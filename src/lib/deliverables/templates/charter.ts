@@ -25,7 +25,7 @@ export const charterTemplateStructure = {
       key: 'sponsor_and_co_sponsor',
       title: 'Sponsor + Co-Sponsor',
       required: true,
-      description: 'Name the executive sponsor and the co-sponsor who will provide air cover and approval support.',
+      description: 'List the executive sponsor and co-sponsor as progress contacts. Product approvals are recorded by an authorized workspace user.',
       example_completed: 'Sponsor: Priya Patel, VP Store Operations. Co-sponsor: Jake Chen, Chief Digital Officer.',
     },
     {
@@ -42,7 +42,7 @@ export const charterTemplateStructure = {
       required: true,
       description: 'Define the intended outcomes and the measurable proof that the program succeeded.',
       example_completed:
-        'Reduce avoidable contacts by 25%, cut average handle time by 15%, and show sponsor sign-off that service quality did not regress.',
+        'Reduce avoidable contacts by 25%, cut average handle time by 15%, and show evidence that service quality did not regress; an authorized workspace user records the product approval.',
     },
     {
       key: 'scope_and_out_of_scope',

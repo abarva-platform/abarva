@@ -296,11 +296,12 @@ export const MORRISON_TIMELINE_TEMPLATE: TimelineResourceEstimate = {
       owner: 'Tori Nguyen',
     },
   ],
-  sponsor_approval: {
+  workspace_approval: {
     approved: true,
+    approved_by: 'authorized-workspace-user',
     approval_date: '2026-07-28',
     approval_percentile_commitment: 'P80',
-    approval_signature_method: 'Sponsor steering attestation',
+    approval_record_method: 'Workspace approval record',
     dissent_captured: true,
   },
 };

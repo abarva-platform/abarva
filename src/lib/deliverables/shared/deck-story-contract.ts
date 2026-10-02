@@ -747,6 +747,59 @@ export function deckContract(id: DeckContractId): DeckStoryContract {
 }
 
 /**
+ * Map an orchestrator deliverableType to the deck story contract that governs
+ * its slides, or null for a deliverable with no deck contract yet. This is the
+ * wiring that lets the generator be TOLD the decision-journey contract and the
+ * validator judge against it — the contract existed but reached neither.
+ */
+export function deckContractIdForDeliverable(
+  deliverableType: string,
+): DeckContractId | null {
+  switch (deliverableType) {
+    case "discovery_report":
+    case "root_cause_worksheet":
+      return "REF_DECK_P2_DISCOVERY_READOUT";
+    case "solution_approach_options":
+    case "target_state_architecture":
+    case "solution_design":
+    case "operating_model_design":
+      return "REF_DECK_P3_SOLUTION_DECISION";
+    case "business_case":
+      return "REF_DECK_P4_BUSINESS_CASE";
+    case "roadmap":
+    case "execution_roadmap":
+      return "REF_DECK_P4_ROADMAP";
+    default:
+      return null;
+  }
+}
+
+/** Slide visual kinds that are a drawn diagram/chart rather than text or a card. */
+const DIAGRAM_VISUAL_KINDS: ReadonlySet<SlideVisualKind> = new Set([
+  "chart",
+  "waterfall",
+  "bridge",
+  "tornado",
+  "matrix",
+  "architecture",
+  "data_flow",
+  "runtime_flow",
+  "roadmap",
+  "heatmap",
+]);
+
+/**
+ * True when a deck's contract calls for at least one drawn diagram/chart slide
+ * — so a deck of that type rendered as all text (no exhibits) is a section list,
+ * not the argument the contract describes.
+ */
+export function deckContractExpectsDiagram(id: DeckContractId): boolean {
+  return deckContract(id).slides.some((s) =>
+    DIAGRAM_VISUAL_KINDS.has(s.primaryVisual),
+  );
+}
+
+/**
  * Every beat a deck's narrative slides carry must exist in the spine it
  * declares. This is the guard that keeps a deck and its document telling the
  * same story — a typo'd or invented beat id is a contract defect, not a

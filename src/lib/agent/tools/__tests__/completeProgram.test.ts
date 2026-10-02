@@ -32,7 +32,8 @@ jest.mock('@/lib/data-plane/postgresCompat', () => ({
 const writeAuditMock = jest.fn();
 jest.mock('@/lib/programs/audit-log', () => ({
   __esModule: true,
-  writeProgramAuditLogBestEffort: (...args: unknown[]) => writeAuditMock(...args),
+  writeProgramAuditLogBestEffort: (...args: unknown[]) =>
+    writeAuditMock(...args),
 }));
 
 const loadUserProgramAccessPolicyMock = jest.fn();
@@ -46,7 +47,10 @@ import { completeProgramTool } from '../program/completeProgram';
 
 beforeEach(() => {
   jest.clearAllMocks();
-  requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'person-1' });
+  requireTenancyMock.mockResolvedValue({
+    clientId: 'client-1',
+    userId: 'person-1',
+  });
   updateEq2Mock.mockResolvedValue({ error: null });
   insertMock.mockResolvedValue({ error: null });
   loadUserProgramAccessPolicyMock.mockResolvedValue({
@@ -64,7 +68,8 @@ describe('complete_program tool', () => {
     const result = await completeProgramTool.handler(
       {
         program_id: 'program-1',
-        completion_notes: 'Tower handoff setup completed and monitoring contract signed.',
+        completion_notes:
+          'Tower handoff setup completed and monitoring contract signed.',
       },
       {
         request: new Request('http://localhost/programs/program-1'),
@@ -74,11 +79,13 @@ describe('complete_program tool', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
-      lifecycle_state: 'completed',
-      status: 'completed',
-      current_phase: 6,
-    }));
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lifecycle_state: 'completed',
+        status: 'completed',
+        current_phase: 6,
+      }),
+    );
     expect(writeAuditMock).toHaveBeenCalledWith(
       { clientId: 'client-1', userId: 'person-1' },
       expect.objectContaining({
@@ -87,7 +94,9 @@ describe('complete_program tool', () => {
         toState: 'completed',
       }),
     );
-    expect(writer.write).toHaveBeenCalledWith(expect.stringContaining('program-phase-changed'));
+    expect(writer.write).toHaveBeenCalledWith(
+      expect.stringContaining('program-phase-changed'),
+    );
   });
 
   // SECURITY (audit 2026-05-22, P0-2b): completing a program is a
@@ -113,6 +122,8 @@ describe('complete_program tool', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe('forbidden:can_approve_gates_required');
+      expect(result.recovery).toContain('authorized workspace user');
+      expect(result.recovery).not.toMatch(/ask a sponsor/i);
     }
     expect(updateMock).not.toHaveBeenCalled();
   });

@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 396,
-    "fenced": 220,
-    "fencedDirect": 96,
+    "routes": 397,
+    "fenced": 222,
+    "fencedDirect": 98,
     "fencedIndirect": 124,
-    "unfenced": 176,
-    "unfencedButReachesFenceModule": 94,
-    "behavioral": 75,
+    "unfenced": 175,
+    "unfencedButReachesFenceModule": 95,
+    "behavioral": 77,
     "byteScannerOnly": 6,
     "none": 139
   },
@@ -2281,7 +2281,7 @@
       "fence": "none",
       "fenceSymbols": [],
       "fenceVia": [],
-      "reachesFenceModule": false,
+      "reachesFenceModule": true,
       "coverage": null,
       "suites": {
         "behavioral": [],
@@ -2411,7 +2411,9 @@
           "src/app/api/home/walkthrough-export/__tests__/route.test.ts",
           "src/app/api/home/walkthrough-export/__tests__/tenancy-fence.test.ts"
         ],
-        "byteScanner": []
+        "byteScanner": [
+          "src/lib/home/preview/__tests__/home-preview-tenant-demo-tripwire.test.ts"
+        ]
       }
     },
     {
@@ -3093,13 +3095,17 @@
     },
     {
       "route": "src/app/api/programs/approve/route.ts",
-      "fence": "none",
-      "fenceSymbols": [],
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
       "fenceVia": [],
-      "reachesFenceModule": false,
-      "coverage": null,
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
       "suites": {
-        "behavioral": [],
+        "behavioral": [
+          "src/app/api/programs/phase-gate/__tests__/route.test.ts"
+        ],
         "byteScanner": []
       }
     },
@@ -6407,6 +6413,23 @@
       "suites": {
         "behavioral": [
           "src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/nda/esign/status/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/source-nda-esign-status-route.test.ts"
         ],
         "byteScanner": []
       }

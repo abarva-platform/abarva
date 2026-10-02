@@ -11,17 +11,16 @@
 //      compared with honest trade-offs, a recommended path, and an
 //      architecture sketch reviewed by architecture.
 //
-//   2. Charter signed-off — the sponsor's binding commitment to the
-//      recommended path: scope boundary, baseline KPI, value hypothesis
+//   2. Charter approved by the authorized Move user: scope boundary, baseline KPI, value hypothesis
 //      with mechanism, kill criterion, named dissenter, succession owner.
 //
-// Both must be present at exit. A signed charter without a credible
-// synthesis is sponsor pressure. A credible synthesis without a signed
-// charter is a deck. Programs fail at this gate either way.
+// Both must be present at exit. Sponsors remain named stakeholders and
+// receive progress updates; the signed-in authorized Move user records the
+// in-product approval.
 //
 // Hard gates (mirrors GATE_RULES P2→P3 in src/lib/programs/governance.ts):
-//   • charter_signed_off (sponsor binding)
-//   • sponsor_assigned with approval_authority='sponsor'
+//   • charter_signed_off by an authorized Move user
+//   • sponsor_assigned as a stakeholder/contact, not as an approval actor
 //
 // Soft gates flagged when missing:
 //   • synthesis option comparison with trade-offs
@@ -44,36 +43,34 @@ export const P2_SYNTHESIS: PhasePack = {
     'A signed gate package combining (a) a synthesis recommendation that names ' +
     'at least two viable target-state options, makes the trade-offs explicit, and ' +
     'recommends a path with an architecture sketch the architecture function has ' +
-    'reviewed; AND (b) a charter the sponsor has personally signed — naming ' +
+    'reviewed; AND (b) a charter approved in Moves by an authorized user — naming ' +
     'baseline KPIs (current value, target, source, method), the value hypothesis ' +
     'with causal mechanism, the scope boundary, a named dissenter, a kill ' +
-    'criterion, and a succession owner. Both halves are required: synthesis ' +
-    'without sponsor sign-off is a deck; sign-off without synthesis is sponsor ' +
-    'pressure. Either alone fails P3 within weeks.',
+    'criterion, and a succession owner. Both halves are required before the ' +
+    'authorized user can approve the phase gate.',
 
   definitionOfDone: [
     {
       id: 'charter-signed-off',
-      label: 'Charter signed off by sponsor',
+      label: 'Charter approved by an authorized Move user',
       severity: 'hard',
       evaluationHint:
         'deliverables_v2 row with deliverable_type_key="charter" and status="signed_off". ' +
-        'The signing person must have approval_authority="sponsor" on engagement_participants — ' +
-        'not delegate, not chief of staff.',
+        'The signed-in actor must have Move approval permission; the actor is recorded directly.',
       preventsFailureModes: [1, 2],
     },
     {
       id: 'sponsor-assigned',
-      label: 'Sponsor assigned with explicit approval authority',
+      label: 'Sponsor listed as a stakeholder contact',
       severity: 'hard',
       evaluationHint:
-        'engagement_participants row with approval_authority="sponsor". The sponsor ' +
-        'must be a real persons-table record, not a role label like "CIO".',
+        'A named sponsor contact is listed for progress communication. Listing a sponsor does not grant approval authority.',
       preventsFailureModes: [1],
     },
     {
       id: 'synthesis-options-compared',
-      label: 'At least two target-state options compared with explicit trade-offs',
+      label:
+        'At least two target-state options compared with explicit trade-offs',
       severity: 'soft',
       evaluationHint:
         'Synthesis prose names ≥2 options, lists what each gives up, and explains ' +
@@ -93,7 +90,8 @@ export const P2_SYNTHESIS: PhasePack = {
     },
     {
       id: 'baseline-kpi-captured',
-      label: 'Baseline KPI: current value + target + source + measurement method',
+      label:
+        'Baseline KPI: current value + target + source + measurement method',
       severity: 'soft',
       evaluationHint:
         'Charter prose names a numeric current value, numeric target, the system ' +
@@ -182,8 +180,7 @@ export const P2_SYNTHESIS: PhasePack = {
       },
       {
         id: 'baseline-source',
-        text:
-          'What does the sponsor measure today, and where does that number come from?',
+        text: 'What does the accountable business owner measure today, and where does that number come from?',
         why:
           'Locks the baseline source before scope discussion. Without a source, ' +
           'targets are aspirational and P5 has nothing to verify against.',
@@ -205,15 +202,13 @@ export const P2_SYNTHESIS: PhasePack = {
       },
       {
         id: 'sponsor-time-committed',
-        text:
-          'How much of the sponsor’s personal calendar does this get over the next 90 days?',
+        text: 'Should the listed sponsor contact receive phase-progress emails?',
         why:
-          'Phantom sponsorship is the #1 P2 failure mode. Without committed ' +
-          'calendar time, the charter is delegated and stalls at the first ' +
-          'real decision.',
+          'Keep sponsor communication informational and explicit. Sponsor calendar ' +
+          'commitment is not required for product workflow or gate progression.',
         expectedAnswerShape:
-          'Specific cadence — e.g., "weekly 30-min steer + monthly 90-min review." ' +
-          'Vague answers ("as needed") indicate phantom sponsorship.',
+          'A yes/no email preference for the listed contact; do not request ' +
+          'sponsor meetings, review, commitment, or approval.',
         preventsFailureModes: [1],
       },
     ],
@@ -234,8 +229,7 @@ export const P2_SYNTHESIS: PhasePack = {
       },
       {
         id: 'architecture-review',
-        text:
-          'Who in architecture has reviewed the sketch, and what did they push back on?',
+        text: 'Who in architecture has reviewed the sketch, and what did they push back on?',
         why:
           'A synthesis without architecture pushback is either pre-aligned or ' +
           'unread. P3 design will surface the issues you avoided here.',
@@ -263,10 +257,10 @@ export const P2_SYNTHESIS: PhasePack = {
       },
       {
         id: 'sponsor-three-month-fear',
-        text: 'What is the sponsor going to lose sleep over three months from now?',
+        text: 'What business outcome or risk should the authorized workspace user focus on over the next three months?',
         why:
-          'Surfaces the real risk anchor — usually the sponsor’s reputation or ' +
-          'political cover. Aligns P3/P4 risk work to what the sponsor cares about.',
+          'Surfaces the decision context the authorized workspace user needs; it ' +
+          'does not make the sponsor an approval actor.',
         preventsFailureModes: [1, 6],
       },
     ],
@@ -274,16 +268,14 @@ export const P2_SYNTHESIS: PhasePack = {
       {
         id: 'signature-authority',
         text:
-          'Who signs the charter, and what authority does that person have to ' +
-          'commit budget, headcount, and stakeholder access?',
-        why:
-          'A charter signed by someone without authority is theatre. Verify ' +
-          'approval_authority="sponsor" on the persons record before close.',
+          'Which workspace user is authorized to approve the charter in Nexus, and ' +
+          'what evidence supports any underlying business authorization?',
+        why: 'Capture the business decision owner and the authorized Moves user separately. The user who approves in the product is recorded as the actor.',
         preventsFailureModes: [1],
       },
       {
         id: 'succession',
-        text: 'If the sponsor leaves the company tomorrow, who owns this program?',
+        text: 'If the business owner changes, who maintains continuity for this program?',
         why:
           'Single-sponsor programs are fragile. A named succession owner reduces ' +
           'the risk of charter collapse mid-program.',
@@ -375,20 +367,17 @@ export const P2_SYNTHESIS: PhasePack = {
     },
     {
       id: 'phantom-sponsor',
-      label: 'The Phantom Sponsor',
+      label: 'Sponsor contact confused with workflow participation',
       detectionHint:
-        'Sponsor named but: (a) not present in any captured workshop or meeting, ' +
-        '(b) cannot commit specific calendar time, (c) referred to via delegate, ' +
-        '(d) all decisions are routed through a chief of staff or PMO without ' +
-        'sponsor sign-off.',
+        'Sponsor is listed as a contact but the workflow incorrectly treats their ' +
+        'attendance, calendar commitment, or review as required.',
       whatToFlag:
-        'Surface that the sponsor pattern looks delegated rather than personal. ' +
-        'Tell the user the program has high probability of stalling at the first ' +
-        'real decision — this is the #1 reason charters fail in P3.',
+        'Keep the sponsor in the contact and progress-update role. Resolve product ' +
+        'approval authority through the workspace access policy and capture business ' +
+        'ownership separately.',
       mitigation:
-        'Insist on a recurring sponsor cadence on the calendar before close, AND ' +
-        'name a succession owner. If the sponsor will not commit, the charter is ' +
-        'not ready to advance — a wrong sponsor is more costly than no sponsor.',
+        'Remove sponsor participation from the gate; record a progress-email ' +
+        'preference and identify the authorized workspace user for product approvals.',
       preventsFailureModes: [1],
     },
     {
@@ -411,14 +400,14 @@ export const P2_SYNTHESIS: PhasePack = {
       id: 'committee-charter',
       label: 'The Committee Charter',
       detectionHint:
-        'More than one sponsor named, OR charter has multiple co-owners with ' +
-        'shared authority, OR sign-off requires a steering committee vote.',
+        'Charter has multiple co-owners with unclear business accountability, or ' +
+        'the product approval action is incorrectly assigned to a committee.',
       whatToFlag:
-        'Surface that authority is fragmented. Multi-sponsor programs cannot ' +
-        'make fast decisions in P3/P4 and stall at gate transitions.',
+        'Surface unclear business accountability. Product gate approval is a single ' +
+        'authorized workspace-user action, not a sponsor or committee vote.',
       mitigation:
-        'Push for one accountable sponsor. Other interested parties become ' +
-        'advisors or stakeholders, not co-sponsors.',
+        'Record a clear business owner and list interested parties as stakeholders. ' +
+        'Keep product approval with the authorized workspace user.',
       preventsFailureModes: [1],
     },
     {
@@ -439,7 +428,8 @@ export const P2_SYNTHESIS: PhasePack = {
     {
       id: 'orphaned-kill-criterion',
       label: 'The Open-Ended Charter',
-      detectionHint: 'No kill criterion stated, or the kill criterion is unmeasurable.',
+      detectionHint:
+        'No kill criterion stated, or the kill criterion is unmeasurable.',
       whatToFlag:
         'Charters without a kill criterion drift into zombie status when results ' +
         'disappoint. Tell the user the charter is missing a stop signal.',
@@ -452,19 +442,20 @@ export const P2_SYNTHESIS: PhasePack = {
 
   coachingArc: {
     entry:
-      'Verify the sponsor is real before discussing scope or options. Surface ' +
-      'dissenters in the first two turns. Push baseline rigor before letting ' +
+      'Confirm the sponsor is listed only as a progress contact; sponsor presence ' +
+      'is not required. Surface dissenters in the first two turns. Push baseline rigor before letting ' +
       'scope discussions take over. Ask what synthesis options are on the table — ' +
       'if there is only one, the synthesis has not happened yet.',
     midPhase:
       'Pressure-test BOTH halves of the gate package. On synthesis: force a ' +
       'crossover condition for at least one alternative; demand named architecture ' +
-      'review with substantive pushback. On charter: 50% scope cut, 3-month ' +
-      'sponsor fear, value mechanism (not just dollar amount). Flag any ' +
+      'review with substantive pushback. On charter: 50% scope cut, decision-owner ' +
+      'risk context, value mechanism (not just dollar amount). Flag any ' +
       'anti-pattern signal the moment it appears — do not wait for the user.',
     exit:
-      'Validate signature authority on the persons record. Confirm sponsor ' +
-      'calendar commitment, succession plan, kill criterion. Confirm synthesis ' +
+      'Confirm the authorized workspace approver is identifiable from access policy. ' +
+      'Confirm a business continuity owner, kill criterion, and sponsor progress ' +
+      'contact preference. Confirm synthesis ' +
       'has trade-offs articulated and architecture has signed off (named, dated, ' +
       'with comments). The exit posture is gate-locking, not consultative — ' +
       'refuse to call the gate done if hard items are unmet.',
@@ -472,7 +463,7 @@ export const P2_SYNTHESIS: PhasePack = {
 
   dependencies: {
     requiresFromPrior: [
-      'P0 Originate: business case, value hypothesis seed, sponsor candidate, classification',
+      'P0 Originate: business case, value hypothesis seed, sponsor progress contact and email preference, classification',
       'P1 Discovery: validated problem statement, OKR baseline, stakeholder map',
       'P0/P1: tenant/client context — industry, vertical, prior programs in flight, pattern match',
     ],
@@ -480,7 +471,7 @@ export const P2_SYNTHESIS: PhasePack = {
       'Recommended target-state path with stated trade-offs — P3 designs against this, not in spite of it',
       'Architecture sketch with named reviewer — P3 detailed design extends, does not re-litigate',
       'Baseline KPI with source and method — P5 measures movement against this',
-      'Sponsor commitment and succession owner — P3/P4 stakeholder cadence draws on these',
+      'Business continuity owner and sponsor progress-contact preference — P3/P4 carry these forward without requiring sponsor involvement',
       'Scope boundary — P3 investigation must stay within',
       'Kill criterion — gives Maestro and Nexus license to flag drift in P3/P4/P5',
       'Named dissenter — P3 stakeholder interviews must include them, not avoid them',
@@ -491,9 +482,9 @@ export const P2_SYNTHESIS: PhasePack = {
   //
   // 9 canonical P2 steps. The DAG threads two roots (options authoring and
   // architecture review) through the synthesis workshop into the charter
-  // composition, sponsor defense, and ultimately the sign-off gate. Three
+  // composition, authorized-user review, and ultimately the approval gate. Three
   // steps produce intermediate artifacts (options table, charter draft,
-  // sponsor commitment evidence) rather than DoD ids; their `outputs` are
+  // stakeholder context evidence) rather than DoD ids; their `outputs` are
   // empty arrays per the slice rule (no invented DoD ids), and downstream
   // steps reference the intermediate artifact id in their `inputs` so the
   // DAG remains legible.
@@ -502,7 +493,7 @@ export const P2_SYNTHESIS: PhasePack = {
   // "medium" are encoded as 'simple' when the work is chat-resolvable
   // (authoring a list, locking a criterion, engaging a dissenter via a
   // single 1:1) and as 'complex' when off-platform multi-stakeholder work
-  // is required (workshop, architecture review, sponsor defense).
+  // is required (workshop or architecture review).
   steps: [
     // Authoring a static options list typically takes a turn or two; treated
     // as simple. Output is intermediate (the options table feeds the
@@ -570,23 +561,20 @@ export const P2_SYNTHESIS: PhasePack = {
       intentCaptureRequired: false,
       postMeetingUploadExpected: false,
     },
-    // Sponsor 1:1 to defend the recommended path against the 3-month-fear
-    // question. Complex (off-platform interview with intent capture and
-    // post-meeting upload). Output is sponsor commitment evidence
-    // (intermediate) consumed at sign-off; `outputs` is empty per slice
-    // rule.
+    // Capture decision context and stakeholder input without making sponsor
+    // attendance or sign-off a workflow prerequisite. The authorized workspace
+    // user records the product decision in the next step.
     {
       id: 'p2-sponsor-defense',
-      label:
-        'Sponsor 1:1 — defend recommended path against 3-month-fear question',
-      complexity: 'complex',
-      agentRole: 'coach_interview',
+      label: 'Review decision context',
+      complexity: 'simple',
+      agentRole: 'validate',
       inputs: ['p2-charter-draft'],
       outputs: [],
       templateRefs: [],
       preventsFailureModes: [1],
-      intentCaptureRequired: true,
-      postMeetingUploadExpected: true,
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
     },
     // Locking a measurable kill criterion is chat-resolvable validation
     // work; treated as simple. Authored alongside the charter so it can be
@@ -605,7 +593,7 @@ export const P2_SYNTHESIS: PhasePack = {
     },
     {
       id: 'p2-succession-named',
-      label: 'Name a sponsor succession owner',
+      label: 'Name a business continuity owner',
       complexity: 'simple',
       agentRole: 'extract',
       inputs: [],
@@ -615,13 +603,11 @@ export const P2_SYNTHESIS: PhasePack = {
       intentCaptureRequired: false,
       postMeetingUploadExpected: false,
     },
-    // Sponsor sign-off is the gate action — chat-resolvable approval
-    // request; the substantive work happened in p2-sponsor-defense. Tagged
-    // [1] because sponsor sign-off concretizes failure-mode #1 (sponsor
-    // commitment).
+    // The authorized workspace user records the product gate decision after
+    // stakeholder context and substantive evidence are reviewed.
     {
       id: 'p2-charter-signoff',
-      label: 'Sponsor signs the charter',
+      label: 'Authorized workspace user approves the charter',
       complexity: 'simple',
       agentRole: 'request_approval',
       inputs: [

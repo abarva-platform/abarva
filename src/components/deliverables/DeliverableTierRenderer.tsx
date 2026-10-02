@@ -1,24 +1,25 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { deliverableToneColor, type DeliverableRenderModel, type DeliverableRouteLink } from '@/lib/deliverables/render-contract';
-import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from '@/lib/integrity/disclaimers';
-import { ExportActions } from './ExportActions';
-import { ApproveActions } from './ApproveActions';
-import { EvidenceChipList } from './EvidenceChipList';
-import { SponsorCommitmentForm } from '@/components/workflow/SponsorCommitmentForm';
-import type { SponsorCommitmentRecord } from '@/lib/workflow/sponsorCommitment';
-import { D02StakeholderSuccessSection } from './D02StakeholderSuccessSection';
-import { D04TensionSection } from './D04TensionSection';
-import type { ProgramTensionRecord, StakeholderSuccessRecord } from '@/lib/workflow/stakeholderSuccess';
-import { DataReadinessForm } from '@/components/workflow/DataReadinessForm';
-import type { DataReadinessRecord } from '@/lib/workflow/dataReadiness';
+import Link from "next/link";
+import type { ReactNode } from "react";
+import {
+  deliverableToneColor,
+  type DeliverableRenderModel,
+  type DeliverableRouteLink,
+} from "@/lib/deliverables/render-contract";
+import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from "@/lib/integrity/disclaimers";
+import { ExportActions } from "./ExportActions";
+import { ApproveActions } from "./ApproveActions";
+import { EvidenceChipList } from "./EvidenceChipList";
+import { D02StakeholderSuccessSection } from "./D02StakeholderSuccessSection";
+import { D04TensionSection } from "./D04TensionSection";
+import type {
+  ProgramTensionRecord,
+  StakeholderSuccessRecord,
+} from "@/lib/workflow/stakeholderSuccess";
+import { DataReadinessForm } from "@/components/workflow/DataReadinessForm";
+import type { DataReadinessRecord } from "@/lib/workflow/dataReadiness";
 
 interface DeliverableTierRendererProps {
   model: DeliverableRenderModel;
-  /**
-   * FM-03 · D01 Program Charter · existing sponsor commitment record.
-   */
-  sponsorCommitment?: SponsorCommitmentRecord | null;
   /**
    * FM-04 · D02 Stakeholder Map · existing success records for the program.
    */
@@ -46,57 +47,88 @@ interface DeliverableTierRendererProps {
 
 export function DeliverableTierRenderer({
   model,
-  sponsorCommitment,
   stakeholderSuccessRecords,
   programTensionRecords,
   dataReadiness,
   canApprove = true,
   approveGateReason,
 }: DeliverableTierRendererProps) {
-  const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
-  const isStakeholderMap = model.deliverable.code === 'D02' || model.deliverable.typeKey === 'stakeholder_map';
-  const isSuccessMetricTree = model.deliverable.code === 'D03' || model.deliverable.typeKey === 'success_metric_tree';
-  const isIntakeSynthesis = model.deliverable.code === 'D04' || model.deliverable.typeKey === 'intake_synthesis';
+  const isStakeholderMap =
+    model.deliverable.code === "D02" ||
+    model.deliverable.typeKey === "stakeholder_map";
+  const isSuccessMetricTree =
+    model.deliverable.code === "D03" ||
+    model.deliverable.typeKey === "success_metric_tree";
+  const isIntakeSynthesis =
+    model.deliverable.code === "D04" ||
+    model.deliverable.typeKey === "intake_synthesis";
   return (
     <main className="del-page">
       <DeliverablePageStyles />
       <div className="del-shell">
-        {model.deliverable.tier === 'stub' ? <StubBody model={model} /> : model.deliverable.tier === 'outline' ? <OutlineBody model={model} /> : <RichBody model={model} canApprove={canApprove} approveGateReason={approveGateReason} />}
-        {isCharter ? (
-          <section style={{ marginTop: 32 }}>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C', fontWeight: 700 }}>
-                Phase 1 → 2 gate requirement · FM-03
-              </div>
-              <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
-                Sponsor commitment
-              </h2>
-            </div>
-            <SponsorCommitmentForm programCode={model.program.code} existing={sponsorCommitment ?? null} />
-          </section>
-        ) : null}
+        {model.deliverable.tier === "stub" ? (
+          <StubBody model={model} />
+        ) : model.deliverable.tier === "outline" ? (
+          <OutlineBody model={model} />
+        ) : (
+          <RichBody
+            model={model}
+            canApprove={canApprove}
+            approveGateReason={approveGateReason}
+          />
+        )}
         {isStakeholderMap ? (
-          <D02StakeholderSuccessSection programCode={model.program.code} existing={stakeholderSuccessRecords ?? []} />
+          <D02StakeholderSuccessSection
+            programCode={model.program.code}
+            existing={stakeholderSuccessRecords ?? []}
+          />
         ) : null}
         {isIntakeSynthesis ? (
-          <D04TensionSection programCode={model.program.code} existing={programTensionRecords ?? []} />
+          <D04TensionSection
+            programCode={model.program.code}
+            existing={programTensionRecords ?? []}
+          />
         ) : null}
         {isSuccessMetricTree ? (
           <section style={{ marginTop: 32 }}>
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C', fontWeight: 700 }}>
+              <div
+                style={{
+                  fontFamily: "JetBrains Mono, monospace",
+                  fontSize: 11,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#0E9F8C",
+                  fontWeight: 700,
+                }}
+              >
                 Phase 1 → 2 gate requirement · FM-02
               </div>
-              <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
+              <h2
+                style={{
+                  fontFamily: "Fraunces, Georgia, serif",
+                  fontSize: 24,
+                  letterSpacing: "-0.015em",
+                  margin: "8px 0 0",
+                  color: "#1a1612",
+                }}
+              >
                 Data readiness
               </h2>
             </div>
-            <DataReadinessForm programCode={model.program.code} existing={dataReadiness ?? null} />
+            <DataReadinessForm
+              programCode={model.program.code}
+              existing={dataReadiness ?? null}
+            />
           </section>
         ) : null}
         <footer className="del-footer">
-          {model.provenance.disclaimer} · Seed spec {model.provenance.seedSpecVersion} · {model.provenance.contentState.replace(/_/g, ' ')}.
-          {model.deliverable.tier === 'rich' ? ` ${RICH_DELIVERABLE_DEMO_DISCLAIMER}` : ''}
+          {model.provenance.disclaimer} · Seed spec{" "}
+          {model.provenance.seedSpecVersion} ·{" "}
+          {model.provenance.contentState.replace(/_/g, " ")}.
+          {model.deliverable.tier === "rich"
+            ? ` ${RICH_DELIVERABLE_DEMO_DISCLAIMER}`
+            : ""}
         </footer>
       </div>
     </main>
@@ -161,10 +193,23 @@ export function DeliverablePageStyles() {
   );
 }
 
-function RichBody({ model, canApprove = true, approveGateReason }: { model: DeliverableRenderModel; canApprove?: boolean; approveGateReason?: string }) {
+function RichBody({
+  model,
+  canApprove = true,
+  approveGateReason,
+}: {
+  model: DeliverableRenderModel;
+  canApprove?: boolean;
+  approveGateReason?: string;
+}) {
   return (
     <>
-      <Header model={model} label="Rich deliverable" canApprove={canApprove} approveGateReason={approveGateReason} />
+      <Header
+        model={model}
+        label="Rich deliverable"
+        canApprove={canApprove}
+        approveGateReason={approveGateReason}
+      />
       <KpiGrid model={model} />
       <div className="del-main-grid">
         <article className="del-panel">
@@ -177,30 +222,72 @@ function RichBody({ model, canApprove = true, approveGateReason }: { model: Deli
             <InlineSignalChart />
           </Section>
           {model.sections.map((section) => (
-            <Section key={section.id} label={section.label} title={section.title}>
+            <Section
+              key={section.id}
+              label={section.label}
+              title={section.title}
+            >
               <p>{stripBullets(section.body)}</p>
-              {section.bullets?.length ? <ul>{section.bullets.slice(0, 6).map((bullet) => <li key={bullet}>{bullet}</li>)}</ul> : null}
+              {section.bullets?.length ? (
+                <ul>
+                  {section.bullets.slice(0, 6).map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              ) : null}
             </Section>
           ))}
           <Section label="Decision Log" title="Sponsor decisions">
             {model.decisions.map((decision) => (
               <div key={`${decision.date}-${decision.summary}`}>
                 <h3>{decision.summary}</h3>
-                <p>{decision.date} · {decision.detail}</p>
+                <p>
+                  {decision.date} · {decision.detail}
+                </p>
               </div>
             ))}
           </Section>
         </article>
         <aside className="del-sidebar">
-          <LinkPanel title="Cross Links" links={model.crossLinks.filter((link) => link.className !== 'breadcrumb' && link.className !== 'evidence').slice(0, 10)} />
-          <LinkPanel title="Evidence Citations" links={model.crossLinks.filter((link) => link.className === 'evidence')} />
+          <LinkPanel
+            title="Cross Links"
+            links={model.crossLinks
+              .filter(
+                (link) =>
+                  link.className !== "breadcrumb" &&
+                  link.className !== "evidence",
+              )
+              .slice(0, 10)}
+          />
+          <LinkPanel
+            title="Evidence Citations"
+            links={model.crossLinks.filter(
+              (link) => link.className === "evidence",
+            )}
+          />
           <section className="del-panel">
             <div className="del-eyebrow">Risk Register</div>
             {model.risks.map((risk) => (
-              <div className="del-status-item" key={risk.title} style={{ marginTop: 10 }}>
-                <div className="del-eyebrow" style={{ color: risk.level === 'High' ? 'var(--del-red)' : 'var(--del-amber)' }}>{risk.level}</div>
+              <div
+                className="del-status-item"
+                key={risk.title}
+                style={{ marginTop: 10 }}
+              >
+                <div
+                  className="del-eyebrow"
+                  style={{
+                    color:
+                      risk.level === "High"
+                        ? "var(--del-red)"
+                        : "var(--del-amber)",
+                  }}
+                >
+                  {risk.level}
+                </div>
                 <strong>{risk.title}</strong>
-                <p style={{ color: 'var(--del-muted)', marginBottom: 0 }}>{risk.mitigation}</p>
+                <p style={{ color: "var(--del-muted)", marginBottom: 0 }}>
+                  {risk.mitigation}
+                </p>
               </div>
             ))}
           </section>
@@ -217,23 +304,44 @@ function OutlineBody({ model }: { model: DeliverableRenderModel }) {
       <KpiGrid model={model} />
       <div className="del-main-grid">
         <article className="del-panel">
-          <Section label="Executive Summary" title="Draft artifact with scoped evidence.">
+          <Section
+            label="Executive Summary"
+            title="Draft artifact with scoped evidence."
+          >
             <p>{model.summary}</p>
           </Section>
           {model.sections.slice(0, 4).map((section) => (
-            <Section key={section.id} label={section.label} title={section.title}>
+            <Section
+              key={section.id}
+              label={section.label}
+              title={section.title}
+            >
               <p>{stripBullets(section.body)}</p>
-              {section.bullets?.length ? <ul>{section.bullets.slice(0, 5).map((bullet) => <li key={bullet}>{bullet}</li>)}</ul> : null}
+              {section.bullets?.length ? (
+                <ul>
+                  {section.bullets.slice(0, 5).map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              ) : null}
             </Section>
           ))}
           <EvidenceTable model={model} />
           <EvidenceAnchors model={model} />
         </article>
         <aside className="del-sidebar">
-          <LinkPanel title="Navigation" links={model.crossLinks.filter((link) => link.className !== 'breadcrumb').slice(0, 8)} />
+          <LinkPanel
+            title="Navigation"
+            links={model.crossLinks
+              .filter((link) => link.className !== "breadcrumb")
+              .slice(0, 8)}
+          />
           <section className="del-panel">
             <div className="del-eyebrow">Promotion Rule</div>
-            <p style={{ color: 'var(--del-muted)', lineHeight: 1.65 }}>This Outline can become Rich after sponsor evidence resolves open decision utility and quality score checks.</p>
+            <p style={{ color: "var(--del-muted)", lineHeight: 1.65 }}>
+              This Outline can become Rich after sponsor evidence resolves open
+              decision utility and quality score checks.
+            </p>
           </section>
         </aside>
       </div>
@@ -249,51 +357,126 @@ function StubBody({ model }: { model: DeliverableRenderModel }) {
         <div className="del-eyebrow">Activation Conditions</div>
         <div className="del-status-list" style={{ marginTop: 16 }}>
           {model.triggerConditions.map((condition) => (
-            <div className="del-status-item" data-state={condition.state} key={condition.title}>
-              <div className="del-eyebrow" style={{ color: condition.state === 'not_yet' ? 'var(--del-amber)' : 'var(--del-teal)' }}>{condition.state.replace(/_/g, ' ')}</div>
+            <div
+              className="del-status-item"
+              data-state={condition.state}
+              key={condition.title}
+            >
+              <div
+                className="del-eyebrow"
+                style={{
+                  color:
+                    condition.state === "not_yet"
+                      ? "var(--del-amber)"
+                      : "var(--del-teal)",
+                }}
+              >
+                {condition.state.replace(/_/g, " ")}
+              </div>
               <strong>{condition.title}</strong>
-              <p style={{ color: 'var(--del-muted)', marginBottom: 0, lineHeight: 1.6 }}>{condition.detail}</p>
+              <p
+                style={{
+                  color: "var(--del-muted)",
+                  marginBottom: 0,
+                  lineHeight: 1.6,
+                }}
+              >
+                {condition.detail}
+              </p>
             </div>
           ))}
         </div>
       </div>
       <div className="del-main-grid">
         <article className="del-panel">
-          <Section label="Structure Preview" title="What will appear when this deliverable activates.">
-            <ul>{model.structurePreview.map((item) => <li key={item}>{item}</li>)}</ul>
+          <Section
+            label="Structure Preview"
+            title="What will appear when this deliverable activates."
+          >
+            <ul>
+              {model.structurePreview.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </Section>
           <Section label="Prerequisites" title="Preserved context">
-            <div className="del-link-list">{model.prerequisites.map((link) => <RouteLink key={`${link.href}-${link.label}`} link={link} />)}</div>
+            <div className="del-link-list">
+              {model.prerequisites.map((link) => (
+                <RouteLink key={`${link.href}-${link.label}`} link={link} />
+              ))}
+            </div>
           </Section>
         </article>
         <aside className="del-sidebar">
-          <LinkPanel title="Preserved Cross-Links" links={model.crossLinks.filter((link) => link.className !== 'breadcrumb').slice(0, 10)} />
+          <LinkPanel
+            title="Preserved Cross-Links"
+            links={model.crossLinks
+              .filter((link) => link.className !== "breadcrumb")
+              .slice(0, 10)}
+          />
         </aside>
       </div>
     </>
   );
 }
 
-function Header({ model, label, canApprove = true, approveGateReason }: { model: DeliverableRenderModel; label: string; canApprove?: boolean; approveGateReason?: string }) {
-  const breadcrumbs = model.crossLinks.filter((link) => link.className === 'breadcrumb');
+function Header({
+  model,
+  label,
+  canApprove = true,
+  approveGateReason,
+}: {
+  model: DeliverableRenderModel;
+  label: string;
+  canApprove?: boolean;
+  approveGateReason?: string;
+}) {
+  const breadcrumbs = model.crossLinks.filter(
+    (link) => link.className === "breadcrumb",
+  );
   return (
     <header className="del-header-grid">
       <div>
         <nav className="del-breadcrumbs" aria-label="Deliverable breadcrumbs">
-          {breadcrumbs.map((link) => <Link href={link.href} key={`${link.label}-${link.href}`}>{link.label}</Link>)}
+          {breadcrumbs.map((link) => (
+            <Link href={link.href} key={`${link.label}-${link.href}`}>
+              {link.label}
+            </Link>
+          ))}
         </nav>
-        <div className="del-topline" style={{ marginTop: 30 }}>{model.tenant.name} · {model.program.code} · {label}</div>
+        <div className="del-topline" style={{ marginTop: 30 }}>
+          {model.tenant.name} · {model.program.code} · {label}
+        </div>
         <h1 className="del-title">{model.deliverable.title}</h1>
         <p className="del-summary">{model.summary}</p>
         <div className="del-pill-row" style={{ marginTop: 22 }}>
-          <span className="del-pill" data-tone="teal">Phase {model.phase.spec} · {model.phase.name}</span>
-          <span className="del-pill" data-tone={model.deliverable.tier === 'stub' ? 'amber' : 'teal'}>{model.deliverable.tier.toUpperCase()}</span>
-          <span className="del-pill" data-tone="amber">Composite disclaimer active</span>
+          <span className="del-pill" data-tone="teal">
+            Phase {model.phase.spec} · {model.phase.name}
+          </span>
+          <span
+            className="del-pill"
+            data-tone={model.deliverable.tier === "stub" ? "amber" : "teal"}
+          >
+            {model.deliverable.tier.toUpperCase()}
+          </span>
+          <span className="del-pill" data-tone="amber">
+            Composite disclaimer active
+          </span>
         </div>
-        {model.deliverable.tier !== 'stub' ? (
-          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <ExportActions deliverableCode={model.deliverable.code} title={model.deliverable.title} />
-            {model.deliverable.tier === 'rich' ? (
+        {model.deliverable.tier !== "stub" ? (
+          <div
+            style={{
+              marginTop: 18,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <ExportActions
+              deliverableCode={model.deliverable.code}
+              title={model.deliverable.title}
+            />
+            {model.deliverable.tier === "rich" ? (
               <ApproveActions
                 programCode={model.program.code}
                 deliverableCode={model.deliverable.code}
@@ -308,8 +491,21 @@ function Header({ model, label, canApprove = true, approveGateReason }: { model:
       </div>
       <aside className="del-panel">
         <div className="del-eyebrow">Render Contract</div>
-        <h2 style={{ fontFamily: 'var(--del-serif)', fontSize: 30, lineHeight: 1.05, letterSpacing: '-0.03em', margin: '12px 0' }}>{label}</h2>
-        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: 0 }}>Tier-specific rendering is driven by the seeded deliverable tier, not by a generic fallback template.</p>
+        <h2
+          style={{
+            fontFamily: "var(--del-serif)",
+            fontSize: 30,
+            lineHeight: 1.05,
+            letterSpacing: "-0.03em",
+            margin: "12px 0",
+          }}
+        >
+          {label}
+        </h2>
+        <p style={{ color: "var(--del-muted)", lineHeight: 1.65, margin: 0 }}>
+          Tier-specific rendering is driven by the seeded deliverable tier, not
+          by a generic fallback template.
+        </p>
       </aside>
     </header>
   );
@@ -321,15 +517,27 @@ function KpiGrid({ model }: { model: DeliverableRenderModel }) {
       {model.kpis.map((kpi) => (
         <div className="del-kpi" key={kpi.label}>
           <div className="del-eyebrow">{kpi.label}</div>
-          <strong style={{ color: deliverableToneColor(kpi.tone) }}>{kpi.value}</strong>
-          <div style={{ color: 'var(--del-muted)', fontSize: 14 }}>{kpi.detail}</div>
+          <strong style={{ color: deliverableToneColor(kpi.tone) }}>
+            {kpi.value}
+          </strong>
+          <div style={{ color: "var(--del-muted)", fontSize: 14 }}>
+            {kpi.detail}
+          </div>
         </div>
       ))}
     </section>
   );
 }
 
-function Section({ label, title, children }: { label: string; title: string; children: ReactNode }) {
+function Section({
+  label,
+  title,
+  children,
+}: {
+  label: string;
+  title: string;
+  children: ReactNode;
+}) {
   return (
     <section className="del-section">
       <div className="del-eyebrow">{label}</div>
@@ -343,24 +551,44 @@ function EvidenceTable({ model }: { model: DeliverableRenderModel }) {
   return (
     <Section label="Evidence Table" title="Tenant-bound evidence basis">
       <table className="del-table">
-        <thead><tr>{model.table.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
+        <thead>
+          <tr>
+            {model.table.columns.map((column) => (
+              <th key={column}>{column}</th>
+            ))}
+          </tr>
+        </thead>
         <tbody>
           {model.table.rows.map((row, rowIndex) => {
-            const rowKey = typeof row[0] === 'string' ? row[0] : row[0]?.text ?? '';
+            const rowKey =
+              typeof row[0] === "string" ? row[0] : (row[0]?.text ?? "");
             return (
-              <tr key={`${rowKey}-${rowIndex}`} data-highlight={model.table.highlightedRows?.includes(rowIndex) ? 'true' : 'false'}>
+              <tr
+                key={`${rowKey}-${rowIndex}`}
+                data-highlight={
+                  model.table.highlightedRows?.includes(rowIndex)
+                    ? "true"
+                    : "false"
+                }
+              >
                 {row.map((cell, cellIndex) => {
                   // C2-14 · cells can be plain strings (legacy) or `{text, href}`
                   // objects for linked values. Pattern + Program cells now render
                   // as clickable links from the deliverable back to their canonical
                   // surfaces.
-                  if (typeof cell === 'string') {
+                  if (typeof cell === "string") {
                     return <td key={`${rowKey}-${cellIndex}`}>{cell}</td>;
                   }
                   if (cell.href) {
                     return (
                       <td key={`${rowKey}-${cellIndex}`}>
-                        <Link href={cell.href} style={{ color: 'var(--del-teal)', textDecoration: 'underline' }}>
+                        <Link
+                          href={cell.href}
+                          style={{
+                            color: "var(--del-teal)",
+                            textDecoration: "underline",
+                          }}
+                        >
                           {cell.text}
                         </Link>
                       </td>
@@ -397,12 +625,25 @@ function EvidenceAnchors({ model }: { model: DeliverableRenderModel }) {
   );
 }
 
-function LinkPanel({ title, links }: { title: string; links: DeliverableRouteLink[] }) {
+function LinkPanel({
+  title,
+  links,
+}: {
+  title: string;
+  links: DeliverableRouteLink[];
+}) {
   if (links.length === 0) return null;
   return (
     <section className="del-panel">
       <div className="del-eyebrow">{title}</div>
-      <div className="del-link-list" style={{ marginTop: 12 }}>{links.map((link) => <RouteLink key={`${link.className}-${link.href}-${link.title}`} link={link} />)}</div>
+      <div className="del-link-list" style={{ marginTop: 12 }}>
+        {links.map((link) => (
+          <RouteLink
+            key={`${link.className}-${link.href}-${link.title}`}
+            link={link}
+          />
+        ))}
+      </div>
     </section>
   );
 }
@@ -426,15 +667,38 @@ function InlineSignalChart() {
     [720, 42],
   ] as const;
   return (
-    <svg role="img" aria-label="Seed evidence confidence trend" viewBox="0 0 760 220" style={{ width: '100%', height: 'auto' }}>
+    <svg
+      role="img"
+      aria-label="Seed evidence confidence trend"
+      viewBox="0 0 760 220"
+      style={{ width: "100%", height: "auto" }}
+    >
       <rect x="0" y="0" width="760" height="220" rx="22" fill="#f2eadc" />
-      <path d="M46 166 C124 118 174 138 232 92 C304 36 362 110 434 74 C504 38 554 104 620 74 C666 52 694 56 720 42" fill="none" stroke="#0e9f8c" strokeWidth="5" />
-      <path d="M46 166 C124 118 174 138 232 92 C304 36 362 110 434 74 C504 38 554 104 620 74 C666 52 694 56 720 42 L720 188 L46 188 Z" fill="rgba(14,159,140,.14)" />
-      {points.map(([x, y]) => <circle key={x} cx={x} cy={y} r="7" fill="#fffdf8" stroke="#0e9f8c" strokeWidth="4" />)}
+      <path
+        d="M46 166 C124 118 174 138 232 92 C304 36 362 110 434 74 C504 38 554 104 620 74 C666 52 694 56 720 42"
+        fill="none"
+        stroke="#0e9f8c"
+        strokeWidth="5"
+      />
+      <path
+        d="M46 166 C124 118 174 138 232 92 C304 36 362 110 434 74 C504 38 554 104 620 74 C666 52 694 56 720 42 L720 188 L46 188 Z"
+        fill="rgba(14,159,140,.14)"
+      />
+      {points.map(([x, y]) => (
+        <circle
+          key={x}
+          cx={x}
+          cy={y}
+          r="7"
+          fill="#fffdf8"
+          stroke="#0e9f8c"
+          strokeWidth="4"
+        />
+      ))}
     </svg>
   );
 }
 
 function stripBullets(value: string): string {
-  return value.replace(/\n- [\s\S]*/g, '').trim() || value;
+  return value.replace(/\n- [\s\S]*/g, "").trim() || value;
 }

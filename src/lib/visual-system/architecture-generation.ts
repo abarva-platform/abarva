@@ -19,6 +19,32 @@ import {
 
 export const DEFAULT_ARCHITECTURE_MODEL = "claude-opus-4-8";
 
+/**
+ * Thrown when the model stops the architecture response under a usage policy
+ * (`stopReason` "refusal"). A refusal is a first-class, explained BLOCK — the
+ * deliverable stops here and is NEVER silently re-routed to a different model
+ * or provider (the egress is Anthropic-only by policy, and routing around a
+ * safety refusal to a less-restricted model would defeat it). It carries the
+ * provider's policy category and explanation so a human can decide whether to
+ * narrow/rephrase the input and re-request, or confirm it is out of bounds.
+ */
+export class ArchitectureRefusalError extends Error {
+  readonly category: string | null;
+  readonly explanation: string | null;
+  constructor(category: string | null, explanation: string | null) {
+    const parts = [`policy category: ${category ?? "not named"}`];
+    if (explanation) parts.push(`provider explanation: ${explanation}`);
+    super(
+      `Architecture generation was refused by the model under a usage policy (${parts.join(
+        ", ",
+      )}).`,
+    );
+    this.name = "ArchitectureRefusalError";
+    this.category = category;
+    this.explanation = explanation;
+  }
+}
+
 const NODE_SCHEMA = {
   type: "object",
   required: ["id", "label", "kind", "layer"],
@@ -506,13 +532,24 @@ export async function generateArchitectureModel(
 ): Promise<GeneratedArchitecture> {
   const model = req.model ?? DEFAULT_ARCHITECTURE_MODEL;
   const maxTokens = req.maxTokens ?? 32_000;
-  const { toolInput, modelId, stopReason, outputTokens } = await call({
-    system: ARCHITECTURE_SYSTEM_PROMPT,
-    userMessage: buildArchitectureUserMessage(req),
-    tool: ARCHITECTURE_TOOL,
-    model,
-    maxTokens,
-  });
+  const { toolInput, modelId, stopReason, outputTokens, stopDetails } =
+    await call({
+      system: ARCHITECTURE_SYSTEM_PROMPT,
+      userMessage: buildArchitectureUserMessage(req),
+      tool: ARCHITECTURE_TOOL,
+      model,
+      maxTokens,
+    });
+  // A refusal is a policy stop, not a generation failure. Surface it as a
+  // first-class, categorized block BEFORE the generic "no structured model"
+  // throw, so its category/explanation are not dropped on the floor and the
+  // caller can route it to a human rather than reporting a vague assembly error.
+  if (stopReason === "refusal") {
+    throw new ArchitectureRefusalError(
+      stopDetails?.category ?? null,
+      stopDetails?.explanation ?? null,
+    );
+  }
   if (stopReason === "max_tokens") {
     throw new Error(
       `Architecture generation was truncated at the ${maxTokens}-token output limit` +

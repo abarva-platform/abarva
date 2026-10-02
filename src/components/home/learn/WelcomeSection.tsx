@@ -532,7 +532,7 @@ const AGENT_TRIO = [
   {
     name: "Ava on Strategic Moves",
     archetype: "Drawing on senior investment-shaping expertise",
-    job: "Turns a candidate bet into a governed Move. Names sponsor, decision rights, gates, business case, and evidence.",
+    job: "Turns a candidate bet into a governed Move. Lists the sponsor contact, assigns workspace decision rights, and shapes the evidence-backed roadmap and business case.",
     color: T.teal,
     colorSoft: T.tealSoft,
     surface: "Strategic Moves",

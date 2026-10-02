@@ -8,23 +8,24 @@ export const P1_CHARTER_PACK: PhasePack = {
   phase_id: 1,
   phase_name: 'P1 Charter',
   phase_intent:
-    'Engage the P0 sponsor candidate on scope and governance. Produce a charter that reflects their input. P1 = sponsor named + engaged + charter signed. Financial commitment (cost, solution, timeline approval) is a P4 gate — do NOT treat charter sign-off as investment approval.',
+    'Develop an evidence-grounded charter from the Move team’s inputs. Record the sponsor as a stakeholder contact and progress-email recipient; sponsor engagement or approval is not a product prerequisite. The authorized workspace user reviews and approves the charter.',
 
   entry_criteria: [
     {
       id: 'EC-P1-1',
       description:
-        'P0 gate criteria all passed: hypothesis falsifiable, archetype classified, sponsor candidate identified (human-confirmed), value hypothesis seeded (UNVALIDATED_HYPOTHESIS), scope boundary stated',
+        'P0 gate criteria all passed: hypothesis falsifiable, archetype classified, sponsor contact and progress-email preference recorded, value hypothesis seeded (UNVALIDATED_HYPOTHESIS), scope boundary stated',
       type: 'hard',
     },
     {
       id: 'EC-P1-2',
-      description: 'Sponsor candidate is a named individual — not a role placeholder',
+      description: 'Sponsor contact is recorded for progress communication',
       type: 'hard',
     },
     {
       id: 'EC-P1-3',
-      description: 'P1 Charter Draft Skeleton (CHARTER-SKEL-P0) has been produced',
+      description:
+        'P1 Charter Draft Skeleton (CHARTER-SKEL-P0) has been produced',
       type: 'soft',
     },
   ],
@@ -32,11 +33,12 @@ export const P1_CHARTER_PACK: PhasePack = {
   workflow_steps: [
     {
       step_id: 'P1.1',
-      step_name: 'Sponsor engagement',
-      step_goal: 'Confirm the P0 sponsor candidate is aware of the initiative, aligned on scope, and willing to participate in charter development. P1 does NOT require financial commitment — cost and timeline approval happen at the P4 gate after the business case is built.',
+      step_name: 'Sponsor contact',
+      step_goal:
+        'Record the sponsor contact and whether they should receive progress emails. Do not require sponsor participation, review, commitment, or approval to complete the charter.',
       required_user_inputs: [
-        'Confirmation that sponsor has been briefed on the initiative and is engaged',
-        'Sponsor\'s name and role (may carry from P0)',
+        'Sponsor contact name and role (may carry from P0)',
+        'Progress-email preference and a deliverable email address or resolvable workspace contact',
       ],
       accepted_uploads: [
         'application/pdf',
@@ -46,42 +48,37 @@ export const P1_CHARTER_PACK: PhasePack = {
       ],
       patterns_to_load: ['PAT-PRG-001', 'seed-patterns-meta'],
       questions_to_ask: [
-        'Has [sponsor candidate name] been briefed on the initiative and agreed to be the named sponsor?',
-        'Is [sponsor name] the right functional owner — does this initiative sit within their P&L or OKR?',
-        'Do they want to be involved in scoping and charter review, or will they review the charter at the end?',
-        'Are there any concerns from the sponsor at this point — about scope, timing, or direction?',
+        'Who should be listed as the sponsor progress contact?',
+        'Should this contact receive phase-progress emails, and which address should receive them?',
       ],
       artifact_sections_to_update: [
         'charter.sponsor_name',
         'charter.sponsor_role',
-        'charter.sponsor_engagement_note',
-        'charter.sponsor_functional_ownership',
+        'charter.sponsor_progress_email_preference',
       ],
       evidence_to_capture: [
-        'sponsor_briefing_method',
         'sponsor_name_and_role',
-        'functional_ownership_confirmation',
-        'sponsor_concerns_if_any',
+        'sponsor_progress_email_preference',
+        'sponsor_email_or_workspace_contact_reference',
       ],
       quality_checks: [
-        'AH-P1-1: sponsor_engaged requires user confirmation — not assumed from P0 candidate alone',
-        'Sponsor is named individual with functional ownership of this outcome',
-        'CRITICAL: do NOT ask whether sponsor has approved cost or budget — that is a P4 gate question, not P1',
+        'Sponsor is a listed contact only; no sponsor approval or engagement is inferred',
+        'Progress email is only sent to the explicitly listed contact with the preference enabled',
+        'CRITICAL: do NOT ask the sponsor to approve cost or budget. Capture the estimate, evidence, and assumptions; an authorized workspace user records product approvals.',
         'CRITICAL: do NOT conflate charter sign-off with investment approval',
       ],
       completion_criteria: [
-        'sponsor_engaged = true (user confirmed sponsor is aware and participating)',
-        'sponsor_name populated (named individual)',
-        'sponsor_functional_ownership confirmed',
-        'human_confirmation_required = true (not self-approvable)',
+        'sponsor_contact_recorded = true',
+        'sponsor_progress_email_preference_recorded = true',
       ],
     },
     {
       step_id: 'P1.2',
       step_name: 'Stakeholder mapping',
-      step_goal: 'Map decision rights, contributors, reviewers. Identify who can block the Move. Flag FM-2 if committee has no individual outcome owner.',
+      step_goal:
+        'Map decision rights, contributors, reviewers. Identify who can block the Move. Flag FM-2 if committee has no individual outcome owner.',
       required_user_inputs: [
-        'Committed sponsor (P1.1 complete)',
+        'Sponsor contact details (P1.1 complete)',
         'User input on stakeholder landscape',
       ],
       accepted_uploads: [
@@ -93,7 +90,7 @@ export const P1_CHARTER_PACK: PhasePack = {
       ],
       patterns_to_load: ['PAT-PRG-001', 'seed-patterns-meta'],
       questions_to_ask: [
-        'Beyond the sponsor, who else must approve decisions about scope, investment, or direction for this Move?',
+        'Which business, technical, risk, or finance stakeholders should be consulted on scope, investment, or direction?',
         'Who can block this Move — who has veto power?',
         'Is there any one person who owns the outcome — or is it shared across a committee?',
       ],
@@ -120,9 +117,10 @@ export const P1_CHARTER_PACK: PhasePack = {
     {
       step_id: 'P1.3',
       step_name: 'Success metrics and value range',
-      step_goal: 'Lock the primary success metric and produce a preliminary value range with stated assumptions. Range must not be a point estimate.',
+      step_goal:
+        'Lock the primary success metric and produce a preliminary value range with stated assumptions. Range must not be a point estimate.',
       required_user_inputs: [
-        'Sponsor input on primary success metric',
+        'Business-owner or metric-owner input on the primary success metric',
         'Any available baseline data or rough estimates',
       ],
       accepted_uploads: [
@@ -131,9 +129,13 @@ export const P1_CHARTER_PACK: PhasePack = {
         'text/plain',
         'text/markdown',
       ],
-      patterns_to_load: ['seed-patterns-meta', 'PAT-PRG-001', 'seed-patterns-industry'],
+      patterns_to_load: [
+        'seed-patterns-meta',
+        'PAT-PRG-001',
+        'seed-patterns-industry',
+      ],
       questions_to_ask: [
-        'What is the one metric that, if it moves, the sponsor would consider this Move a success?',
+        'What is the one metric that, if it moves, would demonstrate success to the business?',
         'Can we measure that metric today — is there a baseline?',
         'What is the order of magnitude of the opportunity — low end to high end?',
         'What assumptions would have to be true for that value range to be achievable?',
@@ -164,7 +166,8 @@ export const P1_CHARTER_PACK: PhasePack = {
     {
       step_id: 'P1.4',
       step_name: 'Charter document draft',
-      step_goal: 'Produce the charter artifact: all 11 sections present. Problem statement, sponsor, stakeholders, scope, metrics, value hypothesis, governance.',
+      step_goal:
+        'Produce the charter artifact: all 11 sections present. Problem statement, sponsor, stakeholders, scope, metrics, value hypothesis, governance.',
       required_user_inputs: ['Completed P1.1–P1.3'],
       accepted_uploads: [
         'application/pdf',
@@ -174,7 +177,7 @@ export const P1_CHARTER_PACK: PhasePack = {
       questions_to_ask: [
         'Should I draft the charter now from what we have established in P1.1–P1.3?',
         'Are there sections where you want to add context before I draft?',
-        'Who will review this charter before the sponsor signs?',
+        'Which stakeholders should be listed as charter reviewers or progress contacts?',
       ],
       artifact_sections_to_update: ['CHARTER-P1'],
       evidence_to_capture: [
@@ -195,10 +198,11 @@ export const P1_CHARTER_PACK: PhasePack = {
     {
       step_id: 'P1.5',
       step_name: 'Gate review preparation',
-      step_goal: 'Self-evaluate all P1→P2 hard gate criteria. Produce gate readiness summary. Label which criteria are self-approved vs. human-confirmed.',
+      step_goal:
+        'Self-evaluate all P1→P2 hard gate criteria. Produce gate readiness summary. Label which criteria are self-approved vs. human-confirmed.',
       required_user_inputs: [
         'Completed P1.1–P1.4',
-        'Confirmation from sponsor',
+        'Authorized workspace-user review',
       ],
       accepted_uploads: [
         'application/pdf',
@@ -208,11 +212,14 @@ export const P1_CHARTER_PACK: PhasePack = {
       ],
       patterns_to_load: ['PAT-PRG-001'],
       questions_to_ask: [
-        'Has the sponsor reviewed the charter — have they formally signed off?',
+        'Has an authorized workspace user reviewed and approved the charter?',
         'Are the key stakeholders briefed — not just mapped?',
         'Is there a confirmed path to baseline data access for P2?',
       ],
-      artifact_sections_to_update: ['gate_readiness_P1', 'charter.sponsor_sign_off'],
+      artifact_sections_to_update: [
+        'gate_readiness_P1',
+        'charter.approval_record',
+      ],
       evidence_to_capture: [
         'gate_readiness_assessment_date',
         'per_criterion_status_evidence_and_approval_label',
@@ -220,22 +227,22 @@ export const P1_CHARTER_PACK: PhasePack = {
       quality_checks: [
         'gate_verdict_is_unambiguous: pass | partial | fail',
         'self_approved_criteria_explicitly_labeled',
-        'sponsor_confirmed_charter_is_hard_requirement',
+        'authorized_workspace_user_approval_is_recorded',
       ],
       completion_criteria: [
         'gate_readiness_summary_produced = true',
         'all_hard_gate_criteria_evaluated = true',
-        'sponsor_confirmed_charter = true (hard requirement)',
+        'sponsor_contact_and_progress_email_preference_recorded = true',
       ],
     },
   ],
 
   phase_outcome:
-    'A sponsor-engaged charter: named functional sponsor confirmed (engaged and participating), primary success metric defined (measurable), preliminary value range (low–high with stated assumptions, labeled PRELIMINARY_ESTIMATE), scope boundary confirmed, stakeholder map with decision rights, governance model, gate readiness summary. NOTE: formal investment approval (cost + solution + timeline) is a P4 gate outcome, not P1.',
+    'An evidence-grounded charter: sponsor contact and progress-email preference recorded, primary success metric defined (measurable), preliminary value range (low–high with stated assumptions, labeled PRELIMINARY_ESTIMATE), scope boundary confirmed, stakeholder map with decision rights, governance model, gate readiness summary. The authorized workspace user records the product approval. Formal investment approval (cost + solution + timeline) is a P4 decision, not P1.',
 
   phase_scope_boundary: {
     in: [
-      'Sponsor commitment confirmation',
+      'Sponsor contact and progress-email preference',
       'Stakeholder mapping with decision rights',
       'Success metric definition and baseline path',
       'Value range (preliminary, PRELIMINARY_ESTIMATE)',
@@ -251,25 +258,25 @@ export const P1_CHARTER_PACK: PhasePack = {
   },
 
   agent_posture_coaching_arc: {
-    entry: 'Confirm sponsor engagement first — not financial commitment. Ask: has the sponsor been briefed and agreed to be the named functional owner? If they have not been engaged at all, surface it as a blocker. If they are engaged but have not yet approved cost/timeline, that is fine — that comes at P4. Do not ask about budget approval in P1.',
+    entry:
+      'Confirm the listed sponsor contact and progress-email preference. Do not require the sponsor to attend, review, commit, or approve. The authorized workspace user makes product decisions after reviewing the evidence.',
     mid: 'Drive stakeholder mapping and success metric. Ask one question at a time. For the value range, push for low–high with stated assumptions — never accept a point estimate without reframing. The value range is preliminary context for P2–P4, not a financial commitment.',
-    exit: 'Before producing the gate readiness summary, run AH-P1-1 through AH-P1-4 checks. Confirm sponsor is engaged (not just named). Label every criterion as self-approved or human-confirmed. The gate verdict must be unambiguous. NEVER ask whether the sponsor has approved cost or budget — that question belongs at P4.',
+    exit: 'Before producing the gate readiness summary, run AH-P1-1 through AH-P1-4 checks. Confirm the sponsor contact and progress-email preference are recorded; sponsor participation is not a gate condition. Label every criterion as self-approved or human-confirmed. The authorized workspace user records the gate decision.',
   },
 
   question_sequencing: {
     open: [
-      'Has [sponsor candidate name] committed to this Move?',
-      'Does the sponsor have authority to approve scope changes and commit resources?',
-      'What triggered the sponsor commitment?',
+      'Who should receive phase-progress emails as the listed sponsor contact?',
+      'Which workspace user is authorized to approve this Move?',
     ],
     converge: [
-      'Who else must approve decisions about scope, investment, or direction?',
+      'Which stakeholders should provide input on scope, investment, or direction?',
       'Is there one person who owns the outcome — or is it shared across a committee?',
-      'What is the one metric that, if it moves, the sponsor would consider this a success?',
+      'What is the one metric that, if it moves, would demonstrate success to the business?',
       'What is the order of magnitude of the opportunity — low end to high end?',
     ],
     close: [
-      'Has the sponsor reviewed the charter and formally signed off?',
+      'Has an authorized workspace user reviewed and approved the charter?',
       'Are the key stakeholders briefed — not just mapped?',
       'Is there a confirmed path to the baseline data needed in P2?',
     ],
@@ -278,10 +285,11 @@ export const P1_CHARTER_PACK: PhasePack = {
   evidence_requirements: [
     {
       id: 'ER-P1-1',
-      label: 'Sponsor commitment evidence',
+      label: 'Sponsor contact and progress-email preference',
       type: 'hard',
-      source: 'Uploaded document or explicit user confirmation in current session',
-      evaluation_hint: "'They will commit when we have a charter' does NOT satisfy this. Needs: signed charter, email confirmation, or recorded session capture.",
+      source: 'Explicit user-provided contact and notification preference',
+      evaluation_hint:
+        'A named contact and explicit progress-email preference are recorded. Do not request or require sponsor participation, commitment, review, or approval.',
       prevents_failure_modes: ['sponsorship_gap'],
     },
     {
@@ -289,56 +297,91 @@ export const P1_CHARTER_PACK: PhasePack = {
       label: 'Value range with PRELIMINARY_ESTIMATE label',
       type: 'hard',
       source: 'Session capture of value discussion',
-      evaluation_hint: 'Range (low–high) + stated assumptions + PRELIMINARY_ESTIMATE label. A point estimate alone does not pass.',
+      evaluation_hint:
+        'Range (low–high) + stated assumptions + PRELIMINARY_ESTIMATE label. A point estimate alone does not pass.',
     },
     {
       id: 'ER-P1-3',
       label: 'Stakeholder map with decision rights assigned',
       type: 'hard',
       source: 'Session capture or uploaded RACI',
-      evaluation_hint: 'A stakeholder list without decision rights is not a complete stakeholder map (AH-P1-4).',
+      evaluation_hint:
+        'A stakeholder list without decision rights is not a complete stakeholder map (AH-P1-4).',
     },
   ],
 
   exit_criteria: [
-    { id: 'EX-P1-1', description: 'Sponsor engaged — named functional owner, briefed, participating in or aligned on charter (investment approval is NOT required at P1 — that is P4)', type: 'hard' },
-    { id: 'EX-P1-2', description: 'Primary success metric defined and measurable', type: 'hard' },
-    { id: 'EX-P1-3', description: 'Value range locked (range + assumptions, PRELIMINARY_ESTIMATE)', type: 'hard' },
-    { id: 'EX-P1-4', description: 'Scope boundary confirmed (in/out documented)', type: 'hard' },
-    { id: 'EX-P1-5', description: 'Stakeholder map complete (decision rights assigned)', type: 'hard' },
-    { id: 'EX-P1-6', description: 'Initial data access confirmed for P2', type: 'soft' },
+    {
+      id: 'EX-P1-1',
+      description:
+        'Sponsor contact and progress-email preference recorded; sponsor participation or approval is not required',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P1-2',
+      description: 'Primary success metric defined and measurable',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P1-3',
+      description:
+        'Value range locked (range + assumptions, PRELIMINARY_ESTIMATE)',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P1-4',
+      description: 'Scope boundary confirmed (in/out documented)',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P1-5',
+      description: 'Stakeholder map complete (decision rights assigned)',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P1-6',
+      description: 'Initial data access confirmed for P2',
+      type: 'soft',
+    },
   ],
 
   gate_criteria: [
     {
       id: 'GC-P1-1',
-      label: 'Sponsor engaged — named functional owner, briefed and participating in charter',
+      label: 'Sponsor contact listed for progress communication',
       type: 'hard',
-      evaluation: 'User has confirmed sponsor is aware of the initiative and is the named functional owner. Charter reflects their input or review. NOTE: financial commitment (cost + timeline approval) is NOT required at P1 — that is GC-P4-3 (Investment Approval). Do not conflate.',
+      evaluation:
+        'A sponsor contact and progress-email preference are recorded. Sponsor participation, review, or approval is not required and does not grant product approval authority.',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'User must confirm sponsor has been engaged and is the named functional owner.',
+      pilot_approval_note:
+        'The authorized workspace user confirms the listed contact and email preference.',
     },
     {
       id: 'GC-P1-2',
       label: 'Primary success metric defined and measurable',
       type: 'hard',
-      evaluation: 'A named, measurable metric with a unit and measurement direction exists.',
+      evaluation:
+        'A named, measurable metric with a unit and measurement direction exists.',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'Nexus self-approves if metric is named and measurable.',
+      pilot_approval_note:
+        'Nexus self-approves if metric is named and measurable.',
     },
     {
       id: 'GC-P1-3',
       label: 'Value range locked (rough range with stated assumptions)',
       type: 'hard',
-      evaluation: 'A range (not point estimate) with stated assumptions and PRELIMINARY_ESTIMATE label exists.',
+      evaluation:
+        'A range (not point estimate) with stated assumptions and PRELIMINARY_ESTIMATE label exists.',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'Requires human deliberation — program lead confirms.',
+      pilot_approval_note:
+        'Requires human deliberation — program lead confirms.',
     },
     {
       id: 'GC-P1-4',
       label: 'Scope boundary confirmed (in/out documented)',
       type: 'hard',
-      evaluation: 'scope_in and scope_out both non-empty (from P0.4 or confirmed in P1).',
+      evaluation:
+        'scope_in and scope_out both non-empty (from P0.4 or confirmed in P1).',
       gating_rule: 'blocks_promotion',
       pilot_approval_note: 'Nexus self-approves if both lists non-empty.',
     },
@@ -346,9 +389,11 @@ export const P1_CHARTER_PACK: PhasePack = {
       id: 'GC-P1-5',
       label: 'Stakeholder map complete (decision rights assigned)',
       type: 'hard',
-      evaluation: 'Stakeholder table has named stakeholders AND decision rights assigned per row (AH-P1-4).',
+      evaluation:
+        'Stakeholder table has named stakeholders AND decision rights assigned per row (AH-P1-4).',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'Requires human review — program lead or admin confirms.',
+      pilot_approval_note:
+        'Requires human review — program lead or admin confirms.',
     },
     {
       id: 'GC-P1-6',
@@ -362,7 +407,8 @@ export const P1_CHARTER_PACK: PhasePack = {
       id: 'GC-P1-7',
       label: 'Key stakeholders briefed (not just mapped)',
       type: 'soft',
-      evaluation: 'User confirms stakeholders have been informed of their roles.',
+      evaluation:
+        'User confirms stakeholders have been informed of their roles.',
       gating_rule: 'warns_only',
       pilot_approval_note: 'Requires human confirmation.',
     },
@@ -371,30 +417,41 @@ export const P1_CHARTER_PACK: PhasePack = {
   anti_patterns: [
     {
       id: 'AP-P1-1',
-      label: 'Sponsor not yet engaged at all',
-      detection_hint: "User says they haven't spoken to the sponsor yet or sponsor doesn't know the initiative exists",
-      what_to_flag: "P1 needs the sponsor engaged — they should know this initiative is happening and have agreed to be the named functional owner. 'Will commit when we have a charter' is fine. 'Haven't talked to them yet' is not — charter development should happen with the sponsor, not before.",
-      mitigation: 'Ask user to brief the sponsor before proceeding with charter work. Note: financial approval is NOT needed — just awareness and engagement.',
+      label: 'Sponsor progress contact missing',
+      detection_hint:
+        'No named sponsor contact or progress-email preference is recorded',
+      what_to_flag:
+        'The Move has no listed sponsor contact for progress communication. This is a contact-data gap only, not an approval or engagement blocker.',
+      mitigation:
+        'Ask the authorized workspace user to list the contact and choose whether phase-progress emails should be sent. Continue charter work without sponsor participation.',
     },
     {
       id: 'AP-P1-2',
       label: 'Point estimate as value range',
-      detection_hint: 'User provides a single dollar figure as the value (e.g., "$3.7M")',
-      what_to_flag: 'I will record that as a preliminary estimate. We need a range with stated assumptions — point estimates become anchors.',
-      mitigation: 'Reframe to low–high range with assumptions. Apply PRELIMINARY_ESTIMATE label.',
+      detection_hint:
+        'User provides a single dollar figure as the value (e.g., "$3.7M")',
+      what_to_flag:
+        'I will record that as a preliminary estimate. We need a range with stated assumptions — point estimates become anchors.',
+      mitigation:
+        'Reframe to low–high range with assumptions. Apply PRELIMINARY_ESTIMATE label.',
     },
     {
       id: 'AP-P1-3',
       label: 'Committee without individual outcome owner',
-      detection_hint: 'Stakeholder map has a committee with no named individual owner',
-      what_to_flag: 'This looks like a committee without an individual owner. Who is accountable if this Move fails to deliver?',
-      mitigation: 'Push for a named individual who owns the outcome. Committees do not own outcomes.',
+      detection_hint:
+        'Stakeholder map has a committee with no named individual owner',
+      what_to_flag:
+        'This looks like a committee without an individual owner. Who is accountable if this Move fails to deliver?',
+      mitigation:
+        'Push for a named individual who owns the outcome. Committees do not own outcomes.',
     },
     {
       id: 'AP-P1-4',
       label: 'Tool-framed problem statement',
-      detection_hint: 'Charter problem statement names a vendor or tool before naming the problem',
-      what_to_flag: 'The problem statement names a tool, not a problem. Let us reframe: what outcome should this Move achieve, independent of the tool?',
+      detection_hint:
+        'Charter problem statement names a vendor or tool before naming the problem',
+      what_to_flag:
+        'The problem statement names a tool, not a problem. Let us reframe: what outcome should this Move achieve, independent of the tool?',
       mitigation: 'Require outcome-first problem statement. Flag FM-7.',
     },
   ],
@@ -402,31 +459,37 @@ export const P1_CHARTER_PACK: PhasePack = {
   self_approval_rules: [
     {
       criterion_id: 'GC-P1-1',
-      condition: 'Requires explicit confirmation from a human — P0 sponsor candidate does not count',
+      condition:
+        'The authorized workspace user confirms the listed sponsor contact and progress-email preference',
       nexus_may_self_approve: false,
-      approval_label: 'Sponsor committed — requires human confirmation',
+      approval_label: 'Sponsor contact and progress-email preference recorded',
     },
     {
       criterion_id: 'GC-P1-2',
-      condition: 'User provides a named, measurable metric with a unit and measurement direction',
+      condition:
+        'User provides a named, measurable metric with a unit and measurement direction',
       nexus_may_self_approve: true,
-      approval_label: 'Nexus self-approved: primary metric defined and measurable',
+      approval_label:
+        'Nexus self-approved: primary metric defined and measurable',
     },
     {
       criterion_id: 'GC-P1-3',
-      condition: 'Requires human deliberation — Nexus formats but cannot mark met without explicit human confirmation of range and assumptions',
+      condition:
+        'Requires human deliberation — Nexus formats but cannot mark met without explicit human confirmation of range and assumptions',
       nexus_may_self_approve: false,
       approval_label: 'Value range locked — requires human deliberation',
     },
     {
       criterion_id: 'GC-P1-4',
-      condition: 'scope_in and scope_out both non-empty (from P0.4 or confirmed in P1)',
+      condition:
+        'scope_in and scope_out both non-empty (from P0.4 or confirmed in P1)',
       nexus_may_self_approve: true,
       approval_label: 'Nexus self-approved: scope boundary confirmed',
     },
     {
       criterion_id: 'GC-P1-5',
-      condition: 'Requires human review — Nexus may draft map but cannot mark complete without human confirming decision rights (AH-P1-4)',
+      condition:
+        'Requires human review — Nexus may draft map but cannot mark complete without human confirming decision rights (AH-P1-4)',
       nexus_may_self_approve: false,
       approval_label: 'Stakeholder map — requires human review',
     },
@@ -438,7 +501,8 @@ export const P1_CHARTER_PACK: PhasePack = {
     },
     {
       criterion_id: 'GC-P1-7',
-      condition: 'Requires human confirmation — Nexus cannot assert briefing from absence of objection',
+      condition:
+        'Requires human confirmation — Nexus cannot assert briefing from absence of objection',
       nexus_may_self_approve: false,
       approval_label: 'Stakeholders briefed — requires human confirmation',
     },
@@ -447,24 +511,29 @@ export const P1_CHARTER_PACK: PhasePack = {
   first_message: [
     {
       variant: 'default',
-      template: "I am scoped to [Move name], currently in P1 Charter. The P0 gate passed — we have a hypothesis and a sponsor candidate: [sponsor name]. P1 goal: engage the sponsor on scope and governance, then produce a charter that reflects their input. Has [sponsor name] been briefed on the initiative and agreed to be the named functional owner? Note: formal investment approval (cost, solution, and timeline) is a P4 gate milestone — we're not asking for that yet.",
+      template:
+        'I am scoped to [Move name], currently in P1 Charter. P1 turns the approved hypothesis and evidence into a charter. We will record [sponsor name] as a progress contact only; the authorized workspace user reviews and approves the charter. Should this contact receive phase-progress emails?',
     },
   ],
 
   fixtures: [
     {
       id: 'FX-P1-1',
-      name: 'Sponsor will review charter — not yet financially committed',
-      description: 'User says sponsor will commit when she sees the charter and the business case',
-      input: { sponsorStatement: 'She will make her final decision once we have the business case' },
+      name: 'Charter proceeds without sponsor review',
+      description:
+        'The sponsor is listed as a progress contact but is not asked to approve the charter',
+      input: {
+        sponsorStatement:
+          'Please send progress updates; the workspace approver will review the charter',
+      },
       expected_behaviors: [
-        'Nexus acknowledges this is the correct sequence — P4 Investment Approval is where financial commitment is captured',
-        'Nexus clarifies: "That is exactly right — the investment decision happens at the P4 gate. For P1, has she been briefed and agreed to be the named functional owner?"',
-        'Does NOT block advancement because of absence of financial commitment',
+        'Nexus records the sponsor as a progress contact and uses the explicit email preference',
+        'Nexus identifies the authorized workspace user as the product approver',
+        'Does NOT ask for sponsor review, commitment, or approval',
       ],
       prohibited_behaviors: [
-        'Treating absence of financial commitment as a P1 blocker',
-        'Marking sponsor_engaged = false because investment has not been approved',
+        'Treating sponsor non-participation as a P1 blocker',
+        'Treating the sponsor as the charter approver',
       ],
     },
     {
@@ -477,24 +546,31 @@ export const P1_CHARTER_PACK: PhasePack = {
         'Nexus records $3.7M as preliminary estimate',
         'Nexus asks for low and high ends with assumptions',
       ],
-      prohibited_behaviors: ['Writing $3.7M in the charter without range conversion'],
+      prohibited_behaviors: [
+        'Writing $3.7M in the charter without range conversion',
+      ],
     },
   ],
 
   coaching_rules: [
     {
       id: 'CR-P1-1',
-      rule: 'Distinguish sponsor engagement (P1 requirement) from investment approval (P4 requirement)',
-      trigger: 'Any reference to whether sponsor has approved cost, budget, or investment',
-      required_behavior: 'Clarify: "Budget and timeline approval happens at the P4 Investment Approval gate — after the business case is built. For P1, we need the sponsor engaged and aligned on scope. Have they been briefed and agreed to be the named functional owner?"',
-      prohibited_behavior: 'Treating absence of financial approval as a P1 blocker. Treating "will approve when they see the business case" as a problem — that is the correct P4 sequence.',
+      rule: 'Keep sponsor contacts separate from product approval authority',
+      trigger:
+        'Any reference to sponsor approval, charter review, or sponsor participation',
+      required_behavior:
+        'Record the sponsor only as a progress contact with an explicit email preference. The authenticated, authorized workspace user reviews and records all product approvals.',
+      prohibited_behavior:
+        'Requesting sponsor approval, treating sponsor participation as a gate, or sending approval requests to the sponsor.',
     },
     {
       id: 'CR-P1-2',
       rule: 'Reframe point estimates as ranges with stated assumptions',
       trigger: 'Value range is stated as a point estimate',
-      required_behavior: "I'll record that as a preliminary estimate. We need a range with assumptions — what would make it higher, what would make it lower?",
-      prohibited_behavior: "Writing a point estimate in the charter without range conversion and PRELIMINARY_ESTIMATE label",
+      required_behavior:
+        "I'll record that as a preliminary estimate. We need a range with assumptions — what would make it higher, what would make it lower?",
+      prohibited_behavior:
+        'Writing a point estimate in the charter without range conversion and PRELIMINARY_ESTIMATE label',
     },
   ],
 
@@ -503,60 +579,77 @@ export const P1_CHARTER_PACK: PhasePack = {
       artifact: 'CHARTER-P1',
       nexus_may_auto_draft: true,
       conditions: ['P1.1–P1.3 complete'],
-      human_direction_required: 'Sponsor commitment and value range require human deliberation before Nexus marks gate criteria met.',
+      human_direction_required:
+        'The authorized workspace user reviews the value range and records the product gate decision. Sponsor commitment is not requested or required.',
     },
     {
       artifact: 'GATE-P1',
       nexus_may_auto_draft: true,
       conditions: ['P1.4 complete'],
-      human_direction_required: 'Human-gated criteria require explicit human confirmation.',
+      human_direction_required:
+        'Human-gated criteria require explicit human confirmation.',
     },
   ],
 
   anti_hallucination_rules: [
     {
       id: 'AH-P1-1',
-      rule: 'Must not conflate sponsor engagement (P1) with investment approval (P4)',
-      trigger: 'Every reference to sponsor status or any question about cost, budget, or timeline approval',
-      required_behavior: 'P1 requires sponsor ENGAGEMENT — they are briefed, named as functional owner, and participating in charter. NEVER ask whether the sponsor has approved the cost or budget in P1 — that is the P4 Investment Approval gate question. If user volunteers financial approval language, acknowledge it but clarify: "That formal approval will be captured at the P4 gate after the business case is complete."',
-      prohibited_behavior: "Asking 'Has the sponsor approved the budget/cost?' or treating absence of financial approval as a P1 blocker. Also: 'They will commit when we have a charter' is OK for P1 — what matters is that they are engaged and will review the charter.",
+      rule: 'Sponsor is a progress contact, never a product approver',
+      trigger:
+        'Any reference to sponsor approval, review, signature, commitment, or gate status',
+      required_behavior:
+        'Sponsors may be listed as contacts and receive informational progress emails when explicitly selected. All product approvals are recorded by the authenticated, authorized workspace user.',
+      prohibited_behavior:
+        'Asking a sponsor to approve, sign, review, or confirm a product gate or deliverable; treating sponsor participation as a prerequisite.',
     },
     {
       id: 'AH-P1-2',
       rule: 'Must not state a value range that implies precision — P1 ranges must be stated as ranges with assumptions, never point estimates',
-      trigger: 'Any value magnitude claim in charter, responses, or artifact drafts',
-      required_behavior: 'Value range must be: (a) a range (low–high), not a point estimate; (b) accompanied by stated assumptions; (c) labeled PRELIMINARY_ESTIMATE.',
-      prohibited_behavior: 'Writing a single dollar figure in the charter without conversion to range with assumptions and PRELIMINARY_ESTIMATE label.',
+      trigger:
+        'Any value magnitude claim in charter, responses, or artifact drafts',
+      required_behavior:
+        'Value range must be: (a) a range (low–high), not a point estimate; (b) accompanied by stated assumptions; (c) labeled PRELIMINARY_ESTIMATE.',
+      prohibited_behavior:
+        'Writing a single dollar figure in the charter without conversion to range with assumptions and PRELIMINARY_ESTIMATE label.',
     },
     {
       id: 'AH-P1-3',
       rule: 'Must not list a stakeholder by name unless from ACL/people data or explicit user input',
-      trigger: 'Every stakeholder name mentioned in charter, stakeholder map, or responses',
-      required_behavior: 'Each named stakeholder must have: (a) an ACL/people data citation, OR (b) an explicit user statement. If neither: "I do not have people data for this scope. Please name the stakeholders directly."',
-      prohibited_behavior: 'Generating plausible stakeholder names based on title inference.',
+      trigger:
+        'Every stakeholder name mentioned in charter, stakeholder map, or responses',
+      required_behavior:
+        'Each named stakeholder must have: (a) an ACL/people data citation, OR (b) an explicit user statement. If neither: "I do not have people data for this scope. Please name the stakeholders directly."',
+      prohibited_behavior:
+        'Generating plausible stakeholder names based on title inference.',
     },
     {
       id: 'AH-P1-4',
       rule: "Must not mark 'stakeholder map complete' if decision rights are not assigned",
       trigger: 'Every gate evaluation involving the stakeholder map criterion',
-      required_behavior: 'The stakeholder_map_complete criterion requires: (a) named stakeholders AND (b) decision rights assigned per row.',
-      prohibited_behavior: 'Marking stakeholder_map_complete on a list that lacks decision rights assignment.',
+      required_behavior:
+        'The stakeholder_map_complete criterion requires: (a) named stakeholders AND (b) decision rights assigned per row.',
+      prohibited_behavior:
+        'Marking stakeholder_map_complete on a list that lacks decision rights assignment.',
     },
   ],
 
-  patterns_to_load: ['PAT-PRG-001', 'seed-patterns-meta', 'seed-patterns-industry'],
+  patterns_to_load: [
+    'PAT-PRG-001',
+    'seed-patterns-meta',
+    'seed-patterns-industry',
+  ],
 
   phase_dependencies: {
     requires_from_prior: [
       'P0 gate passed (all 5 hard criteria)',
       'Falsifiable hypothesis with mechanism',
-      'Sponsor candidate — named, human-confirmed',
+      'Sponsor contact — named and progress-email preference recorded',
       'Archetype classification',
       'Scope boundary (in/out)',
       'Value hypothesis seed (UNVALIDATED_HYPOTHESIS)',
     ],
     produces_for_next: [
-      'Sponsor-committed charter (signed artifact)',
+      'Authorized-user-approved charter with sponsor listed as a progress contact',
       'Primary success metric with baseline path',
       'Preliminary value range (PRELIMINARY_ESTIMATE, with assumptions)',
       'Stakeholder map with decision rights',

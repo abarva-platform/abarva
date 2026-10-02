@@ -19,6 +19,7 @@ import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliver
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   DELIVERABLE_REGISTRY,
   PHASE_CANONICAL_KEYS,
@@ -34,7 +35,6 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
-import { RoleApprovalsPanel } from "./RoleApprovalsPanel";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 interface Props {
@@ -319,6 +319,7 @@ function DocumentRow({
   runState,
   previousRunArtifact,
   presentationMode = false,
+  canApproveGates = false,
 }: {
   spec: DeliverableSpec;
   dbRow: DbDeliverable | undefined;
@@ -332,6 +333,7 @@ function DocumentRow({
   /** Last successful artifact, shown only as history when a newer run did not succeed. */
   previousRunArtifact?: { artifactId: string; updatedAt: string };
   presentationMode?: boolean;
+  canApproveGates?: boolean;
 }) {
   const calmBrowse = presentationMode;
   const hasContent = Boolean(dbRow?.latest_content?.trim());
@@ -549,11 +551,13 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(dbRow.updated_at)}
             </span>
-            {!calmBrowse && (
+            {!calmBrowse && canApproveGates && (
               <DeliverableApprovalAction
                 moveId={moveId}
                 deliverableId={dbRow.id}
-                alreadyApproved={dbRow.signed_off_version === dbRow.current_version}
+                alreadyApproved={
+                  dbRow.signed_off_version === dbRow.current_version
+                }
               />
             )}
           </>
@@ -571,11 +575,13 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(runArtifact.updatedAt)}
             </span>
-            {dbRow && !calmBrowse && (
+            {dbRow && !calmBrowse && canApproveGates && (
               <DeliverableApprovalAction
                 moveId={moveId}
                 deliverableId={dbRow.id}
-                alreadyApproved={dbRow.signed_off_version === dbRow.current_version}
+                alreadyApproved={
+                  dbRow.signed_off_version === dbRow.current_version
+                }
               />
             )}
           </>
@@ -617,16 +623,6 @@ function DocumentRow({
           </span>
         )}
       </div>
-
-      {/* Multi-role approval status — renders nothing for the deliverable
-          types that don't require any (the default; see REQUIRED_APPROVAL_ROLES
-          in deliverable-role-approvals.ts). flexBasis 100% pushes it onto its
-          own line under the title/actions row above. */}
-      {dbRow && (hasContent || builtViaRun) ? (
-        <div style={{ flexBasis: "100%" }}>
-          <RoleApprovalsPanel moveId={moveId} deliverableId={dbRow.id} />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -700,6 +696,12 @@ export async function PhaseDocumentsPanel({
   boardArtifactCount = 0,
 }: Props) {
   const calmBrowse = Boolean(compact) || presentationMode;
+  const tenancy = await getStrategicMovesTenancy().catch(() => null);
+  const canApproveGates = tenancy
+    ? await loadUserProgramAccessPolicy(tenancy, { programId: moveId })
+        .then((policy) => policy.canApproveGates)
+        .catch(() => false)
+    : false;
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
@@ -707,20 +709,26 @@ export async function PhaseDocumentsPanel({
     fetchDeliverablesByKey(moveId),
     listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
   ]);
-  const evidenceNeedPackets = await getStrategicMovesTenancy()
-    .then(async (ctx) => {
-      if (!ctx) return [];
-      const { loadDiscoveryEvidenceReadiness } =
-        await import("@/lib/programs/discovery/evidence-readiness");
-      const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
-      return buildMoveEvidenceNeedPackets({
-        moveId,
-        moveName: moveName ?? "Strategic Move",
-        currentPhase,
-        readiness,
-      });
-    })
-    .catch(() => []);
+  const evidenceNeedPackets = tenancy
+    ? await (async () => {
+        try {
+          const { loadDiscoveryEvidenceReadiness } =
+            await import("@/lib/programs/discovery/evidence-readiness");
+          const readiness = await loadDiscoveryEvidenceReadiness(
+            tenancy,
+            moveId,
+          );
+          return buildMoveEvidenceNeedPackets({
+            moveId,
+            moveName: moveName ?? "Strategic Move",
+            currentPhase,
+            readiness,
+          });
+        } catch {
+          return [];
+        }
+      })()
+    : [];
 
   // Keep latest attempts separate from the latest successful file. A failed
   // rebuild must not make an earlier run look like the current output.
@@ -736,7 +744,14 @@ export async function PhaseDocumentsPanel({
       activeClient.id,
       moveId,
     ).catch(
-      () => new Map<string, { latest: DeliverableRunRecord; latestSucceeded: DeliverableRunRecord | null }>(),
+      () =>
+        new Map<
+          string,
+          {
+            latest: DeliverableRunRecord;
+            latestSucceeded: DeliverableRunRecord | null;
+          }
+        >(),
     );
     for (const spec of DELIVERABLE_REGISTRY) {
       const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
@@ -1015,6 +1030,7 @@ export async function PhaseDocumentsPanel({
                     spec.deliverableTypeKey,
                   )}
                   presentationMode={calmBrowse}
+                  canApproveGates={canApproveGates}
                 />
               ))}
 

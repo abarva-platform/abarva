@@ -33,7 +33,7 @@ import { MetricDistance } from "./MetricDistance";
 import { RenewalTimeline } from "./RenewalTimeline";
 import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
-import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
+import { MONO, PAGE_X, SANS, SERIF, V4, bandHeading, eyebrow } from "./tokens";
 
 export interface BriefingOpening {
   headline: string;
@@ -125,6 +125,10 @@ export function ChapterPage({
         : `Nothing in the loaded record speaks to this question yet. The chapters either side of it draw on families that are present; this one draws on families that are not, and that absence is reported here rather than filled.`
       : chapter.executive_synthesis;
 
+  // The cockpit reading order. The gate above is unchanged -- this reorganises what a drafted
+  // chapter LOOKS like, not when it is drawn: a compact header, an executive readout, a KPI rail
+  // counted from the rows, the governed exhibits, the deterministic evidence the rows support, and
+  // a tabbed narrative that swaps the authored bands in place instead of stacking them down a scroll.
   return (
     <>
       <style>{`
@@ -138,7 +142,9 @@ export function ChapterPage({
         eyebrowText={`Chapter ${String(chapterNumber).padStart(2, "0")} · ${chapter.title}`}
         guidingQuestion={chapter.guidingQuestion}
         headline={headline}
-        standfirst={standfirst}
+        // On a drafted chapter the synthesis moves into the Insights tab, where it flows across the
+        // full canvas. A briefing chapter has no tab workspace, so its standfirst stays in the head.
+        standfirst={briefingOpening ? standfirst : undefined}
       />
 
       {briefingOpening ? (
@@ -152,6 +158,47 @@ export function ChapterPage({
         />
       )}
 
+      {/* The KPI rail. Every number is counted from the props already on this chapter -- the
+          deterministic depth, the band split, the vendor/metric/queue rows. A tile whose number
+          cannot be derived without inventing one is omitted, never filled with a placeholder. */}
+      <CockpitKpiRail
+        tiles={deriveChapterKpis({
+          bands,
+          depth,
+          contracts,
+          metrics,
+          queue,
+          signalPacket,
+        })}
+      />
+
+      {/* The exhibits, through the governed exhibit path unchanged: every bar is a share the
+          deterministic dataset already carries, and the model supplies no plotted value. */}
+      {lead ? (
+        <ExhibitFor
+          visual={lead}
+          index={1}
+          signalPacket={signalPacket}
+          visualDatasets={visualDatasets}
+          meta={exhibitMeta?.[lead.dataset_ref]}
+          dark
+        />
+      ) : null}
+      {rest.map((visual, i) => (
+        <ExhibitFor
+          key={visual.dataset_ref}
+          visual={visual}
+          index={i + 2}
+          signalPacket={signalPacket}
+          visualDatasets={visualDatasets}
+          meta={exhibitMeta?.[visual.dataset_ref]}
+        />
+      ))}
+
+      {/* The deterministic evidence stays visible rather than hidden behind a tab: the findings a
+          reader must act on, the tables the rows support, and the honesty markers for what the rows
+          cannot say are governance affordances, and a governance affordance a reader has to go
+          looking for is one they will not find. */}
       {depth ? (
         <PageShape
           tables={depth.tables}
@@ -179,41 +226,14 @@ export function ChapterPage({
       ) : null}
       {depth ? <UnsupportedViews views={depth.unsupported} /> : null}
 
-      {lead ? (
-        <ExhibitFor
-          visual={lead}
-          index={1}
-          signalPacket={signalPacket}
-          visualDatasets={visualDatasets}
-          meta={exhibitMeta?.[lead.dataset_ref]}
-          dark
-        />
-      ) : null}
-
+      {/* The authored narrative, tabbed. A briefing chapter answers its question through the
+          readout above and carries no band workspace. */}
       {briefingOpening ? null : (
-        <>
-          <RecordBand claims={bands.record} signalPacket={signalPacket} />
-          <FollowsBand claims={bands.follows} signalPacket={signalPacket} />
-        </>
-      )}
-
-      {rest.map((visual, i) => (
-        <ExhibitFor
-          key={visual.dataset_ref}
-          visual={visual}
-          index={i + 2}
+        <CockpitNarrative
+          synthesis={standfirst}
+          bands={bands}
           signalPacket={signalPacket}
-          visualDatasets={visualDatasets}
-          meta={exhibitMeta?.[visual.dataset_ref]}
         />
-      ))}
-
-      {briefingOpening ? null : (
-        <>
-          <ExposuresBand claims={bands.exposures} signalPacket={signalPacket} />
-          <NotEstablishedBand gaps={bands.gaps} />
-          <QuestionsSection questions={bands.questions} />
-        </>
       )}
 
       {!briefingOpening && bands.filledBandCount === 0 ? (
@@ -234,7 +254,599 @@ export function ChapterPage({
           </p>
         </div>
       ) : null}
+
+      {/* Industry context: the sector lenses the record carries, shown once, on the chapter that
+          orients a new executive. It is kept to this chapter deliberately -- the same orientation
+          repeated down every chapter is clutter, and the content is qualitative, so it sits after
+          the counted evidence and names, in words, that it is not a benchmark. The band renders
+          nothing when the record carries no lens. */}
+      {chapter.chapterId === "executive_brief" ? (
+        <IndustryContextSection signalPacket={signalPacket} />
+      ) : null}
     </>
+  );
+}
+
+/** One KPI tile: a number counted from the chapter's props, and the prose that names it. */
+interface KpiTile {
+  value: string;
+  label: string;
+  /** Reserved tones only: risk is the red the register spends on severity, absence is the amber
+   * for what the record does not carry. A plain count takes neither. */
+  tone?: "risk" | "absence" | "blue";
+}
+
+/**
+ * The KPI rail's numbers, every one counted from props the chapter already holds.
+ *
+ * Nothing here is authored or estimated: counts come from the deterministic depth (the findings and
+ * tables the rows produced), the band split, and the vendor/metric/queue row sets the caller passed.
+ * A tile whose number is not derivable without inventing it is not emitted -- the alternative, a
+ * hardcoded figure, is the one thing a governed surface must never put behind a big numeral. The
+ * rail is capped so it reads as a rail and not a table; the order puts what a reader acts on first.
+ */
+function deriveChapterKpis({
+  bands,
+  depth,
+  contracts,
+  metrics,
+  queue,
+  signalPacket,
+}: {
+  bands: ReturnType<typeof splitChapterIntoBands>;
+  depth?: ChapterDepth;
+  contracts?: Array<Record<string, unknown>>;
+  metrics?: EstateRow[];
+  queue?: {
+    risks?: EstateRow[];
+    programs?: EstateRow[];
+    contracts?: EstateRow[];
+  };
+  signalPacket: EnterpriseSignalPacket;
+}): KpiTile[] {
+  const n = (value: number) => value.toLocaleString();
+  const exposureCount = depth
+    ? depth.findings.filter((finding) => finding.kind === "exposure").length
+    : 0;
+  const candidates: Array<KpiTile | null> = [
+    exposureCount > 0
+      ? {
+          value: n(exposureCount),
+          label:
+            exposureCount === 1
+              ? "exposure the record rates as wrong now"
+              : "exposures the record rates as wrong now",
+          tone: "risk",
+        }
+      : null,
+    queue?.risks
+      ? { value: n(queue.risks.length), label: "risk entries in the register" }
+      : null,
+    queue?.programs
+      ? { value: n(queue.programs.length), label: "programs in view" }
+      : null,
+    contracts && contracts.length > 0
+      ? { value: n(contracts.length), label: "vendor contracts in view" }
+      : null,
+    metrics && metrics.length > 0
+      ? { value: n(metrics.length), label: "measures tracked" }
+      : null,
+    bands.record.length > 0
+      ? { value: n(bands.record.length), label: "counted from the record" }
+      : null,
+    depth && depth.tables.length > 0
+      ? {
+          value: n(depth.tables.length),
+          label:
+            depth.tables.length === 1 ? "evidence table" : "evidence tables",
+        }
+      : null,
+    depth && depth.findings.length > 0
+      ? {
+          value: n(depth.findings.length),
+          label:
+            depth.findings.length === 1
+              ? "finding in the evidence"
+              : "findings in the evidence",
+        }
+      : null,
+    depth && depth.unsupported.length > 0
+      ? {
+          value: n(depth.unsupported.length),
+          label: "evidence views pending",
+          tone: "absence",
+        }
+      : null,
+    bands.questions.length > 0
+      ? {
+          value: n(bands.questions.length),
+          label: "questions for the room",
+          tone: "blue",
+        }
+      : null,
+    // Prose and briefing chapters carry no depth; the record's own scale is still a counted fact.
+    {
+      value: n(signalPacket.signals?.length ?? 0),
+      label: "signals on the record",
+    },
+    {
+      value: n(signalPacket.contextItems?.length ?? 0),
+      label: "governed facts",
+    },
+  ];
+  return candidates
+    .filter((tile): tile is KpiTile => tile !== null)
+    .slice(0, 5);
+}
+
+function kpiNumberColor(tone: KpiTile["tone"]): string {
+  if (tone === "risk") return V4.red;
+  if (tone === "absence") return V4.amber;
+  if (tone === "blue") return V4.blue;
+  return V4.navy;
+}
+
+/**
+ * The rail: a row of big-number tiles, serif numerals over mono labels, on the connected-strip
+ * treatment the design uses for a counts band. Renders nothing when no tile is derivable, because
+ * an empty rail reads as a load that failed rather than as a chapter with nothing to count.
+ */
+function CockpitKpiRail({ tiles }: { tiles: KpiTile[] }) {
+  if (tiles.length === 0) return null;
+  return (
+    <section
+      data-home-kpi-rail={tiles.length}
+      style={{ padding: `22px ${PAGE_X}px 0` }}
+    >
+      <div style={kpiRailGridStyle}>
+        {tiles.map((tile) => (
+          <div key={tile.label} style={kpiTileStyle}>
+            <div
+              style={{ ...kpiNumberStyle, color: kpiNumberColor(tile.tone) }}
+            >
+              {tile.value}
+            </div>
+            <div style={kpiLabelStyle}>{tile.label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const kpiRailGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))",
+  gap: 1,
+  background: V4.ruleSoft,
+  border: `1px solid ${V4.ruleSoft}`,
+} as const;
+
+const kpiTileStyle = {
+  background: V4.paper,
+  padding: "14px clamp(12px,1.3vw,18px) 13px",
+  minWidth: 0,
+} as const;
+
+const kpiNumberStyle = {
+  fontFamily: SERIF,
+  fontWeight: 500,
+  fontSize: "clamp(20px,2.1vw,27px)",
+  lineHeight: 1,
+  letterSpacing: "-0.025em",
+  fontVariantNumeric: "tabular-nums",
+  whiteSpace: "nowrap" as const,
+} as const;
+
+const kpiLabelStyle = {
+  marginTop: 8,
+  fontFamily: MONO,
+  fontSize: 10.5,
+  lineHeight: 1.35,
+  letterSpacing: "0.02em",
+  color: V4.slate,
+} as const;
+
+type NarrativeTabKey = "insights" | "open-items" | "watch" | "questions";
+
+/**
+ * The authored bands, organised into a tabbed workspace that swaps one view in for another in
+ * place of the long vertical stack they used to form.
+ *
+ * The bands themselves are reused unchanged -- each still states its own epistemic status by which
+ * band it is, names its sources, and treats absence as a finding. A tab appears only when its band
+ * carries something, so an empty tab never offers a reader a view with nothing behind it. Insights
+ * leads with the synthesis, flowed across the full canvas in reading-width columns rather than
+ * stacked in one tall measure.
+ *
+ * Every panel is in the DOM; the inactive ones are hidden. Nothing a reader relies on -- a source
+ * line, a not-established note, a question's rubric -- is removed by switching tabs, only the view.
+ */
+function CockpitNarrative({
+  synthesis,
+  bands,
+  signalPacket,
+}: {
+  synthesis?: string;
+  bands: ReturnType<typeof splitChapterIntoBands>;
+  signalPacket: EnterpriseSignalPacket;
+}) {
+  const insightsCount = bands.record.length + bands.follows.length;
+  const hasSynthesis = Boolean(synthesis && synthesis.trim().length > 0);
+  const tabs: Array<{ key: NarrativeTabKey; label: string; count: number }> = [
+    insightsCount > 0 || hasSynthesis
+      ? { key: "insights", label: "Insights", count: insightsCount }
+      : null,
+    bands.exposures.length > 0
+      ? {
+          key: "open-items",
+          label: "Open items",
+          count: bands.exposures.length,
+        }
+      : null,
+    bands.gaps.length > 0
+      ? { key: "watch", label: "Watch", count: bands.gaps.length }
+      : null,
+    bands.questions.length > 0
+      ? { key: "questions", label: "Questions", count: bands.questions.length }
+      : null,
+  ].filter(
+    (tab): tab is { key: NarrativeTabKey; label: string; count: number } =>
+      tab !== null,
+  );
+
+  const [active, setActive] = useState<NarrativeTabKey>(
+    tabs[0]?.key ?? "insights",
+  );
+  if (tabs.length === 0) return null;
+  // A band can empty out between renders; fall back to the first available tab rather than show a
+  // panel for a tab that no longer exists.
+  const current = tabs.some((tab) => tab.key === active) ? active : tabs[0].key;
+
+  return (
+    <section data-home-cockpit-workspace style={{ margin: "32px 0 0" }}>
+      <div role="tablist" aria-label="Chapter narrative" style={tabListStyle}>
+        {tabs.map((tab) => {
+          const isActive = tab.key === current;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              data-home-cockpit-tab={tab.key}
+              onClick={() => setActive(tab.key)}
+              style={tabButtonStyle(isActive)}
+            >
+              {tab.label}
+              <span style={tabCountStyle}>{tab.count}</span>
+            </button>
+          );
+        })}
+      </div>
+      {tabs.map((tab) => {
+        const isActive = tab.key === current;
+        return (
+          <div
+            key={tab.key}
+            role="tabpanel"
+            data-home-cockpit-panel={tab.key}
+            hidden={!isActive}
+            style={{ display: isActive ? undefined : "none", paddingTop: 4 }}
+          >
+            {tab.key === "insights" ? (
+              <>
+                {hasSynthesis ? (
+                  <p data-home-cockpit-synthesis style={synthesisStyle}>
+                    {synthesis}
+                  </p>
+                ) : null}
+                <RecordBand claims={bands.record} signalPacket={signalPacket} />
+                <FollowsBand
+                  claims={bands.follows}
+                  signalPacket={signalPacket}
+                />
+              </>
+            ) : null}
+            {tab.key === "open-items" ? (
+              <ExposuresBand
+                claims={bands.exposures}
+                signalPacket={signalPacket}
+              />
+            ) : null}
+            {tab.key === "watch" ? (
+              <NotEstablishedBand gaps={bands.gaps} />
+            ) : null}
+            {tab.key === "questions" ? (
+              <QuestionsSection questions={bands.questions} />
+            ) : null}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+const tabListStyle = {
+  display: "flex",
+  gap: 2,
+  flexWrap: "nowrap" as const,
+  overflowX: "auto" as const,
+  borderBottom: `1px solid ${V4.rule}`,
+  padding: `0 ${PAGE_X}px`,
+} as const;
+
+function tabButtonStyle(active: boolean): CSSProperties {
+  return {
+    font: "inherit",
+    fontFamily: SANS,
+    fontSize: 13,
+    fontWeight: 600,
+    color: active ? V4.navy : V4.slate,
+    background: "none",
+    border: 0,
+    borderBottom: `2px solid ${active ? V4.navy : "transparent"}`,
+    padding: "11px 13px",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    display: "inline-flex",
+    alignItems: "baseline",
+    gap: 5,
+  };
+}
+
+const tabCountStyle = {
+  fontFamily: MONO,
+  fontSize: 10,
+  color: V4.stone,
+} as const;
+
+/**
+ * The synthesis, flowed across the whole canvas in reading-width columns.
+ *
+ * The explicit correction this answers: a synthesis set in one ~72ch measure runs as a tall thin
+ * ribbon down a wide page. `column-width` lays it into as many columns of this width as the canvas
+ * holds -- two on a wide screen, one when narrow -- so the prose uses the width it has been given
+ * without any line growing past a readable measure.
+ */
+const synthesisStyle = {
+  margin: `20px ${PAGE_X}px 0`,
+  columnWidth: "34rem",
+  columnGap: "clamp(28px,3.5vw,56px)",
+  fontFamily: SANS,
+  fontSize: 16,
+  lineHeight: 1.62,
+  color: V4.inkSoft,
+  textWrap: "pretty" as const,
+} as const;
+
+/**
+ * The analytical lenses the record carries, grouped by the kind it files them under.
+ *
+ * This is qualitative sector orientation for a new executive -- the patterns and expert lenses used
+ * to read a payer-provider like this one. It is NOT this enterprise's attested fact and it is NOT a
+ * peer benchmark: nothing here says how this enterprise compares to anyone, and the record holds no
+ * competitor or peer figure to compare against. The record carries each lens as a label under a
+ * kind, and that -- the label and the kind -- is all this section shows. It states no number, no
+ * applicability it was not given, and no business-versus-technology column, because none of that is
+ * in the record and inventing it is the model supplying a fact. The grouping is the record's own
+ * `kind`; the lens content itself already spans business and technology, so both are present without
+ * a fabricated split.
+ *
+ * The raw `kind` is a machine token (e.g. the underscore-joined identifier the record stores). It
+ * never reaches the reader: every heading and tag is a human label, so a client surface carries no
+ * machine vocabulary. A kind the dictionary does not name is still shown, under a label derived from
+ * it, so no lens the record carries is ever silently dropped.
+ */
+type IndustryLens = { kind: string; label: string };
+
+const INDUSTRY_LENS_GROUPS: ReadonlyArray<{
+  kind: string;
+  heading: string;
+  tag: string;
+}> = [
+  {
+    kind: "industry_pattern",
+    heading: "Industry patterns",
+    tag: "Industry pattern",
+  },
+  { kind: "expert_lens", heading: "Expert lenses", tag: "Expert lens" },
+];
+
+/** A kind the dictionary does not name, rendered as a human label and never as the raw token -- a
+ * machine identifier on a client surface is the one thing the vocabulary gate reads for. */
+function humanizeLensKind(kind: string): string {
+  const words = kind.split(/[_\s]+/).filter(Boolean);
+  if (words.length === 0) return "Lens";
+  return words
+    .map((word, index) =>
+      index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
+    )
+    .join(" ");
+}
+
+/** The lenses on the packet, kept to the two fields the record actually carries. The field is read
+ * off the packet the same way the business briefing reads it: it rides on the serialized record and
+ * is absent on a record that predates it, in which case this section does not render at all. */
+function readAnalyticalLenses(
+  signalPacket: EnterpriseSignalPacket,
+): IndustryLens[] {
+  const raw =
+    (signalPacket as { analyticalLenses?: Array<Partial<IndustryLens>> })
+      .analyticalLenses ?? [];
+  return raw.filter(
+    (lens): lens is IndustryLens =>
+      Boolean(lens) &&
+      typeof lens.kind === "string" &&
+      lens.kind.trim().length > 0 &&
+      typeof lens.label === "string" &&
+      lens.label.trim().length > 0,
+  );
+}
+
+function IndustryContextSection({
+  signalPacket,
+}: {
+  signalPacket: EnterpriseSignalPacket;
+}) {
+  const lenses = readAnalyticalLenses(signalPacket);
+  if (lenses.length === 0) return null;
+
+  // Group by the record's own kind: the dictionary kinds first, in their stated order, then any kind
+  // the dictionary does not name, in first-seen order. Nothing the record carries is dropped.
+  const order: string[] = [];
+  const seen = new Set<string>();
+  const remember = (kind: string) => {
+    if (!seen.has(kind)) {
+      seen.add(kind);
+      order.push(kind);
+    }
+  };
+  for (const group of INDUSTRY_LENS_GROUPS) {
+    if (lenses.some((lens) => lens.kind === group.kind)) remember(group.kind);
+  }
+  for (const lens of lenses) remember(lens.kind);
+  const groups = order.map((kind) => {
+    const known = INDUSTRY_LENS_GROUPS.find((group) => group.kind === kind);
+    return {
+      kind,
+      heading: known?.heading ?? humanizeLensKind(kind),
+      tag: known?.tag ?? humanizeLensKind(kind),
+      items: lenses.filter((lens) => lens.kind === kind),
+    };
+  });
+
+  return (
+    <section
+      data-home-industry-context={lenses.length}
+      style={{ padding: `0 ${PAGE_X}px`, margin: "58px 0 0" }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+        <h2 style={bandHeading(V4.ink)}>Industry context</h2>
+        <span style={{ flex: 1, height: 1, background: V4.rule }} />
+      </div>
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontFamily: SANS,
+          fontSize: 14,
+          lineHeight: 1.55,
+          color: V4.slate,
+          maxWidth: "58ch",
+        }}
+      >
+        The forces shaping payer-providers like this one.
+      </p>
+
+      {/* The absence stated in words before any pattern is shown: patterns beside an enterprise's own
+          figures read as a comparison, and the record holds none. The same discipline the
+          perspective layer keeps, so the layout cannot assert what the record does not. */}
+      <aside
+        data-home-industry-provenance
+        style={{
+          margin: "16px 0 0",
+          borderTop: `1px solid ${V4.rule}`,
+          borderBottom: `1px solid ${V4.rule}`,
+          padding: "13px 0",
+        }}
+      >
+        <span style={{ ...eyebrow(V4.amber), fontSize: 10 }}>
+          How to read this
+        </span>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontFamily: SANS,
+            fontSize: 13.5,
+            lineHeight: 1.55,
+            color: V4.inkSoft,
+            maxWidth: "80ch",
+          }}
+        >
+          Analytical lenses and sector patterns the record carries as
+          qualitative orientation &mdash; not this enterprise&apos;s attested
+          facts, and not a peer benchmark. Nothing here says how this enterprise
+          compares to anyone; the record holds no competitor or peer figure.
+          Each lens is shown as the record holds it: a short label, under the
+          kind it is filed under.
+        </p>
+      </aside>
+
+      <div style={{ display: "grid", gap: 26, marginTop: 24 }}>
+        {groups.map((group) => (
+          <div key={group.kind} style={{ minWidth: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 10,
+                marginBottom: 10,
+              }}
+            >
+              <span style={eyebrow(V4.slate)}>{group.heading}</span>
+              <span
+                style={{ fontFamily: MONO, fontSize: 10.5, color: V4.stone }}
+              >
+                {group.items.length}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gap: 1,
+                background: V4.rule,
+                border: `1px solid ${V4.rule}`,
+                borderRadius: 8,
+                overflow: "hidden",
+              }}
+            >
+              {group.items.map((lens, index) => (
+                <div
+                  key={`${group.kind}-${index}-${lens.label}`}
+                  data-home-industry-row={group.kind}
+                  style={{
+                    background: V4.surface,
+                    padding: "13px 16px",
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0,1fr) auto",
+                    gap: "6px 18px",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: SANS,
+                      fontSize: 15,
+                      lineHeight: 1.5,
+                      color: V4.ink,
+                      maxWidth: "76ch",
+                      textWrap: "pretty",
+                    }}
+                  >
+                    {lens.label}
+                  </p>
+                  <span
+                    data-home-industry-tag
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: V4.stone,
+                      whiteSpace: "nowrap",
+                      paddingTop: 2,
+                    }}
+                  >
+                    {group.tag}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

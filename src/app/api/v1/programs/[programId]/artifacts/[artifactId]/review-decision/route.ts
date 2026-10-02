@@ -13,6 +13,7 @@ import {
 } from "@/lib/programs/deliverables/artifact-review-decisions";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { MoveArtifactRow } from "@/lib/programs/deliverables/move-artifacts";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,7 +39,10 @@ async function findPairedReviewArtifact(
       ? meta.pairedVisualCompanionArtifactId
       : null;
 
-  if (outputRole === "docx_editable_phase_record" && pairedVisualCompanionArtifactId) {
+  if (
+    outputRole === "docx_editable_phase_record" &&
+    pairedVisualCompanionArtifactId
+  ) {
     const paired = await getMoveArtifactForTenant(
       ctx,
       pairedVisualCompanionArtifactId,
@@ -80,7 +84,11 @@ async function loadReviewState(
 ) {
   const artifact = await getMoveArtifactForTenant(ctx, artifactId);
   if (!artifact || artifact.move_id !== programId) return null;
-  const pairedArtifact = await findPairedReviewArtifact(ctx, programId, artifact);
+  const pairedArtifact = await findPairedReviewArtifact(
+    ctx,
+    programId,
+    artifact,
+  );
   const reviewPackage = buildReviewPackageFromArtifacts({
     artifact,
     pairedArtifact,
@@ -112,6 +120,7 @@ export async function GET(
   try {
     const ctx = await requireTenancy();
     const { programId, artifactId } = await params;
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     const state = await loadReviewState(ctx, programId, artifactId);
     if (!state) return Response.json({ error: "not_found" }, { status: 404 });
     return Response.json({
@@ -129,6 +138,7 @@ export async function GET(
       packet: state.packet,
       latestDecision: state.latestDecision,
       readiness: state.readiness,
+      canRecordDecision: accessPolicy.canApproveGates,
     });
   } catch (err) {
     return tenancyErrorResponse(err);
@@ -142,18 +152,40 @@ export async function POST(
   try {
     const ctx = await requireTenancy();
     const { programId, artifactId } = await params;
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail:
+            "Only an authorized workspace user can record review decisions.",
+        },
+        { status: 403 },
+      );
+    }
     const state = await loadReviewState(ctx, programId, artifactId);
     if (!state) return Response.json({ error: "not_found" }, { status: 404 });
 
-    const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+    const body = (await req.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
     const decision = normalizeDecision(body?.decision);
-    const rationale = typeof body?.rationale === "string" ? body.rationale.trim() : "";
+    const rationale =
+      typeof body?.rationale === "string" ? body.rationale.trim() : "";
     if (!decision) {
       return Response.json({ error: "invalid_decision" }, { status: 400 });
     }
     if (!rationale) {
       return Response.json(
-        { error: "rationale_required", detail: "Review decisions require a rationale." },
+        {
+          error: "rationale_required",
+          detail: "Review decisions require a rationale.",
+        },
         { status: 400 },
       );
     }
@@ -173,6 +205,7 @@ export async function POST(
       reviewPackage: state.reviewPackage,
       packet: state.packet,
       readiness: readinessForDecision(persisted.decision),
+      canRecordDecision: true,
     });
   } catch (err) {
     return tenancyErrorResponse(err);

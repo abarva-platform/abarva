@@ -21,10 +21,13 @@ export interface HomeAssessmentSelection {
   assessmentId: string;
   /** Null when no declaration applies and the tenant's default assessment is read, as before. */
   declared: HomeDeclaredProjection | null;
+  /** An explicit retirement selects the reviewed record, not older undeclared ECL rows. */
+  retired?: true;
 }
 
 interface DeclarationRow {
   assessment_id: string;
+  state: "active" | "retired";
   projection_hash: string;
   source_set_hash: string;
   manifest_id: string | null;
@@ -59,6 +62,7 @@ export async function selectHomeAssessment(
   try {
     rows = await azureRead.query<DeclarationRow>(
       `select declaration.assessment_id,
+              declaration.state,
               declaration.projection_hash,
               declaration.source_set_hash,
               manifest.id::text as manifest_id,
@@ -72,7 +76,7 @@ export async function selectHomeAssessment(
         and manifest.projection_key = $2
         and manifest.projection_hash = declaration.projection_hash
         and manifest.source_hash = declaration.source_set_hash
-       where declaration.tenant_key = $1 and declaration.state = 'active'`,
+       where declaration.tenant_key = $1 and declaration.state in ('active', 'retired')`,
       [tenantKey, HOME_PROJECTION_KEY],
     );
   } catch (error) {
@@ -94,14 +98,22 @@ export async function selectHomeAssessment(
       { cause: error },
     );
   }
-  if (rows.length > 1) {
+  const active = rows.filter((row) => row.state === "active");
+  if (active.length > 1) {
     throw new HomeProjectionFault(
       "multiple_active_declarations",
       "Home has multiple declared active assessments",
     );
   }
-  const declaration = rows[0];
+  const declaration = active[0];
   if (!declaration) {
+    if (rows.some((row) => row.state === "retired")) {
+      return {
+        assessmentId: denseAssessmentIdForTenant(tenantKey),
+        declared: null,
+        retired: true,
+      };
+    }
     return {
       assessmentId: denseAssessmentIdForTenant(tenantKey),
       declared: null,

@@ -13,6 +13,7 @@ export type HomeProjectionFaultReason =
   | "selection_query_error"
   | "multiple_active_declarations"
   | "declaration_not_bound_to_manifest"
+  | "retired_declaration"
   | "declared_assessment_has_no_rows"
   | "default_assessment_has_no_rows"
   | "no_admissible_rows"

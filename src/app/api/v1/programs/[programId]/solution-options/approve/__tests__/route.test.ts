@@ -12,6 +12,12 @@ jest.mock("@/lib/programs/queries", () => ({
   getProgramById: (...args: unknown[]) => getProgramByIdMock(...args),
 }));
 
+const loadUserProgramAccessPolicyMock = jest.fn();
+jest.mock("@/lib/auth/program-access-policy", () => ({
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    loadUserProgramAccessPolicyMock(...args),
+}));
+
 const completeDeliverableMock = jest.fn();
 jest.mock("@/lib/programs/mutations", () => ({
   __esModule: true,
@@ -60,6 +66,7 @@ function makeRequest(body: unknown): Request {
 beforeEach(() => {
   requireTenancyMock.mockReset();
   getProgramByIdMock.mockReset();
+  loadUserProgramAccessPolicyMock.mockReset();
   completeDeliverableMock.mockReset();
   loadApprovedSolutionApproachMock.mockReset();
   neqMock.mockReset();
@@ -72,6 +79,7 @@ beforeEach(() => {
     id: PROGRAM_ID,
     name: "Clinical + Claims Foundation",
   });
+  loadUserProgramAccessPolicyMock.mockResolvedValue({ canApproveGates: true });
   completeDeliverableMock.mockResolvedValue({
     deliverableId: "deliverable-1",
     versionId: "version-1",
@@ -129,6 +137,11 @@ describe("POST /api/v1/programs/:programId/solution-options/approve", () => {
           solutionContextDigest: expect.objectContaining({
             chosenOption: "Option 2 - Governed Databricks Lakehouse",
             tradeoffsAccepted: ["Parallel BI migration"],
+            decisions: [
+              expect.objectContaining({
+                approvedByRole: "authorized_workspace_user",
+              }),
+            ],
           }),
         }),
       }),
@@ -216,6 +229,26 @@ describe("POST /api/v1/programs/:programId/solution-options/approve", () => {
     });
 
     expect(res.status).toBe(400);
+    expect(completeDeliverableMock).not.toHaveBeenCalled();
+  });
+
+  it("requires authorized Move approval permission before recording a decision", async () => {
+    loadUserProgramAccessPolicyMock.mockResolvedValue({
+      canApproveGates: false,
+    });
+    const res = await POST(
+      makeRequest({
+        chosenOption: "Option 2",
+        options: [{ id: "option-2", name: "Option 2" }],
+      }) as never,
+      { params: Promise.resolve({ programId: PROGRAM_ID }) },
+    );
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "forbidden",
+      detail: "Authorized Move approval permission required.",
+    });
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 });

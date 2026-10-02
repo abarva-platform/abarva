@@ -78,7 +78,11 @@ const DECISION_CONFIG: Record<
   ArtifactReviewDecision,
   Pick<
     ArtifactReviewReadiness,
-    "readyForP3Draft" | "readyForP3Final" | "p2FinalApproved" | "allowedNextAction" | "reason"
+    | "readyForP3Draft"
+    | "readyForP3Final"
+    | "p2FinalApproved"
+    | "allowedNextAction"
+    | "reason"
   >
 > = {
   approve_for_p3_draft: {
@@ -87,7 +91,7 @@ const DECISION_CONFIG: Record<
     p2FinalApproved: false,
     allowedNextAction: "generate_p3_draft",
     reason:
-      "P2 is accepted as a diagnostic basis for P3 draft shaping; final sponsor/signoff gates still apply.",
+      "P2 is accepted as a diagnostic basis for P3 draft shaping; final authorized-user approval gates still apply.",
   },
   request_revisions: {
     readyForP3Draft: false,
@@ -164,9 +168,9 @@ export function buildReviewPackageFromArtifacts(args: {
       ? artifact.artifact_id
       : pairedOutputRole === "html_visual_review_companion" ||
           paired?.file_format === "html"
-        ? paired?.artifact_id ?? null
-        : metaString(artifactMeta, "pairedVisualCompanionArtifactId") ??
-          metaString(pairedMeta, "pairedVisualCompanionArtifactId");
+        ? (paired?.artifact_id ?? null)
+        : (metaString(artifactMeta, "pairedVisualCompanionArtifactId") ??
+          metaString(pairedMeta, "pairedVisualCompanionArtifactId"));
 
   const docxEditableArtifactId =
     artifactOutputRole === "docx_editable_phase_record" ||
@@ -174,7 +178,7 @@ export function buildReviewPackageFromArtifacts(args: {
       ? artifact.artifact_id
       : pairedOutputRole === "docx_editable_phase_record" ||
           paired?.file_format === "docx"
-        ? paired?.artifact_id ?? null
+        ? (paired?.artifact_id ?? null)
         : null;
 
   return {
@@ -230,14 +234,14 @@ export function buildP2ReviewPacket(args: {
     ...metadataList(meta, "knownLimitations", "known_limitations"),
     ...metaOpenItems,
     ...caveats,
-    "This review action authorizes P3 draft shaping only; it does not satisfy final P2 sponsor sign-off.",
+    "This review action authorizes P3 draft shaping only; it does not satisfy final P2 approval by an authorized workspace user.",
     "P3 remains subject to its own evidence and approval gates.",
   ]);
   const missingEvidence = unique([
     ...missingInputs,
     ...metaOpenItems,
     ...metadataList(meta, "missingEvidence", "missing_evidence"),
-    "Sponsor evidence for final P2 gate approval",
+    "Evidence required for final P2 gate approval by an authorized workspace user",
   ]);
   const diagnosticThesis = metadataText(
     meta,
@@ -247,7 +251,7 @@ export function buildP2ReviewPacket(args: {
   const p3Implication = metadataText(meta, "p3Implication", "p3_implication");
 
   return {
-    headline: `${args.artifact.title} · P2 sponsor review`,
+    headline: `${args.artifact.title} · P2 authorized-user review`,
     diagnosticThesis:
       diagnosticThesis ??
       `${args.artifact.title} is presented for review. Confirm each conclusion against its cited source evidence and resolve or explicitly carry forward open items before P3 draft shaping.`,
@@ -265,7 +269,7 @@ export function buildP2ReviewPacket(args: {
         decision: "approve_for_p3_draft",
         label: "Approve for P3 draft",
         consequence:
-          "Allows future-state design drafts from this P2 diagnostic. Does not mark P2 final or bypass sponsor/signoff gates.",
+          "Allows future-state design drafts from this P2 diagnostic. Does not mark P2 final or bypass the authorized-user approval gate.",
       },
       {
         decision: "request_revisions",
@@ -284,11 +288,13 @@ export function buildP2ReviewPacket(args: {
       "Approve for P3 draft shaping only if the cited P2 evidence and explicit limitations are acceptable; otherwise request revisions or hold for evidence.",
     p3Implication:
       p3Implication ??
-      "Use only reviewed, source-cited P2 findings as P3 inputs. Carry all open items and final sponsor sign-off forward; P3 remains subject to its own evidence and approval gates.",
+      "Use only reviewed, source-cited P2 findings as P3 inputs. Carry all open items and the authorized-user approval record forward; P3 remains subject to its own evidence and approval gates.",
   };
 }
 
-export function normalizeDecision(value: unknown): ArtifactReviewDecision | null {
+export function normalizeDecision(
+  value: unknown,
+): ArtifactReviewDecision | null {
   return value === "approve_for_p3_draft" ||
     value === "request_revisions" ||
     value === "hold_for_evidence"

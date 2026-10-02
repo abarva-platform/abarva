@@ -158,10 +158,10 @@ function renderDeterministicReviewCompanionHtml(args: {
   <body>
     <p class="status">Review required</p>
     <h1>${escapeHtml(args.title)}</h1>
-    <p class="note">This review companion records sponsor-review packaging feedback and creates the paired editable phase record. It does not mark the deliverable final, approved, or board-ready.</p>
+    <p class="note">This review companion records workspace-review packaging feedback and creates the paired editable phase record. It does not mark the deliverable final, approved, or board-ready.</p>
 
     <h2>Executive Summary</h2>
-    <p>The prior phase artifact remains the source visual review companion. This version records client review feedback, preserves the evidence caveats, and creates the paired Word-equivalent deliverable for sponsor review.</p>
+    <p>The prior phase artifact remains the source visual review companion. This version records workspace review feedback, preserves the evidence caveats, and creates the paired Word-equivalent deliverable for authorized workspace-user review.</p>
 
     <h2>Table of Contents</h2>
     <ol>
@@ -201,7 +201,7 @@ function renderDeterministicReviewCompanionHtml(args: {
     </table>
 
     <h2>Lineage</h2>
-    <p>This review companion was generated from the prior artifact version and review feedback. It is paired with an editable Word-equivalent deliverable and remains review-required until a named sponsor approves it.</p>
+    <p>This review companion was generated from the prior artifact version and review feedback. It is paired with an editable Word-equivalent deliverable and remains review-required until an authorized workspace user approves it.</p>
   </body>
 </html>`;
 }

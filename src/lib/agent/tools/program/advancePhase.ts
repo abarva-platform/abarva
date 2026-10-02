@@ -9,8 +9,7 @@
 //     gate-evaluation artifacts to the user
 //   - advances when criteria pass (calling the same mutation the legacy
 //     button targeted)
-//   - supports bypass with rationale for sponsor override (lead-only,
-//     gated by the existing requestFounderApproval flow)
+//   - supports bypass with rationale for an authorized-workspace-user exception
 //
 // Evidence semantics (from founder guardrails saved 2026-04-29):
 //   The pack remains static doctrine. Gate evaluation here uses the
@@ -29,16 +28,13 @@
 //     → tool evaluates gates, blocks with unmet criteria
 //     → Nexus emits gate-evaluation artifacts for each unmet criterion
 //     → "Holding on Execution Roadmap — privacy attestation pending. Want to push
-//        anyway with sponsor sign-off, or wait?"
+//        anyway through the authorized exception path, or wait?"
 
 import type { AgentTool, ToolResult } from "../registry";
 import { registerTool } from "../registry";
 import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
 import { advancePhase as advancePhaseMutation } from "@/lib/programs/mutations";
-import {
-  evaluateGate,
-  requestFounderApproval,
-} from "@/lib/programs/governance";
+import { evaluateGate } from "@/lib/programs/governance";
 import { getProgramById } from "@/lib/programs/queries";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
@@ -56,9 +52,8 @@ interface AdvancePhaseInput {
   /** Plain-language rationale, especially when bypassing gates. */
   rationale?: string;
   /**
-   * When true, the agent is requesting a soft-fail bypass (sponsor
-   * override). The handler still routes through requestFounderApproval
-   * if the gate is hard-failing — bypass doesn't override hard fails.
+   * When true, an authorized workspace user is requesting a soft-fail bypass.
+   * Hard gate failures still block; bypass never overrides hard fails.
    */
   bypass_gate?: boolean;
   // SECURITY (audit 2026-05-22, P2-8): `self_approve_if_authorized` was
@@ -87,10 +82,9 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     "each unmet criterion to the user via gate-evaluation artifacts; do NOT announce success or " +
     "pretend the advance happened. Only call this when the user has explicitly asked to advance " +
     '(e.g. "move to Execution Roadmap", "advance the phase"). Default bypass_gate to false; only set true ' +
-    "when the user explicitly invokes a sponsor override and provides a rationale. " +
-    "This tool never SATISFIES a gate approval — when a gate requires approval it CREATES a pending " +
-    "approval request and tells the user it is pending. Self-approval is a deterministic UI action; " +
-    "do not attempt to approve a gate on the user's behalf from chat.",
+    "when the authorized workspace user explicitly invokes an exception and provides a rationale. " +
+    "This tool never SATISFIES a gate approval or creates a sponsor approval request. When the gate is " +
+    "ready, it directs the authorized workspace user to review and approve it in Moves.",
   surfaces: ["/programs/:id"],
   input_schema: {
     type: "object",
@@ -113,8 +107,8 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       bypass_gate: {
         type: "boolean",
         description:
-          "Default false. Only set true when the user explicitly invokes a sponsor override; " +
-          "soft-fail bypass routes through founder approval if needed. Hard fails always block.",
+          "Default false. Only set true when the authorized workspace user explicitly invokes an exception; " +
+          "soft-fail bypass requires an authorized workspace user. Hard fails always block.",
       },
     },
     required: ["program_id", "to_phase"],
@@ -221,51 +215,25 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         programId: input.program_id,
       }));
 
-    // SECURITY (audit 2026-05-22, P2-8): a bypass_gate request still
-    // requires gate-approval rights, but the agent NEVER self-satisfies a
-    // gate approval. When a gate requires approval the tool always
-    // creates a pending request and reports it — self-approval is a
-    // deterministic UI action on /api/v1/programs/:id/advance.
-    if (
-      input.bypass_gate === true &&
-      accessPolicy.canApproveGates !== true &&
-      tenancy.role !== "founder"
-    ) {
+    // Gate approval remains a deliberate action by an authorized workspace
+    // user in the deterministic Moves UI, never an agent-created sponsor
+    // request or an inferred approval from chat.
+    if (input.bypass_gate === true && accessPolicy.canApproveGates !== true) {
       return {
         success: false,
         error: "approval_permission_required",
         recovery:
-          "This session does not have phase-gate approval rights. Ask a tenant admin or sponsor approver to approve the gate, then retry.",
+          "This session does not have phase-gate approval rights. Ask an authorized workspace user to approve the gate, then retry.",
       };
     }
 
     if (gate.requiresApproval && !input.bypass_gate) {
-      // Create a sponsor-approval request via the existing flow rather
-      // than silently advancing. The agent should communicate this
-      // pending state to the user. The agent never satisfies the
-      // approval itself — that is a deterministic UI confirmation.
-      try {
-        await requestFounderApproval(tenancy, input.program_id, {
-          requestType: "phase_gate",
-          headline: `Approve phase ${fromPhase} → ${input.to_phase} gate`,
-          approverRole: gate.approverRole ?? "sponsor",
-          deadlineHours: 48,
-          context: {
-            from_phase: fromPhase,
-            to_phase: input.to_phase,
-            rationale: humanRationale,
-          },
-        });
-      } catch {
-        // Non-fatal — the explicit failure path below tells Nexus.
-      }
       return {
         success: false,
         error: "approval_required",
         recovery:
-          `Phase advance requires sponsor approval. I've queued a request — once it's approved in the ` +
-          `Programs UI, the phase ${fromPhase} → ${input.to_phase} advance can proceed. Tell the user ` +
-          `the request is pending and that an authorized approver must confirm it in the app.`,
+          `The phase ${fromPhase} → ${input.to_phase} gate is ready for approval by an authorized workspace user. ` +
+          "No sponsor approval is requested. Ask an authorized user to review the evidence and approve the gate in Moves.",
       };
     }
 
@@ -301,7 +269,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         // The agent never records itself as the gate approver. When a
         // gate required approval the code path above already returned
         // 'approval_required'; reaching here means either no approval was
-        // required or a sponsor bypass was explicitly invoked.
+        // required or an authorized exception was explicitly invoked.
         approvedByUserId: undefined,
         bypassGate: !!input.bypass_gate,
       });

@@ -9,9 +9,14 @@ import {
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 import { selectHomeAssessment } from "../home-assessment-selection";
 import { getHomeReviewBundle } from "../golden-snapshot";
-import { createHomeNarrativePacketArtifact } from "../home-narrative-packet";
+import {
+  createHomeNarrativePacketArtifact,
+  hashHomeNarrativeValue,
+  type HomeNarrativeSignalPacket,
+} from "../home-narrative-packet";
 import { homeRecordSourceToken } from "../record-source-token";
 import {
   homeSourceDateCoverageLabel,
@@ -139,6 +144,67 @@ function storyPlanFixture(
     summary: storyPlan.overallEvidenceBoundary,
     display_payload_json: { story_plan: storyPlan },
   });
+}
+
+/** An approval as a load records it on the file it loaded. */
+const RECORDED_APPROVAL = {
+  approved_by: "A named approver",
+  approved_at: "2026-10-01",
+  release_record: "docs/releases/records/example-load-approval.md",
+};
+
+/**
+ * The packet a narrative build writes, hashes and stores.
+ *
+ * Written out key by key, the way that build assembles it, and from nothing the Home reader
+ * returns. A fixture copied from the reader's own packet agrees with the reader about whatever
+ * the reader adds, so it cannot show that the reader and the build hash the same object. Typed as
+ * the build's packet: a key only the reader knows does not belong here.
+ */
+function writerShapedPacket(base: HomeReviewBundle): HomeNarrativeSignalPacket {
+  const packet = {
+    enterpriseIdentity: {
+      businessModel: null,
+      industry: null,
+      revenue: null,
+      employeeCount: null,
+    },
+    businessEconomics: {
+      operatingSegments: [],
+      customerSegments: [],
+      technologyBudget: 0,
+      technologyBudgetShareOfRevenue: null,
+    },
+    strategicPriorities: [],
+    signals: [
+      {
+        id: "sig_ecl_contract_value_005",
+        kind: "portfolio",
+        statement: "One contract carries annualized-value evidence.",
+        domains: ["vendor_contract"],
+        evidenceRefs: ["serving.home_vendor_contracts"],
+      },
+    ],
+    contextItems: [
+      {
+        id: "ctx_ecl_scope_business_economics_001",
+        statement: "Customer and channel economics require their own evidence.",
+        domains: ["enterprise_profile"],
+      },
+      {
+        id: "ctx_ecl_vendor_contracts_contract_CTR_005",
+        statement: "A contract is recorded as a contract.",
+        domains: ["vendor_contract"],
+      },
+    ],
+    visualDatasets: {},
+    categorySummaries: [],
+    pagePromptContracts: [],
+    sourceSummaries: [],
+    analyticalLenses: [],
+    coverageManifest: base.thesis.signalPacket.coverageManifest,
+  };
+  return packet as unknown as HomeNarrativeSignalPacket;
 }
 
 describe("buildTechnologyEstateFromHomeProjectionRows", () => {
@@ -428,9 +494,15 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(query.mock.calls[3]?.[0]).toEqual(
       expect.stringContaining("ecl_source.source_file"),
     );
+    expect(query.mock.calls[3]?.[0]).toEqual(
+      expect.stringContaining(
+        "metadata_json->'load_approval' as load_approval",
+      ),
+    );
     expect(bundle.contextVersion?.sourceFileReview).toEqual({
       totalFiles: 1,
       acceptedFiles: 0,
+      notReviewedFiles: 0,
       partialFiles: 1,
       blockedFiles: 0,
       supersededFiles: 0,
@@ -639,6 +711,29 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       kind: "reviewed_snapshot_fallback",
       canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
     });
+  });
+
+  it("serves the reviewed record deliberately after an explicit retirement", async () => {
+    jest.mocked(selectHomeAssessment).mockResolvedValueOnce({
+      assessmentId: denseAssessmentIdForTenant("meridian-health"),
+      declared: null,
+      retired: true,
+    });
+    const query = jest.spyOn(azureRead, "query");
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+
+    const result =
+      await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
+        "meridian-health",
+      );
+
+    expect(result.bundle).toBe(base);
+    expect(result.recordSource).toEqual({
+      kind: "reviewed_snapshot",
+      canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
+    });
+    expect(query).not.toHaveBeenCalled();
   });
 
   it("does not label an entirely refused projection as live", async () => {
@@ -1575,6 +1670,19 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       rows,
       undefined,
       links,
+      [
+        {
+          ...sourceFile,
+          quality_state: "accepted",
+          load_approval: RECORDED_APPROVAL,
+        },
+      ],
+    );
+    const acceptedStateOnly = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      links,
       [{ ...sourceFile, quality_state: "accepted" }],
     );
     expect(partial.contextVersion?.projectionContentHash).toBe(
@@ -1600,6 +1708,17 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(homeSourceFileReviewLabel(sourceFor(accepted))).toBe(
       "Source-file quality: 1 of 1 accepted",
     );
+    // The accepted state with no approval recorded beside it is not acceptance, and recording
+    // the approval is a new version of the record even though no file changed.
+    expect(homeSourceFileReviewLabel(sourceFor(acceptedStateOnly))).toBe(
+      "Source-file quality: 0 of 1 accepted; 1 not reviewed",
+    );
+    expect(acceptedStateOnly.contextVersion?.sourceCatalogHash).not.toBe(
+      accepted.contextVersion?.sourceCatalogHash,
+    );
+    expect(
+      homeRecordSourceToken("meridian-health", sourceFor(acceptedStateOnly)),
+    ).not.toBe(homeRecordSourceToken("meridian-health", sourceFor(accepted)));
     const redated = buildHomeReviewBundleFromEclProjectionRows(
       base,
       rows,
@@ -1671,29 +1790,18 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         new Map([["row-hash", new Set(["source-row-005"])]]),
       ],
     ]);
-    const baseline = buildHomeReviewBundleFromEclProjectionRows(
-      base,
-      rows,
-      undefined,
-      links,
-    );
-    const packet = {
-      ...baseline.thesis.signalPacket,
-      enterpriseIdentity: { businessModel: null, industry: null, revenue: null, employeeCount: null },
-      businessEconomics: { operatingSegments: [], customerSegments: [], technologyBudget: 0, technologyBudgetShareOfRevenue: null },
-      strategicPriorities: [],
-      pagePromptContracts: [],
-      coverageManifest: base.thesis.signalPacket.coverageManifest,
-      analyticalLenses: [],
-    };
-    if (!baseline.contextVersion) throw new Error("context version missing");
+    const packet = writerShapedPacket(base);
+    expect(packet).not.toHaveProperty("homeEnterpriseContext");
     const narrativePacketArtifact = createHomeNarrativePacketArtifact({
       tenantKey: base.tenantKey,
-      assessmentId: baseline.contextVersion.assessmentId,
+      assessmentId: denseAssessmentIdForTenant(base.tenantKey),
       rows,
       verifiedSourceRefs: links,
       packet,
     });
+    expect(narrativePacketArtifact.packetHash).toBe(
+      hashHomeNarrativeValue(packet),
+    );
     const withWriters = rows.map((item) =>
       item.row_type === "summary"
         ? {
@@ -1721,6 +1829,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       file_hash: "a".repeat(64),
       source_date: "2026-09-30",
       quality_state: "accepted",
+      load_approval: RECORDED_APPROVAL,
     };
     const accepted = buildHomeReviewBundleFromEclProjectionRows(
       base,
@@ -1736,13 +1845,41 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       links,
       [{ ...sourceFile, quality_state: "partial" }],
     );
+    // The reader's hash is the build's hash of the build's packet -- not a hash of whatever the
+    // reader goes on to hand the page.
+    expect(accepted.contextVersion?.deterministicPacketHash).toBe(
+      narrativePacketArtifact.packetHash,
+    );
     expect(accepted.contextVersion?.narrativePacketHash).toBe(
-      accepted.contextVersion?.deterministicPacketHash,
+      narrativePacketArtifact.packetHash,
     );
     expect(accepted.contextVersion?.sourceSetHash).toEqual(expect.any(String));
     expect(accepted.contextVersion?.coherence).toBe("coherent");
     expect(partial.contextVersion?.coherence).toBe("unverified");
-    expect(accepted.thesis.signalPacket).toEqual(packet);
+    // The page reads the written packet plus what the reader derived for it, and nothing else.
+    expect(accepted.thesis.signalPacket).toEqual({
+      ...packet,
+      homeEnterpriseContext: null,
+    });
+    // A file in the accepted state is not accepted until an approval is recorded for its load.
+    for (const load_approval of [
+      undefined,
+      null,
+      {},
+      { ...RECORDED_APPROVAL, approved_by: "" },
+      { ...RECORDED_APPROVAL, approved_at: undefined },
+      { ...RECORDED_APPROVAL, release_record: " " },
+    ]) {
+      expect(
+        buildHomeReviewBundleFromEclProjectionRows(
+          base,
+          withWriters,
+          undefined,
+          links,
+          [{ ...sourceFile, load_approval }],
+        ).contextVersion?.coherence,
+      ).toBe("unverified");
+    }
     expect(buildHomeReviewBundleFromEclProjectionRows(base, withWriters.map((item) =>
       item.row_type === "story_plan" ? { ...item, display_payload_json: { story_plan: storyPlanFixture().display_payload_json?.story_plan } } : item,
     ), undefined, links, [sourceFile]).contextVersion?.coherence).toBe("unverified");
@@ -1807,6 +1944,172 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         withoutRowEvidence.contextVersion?.deterministicPacketHash,
       );
       expect(withoutRowEvidence.contextVersion?.coherence).toBe("unverified");
+    }
+  });
+
+  it("keeps a published narrative coherent when the reader attaches an enterprise context", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const sourced = (
+      input: Parameters<typeof row>[0],
+      index: number,
+    ): HomeProjectionRow =>
+      row({
+        ...input,
+        projection_entry_id: `projection-entry-10${index}`,
+        source_hash: "row-hash",
+        source_refs_json: [{ source_record_id: `source-row-10${index}` }],
+        admission_status: "admitted",
+      });
+    const recordRows = [
+      {
+        page_key: "vendor_contracts",
+        row_key: "CTR-005",
+        row_type: "contract",
+        title: "A contract",
+      },
+      {
+        page_key: "business_unit_profile",
+        row_key: "ENT-1",
+        row_type: "enterprise_profile",
+        title: "Reference enterprise",
+        display_payload_json: {
+          business_model: "Reference business model",
+          business_model_basis: "synthetic_reference_not_client_attested",
+        },
+      },
+      {
+        page_key: "business_unit_profile",
+        row_key: "SEG-1",
+        row_type: "business_segment",
+        title: "Segment one",
+        display_payload_json: {
+          segment_key: "SEG-1",
+          segment_name: "Segment one",
+        },
+      },
+      {
+        page_key: "business_unit_profile",
+        row_key: "FUNC-1",
+        row_type: "business_function",
+        title: "Function one",
+        display_payload_json: {
+          function_id: "FUNC-1",
+          function_name: "Function one",
+          business_segment_key: "SEG-1",
+        },
+      },
+    ].map(sourced);
+    const rows = [
+      ...chapterSummaryFixtures(),
+      storyPlanFixture(),
+      row({
+        page_key: "executive_brief",
+        row_key: "executive_brief_writer_claim_001",
+        row_type: "chapter_claim",
+        title: "Published scope claim",
+        summary: "The contract record supplies a scoped business fact.",
+        display_payload_json: {
+          evidence_ids: ["ctx_ecl_vendor_contracts_contract_CTR_005"],
+          claim_type: "FACT",
+          confidence: "high",
+        },
+      }),
+      ...recordRows,
+    ];
+    const links = new Map(
+      recordRows.map((item) => [
+        item.projection_entry_id as string,
+        new Map([
+          [
+            "row-hash",
+            new Set([
+              (item.source_refs_json as Array<{ source_record_id: string }>)[0]
+                .source_record_id,
+            ]),
+          ],
+        ]),
+      ]),
+    );
+    const packet = writerShapedPacket(base);
+    const narrativePacketArtifact = createHomeNarrativePacketArtifact({
+      tenantKey: base.tenantKey,
+      assessmentId: denseAssessmentIdForTenant(base.tenantKey),
+      rows,
+      verifiedSourceRefs: links,
+      packet,
+    });
+    const served = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows.map((item) =>
+        item.row_type === "summary"
+          ? {
+              ...item,
+              display_payload_json: {
+                writer: {
+                  signal_packet_hash: narrativePacketArtifact.packetHash,
+                  generated_at: "2026-09-30T00:00:00.000Z",
+                },
+              },
+            }
+          : item.row_type === "story_plan"
+            ? {
+                ...item,
+                display_payload_json: {
+                  ...item.display_payload_json,
+                  narrative_packet_artifact: narrativePacketArtifact,
+                },
+              }
+            : item,
+      ),
+      undefined,
+      links,
+      [
+        {
+          id: "source-file-100",
+          file_name: "record.csv",
+          file_hash: "a".repeat(64),
+          source_date: "2026-09-30",
+          quality_state: "accepted",
+          load_approval: RECORDED_APPROVAL,
+        },
+      ],
+    );
+
+    // The context is on the packet the page reads...
+    expect(
+      served.thesis.signalPacket.homeEnterpriseContext?.segmentSpine.segments,
+    ).toHaveLength(1);
+    // ...and outside the packet that was hashed, so the narrative written against this record
+    // still reads as aligned with it.
+    expect(served.contextVersion?.deterministicPacketHash).toBe(
+      narrativePacketArtifact.packetHash,
+    );
+    expect(served.contextVersion?.coherence).toBe("coherent");
+    // The narrative build's own row is not a record row, so nothing is reported as left out.
+    expect(
+      served.thesis.signalPacket.homeEnterpriseContext?.excludedUncitedRows,
+    ).toBe(0);
+  });
+
+  it("carries the tenant's declared classification from the stored bundle to the served one", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const rows = [
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-1",
+        row_type: "application",
+        title: "One application",
+      }),
+    ];
+    for (const declaredSyntheticDemo of [true, false, undefined]) {
+      expect(
+        buildHomeReviewBundleFromEclProjectionRows(
+          { ...base, declaredSyntheticDemo },
+          rows,
+        ).declaredSyntheticDemo,
+      ).toBe(declaredSyntheticDemo);
     }
   });
 

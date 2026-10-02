@@ -133,12 +133,12 @@ const SCAFFOLD_DEFS: ScaffoldDef[] = [
   },
   {
     id: "sponsor-candidate",
-    label: "Executive sponsor and decision authority",
+    label: "Sponsor contact and update preference",
     step: 3,
     group: "Govern",
-    help: "Capture the sponsoring role/title and who has authority to approve scope, investment, and design decisions — no named-person resolution required.",
+    help: "List the sponsor as a progress contact and choose whether they receive phase updates. Product approvals are made by a workspace user with explicit approval permission.",
     placeholder:
-      "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor. Decision authority: COO approves scope and investment; CDIO approves architecture.",
+      "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor. Organizational decision rights are captured as context; the authorized workspace user records all Moves approvals.",
   },
   {
     id: "scope-in",
@@ -277,7 +277,7 @@ const EXTENDED_SCAFFOLD_DEFS: ScaffoldDef[] = [
     label: "Stakeholders",
     step: 16,
     group: "Segment",
-    help: "Who else needs to be involved — who'd use it, approve it, or push back — beyond the named sponsor?",
+    help: "Who else should provide input, use the solution, or raise concerns beyond the listed sponsor contact?",
     placeholder: "Coding team lead; Actuarial; Compliance.",
   },
   {
@@ -644,7 +644,7 @@ export function StrategicMoveOriginateClient({
         id: "nexus-open-2a",
         role: "assistant",
         agentName: "Nexus",
-        text: `Describe the business problem or opportunity in plain English. I will help shape it into a Move brief with the right sponsor, scope, evidence, value hypothesis, and readiness checks.`,
+        text: `Describe the business problem or opportunity in plain English. I will help shape it into a Move brief with an outcome owner, scope, evidence, value hypothesis, and readiness checks. We can list a sponsor contact and choose whether to send progress emails; sponsors do not approve product gates.`,
       },
     ],
   );
@@ -652,6 +652,7 @@ export function StrategicMoveOriginateClient({
     programName: "",
     fields: { ...INITIAL_FIELDS },
   });
+  const [sponsorProgressEmails, setSponsorProgressEmails] = useState(false);
   const [draftFields, setDraftFields] = useState<
     Record<ScaffoldFieldId, string>
   >({
@@ -708,7 +709,7 @@ export function StrategicMoveOriginateClient({
       });
     }, 500);
     return () => clearTimeout(handle);
-  }, [turns, brief]);
+  }, [turns, brief, sponsorProgressEmails]);
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
@@ -771,6 +772,7 @@ export function StrategicMoveOriginateClient({
       },
     }));
     setDraftFields((prev) => ({ ...prev, [id]: "" }));
+    if (id === "sponsor-candidate") setSponsorProgressEmails(false);
   }, []);
 
   const send = useCallback(
@@ -1095,6 +1097,7 @@ export function StrategicMoveOriginateClient({
             timeline: brief.fields["foundation-readiness"],
             classification: brief.fields["archetype"],
             sponsor: brief.fields["sponsor-candidate"],
+            sponsorProgressEmails,
             lead: brief.fields["sponsor-candidate"],
             matchedPatternId: null,
             // Extended scaffold fields
@@ -1209,11 +1212,13 @@ export function StrategicMoveOriginateClient({
                 requiredFilled={requiredFilled}
                 requiredFieldCount={activeRequiredFieldCount}
                 scaffoldDefs={activeScaffoldDefs}
+                sponsorProgressEmails={sponsorProgressEmails}
                 stageGroups={activeStageGroups}
                 setActiveP0Step={setActiveP0Step}
                 setBrief={setBrief}
                 setCanvasTab={setCanvasTab}
                 setDraftFields={setDraftFields}
+                setSponsorProgressEmails={setSponsorProgressEmails}
                 submitError={submitError}
                 suggestedName={suggestedName}
                 tenantName={tenantName}
@@ -1406,11 +1411,13 @@ function P0OriginationContractCanvas({
   requiredFilled,
   requiredFieldCount,
   scaffoldDefs,
+  sponsorProgressEmails,
   stageGroups,
   setActiveP0Step,
   setBrief,
   setCanvasTab,
   setDraftFields,
+  setSponsorProgressEmails,
   submitError,
   suggestedName,
   tenantName,
@@ -1430,11 +1437,13 @@ function P0OriginationContractCanvas({
   requiredFilled: number;
   requiredFieldCount: number;
   scaffoldDefs: ScaffoldDef[];
+  sponsorProgressEmails: boolean;
   stageGroups: Array<{ label: string; stepIds: P0StepId[] }>;
   setActiveP0Step: Dispatch<SetStateAction<P0StepId>>;
   setBrief: Dispatch<SetStateAction<BriefState>>;
   setCanvasTab: Dispatch<SetStateAction<P0WorkspaceTab>>;
   setDraftFields: Dispatch<SetStateAction<Record<ScaffoldFieldId, string>>>;
+  setSponsorProgressEmails: Dispatch<SetStateAction<boolean>>;
   submitError: string | null;
   suggestedName: string;
   tenantName: string;
@@ -1499,7 +1508,8 @@ function P0OriginationContractCanvas({
               />
             </div>
             <small>
-              {completionPercent}% intake answers · P0 evidence review still required
+              {completionPercent}% intake answers · P0 evidence review still
+              required
             </small>
           </div>
         </div>
@@ -1576,7 +1586,7 @@ function P0OriginationContractCanvas({
               ))}
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
-                  ? "Answers complete · P0 evidence and sponsor review remain"
+                  ? "Answers complete · P0 evidence and authorized-user approval remain"
                   : `${requiredFilled} of ${requiredFieldCount} complete · finish required steps`}
               </div>
             </aside>
@@ -1595,9 +1605,7 @@ function P0OriginationContractCanvas({
                   Step {activeStepNumber} of {requiredFieldCount}
                 </span>
                 <h2>
-                  {isApproveStep
-                    ? "Submit P0 for review"
-                    : activeP0Def?.label}
+                  {isApproveStep ? "Submit P0 for review" : activeP0Def?.label}
                 </h2>
                 <span className={styles.p0ContractProvide}>Provide</span>
                 <span
@@ -1690,6 +1698,18 @@ function P0OriginationContractCanvas({
                       }
                     />
                   )}
+                  {activeP0Def.id === "sponsor-candidate" ? (
+                    <label className={styles.p0SponsorEmailPreference}>
+                      <input
+                        type="checkbox"
+                        checked={sponsorProgressEmails}
+                        onChange={(event) =>
+                          setSponsorProgressEmails(event.target.checked)
+                        }
+                      />
+                      <span>Send this contact phase-progress emails</span>
+                    </label>
+                  ) : null}
                   <div className={styles.scaffoldActions}>
                     <button
                       type="button"
@@ -1772,13 +1792,13 @@ function P0OriginationContractCanvas({
               Intake answers are not evidence and do not approve this Move.
               Submit the P0 intake to open its review record, then upload one
               source file in Files & Evidence and approve its extraction. P0
-              stays open until that evidence is reviewed and the sponsor
-              approves the brief.
+              stays open until the required evidence is reviewed and an
+              authorized workspace user approves the brief.
             </p>
             <div className={styles.p0EvidencePills}>
               <span>1 uploaded P0 source file</span>
               <span>Human-reviewed extraction</span>
-              <span>Sponsor approval unlocks P1</span>
+              <span>Authorized user approval unlocks P1</span>
             </div>
           </section>
         ) : (
@@ -1823,8 +1843,9 @@ function P0ApproveDetail({
     <div className={styles.p0ContractApprove}>
       <p>
         Submit the intake to create a P0 review record. This does not approve or
-        advance the Move. Upload and approve at least one P0 source file in Files
-        &amp; Evidence before the sponsor can approve the brief and unlock P1.
+        advance the Move. Upload and approve at least one P0 source file in
+        Files &amp; Evidence before an authorized workspace user can approve the
+        brief and unlock P1.
       </p>
       <div className={styles.p0ExpectedEvidence}>
         <span>Required before approval</span>
@@ -1843,7 +1864,7 @@ function P0ApproveDetail({
         </button>
         <span>
           {canPromote
-            ? "P0 remains open for evidence upload and sponsor review."
+            ? "P0 remains open for evidence upload and approval by an authorized workspace user."
             : `${requiredFilled} of ${requiredFieldCount} answers captured — finish the remaining P0 answers.`}
         </span>
       </div>

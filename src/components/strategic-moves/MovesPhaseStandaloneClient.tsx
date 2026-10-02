@@ -36,7 +36,6 @@ import {
   PhaseApproveAndBuild,
   type PhaseBuildArtifact,
 } from "@/components/strategic-moves/PhaseApproveAndBuild";
-import { PhaseRoleApprovalsSummary } from "@/components/strategic-moves/PhaseRoleApprovalsSummary";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
@@ -93,11 +92,6 @@ import {
   PHASE_CANONICAL_KEYS,
   phaseCanonicalKeysForRoute,
 } from "@/lib/programs/deliverable-registry";
-import {
-  APPROVAL_ROLE_LABELS,
-  type ApprovalRole,
-  requiredApprovalRolesFor,
-} from "@/lib/programs/deliverable-role-approval-policy";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import { getPhaseName } from "@/lib/programs/phase-labels";
 
@@ -152,6 +146,8 @@ interface PhaseContract {
 }
 
 interface MovesPhaseStandaloneClientProps {
+  /** Server-resolved permission for evidence and phase approval actions. */
+  canApproveGates?: boolean;
   /**
    * Authoritative phase-capture values, preloaded server-side. Passed as a prop
    * rather than fetched after mount so the page never renders a synthesized or
@@ -429,7 +425,7 @@ const PHASES: PhaseContract[] = [
       { key: "decide", label: "Frame" },
       { key: "approve", label: "Gate approval" },
     ],
-    sessions: ["Problem framing", "Sponsor alignment", "Evidence inventory"],
+    sessions: ["Problem framing", "Stakeholder context", "Evidence inventory"],
     templates: [
       { name: "Move Origination Brief", type: "DOCX" },
       { name: "Value Hypothesis Canvas", type: "XLSX" },
@@ -457,7 +453,7 @@ const PHASES: PhaseContract[] = [
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: [
-      "Sponsor charter review",
+      "Authorized workspace-user charter review",
       "Scope boundary workshop",
       "Success metric review",
     ],
@@ -712,6 +708,7 @@ function samePhaseBuildArtifactIds(
 }
 
 export function MovesPhaseStandaloneClient({
+  canApproveGates = false,
   initialPhaseCaptureValues,
   initialPhaseCaptureRevision,
   initialBusinessChangeAssessment = "",
@@ -1242,8 +1239,8 @@ export function MovesPhaseStandaloneClient({
     : terminalP5Complete
       ? "Move handed off to Tower."
       : !phaseEvidenceCheckAvailable
-        ? phaseEvidenceCheckBlocker ??
-          "Evidence readiness could not be checked. Refresh this phase before continuing."
+        ? (phaseEvidenceCheckBlocker ??
+          "Evidence readiness could not be checked. Refresh this phase before continuing.")
         : phaseEvidenceGapCount > 0
           ? `${phaseEvidenceGapCount} required evidence item${
               phaseEvidenceGapCount === 1 ? "" : "s"
@@ -1284,9 +1281,7 @@ export function MovesPhaseStandaloneClient({
       label: "Gate",
       value: phaseReadinessLabel,
       tone:
-        isHistoricalPhase ||
-        gateApproved ||
-        phaseHardGatesPassed
+        isHistoricalPhase || gateApproved || phaseHardGatesPassed
           ? "ready"
           : "blocked",
     },
@@ -1297,8 +1292,8 @@ export function MovesPhaseStandaloneClient({
     },
   ];
   const phaseCaptureBlocker = !phaseEvidenceCheckAvailable
-    ? phaseEvidenceCheckBlocker ??
-      "Evidence readiness could not be verified. Refresh this phase before Approve & Build."
+    ? (phaseEvidenceCheckBlocker ??
+      "Evidence readiness could not be verified. Refresh this phase before Approve & Build.")
     : currentStateEvidenceGapCount !== null && currentStateEvidenceGapCount > 0
       ? `${currentStateEvidenceGapCount} current-state evidence famil${
           currentStateEvidenceGapCount === 1 ? "y" : "ies"
@@ -1356,12 +1351,16 @@ export function MovesPhaseStandaloneClient({
                   openEvidenceCount: 0,
                 }
               : phaseProgress.blocker
-              ? {
-                  label: "Inputs not ready",
-                  tone: "open",
-                  openEvidenceCount: 0,
-                }
-              : { label: "Ready to build", tone: "ready", openEvidenceCount: 0 }
+                ? {
+                    label: "Inputs not ready",
+                    tone: "open",
+                    openEvidenceCount: 0,
+                  }
+                : {
+                    label: "Ready to build",
+                    tone: "ready",
+                    openEvidenceCount: 0,
+                  }
       : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
@@ -2149,7 +2148,7 @@ export function MovesPhaseStandaloneClient({
         `Gate approval failed (HTTP ${approvalRes.status})`;
       setGateApprovalStatus("blocked");
       setGateApprovalMessage(
-        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve or upload the client-approved deliverable in Files & Evidence, then re-run Approve & Build.`,
+        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve the draft or upload an edited version in Files & Evidence, then re-run Approve & Build.`,
       );
       throw new Error(blockedMessage);
     }
@@ -2468,6 +2467,7 @@ export function MovesPhaseStandaloneClient({
                   <FileCabinetPanel
                     moveId={move.id}
                     phase={phase.phase}
+                    canApproveGates={canApproveGates}
                     onEvidenceChanged={refreshPhase}
                     evidenceFamilies={declarableEvidenceFamilies}
                   />
@@ -2612,6 +2612,7 @@ export function MovesPhaseStandaloneClient({
                   </div>
                   <ApprovalsOverview
                     currentMoveId={move.id}
+                    canApproveGates={canApproveGates}
                     phaseTallies={phaseTallies}
                     reachablePhase={move.currentPhase ?? 0}
                     viewingPhase={phase.phase}
@@ -2783,6 +2784,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
                           currentStateReadiness={currentStateReadiness}
                           evidenceCount={evidenceCount}
@@ -2870,6 +2872,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
                           currentStateReadiness={currentStateReadiness}
                           evidenceCount={evidenceCount}
@@ -3198,9 +3201,8 @@ function WorkspaceSurfaceTabs({
 //
 // Entirely derived from `phaseTallies` (getMovePhaseTallies(move) — already
 // computed server-side and threaded through as a prop, no new fetch here).
-// Approver is always the static "Sponsor" label: every GATE_RULES entry in
-// governance.ts uses the single constant `approverRole: "sponsor"` today —
-// this does not imply a multi-role approval model exists.
+// Product approvals are recorded by the authenticated workspace user with
+// gate-approval permission. Sponsor identity is contact metadata only.
 //
 // "Review & approve" reuses the same two navigation mechanisms already used
 // elsewhere in this file: a real Link to the phase's own route for any other
@@ -3228,37 +3230,20 @@ function approvalStatusClass(row: PhaseTallyRow): string {
   return "upcoming";
 }
 
-function approvalRoleLabelForPhase(phase: number): string {
-  const roleOrder: ApprovalRole[] = [
-    "business",
-    "technology",
-    "finance",
-    "risk_security",
-  ];
-  const roles = new Set(
-    (PHASE_CANONICAL_KEYS[phase] ?? []).flatMap((key) =>
-      requiredApprovalRolesFor(key),
-    ),
-  );
-
-  if (roles.size === 0) {
-    return "Not yet assigned";
-  }
-
-  return roleOrder
-    .filter((role) => roles.has(role))
-    .map((role) => APPROVAL_ROLE_LABELS[role])
-    .join(" · ");
+function approvalRoleLabelForPhase(_phase: number): string {
+  return "Authorized workspace user";
 }
 
 function ApprovalsOverview({
   currentMoveId,
+  canApproveGates,
   phaseTallies,
   reachablePhase,
   viewingPhase,
   onReviewCurrentPhase,
 }: {
   currentMoveId: string;
+  canApproveGates: boolean;
   phaseTallies: PhaseTallyRow[];
   reachablePhase: number;
   viewingPhase: number;
@@ -3298,13 +3283,13 @@ function ApprovalsOverview({
             <span className="mxw-approvals-action">
               {isViewingRow ? (
                 <button onClick={onReviewCurrentPhase} type="button">
-                  Review &amp; approve →
+                  {canApproveGates ? "Review & approve →" : "View gate →"}
                 </button>
               ) : isReachable ? (
                 <Link
                   href={`/strategic-moves/${currentMoveId}/phase/${row.phase}`}
                 >
-                  Review &amp; approve →
+                  {canApproveGates ? "Review & approve →" : "View gate →"}
                 </Link>
               ) : (
                 <span className="mxw-approvals-noaction">
@@ -4117,7 +4102,8 @@ function FinderStepsColumns({
                 phaseHardGatesPassed,
               );
               const blocked = section.required && !captureStatus.complete;
-              const capturedGateOpen = captureStatus.complete && !status.complete;
+              const capturedGateOpen =
+                captureStatus.complete && !status.complete;
               const selected = selectedSectionKey === section.key;
               return (
                 <li key={section.key}>
@@ -4141,7 +4127,8 @@ function FinderStepsColumns({
                           ? "Needs input"
                           : captureStatus.label === "Evidence open"
                             ? "Needs approved evidence"
-                            : captureStatus.label === "Evidence check unavailable"
+                            : captureStatus.label ===
+                                "Evidence check unavailable"
                               ? "Evidence check unavailable"
                               : captureStatus.label}
                       </span>
@@ -4424,6 +4411,7 @@ function FinderFactsTable({ rawValue }: { rawValue: string }) {
 }
 
 function PhaseBody({
+  canApproveGates,
   carriesForwardContent,
   currentStateReadiness,
   displayMoveName,
@@ -4466,6 +4454,7 @@ function PhaseBody({
   substep,
   terminalComplete,
 }: {
+  canApproveGates: boolean;
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
   displayMoveName: string;
@@ -4627,6 +4616,7 @@ function PhaseBody({
         <CurrentStateReadinessPanel
           programId={move.id}
           readiness={currentStateReadiness}
+          canApproveGates={canApproveGates}
         />
         <section className="mxw-zone">
           <h2>Findings to review</h2>
@@ -4684,7 +4674,7 @@ function PhaseBody({
           <section className="mxw-zone">
             <h2>Files to upload</h2>
             <p>
-              Upload sponsor review notes, scope workshop notes, success metric
+              Upload stakeholder input, scope workshop notes, success metric
               decisions, stakeholder map updates, or completed charter
               templates. Multiple files are allowed; uploaded files stay as Move
               evidence until reviewed.
@@ -5143,17 +5133,6 @@ function PhaseBody({
             ))}
           </ul>
         </details>
-        <details className="mxw-gate-detail">
-          <summary>
-            <span>Role approvals</span>
-            <strong>Open review record</strong>
-          </summary>
-          <PhaseRoleApprovalsSummary
-            moveId={move.id}
-            phase={phase.phase}
-            deliverables={move.deliverables}
-          />
-        </details>
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
@@ -5167,9 +5146,9 @@ function PhaseBody({
             <span>
               P0 cannot advance on intake answers alone. Upload one source file
               for this Move in Files &amp; Evidence, review its extracted
-              content, then return here for sponsor approval. The brief is
-              signed and P1 opens only after the evidence requirement and other
-              hard checks pass.
+              content, then return here for authorized user approval. The brief
+              is signed and P1 opens only after the evidence requirement and
+              other hard checks pass.
             </span>
           </div>
         ) : null}
@@ -5186,7 +5165,7 @@ function PhaseBody({
                   : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
               </button>
             </StepHeaderActionPortal>
-          ) : phase.phase >= 1 && canSubmitSatisfiedGate ? (
+          ) : phase.phase >= 1 && canApproveGates && canSubmitSatisfiedGate ? (
             <>
               <StepHeaderActionPortal>
                 <button
@@ -5221,7 +5200,7 @@ function PhaseBody({
                 }}
               />
             </>
-          ) : phase.phase >= 1 ? (
+          ) : phase.phase >= 1 && canApproveGates ? (
             <PhaseApproveAndBuild
               archetype={move.archetype}
               approverLabel={approverLabel}
@@ -5243,7 +5222,13 @@ function PhaseBody({
               phaseLabel={`${phase.code} ${phase.title}`}
               phaseNum={phase.phase}
             />
-          ) : (
+          ) : phase.phase >= 1 ? (
+            <StepHeaderActionPortal>
+              <span className="mxw-gate-note">
+                Approval is available to an authorized workspace user.
+              </span>
+            </StepHeaderActionPortal>
+          ) : canApproveGates ? (
             <>
               {openRequiredEvidence.length === 0 ? (
                 <StepHeaderActionPortal>
@@ -5262,7 +5247,7 @@ function PhaseBody({
               <GateApprovalConfirmDialog
                 open={p0ConfirmOpen}
                 title="Approve the P0 gate?"
-                summary="This records sponsor approval of the origination brief and unlocks P1 Charter. At least one uploaded P0 source file must already have a human-approved extraction."
+                summary="This records your approval of the origination brief and unlocks P1 Charter. Your signed-in account must have Move approval permission. At least one uploaded P0 source file must already have a human-approved extraction."
                 approverLabel={approverLabel}
                 confirmLabel="Approve gate"
                 onCancel={() => setP0ConfirmOpen(false)}
@@ -5272,6 +5257,12 @@ function PhaseBody({
                 }}
               />
             </>
+          ) : (
+            <StepHeaderActionPortal>
+              <span className="mxw-gate-note">
+                Approval is available to an authorized workspace user.
+              </span>
+            </StepHeaderActionPortal>
           )}
         </div>
         {isHistoricalPhase ? (
@@ -5849,7 +5840,7 @@ function DecisionOptionsActionPanel({
         rationaleFor:
           "Highest long-term value if evidence supports broader change.",
         rationaleAgainst:
-          "Highest readiness burden and sponsor commitment required.",
+          "Highest readiness burden; accountable business owner and adoption plan required.",
       },
     ],
     [],
@@ -5857,7 +5848,7 @@ function DecisionOptionsActionPanel({
   const [title, setTitle] = useState(
     `${moveName} P${phase} key design decision`,
   );
-  const [ownerRole, setOwnerRole] = useState("Move sponsor");
+  const [ownerRole, setOwnerRole] = useState("Authorized workspace user");
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [options, setOptions] = useState(defaultOptions);
   const [status, setStatus] = useState<DecisionOptionSaveStatus>("idle");
@@ -7715,7 +7706,8 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
         <span>Open gaps</span>
         <strong>{optionSet.missingEvidence.length}</strong>
         <small>
-          {optionSet.missingEvidence[0] ?? "No open gap was supplied to this comparison"}
+          {optionSet.missingEvidence[0] ??
+            "No open gap was supplied to this comparison"}
         </small>
       </div>
     </div>
@@ -8274,15 +8266,6 @@ function MovesStandaloneStyles() {
 .mxw-gate-mini-list p{margin:3px 0 0;color:var(--muted);font-size:12px;line-height:1.35}
 .mxw-gate-mini-list em{font-style:normal;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:4px 8px;white-space:nowrap}
 .mxw-gate-mini-list li.met em{border-color:rgba(29,143,104,.28);color:var(--green)}
-.mxw-role-approvals-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:#fff}
-.mxw-role-approvals-row{display:flex;flex-direction:column;gap:5px}
-.mxw-role-approvals-title{font-size:12px;font-weight:800;color:var(--ink)}
-.mxw-role-approvals-pills{display:flex;flex-wrap:wrap;gap:6px}
-.mxw-role-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:3px 8px;border-radius:999px;white-space:nowrap}
-.mxw-role-pill-pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
-.mxw-role-pill-reviewed{border:1px solid rgba(176,115,15,.32);background:var(--amber-tint);color:var(--amber)}
-.mxw-role-pill-approved{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
-.mxw-role-pill-rejected{border:1px solid rgba(200,60,60,.35);background:rgba(200,60,60,.08);color:#B4513C}
 .mxw-approval-disclosures{display:grid;gap:9px;margin:14px 0 0}
 .mxw-approval-disclosures details{border:1px solid var(--line);border-radius:12px;background:var(--soft);overflow:hidden}
 .mxw-approval-disclosures summary{display:flex;align-items:center;justify-content:space-between;gap:14px;list-style:none;cursor:pointer;padding:11px 13px}

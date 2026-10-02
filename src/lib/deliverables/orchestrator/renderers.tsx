@@ -64,6 +64,7 @@ import type {
 } from "./types";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
+import { cellTone, CELL_TONE_HEX } from "@/lib/deliverables/shared/cell-tone";
 import {
   MAX_SLIDE_BULLETS,
   bulletFontSize,
@@ -127,7 +128,17 @@ const SOURCE_REGISTER_APPENDIX_THRESHOLD = 10;
 
 /** A light, board-grade table: muted uppercase header (bottom border only),
  *  hairline row dividers, no per-cell boxes, no navy fill. */
-function lightTable(columns: string[], rows: string[][]): Table {
+function lightTable(
+  columns: string[],
+  rows: string[][],
+  statusColumn?: number,
+): Table {
+  const statusCol =
+    typeof statusColumn === "number" &&
+    statusColumn >= 0 &&
+    statusColumn < columns.length
+      ? statusColumn
+      : null;
   const bodyFontSize = columns.length >= 5 ? 18 : 20;
   const columnWeights = columns.map((column) => {
     const label = column.trim().toLowerCase();
@@ -199,39 +210,47 @@ function lightTable(columns: string[], rows: string[][]): Table {
     (row, ri) =>
       new TableRow({
         cantSplit: true,
-        children: columns.map(
-          (_, i) =>
-            new TableCell({
-              width: { size: width(i), type: WidthType.PERCENTAGE },
-              borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                left: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                right: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                // hairline divider on every row except the last (last row no border)
-                bottom:
-                  ri === rows.length - 1
-                    ? { style: BorderStyle.NONE, size: 0, color: "auto" }
-                    : {
-                        style: BorderStyle.SINGLE,
-                        size: 2,
-                        color: TOKENS.LINE2,
-                      },
-              },
-              children: [
-                new Paragraph({
-                  spacing: { before: 40, after: 40 },
-                  children: [
-                    new TextRun({
-                      text: row[i] ?? "",
-                      font: SOURCE_DOCX.BODY_FONT,
-                      size: bodyFontSize,
-                      color: TOKENS.INK,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-        ),
+        children: columns.map((_, i) => {
+          // Colour the declared status column by value (see shared/cell-tone.ts),
+          // matching the deck; every other cell renders plain.
+          const tone =
+            statusCol !== null && i === statusCol
+              ? CELL_TONE_HEX[cellTone(row[i] ?? "")]
+              : null;
+          const shaded = tone && tone.fill ? tone : null;
+          return new TableCell({
+            width: { size: width(i), type: WidthType.PERCENTAGE },
+            ...(shaded ? { shading: { fill: shaded.fill ?? undefined } } : {}),
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+              left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+              right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+              // hairline divider on every row except the last (last row no border)
+              bottom:
+                ri === rows.length - 1
+                  ? { style: BorderStyle.NONE, size: 0, color: "auto" }
+                  : {
+                      style: BorderStyle.SINGLE,
+                      size: 2,
+                      color: TOKENS.LINE2,
+                    },
+            },
+            children: [
+              new Paragraph({
+                spacing: { before: 40, after: 40 },
+                children: [
+                  new TextRun({
+                    text: row[i] ?? "",
+                    font: SOURCE_DOCX.BODY_FONT,
+                    size: bodyFontSize,
+                    color: shaded ? shaded.text : TOKENS.INK,
+                    ...(shaded ? { bold: true } : {}),
+                  }),
+                ],
+              }),
+            ],
+          });
+        }),
       }),
   );
 
@@ -259,7 +278,7 @@ function tableToDocx(table: RenderableTable): Paragraph | Table {
       }),
     ]);
   }
-  return lightTable(table.columns, table.rows);
+  return lightTable(table.columns, table.rows, table.statusColumn);
 }
 
 function normalizeHeadingText(value: string): string {
@@ -679,10 +698,27 @@ function confidencePill(confidence: string): string {
 }
 
 function tableHtml(t: RenderableTable): string {
+  const statusCol =
+    typeof t.statusColumn === "number" &&
+    t.statusColumn >= 0 &&
+    t.statusColumn < t.columns.length
+      ? t.statusColumn
+      : null;
   const head = t.columns.map((c) => `<th>${esc(c)}</th>`).join("");
   const body = t.rows
     .map(
-      (r) => `<tr>${r.map((c) => `<td>${esc(String(c))}</td>`).join("")}</tr>`,
+      (r) =>
+        `<tr>${r
+          .map((c, i) => {
+            if (statusCol !== null && i === statusCol) {
+              const tone = CELL_TONE_HEX[cellTone(String(c))];
+              if (tone.fill) {
+                return `<td style="background:#${tone.fill};color:#${tone.text};font-weight:600">${esc(String(c))}</td>`;
+              }
+            }
+            return `<td>${esc(String(c))}</td>`;
+          })
+          .join("")}</tr>`,
     )
     .join("");
   return `<h3>${esc(t.title)}</h3><table class="md"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
@@ -853,6 +889,97 @@ function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
   return `<svg class="exhibit-svg" viewBox="0 0 ${width} 140" role="img" aria-label="${esc(exhibit.title)}">
     <defs><marker id="arrow-${domId}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs>
     ${arrows}${boxes}
+  </svg>`;
+}
+
+function svgValueTree(exhibit: RenderableExhibit): string {
+  // A value / driver tree: a root outcome on the left breaks down into branches,
+  // each branch into its drivers. The structure IS the point — what rolls up into
+  // what — so it is drawn as a tree, not a flattened list. value_tree was a
+  // declared exhibit kind the dispatch never drew; this is its renderer.
+  const data = exhibit.data;
+  if (!data || data.kind !== "value_tree" || !data.root) return "";
+  const branches = data.branches.slice(0, 6);
+  if (branches.length === 0) return "";
+
+  const rowH = 50;
+  const pad = 18;
+  const nodeH = 40;
+  const childCap = (b: (typeof branches)[number]) =>
+    Math.min(b.children?.length ?? 0, 4);
+  const slots = branches.map((b) => Math.max(1, childCap(b)));
+  const totalSlots = slots.reduce((a, b) => a + b, 0);
+  const height = pad * 2 + totalSlots * rowH;
+  const width = 720;
+  const rootX = 20;
+  const rootW = 176;
+  const brX = 276;
+  const brW = 182;
+  const chX = 520;
+  const chW = 180;
+  const slotCenterY = (k: number) => pad + k * rowH + rowH / 2;
+
+  const node = (
+    x: number,
+    w: number,
+    cy: number,
+    label: string,
+    value: string | undefined,
+    emphasis: boolean,
+  ): string => {
+    const y = cy - nodeH / 2;
+    const lines = fitLabelLines(String(label), Math.floor(w / 6.5), 2);
+    const labelSvg = lines
+      .map(
+        (ln, n) =>
+          `<text x="${x + 12}" y="${y + (lines.length > 1 ? 16 : 20) + n * 13}" font-size="10.5" font-weight="${emphasis ? 700 : 600}">${esc(ln)}</text>`,
+      )
+      .join("");
+    const valueSvg = value
+      ? `<text x="${x + w - 12}" y="${y + nodeH - 11}" text-anchor="end" font-size="10" font-weight="700" fill="var(--fresh)">${esc(String(value).slice(0, 20))}</text>`
+      : "";
+    return `<g>
+      <rect x="${x}" y="${y}" width="${w}" height="${nodeH}" rx="8" fill="${emphasis ? "#fff" : "#fff"}" stroke="var(--line)" stroke-width="${emphasis ? 1.5 : 1}"/>
+      ${labelSvg}${valueSvg}
+    </g>`;
+  };
+
+  let slotCursor = 0;
+  const branchParts: string[] = [];
+  const connectors: string[] = [];
+  const rootCY = height / 2;
+
+  branches.forEach((branch, i) => {
+    const kids = (branch.children ?? []).slice(0, 4);
+    const start = slotCursor;
+    const span = slots[i]!;
+    const branchCY = slotCenterY(start) + ((span - 1) * rowH) / 2;
+    // root → branch connector
+    connectors.push(
+      `<path d="M${rootX + rootW} ${rootCY} C ${(rootX + rootW + brX) / 2} ${rootCY}, ${(rootX + rootW + brX) / 2} ${branchCY}, ${brX} ${branchCY}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`,
+    );
+    branchParts.push(node(brX, brW, branchCY, branch.label, branch.value, true));
+    kids.forEach((child, k) => {
+      const childCY = slotCenterY(start + k);
+      connectors.push(
+        `<path d="M${brX + brW} ${branchCY} C ${(brX + brW + chX) / 2} ${branchCY}, ${(brX + brW + chX) / 2} ${childCY}, ${chX} ${childCY}" fill="none" stroke="var(--line)" stroke-width="1"/>`,
+      );
+      branchParts.push(node(chX, chW, childCY, child.label, child.value, false));
+    });
+    slotCursor += span;
+  });
+
+  const rootNode = node(
+    rootX,
+    rootW,
+    rootCY,
+    data.root.label,
+    data.root.value,
+    true,
+  );
+
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(exhibit.title)}">
+    ${connectors.join("")}${rootNode}${branchParts.join("")}
   </svg>`;
 }
 
@@ -1251,6 +1378,8 @@ function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
     return svgRoadmapExhibit(dataExhibit);
   if (dataExhibit.kind === "flow" || dataExhibit.data?.kind === "flow")
     return svgFlowExhibit(dataExhibit, domId);
+  if (dataExhibit.data?.kind === "value_tree")
+    return svgValueTree(dataExhibit);
   return null;
 }
 
@@ -1453,7 +1582,17 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
  *  (muted uppercase header, hairline row dividers, no navy fill), since
  *  `PDF_STYLES.table`'s default header is a solid navy fill built for
  *  Source's house style, not this orchestrator's. */
-function pdfLightTable(columns: string[], rows: string[][]): ReactElement {
+function pdfLightTable(
+  columns: string[],
+  rows: string[][],
+  statusColumn?: number,
+): ReactElement {
+  const statusCol =
+    typeof statusColumn === "number" &&
+    statusColumn >= 0 &&
+    statusColumn < columns.length
+      ? statusColumn
+      : null;
   return (
     <PdfView style={{ marginVertical: 8 }}>
       <PdfView
@@ -1493,16 +1632,34 @@ function pdfLightTable(columns: string[], rows: string[][]): ReactElement {
             borderBottomWidth: ri === rows.length - 1 ? 0 : 0.5,
           }}
         >
-          {columns.map((_, i) => (
-            <PdfView
-              key={i}
-              style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 4 }}
-            >
-              <PdfText style={{ fontSize: 9, color: PDF_COLORS.HEADER }}>
-                {row[i] ?? ""}
-              </PdfText>
-            </PdfView>
-          ))}
+          {columns.map((_, i) => {
+            const tone =
+              statusCol !== null && i === statusCol
+                ? CELL_TONE_HEX[cellTone(row[i] ?? "")]
+                : null;
+            const shaded = tone && tone.fill ? tone : null;
+            return (
+              <PdfView
+                key={i}
+                style={{
+                  flex: 1,
+                  paddingHorizontal: 6,
+                  paddingVertical: 4,
+                  ...(shaded ? { backgroundColor: `#${shaded.fill}` } : {}),
+                }}
+              >
+                <PdfText
+                  style={{
+                    fontSize: 9,
+                    color: shaded ? `#${shaded.text}` : PDF_COLORS.HEADER,
+                    ...(shaded ? { fontFamily: PDF_FONTS.BODY_BOLD } : {}),
+                  }}
+                >
+                  {row[i] ?? ""}
+                </PdfText>
+              </PdfView>
+            );
+          })}
         </PdfView>
       ))}
     </PdfView>
@@ -1523,7 +1680,7 @@ function tableToPdf(table: RenderableTable): ReactElement {
       </PdfText>
     );
   }
-  return pdfLightTable(table.columns, table.rows);
+  return pdfLightTable(table.columns, table.rows, table.statusColumn);
 }
 
 /** Rasterise one exhibit to a PNG and embed it as a PDF `<Image>`, with the
@@ -1749,6 +1906,10 @@ function addPptxChrome(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
+  // The closing slide carries its own full status footer; every other content
+  // slide gets a short running confidentiality mark so no page leaves the room
+  // unmarked (the gold-standard decks footer every slide).
+  addFooter = true,
 ): void {
   slide.addText(
     `${doc.clientDisplayName.toUpperCase()} · ${doc.title.toUpperCase()}`,
@@ -1781,6 +1942,21 @@ function addPptxChrome(
     h: 0,
     line: { color: PPTX_COLOR.line, width: 0.75 },
   });
+  if (addFooter) {
+    slide.addText(
+      `${doc.clientDisplayName} · Confidential · AI-generated working draft`,
+      {
+        x: 0.55,
+        y: 7.17,
+        w: 12.2,
+        h: 0.22,
+        fontFace: "Arial",
+        fontSize: 7,
+        color: PPTX_COLOR.muted,
+        charSpacing: 0.5,
+      },
+    );
+  }
 }
 
 function addPptxExhibitSlide(
@@ -2005,21 +2181,47 @@ function addPptxTableSlide(
     });
     return;
   }
+  // A dark header row reads as a board table rather than a spreadsheet dump —
+  // it is the single change that most distinguishes an executive exhibit from a
+  // printed grid (the gold-standard decks use a dark header band on every table).
   const header = table.columns.map((c) => ({
     text: c,
     options: {
       bold: true,
-      color: PPTX_COLOR.muted,
+      color: PPTX_COLOR.white,
       fontFace: "Arial",
       fontSize: 9,
-      fill: { color: PPTX_COLOR.paper },
+      fill: { color: PPTX_COLOR.ink },
     },
   }));
+  const statusCol =
+    typeof table.statusColumn === "number" &&
+    table.statusColumn >= 0 &&
+    table.statusColumn < table.columns.length
+      ? table.statusColumn
+      : null;
   const bodyRows = table.rows.slice(0, 14).map((row) =>
-    row.map((cell) => ({
-      text: cell,
-      options: { color: PPTX_COLOR.ink, fontFace: "Arial", fontSize: 10 },
-    })),
+    row.map((cell, colIndex) => {
+      // Colour the declared status/RAG/ownership column by its value so the
+      // table reads at a glance; every other cell renders plain.
+      if (statusCol !== null && colIndex === statusCol) {
+        const tone = CELL_TONE_HEX[cellTone(cell)];
+        return {
+          text: cell,
+          options: {
+            color: tone.text,
+            bold: tone.fill !== null,
+            fontFace: "Arial",
+            fontSize: 10,
+            ...(tone.fill ? { fill: { color: tone.fill } } : {}),
+          },
+        };
+      }
+      return {
+        text: cell,
+        options: { color: PPTX_COLOR.ink, fontFace: "Arial", fontSize: 10 },
+      };
+    }),
   );
   slide.addTable([header, ...bodyRows], {
     x: 0.72,
@@ -2284,7 +2486,7 @@ export async function renderDeliverablePptx(
   // Closing slide: recommendation, next actions, client-to-complete checklist.
   const closingSlide = pptx.addSlide();
   closingSlide.background = { color: PPTX_COLOR.cream };
-  addPptxChrome(closingSlide, doc, slideNumber, totalSlides);
+  addPptxChrome(closingSlide, doc, slideNumber, totalSlides, false);
   closingSlide.addText("RECOMMENDATION & NEXT ACTIONS", {
     x: 0.72,
     y: 0.85,

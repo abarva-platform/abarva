@@ -1,13 +1,11 @@
 import { describe, expect, it } from "@jest/globals";
 import {
-  SelfApprovalViolationError,
   UnresolvedRateGapError,
   checkSnapshotStaleness,
   computeUpstreamScopeFingerprint,
   createEstimateSnapshot,
   getApprovedSnapshotForMove,
   resolvePreparedBy,
-  assertSegregationOfDuties,
   toScopeFingerprintInput,
   type EstimateScopeLookupPort,
   type SnapshotCandidate,
@@ -276,7 +274,7 @@ describe("computeUpstreamScopeFingerprint", () => {
 });
 
 // ---------------------------------------------------------------------------
-// resolvePreparedBy / assertSegregationOfDuties
+// resolvePreparedBy
 // ---------------------------------------------------------------------------
 
 describe("resolvePreparedBy", () => {
@@ -322,35 +320,6 @@ describe("resolvePreparedBy", () => {
   });
 });
 
-describe("assertSegregationOfDuties", () => {
-  it("allows self-approval in pilot mode when approver === preparer", () => {
-    delete process.env.GATE_APPROVAL_STRICT_MODE;
-    expect(() =>
-      assertSegregationOfDuties("same@abarva.ai", "same@abarva.ai"),
-    ).not.toThrow();
-  });
-
-  it("throws SelfApprovalViolationError in strict mode when approver === preparer", () => {
-    process.env.GATE_APPROVAL_STRICT_MODE = "true";
-    expect(() =>
-      assertSegregationOfDuties("same@abarva.ai", "same@abarva.ai"),
-    ).toThrow(SelfApprovalViolationError);
-    delete process.env.GATE_APPROVAL_STRICT_MODE;
-  });
-
-  it("does not throw when approver differs from preparer", () => {
-    expect(() =>
-      assertSegregationOfDuties("approver@abarva.ai", "preparer@abarva.ai"),
-    ).not.toThrow();
-  });
-
-  it("does not throw when preparedBy is null (no identity signal to compare against)", () => {
-    expect(() =>
-      assertSegregationOfDuties("approver@abarva.ai", null),
-    ).not.toThrow();
-  });
-});
-
 // ---------------------------------------------------------------------------
 // createEstimateSnapshot
 // ---------------------------------------------------------------------------
@@ -382,8 +351,8 @@ describe("createEstimateSnapshot", () => {
     expect(store.rows).toHaveLength(0);
   });
 
-  it("records a pilot self-approval note instead of silently accepting same-preparer approval", async () => {
-    delete process.env.GATE_APPROVAL_STRICT_MODE;
+  it("allows authorized-user self-approval in strict mode and records it in the immutable rationale", async () => {
+    process.env.GATE_APPROVAL_STRICT_MODE = "true";
     const store = createFakeSnapshotStore();
     const snapshot = await createEstimateSnapshot(
       baseCandidate({
@@ -394,24 +363,9 @@ describe("createEstimateSnapshot", () => {
     );
     expect(snapshot.status).toBe("approved");
     expect(snapshot.approval_rationale).toContain(
-      "Pilot approval note: the approver is also the pricing estimate preparer",
+      "Approval audit note: the authorized workspace user is also the pricing estimate preparer",
     );
     expect(store.rows).toHaveLength(1);
-  });
-
-  it("rejects a self-approval in strict mode before writing anything", async () => {
-    process.env.GATE_APPROVAL_STRICT_MODE = "true";
-    const store = createFakeSnapshotStore();
-    await expect(
-      createEstimateSnapshot(
-        baseCandidate({
-          approvedBy: "preparer@abarva.ai",
-          preparedBy: "preparer@abarva.ai",
-        }),
-        store,
-      ),
-    ).rejects.toThrow(SelfApprovalViolationError);
-    expect(store.rows).toHaveLength(0);
     delete process.env.GATE_APPROVAL_STRICT_MODE;
   });
 

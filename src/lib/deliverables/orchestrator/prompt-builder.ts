@@ -31,6 +31,10 @@ import type {
   MovesDeliverableKey,
 } from "@/lib/deliverables/profiles/types";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import {
+  deckContractIdForDeliverable,
+  renderDeckContractPrompt,
+} from "@/lib/deliverables/shared/deck-story-contract";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
@@ -529,13 +533,67 @@ const SECTION_SCHEMA_HINT = `Return ONLY JSON for THIS ONE section:
  * own, and the artifact was blocked for having too few. A requirement the
  * writer cannot see is not a quality bar, it is a coin toss.
  */
+/**
+ * The decision-journey contract for this deck — the slide flow, message-led
+ * titles, density, one-message/one-visual discipline and required elements —
+ * stated to the generator. Empty for a non-PPTX request or a deliverable with
+ * no deck contract. This is the richer companion to deckLengthInstruction (which
+ * states only the count band): a bar the writer cannot see is a coin toss.
+ */
+export function deckStoryContractInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!req.outputFormats.includes("pptx")) return "";
+  const id = deckContractIdForDeliverable(req.deliverableType);
+  if (!id) return "";
+  return renderDeckContractPrompt(id);
+}
+
+/** Deck deliverable types technical enough to earn a plain-English mirror slide. */
+const PLAIN_ENGLISH_MIRROR_TYPES: ReadonlySet<string> = new Set([
+  "target_state_architecture",
+  "solution_design",
+  "operating_model_design",
+]);
+
+/**
+ * For a technical deck, ask for ONE plain-English mirror slide near the front —
+ * the same story the deck tells, for the executive in the room who does not need
+ * the jargon. It restates, it does not add: no figure or claim that is not
+ * already made (and grounded) elsewhere in the deck. Empty for a non-PPTX request
+ * or a non-technical deliverable. (The PHS gold-standard deck's "same
+ * architecture, no jargon" slide.)
+ */
+export function plainEnglishMirrorInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!req.outputFormats.includes("pptx")) return "";
+  if (!PLAIN_ENGLISH_MIRROR_TYPES.has(req.deliverableType)) return "";
+  return (
+    "PLAIN-ENGLISH MIRROR: include exactly one early slide that retells this " +
+    "deck's story in plain English for the executive who does not need the " +
+    "technical vocabulary — the same architecture, no jargon. Its governing " +
+    "message is the outcome in business terms; its points name the steps the way " +
+    "a non-technical sponsor would say them. It RESTATES only: introduce no " +
+    "figure, system name or claim that is not already made and grounded elsewhere " +
+    "in the deck, and point it at the technical slides that carry the detail."
+  );
+}
+
 export function deckLengthInstruction(
   req: DeliverableIntelligenceRequest,
 ): string {
   if (!req.outputFormats.includes("pptx")) return "";
   const band = SLIDE_BANDS[req.deliverableType as DeliverableKey];
   if (!band) return "";
-  return `DECK LENGTH: "deckSlides" must contain between ${band.min} and ${band.max} slides. This deck is for: ${band.purpose}. Fewer than ${band.min} reads as a section list, not an argument, and fails the quality gate; more than ${band.max} stops being read. One governing message per slide. Reach the band by giving each distinct step of the argument its own slide — never by repeating a message or adding a slide with nothing to decide.`;
+  // Honour a depth-aware slide floor so the generator is told the SAME min the
+  // gate will enforce (a bar the writer cannot see is a coin toss). It can only
+  // lower the band's min for a smaller-scope Move; the ceiling is unchanged.
+  const min =
+    typeof req.qualityBar.slideFloor === "number"
+      ? Math.max(1, Math.min(band.min, Math.round(req.qualityBar.slideFloor)))
+      : band.min;
+  return `DECK LENGTH: "deckSlides" must contain between ${min} and ${band.max} slides. This deck is for: ${band.purpose}. Fewer than ${min} reads as a section list, not an argument, and fails the quality gate; more than ${band.max} stops being read. One governing message per slide. Reach the band by giving each distinct step of the argument its own slide — never by repeating a message or adding a slide with nothing to decide.`;
 }
 
 /**
@@ -589,10 +647,11 @@ export function requiredExhibitsInstruction(
 const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
-  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx"}],
+  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx","statusColumn":n}],
   "exhibits":[{"key","title","kind","description","targetFormat":"pptx","data":{}}],
   "clientCompleteChecklist":[{"key","label","owner","reason":"client_judgment|legal_review|procurement_signoff|pricing_signoff","placeholderText"}] }
 If PPTX is an output format, populate deckSlides. Each deck slide must have one governingMessage (the argument), 0-4 short supporting points, optional speakerNotes for evidence/traceability, and an optional exhibitKey pointing to an exhibit below. Do not make the renderer infer slide craft from prose.
+A decision table should end in a column that names the owner or the decision, not raw detail. When a table has a status/RAG/ownership column (e.g. risk level, acceptance pass/fail, readiness state, owner), set "statusColumn" to that column's zero-based index so the renderer colours it by value; omit statusColumn for a table with no such column.
 For exhibits, do not merely repeat the exhibit name or purpose. Populate data with the concrete values the renderer should draw. Supported payloads:
 - flow: {"kind":"flow","nodes":[{"id","label","role"}],"edges":[{"from","to","label"}]}
 - matrix/heatmap/comparison: {"kind":"matrix","axes":{"x","y"},"cells":[{"x","y","label","value","weight"}]}
@@ -606,7 +665,7 @@ const RENDER_SCHEMA_HINT = `Return ONLY JSON matching RenderableDeliverable:
 { "title","subtitle","clientDisplayName","initiativeDisplayName",
   "generatedSections":[{"key","title","bodyMarkdown","groundingMode","citationsUsed":[n]}],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
-  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat"}],
+  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat","statusColumn":n}],
   "exhibits":[{"key","title","kind","description","targetFormat","data":{}}],
   "sourceRegister":[{"citationNumber","label","evidenceFamily","confidence","asOf"}],
   "assumptions":[...], "clientCompleteChecklist":[...], "recommendation", "nextActions":[] }`;
@@ -824,6 +883,8 @@ export function buildPassPrompt(
         `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
         `Requirements: ${recommendationRequirement} ${nextActionsRequirement} ${riskTableRequirement} If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
         deckLengthInstruction(req),
+        deckStoryContractInstruction(req),
+        plainEnglishMirrorInstruction(req),
         requiredExhibitsInstruction(req),
         SYNTHESIS_SCHEMA_HINT,
         ``,

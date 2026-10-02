@@ -5,33 +5,9 @@
 // P0 close helper or governed advancePhase path to create approved phase
 // snapshots and advance the Move.
 //
-// INCIDENT 2026-07-20 (fixed here): this route used to call
-// `preparePhaseGateApprovalRecords`, which — for EVERY phase, unconditionally
-// — auto-CREATED a placeholder `deliverables_v2` row (content: literally
-// "P{phase} gate approval record\n\n{rationale}", no real generated content)
-// for a hardcoded `PHASE_GATE_DELIVERABLES` map, then immediately called
-// `signOffDeliverable` on it, all BEFORE `evaluateGate` ever ran. For P3 the
-// map's keys (`design_spec`, `requirements_traceability`) were STALE — the
-// real orchestrator registry (deliverable-registry.ts) has never produced
-// those exact type keys since it was restructured to produce
-// `target_state_architecture`/`solution_design`/`operating_model_design`/
-// `sourcing_strategy` instead. Because no real row with those stale keys
-// could ever exist, this branch fabricated-and-signed-off a fake stand-in
-// EVERY time, regardless of whether real P3 generation had run at all — this
-// is exactly how a real Move (MEMBER AI ASSIST) advanced P3→P4 with zero real
-// P3 deliverables ever generated. `evaluateGate`'s `design_approved`/
-// `requirements_design_outcome_trace` hard checks then genuinely found these
-// fabricated, self-signed rows and passed — this was never a gate bypass or
-// an override; it was a real hard-gate pass on fabricated evidence.
-//
-// Fix: this route no longer creates or signs off ANYTHING. `evaluateGate`
-// (governance.ts) already independently and correctly checks every phase's
-// REAL required deliverables against REAL `deliverables_v2` rows (updated
-// this session to also require role approvals where applicable, and to
-// require a genuinely completed phase module before any free-text fallback
-// can contribute) — that is the single, authoritative gate. Duplicating a
-// subset of that logic here with a second, stale, unmaintained map was the
-// root cause; the fix is to delete the duplicate, not patch it again.
+// Gate approval relies on the single authoritative `evaluateGate` check.
+// This route must not synthesize deliverable rows or mark generated content
+// signed off; only reviewed deliverables and completed phase inputs count.
 
 import { NextRequest } from "next/server";
 import {
@@ -48,6 +24,7 @@ import {
 import { evaluateGate } from "@/lib/programs/governance";
 import { advancePhase } from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
+import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
 import {
@@ -57,9 +34,7 @@ import {
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
-import {
-  loadApprovedMoveEvidenceSnapshot,
-} from "@/lib/programs/approved-move-evidence-snapshot";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import {
   phaseApprovalMatchesEvidence,
@@ -144,7 +119,10 @@ async function captureCompletion(
   const confirmedSolutionRoute =
     phase === 3
       ? resolveConfirmedSolutionRoute({
-          businessChangeAssessment: moduleValue(1, "business_change_assessment"),
+          businessChangeAssessment: moduleValue(
+            1,
+            "business_change_assessment",
+          ),
           routeValidation: moduleValue(2, "solution_route_validation"),
           approvedEvidenceReferences: (
             await listApprovedPhaseEvidence(ctx, programId, 2)
@@ -152,7 +130,10 @@ async function captureCompletion(
         })
       : null;
   const missing: string[] = [];
-  for (const section of getPhaseCaptureSections(phase, confirmedSolutionRoute)) {
+  for (const section of getPhaseCaptureSections(
+    phase,
+    confirmedSolutionRoute,
+  )) {
     const capturedModule = modules.find(
       (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
     );
@@ -220,53 +201,6 @@ async function loadEvidenceState(
   } catch {
     return null;
   }
-}
-
-async function ensureSponsorAuthorityForApprover(
-  sb: ReturnType<typeof getAzureWriteFluentClient>,
-  programId: string,
-  ctx: Awaited<ReturnType<typeof requireTenancy>>,
-): Promise<void> {
-  const { data: sponsorRows, error: sponsorError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("approval_authority", "sponsor")
-    .limit(1);
-  if (sponsorError) throw sponsorError;
-  if (((sponsorRows as Array<{ id: string }> | null) ?? []).length > 0) return;
-
-  const { data: currentRows, error: currentError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("user_id", ctx.userId)
-    .limit(1);
-  if (currentError) throw currentError;
-
-  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ??
-    [])[0];
-  if (currentParticipant) {
-    const { error } = await sb
-      .from("engagement_participants")
-      .update({
-        role: "Sponsor",
-        approval_authority: "sponsor",
-      })
-      .eq("id", currentParticipant.id)
-      .eq("engagement_id", programId);
-    if (error) throw error;
-    return;
-  }
-
-  const { error } = await sb.from("engagement_participants").insert({
-    engagement_id: programId,
-    user_id: ctx.userId,
-    user_name: ctx.email ?? ctx.userId,
-    role: "Sponsor",
-    approval_authority: "sponsor",
-  });
-  if (error) throw error;
 }
 
 async function completeTerminalTowerHandoff(
@@ -468,7 +402,11 @@ export async function POST(
     }
 
     const policy = await loadUserProgramAccessPolicy(ctx, { programId });
-    if (!policy.canApproveGates) {
+    if (
+      !policy.canApproveGates ||
+      (Array.isArray(policy.programIdsAllowed) &&
+        !policy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
         {
           error: "forbidden",
@@ -628,12 +566,8 @@ export async function POST(
     const toPhase = phase + 1;
     // No deliverable is created or signed off here — evaluateGate below is
     // the single, authoritative check against REAL deliverables_v2 rows.
-    // ensureSponsorAuthorityForApprover is unrelated to deliverable
-    // fabrication (it only grants the approving user sponsor authority when
-    // none exists yet for P0→P1) and is kept as-is.
-    if (phase === 1) {
-      await ensureSponsorAuthorityForApprover(sb, programId, ctx);
-    }
+    // The authenticated actor remains the approver; sponsor contacts are never
+    // promoted or rewritten as a side effect of approving a gate.
     const gate = await evaluateGate(ctx, programId, phase, toPhase, {
       supabase: sb,
       allowHistoricalPhase: phase < (program.currentPhase ?? 0),
@@ -745,6 +679,13 @@ export async function POST(
       fromState: `P${phase}`,
       toState: `P${toPhase}`,
       rationale,
+    });
+    await sendMoveProgressUpdate({
+      ctx,
+      programId,
+      moveName: program.name ?? `Move ${programId}`,
+      fromPhase: phase,
+      toPhase: advanced.newPhase,
     });
 
     return Response.json({

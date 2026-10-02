@@ -72,14 +72,14 @@ describe("rendered AI control suite CI ownership", () => {
     ).toBe(true);
   });
 
-  it("runs both approval-action files by exact path", () => {
+  it("runs the active approval-action suite by exact path", () => {
     const command = jestCommands().find((candidate) =>
       candidate.includes("programs/approvals/_actions/__tests__"),
     );
 
     expect(command).toContain("--runTestsByPath");
     expect(command).toContain("escalate-approval.test.ts");
-    expect(command).toContain("notify-sponsor.test.ts");
+    expect(command).not.toContain("notify-sponsor.test.ts");
   });
 
   it("keeps all three directories fully owned in the generated census", () => {

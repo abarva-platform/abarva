@@ -10,6 +10,7 @@ import {
 } from "../generate-service";
 import { getArtifactBrief } from "../artifact-brief-registry";
 import { FIRST_CAPITAL_ARCHITECTURE } from "@/lib/visual-system/__fixtures__/first-capital-architecture";
+import { ArchitectureRefusalError } from "@/lib/visual-system/architecture-generation";
 import type { GovernedEvidenceItem, OrchestrationResult } from "../index";
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
 import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-plan";
@@ -1405,6 +1406,100 @@ describe("runDeliverableForTenant", () => {
 
     expect(out.ok).toBe(false);
     expect(out.blockedReason).toMatch(/architecture_assembly_failed/);
+    expect(fallbackModel).toBeUndefined();
+    delete process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS;
+  });
+
+  it("blocks Target Architecture as a first-class policy refusal — never routed to another model", async () => {
+    process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS =
+      "skyharbor-air";
+    let fallbackModel: unknown;
+    const generate = (async () =>
+      ({
+        ok: true,
+        brief: {
+          deliverableType: "target_architecture",
+          module: "moves",
+        } as never,
+        document: {
+          generatedSections: [
+            {
+              title: "Current state",
+              bodyMarkdown: "Recovery decisions are fragmented.",
+            },
+          ],
+          clientDisplayName: "SkyHarbor Air",
+          initiativeDisplayName: "IROPS Agentic Response",
+        } as never,
+        quality: { pass: true, warnings: [] } as never,
+        passTrace: [],
+      }) as OrchestrationResult) as never;
+    const persist = (async (_r: unknown, opts: unknown) => {
+      fallbackModel = (
+        opts as { structuredModels?: { architectureModel?: unknown } }
+      ).structuredModels?.architectureModel;
+      return { id: "art-refused" };
+    }) as never;
+    const plan: DeliverablePlan = {
+      artifactType: "target_state_architecture",
+      audience: "cio",
+      decisionPurpose: "Approve the target recovery command architecture.",
+      storyline: "Current fragmentation must become a governed decision system.",
+      currentStateInterpretation:
+        "Recovery decisions are manually coordinated today.",
+      majorGaps: [
+        {
+          id: "g1",
+          observation: "Decisions are fragmented.",
+          gap: "Shared context is missing.",
+          designImplication: "Create a governed context layer.",
+        },
+      ],
+      targetStateHypothesis:
+        "A governed AI-assisted decision loop improves recovery command.",
+      requiredDecisions: ["Approve the target architecture."],
+      requiredExhibits: [],
+      narrativeSequence: [
+        { id: "b1", point: "Current state fragments decisions." },
+        { id: "b2", point: "A governed context gap remains." },
+        { id: "b3", point: "Target state creates governed approvals." },
+      ],
+      evidenceNeeded: [],
+      missingInputs: ["Confirm integration protocols."],
+      assumptions: [],
+      risks: [],
+      readerTakeaway: "The reader can explain the target architecture.",
+    };
+    const generateArchitecture = (async () => {
+      throw new ArchitectureRefusalError("cyber", "Flagged by policy.");
+    }) as never;
+
+    const out = await runDeliverableForTenant(
+      {
+        ...baseInput,
+        module: "moves" as const,
+        deliverableType: "target_architecture",
+      },
+      {
+        assemble,
+        loadPolicy,
+        generate,
+        persist,
+        generatePlan: (async () => ({ plan })) as never,
+        generateArchitecture,
+      },
+    );
+
+    expect(out.ok).toBe(false);
+    // Distinct from a generic assembly failure: named refusal + category.
+    expect(out.blockedReason).toMatch(/architecture_generation_refused/);
+    expect(out.blockedReason).not.toMatch(/architecture_assembly_failed/);
+    expect(out.blockedReason).toContain("policy category: cyber");
+    // The human-facing blocker states it is blocked, not re-routed.
+    expect(out.blockers?.join(" ")).toMatch(
+      /never routed to a different model/i,
+    );
+    // Nothing was persisted from a deterministic model swap.
     expect(fallbackModel).toBeUndefined();
     delete process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS;
   });

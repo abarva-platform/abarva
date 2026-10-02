@@ -266,7 +266,7 @@ export async function buildPhaseWordEquivalentDocx(
   const status =
     input.reviewStatus ??
     (input.generationMode === "draft"
-      ? "Pre-gate draft - sponsor review required"
+      ? "Pre-gate draft - authorized workspace review required"
       : "Draft - client review required");
   const extracted = stripHtml(input.html);
   const coverChildren: DocChild[] = [
@@ -331,7 +331,7 @@ export async function buildPhaseWordEquivalentDocx(
     ),
     heading("Client-to-Complete / Validate in P2", 1),
     paragraph(
-      "Client to complete: sponsor approval, scope confirmation, completed P2 workshop outputs, evidence uploads, and current-state validation before design, roadmap, estimate, or Tower claims are generated.",
+      "Client to complete: scope confirmation, completed P2 workshop outputs, evidence uploads, and current-state validation before design, roadmap, estimate, or Tower claims are generated. Sponsor approval is not required; an authorized workspace user records product approvals.",
       { italics: true, color: MUTED },
     ),
     heading("Extracted Review Text", 1),
@@ -422,7 +422,7 @@ export async function buildPhaseWordEquivalentDocx(
   } else {
     children.push(
       paragraph(
-        "Client to complete: sponsor approval, workshop notes, client corrections, and final phase signoff before this record becomes final.",
+        "Client to complete: workshop notes, client corrections, and required evidence review before this record becomes final. An authorized workspace user records final phase approval; sponsor approval is not required.",
         { italics: true, color: MUTED },
       ),
     );
@@ -489,7 +489,7 @@ export async function buildPhaseWordEquivalentDocx(
               new Paragraph({
                 alignment: AlignmentType.CENTER,
                 children: [
-                  new TextRun({ text: "Draft for sponsor review | Page ", size: 16, color: MUTED }),
+                  new TextRun({ text: "Draft for workspace review | Page ", size: 16, color: MUTED }),
                   new TextRun({ children: [PageNumber.CURRENT], size: 16, color: MUTED }),
                   new TextRun({ text: " of ", size: 16, color: MUTED }),
                   new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: MUTED }),

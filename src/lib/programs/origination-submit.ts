@@ -63,6 +63,7 @@ export interface SubmitOriginationBriefInput {
   timeline?: string | null;
   classification?: string | null;
   sponsor: string;
+  sponsorProgressEmails?: boolean;
   lead?: string | null;
   matchedPatternId?: string | null;
   // Extended scaffold fields (steps 4–9). `scopeBoundary` is the legacy
@@ -421,7 +422,9 @@ async function insertParticipant(input: {
   programId: string;
   person: ResolvedPerson;
   role: string;
-  approvalAuthority: "sponsor" | "contributor";
+  approvalAuthority: "contributor";
+  progressContact?: boolean;
+  sendProgressEmails?: boolean;
 }): Promise<void> {
   const sb = getAzureWriteFluentClient();
   const basePayload = {
@@ -429,18 +432,21 @@ async function insertParticipant(input: {
     user_id: input.person.id,
     user_name: input.person.name,
     role: input.role,
-    notify_on: ["phase_gate", "approval"],
+    notify_on:
+      input.progressContact && input.sendProgressEmails ? ["phase_gate"] : [],
     approval_authority: input.approvalAuthority,
     last_touchpoint_at: new Date().toISOString(),
   };
   const { error } = await sb.from("engagement_participants").insert({
     ...basePayload,
-    program_access_level: "program_member",
+    program_access_level: input.progressContact
+      ? "program_viewer"
+      : "program_member",
     can_view_financial: false,
-    can_upload: true,
-    can_generate_deliverables: true,
-    can_publish_deliverables: input.approvalAuthority === "sponsor",
-    can_approve_phase_gates: input.approvalAuthority === "sponsor",
+    can_upload: !input.progressContact,
+    can_generate_deliverables: !input.progressContact,
+    can_publish_deliverables: false,
+    can_approve_phase_gates: false,
   });
   if (
     error &&
@@ -658,6 +664,7 @@ export async function submitOriginationBrief(
     timeline: optionalText(rawInput.timeline),
     classification: optionalText(rawInput.classification),
     sponsor: requiredText(rawInput.sponsor, "sponsor"),
+    sponsorProgressEmails: rawInput.sponsorProgressEmails === true,
     lead:
       optionalText(rawInput.lead) ?? requiredText(rawInput.sponsor, "sponsor"),
     matchedPatternId: optionalText(rawInput.matchedPatternId),
@@ -1033,14 +1040,18 @@ export async function submitOriginationBrief(
       programId,
       person: sponsor,
       role: "Sponsor",
-      approvalAuthority: "sponsor",
+      approvalAuthority: "contributor",
+      progressContact: true,
+      sendProgressEmails: input.sponsorProgressEmails,
     });
     if (coSponsor && coSponsor.id !== sponsor.id) {
       await insertParticipant({
         programId,
         person: coSponsor,
         role: "Co-sponsor",
-        approvalAuthority: "sponsor",
+        approvalAuthority: "contributor",
+        progressContact: true,
+        sendProgressEmails: input.sponsorProgressEmails,
       });
     }
     if (lead.id !== sponsor.id) {

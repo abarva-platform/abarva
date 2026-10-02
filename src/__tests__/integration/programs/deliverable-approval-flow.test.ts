@@ -292,11 +292,10 @@ describe('canonical type tuples', () => {
     ]);
   });
 
-  it('LOCK_REASONS_IN_ORDER covers all four reasons', () => {
+  it('LOCK_REASONS_IN_ORDER covers all three reasons', () => {
     expect(LOCK_REASONS_IN_ORDER).toEqual([
       'approved_final',
       'board_presented',
-      'client_signed_off',
       'archived',
     ]);
   });
@@ -310,23 +309,21 @@ describe('canonical type tuples', () => {
     ]);
   });
 
-  it('REVIEWER_ROLES_IN_ORDER covers all five roles', () => {
+  it('REVIEWER_ROLES_IN_ORDER covers all four roles', () => {
     expect(REVIEWER_ROLES_IN_ORDER).toEqual([
       'maestro',
       'steward',
-      'client_sponsor',
-      'cxo_sponsor',
+      'authorized_workspace_user',
       'external_reviewer',
     ]);
   });
 
-  it('APPROVAL_BLOCKERS_IN_ORDER covers all five blockers', () => {
+  it('APPROVAL_BLOCKERS_IN_ORDER covers all four blockers', () => {
     expect(APPROVAL_BLOCKERS_IN_ORDER).toEqual([
       'missing_evidence',
       'unresolved_risk',
       'pending_review',
       'locked_by_prior',
-      'needs_sponsor_signoff',
     ]);
   });
 });

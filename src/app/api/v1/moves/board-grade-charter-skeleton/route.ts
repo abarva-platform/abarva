@@ -101,7 +101,7 @@ export async function GET(req: NextRequest): Promise<Response> {
         phaseOrStage: "P1_charter",
         artifactStandard: "moves.board_grade.charter",
         decisionContext:
-          "Approve chartering of the Move, including scope, sponsor accountability, value hypothesis, operating model, and phase gates.",
+          "Approve chartering of the Move, including scope, accountable ownership, listed sponsor contact, value hypothesis, operating model, and phase gates. Product approval is recorded by an authorized workspace user.",
         audience: ["board", "cio", "cfo", "steering_committee"],
       });
       if (orchestrated) return orchestrated;

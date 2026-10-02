@@ -4,6 +4,7 @@ const tenancy = {
   userId: "reviewer-1",
   email: "reviewer@example.test",
 };
+let callerRole = "workspace_member";
 
 const htmlArtifact = {
   artifact_id: "html-artifact",
@@ -47,6 +48,7 @@ const docxArtifact = {
 
 let insertedDecision: Record<string, unknown> | null = null;
 let latestDecision: Record<string, unknown> | null = null;
+let mockCanApproveGates = true;
 
 function builder(table: string) {
   const state: { insertPayload?: Record<string, unknown> } = {};
@@ -56,30 +58,30 @@ function builder(table: string) {
   api.order = jest.fn(() => api);
   api.limit = jest.fn(() => api);
   api.insert = jest.fn((payload: Record<string, unknown>) => {
-      state.insertPayload = payload;
-      return api;
+    state.insertPayload = payload;
+    return api;
   });
   api.maybeSingle = jest.fn(async () => {
-      if (table === "move_artifacts") return { data: docxArtifact, error: null };
-      if (table === "move_artifact_review_decisions") {
-        return { data: latestDecision, error: null };
-      }
-      return { data: null, error: null };
+    if (table === "move_artifacts") return { data: docxArtifact, error: null };
+    if (table === "move_artifact_review_decisions") {
+      return { data: latestDecision, error: null };
+    }
+    return { data: null, error: null };
   });
   api.single = jest.fn(async () => {
-      insertedDecision = {
-        id: "decision-1",
-        created_at: "2026-06-28T01:00:00Z",
-        ...(state.insertPayload ?? {}),
-      };
-      latestDecision = insertedDecision;
-      return { data: insertedDecision, error: null };
+    insertedDecision = {
+      id: "decision-1",
+      created_at: "2026-06-28T01:00:00Z",
+      ...(state.insertPayload ?? {}),
+    };
+    latestDecision = insertedDecision;
+    return { data: insertedDecision, error: null };
   });
   return api;
 }
 
 jest.mock("../../../../../_auth", () => ({
-  requireTenancy: jest.fn(async () => tenancy),
+  requireTenancy: jest.fn(async () => ({ ...tenancy, role: callerRole })),
   tenancyErrorResponse: jest.fn(() => {
     throw new Error("not a tenancy error");
   }),
@@ -104,6 +106,12 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   })),
 }));
 
+jest.mock("@/lib/auth/program-access-policy", () => ({
+  loadUserProgramAccessPolicy: jest.fn(async () => ({
+    canApproveGates: mockCanApproveGates,
+  })),
+}));
+
 import { GET, POST } from "../route";
 
 function req(body: Record<string, unknown>) {
@@ -119,6 +127,8 @@ function params(programId = "move-1", artifactId = "html-artifact") {
 beforeEach(() => {
   insertedDecision = null;
   latestDecision = null;
+  mockCanApproveGates = true;
+  callerRole = "workspace_member";
 });
 
 describe("artifact review decision route", () => {
@@ -216,5 +226,22 @@ describe("artifact review decision route", () => {
       readyForP3Draft: false,
       allowedNextAction: "regenerate_p2",
     });
+  });
+
+  it("denies review decisions to a listed contact without approval authority", async () => {
+    mockCanApproveGates = false;
+    callerRole = "founder";
+    const res = await POST(
+      req({
+        decision: "approve_for_p3_draft",
+        rationale: "A listed contact cannot record a Nexus approval.",
+      }),
+      params(),
+    );
+    const json = (await res.json()) as { error: string };
+
+    expect(res.status).toBe(403);
+    expect(json.error).toBe("forbidden");
+    expect(insertedDecision).toBeNull();
   });
 });
