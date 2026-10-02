@@ -21,7 +21,10 @@ test("V2 enterprise context reuses declared IDs and preserves shared/unresolved 
       display_name: item.name,
       source_record_id: `source-${item.id}`,
       value_state: "known",
-      attributes_json: item.attributes,
+      attributes_json: {
+        ...item.attributes,
+        source_as_of: item.source_as_of,
+      },
     }));
     const rows: HomeProjectionRow[] = buildSyntheticHomeRows(canonical).map(
       (row) => ({
@@ -62,6 +65,26 @@ test("V2 enterprise context reuses declared IDs and preserves shared/unresolved 
     assert.ok(riskBrowser.rows.every((row) => row.controlOwner === context.riskTriage.attentionRisks[0].ownerRole));
     assert.equal(context.unlinkedPrograms.length, 1);
     assert.ok(context.unlinkedPrograms[0].sourceRefs.length > 0);
+    assert.equal(context.valueProof.programCount, 24);
+    assert.equal(context.valueProof.asOf, "2026-09-30");
+    assert.equal(context.valueProof.approvedBudgetUsd, 302_800_000);
+    assert.equal(context.valueProof.forecastUsd, 323_169_000);
+    assert.equal(context.valueProof.overBudgetProgramCount, 15);
+    assert.equal(context.valueProof.modelledClaimCount, 23);
+    assert.equal(context.valueProof.unsupportedClaimCount, 1);
+    assert.equal(context.valueProof.otherClaimCount, 0);
+    assert.equal(context.valueProof.completedPeriodSpendLines, 360);
+    assert.equal(context.valueProof.excludedSpendLines, 120);
+    assert.equal(context.valueProof.priorities.length, 6);
+    assert.equal(
+      context.valueProof.priorities.reduce((sum, priority) => sum + priority.programCount, 0),
+      24,
+    );
+    assert.ok(context.valueProof.priorities.every((priority) => priority.sourceRefs.length > 0));
+    assert.equal(context.valueProof.priorities.at(-1)?.title, "No declared priority");
+    assert.equal(context.valueProof.priorities.at(-1)?.programCount, 1);
+    assert.equal(context.valueProof.priorities.at(-1)?.ownerRole, null);
+    assert.ok(context.valueProof.priorities.slice(0, -1).every((priority) => priority.ownerRole));
     const total = (domain: string) =>
       context.segmentSpine.segments.reduce(
         (sum, segment) => sum + segment.domains[domain].count,
@@ -69,7 +92,7 @@ test("V2 enterprise context reuses declared IDs and preserves shared/unresolved 
       ) + context.segmentSpine.unattributed[domain];
     assert.equal(total("applications"), 344);
     assert.equal(total("programs"), 24);
-    assert.equal(total("spend"), 480);
+    assert.equal(total("spend"), 360);
     assert.equal(total("risks"), 200);
     assert.equal(
       context.segmentSpine.unresolvedByDomain.applications,
@@ -94,6 +117,56 @@ test("V2 enterprise context reuses declared IDs and preserves shared/unresolved 
     assert.deepEqual(fromServing?.segmentSpine, context.segmentSpine);
     assert.deepEqual(fromServing?.priorities, context.priorities);
     assert.deepEqual(fromServing?.riskTriage, context.riskTriage);
+    assert.deepEqual(fromServing?.valueProof, context.valueProof);
+    const undatedRows = rows.map((row) =>
+      row.row_type === "enterprise_profile"
+        ? {
+            ...row,
+            display_payload_json: {
+              ...row.display_payload_json,
+              source_as_of: null,
+            },
+          }
+        : row,
+    );
+    const undated = buildHomeEnterpriseContext(undatedRows, (row) => [
+      `source-${row.row_key}`,
+    ]);
+    assert.equal(undated?.valueProof.completedPeriodSpendLines, 0);
+    assert.equal(undated?.valueProof.excludedSpendLines, 480);
+    assert.ok(undated?.segmentSpine.segments.every((segment) => segment.domains.spend === undefined));
+    assert.ok(undated?.segmentSpine.shareVsRevenue.every((segment) => segment.shares.spend === undefined));
+    const invalidDateRows = rows.map((row) =>
+      row.row_type === "enterprise_profile"
+        ? {
+            ...row,
+            display_payload_json: {
+              ...row.display_payload_json,
+              source_as_of: "2026-09-31",
+            },
+          }
+        : row,
+    );
+    const invalidDateContext = buildHomeEnterpriseContext(invalidDateRows, (row) => [
+      `source-${row.row_key}`,
+    ]);
+    assert.equal(invalidDateContext?.valueProof.completedPeriodSpendLines, 0);
+    const missingActualRows = rows.map((row) =>
+      row.row_key === "FIN-0008"
+        ? {
+            ...row,
+            display_payload_json: {
+              ...row.display_payload_json,
+              actual_usd: null,
+            },
+          }
+        : row,
+    );
+    const missingActual = buildHomeEnterpriseContext(missingActualRows, (row) => [
+      `source-${row.row_key}`,
+    ]);
+    assert.equal(missingActual?.valueProof.completedPeriodSpendLines, 359);
+    assert.equal(missingActual?.valueProof.excludedSpendLines, 121);
     const sourceHash = "a".repeat(64);
     const bundleRows = servingRows
       .filter((row) =>

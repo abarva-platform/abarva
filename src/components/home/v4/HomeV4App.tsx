@@ -330,6 +330,7 @@ function MixedChapterFrame({
     our_business: ["Business model and segment economics", "Where the enterprise operates, who owns each segment, and how resources are attributed."],
     strategy_value_creation: ["Priorities and execution", "Declared priorities connected to accountable owners, programs, and measures."],
     how_we_operate: ["How accountability runs", "Business functions, their owners, and the work and risk attached to them."],
+    performance_value: ["Where investment outruns proof", "Declared program investment, forecast pressure, and the current limits of value evidence."],
     what_needs_attention: ["Where risk needs review", "High and critical risks prioritized by their recorded control state and accountable owner."],
   };
   const contextHeading = enterpriseContext ? contextHeadings[chapter.chapterId] : undefined;

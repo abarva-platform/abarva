@@ -163,7 +163,10 @@ describe("Home walkthrough export", () => {
         display_name: object.name,
         source_record_id: `source-${object.id}`,
         value_state: "known",
-        attributes_json: object.attributes,
+        attributes_json: {
+          ...object.attributes,
+          source_as_of: object.source_as_of,
+        },
       })));
       const sourceByRow = new Map(rows.map((row) => [row.row_key, row.source_record_id]));
       const context = buildHomeEnterpriseContext(rows, (row) => {
@@ -190,6 +193,7 @@ describe("Home walkthrough export", () => {
         "Segment scale and governed footprint",
         "Priority ownership and delivery",
         "Function ownership and footprint",
+        "Program investment by declared priority",
         "High and critical risks needing control review",
       ]) {
         expect(html).toContain(label);
@@ -203,6 +207,9 @@ describe("Home walkthrough export", () => {
       expect(pdfMarkup).toContain("Unknown is not uncontrolled");
       expect(html).toContain("Recovery capacity gap: Informatica PowerCenter");
       expect(pdfMarkup).toContain("Recovery capacity gap: Informatica PowerCenter");
+      expect(html).toContain("Client-attested realized value is not established");
+      expect(pdfMarkup).toContain("Client-attested realized value is not established");
+      expect(html).toContain("120 of 480 spend records lack a verifiable completed-period actual");
       const businessChapter = html.slice(html.indexOf("Chapter 02"), html.indexOf("Chapter 03"));
       expect(businessChapter).toContain("Current source-linked record");
       expect(businessChapter).not.toContain("No current chapter-specific tables");
