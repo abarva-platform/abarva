@@ -1,0 +1,298 @@
+name: Source NDA demo key bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "status is read-only; create provisions the demo JWT key"
+        required: true
+        type: choice
+        options: [status, create]
+      confirm:
+        description: "For create only, type CREATE_LAB_KEY exactly"
+        required: false
+        type: string
+
+concurrency:
+  group: source-nda-demo-key-bootstrap
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  RESOURCE_GROUP: rg-abarva-controlplane-lab-eastus
+  VAULT_RESOURCE_GROUP: rg-abarva-shared-security-lab-eastus
+  VAULT_NAME: kv-abarva-lab-001
+  ACR_NAME: acrabarvalab001
+  WEB_APP_NAME: ca-abarva-web-lab-eastus
+  PRIVATE_OPERATOR_JOB: job-abarva-private-operator-eus
+  RUNTIME_IDENTITY: id-abarva-scale-runtime-lab-eastus
+  KEY_NAME: source-nda-docusign-lab-jwt
+  SIGN_ROLE_NAME: Source NDA Demo JWT Signer
+  BOOTSTRAP_ROLE_NAME: Source NDA Demo JWT Key Creator
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID }}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Assert main and explicit creation consent
+        shell: bash
+        env:
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == refs/heads/main ]] || { echo 'Main only' >&2; exit 1; }
+          [[ "$MODE" == status || "$MODE" == create ]] || exit 1
+          if [[ "$MODE" == create ]]; then
+            [[ "$CONFIRM" == CREATE_LAB_KEY ]] || { echo 'Exact create confirmation required' >&2; exit 1; }
+          fi
+          [[ -n "$AZURE_DEPLOY_CLIENT_ID" && -n "$AZURE_DEPLOY_TENANT_ID" && -n "$AZURE_DEPLOY_SUBSCRIPTION_ID" ]]
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Preflight private vault and deployed image
+        id: preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/source-nda-demo-key
+          vault_json="$(az keyvault show -g "$VAULT_RESOURCE_GROUP" -n "$VAULT_NAME" -o json)"
+          jq -e '.properties.publicNetworkAccess == "Disabled" and .properties.enableRbacAuthorization == true' <<< "$vault_json" >/dev/null
+          vault_id="$(jq -r '.id' <<< "$vault_json")"
+          endpoint_json="$(az network private-endpoint-connection list --id "$vault_id" -o json)"
+          approved_endpoints="$(jq '[.[] | select(.properties.privateLinkServiceConnectionState.status == "Approved" and .properties.provisioningState == "Succeeded")] | length' <<< "$endpoint_json")"
+          [[ "$approved_endpoints" -gt 0 ]] || { echo 'Vault private endpoint is not approved' >&2; exit 1; }
+
+          web_json="$(az containerapp show -g "$RESOURCE_GROUP" -n "$WEB_APP_NAME" -o json)"
+          image="$(jq -r '.properties.template.containers[0].image // empty' <<< "$web_json")"
+          [[ "$image" == "$ACR_NAME.azurecr.io/abarva/web@sha256:"* ]] || { echo 'Web image is not approved and digest pinned' >&2; exit 1; }
+          revision="$(jq -r '.properties.latestReadyRevisionName // empty' <<< "$web_json")"
+          traffic="$(jq --arg revision "$revision" '[.properties.configuration.ingress.traffic[]? | select(.revisionName == $revision and .weight == 100)] | length' <<< "$web_json")"
+          [[ -n "$revision" && "$traffic" -eq 1 ]] || { echo 'Latest ready revision does not own all web traffic' >&2; exit 1; }
+          revision_image="$(az containerapp revision show -g "$RESOURCE_GROUP" -n "$WEB_APP_NAME" \
+            --revision "$revision" --query 'properties.template.containers[0].image' -o tsv)"
+          [[ "$revision_image" == "$image" ]] || { echo 'Web template and serving revision images differ' >&2; exit 1; }
+          job_json="$(az containerapp job show -g "$RESOURCE_GROUP" -n "$PRIVATE_OPERATOR_JOB" -o json)"
+          environment_id="$(jq -r '.properties.environmentId // empty' <<< "$job_json")"
+          [[ "$environment_id" == *"/cae-abarva-scale-lab-eastus" ]] || { echo 'Private operator environment mismatch' >&2; exit 1; }
+
+          echo "vault_id=$vault_id" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "environment_id=$environment_id" >> "$GITHUB_OUTPUT"
+          jq -n --arg mode '${{ inputs.mode }}' --arg image "$image" --arg revision "$revision" \
+            --arg vault "$VAULT_NAME" --argjson privateEndpoints "$approved_endpoints" \
+            '{mode:$mode,image:$image,revision:$revision,vault:$vault,approvedPrivateEndpoints:$privateEndpoints}' \
+            > audit-artifacts/source-nda-demo-key/preflight.json
+
+      - name: Report status without entering vault data plane
+        if: inputs.mode == 'status'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Status preflight passed. The vault data plane is private; key presence is only checked by the in-network create job.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create isolated identity and temporary permissions
+        if: inputs.mode == 'create'
+        id: identity
+        shell: bash
+        env:
+          VAULT_ID: ${{ steps.preflight.outputs.vault_id }}
+        run: |
+          set -euo pipefail
+          identity_name="id-nda-jwt-bootstrap-$GITHUB_RUN_ID"
+          identity_json="$(az identity create -g "$RESOURCE_GROUP" -n "$identity_name" -o json)"
+          identity_id="$(jq -r '.id' <<< "$identity_json")"
+          principal_id="$(jq -r '.principalId' <<< "$identity_json")"
+          client_id="$(jq -r '.clientId' <<< "$identity_json")"
+          acr_id="$(az acr show -n "$ACR_NAME" --query id -o tsv)"
+          [[ -n "$identity_id" && -n "$principal_id" && -n "$client_id" && -n "$acr_id" ]]
+          echo "identity_name=$identity_name" >> "$GITHUB_OUTPUT"
+          echo "identity_id=$identity_id" >> "$GITHUB_OUTPUT"
+          echo "principal_id=$principal_id" >> "$GITHUB_OUTPUT"
+          echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
+          echo "acr_id=$acr_id" >> "$GITHUB_OUTPUT"
+          role_json="$(az role definition list --name "$BOOTSTRAP_ROLE_NAME" -o json)"
+          if [[ "$(jq 'length' <<< "$role_json")" -eq 0 ]]; then
+            jq -n --arg name "$BOOTSTRAP_ROLE_NAME" --arg scope "/subscriptions/$AZURE_DEPLOY_SUBSCRIPTION_ID" \
+              --arg id "$(cat /proc/sys/kernel/random/uuid)" \
+              '{Name:$name,Id:$id,IsCustom:true,Description:"Create and read keys in the lab vault only while a one-off bootstrap identity is assigned",Actions:[],NotActions:[],DataActions:["Microsoft.KeyVault/vaults/keys/read","Microsoft.KeyVault/vaults/keys/create/action"],NotDataActions:[],AssignableScopes:[$scope]}' \
+              > audit-artifacts/source-nda-demo-key/bootstrap-role.json
+            az role definition create --role-definition audit-artifacts/source-nda-demo-key/bootstrap-role.json --output none
+          else
+            jq -e 'length == 1 and (.[0].permissions | length == 1) and
+              (.[0].permissions[0].actions | length == 0) and
+              (.[0].permissions[0].dataActions | sort == ["Microsoft.KeyVault/vaults/keys/create/action","Microsoft.KeyVault/vaults/keys/read"])' \
+              <<< "$role_json" >/dev/null || { echo 'Existing bootstrap role is over-permissioned' >&2; exit 1; }
+          fi
+          az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
+            --role AcrPull --scope "$acr_id" --output none
+          az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
+            --role "$BOOTSTRAP_ROLE_NAME" --scope "$VAULT_ID" --output none
+
+      - name: Run one-off job inside the private environment
+        if: inputs.mode == 'create'
+        id: execution
+        shell: bash
+        env:
+          IMAGE: ${{ steps.preflight.outputs.image }}
+          ENVIRONMENT_ID: ${{ steps.preflight.outputs.environment_id }}
+          IDENTITY_ID: ${{ steps.identity.outputs.identity_id }}
+          CLIENT_ID: ${{ steps.identity.outputs.client_id }}
+        run: |
+          set -euo pipefail
+          job_name="nda-jwt-key-$GITHUB_RUN_ID"
+          echo "job_name=$job_name" >> "$GITHUB_OUTPUT"
+          cat > audit-artifacts/source-nda-demo-key/job.yaml <<YAML
+          name: $job_name
+          identity:
+            type: UserAssigned
+            userAssignedIdentities:
+              $IDENTITY_ID: {}
+          properties:
+            environmentId: $ENVIRONMENT_ID
+            configuration:
+              triggerType: Manual
+              replicaRetryLimit: 0
+              replicaTimeout: 300
+              manualTriggerConfig:
+                parallelism: 1
+                replicaCompletionCount: 1
+              registries:
+                - server: $ACR_NAME.azurecr.io
+                  identity: $IDENTITY_ID
+            template:
+              containers:
+                - name: key-bootstrap
+                  image: $IMAGE
+                  imageType: ContainerImage
+                  command: [node]
+                  args: [/app/scripts/ops/docusign-lab-key-bootstrap.mjs]
+                  env:
+                    - name: AZURE_CLIENT_ID
+                      value: $CLIENT_ID
+                    - name: DOCUSIGN_ENV
+                      value: demo
+                    - name: DOCUSIGN_KEY_BOOTSTRAP_CONFIRM
+                      value: CREATE_LAB_KEY
+                  resources:
+                    cpu: 0.5
+                    memory: 1Gi
+            workloadProfileName: Consumption
+          resourceGroup: $RESOURCE_GROUP
+          YAML
+          # RBAC propagation is eventually consistent; a missing grant makes the job fail closed.
+          sleep 30
+          az containerapp job create -g "$RESOURCE_GROUP" -n "$job_name" \
+            --yaml audit-artifacts/source-nda-demo-key/job.yaml --output none
+          execution="$(az containerapp job start -g "$RESOURCE_GROUP" -n "$job_name" --query name -o tsv)"
+          [[ -n "$execution" ]]
+          echo "execution=$execution" >> "$GITHUB_OUTPUT"
+          status=unknown
+          for attempt in $(seq 1 30); do
+            status="$(az containerapp job execution show -g "$RESOURCE_GROUP" -n "$job_name" \
+              --job-execution-name "$execution" --query properties.status -o tsv 2>/dev/null || true)"
+            [[ "$status" == Succeeded || "$status" == Failed || "$status" == Canceled ]] && break
+            sleep 10
+          done
+          az containerapp job logs show -g "$RESOURCE_GROUP" -n "$job_name" \
+            --execution "$execution" --container key-bootstrap --tail 50 \
+            > audit-artifacts/source-nda-demo-key/job.log
+          [[ "$status" == Succeeded ]] || { echo "Bootstrap job $status" >&2; exit 1; }
+          node scripts/ops/docusign-lab-key-bootstrap-proof.mjs \
+            audit-artifacts/source-nda-demo-key/job.log \
+            audit-artifacts/source-nda-demo-key/public-key.json
+          {
+            echo '```pem'
+            jq -r '.publicKeyPem' audit-artifacts/source-nda-demo-key/public-key.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo 'Public PEM only; upload it in DocuSign demo Apps and Keys. No private key or webhook secret was exported.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Grant runtime key-scoped read and sign only
+        if: inputs.mode == 'create' && steps.execution.outcome == 'success'
+        shell: bash
+        env:
+          VAULT_ID: ${{ steps.preflight.outputs.vault_id }}
+        run: |
+          set -euo pipefail
+          key_scope="$VAULT_ID/keys/$KEY_NAME"
+          role_json="$(az role definition list --name "$SIGN_ROLE_NAME" -o json)"
+          if [[ "$(jq 'length' <<< "$role_json")" -eq 0 ]]; then
+            jq -n --arg name "$SIGN_ROLE_NAME" --arg scope "/subscriptions/$AZURE_DEPLOY_SUBSCRIPTION_ID" \
+              --arg id "$(cat /proc/sys/kernel/random/uuid)" \
+              '{Name:$name,Id:$id,IsCustom:true,Description:"Read and sign with the lab Source NDA JWT key only when assigned at key scope",Actions:[],NotActions:[],DataActions:["Microsoft.KeyVault/vaults/keys/read","Microsoft.KeyVault/vaults/keys/sign/action"],NotDataActions:[],AssignableScopes:[$scope]}' \
+              > audit-artifacts/source-nda-demo-key/sign-role.json
+            az role definition create --role-definition audit-artifacts/source-nda-demo-key/sign-role.json --output none
+          else
+            jq -e 'length == 1 and (.[0].permissions | length == 1) and
+              (.[0].permissions[0].actions | length == 0) and
+              (.[0].permissions[0].dataActions | sort == ["Microsoft.KeyVault/vaults/keys/read","Microsoft.KeyVault/vaults/keys/sign/action"])' \
+              <<< "$role_json" >/dev/null || { echo 'Existing sign role is over-permissioned' >&2; exit 1; }
+          fi
+          runtime_principal="$(az identity show -g "$RESOURCE_GROUP" -n "$RUNTIME_IDENTITY" --query principalId -o tsv)"
+          existing_assignment="$(az role assignment list --assignee "$runtime_principal" --scope "$key_scope" \
+            --role "$SIGN_ROLE_NAME" --query '[].id' -o tsv)"
+          if [[ -z "$existing_assignment" ]]; then
+            az role assignment create --assignee-object-id "$runtime_principal" --assignee-principal-type ServicePrincipal \
+              --role "$SIGN_ROLE_NAME" --scope "$key_scope" --output none
+          fi
+          az role assignment list --assignee "$runtime_principal" --scope "$key_scope" \
+            --role "$SIGN_ROLE_NAME" --query '[].scope' -o tsv | grep -Fxi "$key_scope"
+          echo 'Runtime key-scoped read/sign grant verified; no create or export grant retained.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove bootstrap job and temporary permissions
+        if: always() && inputs.mode == 'create' && steps.identity.outcome != 'skipped'
+        shell: bash
+        env:
+          VAULT_ID: ${{ steps.preflight.outputs.vault_id }}
+        run: |
+          set -euo pipefail
+          job_name="nda-jwt-key-$GITHUB_RUN_ID"
+          identity_name="id-nda-jwt-bootstrap-$GITHUB_RUN_ID"
+          az containerapp job delete -g "$RESOURCE_GROUP" -n "$job_name" --yes --output none 2>/dev/null || true
+          principal="$(az identity show -g "$RESOURCE_GROUP" -n "$identity_name" --query principalId -o tsv 2>/dev/null || true)"
+          if [[ -n "$principal" ]]; then
+            acr_id="$(az acr show -n "$ACR_NAME" --query id -o tsv)"
+            for entry in "$BOOTSTRAP_ROLE_NAME|$VAULT_ID" "AcrPull|$acr_id"; do
+              role="${entry%%|*}"
+              scope="${entry#*|}"
+              assignments="$(az role assignment list --assignee "$principal" --role "$role" \
+                --scope "$scope" --query '[].id' -o tsv)"
+              while IFS= read -r assignment; do
+                [[ -n "$assignment" ]] && az role assignment delete --ids "$assignment"
+              done <<< "$assignments"
+              for attempt in 1 2 3 4 5; do
+                remaining="$(az role assignment list --assignee "$principal" --role "$role" \
+                  --scope "$scope" --query '[].id' -o tsv)"
+                [[ -z "$remaining" ]] && break
+                sleep 5
+              done
+              [[ -z "$remaining" ]] || { echo "Temporary $role grant remains" >&2; exit 1; }
+            done
+            az identity delete -g "$RESOURCE_GROUP" -n "$identity_name" --output none
+          fi
+          [[ -z "$(az identity show -g "$RESOURCE_GROUP" -n "$identity_name" --query id -o tsv 2>/dev/null || true)" ]]
+          [[ -z "$(az containerapp job show -g "$RESOURCE_GROUP" -n "$job_name" --query id -o tsv 2>/dev/null || true)" ]]
+          echo 'Temporary bootstrap job and identity removed.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload audit proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-nda-demo-key-bootstrap
+          path: audit-artifacts/source-nda-demo-key
+          if-no-files-found: warn
