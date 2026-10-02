@@ -40,6 +40,7 @@ Moves product approvals are recorded by an authenticated workspace user with app
 ## QA / Validation
 
 - Approval-path regression sweep: 24 suites, 305 tests passed.
+- Full Programs unit suite: 100 suites, 886 tests passed; legacy client-generated sponsor-approval text remains rejected as non-authoritative.
 - AI surface controls: 24 suites, 235 tests passed; all 40 credited controls and 129 named cases were found and passed.
 - TypeScript check passed with Node 24 and a 6 GB heap.
 - Focused ESLint passed with zero errors; the full-source lint also reported zero errors and repository warnings.
