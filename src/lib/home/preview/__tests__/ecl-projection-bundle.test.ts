@@ -9,6 +9,7 @@ import {
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { selectedHomeAssessmentId } from "../home-assessment-selection";
 import { getHomeReviewBundle } from "../golden-snapshot";
 import { createHomeNarrativePacketArtifact } from "../home-narrative-packet";
 import { homeRecordSourceToken } from "../record-source-token";
@@ -17,6 +18,11 @@ import {
   homeSourceFileReviewLabel,
 } from "../record-source";
 import type { HomeReviewBundle } from "../types";
+
+jest.mock("../home-assessment-selection", () => ({
+  selectedHomeAssessmentId: jest.fn(async () =>
+    "assessment-dense-source-room-20260823"),
+}));
 
 type PacketWithCategorySummaries = ReturnType<
   typeof buildHomeReviewBundleFromEclProjectionRows
@@ -438,6 +444,34 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
       ]),
     );
+  });
+
+  it("reads the explicitly selected Home assessment without changing other product selectors", async () => {
+    jest.mocked(selectedHomeAssessmentId).mockResolvedValueOnce(
+      "assessment-synthetic-enterprise-v2",
+    );
+    const query = jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([{ full_name: "serving.home_applications_systems" }])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "Selected application",
+          admission_status: "admitted",
+        }),
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    await getHomeEclProjectionBundle("meridian-health");
+
+    expect(query.mock.calls[1]?.[1]).toEqual([
+      "meridian-health",
+      "assessment-synthetic-enterprise-v2",
+    ]);
   });
 
   it("keeps served rows visible but unlinked when source resolution fails", async () => {

@@ -19,6 +19,10 @@ const query = jest.fn();
 jest.mock("@/lib/data-plane/azureRead", () => ({
   azureRead: { query: (...args: unknown[]) => query(...args) },
 }));
+jest.mock("../home-assessment-selection", () => ({
+  selectedHomeAssessmentId: jest.fn(async () =>
+    "assessment-dense-source-room-20260823"),
+}));
 
 import { getHomeEclProjectionBundle } from "../ecl-projection-bundle";
 

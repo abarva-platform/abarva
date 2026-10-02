@@ -12,13 +12,17 @@ on:
       - "scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_home_promotion.ts"
       - "scripts/ecl/project_synthetic_enterprise_home.ts"
+      - "scripts/ecl/promote_synthetic_enterprise_home.ts"
+      - "scripts/ecl/retire_synthetic_enterprise_home.ts"
       - "scripts/ecl/synthetic_enterprise_home_rows.ts"
       - "scripts/ecl/generate_synthetic_enterprise_v1.py"
       - "scripts/ecl/validate_synthetic_enterprise_v1.py"
       - "datasets/synthetic/enterprise-v2/**"
       - "scripts/ecl/load_synthetic_enterprise_v1.ts"
       - "supabase/migrations/20261001183000_ecl_enterprise_context_admission.sql"
+      - "supabase/migrations/20261002013000_home_active_assessment.sql"
       - "supabase/migrations/20260901090000_home_serving_views_intake_families.sql"
       - "supabase/migrations/20260902090000_home_serving_view_executive_interviews.sql"
       - "supabase/migrations/20260902100000_home_serving_view_relationships.sql"
@@ -76,3 +80,12 @@ jobs:
           NODE_OPTIONS: --conditions=react-server
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
         run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts
+      - name: Rehearse inert Home selection migration
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: |
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261002013000_home_active_assessment.sql
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261002013000_home_active_assessment.sql
+          test "$(psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -At -c 'select count(*) from ecl_projection.home_active_assessment')" = 0
+      - name: Prove generated Home admission spine
+        run: npm run test:ecl:synthetic-enterprise-v2:promote-home

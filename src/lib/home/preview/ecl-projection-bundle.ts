@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
+import { selectedHomeAssessmentId } from "./home-assessment-selection";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
 import { buildHomeEnterpriseContext } from "./ecl-enterprise-context";
 import { homeProjectionPayload } from "./projection-row-payload";
@@ -3030,7 +3031,7 @@ export async function getHomeEclProjectionBundle(
     );
   }
 
-  const assessmentId = denseAssessmentIdForTenant(tenantKey);
+  const assessmentId = await selectedHomeAssessmentId(tenantKey);
   const { rows, absentViews } = await readHomeProjectionRows(
     tenantKey,
     assessmentId,
