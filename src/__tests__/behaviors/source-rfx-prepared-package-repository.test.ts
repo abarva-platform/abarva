@@ -20,7 +20,7 @@ const content = {
   packageVersionId: "version-1",
   version: 1,
   disclosureClassification: "confidential",
-  authentication: { method: "shared_secret", secretRef: "vault-ref" },
+  authentication: { method: "shared_secret" as const, secretRef: "vault-ref" },
   expiresAt: "2026-10-01T00:00:00.000Z",
   artifacts: [{ artifactId: "22222222-2222-4222-8222-222222222222", sha256: "a".repeat(64) }],
   recipients: [{

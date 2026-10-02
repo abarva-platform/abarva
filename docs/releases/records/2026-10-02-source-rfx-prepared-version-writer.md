@@ -1,4 +1,4 @@
-# 2026-10-02 Source RFx prepared package-version writer
+# 2026-10-02 Source RFx prepared package-version action
 
 ## Release ID
 
@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a transactional library writer for immutable, versioned RFx package preparations. It records the exact governed package and recipient snapshot only when the existing preparation decision is ready. Preparation is not an invitation, external transmission, receipt, or supplier contact.
+Adds a transactional writer and authenticated internal action for immutable, versioned RFx package preparations. The action binds tenant, event, reviewer and decision time to the signed-in session, compares a bounded proposed packet with current artifact, candidate, contact and NDA authority, then persists a prepared snapshot only when those checks pass. Preparation is not an invitation, external transmission, receipt, or supplier contact.
 
 ## Layer Impact
 
@@ -18,29 +18,31 @@ Release lane: `global-control-lane`. Layer 3 retains supplier and evidence autho
 
 ## Client Applicability
 
-- All clients: the library is available to Source workflow callers after deployment.
+- All clients: available to signed-in Source stage approvers when matching governed authorities exist.
 - Specific clients: none.
-- Internal only: no route or operator action is exposed in this slice.
+- Internal only: yes; the route creates a prepared version, not an external release.
 - Public/demo only: no.
-- Feature flag: none; the writer has no runtime caller yet.
+- Feature flag: none.
 
 ## Changes Included
 
 - New `writePreparedRfxPackageVersion` transaction seam under Source RFx delivery.
+- Authenticated prepare route with a bounded JSON proposal, source-backed preview and named refusal defects.
 - Focused behavior tests for monotonic versions, prior-version immutability, event fencing, digest bytes, and blocked recipients.
-- No schema migration, route, issuance job, email, or supplier action.
+- No schema migration, issuance job, email, or supplier action.
 
 ## QA / Validation
 
 - Red-first: both initial writer behavior tests failed against a stub.
 - Restored implementation: three focused tests pass.
 - Event-fence mutation removing the event predicate made the foreign-event refusal fail with an accepted write; restoring it returned the suite to green.
-- Full TypeScript check passed. Scoped ESLint, adjacent suites and release gate are to be recorded before PR readiness.
+- Route tests were red against a non-writing stub, then green. Removing the source-authority inconsistency check made a refused preview return 201; restoring it returned 409 with no write.
+- Three focused/adjacent suites passed 31 tests. Full TypeScript check passed; scoped ESLint, ownership and release gates are recorded with the PR.
 - No live package version or signed-in stage exit was created or claimed.
 
 ## Rollout Plan
 
-Merge through a reviewed pull request. The repo-owned ACA main workflow builds and deploys the merged image. Because no route calls the writer in this slice, the capability is code-available but not user-operable until a separately governed Source route is added.
+Merge through a reviewed pull request. The repo-owned ACA main workflow builds and deploys the merged image. The route is an internal API action; an in-step event-page control and any external issue/recipient transmission remain separate work.
 
 ## Deployment Authority
 
@@ -50,16 +52,16 @@ Merge through a reviewed pull request. The repo-owned ACA main workflow builds a
 - ACA runtime invariant: web template and sole 100%-traffic revision must match the approved digest.
 - Worker image invariant: both delivery-worker job images must match that digest.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes, after a guarded route and eligible evidence exist; not claimable in this library-only slice.
+- Live signed-in proof required: yes; the expected negative path is a named refusal until eligible artifacts, contacts and NDA authority exist.
 
 ## Rollback Plan
 
-Revert this library-only merge via a new pull request, then allow the repo-owned ACA main workflow to deploy the rollback. Already-persisted prepared versions, if any are later written by a caller, are immutable and must not be deleted or rewritten by rollback.
+Revert the route and writer via a new pull request, then allow the repo-owned ACA main workflow to deploy the rollback. Already-persisted prepared versions are immutable and must not be deleted or rewritten by rollback.
 
 ## Audit Evidence
 
-The PR diff and CI checks will show the write seam and behavioral tests. Local test, mutation, typecheck, lint and release-gate output are recorded in the PR once complete. A future signed-in preparation readback must be captured separately.
+The PR diff and CI checks show the write action and behavioral tests. Local test, mutation, typecheck, lint and release-gate output are recorded in the PR. A signed-in preparation refusal or version readback is captured separately.
 
 ## Known Gaps
 
-There is no authenticated route or UI for preparation, no approved-contact write path in this slice, and no issuance action. No positive live prepared-version readback is claimed.
+There is no event-page prepare control or issuance action. The action does not independently approve an RFP Client Final or legal terms; the external release boundary needs that separate authority. No positive live prepared-version readback is claimed.
