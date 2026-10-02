@@ -74,6 +74,7 @@ import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import {
   assembleP3SolutionOptions,
   buildP3DesignInputsPackFromSignals,
+  p2SourceEvidenceTitle,
   type P3OptionSet,
 } from "@/lib/programs/phase-templates/p3-option-assembler";
 import {
@@ -7647,7 +7648,7 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
           {clientOptions
             ? `Move evidence: ${optionSet.sourceTitle ?? "uploaded options"}`
             : optionSet.sourceEvidenceLabels?.length
-              ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.join(", ")}`
+              ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.map(p2SourceEvidenceTitle).join(", ")}`
               : "P2 source evidence unavailable"}
         </strong>
         <small>

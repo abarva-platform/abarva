@@ -2,6 +2,7 @@ import type { DeliverableContentSignal } from '@/lib/deliverables/deliverable-co
 import type { BuildingBlockKey } from './building-blocks';
 import type { P3DesignInputsPack } from './types';
 import type { UploadedSolutionOptionSet } from './uploaded-solution-options';
+import { getDeliverableSpec } from '@/lib/programs/deliverable-registry';
 
 export type P3OptionScoreDimension =
   | 'business_value'
@@ -324,7 +325,7 @@ export function assembleP3SolutionOptions({
       readiness?.softGaps?.join(' '),
     ].join(' '),
   );
-  const useCasePattern = inferUseCasePattern(text);
+  const useCasePattern = inferUseCasePattern(text, archetype);
   const missingEvidence = unique([
     ...(designInputs.unresolvedQuestions ?? []),
     ...(designInputs.notReadyConditions ?? []),
@@ -860,22 +861,72 @@ function adjust(scoresRecord: Record<P3OptionScoreDimension, number>, key: P3Opt
   scoresRecord[key] = Math.max(1, Math.min(10, scoresRecord[key] + amount));
 }
 
-function inferUseCasePattern(text: string): P3UseCasePattern {
-  if (/airline|airport|baggage|bag|disruption|irops|station|recovery|handler|sla/.test(text)) {
-    return 'operations_resilience';
+/**
+ * A Move whose archetype already says what kind of use case it is does not
+ * need its pattern guessed from prose.
+ */
+const ARCHETYPE_USE_CASE_PATTERNS: Record<string, P3UseCasePattern> = {
+  contact_center_agent_assist: 'member_service_agent_assist',
+};
+
+/**
+ * Vocabulary per pattern, most specific pattern first. Order only breaks a
+ * tie; the pattern with the most distinct terms present wins.
+ */
+const USE_CASE_PATTERN_TERMS: ReadonlyArray<{
+  pattern: P3UseCasePattern;
+  terms: readonly string[];
+}> = [
+  {
+    pattern: 'operations_resilience',
+    terms: ['airline', 'airport', 'baggage', 'bag', 'disruption', 'irops', 'station', 'recovery', 'handler', 'sla'],
+  },
+  {
+    pattern: 'member_service_agent_assist',
+    terms: [
+      'member', 'call center', 'contact center', 'agent assist', 'agent-assist', 'claims', 'benefits',
+      'eligibility', 'prior auth', 'authorization', 'crm', 'pharmacy', 'emr', 'ehr', 'phi',
+    ],
+  },
+  {
+    pattern: 'legal_contract_intake',
+    terms: ['legal', 'contract', 'clm', 'obligation', 'attorney', 'clause', 'privilege'],
+  },
+  {
+    pattern: 'finance_close_and_transparency',
+    terms: ['finance', 'close', 'gl', 'margin', 'cost', 'capitation', 'payment', 'reconciliation', 'reporting'],
+  },
+];
+
+const GENERAL_OPERATIONS_TERMS = [
+  'operations', 'workflow', 'resilience', 'recovery', 'service', 'irops', 'command', 'routing',
+];
+
+/** Whole-word (or whole-phrase) presence, allowing a plural. "sla" is not in "translate". */
+function hasTerm(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[\s-]+/g, '[\\s-]+');
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}s?(?:$|[^a-z0-9])`).test(text);
+}
+
+/**
+ * The first version tested each pattern's vocabulary as bare substrings and
+ * returned the first pattern with any hit. A single incidental word — "sla",
+ * "station", "bag" inside another word — therefore outranked a text full of
+ * another pattern's terms, and a member-service Move was given the
+ * operations option set.
+ */
+function inferUseCasePattern(text: string, archetype?: string | null): P3UseCasePattern {
+  const archetypeKey = (archetype ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  const declared = ARCHETYPE_USE_CASE_PATTERNS[archetypeKey];
+  if (declared) return declared;
+
+  let best: { pattern: P3UseCasePattern; hits: number } | null = null;
+  for (const { pattern, terms } of USE_CASE_PATTERN_TERMS) {
+    const hits = terms.filter((term) => hasTerm(text, term)).length;
+    if (hits > 0 && (!best || hits > best.hits)) best = { pattern, hits };
   }
-  if (/member|call center|contact center|agent assist|agent-assist|claims|benefits|eligibility|prior auth|authorization|crm|pharmacy|emr|ehr|phi/.test(text)) {
-    return 'member_service_agent_assist';
-  }
-  if (/legal|contract|clm|obligation|attorney|clause|privilege/.test(text)) {
-    return 'legal_contract_intake';
-  }
-  if (/finance|close|gl|margin|cost|capitation|payment|reconciliation|reporting/.test(text)) {
-    return 'finance_close_and_transparency';
-  }
-  if (/operations|workflow|resilience|recovery|service|irops|command|routing/.test(text)) {
-    return 'operations_resilience';
-  }
+  if (best) return best.pattern;
+  if (GENERAL_OPERATIONS_TERMS.some((term) => hasTerm(text, term))) return 'operations_resilience';
   return 'generic_bounded_solution';
 }
 
@@ -1026,6 +1077,14 @@ function hasPrivacyWord(value: string): boolean {
 
 function hasChangeWord(value: string): boolean {
   return /change|training|adoption|owner|sme|capacity|operating model|workforce/i.test(value);
+}
+
+/**
+ * What a reader is shown for a P2 source: the document's title. The raw
+ * deliverable type key ("discovery_report") is an internal identifier.
+ */
+export function p2SourceEvidenceTitle(deliverableTypeKey: string): string {
+  return getDeliverableSpec(deliverableTypeKey)?.documentTitle ?? deliverableTypeKey.replace(/[_-]+/g, ' ');
 }
 
 export function containsLegacyStaticP3Labels(optionSet: P3OptionSet): boolean {

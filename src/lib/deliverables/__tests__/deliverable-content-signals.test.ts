@@ -166,4 +166,33 @@ describe("readDeliverableContentSignals", () => {
     expect(byKey.open_inputs?.snippet).toContain("owner-approved access evidence");
     expect(byKey.readiness_gaps?.sourceDeliverableTypeKey).toBe("discovery_report");
   });
+  it("reads signals from an accepted deliverable, which is stored as Markdown", async () => {
+    // Every other fixture here is HTML. The acceptance route stores
+    // "## title" + Markdown body, and the reader returned nothing for it.
+    mockQuery.mockResolvedValueOnce([
+      {
+        content: [
+          "# Discovery Readout",
+          "",
+          "## Systems — production interfaces remain unvalidated",
+          "Production connectivity is not validated; owner approval is pending.",
+          "",
+          "## Open Inputs Required",
+          "Reconcile measures and obtain owner-approved access evidence.",
+        ].join("\n"),
+        version: 2,
+      },
+    ]);
+
+    const signals = await readApprovedPhaseGateContentSignals("move-markdown", 2);
+    const byKey = Object.fromEntries(signals.map((signal) => [signal.key, signal]));
+
+    expect(byKey.readiness_gaps?.heading).toBe(
+      "Systems — production interfaces remain unvalidated",
+    );
+    expect(byKey.open_inputs?.snippet).toBe(
+      "Reconcile measures and obtain owner-approved access evidence.",
+    );
+    expect(byKey.open_inputs?.sourceDeliverableTypeKey).toBe("discovery_report");
+  });
 });

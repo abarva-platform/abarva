@@ -113,8 +113,80 @@ function findTableMatch(html: string, keyword: string): ExhibitContentMatch | nu
   return null;
 }
 
+// ── Markdown ──
+//
+// A deliverable accepted from a structured generated artifact is stored as
+// Markdown ("## Section title" + body), not HTML. The HTML locators above find
+// no headings and no tables in it, so every signal read from an accepted
+// deliverable came back empty. These are the same two locators for Markdown.
+
+const MARKDOWN_HEADING_RE = /^(#{1,4})[ \t]+(.+?)[ \t]*#*[ \t]*$/gm;
+
+function stripMarkdown(markdown: string): string {
+  return markdown
+    .replace(/^[ \t]*\|?[ \t]*:?-{3,}:?[ \t]*(\|[ \t]*:?-{3,}:?[ \t]*)*\|?[ \t]*$/gm, "")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__|`)/g, "")
+    .replace(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+/gm, "")
+    .replace(/^[ \t]*\|[ \t]*/gm, "")
+    .replace(/[ \t]*\|[ \t]*$/gm, "")
+    .replace(/[ \t]*\|[ \t]*/g, " | ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
+}
+
+function findMarkdownHeadingMatch(markdown: string, keyword: string): ExhibitContentMatch | null {
+  const headings: Array<{ index: number; end: number; text: string }> = [];
+  let match: RegExpExecArray | null;
+  MARKDOWN_HEADING_RE.lastIndex = 0;
+  while ((match = MARKDOWN_HEADING_RE.exec(markdown)) !== null) {
+    headings.push({
+      index: match.index,
+      end: MARKDOWN_HEADING_RE.lastIndex,
+      text: stripMarkdown(match[2]),
+    });
+  }
+
+  const hit = headings.find((h) => headingMatchesKeyword(h.text, keyword));
+  if (!hit) return null;
+
+  const next = headings.find((h) => h.index > hit.index);
+  const body = stripMarkdown(markdown.slice(hit.end, next ? next.index : markdown.length));
+  if (!body) return null;
+
+  return { heading: hit.text, snippet: truncate(body) };
+}
+
+function isMarkdownTableRow(line: string): boolean {
+  return /^[ \t]*\|.*\|[ \t]*$/.test(line);
+}
+
+function findMarkdownTableMatch(markdown: string, keyword: string): ExhibitContentMatch | null {
+  const lines = markdown.split("\n");
+  for (let start = 0; start < lines.length; start += 1) {
+    if (!isMarkdownTableRow(lines[start])) continue;
+    let end = start;
+    while (end + 1 < lines.length && isMarkdownTableRow(lines[end + 1])) end += 1;
+    const tableLines = lines.slice(start, end + 1);
+    const headerText = stripMarkdown(tableLines[0]).replace(/ \| /g, " ");
+    const tableText = stripMarkdown(tableLines.join("\n"));
+    start = end;
+    // A table is a header, a separator and at least one row.
+    if (tableLines.length < 3) continue;
+    const matches =
+      headingMatchesKeyword(headerText, keyword) ||
+      headingMatchesKeyword(tableText.slice(0, 400), keyword);
+    if (!matches || !tableText) continue;
+    return { heading: headerText || `Table matching "${keyword}"`, snippet: truncate(tableText) };
+  }
+  return null;
+}
+
 /**
- * Given real generated deliverable HTML and a keyword known to be present
+ * Given real generated deliverable content (HTML, or Markdown for a
+ * deliverable accepted from a structured artifact) and a keyword known to be present
  * (typically one of `golden-bar.ts`'s `extractExhibitKinds` markers), locate
  * the nearest heading or table associated with that keyword and return its
  * real text content. Returns `null` when no matching heading or table is
@@ -124,5 +196,10 @@ function findTableMatch(html: string, keyword: string): ExhibitContentMatch | nu
  */
 export function extractExhibitContent(html: string, keyword: string): ExhibitContentMatch | null {
   if (!html || !keyword.trim()) return null;
-  return findHeadingMatch(html, keyword) ?? findTableMatch(html, keyword);
+  return (
+    findHeadingMatch(html, keyword) ??
+    findTableMatch(html, keyword) ??
+    findMarkdownHeadingMatch(html, keyword) ??
+    findMarkdownTableMatch(html, keyword)
+  );
 }
