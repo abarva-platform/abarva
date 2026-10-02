@@ -899,8 +899,8 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(decisionContext).toContain(
       "Read-only reporting foundation / Data engineer / vendor",
     );
-    expect(decisionContext).toContain("USD 1,100/USD 2,000/USD 2,900");
-    expect(decisionContext).toContain("USD 1,650/USD 3,000/USD 4,350");
+    expect(decisionContext).toContain("$1,100/$2,000/$2,900");
+    expect(decisionContext).toContain("$1,650/$3,000/$4,350");
     expect(decisionContext).toContain("Reviewed by: Finance reviewer");
   });
 

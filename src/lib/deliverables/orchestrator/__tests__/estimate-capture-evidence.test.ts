@@ -7,6 +7,9 @@ import {
   repairEvidenceBackedUncitedFigures,
 } from "../section-generation";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
+import { untracedFigures } from "../numeric-lineage-tokens";
+import { validateDeliverableQuality } from "../quality-validator";
+import { goodDocument, amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { GovernedEvidenceItem } from "../types";
 
 function line(
@@ -109,6 +112,46 @@ describe("the reviewed estimate as a citable evidence statement", () => {
     expect(extractUnsupportedFigureClaims(cited)).toEqual([]);
   });
 
+  it("traces hours and rates in the forms a document writes them", () => {
+    // Observed: with the costs traced, two tables were still blocked. Total
+    // hours over a thousand are written with a separator, and a rate is
+    // written with its currency symbol; the estimate held them as "1560" and
+    // "USD 150", which match neither.
+    const large = model({
+      rows: [
+        line("p1", "Connectors", "internal", [1200, 1560, 2040], 150, 0, 0),
+        line("p1", "Connectors", "vendor", [1100, 1400, 1900], 190, 0, 0),
+      ],
+    });
+    const statement = estimateCaptureStatement(
+      ESTIMATE_CAPTURE_SECTION_KEY,
+      large,
+    )!;
+    expect(statement).toContain("1,200/1,560/2,040");
+    expect(statement).toContain("$150/h");
+
+    const table = [
+      "| Scenario | Effort hours (low/base/high) | Planning rate |",
+      "|---|---|---|",
+      "| Internal | 1,200 / 1,560 / 2,040 | $150 |",
+      "| Vendor | 1,100 / 1,400 / 1,900 | $190 |",
+    ].join("\n");
+    expect(extractUnsupportedFigureClaims(table)).toHaveLength(1);
+
+    const cited = repairEvidenceBackedUncitedFigures(
+      table,
+      asEvidence(statement),
+    );
+    expect(cited).toContain("[7]");
+    expect(extractUnsupportedFigureClaims(cited)).toEqual([]);
+
+    // An hours figure the estimate does not contain is still unsupported.
+    const wrong = table.replace("1,560", "1,650");
+    expect(
+      repairEvidenceBackedUncitedFigures(wrong, asEvidence(statement)),
+    ).toBe(wrong);
+  });
+
   it("still leaves a figure that is not in the estimate unsupported", () => {
     const statement = estimateCaptureStatement(
       ESTIMATE_CAPTURE_SECTION_KEY,
@@ -150,5 +193,55 @@ describe("the reviewed estimate as a citable evidence statement", () => {
 
   it("applies only to the estimate section", () => {
     expect(estimateCaptureStatement("value_plan", model())).toBeNull();
+  });
+});
+
+describe("a blocked figure is named", () => {
+  const statement = "Scenario cost $107,943 low, $143,848 base; rate $150/h.";
+  const evidence: GovernedEvidenceItem[] = [
+    {
+      citationNumber: 3,
+      label: "Reviewed estimate",
+      statement,
+      evidenceFamily: "phase_capture:estimates_capacity",
+      confidence: "high",
+      disclosureTier: "internal_only",
+      provenanceRef: "test:estimate",
+    },
+  ];
+
+  it("lists only the figures that match no evidence, as written", () => {
+    const table =
+      "| Internal | USD 107,943 | USD 143,848 | | Difference | USD 35,905 | 33% |";
+    expect(untracedFigures(table, evidence)).toEqual(["35,905", "33%"]);
+    expect(untracedFigures("USD 107,943 at $150", evidence)).toEqual([]);
+    expect(untracedFigures(table, [])).toEqual([
+      "107,943",
+      "143,848",
+      "35,905",
+      "33%",
+    ]);
+  });
+
+  it("puts them in the quality gate's blocker", () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        ...doc.generatedSections[0],
+        // Ends with a full stop so the claim is this table alone: the gate
+        // reads up to the next sentence end, across section boundaries.
+        bodyMarkdown:
+          "| Internal | USD 107,943 | USD 143,848 | | Difference | USD 35,905 | Planning only.",
+        rawBodyMarkdown:
+          "| Internal | USD 107,943 | USD 143,848 | | Difference | USD 35,905 | Planning only.",
+      },
+      ...doc.generatedSections.slice(1),
+    ];
+    const req = { ...amsRfpRequest(), governedEvidenceBundle: evidence };
+    const result = validateDeliverableQuality(doc, req);
+    const blocker = result.blockers.find((b) =>
+      /unsupported client-fact claim/.test(b),
+    );
+    expect(blocker).toContain("[figures with no match in evidence: 35,905]");
   });
 });
