@@ -724,10 +724,6 @@ export function exhibitRejectionReason(
     : "description has fewer than three distinct statements";
 }
 
-function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
-  return exhibitRejectionReason(exhibit) === null;
-}
-
 function renderableExhibitsFromSynthesis(
   synth: SynthesisResult,
 ): RenderableExhibit[] {
