@@ -7,6 +7,12 @@ on:
     # Every file the generator, the adapter, the loader and these tests read.
     # A change to the source definition, the relationship map or the dataset
     # registry changes what would be loaded, so it has to run this proof too.
+    #
+    # The Home job tests check this list themselves: each fails when a module
+    # it loaded, or a file it names as read at run time, is not covered here,
+    # and when a path named here no longer exists. The admission gate runs the
+    # Home reader's own builder, so the reader's directory is covered whole and
+    # the modules it loads from elsewhere are named one by one.
     paths:
       - ".github/workflows/ecl-physical-admission.yml"
       - "config/ecl/synthetic-enterprise-v1-relationship-map.json"
@@ -48,6 +54,21 @@ on:
       - "supabase/migrations/20260901090000_home_serving_views_intake_families.sql"
       - "supabase/migrations/20260902090000_home_serving_view_executive_interviews.sql"
       - "supabase/migrations/20260902100000_home_serving_view_relationships.sql"
+      - "scripts/data-build/segment-spine.ts"
+      - "scripts/ecl/__tests__/synthetic-enterprise-home-rows.test.ts"
+      - "scripts/ecl/__tests__/test_home_active_assessment_migration.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_home_admission.ts"
+      - "scripts/ecl/synthetic_enterprise_home_job.ts"
+      - "src/lib/auth/agent-client-logins.ts"
+      - "src/lib/client-config.ts"
+      - "src/lib/data-plane/azureRead.ts"
+      - "src/lib/data-plane/read-adapters/azureSession.ts"
+      - "src/lib/data-plane/tenantConnectionResolver.ts"
+      - "src/lib/ecl/denseAssessment.ts"
+      - "src/lib/home/preview/**"
+      - "src/lib/observability/structured-logger.ts"
+      - "src/lib/tenant/aliases.ts"
+      - "tsconfig.json"
   workflow_dispatch:
 
 jobs:
@@ -96,6 +117,8 @@ jobs:
         run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts
       - name: Refuse a projection or a Home promotion the dataset registry has not approved
         run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_home_gates.ts
+      - name: Map canonical rows to Home rows without filling in what the source does not hold
+        run: node --import tsx --test scripts/ecl/__tests__/synthetic-enterprise-home-rows.test.ts
       - name: Load and read back synthetic source and canonical rows
         env:
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
@@ -133,5 +156,16 @@ jobs:
           psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261002013000_home_active_assessment.sql
           psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261002013000_home_active_assessment.sql
           test "$(psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -At -c 'select count(*) from ecl_projection.home_active_assessment')" = 0
+      - name: Hold the Home declarations table to what its migration promises
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_home_active_assessment_migration.ts
+      # Runs the admission and retirement jobs themselves, with the Home
+      # reader's own builder as the gate, against the projection written above.
+      - name: Check, promote, retire and re-promote the projected assessment
+        env:
+          NODE_OPTIONS: --conditions=react-server
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_admission.ts
       - name: Prove generated Home admission spine
         run: npm run test:ecl:synthetic-enterprise-v2:promote-home

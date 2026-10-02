@@ -4,6 +4,7 @@ import { buildHomeEnterpriseContext } from "../../../src/lib/home/preview/ecl-en
 import { generatePack } from "../load_synthetic_enterprise_v1";
 import { assertProjectionProof } from "../promote_synthetic_enterprise_home";
 import { buildSyntheticHomeRows } from "../synthetic_enterprise_home_rows";
+import { assertWorkflowTriggersCover } from "./synthetic_enterprise_gate_fixtures";
 
 const proof = {
   status: "passed",
@@ -31,19 +32,54 @@ const expected = {
 };
 
 assert.doesNotThrow(() => assertProjectionProof(proof, expected));
-for (const changed of [
-  { rows: 3642 },
-  { source_linked_rows: 3642 },
-  { source_set_hash: "c".repeat(64) },
-  { client_attestation_state: "client_attested" },
-  { serving_state: "home_active" },
-  { row_types: { ...proof.row_types, application: 24 } },
-]) {
+// One case per condition of the contract. Each changes the proof in a way that
+// only its own condition refuses, so a condition that is removed lets its case
+// through.
+const refusedProofs: Record<string, Partial<typeof proof>> = {
+  status: { status: "failed" },
+  assessment_id: { assessment_id: "synthetic-v1" },
+  source_set_hash: { source_set_hash: "c".repeat(64) },
+  client_attestation_state: { client_attestation_state: "client_attested" },
+  serving_state: { serving_state: "home_active" },
+  projection_hash: { projection_hash: "B".repeat(64) },
+  // Fewer rows, every one of them still source-linked.
+  rows: { rows: 3642, source_linked_rows: 3642 },
+  source_linked_rows: { source_linked_rows: 3642 },
+  enterprise_profile: {
+    row_types: { ...proof.row_types, enterprise_profile: 2 },
+  },
+  business_segment: { row_types: { ...proof.row_types, business_segment: 2 } },
+  business_function: {
+    row_types: { ...proof.row_types, business_function: 13 },
+  },
+  priority: { row_types: { ...proof.row_types, priority: 4 } },
+  program: { row_types: { ...proof.row_types, program: 25 } },
+  application: { row_types: { ...proof.row_types, application: 24 } },
+  contract: { row_types: { ...proof.row_types, contract: 229 } },
+};
+assert.equal(Object.keys(refusedProofs).length, 15);
+for (const [condition, changed] of Object.entries(refusedProofs)) {
   assert.throws(
     () => assertProjectionProof({ ...proof, ...changed }, expected),
-    /does not meet the Home admission contract/,
+    /^Error: Projection proof does not meet the Home admission contract$/,
+    condition,
   );
 }
+// The expected assessment and source set are the caller's, not the proof's.
+assert.throws(() =>
+  assertProjectionProof(proof, { ...expected, assessmentId: "synthetic-v1" }),
+);
+assert.throws(() =>
+  assertProjectionProof(proof, { ...expected, sourceSetHash: "c".repeat(64) }),
+);
+// A hash of the projected rows is an additional field: a proof with one, and
+// a proof written before the field existed, both meet the contract.
+assert.doesNotThrow(() =>
+  assertProjectionProof(
+    { ...proof, projected_rows_hash: "d".repeat(64) },
+    expected,
+  ),
+);
 async function main(): Promise<void> {
   const pack = await generatePack("v2");
   try {
@@ -75,6 +111,7 @@ async function main(): Promise<void> {
     assert.equal(context.priorities.length, 5);
     assert.equal(context.unlinkedPrograms.length, 1);
     assert.equal(context.excludedUncitedRows, 0);
+    assertWorkflowTriggersCover([]);
     console.log("Home projection proof and generated enterprise spine passed");
   } finally {
     await rm(pack.dir, { recursive: true, force: true });
