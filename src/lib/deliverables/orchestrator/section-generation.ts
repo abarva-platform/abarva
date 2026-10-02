@@ -182,8 +182,29 @@ export interface ConsolidatedOpenInput {
   detail: string;
 }
 
-function normalizeOpenInputDetail(detail: string): string {
-  const normalized = detail
+/**
+ * A structured field from the model, as text.
+ *
+ * The synthesis pass returns JSON, and a field typed as text here can arrive
+ * as a number, a boolean, null, or a nested value — a table cell holding 64
+ * rather than "64". Every repair below calls string methods on these fields,
+ * so one numeric cell failed the whole build with a TypeError.
+ */
+export function structuredText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeOpenInputDetail(detail: unknown): string {
+  const normalized = structuredText(detail)
     .replace(
       /\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi,
       (_match, inner: string) =>
@@ -205,16 +226,20 @@ function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
   return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
 }
 
-function repairStructuredClientFactText(value: string): string {
+function repairStructuredClientFactText(value: unknown): string {
   return repairUncitedFigures(normalizeOpenInputDetail(value));
 }
 
 function repairStructuredTable(table: RenderableTable): RenderableTable {
+  const columns: unknown[] = Array.isArray(table.columns) ? table.columns : [];
+  const rows: unknown[] = Array.isArray(table.rows) ? table.rows : [];
   return {
     ...table,
-    columns: table.columns.map((column) => normalizeOpenInputDetail(column)),
-    rows: table.rows.map((row) =>
-      row.map((cell) => repairStructuredClientFactText(cell)),
+    columns: columns.map((column) => normalizeOpenInputDetail(column)),
+    rows: rows.map((row) =>
+      (Array.isArray(row) ? row : [row]).map((cell) =>
+        repairStructuredClientFactText(cell),
+      ),
     ),
   };
 }
@@ -245,7 +270,9 @@ function repairStructuredDeckSlides(
         ? { title: repairStructuredClientFactText(slide.title) }
         : {}),
       governingMessage: repairStructuredClientFactText(slide.governingMessage),
-      points: (slide.points ?? []).map(repairStructuredClientFactText),
+      points: (Array.isArray(slide.points) ? slide.points : []).map(
+        repairStructuredClientFactText,
+      ),
       ...(slide.speakerNotes
         ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
         : {}),
