@@ -16,6 +16,7 @@ import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
 import {
   MovesPhaseStandaloneClient,
+  gateOnlyConfirmSummaryFor,
   movesPhaseCopyAuditBlocks,
 } from "../MovesPhaseStandaloneClient";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -4366,6 +4367,25 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeDisabled();
 
     jest.useRealTimers();
+  });
+
+  it("says which phase approving a gate opens — the next one, not the one being approved", () => {
+    const p2 = { phase: 2, code: "P2", title: "Discover & Diagnose" };
+    const p3 = { phase: 3, code: "P3", title: "Design Future State" };
+    // Approving the gate of the phase the Move is in.
+    expect(gateOnlyConfirmSummaryFor(p2, p2)).toBe(
+      "This submits the already-satisfied P2 gate and opens P3 Design Future State. It does not regenerate artifacts.",
+    );
+    // Re-approving an earlier gate opens nothing.
+    expect(gateOnlyConfirmSummaryFor(p2, p3)).toBe(
+      "This re-submits the already-satisfied P2 gate against current evidence. The Move stays in P3 Design Future State. It does not regenerate artifacts.",
+    );
+    expect(
+      gateOnlyConfirmSummaryFor(
+        { phase: 4, code: "P4" },
+        { phase: 4, code: "P4", title: "Roadmap & Business Case" },
+      ),
+    ).toContain("opens P5 Mobilize & Handoff");
   });
 
   it("submits an already-satisfied P5 gate without regenerating artifacts", async () => {

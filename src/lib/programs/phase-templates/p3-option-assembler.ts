@@ -176,7 +176,7 @@ export function buildP3DesignInputsPackFromSignals({
     )
     .map((signal) =>
       signal.sourceDeliverableTypeKey
-        ? `P2 ${signal.sourceDeliverableTypeKey}: ${signal.heading}`
+        ? `P2 ${p2SourceEvidenceTitle(signal.sourceDeliverableTypeKey)}: ${signal.heading}`
         : `P2: ${signal.heading}`,
     );
   const priorPhaseEvidence = priorPhaseContent.map((signal) => {

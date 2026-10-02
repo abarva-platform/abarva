@@ -1706,7 +1706,7 @@ function ArtifactRow({
                 value={clientApprovalReason}
                 onChange={(e) => setClientApprovalReason(e.target.value)}
                 rows={2}
-                placeholder="Approval rationale, e.g. Sponsor reviewed the charter and approved this version for P1 gate closure."
+                placeholder="Approval rationale, e.g. the sponsor reviewed this version and approved it for gate closure."
                 style={{
                   width: "100%",
                   resize: "vertical",

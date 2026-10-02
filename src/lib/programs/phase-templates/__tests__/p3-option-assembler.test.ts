@@ -395,10 +395,10 @@ describe('P3 dynamic option assembler', () => {
     });
 
     expect(pack.notReadyConditions).toContain(
-      'P2 discovery_report: Systems: production interfaces remain unvalidated',
+      'P2 Discovery & Diagnosis Report: Systems: production interfaces remain unvalidated',
     );
     expect(pack.unresolvedQuestions).toContain(
-      'P2 discovery_report: Open Inputs Required',
+      'P2 Discovery & Diagnosis Report: Open Inputs Required',
     );
     expect(pack.evidenceBackedConstraints?.join(' ')).toMatch(/mock contract test passed/i);
   });
@@ -426,7 +426,7 @@ describe('P3 dynamic option assembler', () => {
     });
 
     expect(optionSet.missingEvidence).toContain(
-      'P2 discovery_report: Systems: production interfaces remain unvalidated',
+      'P2 Discovery & Diagnosis Report: Systems: production interfaces remain unvalidated',
     );
     expect(optionSet.sourceEvidenceLabels).toContain('discovery_report');
     expect(optionSet.recommendationConfidence).toBe('low');
