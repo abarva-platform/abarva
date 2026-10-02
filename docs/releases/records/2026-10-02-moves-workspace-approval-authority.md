@@ -41,8 +41,8 @@ Moves product approvals are recorded by an authenticated workspace user with app
 - Affected-path test sweep: 41 suites passed; 617 tests passed. One existing canonical-admin-roster assertion failed on the branch baseline and is unrelated to these changes.
 - TypeScript check passed with Node 24 and a 6 GB heap.
 - Full ESLint passed with zero errors; warnings are existing repository warnings.
-- Focused approval/notification suites passed: 7 suites, 78 tests. The affected-path sweep also passed 41 suites with 617 tests; one existing canonical-admin-roster assertion failed on the branch baseline and is unrelated to these changes.
-- Local release-check passed all 11 gates. GitHub CI results are pending PR validation.
+- Focused approval, notification, and affected integration suites passed: 12 suites, 224 tests. The broader affected-path sweep also passed 41 suites with 617 tests; one existing canonical-admin-roster assertion failed on the branch baseline and is unrelated to these changes.
+- AI surface controls, route/export reachability, DOM integrity, and tenancy-fence census checks passed. Local release-check passed all 11 gates. GitHub CI results are pending PR revalidation.
 - Signed-in production verification is pending deployment and must not be inferred from these tests.
 
 ## Rollout Plan

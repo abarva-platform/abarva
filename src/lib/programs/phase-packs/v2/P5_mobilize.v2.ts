@@ -300,8 +300,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       id: 'AP-P5-2',
       label: 'Incomplete delivery team',
-      // dom-integrity-ignore-line — "TBD" is the anti-pattern Nexus detects, not a placeholder
       detection_hint:
+        // dom-integrity-ignore-line — classifier vocabulary, not rendered output
         'Critical roles are listed as "TBD" or "to be hired" without a confirmed path',
       what_to_flag:
         'Critical roles without named individuals or a confirmed hiring path are P5 blockers. The delivery team must be assembled before Tower accepts the handoff.',

@@ -50,10 +50,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-type ProgramMutationClient = Awaited<
-  ReturnType<typeof getProgramsRouteSupabase>
->["supabase"];
-
 const DOCX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const PPTX_CONTENT_TYPE =

@@ -606,7 +606,7 @@
             "createAutonomousDecisionTextStreamer()",
             "autonomousDecisionStreamer.push(",
             "autonomousDecisionStreamer.flush()",
-            "PHASE ADVANCE APPROVALS",
+            "PHASE APPROVALS",
             "Do not claim the user can see, approve"
           ],
           "behavioralTest": {

@@ -203,6 +203,7 @@ const programScopedCases: RouteCase[] = [
     params: { programId: OWN_PROGRAM },
     body: {
       toPhase: 1,
+      selfApproveIfAuthorized: true,
       snapshot: { source: 'test' },
       humanRationale: 'Reviewed the governing evidence for this phase transition.',
     },

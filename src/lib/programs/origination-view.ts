@@ -68,7 +68,7 @@ export function buildOriginationViewModel(): OriginationViewModel {
     stewardOpenerCopy:
       'Steward is ready to classify your program and match it to known patterns. Fill in the three sections below to open your program.',
     stewardSubmitCopy:
-      'Program opening. The sponsor receives progress updates only when opted in; the authorized workspace user records product approvals.',
+      'Nexus opens the program. The sponsor receives progress updates only when opted in; the authorized workspace user records product approvals.',
     deterministicSeed: true,
   };
 }
