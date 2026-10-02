@@ -1,11 +1,14 @@
 import {
   namesAPerson,
   resolveLoadApproval,
+  resolveServingApproval,
   validateManifest,
   validateManifestRegistry,
   type DatasetManifest,
   type LoadApproval,
   type LoadBinding,
+  type ServingApproval,
+  type ServingBinding,
 } from "../dataset-manifest";
 
 /**
@@ -420,5 +423,218 @@ describe("validateManifestRegistry", () => {
         () => false,
       ),
     ).toEqual([]);
+  });
+});
+
+function servingApproval(over: Partial<ServingApproval> = {}): ServingApproval {
+  return {
+    ...loadApproval(),
+    approved_at: "2026-06-10",
+    surface: "home",
+    ...over,
+  };
+}
+
+function servableManifest(
+  over: Partial<DatasetManifest> = {},
+): DatasetManifest {
+  return loadableManifest({ serving_approval: servingApproval(), ...over });
+}
+
+function servingBinding(over: Partial<ServingBinding> = {}): ServingBinding {
+  return { ...binding(), surface: "home", ...over };
+}
+
+function servingRefusal(
+  manifests: unknown[],
+  bound: ServingBinding = servingBinding(),
+): string {
+  const decision = resolveServingApproval(manifests, bound);
+  if (decision.approved) throw new Error("expected serving to be refused");
+  return decision.reasons.join(" | ");
+}
+
+describe("validateManifest approved_by", () => {
+  // The shared fixture signs off with a single lower-case name.
+  it.each([manifest().approved_by, "Jordan Rivera"])(
+    "does not warn about a person: %s",
+    (name) => {
+      expect(
+        validateManifest(manifest({ approved_by: name })).warnings,
+      ).toEqual([]);
+    },
+  );
+
+  it.each([
+    "Codex synthetic lab reviewer under product-owner delegation",
+    "active-task-operator-approval",
+    "AbarVa Product Engineering",
+  ])(
+    "warns, without failing, when the sign-off is an agent, team or role: %s",
+    (name) => {
+      const v = validateManifest(manifest({ approved_by: name }));
+      expect(v.ok).toBe(true);
+      expect(v.warnings).toEqual([
+        "approved_by names an agent, team, role or delegation, not a person",
+      ]);
+    },
+  );
+});
+
+describe("validateManifest serving_approval", () => {
+  it("accepts a serving approval for the version the load approval covers", () => {
+    expect(validateManifest(servableManifest())).toEqual({
+      ok: true,
+      errors: [],
+      warnings: [],
+    });
+  });
+
+  it("rejects a serving approval that does not name a person", () => {
+    const v = validateManifest(
+      servableManifest({
+        serving_approval: servingApproval({ approved_by: "Release Bot" }),
+      }),
+    );
+    expect(v.errors).toEqual([
+      "serving_approval.approved_by must be a named person, not an agent, team, role or delegation",
+    ]);
+  });
+
+  it("rejects a serving approval with no load approval", () => {
+    const v = validateManifest(servableManifest({ load_approval: undefined }));
+    expect(v.errors).toEqual([
+      "serving_approval requires a load_approval for the same version",
+    ]);
+  });
+
+  it("rejects a serving approval for a different version than the load approval", () => {
+    for (const over of [
+      { source_set_hash: OTHER_SOURCE_SET_HASH },
+      { assessment_id: "assessment-other" },
+    ] satisfies Partial<ServingApproval>[]) {
+      const v = validateManifest(
+        servableManifest({ serving_approval: servingApproval(over) }),
+      );
+      expect({ over, errors: v.errors }).toEqual({
+        over,
+        errors: [
+          "serving_approval and load_approval are for different versions",
+        ],
+      });
+    }
+  });
+
+  it("rejects an unknown surface and unknown fields", () => {
+    expect(
+      validateManifest(
+        servableManifest({
+          serving_approval: servingApproval({ surface: "tower" as never }),
+        }),
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateManifest(
+        servableManifest({
+          serving_approval: {
+            ...servingApproval(),
+            waived: true,
+          } as ServingApproval,
+        }),
+      ).ok,
+    ).toBe(false);
+    const withoutSurface: Record<string, unknown> = { ...servingApproval() };
+    delete withoutSurface.surface;
+    expect(
+      validateManifest(
+        servableManifest({
+          serving_approval: withoutSurface as ServingApproval,
+        }),
+      ).ok,
+    ).toBe(false);
+  });
+
+  it("requires a serving approval's release record to exist", () => {
+    const record = "docs/releases/records/2026-06-10-not-written.md";
+    expect(
+      validateManifestRegistry(
+        [
+          {
+            file: "a.json",
+            raw: servableManifest({
+              serving_approval: servingApproval({ release_record: record }),
+            }),
+          },
+        ],
+        (path) => path === loadApproval().release_record,
+      ),
+    ).toEqual([
+      `a.json: serving_approval.release_record ${record} does not exist`,
+    ]);
+  });
+});
+
+describe("resolveServingApproval", () => {
+  it("approves serving a loaded version on the surface the approval names", () => {
+    expect(
+      resolveServingApproval([servableManifest()], servingBinding()),
+    ).toEqual({
+      approved: true,
+      approval: servingApproval(),
+    });
+  });
+
+  it("refuses when the load itself is not approved, for the load's reason", () => {
+    expect(
+      servingRefusal([manifest({ ingestion_method: "operator_aca_job" })]),
+    ).toBe("manifest carries no load_approval");
+    expect(servingRefusal([])).toMatch(/found 0/);
+    expect(
+      servingRefusal(
+        [servableManifest()],
+        servingBinding({ source_set_hash: OTHER_SOURCE_SET_HASH }),
+      ),
+    ).toBe("load_approval is for a different source-set hash");
+  });
+
+  it("refuses a loaded version with no serving approval", () => {
+    expect(servingRefusal([loadableManifest()])).toBe(
+      "manifest carries no serving_approval",
+    );
+    expect(servingRefusal([loadableManifest({ serving_approval: null })])).toBe(
+      "manifest carries no serving_approval",
+    );
+  });
+
+  it("refuses a serving approval the manifest check rejects", () => {
+    expect(
+      servingRefusal([
+        servableManifest({
+          serving_approval: servingApproval({ approved_by: "Platform Team" }),
+        }),
+      ]),
+    ).toBe(
+      "manifest is invalid: serving_approval.approved_by must be a named person, not an agent, team, role or delegation",
+    );
+    expect(
+      servingRefusal([
+        servableManifest({
+          serving_approval: servingApproval({
+            source_set_hash: OTHER_SOURCE_SET_HASH,
+          }),
+        }),
+      ]),
+    ).toBe(
+      "manifest is invalid: serving_approval and load_approval are for different versions",
+    );
+  });
+
+  it("refuses to serve on a surface the approval does not name", () => {
+    expect(
+      servingRefusal(
+        [servableManifest()],
+        servingBinding({ surface: "tower" as never }),
+      ),
+    ).toBe("serving_approval is for home, not tower");
   });
 });

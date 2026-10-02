@@ -42,7 +42,7 @@ Adds a private operator job that validates a pinned synthetic enterprise source 
 - PASS: Read-only generation validates 22 files, 16,416 source rows, 5,759 objects, 10,619 resolved relationships, and one unresolved edge.
 - PASS: Disposable Postgres round trip checks source and canonical counts, logical application grain, selected provenance states, row lineage, and refusal to overwrite an occupied assessment.
 - PASS: Local typecheck and lint.
-- NOT RUN: CI repetition of the insertion path after the physical admission migration; pending PR checks.
+- PASS: CI repetition of the insertion path after the physical admission migration, in the ECL physical admission workflow.
 - NOT RUN: Shared lab operator execution, independent live readback, or signed-in browser proof.
 
 ## Rollout Plan

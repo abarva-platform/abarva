@@ -1,15 +1,9 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
-import {
-  resolveLoadApproval,
-  type LoadApproval,
-} from "../../../src/lib/governance/dataset-manifest";
+import { resolveLoadApproval } from "../../../src/lib/governance/dataset-manifest";
 import {
   generatePack,
   loadBinding,
@@ -19,86 +13,16 @@ import {
   runStages,
   type GeneratedPack,
 } from "../load_synthetic_enterprise_v1";
-
-const TENANT = CANONICAL_TENANT_KEYS[0];
-const ASSESSMENT = "assessment-fixture-enterprise-v1";
-const HASH = "c".repeat(64);
-const OTHER_HASH = "d".repeat(64);
-const RELEASE_RECORD = "docs/releases/records/2026-01-01-fixture-load.md";
-
-function fixturePack(objectCount = 3): GeneratedPack {
-  return {
-    dir: path.join(tmpdir(), "ecl-load-gate-fixture-does-not-exist"),
-    manifest: {
-      dataset_id: "FIXTURE_ENTERPRISE_V1",
-      tenant_key: TENANT,
-      assessment_id: ASSESSMENT,
-      as_of: "2026-01-01",
-      source_set_hash: HASH,
-      client_attestation_state: "not_client_attested",
-      files: [],
-    },
-    normalized: {
-      source_set_hash: HASH,
-      tenant_key: TENANT,
-      assessment_id: ASSESSMENT,
-      client_attestation_state: "not_client_attested",
-      objects: Array.from({ length: objectCount }, (_, index) => ({
-        id: `OBJ-${index}`,
-        type: "application",
-        name: `Fixture object ${index}`,
-        attributes: {},
-        source_as_of: "2026-01-01",
-        provenance_class: "synthetic",
-        client_attestation_state: "not_client_attested",
-        source: { source_family: "fixture", source_row_id: `ROW-${index}` },
-      })),
-      relationships: [],
-      unresolved_relationships: [],
-      quality: {
-        object_count: objectCount,
-        relationship_count: 0,
-        unresolved_relationship_count: 0,
-      },
-    },
-  };
-}
-
-function approval(over: Partial<LoadApproval> = {}): LoadApproval {
-  return {
-    approved_by: "Jordan Rivera",
-    approved_at: "2026-01-01",
-    assessment_id: ASSESSMENT,
-    source_set_hash: HASH,
-    release_record: RELEASE_RECORD,
-    ...over,
-  };
-}
-
-function registryManifest(
-  over: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return {
-    dataset_id: "FIXTURE_ENTERPRISE_V1",
-    title: "Fixture enterprise source set",
-    client_key: TENANT,
-    tenant_scope: "canonical_tenant",
-    source_layer: "tenant_context",
-    classification: "internal",
-    owner: "fixture owner",
-    source_basis: "deterministic fixture definition",
-    ingestion_method: "operator_aca_job",
-    retrieval_plan: "postgres_fts",
-    retrieval_proof_required: true,
-    pii_phi_handling: null,
-    expected_object_count: 3,
-    approved_by: "fixture owner",
-    approved_at: "2026-01-01",
-    load_approval: approval(),
-    notes: null,
-    ...over,
-  };
-}
+import {
+  ASSESSMENT,
+  HASH,
+  OTHER_HASH,
+  RELEASE_RECORD,
+  approval,
+  fixturePack,
+  registryManifest,
+  startThreeWays,
+} from "./synthetic_enterprise_gate_fixtures";
 
 function jobEnv(
   over: Record<string, string | undefined> = {},
@@ -399,65 +323,16 @@ test("the committed registry describes every source version the loader generates
 });
 
 test("the loader runs when invoked directly, through a symlinked root too, and never on import", async () => {
-  const repoRoot = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../../..",
-  );
-  const script = "scripts/ecl/load_synthetic_enterprise_v1.ts";
-  const scratch = await mkdtemp(path.join(tmpdir(), "ecl-load-gate-entry-"));
-  const linkedRoot = path.join(scratch, "linked-root");
   // With no job binding in the environment, an executing run stops at its first gate.
-  const env = { ...process.env };
-  for (const key of Object.keys(env)) {
-    if (
-      key === "DATABASE_URL" ||
-      key.startsWith("ECL_SYNTHETIC_") ||
-      key.startsWith("AZURE_STORAGE_")
-    ) {
-      delete env[key];
-    }
-  }
-  const run = (cwd: string, args: string[]) =>
-    spawnSync(process.execPath, ["--import", "tsx", ...args], {
-      cwd,
-      env,
-      encoding: "utf8",
-    });
   const refused = /^Missing governed job bindings: DATABASE_URL/;
-  let linked = false;
-  try {
-    // An importer whose own path contains the loader's name.
-    const importer = path.join(
-      scratch,
-      "imports-load_synthetic_enterprise_v1.mjs",
-    );
-    await writeFile(
-      importer,
-      'await import(process.argv[2]);\nconsole.log("imported without running");\n',
-    );
-    const imported = run(repoRoot, [
-      importer,
-      pathToFileURL(path.join(repoRoot, script)).href,
-      "--execute",
-    ]);
-    assert.equal(imported.status, 0, imported.stderr);
-    assert.equal(imported.stdout, "imported without running\n");
-
-    const direct = run(repoRoot, [script, "--execute"]);
-    assert.equal(direct.status, 1, direct.stderr);
-    assert.match(direct.stderr, refused);
-
-    await symlink(repoRoot, linkedRoot, "dir");
-    linked = true;
-    const throughLink = run(linkedRoot, [
-      path.join(linkedRoot, script),
-      "--execute",
-    ]);
-    assert.equal(throughLink.status, 1, throughLink.stderr);
-    assert.match(throughLink.stderr, refused);
-  } finally {
-    // Remove the link itself before the directory that holds it.
-    if (linked) await unlink(linkedRoot);
-    await rm(scratch, { recursive: true, force: true });
-  }
+  const { imported, direct, throughLink } = await startThreeWays(
+    "scripts/ecl/load_synthetic_enterprise_v1.ts",
+    ["--execute"],
+  );
+  assert.equal(imported.status, 0, imported.stderr);
+  assert.equal(imported.stdout, "imported without running\n");
+  assert.equal(direct.status, 1, direct.stderr);
+  assert.match(direct.stderr, refused);
+  assert.equal(throughLink.status, 1, throughLink.stderr);
+  assert.match(throughLink.stderr, refused);
 });

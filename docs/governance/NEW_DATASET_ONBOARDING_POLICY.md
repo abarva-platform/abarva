@@ -41,6 +41,7 @@ up front, in a manifest, and checked in CI.
 | `pii_phi_handling`            | Required for sensitive classifications.                                     |
 | `approved_by` / `approved_at` | Human sign-off for declaring the dataset. It does not approve loading it.   |
 | `load_approval`               | Optional until a load is approved. A named person's approval for ONE exact version: `approved_by`, `approved_at`, `assessment_id`, `source_set_hash`, `release_record`. |
+| `serving_approval`            | Optional until that loaded version is approved for a product surface. The same fields plus `surface` (`home`). Requires a `load_approval` for the same version. |
 
 ## Hard rules enforced by CI
 
@@ -50,8 +51,10 @@ up front, in a manifest, and checked in CI.
 - Sensitive (pii/phi/restricted) targeting `corpus_global` → **fail**.
 - Sensitive classification without `pii_phi_handling` → **fail**.
 - Unknown manifest fields (strict schema) → **fail**.
-- `load_approval.approved_by` naming an agent, a team, a role or a delegation → **fail**.
-- `load_approval.release_record` that is not an existing `docs/releases/records/*.md` file → **fail**.
+- `load_approval.approved_by` or `serving_approval.approved_by` naming an agent, a team, a role or a delegation → **fail**.
+- A `release_record` in either approval that is not an existing `docs/releases/records/*.md` file → **fail**.
+- `serving_approval` without a `load_approval`, or for a different assessment or source-set hash than it → **fail**.
+- The manifest's own `approved_by` naming an agent, a team, a role or a delegation → **warn**.
 - Two manifests declaring the same `dataset_id` → **fail**.
 - Retrievable plan with `retrieval_proof_required: false` → **warn**.
 
@@ -84,8 +87,32 @@ covers the first. A data-plane load needs the second, recorded in the same manif
 - Approving a load is not reviewing its rows. Loaded rows stay `not_reviewed` until
   a review step says otherwise.
 
-Enforced today by `resolveLoadApproval` in `src/lib/governance/dataset-manifest.ts`
-and by the synthetic enterprise context loader. Other loaders do not read it yet.
+## Serving approval
+
+Loading a version does not approve showing it to anyone. Selecting a loaded version
+for a product surface is a third decision, recorded beside the load approval:
+
+```json
+"serving_approval": {
+  "approved_by": "<the approving person's name>",
+  "approved_at": "YYYY-MM-DD",
+  "assessment_id": "<the same assessment>",
+  "source_set_hash": "<the same sha256>",
+  "release_record": "docs/releases/records/<record>.md",
+  "surface": "home"
+}
+```
+
+- It needs a `load_approval` for the same assessment and source-set hash.
+- A job that changes what a surface serves refuses without it. A check-only run
+  reports the decision and changes nothing.
+- Retiring a served version, which returns the surface to what it served before,
+  does not need it.
+
+Enforced today by `resolveLoadApproval` and `resolveServingApproval` in
+`src/lib/governance/dataset-manifest.ts`: the synthetic enterprise context loader
+and its Home projection job require the load approval, and its Home promotion job
+requires the serving approval. Other loaders do not read either yet.
 
 This closes the framework: PR-1 contract → PR-3 readiness → PR-4 CI gate →
 PR-5 runtime seam → PR-6 coverage → **PR-8 onboarding gate** ensures the next

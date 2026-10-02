@@ -65,6 +65,21 @@ export const LoadApprovalSchema = z
   .strict();
 export type LoadApproval = z.infer<typeof LoadApprovalSchema>;
 
+/** Product surfaces a loaded dataset version can be approved for serving on. */
+export const SERVING_SURFACES = ["home"] as const;
+
+/**
+ * Approval to serve ONE exact, already-loaded version on a product surface.
+ *
+ * Loading a version does not approve showing it to anyone. Selecting it for a
+ * product surface is approved separately, by a named person, for the same
+ * assessment and source-set hash the load approval covers.
+ */
+export const ServingApprovalSchema = LoadApprovalSchema.extend({
+  surface: z.enum(SERVING_SURFACES),
+}).strict();
+export type ServingApproval = z.infer<typeof ServingApprovalSchema>;
+
 export const DatasetManifestSchema = z
   .object({
     dataset_id: z.string().min(3),
@@ -93,15 +108,17 @@ export const DatasetManifestSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "approved_at must be YYYY-MM-DD"),
     /** Absent until a named person approves loading one exact version. */
     load_approval: LoadApprovalSchema.nullable().optional(),
+    /** Absent until a named person approves serving that loaded version on a surface. */
+    serving_approval: ServingApprovalSchema.nullable().optional(),
     notes: z.string().nullable().optional(),
   })
   .strict();
 export type DatasetManifest = z.infer<typeof DatasetManifestSchema>;
 
-// A load approver must be a person. This cannot prove that a person typed the
-// name. It refuses a string that plainly names an agent, a team, a role or a
-// delegation; what makes the approval reviewable is that it is a committed
-// line, bound to one source-set hash, that a pull request has to show.
+// A load or serving approver must be a person. This cannot prove that a person
+// typed the name. It refuses a string that plainly names an agent, a team, a
+// role or a delegation; what makes the approval reviewable is that it is a
+// committed line, bound to one source-set hash, that a pull request has to show.
 const PERSON_NAME =
   /^\p{Lu}[\p{L}'’.-]*(?: [\p{L}'’.-]+)* \p{Lu}[\p{L}'’.-]*$/u;
 const NON_PERSON_APPROVER =
@@ -172,17 +189,38 @@ export function validateManifest(raw: unknown): ManifestValidation {
       "retrieval_plan is set but retrieval_proof_required is false — agent-usable context should be retrieval-proven",
     );
   }
-  if (m.load_approval && !namesAPerson(m.load_approval.approved_by)) {
-    errors.push(
-      "load_approval.approved_by must be a named person, not an agent, team, role or delegation",
+  // The dataset's own sign-off is free text today, so an agent, team, role or
+  // delegation in it is reported, not refused. In a load or serving approval it
+  // is refused.
+  if (NON_PERSON_APPROVER.test(m.approved_by)) {
+    warnings.push(
+      "approved_by names an agent, team, role or delegation, not a person",
     );
+  }
+  for (const field of ["load_approval", "serving_approval"] as const) {
+    const approval = m[field];
+    if (approval && !namesAPerson(approval.approved_by)) {
+      errors.push(
+        `${field}.approved_by must be a named person, not an agent, team, role or delegation`,
+      );
+    }
+  }
+  if (m.serving_approval) {
+    if (!m.load_approval) {
+      errors.push("serving_approval requires a load_approval for the same version");
+    } else if (
+      m.serving_approval.assessment_id !== m.load_approval.assessment_id ||
+      m.serving_approval.source_set_hash !== m.load_approval.source_set_hash
+    ) {
+      errors.push("serving_approval and load_approval are for different versions");
+    }
   }
   return { ok: errors.length === 0, errors, warnings };
 }
 
 /**
  * Rules that no single manifest can check about itself: a dataset is declared
- * once, and the release record a load approval names is a file that exists.
+ * once, and the release record an approval names is a file that exists.
  * A manifest that does not parse is skipped here; `validateManifest` reports it.
  */
 export function validateManifestRegistry(
@@ -203,10 +241,11 @@ export function validateManifestRegistry(
     } else {
       declaredBy.set(m.dataset_id, file);
     }
-    if (m.load_approval && !recordExists(m.load_approval.release_record)) {
-      errors.push(
-        `${file}: load_approval.release_record ${m.load_approval.release_record} does not exist`,
-      );
+    for (const field of ["load_approval", "serving_approval"] as const) {
+      const record = m[field]?.release_record;
+      if (record && !recordExists(record)) {
+        errors.push(`${file}: ${field}.release_record ${record} does not exist`);
+      }
     }
   }
   return errors;
@@ -288,4 +327,50 @@ export function resolveLoadApproval(
   return reasons.length > 0
     ? { approved: false, reasons }
     : { approved: true, approval };
+}
+
+/** What a promotion is about to serve: a load binding, and where it will be shown. */
+export interface ServingBinding extends LoadBinding {
+  surface: (typeof SERVING_SURFACES)[number];
+}
+
+export type ServingApprovalDecision =
+  | { approved: true; approval: ServingApproval }
+  | { approved: false; reasons: string[] };
+
+/**
+ * Decide whether one exact, loaded dataset version may be served on a surface.
+ *
+ * Everything a load needs is needed first: the one valid manifest, describing
+ * this version, with its load approval. On top of that the manifest must carry
+ * a serving approval for this assessment, this source-set hash and this surface.
+ */
+export function resolveServingApproval(
+  manifests: unknown[],
+  binding: ServingBinding,
+): ServingApprovalDecision {
+  const load = resolveLoadApproval(manifests, binding);
+  if (!load.approved) return load;
+  // resolveLoadApproval approved, so exactly one valid manifest declares the dataset.
+  const m = DatasetManifestSchema.parse(
+    manifests.find(
+      (raw) =>
+        typeof raw === "object" &&
+        raw !== null &&
+        (raw as { dataset_id?: unknown }).dataset_id === binding.dataset_id,
+    ),
+  );
+  const approval = m.serving_approval;
+  if (!approval) {
+    return { approved: false, reasons: ["manifest carries no serving_approval"] };
+  }
+  // A valid manifest's serving approval is for the same version as its load
+  // approval, which resolveLoadApproval has just matched to this binding.
+  if (approval.surface !== binding.surface) {
+    return {
+      approved: false,
+      reasons: [`serving_approval is for ${approval.surface}, not ${binding.surface}`],
+    };
+  }
+  return { approved: true, approval };
 }
