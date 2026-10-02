@@ -92,12 +92,17 @@ export function homeSourceFileReviewLabelForVersion(
     return "No source files registered for this record";
   if (review.acceptedFiles === review.totalFiles)
     return `Source-file quality: ${review.totalFiles} of ${review.totalFiles} accepted`;
+  // Stated beside the accepted count, never folded into it: a file with no recorded approval is
+  // not a smaller kind of accepted.
+  const notReviewed = review.notReviewedFiles
+    ? `; ${review.notReviewedFiles} not reviewed`
+    : "";
   const partial = review.partialFiles ? `; ${review.partialFiles} partial` : "";
   const blocked = review.blockedFiles ? `; ${review.blockedFiles} blocked` : "";
   const superseded = review.supersededFiles
     ? `; ${review.supersededFiles} superseded`
     : "";
-  return `Source-file quality: ${review.acceptedFiles} of ${review.totalFiles} accepted${partial}${blocked}${superseded}`;
+  return `Source-file quality: ${review.acceptedFiles} of ${review.totalFiles} accepted${notReviewed}${partial}${blocked}${superseded}`;
 }
 
 export function homeSourceCoverageGapLabel(

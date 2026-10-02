@@ -16,7 +16,15 @@ export interface EnterpriseContextFact {
   asOf: string | null;
 }
 
+/** A segment's own row. Revenue is what that row records, or null when it records none. */
+export interface EnterpriseContextSegmentFact extends EnterpriseContextFact {
+  revenueUsd: number | null;
+  revenueSharePct: number | null;
+}
+
 export interface EnterpriseContextFunction extends EnterpriseContextFact {
+  /** The identifier other records name this function by. How its rows are found, not shown. */
+  functionId: string;
   segmentKey: string | null;
   executiveOwner: string | null;
   applicationCount: number;
@@ -25,12 +33,31 @@ export interface EnterpriseContextFunction extends EnterpriseContextFact {
 }
 
 export interface EnterpriseContextPriority extends EnterpriseContextFact {
+  /** The identifier programs and measures name this priority by. */
+  priorityId: string;
   segmentKey: string | null;
   ownerRole: string | null;
   targetOutcome: string | null;
   programCount: number;
   atRiskProgramCount: number;
   metricCount: number;
+}
+
+export interface EnterpriseContextProgram extends EnterpriseContextFact {
+  programId: string;
+}
+
+/**
+ * Why records are counted outside every segment. Three different facts, kept apart: one number
+ * for all three reads as "shared" when part of it is a link that does not resolve.
+ */
+export interface AttributionGap {
+  /** The record's function is in this record and declares no segment. */
+  functionWithoutSegment: number;
+  /** The record names a function that is not in this record. */
+  functionNotInRecord: number;
+  /** The record names no function. */
+  noFunctionRecorded: number;
 }
 
 export interface EnterpriseContextRisk extends EnterpriseContextFact {
@@ -81,17 +108,32 @@ export interface HomeEnterpriseContext {
     businessModel: string;
     annualRevenueUsd: number | null;
   };
+  /**
+   * `revenueUsd` and `revenueSharePct` on a spine row are inputs to its arithmetic and read 0
+   * where the segment's row records none. To show a segment's revenue, read `segmentFacts`.
+   */
   segmentSpine: SegmentSpineReport;
-  segmentFacts: Record<string, EnterpriseContextFact>;
+  segmentFacts: Record<string, EnterpriseContextSegmentFact>;
   functions: EnterpriseContextFunction[];
   priorities: EnterpriseContextPriority[];
   valueProof: EnterpriseValueProof;
   riskTriage: EnterpriseRiskTriage;
+  /** Functions whose row declares no segment. Says nothing about why. */
   sharedFunctionIds: string[];
-  unlinkedPrograms: EnterpriseContextFact[];
+  unlinkedPrograms: EnterpriseContextProgram[];
+  /** By the same domain names the spine uses; sums to that domain's `unattributed` count. */
+  attributionGaps: Record<string, AttributionGap>;
+  /** Spend lines that record no amount. They are counted, and add nothing to any total. */
+  unrecordedSpendAmounts: number;
   excludedUncitedRows: number;
   evidenceClass: "synthetic_reference";
 }
+
+/** Rows a narrative build writes about the record. They are not part of it and cite nothing. */
+const NARRATIVE_ROW_TYPES = new Set(["summary", "chapter_claim", "story_plan"]);
+
+/** The spine's own name for "in no segment"; a function with no segment is routed there. */
+const NO_SEGMENT = "Unattributed";
 
 type SourceRefsForRow = (row: HomeProjectionRow) => string[];
 
@@ -144,11 +186,11 @@ export function buildHomeEnterpriseContext(
   rows: HomeProjectionRow[],
   sourceRefs: SourceRefsForRow,
 ): HomeEnterpriseContext | null {
-  const cited = rows.filter((row) => sourceRefs(row).length > 0);
-  const excludedUncitedRows =
-    rows.filter(
-      (row) => row.row_type !== "summary" && row.row_type !== "chapter_claim",
-    ).length - cited.length;
+  const recordRows = rows.filter(
+    (row) => !NARRATIVE_ROW_TYPES.has(row.row_type),
+  );
+  const cited = recordRows.filter((row) => sourceRefs(row).length > 0);
+  const excludedUncitedRows = recordRows.length - cited.length;
   const byType = (rowType: string) =>
     cited.filter((row) => row.row_type === rowType);
   const profileRows = byType("enterprise_profile");
@@ -193,7 +235,7 @@ export function buildHomeEnterpriseContext(
     if (segmentId && !segmentKeys.has(segmentId)) return null;
     if (!segmentId) sharedFunctionIds.push(functionId);
     functionMap[functionId] = {
-      segment_key: segmentId || "Unattributed",
+      segment_key: segmentId || NO_SEGMENT,
       clinical: false,
       office: "",
     };
@@ -202,7 +244,7 @@ export function buildHomeEnterpriseContext(
   const domainSpecs = [
     ["programs", "program", "sponsor_function_id"],
     ["applications", "application", "business_function_id"],
-    ["data assets", "data_analytics_workload", "business_function_id"],
+    ["data assets", "data_analytics_workload", "function_id"],
     ["platforms", "infrastructure", "business_function_id"],
     ["workforce roles", "workforce_role", "function_id"],
     ["KPIs", "metric", "business_function_id"],
@@ -216,6 +258,9 @@ export function buildHomeEnterpriseContext(
         stringValue(payload(row)[key]),
       ),
   );
+  // Only spend in a completed fiscal period with a recorded amount feeds a total, so a
+  // segment with no such line carries no spend domain at all rather than a total of zero.
+  // Lines excluded here are counted in valueProof.excludedSpendLines, not silently dropped.
   const spendRows = byType("spend_line");
   const completedSpendRows = spendRows.filter((row) =>
     completedFiscalPeriod(row, stringValue(profilePayload.source_as_of)) &&
@@ -232,12 +277,47 @@ export function buildHomeEnterpriseContext(
     spend.moneyLabel = "actual spend in completed fiscal periods (USD)";
     contributions.push(spend);
   }
-  const segmentSpine = buildSegmentSpine(segments, contributions);
+  const spine = buildSegmentSpine(segments, contributions);
   const segmentFacts = Object.fromEntries(
-    segmentRows.map((row) => [
-      stringValue(payload(row).segment_key),
-      fact(row, sourceRefs),
-    ]),
+    segmentRows.map((row) => {
+      const data = payload(row);
+      return [
+        stringValue(data.segment_key),
+        {
+          ...fact(row, sourceRefs),
+          revenueUsd: numberValue(data.revenue_usd),
+          revenueSharePct: numberValue(data.revenue_share_pct),
+        },
+      ];
+    }),
+  );
+  // A share compared against a revenue share nobody recorded is a number about nothing.
+  const segmentSpine: SegmentSpineReport = {
+    ...spine,
+    shareVsRevenue: spine.shareVsRevenue.filter(
+      (entry) => segmentFacts[entry.segmentKey]?.revenueSharePct !== null,
+    ),
+  };
+  const functionsWithoutSegment = new Set(sharedFunctionIds);
+  const attributionGaps: Record<string, AttributionGap> = Object.fromEntries(
+    [
+      ...domainSpecs,
+      ["spend", "spend_line", "business_function_id"] as const,
+    ].map(([domain, rowType, key]) => {
+      const gap: AttributionGap = {
+        functionWithoutSegment: 0,
+        functionNotInRecord: 0,
+        noFunctionRecorded: 0,
+      };
+      for (const row of byType(rowType)) {
+        const functionId = stringValue(payload(row)[key]);
+        if (!functionId) gap.noFunctionRecorded += 1;
+        else if (!functionMap[functionId]) gap.functionNotInRecord += 1;
+        else if (functionsWithoutSegment.has(functionId))
+          gap.functionWithoutSegment += 1;
+      }
+      return [domain, gap];
+    }),
   );
   const countFor = (rowType: string, functionId: string, key: string) =>
     byType(rowType).filter(
@@ -248,6 +328,7 @@ export function buildHomeEnterpriseContext(
     const functionId = stringValue(data.function_id);
     return {
       ...fact(row, sourceRefs),
+      functionId,
       segmentKey: stringValue(data.business_segment_key) || null,
       executiveOwner: stringValue(data.executive_owner) || null,
       applicationCount: countFor(
@@ -275,7 +356,10 @@ export function buildHomeEnterpriseContext(
     !priorityIds.has(stringValue(payload(row).priority_id)),
   );
   const unlinkedPrograms = unlinkedProgramRows
-    .map((row) => fact(row, sourceRefs))
+    .map((row) => ({
+      ...fact(row, sourceRefs),
+      programId: stringValue(payload(row).program_id) || row.row_key,
+    }))
     .sort((a, b) => a.rowKey.localeCompare(b.rowKey));
   const priorities: EnterpriseContextPriority[] = priorityRows.map((row) => {
     const data = payload(row);
@@ -285,6 +369,7 @@ export function buildHomeEnterpriseContext(
     );
     return {
       ...fact(row, sourceRefs),
+      priorityId,
       segmentKey: stringValue(data.segment_id) || null,
       ownerRole: ownerById.get(stringValue(data.owner_id)) || null,
       targetOutcome: stringValue(data.target_outcome) || null,
@@ -423,6 +508,10 @@ export function buildHomeEnterpriseContext(
     riskTriage,
     sharedFunctionIds: sharedFunctionIds.sort(),
     unlinkedPrograms,
+    attributionGaps,
+    unrecordedSpendAmounts: spendRows.filter(
+      (row) => numberValue(payload(row).actual_usd) === null,
+    ).length,
     excludedUncitedRows,
     evidenceClass: "synthetic_reference",
   };

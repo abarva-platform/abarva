@@ -10,14 +10,19 @@ import { render, screen } from "@testing-library/react";
 
 import { HomeV4App } from "../HomeV4App";
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
+import { isDeclaredSyntheticDemoTenant } from "@/lib/tenant/declared-synthetic-tenant";
 
 jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-function bundle(): HomeReviewBundle {
+function bundle(
+  declaredSyntheticDemo = isDeclaredSyntheticDemoTenant("skyharbor-air"),
+): HomeReviewBundle {
   return {
     tenantKey: "skyharbor-air",
+    // As the loader sets it: from the tenant input registry, not from the tenant's name.
+    declaredSyntheticDemo,
     provenance: {
       generated_at: "2026-08-19T00:00:00.000Z",
       home_synthesis_contract_version: "home-chapters-v1",
@@ -43,6 +48,33 @@ describe("Home tenant isolation", () => {
   it("marks the surface as a demo client with synthetic data", () => {
     render(<HomeV4App bundle={bundle()} tenantKey="skyharbor-air" />);
     expect(screen.getByText(/demo/i)).toBeInTheDocument();
+    expect(screen.getByText("Composite reference tenant")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Synthetic portfolio. Not a customer, not a case study.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("makes no demo or synthetic statement about a tenant that is not declared synthetic", () => {
+    for (const declaredSyntheticDemo of [false, undefined]) {
+      const { container, unmount } = render(
+        <HomeV4App
+          bundle={{ ...bundle(), declaredSyntheticDemo }}
+          tenantKey="skyharbor-air"
+        />,
+      );
+      // The client is still named; nothing is said about it being a demonstration.
+      expect(screen.getByText("SkyHarbor Global")).toBeInTheDocument();
+      expect(
+        container.querySelector("[data-home-tenant-declaration]"),
+      ).toHaveAttribute("data-home-tenant-declaration", "none");
+      expect(container).not.toHaveTextContent(/demo/i);
+      expect(container).not.toHaveTextContent(/synthetic portfolio/i);
+      expect(container).not.toHaveTextContent(/not a customer/i);
+      expect(container).not.toHaveTextContent(/composite reference tenant/i);
+      unmount();
+    }
   });
 
   it("exposes no control that switches to another client", () => {
