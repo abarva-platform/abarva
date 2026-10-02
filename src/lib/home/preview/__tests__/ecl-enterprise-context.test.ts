@@ -4,7 +4,11 @@ import { rm } from "node:fs/promises";
 import { generatePack } from "../../../../../scripts/ecl/load_synthetic_enterprise_v1";
 import { buildSyntheticHomeRows } from "../../../../../scripts/ecl/synthetic_enterprise_home_rows";
 import { buildHomeEnterpriseContext } from "../ecl-enterprise-context";
-import type { HomeProjectionRow } from "../ecl-projection-bundle";
+import {
+  buildHomeReviewBundleFromEclProjectionRows,
+  type HomeProjectionRow,
+} from "../ecl-projection-bundle";
+import { getHomeReviewBundle } from "../golden-snapshot";
 
 test("V2 enterprise context reuses declared IDs and preserves shared/unresolved work", async () => {
   const pack = await generatePack("v2");
@@ -70,6 +74,38 @@ test("V2 enterprise context reuses declared IDs and preserves shared/unresolved 
     ]);
     assert.deepEqual(fromServing?.segmentSpine, context.segmentSpine);
     assert.deepEqual(fromServing?.priorities, context.priorities);
+    const sourceHash = "a".repeat(64);
+    const bundleRows = servingRows
+      .filter((row) =>
+        ["enterprise_profile", "business_segment", "business_function"].includes(
+          row.row_type,
+        ),
+      )
+      .map((row, index) => ({
+        ...row,
+        projection_entry_id: `entry-${index}`,
+        source_hash: sourceHash,
+        source_refs_json: [`source-${row.row_key}`],
+        admission_status: "admitted",
+      }));
+    const verifiedRefs = new Map(
+      bundleRows.map((row) => [
+        row.projection_entry_id,
+        new Map([[sourceHash, new Set([`source-${row.row_key}`])]]),
+      ]),
+    );
+    const base = getHomeReviewBundle("meridian-health");
+    assert.ok(base);
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      bundleRows,
+      pack.manifest.assessment_id,
+      verifiedRefs,
+    );
+    assert.equal(
+      bundle.thesis.signalPacket.homeEnterpriseContext?.segmentSpine.segments.length,
+      3,
+    );
     assert.equal(
       buildHomeEnterpriseContext(
         servingRows.filter((row) => row.row_type !== "enterprise_profile"),
