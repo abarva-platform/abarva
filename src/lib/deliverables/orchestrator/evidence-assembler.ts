@@ -29,6 +29,7 @@ import {
   toStoredReviewedStructured,
 } from "@/lib/programs/evidence-review-contract";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import { estimateCaptureStatement } from "./estimate-capture-evidence";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
@@ -339,6 +340,19 @@ function phaseCaptureCandidates(
     provenanceRef:
       stringOrNull(row.id) ?? moduleKey ?? `program_modules:${sectionKey}`,
   };
+  // The reviewed estimate is cited as its calculated rendering, whole: the
+  // figures a deliverable presents are the calculated ones, and they are not
+  // in the saved inputs. See estimate-capture-evidence.ts.
+  const estimateStatement = estimateCaptureStatement(sectionKey, value);
+  if (estimateStatement) {
+    return [
+      {
+        ...baseCandidate,
+        label: `${phasePrefix}: reviewed estimate model`,
+        statement: estimateStatement,
+      },
+    ];
+  }
   const signalCandidates = captureValueSignals(label, value).map(
     (signal, index): GovernedCandidateLike => ({
       label: `${phasePrefix}: ${signal.label}`,
