@@ -68,6 +68,7 @@
     "docs:nexus-manual": "npx tsx scripts/docs/build-nexus-manual.ts",
     "docs:nexus-manual:check": "npx tsx scripts/docs/build-nexus-manual.ts --check",
     "release:check": "node scripts/release-check.mjs",
+    "check:release-check-runs-every-gate": "node scripts/release-control/__tests__/run-release-check-runs-every-gate-tests.mjs",
     "check:release-record-lane-guard": "node scripts/release-control/__tests__/run-release-record-lane-guard-tests.mjs",
     "check:release-record-template-contract": "node scripts/release-control/__tests__/run-release-record-template-contract-tests.mjs",
     "check:release-record-tenant-narrative-guard": "node scripts/release-control/__tests__/run-release-record-tenant-narrative-guard-tests.mjs",

@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 
-import './release-control/check-migration-seals.mjs';
-import './release-control/check-azure-deployment-lane.mjs';
-import './audit/check-no-legacy-tenant-inputs.mjs';
-import './release-control/check-release-record.mjs';
-import './release-control/check-nexus-manual-spine.mjs';
-import './release-control/check-deploy-authority-policy.mjs';
-import './release-control/check-tower-tool-rollout-field-survival.mjs';
-import './release-control/check-tower-ai-business-case-field-survival.mjs';
-import './release-control/check-pilot-data-ingestion-policy.mjs';
-import './release-control/check-home-route-surface.mjs';
-import './release-control/check-scb-truth-gates.mjs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { RELEASE_GATES } from './release-control/release-gates.mjs';
+import { runReleaseGates } from './release-control/run-release-gates.mjs';
+
+// Gates are listed in `release-control/release-gates.mjs` and each runs as its
+// own process. None is imported here: a gate that calls `process.exit(0)` when
+// it passes would end this process, and the gates after it would never run.
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+process.exitCode = runReleaseGates({
+  gates: RELEASE_GATES,
+  args: process.argv.slice(2),
+  rootDir,
+}).exitCode;
