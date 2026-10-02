@@ -45,9 +45,10 @@ No change to the canonical model, source adapters, or client intake.
 - `src/lib/deliverables/shared/cell-tone.ts` (new): deterministic, format-agnostic
   value → tone (critical / warn / good / neutral) map + hex colours.
 - `src/lib/deliverables/orchestrator/types.ts`: optional `RenderableTable.statusColumn`.
-- `src/lib/deliverables/orchestrator/renderers.tsx`: the PPTX table renderer
-  colours the declared status column's cells by value; out-of-range index is
-  ignored (plain table). `repairStructuredTable` already preserves the field.
+- `src/lib/deliverables/orchestrator/renderers.tsx`: the PPTX, HTML, DOCX and PDF
+  table renderers all colour the declared status column's cells by value (shared
+  `cell-tone`); out-of-range index is ignored (plain table). `repairStructuredTable`
+  already preserves the field.
 - `src/lib/deliverables/orchestrator/prompt-builder.ts`: both synthesis/render
   schema hints carry `statusColumn`, with an instruction to include an
   owner/decision column and mark a status column when present.
@@ -56,8 +57,9 @@ No change to the canonical model, source adapters, or client intake.
 
 ## QA / Validation
 
-- Rendered a deck with a three-row risk table (High / Medium / Low) and confirmed
-  the Impact column renders red / amber / green while other columns stay plain.
+- Rendered a three-row risk table (High / Medium / Low) in PPTX and DOCX and
+  confirmed the Impact column renders red / amber / green while other columns stay
+  plain; an HTML test asserts the same.
 - `npx jest src/lib/deliverables` — 108 suites / 1,286 tests pass.
 - Scoped `tsc` over changed files: no type errors. `eslint`: clean.
 - `npm run release:check --base origin/main --head HEAD`: all gates pass.
@@ -94,8 +96,8 @@ workflow. No migration or data change to unwind.
 
 ## Known Gaps
 
-- Colouring is applied in the PPTX renderer (the lead deck format), consistent
-  with the dark-header change. Mirroring it in the HTML / DOCX / PDF table
-  renderers is a fast follow.
-- `value_tree` exhibit SVG builder and a plain-English-mirror prompt beat remain
-  from the deck-quality remediation sequence.
+- Colouring is applied across PPTX, HTML, DOCX and PDF. Verified by render in
+  PPTX, DOCX and HTML; the PDF path is type-safe and uses the identical shared
+  logic (standalone PDF rasterisation needs font registration the app does at
+  runtime).
+- A plain-English-mirror prompt beat remains from the deck-quality sequence.

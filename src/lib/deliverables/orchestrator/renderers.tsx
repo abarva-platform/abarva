@@ -128,7 +128,17 @@ const SOURCE_REGISTER_APPENDIX_THRESHOLD = 10;
 
 /** A light, board-grade table: muted uppercase header (bottom border only),
  *  hairline row dividers, no per-cell boxes, no navy fill. */
-function lightTable(columns: string[], rows: string[][]): Table {
+function lightTable(
+  columns: string[],
+  rows: string[][],
+  statusColumn?: number,
+): Table {
+  const statusCol =
+    typeof statusColumn === "number" &&
+    statusColumn >= 0 &&
+    statusColumn < columns.length
+      ? statusColumn
+      : null;
   const bodyFontSize = columns.length >= 5 ? 18 : 20;
   const columnWeights = columns.map((column) => {
     const label = column.trim().toLowerCase();
@@ -200,39 +210,47 @@ function lightTable(columns: string[], rows: string[][]): Table {
     (row, ri) =>
       new TableRow({
         cantSplit: true,
-        children: columns.map(
-          (_, i) =>
-            new TableCell({
-              width: { size: width(i), type: WidthType.PERCENTAGE },
-              borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                left: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                right: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                // hairline divider on every row except the last (last row no border)
-                bottom:
-                  ri === rows.length - 1
-                    ? { style: BorderStyle.NONE, size: 0, color: "auto" }
-                    : {
-                        style: BorderStyle.SINGLE,
-                        size: 2,
-                        color: TOKENS.LINE2,
-                      },
-              },
-              children: [
-                new Paragraph({
-                  spacing: { before: 40, after: 40 },
-                  children: [
-                    new TextRun({
-                      text: row[i] ?? "",
-                      font: SOURCE_DOCX.BODY_FONT,
-                      size: bodyFontSize,
-                      color: TOKENS.INK,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-        ),
+        children: columns.map((_, i) => {
+          // Colour the declared status column by value (see shared/cell-tone.ts),
+          // matching the deck; every other cell renders plain.
+          const tone =
+            statusCol !== null && i === statusCol
+              ? CELL_TONE_HEX[cellTone(row[i] ?? "")]
+              : null;
+          const shaded = tone && tone.fill ? tone : null;
+          return new TableCell({
+            width: { size: width(i), type: WidthType.PERCENTAGE },
+            ...(shaded ? { shading: { fill: shaded.fill ?? undefined } } : {}),
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+              left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+              right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+              // hairline divider on every row except the last (last row no border)
+              bottom:
+                ri === rows.length - 1
+                  ? { style: BorderStyle.NONE, size: 0, color: "auto" }
+                  : {
+                      style: BorderStyle.SINGLE,
+                      size: 2,
+                      color: TOKENS.LINE2,
+                    },
+            },
+            children: [
+              new Paragraph({
+                spacing: { before: 40, after: 40 },
+                children: [
+                  new TextRun({
+                    text: row[i] ?? "",
+                    font: SOURCE_DOCX.BODY_FONT,
+                    size: bodyFontSize,
+                    color: shaded ? shaded.text : TOKENS.INK,
+                    ...(shaded ? { bold: true } : {}),
+                  }),
+                ],
+              }),
+            ],
+          });
+        }),
       }),
   );
 
@@ -260,7 +278,7 @@ function tableToDocx(table: RenderableTable): Paragraph | Table {
       }),
     ]);
   }
-  return lightTable(table.columns, table.rows);
+  return lightTable(table.columns, table.rows, table.statusColumn);
 }
 
 function normalizeHeadingText(value: string): string {
@@ -680,10 +698,27 @@ function confidencePill(confidence: string): string {
 }
 
 function tableHtml(t: RenderableTable): string {
+  const statusCol =
+    typeof t.statusColumn === "number" &&
+    t.statusColumn >= 0 &&
+    t.statusColumn < t.columns.length
+      ? t.statusColumn
+      : null;
   const head = t.columns.map((c) => `<th>${esc(c)}</th>`).join("");
   const body = t.rows
     .map(
-      (r) => `<tr>${r.map((c) => `<td>${esc(String(c))}</td>`).join("")}</tr>`,
+      (r) =>
+        `<tr>${r
+          .map((c, i) => {
+            if (statusCol !== null && i === statusCol) {
+              const tone = CELL_TONE_HEX[cellTone(String(c))];
+              if (tone.fill) {
+                return `<td style="background:#${tone.fill};color:#${tone.text};font-weight:600">${esc(String(c))}</td>`;
+              }
+            }
+            return `<td>${esc(String(c))}</td>`;
+          })
+          .join("")}</tr>`,
     )
     .join("");
   return `<h3>${esc(t.title)}</h3><table class="md"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
@@ -1454,7 +1489,17 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
  *  (muted uppercase header, hairline row dividers, no navy fill), since
  *  `PDF_STYLES.table`'s default header is a solid navy fill built for
  *  Source's house style, not this orchestrator's. */
-function pdfLightTable(columns: string[], rows: string[][]): ReactElement {
+function pdfLightTable(
+  columns: string[],
+  rows: string[][],
+  statusColumn?: number,
+): ReactElement {
+  const statusCol =
+    typeof statusColumn === "number" &&
+    statusColumn >= 0 &&
+    statusColumn < columns.length
+      ? statusColumn
+      : null;
   return (
     <PdfView style={{ marginVertical: 8 }}>
       <PdfView
@@ -1494,16 +1539,34 @@ function pdfLightTable(columns: string[], rows: string[][]): ReactElement {
             borderBottomWidth: ri === rows.length - 1 ? 0 : 0.5,
           }}
         >
-          {columns.map((_, i) => (
-            <PdfView
-              key={i}
-              style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 4 }}
-            >
-              <PdfText style={{ fontSize: 9, color: PDF_COLORS.HEADER }}>
-                {row[i] ?? ""}
-              </PdfText>
-            </PdfView>
-          ))}
+          {columns.map((_, i) => {
+            const tone =
+              statusCol !== null && i === statusCol
+                ? CELL_TONE_HEX[cellTone(row[i] ?? "")]
+                : null;
+            const shaded = tone && tone.fill ? tone : null;
+            return (
+              <PdfView
+                key={i}
+                style={{
+                  flex: 1,
+                  paddingHorizontal: 6,
+                  paddingVertical: 4,
+                  ...(shaded ? { backgroundColor: `#${shaded.fill}` } : {}),
+                }}
+              >
+                <PdfText
+                  style={{
+                    fontSize: 9,
+                    color: shaded ? `#${shaded.text}` : PDF_COLORS.HEADER,
+                    ...(shaded ? { fontFamily: PDF_FONTS.BODY_BOLD } : {}),
+                  }}
+                >
+                  {row[i] ?? ""}
+                </PdfText>
+              </PdfView>
+            );
+          })}
         </PdfView>
       ))}
     </PdfView>
@@ -1524,7 +1587,7 @@ function tableToPdf(table: RenderableTable): ReactElement {
       </PdfText>
     );
   }
-  return pdfLightTable(table.columns, table.rows);
+  return pdfLightTable(table.columns, table.rows, table.statusColumn);
 }
 
 /** Rasterise one exhibit to a PNG and embed it as a PDF `<Image>`, with the
