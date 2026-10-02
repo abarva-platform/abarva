@@ -100,7 +100,10 @@ jobs:
         run: npx jest --runTestsByPath src/components/setup/__tests__/ConnectorReconnectPage.assumption-disclosure.test.tsx --runInBand
 
       - name: Exercise Moves phase-gate route approval
-        run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
+        # The catalog credits the route suite for proving both the authorized
+        # workspace-user success path and the missing-rationale refusal. Keep
+        # the focused denial suite as an additional check.
+        run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts --runInBand
 
       - name: Exercise Intelligence gate-waiver decision controls
         run: npx jest --runTestsByPath src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts --runInBand
