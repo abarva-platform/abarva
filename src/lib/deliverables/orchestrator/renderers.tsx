@@ -856,6 +856,97 @@ function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
   </svg>`;
 }
 
+function svgValueTree(exhibit: RenderableExhibit): string {
+  // A value / driver tree: a root outcome on the left breaks down into branches,
+  // each branch into its drivers. The structure IS the point — what rolls up into
+  // what — so it is drawn as a tree, not a flattened list. value_tree was a
+  // declared exhibit kind the dispatch never drew; this is its renderer.
+  const data = exhibit.data;
+  if (!data || data.kind !== "value_tree" || !data.root) return "";
+  const branches = data.branches.slice(0, 6);
+  if (branches.length === 0) return "";
+
+  const rowH = 50;
+  const pad = 18;
+  const nodeH = 40;
+  const childCap = (b: (typeof branches)[number]) =>
+    Math.min(b.children?.length ?? 0, 4);
+  const slots = branches.map((b) => Math.max(1, childCap(b)));
+  const totalSlots = slots.reduce((a, b) => a + b, 0);
+  const height = pad * 2 + totalSlots * rowH;
+  const width = 720;
+  const rootX = 20;
+  const rootW = 176;
+  const brX = 276;
+  const brW = 182;
+  const chX = 520;
+  const chW = 180;
+  const slotCenterY = (k: number) => pad + k * rowH + rowH / 2;
+
+  const node = (
+    x: number,
+    w: number,
+    cy: number,
+    label: string,
+    value: string | undefined,
+    emphasis: boolean,
+  ): string => {
+    const y = cy - nodeH / 2;
+    const lines = fitLabelLines(String(label), Math.floor(w / 6.5), 2);
+    const labelSvg = lines
+      .map(
+        (ln, n) =>
+          `<text x="${x + 12}" y="${y + (lines.length > 1 ? 16 : 20) + n * 13}" font-size="10.5" font-weight="${emphasis ? 700 : 600}">${esc(ln)}</text>`,
+      )
+      .join("");
+    const valueSvg = value
+      ? `<text x="${x + w - 12}" y="${y + nodeH - 11}" text-anchor="end" font-size="10" font-weight="700" fill="var(--fresh)">${esc(String(value).slice(0, 20))}</text>`
+      : "";
+    return `<g>
+      <rect x="${x}" y="${y}" width="${w}" height="${nodeH}" rx="8" fill="${emphasis ? "#fff" : "#fff"}" stroke="var(--line)" stroke-width="${emphasis ? 1.5 : 1}"/>
+      ${labelSvg}${valueSvg}
+    </g>`;
+  };
+
+  let slotCursor = 0;
+  const branchParts: string[] = [];
+  const connectors: string[] = [];
+  const rootCY = height / 2;
+
+  branches.forEach((branch, i) => {
+    const kids = (branch.children ?? []).slice(0, 4);
+    const start = slotCursor;
+    const span = slots[i]!;
+    const branchCY = slotCenterY(start) + ((span - 1) * rowH) / 2;
+    // root → branch connector
+    connectors.push(
+      `<path d="M${rootX + rootW} ${rootCY} C ${(rootX + rootW + brX) / 2} ${rootCY}, ${(rootX + rootW + brX) / 2} ${branchCY}, ${brX} ${branchCY}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`,
+    );
+    branchParts.push(node(brX, brW, branchCY, branch.label, branch.value, true));
+    kids.forEach((child, k) => {
+      const childCY = slotCenterY(start + k);
+      connectors.push(
+        `<path d="M${brX + brW} ${branchCY} C ${(brX + brW + chX) / 2} ${branchCY}, ${(brX + brW + chX) / 2} ${childCY}, ${chX} ${childCY}" fill="none" stroke="var(--line)" stroke-width="1"/>`,
+      );
+      branchParts.push(node(chX, chW, childCY, child.label, child.value, false));
+    });
+    slotCursor += span;
+  });
+
+  const rootNode = node(
+    rootX,
+    rootW,
+    rootCY,
+    data.root.label,
+    data.root.value,
+    true,
+  );
+
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(exhibit.title)}">
+    ${connectors.join("")}${rootNode}${branchParts.join("")}
+  </svg>`;
+}
+
 function svgMatrixExhibit(exhibit: RenderableExhibit): string {
   // A matrix's whole meaning is WHERE a thing sits. This previously placed
   // cells by array index — first clause top-left, second top-right — so the
@@ -1251,6 +1342,8 @@ function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
     return svgRoadmapExhibit(dataExhibit);
   if (dataExhibit.kind === "flow" || dataExhibit.data?.kind === "flow")
     return svgFlowExhibit(dataExhibit, domId);
+  if (dataExhibit.data?.kind === "value_tree")
+    return svgValueTree(dataExhibit);
   return null;
 }
 
