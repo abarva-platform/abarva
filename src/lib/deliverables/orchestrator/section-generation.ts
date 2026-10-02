@@ -684,18 +684,34 @@ function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
   }
 }
 
-function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
-  if (!exhibitHasStructuredData(exhibit)) return false;
+/**
+ * Why an authored exhibit is not kept, or null when it is.
+ *
+ * The rules are the same as before; they are named so a dropped exhibit can
+ * be reported. An exhibit that failed one of them used to vanish without a
+ * trace, and the artifact was then blocked for "missing exhibits" with no
+ * way to tell a missing exhibit from a rejected one.
+ */
+export function exhibitRejectionReason(
+  exhibit: RenderableExhibit,
+): string | null {
+  if (!exhibitHasStructuredData(exhibit)) {
+    return "data is missing, is not a supported payload kind, or is below that kind's minimum content";
+  }
   const description = exhibit.description?.trim() ?? "";
   if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
-    return false;
+    return "key, title or description is empty";
   }
-  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) return false;
+  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) {
+    return "description is a generic placeholder";
+  }
   const clauses = description
     .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
     .map((p) => p.trim())
     .filter(Boolean);
-  return clauses.length >= 3;
+  return clauses.length >= 3
+    ? null
+    : "description has fewer than three distinct statements";
 }
 
 function renderableExhibitsFromSynthesis(
@@ -704,7 +720,13 @@ function renderableExhibitsFromSynthesis(
   const byKey = new Map<string, RenderableExhibit>();
   for (const exhibit of synth.exhibits ?? []) {
     const repaired = repairStructuredExhibit(exhibit);
-    if (!exhibitHasDiagramReadyContent(repaired)) continue;
+    const rejection = exhibitRejectionReason(repaired);
+    if (rejection) {
+      console.warn(
+        `[section-generation] authored exhibit not kept: key=${JSON.stringify(repaired.key ?? null)} reason=${rejection}`,
+      );
+      continue;
+    }
     byKey.set(repaired.key, repaired);
   }
   return [...byKey.values()];
