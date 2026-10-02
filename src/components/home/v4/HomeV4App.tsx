@@ -331,7 +331,7 @@ function MixedChapterFrame({
     strategy_value_creation: ["Priorities and execution", "Declared priorities connected to accountable owners, programs, and measures."],
     how_we_operate: ["How accountability runs", "Business functions, their owners, and the work and risk attached to them."],
     performance_value: ["Where investment outruns proof", "Declared program investment, forecast pressure, and the current limits of value evidence."],
-    what_needs_attention: ["Where risk needs review", "High and critical risks prioritized by their recorded control state and accountable owner."],
+    what_needs_attention: ["Where risk needs review", "High and critical risks ordered by recorded severity and control state; item-level ownership remains to be confirmed."],
   };
   const contextHeading = enterpriseContext ? contextHeadings[chapter.chapterId] : undefined;
 

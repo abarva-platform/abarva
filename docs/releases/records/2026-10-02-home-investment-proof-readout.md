@@ -29,14 +29,15 @@ The Home value chapter now separates declared program investment from evidence o
 
 - Source-linked program budget, forecast, value-claim, and priority aggregation.
 - Completed-period admission for spend rollups; undated or future-period records are excluded.
-- Value chapter and HTML/PDF export readouts with explicit evidence limits and record drill-through.
+- Value chapter, current-record aVa answer, and HTML/PDF export readouts with explicit evidence limits and record drill-through.
+- Home advisor display now retains the packet's direct answer and citations; the risk opening no longer implies item-level ownership from a register-wide role default.
 - Focused read-model, rendering, and export tests.
 
 ## QA / Validation
 
-- Focused Home read-model, panel, and export suites: 13 tests passed.
-- TypeScript typecheck and targeted ESLint: passed.
-- Home ratchet: 830/858 tests, the same 12 baselined suites, no movement.
+- Focused Home read-model, panel, advisor bridge, current-context answer, and export suites: 91 tests passed.
+- TypeScript typecheck passed; targeted ESLint passed with one pre-existing hook dependency warning in the dock.
+- Home ratchet: 844/872 tests, the same 12 baselined suites, no movement.
 - Release check: 11 of 11 gates passed.
 - PR CI and signed-in browser proof: pending.
 
@@ -66,4 +67,4 @@ PR, CI, ACA deploy run, runtime invariant output, and signed-in browser/export p
 
 - Benefit realization is not client-attested in the qualifying synthetic reference record; the chapter does not claim that it is.
 - Future or undated spend records fail the completed-period admission check; the source date remains synthetic and is not a client attestation of currency.
-- This release does not create a time series, reconcile finance line items to program budgets, or infer dependency joins.
+- This release does not create a time series, reconcile finance line items to program budgets, or infer dependency joins. aVa continues to decline those unsupported requests.

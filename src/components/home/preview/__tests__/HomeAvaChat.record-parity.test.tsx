@@ -20,7 +20,14 @@ jest.mock("@/components/ava-chat/AvaChatShell", () => ({
     <div>
       <button onClick={() => void onMessage("What is on screen?")}>Ask</button>
       {thread.map((message) => (
-        <p key={message.id}>{message.body}</p>
+        <p key={message.id}>
+          {message.body}
+          {message.role === "agent" ? (
+            <span data-testid="home-answer-metadata">
+              {message.agentAnswer?.directAnswer ?? ""} | {message.citations?.[0]?.name ?? ""}
+            </span>
+          ) : null}
+        </p>
       ))}
     </div>
   ),
@@ -103,4 +110,36 @@ it("tells the reader to refresh when Home's context changed", async () => {
       "Home's record changed since this page opened. Refresh Home before asking aVa again.",
     ),
   ).toBeInTheDocument();
+});
+
+it("keeps the direct answer and source citations on the Home chat turn", async () => {
+  jest.mocked(global.fetch).mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      answer: {
+        directAnswer: "The budget forecast exceeds the approved plan.",
+        prose: "Two priorities account for most of the difference.",
+        citations: [
+          {
+            id: "citation-1",
+            label: "Approved program budget row",
+            recordId: "internal-row-1",
+            excerpt: "Forecast and budget from the same program record.",
+          },
+        ],
+      },
+    }),
+  } as Response);
+
+  render(
+    <HomeAvaChat tenantKey="meridian-health" recordSource={recordSource}>
+      <div>Home</div>
+    </HomeAvaChat>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+  expect(await screen.findByTestId("home-answer-metadata")).toHaveTextContent(
+    "The budget forecast exceeds the approved plan. | Approved program budget row",
+  );
 });

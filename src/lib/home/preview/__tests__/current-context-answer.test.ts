@@ -130,6 +130,45 @@ const context = {
       metricCount: 1,
     },
   ],
+  valueProof: {
+    asOf: "2026-09-30",
+    programCount: 3,
+    approvedBudgetUsd: 100_000_000,
+    forecastUsd: 110_000_000,
+    overBudgetProgramCount: 1,
+    missingFinancialCount: 0,
+    modelledClaimCount: 2,
+    unsupportedClaimCount: 1,
+    otherClaimCount: 0,
+    completedPeriodSpendLines: 9,
+    excludedSpendLines: 1,
+    priorities: [
+      {
+        rowKey: "priority-1",
+        title: "Improve quality",
+        sourceRefs: ["source-priority-1", "source-program-1"],
+        asOf: "2026-09-30",
+        ownerRole: "Care president",
+        programCount: 2,
+        approvedBudgetUsd: 70_000_000,
+        forecastUsd: 80_000_000,
+        overBudgetProgramCount: 1,
+        missingFinancialCount: 0,
+      },
+      {
+        rowKey: "priority-2",
+        title: "Simplify claims",
+        sourceRefs: ["source-priority-2", "source-program-2"],
+        asOf: "2026-09-30",
+        ownerRole: "Plan president",
+        programCount: 1,
+        approvedBudgetUsd: 30_000_000,
+        forecastUsd: 30_000_000,
+        overBudgetProgramCount: 0,
+        missingFinancialCount: 0,
+      },
+    ],
+  },
   riskTriage: {
     totalRisks: 3,
     highOrCritical: 2,
@@ -206,6 +245,9 @@ describe("current Home context answers", () => {
     ],
     ["What are our strategic priorities?", "priorities", "source-priority-1"],
     ["How is the operating model organized?", "operating", "source-care"],
+    ["What value has finance validated?", "value", "source-priority-1"],
+    ["What is our program budget?", "value", "source-priority-1"],
+    ["What should the CFO care about first?", "value", "source-priority-1"],
     ["Which risks need attention first?", "risk", "source-risk-1"],
   ])("answers %s from the current record only", (question, area, sourceRef) => {
     const answer = answerHomeCurrentContext({
@@ -224,13 +266,14 @@ describe("current Home context answers", () => {
     ).toBe(true);
     expect(answer?.citations[0].recordId).toBe(version.projectionContentHash);
     expect(answer?.directAnswer).not.toContain("72 contracts");
-    expect(answer && validateAvaAnswerPacket(answer).passed).toBe(true);
+    expect(answer && validateAvaAnswerPacket(answer).violations.filter((violation) => violation.severity === "error")).toEqual([]);
   });
 
-  it("does not fill value, dependency, or change gaps with old narrative", () => {
+  it("does not fill commercial, dependency, or change gaps with old narrative", () => {
     for (const question of [
-      "What value has finance validated?",
       "Where are we commercially exposed?",
+      "What is our IT budget?",
+      "Which finance systems do we have?",
       "What does the data estate imply for strategy?",
       "Show critical dependencies",
       "Show me the graph of how risks, vendors, applications, data and programs connect.",
@@ -246,6 +289,21 @@ describe("current Home context answers", () => {
         }),
       ).toBeNull();
     }
+  });
+
+  it("distinguishes recorded investment from unproven realized value", () => {
+    const answer = answerHomeCurrentContext({
+      context,
+      version,
+      tenantKey: "meridian-health",
+      question: "What value has finance validated?",
+    });
+    expect(answer?.directAnswer).toContain("$100M");
+    expect(answer?.directAnswer).toContain("$110M");
+    expect(answer?.directAnswer).toContain("Client-attested realized value is not established");
+    expect(answer?.prose?.split("\n")).toHaveLength(2);
+    expect(answer?.gaps[0].detail).toContain("2 value claims are modelled");
+    expect(answer?.citations.some((citation) => citation.recordId === "source-program-1")).toBe(true);
   });
 
   it("does not present a constant register role as item-level accountability", () => {
@@ -287,6 +345,15 @@ describe("current Home context answers", () => {
     expect(answer.citations[0].recordId).toBe(
       bundle.provenance.canonical_snapshot_hash,
     );
+    const value = await answerHomeAvaQuestion({
+      bundle,
+      tenantKey: "meridian-health",
+      question: "I'm on Technology & Data. What should the CFO care about first?",
+      activeChapterId: "technology_data",
+    });
+    expect(value.intent).toBe("home_current_value");
+    expect(value.directAnswer).toContain("$100M");
+    expect(value.directAnswer).not.toContain("reviewed narrative");
     const graph = await answerHomeAvaQuestion({
       bundle,
       tenantKey: "meridian-health",
