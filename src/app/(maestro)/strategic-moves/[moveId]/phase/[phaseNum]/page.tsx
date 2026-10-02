@@ -57,6 +57,8 @@ import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-re
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import { parseUploadedSolutionOptions } from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
@@ -698,6 +700,20 @@ export default async function StrategicMovePhaseWorkspacePage({
     move.id,
     2,
   );
+  // The design phase decides between options. When the Move's approved
+  // evidence declares its own option set, that set — not a template one — is
+  // what is offered and what gets recorded as approved.
+  const uploadedSolutionOptionSet =
+    parsedPhase === 3
+      ? await loadApprovedMoveEvidenceSnapshot({
+          tenantKey: ctx.clientKey ?? ctx.clientId,
+          moveId,
+        })
+          .then((snapshot) =>
+            snapshot ? parseUploadedSolutionOptions(snapshot.rows) : null,
+          )
+          .catch(() => null)
+      : null;
   const initialConfirmedSolutionRoute = resolveConfirmedSolutionRoute({
     businessChangeAssessment: initialBusinessChangeAssessment,
     routeValidation: captureValue(2, "solution_route_validation"),
@@ -749,6 +765,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         initialBusinessChangeAssessment={initialBusinessChangeAssessment}
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}
         initialConfirmedSolutionRoute={initialConfirmedSolutionRoute}
+        uploadedSolutionOptionSet={uploadedSolutionOptionSet}
         initialStageReadinessPreview={initialStageReadinessPreview}
         syntheticEvidencePackHref={syntheticEvidencePackHref}
         phaseBuildArtifacts={phaseBuildArtifacts}

@@ -1,6 +1,7 @@
 import type { DeliverableContentSignal } from '@/lib/deliverables/deliverable-content-signals';
 import type { BuildingBlockKey } from './building-blocks';
 import type { P3DesignInputsPack } from './types';
+import type { UploadedSolutionOptionSet } from './uploaded-solution-options';
 
 export type P3OptionScoreDimension =
   | 'business_value'
@@ -38,11 +39,30 @@ export interface P3SolutionOption {
   recommendationLabel: string;
   evidenceBasis: string[];
   missingEvidence: string[];
+  /**
+   * Present when the option is the client's own, taken from approved Move
+   * evidence. Only these four fields were supplied; the template fields above
+   * (scores, building blocks, effort, split, controls) are left empty rather
+   * than filled with generated text, and the UI shows these instead.
+   */
+  clientSupplied?: {
+    benefit: string;
+    tradeoff: string;
+    condition: string;
+    scope: string;
+  };
 }
 
 export interface P3OptionSet {
   moveId: string;
-  source: 'p3_design_inputs_pack';
+  /**
+   * `move_uploaded_options`: the client's option set from approved Move
+   * evidence. `p3_design_inputs_pack`: the built-in template set, used only
+   * when the Move declares none.
+   */
+  source: 'p3_design_inputs_pack' | 'move_uploaded_options';
+  /** Evidence item the options came from, when `source` is the Move's own. */
+  sourceTitle?: string;
   useCasePattern: P3UseCasePattern;
   options: P3SolutionOption[];
   recommendedOptionId: string | null;
@@ -88,6 +108,8 @@ export interface AssembleP3SolutionOptionsInput {
   designInputs: P3DesignInputsPack;
   readiness?: P3OptionReadinessInput | null;
   evidenceNeedPackets?: P3OptionEvidenceNeed[];
+  /** The option set declared in the Move's approved design-phase evidence. */
+  uploadedOptionSet?: UploadedSolutionOptionSet | null;
 }
 
 export type P3UseCasePattern =
@@ -286,6 +308,7 @@ export function assembleP3SolutionOptions({
   moveName,
   readiness,
   tenantName,
+  uploadedOptionSet,
   valueAtStake,
 }: AssembleP3SolutionOptionsInput): P3OptionSet {
   const text = normalizeText(
@@ -325,6 +348,28 @@ export function assembleP3SolutionOptions({
       return sourceMatch ? [sourceMatch[1]] : [];
     }),
   );
+  // The client's own options take precedence over the template set. They are
+  // carried as written: not scored, not ranked, and not recommended by us —
+  // the template scoring knows nothing about these proposals, and a number
+  // beside a client option would read as an assessment nobody made.
+  if (uploadedOptionSet && uploadedOptionSet.options.length > 0) {
+    return {
+      moveId,
+      source: 'move_uploaded_options',
+      sourceTitle: uploadedOptionSet.sourceTitle,
+      useCasePattern,
+      options: uploadedOptionSet.options.map((option) =>
+        clientSuppliedOption(option, uploadedOptionSet.sourceTitle, missingEvidence),
+      ),
+      recommendedOptionId: null,
+      recommendationConfidence: 'low',
+      missingEvidence,
+      evidenceBasis,
+      sourceEvidenceLabels,
+      usedGlobalStaticFallback: false,
+    };
+  }
+
   const context = buildScoringContext(text, readiness, missingEvidence, evidenceBasis);
   const options = optionBlueprintsFor(useCasePattern).map((blueprint) =>
     finalizeOption(blueprint, context, missingEvidence, evidenceBasis),
@@ -356,6 +401,46 @@ export function assembleP3SolutionOptions({
     evidenceBasis,
     sourceEvidenceLabels,
     usedGlobalStaticFallback: false,
+  };
+}
+
+function clientSuppliedOption(
+  option: UploadedSolutionOptionSet['options'][number],
+  sourceTitle: string,
+  missingEvidence: string[],
+): P3SolutionOption {
+  return {
+    id: option.id,
+    label: option.name,
+    summary: option.benefit,
+    businessImpact: option.benefit,
+    requiredBuildingBlocks: [],
+    dataPlatformImplications: '',
+    humanAiSplit: '',
+    controls: '',
+    timeToValue: '',
+    effort: '',
+    risks: option.tradeoff ? [option.tradeoff] : [],
+    dependencies: [],
+    reusePotential: '',
+    readinessConditions: option.condition ? [option.condition] : [],
+    notRecommendedYetReasons: [],
+    scores: Object.fromEntries(SCORE_DIMENSIONS.map((key) => [key, 0])) as Record<
+      P3OptionScoreDimension,
+      number
+    >,
+    totalScore: 0,
+    confidence: 'low',
+    recommended: false,
+    recommendationLabel: 'Client-supplied option',
+    evidenceBasis: [`${sourceTitle}: ${option.id} — ${option.name}`],
+    missingEvidence,
+    clientSupplied: {
+      benefit: option.benefit,
+      tradeoff: option.tradeoff,
+      condition: option.condition,
+      scope: option.scope,
+    },
   };
 }
 
