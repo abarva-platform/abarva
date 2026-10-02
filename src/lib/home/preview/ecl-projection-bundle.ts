@@ -82,7 +82,54 @@ export type HomeSourceFileReviewRow = {
   file_hash: string;
   source_date: string | null;
   quality_state: string;
+  /** The approval a load records on the file it loaded. Absent on a file loaded without one. */
+  load_approval?: unknown;
 };
+
+/**
+ * The approval recorded for a file's load: who approved it, when, and the release record that
+ * carries it. All three or it is not an approval -- a name with no date and no record is a
+ * string somebody typed.
+ */
+function recordedLoadApproval(
+  value: unknown,
+): { approvedBy: string; approvedAt: string; releaseRecord: string } | null {
+  let approval = value;
+  if (typeof approval === "string") {
+    try {
+      approval = JSON.parse(approval);
+    } catch {
+      return null;
+    }
+  }
+  if (!approval || typeof approval !== "object" || Array.isArray(approval))
+    return null;
+  const field = (key: string) => {
+    const raw = (approval as JsonRecord)[key];
+    return typeof raw === "string" ? raw.trim() : "";
+  };
+  const approvedBy = field("approved_by");
+  const approvedAt = field("approved_at");
+  const releaseRecord = field("release_record");
+  return approvedBy && approvedAt && releaseRecord
+    ? { approvedBy, approvedAt, releaseRecord }
+    : null;
+}
+
+/**
+ * The one test of "accepted", for the label and for the gate that depends on it.
+ *
+ * The accepted state is what a load writes about the files it just loaded. It becomes acceptance
+ * only when an approval is recorded beside it; without one the file is counted as not reviewed.
+ */
+export function isHomeSourceFileAccepted(
+  row: HomeSourceFileReviewRow,
+): boolean {
+  return (
+    row.quality_state === "accepted" &&
+    recordedLoadApproval(row.load_approval) !== null
+  );
+}
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
   business_segment: [
@@ -2613,7 +2660,8 @@ function contextVersionForRows(
   base: HomeReviewBundle,
   rows: HomeProjectionRow[],
   assessmentId: string,
-  signalPacket: EnterpriseSignalPacket,
+  /** The packet the narrative was written against, before any reader-only addition. */
+  writtenPacket: EnterpriseSignalPacket,
   claims: Map<ChapterId, GroundedClaim[]>,
   hasPublishedClaims: boolean,
   verifiedSourceRefs: VerifiedSourceRefs,
@@ -2638,7 +2686,7 @@ function contextVersionForRows(
       .map((writer) => text(writer.generated_at))
       .filter((value): value is string => Boolean(value)),
   );
-  const deterministicPacketHash = hashHomeNarrativeValue(signalPacket);
+  const deterministicPacketHash = hashHomeNarrativeValue(writtenPacket);
   const citableRows = rows.filter(
     (row) =>
       row.row_type !== "summary" &&
@@ -2675,21 +2723,29 @@ function contextVersionForRows(
   const sourceCatalogHash = sourceCatalogRows
     ? hash(
         [...sourceCatalogRows]
-          .map((row) => ({
-            id: row.id,
-            fileName: row.file_name,
-            fileHash: row.file_hash,
-            sourceDate: row.source_date,
-            qualityState: row.quality_state,
-          }))
+          .map((row) => {
+            const loadApproval = recordedLoadApproval(row.load_approval);
+            return {
+              id: row.id,
+              fileName: row.file_name,
+              fileHash: row.file_hash,
+              sourceDate: row.source_date,
+              qualityState: row.quality_state,
+              // Present only once recorded, so recording an approval is itself a new version.
+              ...(loadApproval ? { loadApproval } : {}),
+            };
+          })
           .sort((left, right) => left.id.localeCompare(right.id)),
       )
     : null;
   const sourceFileReview = sourceCatalogRows
     ? {
         totalFiles: sourceCatalogRows.length,
-        acceptedFiles: sourceCatalogRows.filter(
-          (row) => row.quality_state === "accepted",
+        acceptedFiles: sourceCatalogRows.filter(isHomeSourceFileAccepted)
+          .length,
+        notReviewedFiles: sourceCatalogRows.filter(
+          (row) =>
+            row.quality_state === "accepted" && !isHomeSourceFileAccepted(row),
         ).length,
         partialFiles: sourceCatalogRows.filter(
           (row) => row.quality_state === "partial",
@@ -2727,8 +2783,8 @@ function contextVersionForRows(
   const narrativePacketHash =
     writerHashes.size === 1 ? [...writerHashes][0]! : null;
   const evidenceIds = new Set([
-    ...signalPacket.signals.map((signal) => signal.id),
-    ...signalPacket.contextItems.map((item) => item.id),
+    ...writtenPacket.signals.map((signal) => signal.id),
+    ...writtenPacket.contextItems.map((item) => item.id),
   ]);
   // Scope notes and aggregate signals orient a claim; only a linked serving row traces it to source.
   const sourceBackedContextIds = new Set(
@@ -2756,8 +2812,7 @@ function contextVersionForRows(
       sourceCatalogRows?.length &&
       sourceCatalogRows.every(
         (row) =>
-          row.quality_state === "accepted" &&
-          /^[a-f0-9]{64}$/.test(row.file_hash),
+          isHomeSourceFileAccepted(row) && /^[a-f0-9]{64}$/.test(row.file_hash),
       ),
     );
   const hasCurrentStoryPlan =
@@ -2811,14 +2866,21 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     rowPayload(storyRow).narrative_packet_artifact,
     { tenantKey: base.tenantKey, assessmentId, rows, verifiedSourceRefs },
   ) : null;
-  const signalPacket: EnterpriseSignalPacket = {
-    ...(narrativePacketArtifact?.packet ?? buildEclSignalPacket(
+  // The packet as the narrative was written against it. Its hash is what a published narrative
+  // is compared with, so nothing this reader adds for the page may be part of it.
+  const writtenPacket: EnterpriseSignalPacket =
+    narrativePacketArtifact?.packet ??
+    buildEclSignalPacket(
       factualRows,
       technologyEstate,
       assessmentId,
       verifiedSourceRefs,
       rows.length - factualRows.length,
-    )),
+    );
+  // What the page and the export read: the written packet, plus the context this reader derives.
+  // Attached here, after the packet above has been set aside for hashing.
+  const signalPacket: EnterpriseSignalPacket = {
+    ...writtenPacket,
     homeEnterpriseContext: buildHomeEnterpriseContext(
       factualRows,
       (row) => admittedSourceRefs(row, verifiedSourceRefs),
@@ -2830,7 +2892,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     base,
     rows,
     assessmentId,
-    signalPacket,
+    writtenPacket,
     claims,
     hasPublishedClaims,
     verifiedSourceRefs,
@@ -2848,6 +2910,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     : base.executiveStoryPlan;
   return normalizeHomeReviewBundle({
     tenantKey: base.tenantKey,
+    declaredSyntheticDemo: base.declaredSyntheticDemo,
     contextVersion,
     provenance: {
       ...base.provenance,
@@ -3036,7 +3099,8 @@ async function readHomeSourceCatalog(
 ): Promise<HomeSourceFileReviewRow[] | null> {
   try {
     return await azureRead.query<HomeSourceFileReviewRow>(
-      `select id::text, file_name, file_hash, source_date::text, quality_state
+      `select id::text, file_name, file_hash, source_date::text, quality_state,
+              metadata_json->'load_approval' as load_approval
        from ecl_source.source_file
        where tenant_key = $1 and assessment_id = $2`,
       [tenantKey, assessmentId],

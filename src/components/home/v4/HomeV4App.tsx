@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { BrowseTheData } from "@/components/home/preview/BrowseTheData";
 import { HomeAvaChat } from "@/components/home/preview/HomeAvaChat";
-import { RecordBrowser } from "./RecordBrowser";
+import { RecordBrowser, type RecordRowMatch } from "./RecordBrowser";
 import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type {
@@ -311,6 +311,7 @@ function MixedChapterFrame({
   onBrowse,
   enterpriseContext,
   onOpenRows,
+  onOpenMatch,
 }: {
   children: ReactNode;
   enabled: boolean;
@@ -322,11 +323,12 @@ function MixedChapterFrame({
   onBrowse: () => void;
   enterpriseContext: EnterpriseSignalPacket["homeEnterpriseContext"];
   onOpenRows: (type: string, filter: string) => void;
+  onOpenMatch: (type: string, match: RecordRowMatch) => void;
 }) {
   if (!enabled || !chapter) return <>{children}</>;
 
   const contextHeadings: Partial<Record<ChapterId, [string, string]>> = {
-    executive_brief: ["The enterprise, in evidence", "The business, its priorities, and its execution signals from the current governed record."],
+    executive_brief: ["The enterprise, in evidence", "The business, its priorities, and its execution signals from the current record."],
     our_business: ["Business model and segment economics", "Where the enterprise operates, who owns each segment, and how resources are attributed."],
     strategy_value_creation: ["Priorities and execution", "Declared priorities connected to accountable owners, programs, and measures."],
     how_we_operate: ["How accountability runs", "Business functions, their owners, and the work and risk attached to them."],
@@ -469,6 +471,7 @@ function MixedChapterFrame({
           chapterId={chapter.chapterId}
           context={enterpriseContext}
           onOpenRows={onOpenRows}
+          onOpenMatch={onOpenMatch}
         />
       ) : null}
       <details
@@ -524,6 +527,8 @@ export function HomeV4App({
    * narrows a view someone arrived at deliberately.
    */
   const [recordFilter, setRecordFilter] = useState<string | null>(null);
+  /** The same, for a figure counted by a declared identifier: carried and cleared with it. */
+  const [recordMatch, setRecordMatch] = useState<RecordRowMatch | null>(null);
 
   const chapters = displayBundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
@@ -577,13 +582,18 @@ export function HomeV4App({
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, [displayBundle]);
 
-  const selectActiveView = (id: string, filter?: string) => {
+  const selectActiveView = (
+    id: string,
+    filter?: string,
+    match?: RecordRowMatch,
+  ) => {
     const nextView = resolveHashView(`#${id}`, displayBundle);
     if (!nextView) {
       return;
     }
 
     setRecordFilter(filter ?? null);
+    setRecordMatch(match ?? null);
     setActiveView(nextView);
     if (typeof window !== "undefined" && window.location.hash !== `#${id}`) {
       window.history.replaceState(null, "", `#${id}`);
@@ -593,6 +603,11 @@ export function HomeV4App({
   /** Opens the rows behind a figure: the record browser for that type, filter already applied. */
   const openRecordRows = (objectType: string, filter: string) => {
     selectActiveView(`tech:${objectType}`, filter);
+  };
+
+  /** Opens the rows a figure was counted from, by the identifier the count joined on. */
+  const openRecordMatch = (objectType: string, match: RecordRowMatch) => {
+    selectActiveView(`tech:${objectType}`, undefined, match);
   };
 
   /** Exhibit count lines, computed from the estate rather than asserted. An exhibit whose totals
@@ -802,6 +817,7 @@ export function HomeV4App({
       >
         <Rail
           clientLabel={TENANT_LABEL[tenantKey]}
+          declaredSyntheticDemo={displayBundle.declaredSyntheticDemo === true}
           groups={groups}
           activeId={activeView}
           onSelect={selectActiveView}
@@ -830,6 +846,7 @@ export function HomeV4App({
             onBrowse={() => selectActiveView("browse-the-data")}
             enterpriseContext={signalPacket.homeEnterpriseContext}
             onOpenRows={openRecordRows}
+            onOpenMatch={openRecordMatch}
           >
             {activeChapter ? (
               isDrafted(activeChapter.chapterId) ? (
@@ -984,9 +1001,10 @@ export function HomeV4App({
 
           {activeTechRecordType ? (
             <RecordBrowser
-              key={`${activeTechRecordType.objectType}:${recordFilter ?? ""}`}
+              key={`${activeTechRecordType.objectType}:${recordFilter ?? ""}:${recordMatch ? `${recordMatch.field}=${recordMatch.value}` : ""}`}
               recordType={activeTechRecordType}
               initialQuery={recordFilter ?? undefined}
+              initialMatch={recordMatch ?? undefined}
             />
           ) : null}
         </main>
