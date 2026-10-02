@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { verifiedReadiness, type NarrativeReadinessProof } from "../home-narrative-readiness";
+import { signalSourceHash, verifiedReadiness, type NarrativeReadinessProof } from "../home-narrative-readiness";
 
 const proof: NarrativeReadinessProof = {
   object_table: "ecl_projection.home_enterprise_landscape",
@@ -36,4 +36,20 @@ test("only independent, current readiness proof permits a narrative candidate", 
   assert.equal(admits({ ...proof, retrievability: "not_indexed" }), false);
   assert.equal(admits({ ...proof, cited_render_verified_at: null }), false);
   assert.equal(admits({ ...proof, classification: "restricted" }), false);
+  assert.equal(admits({ ...proof, source_layer: "tenant_context" }), false);
+  assert.equal(admits({ ...proof, policy_validated_at: null }), false);
+  assert.equal(admits({ ...proof, source_basis: null }), false);
+  assert.equal(admits({ ...proof, confidence_level: "low" }), false);
+  assert.equal(admits({ ...proof, confidence_level: null }), false);
+  assert.equal(admits({ ...proof, confidence_level: "medium" }), true);
+  assert.equal(admits({ ...proof, retrievability: "search_indexed" }), true);
+});
+
+test("a signal's source hash covers every cited row, in any order, counted once", () => {
+  // sha256 of the JSON array ["source-a","source-b"], computed outside this module.
+  const known = "2fd42fa910872b1876599a17f959e94012d193e518d224a71daf8eb59cdb896f";
+  assert.equal(signalSourceHash(["source-b", "source-a", "source-a"]), known);
+  assert.equal(signalSourceHash(["source-a", "source-b"]), known);
+  assert.notEqual(signalSourceHash(["source-a", "source-c"]), known);
+  assert.notEqual(signalSourceHash(["source-a"]), known);
 });
