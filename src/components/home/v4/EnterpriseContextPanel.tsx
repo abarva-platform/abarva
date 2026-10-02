@@ -6,6 +6,7 @@ import type {
 } from "@/lib/home/preview/ecl-enterprise-context";
 import type { ChapterId } from "@/lib/home/preview/types";
 import type { RecordRowMatch } from "./RecordBrowser";
+import { formatValueMoney } from "@/lib/home/preview/value-proof-format";
 import { PAGE_X, SANS, V4 } from "./tokens";
 
 /** What a reader is told when the record holds no value. Never a zero, never a blank. */
@@ -490,8 +491,8 @@ export function EnterpriseContextPanel({
               marginBottom: 24,
             }}
           >
-            {metric("Approved program budgets", money(context.valueProof.approvedBudgetUsd))}
-            {metric("Program forecasts", money(context.valueProof.forecastUsd))}
+            {metric("Approved program budgets", formatValueMoney(context.valueProof.approvedBudgetUsd))}
+            {metric("Program forecasts", formatValueMoney(context.valueProof.forecastUsd))}
             {metric("Forecast above budget", `${context.valueProof.overBudgetProgramCount} of ${context.valueProof.programCount}`)}
             {metric("Client-attested realized benefits", "Not established")}
           </div>
@@ -522,8 +523,8 @@ export function EnterpriseContextPanel({
                 </td>
                 <td style={CELL_STYLE}>{priority.ownerRole ?? "Not recorded"}</td>
                 <td style={CELL_STYLE}>{priority.programCount}</td>
-                <td style={CELL_STYLE}>{money(priority.approvedBudgetUsd)}</td>
-                <td style={CELL_STYLE}>{money(priority.forecastUsd)}</td>
+                <td style={CELL_STYLE}>{formatValueMoney(priority.approvedBudgetUsd)}</td>
+                <td style={CELL_STYLE}>{formatValueMoney(priority.forecastUsd)}</td>
                 <td style={CELL_STYLE}>{priority.overBudgetProgramCount}</td>
                 <td style={CELL_STYLE}><Evidence fact={priority} /></td>
               </tr>

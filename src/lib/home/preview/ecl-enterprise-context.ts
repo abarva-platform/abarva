@@ -400,14 +400,15 @@ export function buildHomeEnterpriseContext(
       ).length,
     };
   };
+  const commonSourceDate = (sourceRows: HomeProjectionRow[]): string | null => {
+    const dates = sourceRows.map((row) => stringValue(payload(row).source_as_of));
+    return dates.length > 0 && dates.every((date) => date && date === dates[0])
+      ? dates[0]
+      : null;
+  };
   const valueProof: EnterpriseValueProof = {
     ...programAmounts(programRows),
-    asOf: (() => {
-      const dates = programRows.map((row) => stringValue(payload(row).source_as_of));
-      return dates.length > 0 && dates.every((date) => date && date === dates[0])
-        ? dates[0]
-        : null;
-    })(),
+    asOf: commonSourceDate(programRows),
     modelledClaimCount: programRows.filter((row) =>
       stringValue(payload(row).value_claim_status) === "modelled_not_finance_validated",
     ).length,
@@ -435,7 +436,7 @@ export function buildHomeEnterpriseContext(
       rowKey: "unlinked-programs",
       title: "No declared priority",
       sourceRefs: [...new Set(unlinkedProgramRows.map(sourceRefs).flat())],
-      asOf: null,
+      asOf: commonSourceDate(unlinkedProgramRows),
       unlinked: true,
       ownerRole: null,
       ...programAmounts(unlinkedProgramRows),

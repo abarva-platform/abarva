@@ -1404,6 +1404,7 @@ describe("AgentDock · thread render", () => {
     expect(turn).toHaveTextContent("Two priorities need review.");
     expect(screen.getByTestId("evidence-basis")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Evidence basis/ }));
+    expect(screen.getByText("Governed record")).toBeInTheDocument();
     expect(screen.getByText("Program investment record")).toBeInTheDocument();
     expect(turn).not.toHaveTextContent("internal-row-1");
   });

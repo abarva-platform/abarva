@@ -221,6 +221,7 @@ describe("the enterprise context read from the generated source", () => {
     assert.equal(context.valueProof.priorities.at(-1)?.title, "No declared priority");
     assert.equal(context.valueProof.priorities.at(-1)?.programCount, 1);
     assert.equal(context.valueProof.priorities.at(-1)?.ownerRole, null);
+    assert.equal(context.valueProof.priorities.at(-1)?.asOf, "2026-09-30");
     assert.ok(context.valueProof.priorities.slice(0, -1).every((priority) => priority.ownerRole));
     const total = (domain: string) =>
       context.segmentSpine.segments.reduce(
