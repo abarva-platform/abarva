@@ -11,6 +11,9 @@
  * the declaration names, a declaration naming another tenant's manifest serves nothing, and every
  * path that serves something other than the selected projection reports itself.
  *
+ * Last, it applies the migration that makes the database refuse a declaration naming another
+ * tenant's or another assessment's manifest, and holds that too.
+ *
  * Run only against a database this test may fill and throw away:
  *
  *   ECL_ADMISSION_TEST_DATABASE_URL=postgresql://…@127.0.0.1:…/ecl_admission_test \
@@ -52,6 +55,15 @@ const MIGRATIONS = [
   "supabase/migrations/20260902100000_home_serving_view_relationships.sql",
   "supabase/migrations/20261002013000_home_active_assessment.sql",
 ];
+
+/**
+ * Applied part-way through, once the reader's own refusals have been exercised on the schema
+ * without it: a database that has not had this migration is fenced by the reader alone.
+ */
+const TENANT_FK_MIGRATION =
+  "supabase/migrations/20261002060000_home_active_assessment_tenant_fk.sql";
+const TENANT_FK_NAME = "home_active_assessment_manifest_tenant_fkey";
+const TENANT_FK_INDEX = "projection_manifest_id_tenant_assessment_key";
 
 interface Projection {
   tenantKey: string;
@@ -689,6 +701,85 @@ async function main(): Promise<void> {
     );
     assert.deepEqual(await servedApplications(first), firstDeclared.titles);
 
+    // ── The database refuses what the reader refuses ─────────────────────────────────────────
+    // Until here the reader was the only fence: every declaration above that named another
+    // tenant's or another assessment's manifest was stored. With the migration it cannot be.
+    const tenantFk = readFileSync(path.join(ROOT, TENANT_FK_MIGRATION), "utf8");
+    const storeCrossTenantDeclaration = () =>
+      db.query(
+        `insert into ecl_projection.home_active_assessment
+           (tenant_key, assessment_id, projection_manifest_id, source_set_hash, projection_hash,
+            projection_proof_uri, state, retired_at)
+         values ($1,$2,$3,$4,$5,'https://synthetic.invalid/tenant-fence','retired',now())`,
+        [
+          second,
+          firstDeclared.assessmentId,
+          firstDeclared.manifestId,
+          firstDeclared.sourceHash,
+          firstDeclared.projectionHash,
+        ],
+      );
+    const tenantFkParts = async () => {
+      const found = await db.query<{ constraints: string; indexes: string }>(
+        `select
+           (select count(*) from pg_constraint
+             where conrelid = 'ecl_projection.home_active_assessment'::regclass
+               and conname = $1)::text as constraints,
+           (select count(*) from pg_indexes
+             where schemaname = 'ecl_projection' and indexname = $2)::text as indexes`,
+        [TENANT_FK_NAME, TENANT_FK_INDEX],
+      );
+      return {
+        constraints: Number(found.rows[0].constraints),
+        indexes: Number(found.rows[0].indexes),
+      };
+    };
+    assert.deepEqual(await tenantFkParts(), { constraints: 0, indexes: 0 });
+    // A stored declaration that breaks the rule makes the migration fail as a whole: it names
+    // the row instead of hiding it, and leaves nothing half-applied.
+    await storeCrossTenantDeclaration();
+    await assert.rejects(db.query(tenantFk), {
+      code: "23503",
+      constraint: TENANT_FK_NAME,
+    });
+    await db.query("rollback");
+    assert.deepEqual(await tenantFkParts(), { constraints: 0, indexes: 0 });
+    await db.query(
+      `delete from ecl_projection.home_active_assessment
+       where tenant_key = $1 and assessment_id = $2`,
+      [second, firstDeclared.assessmentId],
+    );
+    // Applied, and applied again without effect.
+    await db.query(tenantFk);
+    await db.query(tenantFk);
+    assert.deepEqual(await tenantFkParts(), { constraints: 1, indexes: 1 });
+    // Another tenant's manifest, by insert and by update; another assessment's manifest.
+    await assert.rejects(storeCrossTenantDeclaration(), {
+      code: "23503",
+      constraint: TENANT_FK_NAME,
+    });
+    for (const standIn of standIns.slice(0, 2)) {
+      await assert.rejects(nameManifest(standIn.manifestId), {
+        code: "23503",
+        constraint: TENANT_FK_NAME,
+      });
+    }
+    // A manifest of the same tenant and assessment that is not a Home projection is one the
+    // database still stores. The reader's refusal stays the fence for it.
+    await nameManifest(standIns[2].manifestId);
+    await expectReviewedSnapshotBecause(
+      first,
+      "declaration_not_bound_to_manifest",
+    );
+    await nameManifest(firstDeclared.manifestId);
+    takeSignals();
+    assert.deepEqual(await servedApplications(first), firstDeclared.titles);
+    assert.deepEqual(
+      takeSignals(),
+      [],
+      "a declaration the database accepts and the reader binds reports nothing",
+    );
+
     // ── The selection query fails for a reason that is not a missing table ───────────────────
     await db.query(
       "alter table ecl_projection.home_active_assessment rename column state to state_renamed",
@@ -725,6 +816,7 @@ async function main(): Promise<void> {
       TEST_PATH,
       WORKFLOW_PATH,
       ...MIGRATIONS,
+      TENANT_FK_MIGRATION,
       ...loaded,
       ...HOME_PREVIEW_TENANT_KEYS.map((tenantKey) =>
         SNAPSHOT_GLOB.replace("**", `${tenantKey}.json`),
