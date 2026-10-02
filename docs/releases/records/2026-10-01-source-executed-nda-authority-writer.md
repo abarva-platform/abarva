@@ -35,7 +35,7 @@ Adds an authenticated, in-step capture path for executed NDA authority. It recor
 
 ## QA / Validation
 
-The writer and route suites were red before implementation and green afterward. Removing the candidate event fence turned the foreign-event case red; the fence was restored. The affected suites pass 78/78, full TypeScript and scoped ESLint pass, and the library-orphan audit is green after wiring the authenticated route. Release validation and applicable CI are recorded separately as they complete. No live executed NDA row or positive signed-in coverage is claimed.
+The writer and route suites were red before implementation and green afterward. Removing the candidate event fence turned the foreign-event case red; the fence was restored. The affected suites pass 78/78, full TypeScript and scoped ESLint pass, and the library-orphan audit is green after wiring the authenticated route. The new route has behavioral tenancy-fence coverage. The capture form has focused render/submit behavior tests; it is not counted by the separate three-screen builder-vocabulary render control, whose measured unaudited remainder increases by one. Release validation and applicable CI are recorded separately as they complete. No live executed NDA row or positive signed-in coverage is claimed.
 
 ## Rollout Plan
 
