@@ -138,6 +138,51 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     jest.restoreAllMocks();
   });
 
+  it("retains declared join IDs for segment and priority drill-through", () => {
+    const estate = buildTechnologyEstateFromHomeProjectionRows([
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-1",
+        row_type: "application",
+        title: "Example application",
+        admission_status: "admitted",
+        display_payload_json: {
+          application_id: "APP-1",
+          segment_id: "SEG-1",
+          business_function_id: "FUNC-1",
+        },
+      }),
+      row({
+        page_key: "programs_initiatives",
+        row_key: "PROG-1",
+        row_type: "program",
+        title: "Example program",
+        admission_status: "admitted",
+        display_payload_json: {
+          program_id: "PROG-1",
+          priority_id: "PRI-1",
+          sponsor_function_id: "FUNC-1",
+        },
+      }),
+    ]);
+    const apps = estate.recordTypes.find(
+      (type) => type.objectType === "application_system",
+    );
+    const programs = estate.recordTypes.find(
+      (type) => type.objectType === "program_initiative",
+    );
+    expect(apps?.rows[0]).toMatchObject({
+      segmentId: "SEG-1",
+      businessFunctionId: "FUNC-1",
+    });
+    expect(programs?.rows[0]).toMatchObject({
+      priorityId: "PRI-1",
+      sponsorFunctionId: "FUNC-1",
+    });
+    expect(apps?.columns).toContain("segmentId");
+    expect(programs?.columns).toContain("priorityId");
+  });
+
   it("reads identified enterprise families without inventing missing or refused rows", () => {
     const rows: HomeProjectionRow[] = [
       row({
