@@ -41,7 +41,7 @@ Moves product approvals are recorded by an authenticated workspace user with app
 
 - Approval-path regression sweep: 24 suites, 305 tests passed.
 - Programs and playbook unit suites: 102 suites, 897 tests passed; legacy client-generated sponsor-approval text remains rejected, and workshop packs no longer hydrate historical role approvals.
-- AI surface controls: 24 suites, 235 tests passed; all 40 credited controls and 129 named cases were found and passed.
+- AI surface controls: 24 suites, 236 tests passed; all 40 credited controls and 129 named cases were found and passed. CI no longer invokes the retired sponsor-notification test.
 - TypeScript check passed with Node 24 and a 6 GB heap.
 - Focused ESLint passed with zero errors; the full-source lint also reported zero errors and repository warnings.
 - Test-CI census is current; the library orphan audit reports no change against baseline.

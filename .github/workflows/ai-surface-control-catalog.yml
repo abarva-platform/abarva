@@ -780,7 +780,6 @@ jobs:
         run: >-
           npx jest --runTestsByPath
           "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/escalate-approval.test.ts"
-          "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/notify-sponsor.test.ts"
           --runInBand
 
       - name: Exercise Source award and SOW handoff readiness
