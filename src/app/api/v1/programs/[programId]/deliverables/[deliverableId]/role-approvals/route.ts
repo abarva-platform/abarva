@@ -5,32 +5,16 @@
 //   roles returns an empty required set (the existing single-actor sign-off
 //   remains the only gate for it).
 //
-// POST /api/v1/programs/:programId/deliverables/:deliverableId/role-approvals
-//   Record (upsert) one role's decision: { role, status, approverName?,
-//   outstandingConditions? }. Requires approver authority or higher, same bar
-//   as the existing sign-off route.
+// POST is retired: Moves has one authorized workspace-user approval, not
+// separate business, technology, finance, or risk sign-off actors.
 
-import {
-  getRoleApprovalSummary,
-  recordRoleApprovalDecision,
-  type ApprovalRole,
-  type RoleApprovalStatus,
-} from '@/lib/programs/deliverable-role-approvals';
-import { hasAuthority } from '@/lib/programs/governance';
+import { getRoleApprovalSummary } from '@/lib/programs/deliverable-role-approvals';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
-import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const VALID_ROLES: ApprovalRole[] = ['business', 'technology', 'finance', 'risk_security'];
-const VALID_STATUSES: RoleApprovalStatus[] = ['pending', 'reviewed', 'approved', 'rejected'];
-
-function isCodexProofSandboxMove(programName: string | null | undefined): boolean {
-  return /^codex proof\b/i.test((programName ?? '').trim());
-}
 
 async function loadDeliverableTypeKey(
   supabase: Awaited<ReturnType<typeof getProgramsRouteSupabase>>['supabase'],
@@ -44,7 +28,10 @@ async function loadDeliverableTypeKey(
     .eq('engagement_id', programId)
     .maybeSingle();
   if (error) throw error;
-  return (data as { deliverable_type_key: string } | null)?.deliverable_type_key ?? null;
+  return (
+    (data as { deliverable_type_key: string } | null)?.deliverable_type_key ??
+    null
+  );
 }
 
 export async function GET(
@@ -58,114 +45,69 @@ export async function GET(
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
-    const deliverableTypeKey = await loadDeliverableTypeKey(supabase, programId, deliverableId);
-    if (!deliverableTypeKey) return Response.json({ error: 'not_found' }, { status: 404 });
-
-    const summary = await getRoleApprovalSummary(ctx, programId, deliverableId, deliverableTypeKey, {
+    const deliverableTypeKey = await loadDeliverableTypeKey(
       supabase,
-    });
+      programId,
+      deliverableId,
+    );
+    if (!deliverableTypeKey)
+      return Response.json({ error: 'not_found' }, { status: 404 });
+
+    const summary = await getRoleApprovalSummary(
+      ctx,
+      programId,
+      deliverableId,
+      deliverableTypeKey,
+      {
+        supabase,
+      },
+    );
     return Response.json({ ok: true, ...summary });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
     } catch {}
     console.error('[GET /programs/:id/deliverables/:did/role-approvals]', err);
-    return Response.json({ error: 'internal_error', message: (err as Error).message }, { status: 500 });
+    return Response.json(
+      { error: 'internal_error', message: (err as Error).message },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ programId: string; deliverableId: string }> },
 ) {
   try {
     const { programId, deliverableId } = await params;
     const ctx = await requireTenancy();
-    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
-
-    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
-    const canApprove =
-      accessPolicy.canApproveGates ||
-      (await hasAuthority(ctx, programId, 'approver', { supabase })) ||
-      ctx.role === 'founder' ||
-      ctx.role === 'maestro';
-    if (!canApprove) {
-      return Response.json(
-        { error: 'forbidden', detail: 'approver authority or higher required' },
-        { status: 403 },
-      );
-    }
-
-    const body = (await req.json().catch(() => null)) as
-      | {
-          role?: string;
-          status?: string;
-          approverName?: string;
-          outstandingConditions?: string;
-          sandboxProxyApproval?: boolean;
-        }
-      | null;
-    if (!body?.role || !VALID_ROLES.includes(body.role as ApprovalRole)) {
-      return Response.json(
-        { error: 'invalid_role', detail: `role must be one of ${VALID_ROLES.join(', ')}` },
-        { status: 400 },
-      );
-    }
-    if (!body.status || !VALID_STATUSES.includes(body.status as RoleApprovalStatus)) {
-      return Response.json(
-        { error: 'invalid_status', detail: `status must be one of ${VALID_STATUSES.join(', ')}` },
-        { status: 400 },
-      );
-    }
-
-    const sandboxProxyApproval =
-      body.sandboxProxyApproval === true &&
-      accessPolicy.canApproveGates &&
-      isCodexProofSandboxMove(program.name);
-
-    const record = await recordRoleApprovalDecision(
-      ctx,
+    const deliverableTypeKey = await loadDeliverableTypeKey(
+      supabase,
       programId,
       deliverableId,
-      {
-        role: body.role as ApprovalRole,
-        status: body.status as RoleApprovalStatus,
-        approverName: body.approverName,
-        outstandingConditions: sandboxProxyApproval
-          ? [
-              body.outstandingConditions,
-              `Sandbox proxy approval recorded by ${ctx.email ?? ctx.userId} for Codex Proof Move ${programId}.`,
-            ]
-              .filter(Boolean)
-              .join('\n')
-          : body.outstandingConditions,
-      },
-      { supabase, sandboxProxyApproval },
     );
-    return Response.json({ ok: true, record });
+    if (!deliverableTypeKey)
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    return Response.json(
+      {
+        error: 'role_approvals_retired',
+        detail:
+          'Moves records approvals from one authorized workspace user. Capture stakeholder comments as review feedback; use the deliverable sign-off action for approval.',
+      },
+      { status: 410 },
+    );
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
     } catch {}
-    if (
-      err instanceof Error &&
-      (err.message === 'self_approval_violation' ||
-        err.message === 'separation_of_duties_violation')
-    ) {
-      return Response.json(
-        {
-          error: err.message,
-          detail:
-            err.message === 'self_approval_violation'
-              ? 'The deliverable creator cannot approve this role decision. Use a distinct approver or an explicit sandbox proxy on Codex Proof Moves.'
-              : 'The same reviewer cannot approve multiple required roles for this deliverable version.',
-        },
-        { status: 409 },
-      );
-    }
     console.error('[POST /programs/:id/deliverables/:did/role-approvals]', err);
-    return Response.json({ error: 'internal_error', message: (err as Error).message }, { status: 500 });
+    return Response.json(
+      { error: 'internal_error', message: (err as Error).message },
+      { status: 500 },
+    );
   }
 }

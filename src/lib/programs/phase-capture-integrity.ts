@@ -36,7 +36,7 @@ export const LEGACY_ORIGINATE_PLACEHOLDERS: readonly string[] = [
   "Reduce cycle time, run cost, and leakage while improving reliability and adoption.",
   "Confirm data quality, security posture, process ownership, and evaluation controls before automation expands.",
   // The hardcoded recommendation the same phase-0 branch synthesized.
-  "Advance to Charter after sponsor review; retain open evidence questions as explicit gate caveats.",
+  "Advance to Charter after authorized workspace-user review; retain open evidence questions as explicit gate caveats.",
 ];
 
 const NORMALIZED_PLACEHOLDERS = new Set(
@@ -56,7 +56,7 @@ export const CLIENT_SYNTHESIZED_PHASE_CAPTURE_MARKERS: readonly string[] = [
   "Operating owners and technology/data co-sponsors must confirm cadence, authority, and phase-gate attendance.",
   "Discovery should validate baseline, target direction, measurement owner, evidence confidence, and what cannot yet be claimed.",
   "Core roles: executive sponsor, operating owner, technology/data owner, risk/privacy/compliance owner, finance value owner, and change/adoption owner.",
-  "Sponsor approves scope and phase advancement; operating owner approves process fit; technology/data owner approves platform and integration assumptions; risk/privacy/compliance approve controls and PHI boundaries; finance validates value logic.",
+  "The authorized workspace user records product approval. Sponsor, operating, technology/data, risk/privacy/compliance, and finance stakeholders provide evidence and review input; listing a stakeholder does not create another product approver.",
   "P2 must collect enough process, technology, data, controls, org/change, and baseline metric evidence to decide whether to proceed, hold, or narrow the Move.",
   "Approval note: accountable owner review and caveats must remain attached to the gate record.",
 ];

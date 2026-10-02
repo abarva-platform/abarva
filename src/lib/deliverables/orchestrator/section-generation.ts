@@ -781,10 +781,10 @@ function fallbackRecommendation(
   }
 
   if (req.module === "moves" && req.deliverableType === "charter") {
-    return `We recommend the sponsor review this concise Charter and approve Discovery only with the stated scope, decision rights, authorization conditions, assumptions, and caveats carried forward; detailed workshop instructions belong in the separate Discovery Workshop Guide.`;
+    return `We recommend the authorized workspace user review and approve Discovery only with the stated scope, decision rights, authorization conditions, assumptions, and caveats carried forward. The listed sponsor contact receives progress updates only when selected; detailed workshop instructions belong in the separate Discovery Workshop Guide.`;
   }
 
-  return `We recommend sponsor review of this artifact before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly.`;
+  return `We recommend review by the authorized workspace user before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly. Sponsors receive progress updates only when selected and do not approve product gates.`;
 }
 
 function fallbackRiskTable(
@@ -810,7 +810,7 @@ function fallbackRiskTable(
       "Open decision",
       clientCompleteReasonLabel(c.reason),
       c.owner,
-      "Confirm during sponsor review before phase advancement.",
+      "Confirm with the authorized workspace user before phase advancement.",
     ]);
   }
 

@@ -11,7 +11,7 @@
 //   - recommended target-state path
 //   - architecture sketch and architecture reviewer
 //   - baseline KPI/source/method
-//   - sponsor commitment and succession owner
+//   - business continuity owner and sponsor progress-contact preference
 //   - scope boundary
 //   - kill criterion
 //   - named dissenter
@@ -45,7 +45,7 @@ export const P3_DESIGN: PhasePack = {
       evaluationHint:
         'Design package references the P2 synthesis recommendation and names the ' +
         'chosen target-state path. If the design silently changes direction, it ' +
-        'must include a dated decision record from sponsor and architecture.',
+        'must include a dated decision record reviewed by the authorized workspace user and relevant technical reviewers.',
       preventsFailureModes: [1, 2],
     },
     {
@@ -72,7 +72,8 @@ export const P3_DESIGN: PhasePack = {
     },
     {
       id: 'pilot-cohort-named',
-      label: 'Validation scope identified when applicable to the approved route',
+      label:
+        'Validation scope identified when applicable to the approved route',
       severity: 'hard',
       evaluationHint:
         'If a pilot or representative validation is needed, name the cohort and ' +
@@ -92,12 +93,14 @@ export const P3_DESIGN: PhasePack = {
     },
     {
       id: 'sponsor-commitment-confirmed',
-      label: 'Sponsor commitment and decision cadence confirmed for Execution Roadmap',
+      label:
+        'Business owner and operating cadence recorded for the Execution Roadmap',
       severity: 'hard',
       evaluationHint:
-        'Design closeout records the sponsor cadence for P4, the decision forum, ' +
-        'and the person with approval_authority="sponsor". If the sponsor is only ' +
-        'represented by a delegate, the Execution Roadmap start is politically exposed.',
+        'Legacy criterion key retained for saved-workflow compatibility. Design ' +
+        'closeout records the accountable business owner, operating cadence, and ' +
+        'authorized workspace user responsible for product approvals. Sponsor ' +
+        'participation, commitment, or sign-off is not required.',
       preventsFailureModes: [1],
     },
     {
@@ -107,7 +110,7 @@ export const P3_DESIGN: PhasePack = {
       evaluationHint:
         'Design package includes in-scope/out-of-scope text and maps every design ' +
         'workstream to that boundary. New workstreams outside the charter require ' +
-        'a sponsor-approved change record, not informal design expansion.',
+        'an authorized-user-approved change record, not informal design expansion.',
       preventsFailureModes: [2, 10],
     },
     {
@@ -141,12 +144,12 @@ export const P3_DESIGN: PhasePack = {
     },
     {
       id: 'cxo-interview-complete',
-      label: 'CXO interview completed',
+      label: 'Executive decision context grounded in evidence',
       severity: 'soft',
       evaluationHint:
-        'program_modules row with module_key="cxo_interview" and status="completed". ' +
-        'The interview should confirm sponsor appetite for the pilot, success ' +
-        'thresholds, and the consequence of failing them.',
+        'Evidence or an optional stakeholder conversation records the business ' +
+        'outcome, decision context, success thresholds, and consequence of ' +
+        'failing them. Do not require sponsor participation, approval, or signature.',
       preventsFailureModes: [1, 5],
     },
   ],
@@ -170,7 +173,7 @@ export const P3_DESIGN: PhasePack = {
         id: 'who-builds-operates-approves',
         text:
           'For each major component, who builds it, who operates it after pilot, ' +
-          'and who has approval authority if the design changes?',
+          'and which workspace user is authorized to approve a design change?',
         why:
           'A design without ownership becomes a P4 handoff problem. P4 needs ' +
           'operators and approvers, not just boxes on a diagram.',
@@ -199,7 +202,7 @@ export const P3_DESIGN: PhasePack = {
           'source system, and measurement method?',
         why:
           'Prevents the pilot from measuring convenient telemetry instead of the ' +
-          'value case the sponsor signed.',
+          'value case the authorized workspace user approved.',
         preventsFailureModes: [3, 9],
       },
     ],
@@ -265,14 +268,14 @@ export const P3_DESIGN: PhasePack = {
       {
         id: 'cxo-commitment-to-consequence',
         text:
-          'Has the CXO sponsor accepted the consequence of both pilot success and ' +
-          'pilot failure?',
+          'Has the authorized workspace user recorded the consequences of both ' +
+          'pilot success and pilot failure?',
         why:
-          'Sponsors often approve pilots while avoiding the hard decision that ' +
-          'follows. P4 needs permission to scale, kill, or re-baseline based on evidence.',
+          'P4 needs an explicit, evidence-based decision path to scale, stop, or ' +
+          're-baseline. This is recorded by the authorized workspace user.',
         expectedAnswerShape:
-          'Sponsor-attested consequence: scale path if pass; kill, remediate, or ' +
-          're-baseline path if fail.',
+          'Recorded decision path: scale if pass; stop, remediate, or re-baseline ' +
+          'if fail, with evidence and assumptions.',
         preventsFailureModes: [1, 5],
       },
       {
@@ -297,11 +300,11 @@ export const P3_DESIGN: PhasePack = {
         'architecture posture, or value hypothesis without a new decision record.',
       whatToFlag:
         'Tell the user P3 is being used to reopen P2. That may be necessary, but ' +
-        'it is not free: the sponsor and architecture function must explicitly ' +
-        'approve the change before execution-roadmap planning continues.',
+        'it is not free: the authorized workspace user must approve a change ' +
+        'record before roadmap planning continues, with relevant architecture review.',
       mitigation:
         'Create a dated design decision record with the changed assumption, why P2 ' +
-        'was invalidated, sponsor/architecture approval, and impact to scope, KPI, ' +
+        'was invalidated, stakeholder/architecture review, and impact to scope, KPI, ' +
         'and pilot timing.',
       preventsFailureModes: [1, 2],
     },
@@ -359,7 +362,7 @@ export const P3_DESIGN: PhasePack = {
         'from the change will usually wait until roadmap funding threatens their position.',
       mitigation:
         'Put the dissenter in the design review or record their objection and the ' +
-        'sponsor decision that accepts or rejects it.',
+        'authorized workspace user decision that accepts or rejects it.',
       preventsFailureModes: [1, 5],
     },
     {
@@ -383,7 +386,7 @@ export const P3_DESIGN: PhasePack = {
       'First verify the human-validated P2 solution route is tied to approved evidence. ' +
       'If it is missing or stale, return to P2 rather than assuming a full redesign. ' +
       'Carry forward the recommended path, architecture sketch, baseline source, ' +
-      'sponsor commitment, scope boundary, kill criterion, and dissenter.',
+      'sponsor progress-contact preference, scope boundary, kill criterion, and dissenter.',
     midPhase:
       'Right-size detail to the validated route. Ask only for architecture, process, ' +
       'ownership, controls, and validation details that materially affect the P4 ' +
@@ -400,8 +403,8 @@ export const P3_DESIGN: PhasePack = {
       'P2 Synthesis: recommended target-state path with stated trade-offs - P3 designs against this, not around it',
       'P2 Synthesis: architecture sketch and human-validated solution route - P3 expands only to estimate-ready detail',
       'P2 Synthesis: baseline KPI with source and method - P3 carries estimate-relevant validation criteria forward',
-      'P2 Synthesis: sponsor commitment, decision cadence, and succession owner - P3/P4 use these for design and roadmap decisions',
-      'P2 Synthesis: scope boundary - P3 keeps estimate-ready design inside it unless sponsor approves a change',
+      'P2 Synthesis: business continuity owner, operating cadence, and sponsor progress-contact preference - P3/P4 use these for planning and updates',
+      'P2 Synthesis: scope boundary - P3 keeps estimate-ready design inside it unless an authorized workspace user approves a change',
       'P2 Synthesis: kill criterion - P3 turns it into a roadmap stop/re-baseline rule',
       'P2 Synthesis: named dissenter - P3 must engage, record, or explicitly escalate their objection',
     ],
@@ -409,7 +412,7 @@ export const P3_DESIGN: PhasePack = {
       'Human-reviewed, route-appropriate estimate-ready design and traceability',
       'Validation scope and success criteria when applicable to the approved route',
       'Phase 3 findings with accepted risks, open assumptions, and decisions',
-      'Sponsor decisions and kill/re-baseline conditions carried forward',
+      'Authorized-user decisions and kill/re-baseline conditions carried forward',
       'Adoption/operating ownership and internal/vendor/hybrid sizing assumptions for P4',
     ],
   },
@@ -420,16 +423,16 @@ export const P3_DESIGN: PhasePack = {
   // into two parallel substantive workstreams - architecture expansion and
   // (when in scope) vendor selection - both of which feed the detailed design
   // composition. The detailed design draft is the central intermediate
-  // artifact: pilot-cohort design, the CXO interview, and the second
+  // artifact: pilot-cohort design, executive-context synthesis, and the second
   // dissenter engagement all consume it. The findings package ingests every
   // substantive output, and design sign-off is the terminal node ingesting
-  // the design draft, vendor selection, pilot cohort, criteria, sponsor
-  // commitment, and dissenter engagement.
+  // the design draft, vendor selection, pilot cohort, criteria, business
+  // continuity record, and dissenter engagement.
   //
   // Two intermediate artifacts referenced by `inputs` only (no DoD id, no
   // step `outputs` entry per slice rule):
   //   - `p3-detailed-design-draft`: produced by `p3-detailed-design`,
-  //     consumed by pilot-cohort design, CXO interview, dissenter
+  //     consumed by pilot-cohort design, executive-context synthesis, dissenter
   //     engagement, findings package, and sign-off.
   //   - `p3-vendor-selection-complete`: produced by `p3-vendor-selection`
   //     when sourcing is in scope, consumed by sign-off; the vendor BAFO
@@ -457,7 +460,7 @@ export const P3_DESIGN: PhasePack = {
   // `request_approval` / `extract` steps are upload-false by rule.
   steps: [
     // Continuity step. Tagged [1, 2] because the P2 carry-forward keeps
-    // sponsor commitment (#1) and problem definition (#2) intact across the
+    // continuity ownership (#1) and problem definition (#2) intact across the
     // gate; without ingesting the carry-forward record, P3 silently
     // re-litigates target-state and dilutes both. Mirrors the underlying DoD
     // item `p2-target-state-path-carried-forward` (also tagged [1, 2]).
@@ -556,13 +559,12 @@ export const P3_DESIGN: PhasePack = {
       intentCaptureRequired: true,
       postMeetingUploadExpected: true,
     },
-    // CXO 1:1 - sponsor commits to the consequence of pilot pass and pilot
-    // fail. Outputs span `cxo-interview-complete` (governance gate item)
-    // and `sponsor-commitment-confirmed` (the substantive commitment).
-    // Tagged [1] - sponsor commitment failure mode.
+    // Executive decision context may come from existing evidence. If an
+    // interview is needed, speak with the outcome owner, not the sponsor for
+    // product approval. Workspace users remain the only product approvers.
     {
       id: 'p3-cxo-interview',
-      label: 'CXO 1:1 - sponsor commitment to consequence',
+      label: 'Outcome-owner interview for executive decision context',
       complexity: 'complex',
       agentRole: 'coach_interview',
       inputs: [
@@ -622,17 +624,15 @@ export const P3_DESIGN: PhasePack = {
       intentCaptureRequired: false,
       postMeetingUploadExpected: false,
     },
-    // Terminal gate node. Sponsor + ARB sign the design (and vendor
-    // selection if applicable). Output is `detailed-design-signed-off`.
+    // Terminal gate node. The authorized workspace user approves the design
+    // (and vendor selection if applicable). Output is `detailed-design-signed-off`.
     // `vendor_selection_approved` is a gate-check rather than a DoD id, so
     // it is intentionally NOT listed in `outputs`; it is referenced via
     // `p3-vendor-selection-complete` in `inputs` for DAG legibility.
-    // Tagged [1] per the slice spec - sponsor sign-off concretizes
-    // failure mode #1.
     {
       id: 'p3-design-signoff',
       label:
-        'Sponsor + ARB sign the design (and vendor selection if applicable)',
+        'Authorized user approves the design (and vendor selection if applicable)',
       complexity: 'simple',
       agentRole: 'request_approval',
       inputs: [

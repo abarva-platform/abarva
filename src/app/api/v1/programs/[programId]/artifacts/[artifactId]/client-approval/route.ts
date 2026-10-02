@@ -13,7 +13,6 @@ import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
-import { hasAuthority } from "@/lib/programs/governance";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
 import { signOffDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
@@ -67,53 +66,6 @@ const PHASE_TO_MODULE_KEY: Record<number, string> = {
   4: "roadmap",
   5: "mobilize",
 };
-
-async function ensureSponsorAuthorityForP1ClientApproval(
-  sb: ProgramMutationClient,
-  programId: string,
-  ctx: Awaited<ReturnType<typeof requireTenancy>>,
-): Promise<void> {
-  const { data: sponsorRows, error: sponsorError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("approval_authority", "sponsor")
-    .limit(1);
-  if (sponsorError) throw sponsorError;
-  if (((sponsorRows as Array<{ id: string }> | null) ?? []).length > 0) return;
-
-  const { data: currentRows, error: currentError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("user_id", ctx.userId)
-    .limit(1);
-  if (currentError) throw currentError;
-
-  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ??
-    [])[0];
-  if (currentParticipant) {
-    const { error } = await sb
-      .from("engagement_participants")
-      .update({
-        role: "Sponsor",
-        approval_authority: "sponsor",
-      })
-      .eq("id", currentParticipant.id)
-      .eq("engagement_id", programId);
-    if (error) throw error;
-    return;
-  }
-
-  const { error } = await sb.from("engagement_participants").insert({
-    engagement_id: programId,
-    user_id: ctx.userId,
-    user_name: ctx.email ?? ctx.userId,
-    role: "Sponsor",
-    approval_authority: "sponsor",
-  });
-  if (error) throw error;
-}
 
 function stripHtml(html: string): string {
   return html
@@ -402,7 +354,7 @@ export async function POST(
         ? artifact.metadata.phaseEvidenceSnapshotHash
         : typeof artifact.metadata.evidenceSnapshotHash === "string"
           ? artifact.metadata.evidenceSnapshotHash
-        : null;
+          : null;
     if (
       !currentEvidenceSnapshot ||
       !artifactSnapshotHash ||
@@ -433,8 +385,10 @@ export async function POST(
         ? artifact.metadata.generationLineage
         : {}) as Record<string, unknown>),
       evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-      phaseEvidenceSnapshotHash:
-        approvedMoveEvidenceRevisionForPhase(currentEvidenceSnapshot, phase),
+      phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+        currentEvidenceSnapshot,
+        phase,
+      ),
       evidenceSnapshotScope: "phase",
     };
 
@@ -491,29 +445,24 @@ export async function POST(
       verifiedGenerationLineage = {
         ...(validation.lineage as unknown as Record<string, unknown>),
         evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-        phaseEvidenceSnapshotHash:
-          approvedMoveEvidenceRevisionForPhase(
-            currentEvidenceSnapshot,
-            phase,
-          ),
+        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+          currentEvidenceSnapshot,
+          phase,
+        ),
         evidenceSnapshotScope: "phase",
       };
     }
 
-    if (phase === 1) {
-      await ensureSponsorAuthorityForP1ClientApproval(supabase, programId, ctx);
-    }
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
-    const canApprove =
-      accessPolicy.canApproveGates ||
-      (await hasAuthority(ctx, programId, "approver", { supabase })) ||
-      ctx.role === "founder" ||
-      ctx.role === "maestro";
-    if (!canApprove) {
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
         {
           error: "forbidden",
-          detail: "approver authority or higher required",
+          detail: "Authorized Move approval permission required.",
         },
         { status: 403 },
       );
@@ -647,11 +596,10 @@ export async function POST(
           parseMethod: parsed.extractedStructured.parse_method,
           parseWarnings: parsed.extractedStructured.warnings,
           evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash:
-            approvedMoveEvidenceRevisionForPhase(
-              currentEvidenceSnapshot,
-              phase,
-            ),
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
           evidenceSnapshotScope: "phase",
           generationLineage: verifiedGenerationLineage,
         },
@@ -744,11 +692,10 @@ export async function POST(
               ? { generationLineage: verifiedGenerationLineage }
               : {}),
             evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-            phaseEvidenceSnapshotHash:
-              approvedMoveEvidenceRevisionForPhase(
-                currentEvidenceSnapshot,
-                phase,
-              ),
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
             evidenceSnapshotScope: "phase",
           },
         });
@@ -783,11 +730,10 @@ export async function POST(
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
         evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-        phaseEvidenceSnapshotHash:
-          approvedMoveEvidenceRevisionForPhase(
-            currentEvidenceSnapshot,
-            phase,
-          ),
+        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+          currentEvidenceSnapshot,
+          phase,
+        ),
         evidenceSnapshotScope: "phase",
         approvalReason: reason,
         mode: isFileUploadApproval
@@ -817,11 +763,10 @@ export async function POST(
           source: "generated_artifact_acceptance",
           generatedArtifactId: artifact.id,
           evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash:
-            approvedMoveEvidenceRevisionForPhase(
-              currentEvidenceSnapshot,
-              phase,
-            ),
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
           evidenceSnapshotScope: "phase",
           approvalMode: isFileUploadApproval
             ? "client_approved_replacement"

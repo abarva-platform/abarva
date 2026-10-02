@@ -28,29 +28,68 @@ interface LegacyDeliverable {
 }
 
 function legacyTitle(type: string): string {
-  return type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return type
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 function legacyPreview(deliverable: LegacyDeliverable): string {
   const content = deliverable.content ?? {};
-  if (typeof content.problem_statement === 'string' && content.problem_statement.trim()) return content.problem_statement;
-  if (typeof content.current_state_summary === 'string' && content.current_state_summary.trim()) return content.current_state_summary;
-  if (typeof content.recommendation_rationale === 'string' && content.recommendation_rationale.trim()) return content.recommendation_rationale;
-  if (Array.isArray(content.root_causes) && content.root_causes.length > 0) return `Root causes: ${content.root_causes.slice(0, 2).join(' · ')}`;
-  if (Array.isArray(content.hypotheses) && content.hypotheses.length > 0) return `Hypotheses: ${content.hypotheses.slice(0, 2).join(' · ')}`;
-  if (Array.isArray(content.metrics_compared) && content.metrics_compared.length > 0) return `Metrics compared: ${content.metrics_compared.length}`;
+  if (
+    typeof content.problem_statement === 'string' &&
+    content.problem_statement.trim()
+  )
+    return content.problem_statement;
+  if (
+    typeof content.current_state_summary === 'string' &&
+    content.current_state_summary.trim()
+  )
+    return content.current_state_summary;
+  if (
+    typeof content.recommendation_rationale === 'string' &&
+    content.recommendation_rationale.trim()
+  )
+    return content.recommendation_rationale;
+  if (Array.isArray(content.root_causes) && content.root_causes.length > 0)
+    return `Root causes: ${content.root_causes.slice(0, 2).join(' · ')}`;
+  if (Array.isArray(content.hypotheses) && content.hypotheses.length > 0)
+    return `Hypotheses: ${content.hypotheses.slice(0, 2).join(' · ')}`;
+  if (
+    Array.isArray(content.metrics_compared) &&
+    content.metrics_compared.length > 0
+  )
+    return `Metrics compared: ${content.metrics_compared.length}`;
   return `${Object.keys(content).length} structured fields available`;
 }
 
 function legacySignals(deliverable: LegacyDeliverable): string[] {
   const content = deliverable.content ?? {};
   const signals: string[] = [];
-  if (Array.isArray(content.stakeholders) && content.stakeholders.length > 0) signals.push(`${content.stakeholders.length} stakeholders`);
-  if (Array.isArray(content.success_criteria) && content.success_criteria.length > 0) signals.push(`${content.success_criteria.length} success criteria`);
-  if (Array.isArray(content.quantified_problem) && content.quantified_problem.length > 0) signals.push(`${content.quantified_problem.length} quantified metrics`);
-  if (Array.isArray(content.active_genome_patterns) && content.active_genome_patterns.length > 0) signals.push(`${content.active_genome_patterns.length} genome patterns`);
-  if (Array.isArray(content.roadmap) && content.roadmap.length > 0) signals.push(`${content.roadmap.length} roadmap milestones`);
-  if (Array.isArray(content.metrics_compared) && content.metrics_compared.length > 0) signals.push(`${content.metrics_compared.length} verified outcomes`);
+  if (Array.isArray(content.stakeholders) && content.stakeholders.length > 0)
+    signals.push(`${content.stakeholders.length} stakeholders`);
+  if (
+    Array.isArray(content.success_criteria) &&
+    content.success_criteria.length > 0
+  )
+    signals.push(`${content.success_criteria.length} success criteria`);
+  if (
+    Array.isArray(content.quantified_problem) &&
+    content.quantified_problem.length > 0
+  )
+    signals.push(`${content.quantified_problem.length} quantified metrics`);
+  if (
+    Array.isArray(content.active_genome_patterns) &&
+    content.active_genome_patterns.length > 0
+  )
+    signals.push(`${content.active_genome_patterns.length} genome patterns`);
+  if (Array.isArray(content.roadmap) && content.roadmap.length > 0)
+    signals.push(`${content.roadmap.length} roadmap milestones`);
+  if (
+    Array.isArray(content.metrics_compared) &&
+    content.metrics_compared.length > 0
+  )
+    signals.push(`${content.metrics_compared.length} verified outcomes`);
   return signals;
 }
 
@@ -64,17 +103,25 @@ interface V2Deliverable {
   updated_at: string;
   latest_version?: {
     version: number;
-    quality_issues: { total_score?: number; critical?: string[]; remaining?: string[] } | null;
+    quality_issues: {
+      total_score?: number;
+      critical?: string[];
+      remaining?: string[];
+    } | null;
     generated_at: string;
   } | null;
 }
 
-async function loadV2Deliverables(engagementId: string): Promise<V2Deliverable[]> {
+async function loadV2Deliverables(
+  engagementId: string,
+): Promise<V2Deliverable[]> {
   const sb = getAzureReadFluentClient();
   try {
     const { data } = await sb
       .from('deliverables_v2')
-      .select('id, deliverable_type_key, title, status, current_version, created_at, updated_at')
+      .select(
+        'id, deliverable_type_key, title, status, current_version, created_at, updated_at',
+      )
       .eq('engagement_id', engagementId)
       .order('updated_at', { ascending: false });
     const rows = (data as V2Deliverable[] | null) ?? [];
@@ -88,7 +135,12 @@ async function loadV2Deliverables(engagementId: string): Promise<V2Deliverable[]
       .order('version', { ascending: false });
     type LatestV = NonNullable<V2Deliverable['latest_version']>;
     const latest = new Map<string, LatestV>();
-    for (const v of (versions as Array<{ deliverable_id: string; version: number; quality_issues: LatestV['quality_issues']; generated_at: string }> | null) ?? []) {
+    for (const v of (versions as Array<{
+      deliverable_id: string;
+      version: number;
+      quality_issues: LatestV['quality_issues'];
+      generated_at: string;
+    }> | null) ?? []) {
       if (!latest.has(v.deliverable_id)) {
         latest.set(v.deliverable_id, {
           version: v.version,
@@ -97,7 +149,10 @@ async function loadV2Deliverables(engagementId: string): Promise<V2Deliverable[]
         });
       }
     }
-    return rows.map((r) => ({ ...r, latest_version: latest.get(r.id) ?? null }));
+    return rows.map((r) => ({
+      ...r,
+      latest_version: latest.get(r.id) ?? null,
+    }));
   } catch (err) {
     console.warn('[loadV2Deliverables]', err);
     return [];
@@ -135,7 +190,9 @@ export default async function DeliverablesPage({
   const engagement = await getEngagementByGraphId(graphId);
   if (!engagement) notFound();
 
-  const legacyList = (Array.isArray(engagement.deliverables) ? engagement.deliverables : []) as LegacyDeliverable[];
+  const legacyList = (
+    Array.isArray(engagement.deliverables) ? engagement.deliverables : []
+  ) as LegacyDeliverable[];
   const legacy = legacyList.slice().sort((a, b) => b.phase - a.phase);
   const v2 = await loadV2Deliverables(engagement.id);
 
@@ -152,31 +209,61 @@ export default async function DeliverablesPage({
       <div style={{ marginBottom: 6 }}>
         <Link
           href={`/engagements/${encodeURIComponent(graphId)}`}
-          style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textDecoration: 'none', letterSpacing: '0.08em' }}
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            color: TEAL,
+            textDecoration: 'none',
+            letterSpacing: '0.08em',
+          }}
         >
           ← engagement console
         </Link>
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 4 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            color: PURPLE,
+            letterSpacing: '0.14em',
+            marginBottom: 4,
+          }}
+        >
           DELIVERABLES · {engagement.name}
         </div>
-        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, fontWeight: 400, margin: 0 }}>
+        <h1
+          style={{
+            fontFamily: 'Fraunces, Georgia, serif',
+            fontSize: 26,
+            fontWeight: 400,
+            margin: 0,
+          }}
+        >
           Work products
         </h1>
       </div>
 
       {v2.length > 0 && (
         <section style={{ marginBottom: 28 }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 12 }}>
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              color: MUTE,
+              letterSpacing: '0.14em',
+              marginBottom: 12,
+            }}
+          >
             GENERATED · {v2.length}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {v2.map((d) => {
               const totalScore = d.latest_version?.quality_issues?.total_score;
               const critical = d.latest_version?.quality_issues?.critical ?? [];
-              const remaining = d.latest_version?.quality_issues?.remaining ?? [];
+              const remaining =
+                d.latest_version?.quality_issues?.remaining ?? [];
               return (
                 <Link
                   key={d.id}
@@ -191,38 +278,111 @@ export default async function DeliverablesPage({
                     color: INK,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-                    <span style={{ fontSize: 14, fontWeight: 500 }}>{d.title}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: statusColor(d.status), letterSpacing: '0.12em' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 10,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>
+                      {d.title}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: statusColor(d.status),
+                        letterSpacing: '0.12em',
+                      }}
+                    >
                       ● {d.status.replace(/_/g, ' ').toUpperCase()}
                     </span>
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.1em' }}>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: MUTE,
+                        letterSpacing: '0.1em',
+                      }}
+                    >
                       v{d.current_version}
                     </span>
                     {typeof totalScore === 'number' && (
-                      <span style={{ fontFamily: MONO, fontSize: 9, color: qualityColor(totalScore), letterSpacing: '0.1em', marginLeft: 'auto' }}>
+                      <span
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9,
+                          color: qualityColor(totalScore),
+                          letterSpacing: '0.1em',
+                          marginLeft: 'auto',
+                        }}
+                      >
                         QUALITY {totalScore}/100
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: 12, color: MUTE, fontFamily: MONO, letterSpacing: '0.08em' }}>
-                    {d.deliverable_type_key} · generated {d.latest_version ? new Date(d.latest_version.generated_at).toLocaleString() : new Date(d.updated_at).toLocaleString()}
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: MUTE,
+                      fontFamily: MONO,
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {d.deliverable_type_key} · generated{' '}
+                    {d.latest_version
+                      ? new Date(d.latest_version.generated_at).toLocaleString()
+                      : new Date(d.updated_at).toLocaleString()}
                   </div>
                   {(critical.length > 0 || remaining.length > 0) && (
-                    <div style={{ marginTop: 8, fontSize: 12, color: MUTE, lineHeight: 1.5 }}>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 12,
+                        color: MUTE,
+                        lineHeight: 1.5,
+                      }}
+                    >
                       {critical.length > 0 && (
-                        <div style={{ color: CORAL, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', marginBottom: 2 }}>
-                          {critical.length} CRITICAL ISSUE{critical.length === 1 ? '' : 'S'}
+                        <div
+                          style={{
+                            color: CORAL,
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            letterSpacing: '0.1em',
+                            marginBottom: 2,
+                          }}
+                        >
+                          {critical.length} CRITICAL ISSUE
+                          {critical.length === 1 ? '' : 'S'}
                         </div>
                       )}
                       {remaining.length > 0 && (
-                        <div style={{ color: AMBER, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em' }}>
-                          {remaining.length} REMAINING ISSUE{remaining.length === 1 ? '' : 'S'}
+                        <div
+                          style={{
+                            color: AMBER,
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            letterSpacing: '0.1em',
+                          }}
+                        >
+                          {remaining.length} REMAINING ISSUE
+                          {remaining.length === 1 ? '' : 'S'}
                         </div>
                       )}
                     </div>
                   )}
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.1em', marginTop: 8 }}>
+                  <div
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      color: TEAL,
+                      letterSpacing: '0.1em',
+                      marginTop: 8,
+                    }}
+                  >
                     VIEW DETAIL →
                   </div>
                 </Link>
@@ -233,18 +393,46 @@ export default async function DeliverablesPage({
       )}
 
       <section>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 12 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            color: MUTE,
+            letterSpacing: '0.14em',
+            marginBottom: 12,
+          }}
+        >
           PHASE-GATE DELIVERABLES · {legacy.length}
         </div>
         {legacy.length === 0 && v2.length === 0 ? (
-          <div style={{ padding: 20, border: BORDER, borderRadius: 10, background: PANEL_BG, color: MUTE, fontSize: 13.5, lineHeight: 1.5 }}>
-            No deliverables generated yet. Phase-gate deliverables land automatically when the
-            sponsor approves a phase (Phase 0 → charter; Phase 1 → diagnostic; etc.). On-demand
-            deliverables (spec Phase 4 generator) can be triggered when the topic + deliverable
-            type are assigned.
+          <div
+            style={{
+              padding: 20,
+              border: BORDER,
+              borderRadius: 10,
+              background: PANEL_BG,
+              color: MUTE,
+              fontSize: 13.5,
+              lineHeight: 1.5,
+            }}
+          >
+            No deliverables generated yet. Phase-gate deliverables land
+            automatically when the authorized workspace user approves a phase
+            (Phase 0 → charter; Phase 1 → diagnostic; etc.). On-demand
+            deliverables (spec Phase 4 generator) can be triggered when the
+            topic + deliverable type are assigned.
           </div>
         ) : legacy.length === 0 ? (
-          <div style={{ padding: 14, border: BORDER, borderRadius: 10, background: PANEL_BG, color: MUTE, fontSize: 12 }}>
+          <div
+            style={{
+              padding: 14,
+              border: BORDER,
+              borderRadius: 10,
+              background: PANEL_BG,
+              color: MUTE,
+              fontSize: 12,
+            }}
+          >
             No phase-gate deliverables yet.
           </div>
         ) : (
@@ -259,38 +447,68 @@ export default async function DeliverablesPage({
                   borderRadius: 10,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '0.14em' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 10,
+                    marginBottom: 4,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      color: TEAL,
+                      letterSpacing: '0.14em',
+                    }}
+                  >
                     PHASE {d.phase} · {PHASE_LABELS[d.phase]?.toUpperCase()}
                   </span>
                   <span style={{ fontSize: 14, fontWeight: 500 }}>
                     {legacyTitle(d.type)}
                   </span>
-                  <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginLeft: 'auto' }}>
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      color: MUTE,
+                      marginLeft: 'auto',
+                    }}
+                  >
                     {new Date(d.generated_at).toLocaleDateString()}
                   </span>
                 </div>
-                <div style={{ fontSize: 12.5, color: INK, lineHeight: 1.55, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: INK,
+                    lineHeight: 1.55,
+                    marginBottom: 8,
+                  }}
+                >
                   {legacyPreview(d)}
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {legacySignals(d).length > 0 ? legacySignals(d).map((signal) => (
-                    <span
-                      key={signal}
-                      style={{
-                        fontFamily: MONO,
-                        fontSize: 9,
-                        color: MUTE,
-                        letterSpacing: '0.08em',
-                        padding: '3px 7px',
-                        borderRadius: 999,
-                        border: BORDER,
-                        background: 'rgba(255,255,255,0.03)',
-                      }}
-                    >
-                      {signal.toUpperCase()}
-                    </span>
-                  )) : (
+                  {legacySignals(d).length > 0 ? (
+                    legacySignals(d).map((signal) => (
+                      <span
+                        key={signal}
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9,
+                          color: MUTE,
+                          letterSpacing: '0.08em',
+                          padding: '3px 7px',
+                          borderRadius: 999,
+                          border: BORDER,
+                          background: 'rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        {signal.toUpperCase()}
+                      </span>
+                    ))
+                  ) : (
                     <span style={{ fontSize: 12, color: MUTE }}>
                       {Object.keys(d.content ?? {}).length} structured fields
                     </span>

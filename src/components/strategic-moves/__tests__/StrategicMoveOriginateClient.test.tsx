@@ -105,7 +105,7 @@ function selectP0Tab(step: number) {
   const labels = [
     /business problem or opportunity/i,
     /transformation pattern/i,
-    /executive sponsor and decision authority/i,
+    /sponsor contact and update preference/i,
     /in scope/i,
     /out of scope/i,
     /value hypothesis/i,
@@ -192,9 +192,7 @@ describe("StrategicMoveOriginateClient", () => {
     );
     expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /review p0 intake/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /review p0 intake/i }));
     const approveButton = screen.getByRole("button", {
       name: /^submit p0 for review$/i,
     });
@@ -331,9 +329,7 @@ describe("StrategicMoveOriginateClient", () => {
     expect(
       screen.queryByText("Dr. Anita Krishnamurthy"),
     ).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: /review p0 intake/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /review p0 intake/i }));
     expect(
       screen.getByRole("button", { name: /^submit p0 for review$/i }),
     ).toBeEnabled();
@@ -367,9 +363,7 @@ describe("StrategicMoveOriginateClient", () => {
         "Treasury modernization and finance-controls move.",
       )[0],
     ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: /review p0 intake/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /review p0 intake/i }));
     expect(
       screen.getByRole("button", { name: /^submit p0 for review$/i }),
     ).toBeEnabled();
@@ -419,9 +413,7 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     expect(screen.getByText(/Answers complete/i)).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: /review p0 intake/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /review p0 intake/i }));
     expect(
       screen.getByRole("button", { name: /^submit p0 for review$/i }),
     ).toBeEnabled();
@@ -515,9 +507,7 @@ describe("StrategicMoveOriginateClient", () => {
       },
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /review p0 intake/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /review p0 intake/i }));
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: /^submit p0 for review$/i }),
@@ -572,7 +562,7 @@ describe("StrategicMoveOriginateClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("distinguishes intake submission from evidence-backed sponsor approval", () => {
+    it("distinguishes intake submission from evidence-backed authorized-user approval", () => {
       render(<StrategicMoveOriginateClient tenantName="Tenant A" />);
 
       fireEvent.click(
@@ -723,7 +713,7 @@ describe("StrategicMoveOriginateClient", () => {
           /^transformation pattern \(archetype\)$/i,
           "AI-powered ops decision support.",
         ],
-        [/^executive sponsor and decision authority$/i, "VP, Risk Adjustment."],
+        [/^sponsor contact and update preference$/i, "VP, Risk Adjustment."],
         [/^in scope$/i, "Claims and Epic chart data."],
         [/^out of scope$/i, "Clinical adjudication decisions."],
         [

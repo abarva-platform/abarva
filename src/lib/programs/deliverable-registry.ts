@@ -96,7 +96,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     standAlone: true,
     sections: [
       "Executive Summary (1 paragraph: problem statement, recommended approach, preliminary value hypothesis $M–$M, program duration)",
-      "Sponsor Commitment (named sponsor, role, decision rights, review cadence, documented commitment evidence)",
+      "Sponsor Contact (name, role, and explicit phase-progress email preference; no approval or commitment evidence)",
       "Stakeholder Map (decision-makers, contributors, blockers — named individuals with decision rights assigned)",
       "Success Metrics & Value Range (primary KPI with current baseline, preliminary value range $M–$M with stated assumptions labeled PRELIMINARY_ESTIMATE)",
       "Scope Boundary (explicit in-scope / out-of-scope list — specific capabilities and business processes, not generic)",
@@ -471,7 +471,8 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       },
       {
         sheetName: "Implementation Costs",
-        purpose: "Editable role-based internal/vendor effort, rates, other cost drivers, and year-by-year phasing",
+        purpose:
+          "Editable role-based internal/vendor effort, rates, other cost drivers, and year-by-year phasing",
         editable: true,
         markdownSection: "IMPLEMENTATION_COSTS",
       },

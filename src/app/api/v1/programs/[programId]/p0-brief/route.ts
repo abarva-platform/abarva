@@ -44,7 +44,7 @@ export async function POST(
       "Product-development lifecycle value stream (ideation → release).";
     const sponsor =
       (charter.sponsor_candidate as string) ??
-      "Assigned sponsor (see charter).";
+      "Listed sponsor progress contact (see charter).";
     const problem =
       program.problemStatement ??
       (charter.problem_statement as string) ??

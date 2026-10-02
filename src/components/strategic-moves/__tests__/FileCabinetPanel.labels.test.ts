@@ -10,7 +10,7 @@ import {
   isContextExtractArtifact,
   supportsGeneratedClientApproval,
   supportsReviewRegeneration,
-  supportsSponsorReviewDecisionArtifact,
+  supportsWorkspaceReviewDecisionArtifact,
 } from "../FileCabinetPanel";
 
 describe("FileCabinetPanel artifact labels", () => {
@@ -149,7 +149,7 @@ describe("FileCabinetPanel artifact labels", () => {
 
   it("does not load P2 sponsor review packets for direct generated artifacts", () => {
     expect(
-      supportsSponsorReviewDecisionArtifact(
+      supportsWorkspaceReviewDecisionArtifact(
         {
           artifactType: "charter",
           family: "generated_deliverable",
@@ -208,7 +208,7 @@ describe("FileCabinetPanel artifact labels", () => {
       }),
     ).toBe(false);
     expect(
-      supportsSponsorReviewDecisionArtifact(
+      supportsWorkspaceReviewDecisionArtifact(
         {
           artifactType: "current_state_diagnostic",
           family: "approval_artifact",

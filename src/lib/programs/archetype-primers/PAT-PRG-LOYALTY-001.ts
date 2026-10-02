@@ -28,7 +28,7 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     'across POS / ecommerce / mobile / partner / loyalty platform — overlap rates, ' +
     'consent state per channel, residency and price-discrimination posture; (4) a ' +
     'decisioning-engine integration map showing the path from AI score to each ' +
-    'customer touchpoint (or admitting where it doesn\'t reach — that gap is where ' +
+    "customer touchpoint (or admitting where it doesn't reach — that gap is where " +
     'most loyalty AI dies as a parallel score operations ignores). P2 owns the ' +
     'model-vs-vendor evaluation; P1 nails feasibility and proves the program can ' +
     'produce a decision-grade lift signal in market.',
@@ -45,7 +45,7 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     {
       role: 'CMO / Sponsor',
       rationale:
-        'Exec sponsor and the only role who can sign off on the kill criterion at the P2 gate; without sponsor presence the cohort and offer mechanic decisions get reopened by adjacent marketing teams and the program loses scope discipline.',
+        'Executive sponsor is the business stakeholder for the kill criterion. The authorized workspace user records the P2 gate decision after the cohort and offer-mechanic evidence is reviewed.',
       neededAt: 'kickoff',
       escalationHint:
         'If the CMO cannot attend the Day 1 cohort + mechanic workshop, defer Day 1 rather than running it — a cohort locked without sponsor authority will not survive the synthesis-prep readout.',
@@ -96,7 +96,7 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
       title: 'Loyalty cohort + offer mechanic workshop facilitator guide',
       kind: 'workshop_facilitator_guide',
       description:
-        'Run-of-show + prompts for the Day 1 session: forces a single tier or RFM cell × single channel × single offer mechanic decision, names the lift hypothesis, and seeds the kill criterion the sponsor will sign at P2.',
+        'Run-of-show + prompts for the Day 1 session: forces a single tier or RFM cell × single channel × single offer mechanic decision, names the lift hypothesis, and seeds the kill criterion for the authorized workspace user to review at P2.',
       satisfiesEvidenceItems: [
         'p0-seed-ingested',
         'pattern-specific-evidence-complete',
@@ -221,7 +221,8 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
   dataAssets: [
     {
       id: 'first-cohort-rfm-segment-definition',
-      label: 'First cohort RFM segment definition + last-12-month engagement (member count, redemption, spend, visit frequency)',
+      label:
+        'First cohort RFM segment definition + last-12-month engagement (member count, redemption, spend, visit frequency)',
       rationale:
         'Anchors what the first cohort actually looks like in the loyalty system-of-record at the locked granularity; without it the lift hypothesis is hand-waved and the holdout sizing on Day 3 cannot be defended.',
       format: 'spreadsheet',
@@ -229,7 +230,8 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'identity-resolution-overlap-audit',
-      label: 'Identity-resolution audit — pairwise overlap rates across POS / ecommerce / mobile / partner / loyalty platform',
+      label:
+        'Identity-resolution audit — pairwise overlap rates across POS / ecommerce / mobile / partner / loyalty platform',
       rationale:
         'Required to compute member coverage and identity-key fill rate per channel; without it churn and lifetime-value predictions are scored against partial profiles and the bias is unknowable, which the P2 anti-pattern detector will flag.',
       format: 'spreadsheet',
@@ -237,7 +239,8 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'consent-state-per-channel-map',
-      label: 'Consent-state map per channel (lawful basis, residency, price-discrimination posture, audit findings in flight)',
+      label:
+        'Consent-state map per channel (lawful basis, residency, price-discrimination posture, audit findings in flight)',
       rationale:
         'Locks privacy posture before P2 weighs personalized-offer designs; a loyalty AI that activates without consent lineage and price-discrimination compliance fails the first regulator query and the program loses sponsor air-cover.',
       format: 'PDF',
@@ -245,7 +248,8 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'incrementality-baseline-or-control-design',
-      label: 'Incrementality baseline (control vs. treatment for the offer mechanic on the cohort, last 12 months) — or control-design specification if no prior tests exist',
+      label:
+        'Incrementality baseline (control vs. treatment for the offer mechanic on the cohort, last 12 months) — or control-design specification if no prior tests exist',
       rationale:
         'The truth-tellable metric for loyalty AI is lift vs. counterfactual; either the prior holdout exists and seeds the baseline, or the absence is itself a finding and the Day 3 session locks the control-design specification P3/P4 will execute against.',
       format: 'spreadsheet',
@@ -253,7 +257,8 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'decisioning-engine-integration-map',
-      label: 'Decisioning-engine integration map — path from AI score to each customer touchpoint (email, app, web, POS prompt, call center, partner)',
+      label:
+        'Decisioning-engine integration map — path from AI score to each customer touchpoint (email, app, web, POS prompt, call center, partner)',
       rationale:
         'Names every surface where the AI score currently reaches and every surface where it does not; the gaps are where most loyalty AI dies as a parallel score operations ignores, and the map is the gating evidence for P2 architecture options.',
       format: 'PDF',
@@ -261,7 +266,8 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'current-offer-engine-rule-inventory',
-      label: 'Current offer-engine rule inventory for the first cohort × channel (last 90 days)',
+      label:
+        'Current offer-engine rule inventory for the first cohort × channel (last 90 days)',
       rationale:
         'Documents the legacy segmentation rules the AI score must replace rather than parallel; required input for the synthesis-prep cohort-confirmation conversation and for the Decisioning Operator attestation that the score will reach the touchpoint.',
       format: 'spreadsheet',
@@ -272,43 +278,50 @@ export const LOYALTY_AI_PRIMER: ArchetypePrimer = {
   prepChecklist: [
     {
       id: 'confirm-first-cohort-bounded',
-      label: 'Confirm the first cohort is bounded — one tier OR one RFM cell, one channel, one offer mechanic',
+      label:
+        'Confirm the first cohort is bounded — one tier OR one RFM cell, one channel, one offer mechanic',
       rationale:
         'The "everywhere-charter" anti-pattern kills loyalty AI programs faster than any model choice; a P1 that tries to baseline "all members" across "all channels" produces a placeholder report and the sponsor will reopen the cohort at P2.',
     },
     {
       id: 'engage-privacy-counsel-before-personalized-offer-work',
-      label: 'Engage Privacy Counsel BEFORE any personalized-offer scoping begins',
+      label:
+        'Engage Privacy Counsel BEFORE any personalized-offer scoping begins',
       rationale:
         'Personalized-offer programs surface price-discrimination compliance questions that vary by jurisdiction; deferring Privacy to mid-P1 is the most common reason loyalty AI discoveries either redo Day 2 or hit a regulator finding in P5.',
     },
     {
       id: 'confirm-loyalty-platform-architect-on-team',
-      label: 'Confirm the CRM / Loyalty Platform Architect is named on the program team',
+      label:
+        'Confirm the CRM / Loyalty Platform Architect is named on the program team',
       rationale:
-        'Without an integration path to the loyalty platform\'s decisioning engine, the AI score is theoretical — it never reaches the touchpoint, the offer engine still runs the legacy rule, and the program produces a parallel score the operating team ignores.',
+        "Without an integration path to the loyalty platform's decisioning engine, the AI score is theoretical — it never reaches the touchpoint, the offer engine still runs the legacy rule, and the program produces a parallel score the operating team ignores.",
     },
     {
       id: 'identify-incrementality-dissenter',
-      label: 'Identify the dissenter — usually the Marketing Analytics / Incrementality Lead who will insist on holdout discipline',
+      label:
+        'Identify the dissenter — usually the Marketing Analytics / Incrementality Lead who will insist on holdout discipline',
       rationale:
         'Stakeholder maps without an incrementality-side dissenter become department-RACIs; the holdout discipline is what separates a defensible P5 value claim from a confirmation-bias engagement-lift narrative the next portfolio review rejects.',
     },
     {
       id: 'author-falsifiable-rfm-hypothesis',
-      label: 'Author the falsifiable hypothesis: which RFM cell will show the largest incremental lift on the chosen offer mechanic, and what evidence would change the answer?',
+      label:
+        'Author the falsifiable hypothesis: which RFM cell will show the largest incremental lift on the chosen offer mechanic, and what evidence would change the answer?',
       rationale:
-        'Anti-confirmation discipline. Without a stated hypothesis and falsifiers entering Day 1, the cohort workshop becomes a confirmation of the program owner\'s priors rather than a discovery — and the holdout design on Day 3 inherits that confirmation bias.',
+        "Anti-confirmation discipline. Without a stated hypothesis and falsifiers entering Day 1, the cohort workshop becomes a confirmation of the program owner's priors rather than a discovery — and the holdout design on Day 3 inherits that confirmation bias.",
     },
     {
       id: 'schedule-marketing-analytics-day-3',
-      label: 'Schedule Marketing Analytics / Incrementality Lead for the Day 3 baseline session',
+      label:
+        'Schedule Marketing Analytics / Incrementality Lead for the Day 3 baseline session',
       rationale:
         'The holdout-control framework cannot be deferred to P3 — without it the program cannot prove value at P5 and the kill criterion is undefined. Calendar lock for the Incrementality Lead is the gating step for a defensible P2 readiness recommendation.',
     },
     {
       id: 'name-decisioning-operator-for-touchpoint-attestation',
-      label: 'Name the Decisioning / Offer Engine Operator who will attest the AI score replaces (not supplements) the legacy rule for the first cohort',
+      label:
+        'Name the Decisioning / Offer Engine Operator who will attest the AI score replaces (not supplements) the legacy rule for the first cohort',
       rationale:
         'A loyalty AI score that runs alongside the legacy segmentation rule is the parallel-score failure mode; without operator attestation in P1 that the score will replace the rule for the first cohort × channel, the program ships a model the offer engine ignores.',
     },

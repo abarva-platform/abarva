@@ -612,8 +612,7 @@ export function synthesizeMeetingNotes(
     a.id.localeCompare(b.id),
   );
   const sortedRisks = [...risks].sort((a, b) => {
-    const impactDelta =
-      impactRank(b.impact) - impactRank(a.impact);
+    const impactDelta = impactRank(b.impact) - impactRank(a.impact);
     if (impactDelta !== 0) return impactDelta;
     return a.id.localeCompare(b.id);
   });
@@ -765,7 +764,7 @@ function composeDecisionOne(workshopType: string): string {
     case 'adoption_change_readiness':
       return 'Confirm the readiness signal the room accepts as gating.';
     case 'executive_decision_review':
-      return 'Capture the executive decision the sponsor signs.';
+      return 'Capture the executive decision and the authorized workspace user who records it in Moves.';
     default:
       return 'Confirm the workshop framing the room accepts.';
   }
@@ -790,7 +789,7 @@ function composeDecisionRationaleOne(workshopType: string): string {
     case 'adoption_change_readiness':
       return 'Readiness signal is honest and verifiable per the rubric.';
     case 'executive_decision_review':
-      return 'Evidence chain supports the decision the sponsor signs today.';
+      return 'Evidence chain supports the decision recorded by the authorized workspace user today.';
     default:
       return 'Decision aligns with the workshop objective the Maestro framed.';
   }
@@ -865,7 +864,7 @@ function composeActionOne(workshopType: string): string {
     case 'adoption_change_readiness':
       return 'Compile the readiness signal log with gating-signal annotation.';
     case 'executive_decision_review':
-      return 'Compile the executive decision record and circulate for sponsor sign.';
+      return 'Compile the executive decision record for authorized workspace-user review.';
     default:
       return 'Compile the workshop output and circulate to attendees.';
   }
@@ -915,7 +914,7 @@ function composeRiskOne(workshopType: string): string {
     case 'adoption_change_readiness':
       return 'Pilot population does not represent the scale population.';
     case 'executive_decision_review':
-      return 'Evidence chain has gaps the sponsor flags during the review.';
+      return 'Evidence chain has gaps for the authorized workspace user to review.';
     default:
       return 'Workshop output is incomplete and triggers downstream rework.';
   }
@@ -1115,7 +1114,7 @@ function composeAlignmentTopicOne(workshopType: string): string {
     case 'adoption_change_readiness':
       return 'Gating readiness signal.';
     case 'executive_decision_review':
-      return 'Executive decision the sponsor will sign.';
+      return 'Executive decision for the authorized workspace user to record.';
     default:
       return 'Workshop-level alignment topic the Maestro framed.';
   }

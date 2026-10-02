@@ -216,7 +216,7 @@ const completeP2CaptureValues = {
 
 const completeP1CaptureValues = {
   sponsor_commitment:
-    "Sponsor confirms weekly charter review cadence and decision authority.",
+    "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.",
   scope_boundary:
     "In scope: Airport turnaround operations.\n\nOut of scope: Crew scheduling policy changes.",
   success_criteria:
@@ -671,7 +671,7 @@ describe("MovesPhaseStandaloneClient", () => {
                   fieldKey: "sponsor_commitment",
                   currentValue: null,
                   proposedValue:
-                    "Sponsor confirms weekly charter review cadence.",
+                    "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.",
                   rationale:
                     "Drafted from the approved origination stakeholder view.",
                   evidenceRefs: ["P0 · Stakeholder / owner view"],
@@ -806,6 +806,29 @@ describe("MovesPhaseStandaloneClient", () => {
     jest.restoreAllMocks();
   });
 
+  it("shows no approval action to a user without workspace approval permission", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates={false}
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Approval is available to an authorized workspace user.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Approve P1 gate/i }),
+    ).toBeNull();
+  });
+
   describe("design decision after a reload", () => {
     function optionCards(container: HTMLElement) {
       return Array.from(
@@ -816,6 +839,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("selects nothing when no decision is recorded", () => {
       const { container } = render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -830,9 +854,9 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       const cards = optionCards(container);
       expect(cards.length).toBeGreaterThan(1);
-      expect(cards.filter((card) => card.classList.contains("selected"))).toEqual(
-        [],
-      );
+      expect(
+        cards.filter((card) => card.classList.contains("selected")),
+      ).toEqual([]);
     });
 
     it("restores the recorded option as selected, without a click", () => {
@@ -840,6 +864,7 @@ describe("MovesPhaseStandaloneClient", () => {
       // fresh page that is told that option was approved.
       const first = render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -860,6 +885,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
       const { container } = render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           approvedSolutionOption={{ selectedOptionId: id, chosenOption: label }}
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
@@ -885,6 +911,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("renders the Finder contract shell even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -905,6 +932,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("renders the new shell without any feature-flag fallback dependency", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -922,6 +950,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
@@ -941,6 +970,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("renders the Finder shell class and data attribute with the expected tab/phase structure", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -968,6 +998,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={move}
@@ -1063,7 +1094,9 @@ describe("MovesPhaseStandaloneClient", () => {
       const contractCard = screen.getByTestId("mxw-contract-card");
       expect(contractCard).toBeInTheDocument();
       expect(
-        within(contractCard).getAllByText("Sponsor commitment").length,
+        within(contractCard).getAllByText(
+          "Sponsor contact and progress updates",
+        ).length,
       ).toBeGreaterThan(0);
       expect(
         within(contractCard).getByRole("button", { name: /Upload Evidence/i }),
@@ -1101,6 +1134,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialStageReadinessPreview={{
@@ -1129,7 +1163,8 @@ describe("MovesPhaseStandaloneClient", () => {
                 {
                   proposalId: "proposal-1",
                   question: "Provide baseline metrics.",
-                  response: "Baseline metrics remain unverified pending finance confirmation.",
+                  response:
+                    "Baseline metrics remain unverified pending finance confirmation.",
                   answerState: "insufficient_evidence",
                   disposition: "accepted",
                 },
@@ -1168,6 +1203,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={move}
@@ -1217,6 +1253,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialStageReadinessPreview={{
@@ -1318,6 +1355,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("keeps compact phase and workspace controls reachable when the desktop rail is hidden", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -1350,6 +1388,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("keeps the collapse toggle available even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -1370,6 +1409,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("renders a collapse toggle; clicking it collapses the rail to an icon-only strip (real DOM/class change), and clicking again expands it back", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -1414,6 +1454,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("collapsed: a reachable phase's icon is still a real link to its phase route (navigation survives collapse)", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -1444,6 +1485,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("opens the overview even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove()}
@@ -1465,6 +1507,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("opens the overview list with every row reproducible from the mocked getMovePhaseTallies output alone", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({ currentPhase: 3 })}
@@ -1493,20 +1536,15 @@ describe("MovesPhaseStandaloneClient", () => {
       // P4/P5 are "upcoming" -> Not reached.
       expect(screen.getAllByText("Not reached").length).toBe(2);
       expect(within(overview).queryByText("Sponsor")).not.toBeInTheDocument();
-      expect(within(overview).getAllByText("Not yet assigned").length).toBe(4);
       expect(
-        within(overview).getByText(
-          "Business approver · Technology approver · Risk/security approver",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        within(overview).getByText("Business approver · Finance approver"),
-      ).toBeInTheDocument();
+        within(overview).getAllByText("Authorized workspace user"),
+      ).toHaveLength(6);
     });
 
     it("current-phase row: Review & approve returns to the phase workspace at the approve substep", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({ currentPhase: 3 })}
@@ -1533,6 +1571,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("another reachable phase row: Review & approve is a real link to that phase's route", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({ currentPhase: 3 })}
@@ -1565,6 +1604,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not render the retired P0 originate form inside the phase workspace", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -1605,6 +1645,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("honors P0 focus=gate by opening gate approval instead of the retired form", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -1638,6 +1679,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("gates P0 gate approval behind a confirmation dialog and shows the signed-in approver identity", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
         evidenceNeedPackets={[]}
@@ -1682,6 +1724,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("cancelling the P0 gate approval confirmation leaves the gate unapproved", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -1714,6 +1757,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows completed P0 as read-only when the Move has already advanced to P1", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -1754,6 +1798,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -1806,6 +1851,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows the saved seven-answer P0 brief separately from gate criteria", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -1865,6 +1911,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("frames P1 as a posture hypothesis, not a solution approach recommendation", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="prepare"
@@ -1884,8 +1931,11 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByRole("heading", { name: "Charter inputs" }),
     ).toBeInTheDocument();
     expect(
-      (screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement)
-        .value,
+      (
+        screen.getByLabelText(
+          "Sponsor contact and progress updates",
+        ) as HTMLTextAreaElement
+      ).value,
     ).toBe("");
     expect(
       (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
@@ -1937,6 +1987,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="prepare"
@@ -1949,12 +2000,17 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Sponsor commitment/i));
+    fireEvent.click(
+      contractStepButton(/Sponsor contact and progress updates/i),
+    );
     const sponsorInput = screen.getAllByLabelText(
-      "Sponsor commitment",
+      "Sponsor contact and progress updates",
     )[0] as HTMLTextAreaElement;
     fireEvent.change(sponsorInput, {
-      target: { value: "Sponsor confirms weekly charter review cadence." },
+      target: {
+        value:
+          "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.",
+      },
     });
 
     expect(screen.queryByText(/^Done$/i)).not.toBeInTheDocument();
@@ -1983,9 +2039,11 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   it("marks a P1 field captured after save and keeps it neutral while the phase gate is open", async () => {
-    const savedText = "Sponsor confirms weekly charter review cadence.";
+    const savedText =
+      "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.";
     const { unmount } = render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureRevision="revision-before-edit"
@@ -1999,9 +2057,11 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Sponsor commitment/i));
+    fireEvent.click(
+      contractStepButton(/Sponsor contact and progress updates/i),
+    );
     const sponsorInput = screen.getAllByLabelText(
-      "Sponsor commitment",
+      "Sponsor contact and progress updates",
     )[0] as HTMLTextAreaElement;
     fireEvent.change(sponsorInput, {
       target: { value: savedText },
@@ -2033,6 +2093,7 @@ describe("MovesPhaseStandaloneClient", () => {
     unmount();
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureRevision="revision-after-edit"
@@ -2046,10 +2107,15 @@ describe("MovesPhaseStandaloneClient", () => {
         phaseTallies={[...phaseTallies]}
       />,
     );
-    fireEvent.click(contractStepButton(/Sponsor commitment/i));
+    fireEvent.click(
+      contractStepButton(/Sponsor contact and progress updates/i),
+    );
     expect(
-      (screen.getAllByLabelText("Sponsor commitment")[0] as HTMLTextAreaElement)
-        .value,
+      (
+        screen.getAllByLabelText(
+          "Sponsor contact and progress updates",
+        )[0] as HTMLTextAreaElement
+      ).value,
     ).toBe(savedText);
     expect(screen.getAllByText("Captured · gate open").length).toBeGreaterThan(
       0,
@@ -2059,6 +2125,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("uses P1 step 2 for uploading evidence, with multiple files enabled", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="decide"
@@ -2118,6 +2185,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not report an upload as usable evidence when parsing did not create a review record", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="decide"
@@ -2147,6 +2215,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("routes P2 current-state uploads through readiness evidence families instead of generic artifact upload", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={{
           ...makeCurrentStateReadiness(),
@@ -2268,6 +2337,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={{
           ...base,
@@ -2355,6 +2425,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("uploads workshop notes as review-pending session artifacts instead of mis-mapping them to a P2 family", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={makeCurrentStateReadiness()}
         evidenceNeedPackets={[]}
@@ -2402,6 +2473,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("sends a canonical-backed family to the structured loader, not the document path", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={makeCurrentStateReadiness()}
         evidenceNeedPackets={[]}
@@ -2459,6 +2531,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={makeCurrentStateReadiness()}
         evidenceNeedPackets={[]}
@@ -2495,6 +2568,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("routes airline P2 uploads by active readiness family labels", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={{
           ...makeCurrentStateReadiness(),
@@ -2576,6 +2650,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows empty P1 charter capture fields as missing until real values are captured", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -2593,8 +2668,11 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByRole("heading", { name: "Charter inputs" }),
     ).toBeInTheDocument();
     expect(
-      (screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement)
-        .value,
+      (
+        screen.getByLabelText(
+          "Sponsor contact and progress updates",
+        ) as HTMLTextAreaElement
+      ).value,
     ).toBe("");
     expect(
       (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
@@ -2610,6 +2688,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("keeps solution approach selection in P3 after discovery evidence", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="decide"
@@ -2666,6 +2745,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("recovers the selected P3 option from persisted recommendation text after reload", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={{
@@ -2748,6 +2828,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={evidenceNeedPackets}
         move={makeMove()}
@@ -2806,6 +2887,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -2855,6 +2937,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[coveredEvidence]}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -2875,6 +2958,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not report evidence as covered when the active phase has no evidence checklist", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -2885,9 +2969,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(
-      contractStepButton(/Approve & Build/i),
-    );
+    fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
       /Evidence\s*Not checked/,
@@ -2900,6 +2982,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("keeps phase progress blocked when evidence readiness could not be checked", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         evidenceReadinessAvailable={false}
@@ -2925,6 +3008,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("surfaces real carries-forward content extracted from this phase's generated deliverable", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[
           {
             key: "workstreams",
@@ -2954,6 +3038,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("omits the carries-forward section when no real content signals were extracted", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -2973,6 +3058,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("renders P3 in the contract shell instead of the older prepare wall", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -3021,7 +3107,9 @@ describe("MovesPhaseStandaloneClient", () => {
       within(menu).getByRole("button", { name: /Compare Options/i }),
     );
     expect(screen.getByText("Options & recommendation")).toBeInTheDocument();
-    expect(screen.getByText("P2 source evidence unavailable")).toBeInTheDocument();
+    expect(
+      screen.getByText("P2 source evidence unavailable"),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText("How to complete this phase"),
     ).not.toBeInTheDocument();
@@ -3043,6 +3131,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("renders P4 in the contract shell instead of the older prepare wall", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3135,6 +3224,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("hides the Cost & Effort rail entry point when moves_pricing_engine is off (the default)", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3153,6 +3243,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows the Cost & Effort rail entry point only on P4 when the flag is on, and opens the wizard", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3177,6 +3268,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not show the Cost & Effort rail entry point on a non-P4 phase, even with the flag on", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3196,6 +3288,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("hides the Risk Assessment rail entry point when moves_risk_tier_scoring_v1 is off (the default)", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3214,6 +3307,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows the Risk Assessment rail entry point only on P2 when the flag is on, and opens the panel", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3236,6 +3330,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("also shows the Risk Assessment rail entry point on P3 when the flag is on — starts at P2, finalizes at P3", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3255,6 +3350,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not show the Risk Assessment rail entry point on P4 (or any phase other than P2/P3), even with the flag on", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3274,6 +3370,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("hides the Solutioning rail entry point when moves_solution_pattern_gate_v1 is off (the default)", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3292,6 +3389,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows the Solutioning rail entry point only on P3 when the flag is on, and opens the panel", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3316,6 +3414,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not show the Solutioning rail entry point on a non-P3 phase, even with the flag on", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3335,6 +3434,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("renders P5 in the contract shell instead of the older prepare wall", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3418,6 +3518,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("mounts governed current-state readiness in the current-state workspace before the static findings lanes", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={makeCurrentStateReadiness()}
         evidenceNeedPackets={[]}
@@ -3457,6 +3558,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows review-required current-state docs as visible evidence and removes the row immediately after approval", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentStateReadiness={makeReviewRequiredCurrentStateReadiness()}
         evidenceNeedPackets={[]}
@@ -3517,6 +3619,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not label an approval step ready when hard gate criteria remain blocked", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         currentStateReadiness={{
@@ -3578,6 +3681,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("the evidence-item counts at gate approval are clickable links that open Files & Evidence, not inert text", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -3611,6 +3715,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("shows current generated artifacts on the gate panel when linked evidence is empty", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -3705,6 +3810,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="approve"
@@ -3790,6 +3896,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureRevision="p2-complete"
@@ -3831,6 +3938,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -3873,6 +3981,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
@@ -3896,6 +4005,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not load Phase Intelligence until the user opens its workspace tab", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
@@ -3932,6 +4042,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("wires phase workspace v2 task actions to the existing Files and gate controls", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[
           {
@@ -3978,7 +4089,9 @@ describe("MovesPhaseStandaloneClient", () => {
       }),
     ).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+      screen.getByRole("button", {
+        name: /Operational playbook and metric discipline/i,
+      }),
     );
 
     fireEvent.click(contractStepButton(/Approve & Build/i));
@@ -4044,6 +4157,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -4078,6 +4192,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("supports the explorer, upload, aVa launcher, and gate ceremony interactions", async () => {
     const { container } = render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -4109,7 +4224,9 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(screen.getByRole("button", { name: /Stage workspace/i }));
     fireEvent.click(contractStepButton(/Record Decision/i));
     fireEvent.click(
-      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+      screen.getByRole("button", {
+        name: /Operational playbook and metric discipline/i,
+      }),
     );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     expect(
@@ -4201,6 +4318,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("reserves bottom safe area so the fixed aVa launcher does not cover gate content", () => {
     const { container } = render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -4247,7 +4365,7 @@ describe("MovesPhaseStandaloneClient", () => {
                   {
                     severity: "hard",
                     check: "charter_signed_off",
-                    reason: "Charter signed off by sponsor",
+                    reason: "Charter approved by an authorized Move user",
                   },
                 ],
               },
@@ -4261,6 +4379,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={completeP3CaptureValues}
@@ -4272,7 +4391,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(contractStepButton(/Record Decision/i));
     fireEvent.click(
-      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+      screen.getByRole("button", {
+        name: /Operational playbook and metric discipline/i,
+      }),
     );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
@@ -4292,16 +4413,18 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
     expect(
-      screen.getAllByText(/Charter signed off by sponsor/i).length,
+      screen.getAllByText(/Charter approved by an authorized Move user/i)
+        .length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getByText(/approve or upload the client-approved deliverable/i),
+      screen.getByText(/approve the draft or upload an edited version/i),
     ).toBeInTheDocument();
   });
 
   it("gates Approve & Build behind a confirmation dialog and does not enqueue a build until confirmed", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
         evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
@@ -4314,7 +4437,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(contractStepButton(/Record Decision/i));
     fireEvent.click(
-      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+      screen.getByRole("button", {
+        name: /Operational playbook and metric discipline/i,
+      }),
     );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
@@ -4331,11 +4456,13 @@ describe("MovesPhaseStandaloneClient", () => {
       within(dialog).queryByText(/Approving as: jane@apex-retail.com/i),
     ).not.toBeInTheDocument();
     expect(
-      within(dialog).getByText(/It does not sign off the generated documents/i),
+      within(dialog).getByText(
+        /It does not approve the generated documents or the phase gate/i,
+      ),
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(
-        /the gate remains blocked until each required deliverable is reviewed and signed off/i,
+        /The authorized Move user reviews each required deliverable in Files & Evidence, then approves the ready phase gate/i,
       ),
     ).toBeInTheDocument();
     expect(
@@ -4387,6 +4514,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
         evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
@@ -4399,7 +4527,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(contractStepButton(/Record Decision/i));
     fireEvent.click(
-      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+      screen.getByRole("button", {
+        name: /Operational playbook and metric discipline/i,
+      }),
     );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
@@ -4466,6 +4596,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("submits an already-satisfied P5 gate without regenerating artifacts", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         currentUser={{ email: "move.runner@example.com", role: "client_admin" }}
         evidenceNeedPackets={coveredEvidencePacketsForPhase(5)}
@@ -4537,6 +4668,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("wires the aVa suggested questions to a real chat send, with programId set correctly to avoid the 'no active Move session' regression", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
@@ -4587,6 +4719,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("gets cited aVa drafts without writing, then persists only after Save changes", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -4632,10 +4765,10 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Insert as draft" }));
     const sponsorInput = screen.getAllByLabelText(
-      "Sponsor commitment",
+      "Sponsor contact and progress updates",
     )[0] as HTMLTextAreaElement;
     expect(sponsorInput.value).toBe(
-      "Sponsor confirms weekly charter review cadence.",
+      "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.",
     );
     expect(screen.getByText(/aVa draft is local/i)).toBeInTheDocument();
     expect(
@@ -4662,7 +4795,8 @@ describe("MovesPhaseStandaloneClient", () => {
       expect.objectContaining({
         phase: 1,
         sections: {
-          sponsor_commitment: "Sponsor confirms weekly charter review cadence.",
+          sponsor_commitment:
+            "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.",
         },
       }),
     );
@@ -4671,6 +4805,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("does not offer aVa draft action when phase inputs are already complete", () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP1CaptureValues}
@@ -4736,6 +4871,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove({
@@ -4816,6 +4952,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
@@ -4847,6 +4984,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("supports typing and sending a free-form question via the composer", async () => {
     render(
       <MovesPhaseStandaloneClient
+        canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
@@ -4881,6 +5019,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("retired legacy path: renders the contract-card shell, not the old horizontal stepper", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({
@@ -4913,6 +5052,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP2CaptureValues}
@@ -4951,6 +5091,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("does not show a P1-to-P2 workbook review as current P2-to-P3 readiness", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialStageReadinessPreview={{
@@ -5000,6 +5141,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP2CaptureValues}
@@ -5057,6 +5199,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("marks exactly one owning workflow row active while a phase input is selected", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({
@@ -5090,6 +5233,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("keeps phase progress to the critical inputs, gate, and next-action signals", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({
@@ -5117,6 +5261,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("keeps P2 evidence progress open when current-state readiness has hard gaps", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           currentStateReadiness={makeCurrentStateReadiness()}
           evidenceNeedPackets={[]}
@@ -5151,6 +5296,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           currentStateReadiness={coveredReadiness}
           evidenceNeedPackets={[]}
@@ -5171,6 +5317,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("does not report P2 evidence as covered when current-state readiness is unavailable", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           currentStateReadiness={null}
           evidenceNeedPackets={[]}
@@ -5194,6 +5341,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("citation toggle: absent by default (no captured source), then appears and actually reveals/hides the source caption once a real source is captured", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({
@@ -5256,6 +5404,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("upload-type workflow step: the real file input reachable from the two-column detail pane invokes the same existing upload wiring (no new handler built)", async () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           move={makeMove({
@@ -5301,6 +5450,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("'Coming up' card: opens by default when real readiness-pack chips exist, then collapses and reopens the same real data", () => {
       render(
         <MovesPhaseStandaloneClient
+          canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[
             {

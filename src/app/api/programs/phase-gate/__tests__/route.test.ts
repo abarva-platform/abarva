@@ -157,7 +157,13 @@ describe("POST /api/programs/phase-gate read plane", () => {
     getStakeholderSuccessRecords.mockReturnValue([{ id: "success_1" }]);
     dataReadinessGateMet.mockReturnValue({ met: true, blockedDimensions: [] });
     getSeedPlan.mockReturnValue({
-      programs: [{ code: "APX-01", graphNodeId: "graph_program_1" }],
+      programs: [
+        {
+          code: "APX-01",
+          tenantKey: "apex-retail",
+          graphNodeId: "graph_program_1",
+        },
+      ],
     });
     mockAzureRead.maybeSingle.mockResolvedValue({
       id: "engagement_1",
@@ -174,6 +180,10 @@ describe("POST /api/programs/phase-gate read plane", () => {
     const res = await POST(phaseGateRequest() as never);
 
     expect(res.status).toBe(200);
+    expect(loadUserProgramAccessPolicy).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: "client_1", userId: "user_1" }),
+      { programId: "engagement_1" },
+    );
     await expect(res.json()).resolves.toMatchObject({
       ok: true,
       entry: {
@@ -333,6 +343,105 @@ describe("POST /api/programs/phase-gate read plane", () => {
     });
     expect(advanceEngagementPhase).not.toHaveBeenCalled();
     expect(writeProgramAuditLog).not.toHaveBeenCalled();
+  });
+
+  it("denies an approver whose permission is scoped to a different Move", async () => {
+    loadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: true,
+      programIdsAllowed: ["another-engagement"],
+    });
+    const { POST } = await import("@/app/api/programs/phase-gate/route");
+    const res = await POST(phaseGateRequest() as never);
+
+    expect(res.status).toBe(403);
+    expect(advanceEngagementPhase).not.toHaveBeenCalled();
+    expect(writeProgramAuditLog).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/programs/approve", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    auth.mockResolvedValue({ userId: "user_1" });
+    clerkClient.mockResolvedValue({
+      users: {
+        getUser: jest.fn().mockResolvedValue({
+          firstName: "Maya",
+          lastName: "Patel",
+          publicMetadata: { role: "admin" },
+          emailAddresses: [{ emailAddress: "maya@example.com" }],
+        }),
+      },
+    });
+    tenantKeyForProgramCode.mockReturnValue("apex-retail");
+    checkTenantAccessByKey.mockResolvedValue({ ok: true });
+    requireTenancy.mockResolvedValue({
+      clientId: "client_1",
+      clientKey: "apex-retail",
+      userId: "user_1",
+      role: "admin",
+    });
+    getSeedPlan.mockReturnValue({
+      programs: [
+        {
+          code: "APX-01",
+          tenantKey: "apex-retail",
+          graphNodeId: "graph_program_1",
+        },
+      ],
+    });
+    mockAzureRead.maybeSingle.mockResolvedValue({ id: "engagement_1" });
+    loadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: true,
+      programIdsAllowed: ["engagement_1"],
+    });
+    existsSync.mockReturnValue(false);
+  });
+
+  it("checks approval authority against the exact Move before writing", async () => {
+    const { POST } = await import("@/app/api/programs/approve/route");
+    const res = await POST(
+      new Request("http://localhost/api/programs/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          programCode: "APX-01",
+          deliverableCode: "D01",
+          phase: 1,
+          decision: "approved",
+        }),
+      }) as never,
+    );
+
+    expect(res.status).toBe(200);
+    expect(loadUserProgramAccessPolicy).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: "client_1", userId: "user_1" }),
+      { programId: "engagement_1" },
+    );
+    expect(writeFileSync).toHaveBeenCalled();
+  });
+
+  it("denies an approver whose permission is scoped to a different Move", async () => {
+    loadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: true,
+      programIdsAllowed: ["another-engagement"],
+    });
+    const { POST } = await import("@/app/api/programs/approve/route");
+    const res = await POST(
+      new Request("http://localhost/api/programs/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          programCode: "APX-01",
+          deliverableCode: "D01",
+          phase: 1,
+          decision: "approved",
+        }),
+      }) as never,
+    );
+
+    expect(res.status).toBe(403);
+    expect(writeFileSync).not.toHaveBeenCalled();
   });
 });
 

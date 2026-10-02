@@ -7,7 +7,6 @@ import {
   tenantKeyForProgramCode,
 } from "@/lib/auth/tenant-access";
 import { requireTenancy } from "@/lib/auth/tenancy";
-import { getLatestSponsorCommitment } from "@/lib/workflow/sponsorCommitmentLedger";
 import {
   getProgramTensionRecords,
   getStakeholderSuccessRecords,
@@ -101,12 +100,14 @@ function writeLedger(ledger: PhaseGateLedger): void {
 
 async function resolvePhaseGateEngagement(
   programCode: string,
+  ownerKey: string,
 ): Promise<PhaseGateEngagementRow | null> {
   const plan = getSeedPlan();
   const seedProgram = plan.programs.find(
     (p) => p.code.trim().toLowerCase() === programCode.trim().toLowerCase(),
   );
-  const graphNodeId = seedProgram?.graphNodeId ?? null;
+  if (!seedProgram || seedProgram.tenantKey !== ownerKey) return null;
+  const graphNodeId = seedProgram.graphNodeId;
   if (!graphNodeId) {
     console.warn("[phase-gate] no graphNodeId resolved for programCode", {
       programCode,
@@ -184,6 +185,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: access.reason }, { status });
   }
 
+  const engRow = await resolvePhaseGateEngagement(programCode, ownerKey).catch(
+    (err) => {
+      console.error("[phase-gate] Move lookup failed", {
+        programCode,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      return null;
+    },
+  );
+  if (!engRow) {
+    return NextResponse.json({ error: "unknown program" }, { status: 404 });
+  }
+
   // SECURITY (audit 2026-05-22, P0-2a): a phase-gate advance is a
   // gate-feeding write. The route previously checked tenant membership
   // but never a role — any tenant member could advance any program
@@ -193,14 +207,20 @@ export async function POST(request: NextRequest) {
   let policyCtx: Awaited<ReturnType<typeof requireTenancy>> | null = null;
   try {
     policyCtx = await requireTenancy();
-    const accessPolicy = await loadUserProgramAccessPolicy(policyCtx);
+    const accessPolicy = await loadUserProgramAccessPolicy(policyCtx, {
+      programId: engRow.id,
+    });
     advancerRole = policyCtx.role ?? null;
-    if (!accessPolicy.canApproveGates) {
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(engRow.id))
+    ) {
       return NextResponse.json(
         {
           error: "forbidden",
           detail:
-            "Advancing a program across a phase gate requires gate-approval permission. Ask a sponsor or client admin to advance, or to grant can_approve_gates.",
+            "Advancing a program across a phase gate requires gate-approval permission from the authenticated workspace user.",
         },
         { status: 403 },
       );
@@ -230,23 +250,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // FM-03 · Phase 1 → 2 gate requires a sponsor commitment record. Other
-  // phase transitions have their own preconditions (Phase 2→3 needs the
-  // tension-capture fields per FM-04, etc.) — those land in follow-up
-  // items. For now, enforce only the FM-03 precondition.
+  // Sponsor status is contact metadata only. Keep the actual phase evidence
+  // checks below, but never make sponsor commitment a gate condition.
   if (fromPhase === 1 && toPhase === 2) {
-    const commitment = getLatestSponsorCommitment(programCode);
-    if (!commitment) {
-      return NextResponse.json(
-        {
-          error: "precondition_failed",
-          precondition: "sponsor_commitment",
-          message:
-            "Phase 1 → Phase 2 requires a sponsor commitment record. Submit the commitment form on D01 Charter first.",
-        },
-        { status: 412 },
-      );
-    }
     // FM-04 · require at least one success record (D02) and one tension
     // record (D04). Full per-stakeholder enforcement needs Codex's
     // stakeholder resolver; this floor catches "empty D02/D04" gates.
@@ -296,26 +302,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (fromPhase === 2 && toPhase === 3) {
-    const engRow = await resolvePhaseGateEngagement(programCode).catch(
-      (err) => {
-        console.error("[phase-gate] discovery readiness lookup failed", {
-          programCode,
-          message: err instanceof Error ? err.message : String(err),
-        });
-        return null;
-      },
-    );
-    if (!engRow) {
-      return NextResponse.json(
-        {
-          error: "precondition_failed",
-          precondition: "discovery_evidence_readiness",
-          message:
-            "Phase 2 → Phase 3 requires a resolvable Move row so discovery evidence readiness can be checked.",
-        },
-        { status: 412 },
-      );
-    }
     const readiness = await loadDiscoveryEvidenceReadiness(
       policyCtx ?? (await requireTenancy()),
       engRow.id,
@@ -379,75 +365,71 @@ export async function POST(request: NextRequest) {
   // SECURITY (audit 2026-05-22, P1-6): the filesystem ledger at
   // `.approvals/phase-gates.json` is NOT durable — it is lost on redeploy
   // and inconsistent across serverless instances. The authoritative
-  // record of a phase-gate advance is the Supabase `program_audit_log`
+  // record of a phase-gate advance is the `program_audit_log`
   // write below. The filesystem write is kept only as a best-effort
   // local cache for the assigned-to-me queue and never gates the
   // response; a filesystem failure must not block a successful advance.
   let engagementId: string | null = null;
   try {
-    const engRow = await resolvePhaseGateEngagement(programCode);
-    if (engRow) {
-      engagementId = engRow.id;
+    engagementId = engRow.id;
 
-      // 2. Build the deduplicated gates_passed array with the new phase appended.
-      const existingGates: number[] = Array.isArray(engRow.gates_passed)
-        ? (engRow.gates_passed as number[])
-        : [];
-      const updatedGates = Array.from(
-        new Set([...existingGates, toPhase]),
-      ).sort((a, b) => a - b);
+    // 2. Build the deduplicated gates_passed array with the new phase appended.
+    const existingGates: number[] = Array.isArray(engRow.gates_passed)
+      ? (engRow.gates_passed as number[])
+      : [];
+    const updatedGates = Array.from(new Set([...existingGates, toPhase])).sort(
+      (a, b) => a - b,
+    );
 
-      // 3. UPDATE engagements.current_phase and gates_passed — routed through
-      // the data-plane write seam (Slice 3a). The engagement-row lookup above
-      // is read-only and now uses the Packet 30 read plane.
-      const ok = await selectProgramsWriteAdapter(
-        undefined,
-        ownerKey,
-      ).advanceEngagementPhase({
+    // 3. UPDATE engagements.current_phase and gates_passed — routed through
+    // the data-plane write seam (Slice 3a). The engagement-row lookup above
+    // is read-only and now uses the Packet 30 read plane.
+    const ok = await selectProgramsWriteAdapter(
+      undefined,
+      ownerKey,
+    ).advanceEngagementPhase({
+      engagementId,
+      toPhase,
+      gatesPassed: updatedGates,
+      tenantKey: ownerKey,
+    });
+    if (!ok) {
+      console.error("[phase-gate] engagement phase update failed", {
+        programCode,
         engagementId,
-        toPhase,
-        gatesPassed: updatedGates,
-        tenantKey: ownerKey,
       });
-      if (!ok) {
-        console.error("[phase-gate] engagement phase update failed", {
+    }
+
+    // State reconciliation: keep the canonical gate signals in lockstep with
+    // current_phase. advanceEngagementPhase moved current_phase + gates_passed
+    // above; now record the approved gate as a phase_snapshot and clear any
+    // pending lifecycle so getMoveStatus (Overview) and the snapshot history
+    // don't read a stale "awaiting decision" after the advance. Best-effort —
+    // the authoritative record is the audit-log write below, so a failure here
+    // is logged, never fatal.
+    try {
+      const writeSb = getAzureWriteFluentClient();
+      await writeSb.from("phase_snapshots").insert({
+        engagement_id: engagementId,
+        phase_number: toPhase,
+        approval_status: "approved",
+      });
+      await writeSb
+        .from("engagements")
+        .update({ lifecycle_state: "approved" })
+        .eq("id", engagementId);
+    } catch (snapErr) {
+      console.warn(
+        "[phase-gate] snapshot/lifecycle reconciliation write failed",
+        {
           programCode,
           engagementId,
-        });
-      }
-
-      // State reconciliation: keep the canonical gate signals in lockstep with
-      // current_phase. advanceEngagementPhase moved current_phase + gates_passed
-      // above; now record the approved gate as a phase_snapshot and clear any
-      // pending lifecycle so getMoveStatus (Overview) and the snapshot history
-      // don't read a stale "awaiting decision" after the advance. Best-effort —
-      // the authoritative record is the audit-log write below, so a failure here
-      // is logged, never fatal.
-      try {
-        const writeSb = getAzureWriteFluentClient();
-        await writeSb.from("phase_snapshots").insert({
-          engagement_id: engagementId,
-          phase_number: toPhase,
-          approval_status: "approved",
-        });
-        await writeSb
-          .from("engagements")
-          .update({ lifecycle_state: "approved" })
-          .eq("id", engagementId);
-      } catch (snapErr) {
-        console.warn(
-          "[phase-gate] snapshot/lifecycle reconciliation write failed",
-          {
-            programCode,
-            engagementId,
-            message:
-              snapErr instanceof Error ? snapErr.message : String(snapErr),
-          },
-        );
-      }
+          message: snapErr instanceof Error ? snapErr.message : String(snapErr),
+        },
+      );
     }
   } catch (err) {
-    console.error("[phase-gate] supabase write threw", {
+    console.error("[phase-gate] phase write threw", {
       programCode,
       message: err instanceof Error ? err.message : String(err),
     });

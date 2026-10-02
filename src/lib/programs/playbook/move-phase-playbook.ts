@@ -74,7 +74,10 @@ export interface WorkshopTemplateSpec {
   columns: string[];
 }
 
-export const WORKSHOP_TEMPLATES: Record<WorkshopTemplateKind, WorkshopTemplateSpec> = {
+export const WORKSHOP_TEMPLATES: Record<
+  WorkshopTemplateKind,
+  WorkshopTemplateSpec
+> = {
   decision_log: {
     kind: "decision_log",
     label: "Decision Log",
@@ -93,17 +96,36 @@ export const WORKSHOP_TEMPLATES: Record<WorkshopTemplateKind, WorkshopTemplateSp
   evidence_request_tracker: {
     kind: "evidence_request_tracker",
     label: "Evidence Request Tracker",
-    columns: ["Evidence Needed", "Requested From", "Format", "Status", "Due Date"],
+    columns: [
+      "Evidence Needed",
+      "Requested From",
+      "Format",
+      "Status",
+      "Due Date",
+    ],
   },
   stakeholder_alignment_matrix: {
     kind: "stakeholder_alignment_matrix",
     label: "Stakeholder Alignment Matrix",
-    columns: ["Stakeholder", "Role", "Position", "Concerns", "Alignment Status"],
+    columns: [
+      "Stakeholder",
+      "Role",
+      "Position",
+      "Concerns",
+      "Alignment Status",
+    ],
   },
   option_scoring: {
     kind: "option_scoring",
     label: "Option Scoring Template",
-    columns: ["Option", "Value", "Feasibility", "Risk", "Weighted Score", "Recommended?"],
+    columns: [
+      "Option",
+      "Value",
+      "Feasibility",
+      "Risk",
+      "Weighted Score",
+      "Recommended?",
+    ],
   },
   action_register: {
     kind: "action_register",
@@ -211,7 +233,7 @@ const P1: MovePhasePlaybook = {
       ],
       gate: {
         criterion:
-          "Problem, outcome, scope, and decision rights captured and signed by the sponsor.",
+          "Problem, outcome, scope, and decision rights captured; the authorized workspace user records the product approval.",
         alignedBy: "Sponsor",
         severity: "hard",
       },
@@ -234,8 +256,8 @@ const P1: MovePhasePlaybook = {
         closing:
           "Before anyone leaves: the problem statement, target outcome + metric, scope boundary, sponsor + decision rights, and funding envelope must all be written down and read back for agreement — not just discussed.",
         probeIfWeak: [
-          "If the outcome is stated as a technology (\"deploy an AI assistant\") rather than a business result, ask: what business metric moves, and by when?",
-          "If scope is vague (\"the whole department\"), ask for the specific first cohort/use case and what is explicitly excluded.",
+          'If the outcome is stated as a technology ("deploy an AI assistant") rather than a business result, ask: what business metric moves, and by when?',
+          'If scope is vague ("the whole department"), ask for the specific first cohort/use case and what is explicitly excluded.',
         ],
         disagreementSignals: [
           "The sponsor and business owner describe success in different metrics.",
@@ -244,7 +266,11 @@ const P1: MovePhasePlaybook = {
         parkingLotRule:
           "Anything about HOW the solution will work (architecture, vendor, technology choice) is parked for P3 — this session decides WHY and WHETHER to fund discovery, not the design.",
       },
-      workshopTemplates: ["decision_log", "assumption_register", "approval_page"],
+      workshopTemplates: [
+        "decision_log",
+        "assumption_register",
+        "approval_page",
+      ],
     },
   ],
 };
@@ -315,10 +341,10 @@ const P2: MovePhasePlaybook = {
         opening:
           "Frame this as evidence-gathering, not solutioning: the room's job is to attest what IS true today, not propose what should change.",
         closing:
-          "Confirm every baseline metric has a named attesting owner (not \"the system\" or \"IT\"), and every gap is tagged foundation vs use-case before the room closes.",
+          'Confirm every baseline metric has a named attesting owner (not "the system" or "IT"), and every gap is tagged foundation vs use-case before the room closes.',
         probeIfWeak: [
-          "If a baseline number is quoted without a source (\"it's around 20%\"), ask who owns that number and where it can be pulled from.",
-          "If a gap is described only as a symptom (\"the process is slow\"), ask what specifically causes the delay and whether it's a data gap, a process gap, or a capability gap.",
+          'If a baseline number is quoted without a source ("it\'s around 20%"), ask who owns that number and where it can be pulled from.',
+          'If a gap is described only as a symptom ("the process is slow"), ask what specifically causes the delay and whether it\'s a data gap, a process gap, or a capability gap.',
         ],
         disagreementSignals: [
           "The data partner's pulled numbers surprise the frontline SME — that gap itself is a finding, not noise to smooth over.",
@@ -327,7 +353,11 @@ const P2: MovePhasePlaybook = {
         parkingLotRule:
           "Any proposed fix or target-state idea raised in this session is logged in the open issue log and carried to P3 — this session diagnoses, it does not design.",
       },
-      workshopTemplates: ["open_issue_log", "evidence_request_tracker", "assumption_register"],
+      workshopTemplates: [
+        "open_issue_log",
+        "evidence_request_tracker",
+        "assumption_register",
+      ],
     },
   ],
 };
@@ -432,7 +462,11 @@ const P3: MovePhasePlaybook = {
         parkingLotRule:
           "Vendor pricing, contract terms, and detailed delivery scheduling are parked for Sourcing Strategy and the Execution Roadmap — this session decides the architecture, not the commercial or delivery plan.",
       },
-      workshopTemplates: ["option_scoring", "decision_log", "stakeholder_alignment_matrix"],
+      workshopTemplates: [
+        "option_scoring",
+        "decision_log",
+        "stakeholder_alignment_matrix",
+      ],
     },
   ],
 };
@@ -509,9 +543,9 @@ const P4: MovePhasePlaybook = {
         opening:
           "Set the rule explicitly: every number in this room must trace to an approved P2 baseline or a stated, labelled assumption — nothing gets invented to make the business case look better.",
         closing:
-          "Confirm the RACI names actual people (not \"the team\"), and that every workstream's value claim has a source before the room closes.",
+          'Confirm the RACI names actual people (not "the team"), and that every workstream\'s value claim has a source before the room closes.',
         probeIfWeak: [
-          "If an estimate is given with no stated basis (\"about 6 weeks\"), ask what the estimate is built from — a similar past effort, a vendor quote, a rule of thumb.",
+          'If an estimate is given with no stated basis ("about 6 weeks"), ask what the estimate is built from — a similar past effort, a vendor quote, a rule of thumb.',
           "If a value number doesn't match the P2 baseline, ask directly where the new number came from before it goes in the business case.",
         ],
         disagreementSignals: [
@@ -521,7 +555,11 @@ const P4: MovePhasePlaybook = {
         parkingLotRule:
           "Detailed technical implementation tasks are parked for the delivery team's own backlog — this session commits to workstreams, estimates, milestones, and value, not task-level planning.",
       },
-      workshopTemplates: ["decision_log", "action_register", "assumption_register"],
+      workshopTemplates: [
+        "decision_log",
+        "action_register",
+        "assumption_register",
+      ],
     },
   ],
 };
@@ -593,7 +631,7 @@ const P5: MovePhasePlaybook = {
         closing:
           "Every named metric in the measurement spine must have a baseline, a target, a threshold, and an owner before the room closes — no metric ships without all four.",
         probeIfWeak: [
-          "If a metric has no threshold (\"we'll keep an eye on it\"), ask what specific value triggers an escalation and to whom.",
+          'If a metric has no threshold ("we\'ll keep an eye on it"), ask what specific value triggers an escalation and to whom.',
           "If the adoption plan has no named owner, ask who is accountable for adoption not just who is informed of it.",
         ],
         disagreementSignals: [

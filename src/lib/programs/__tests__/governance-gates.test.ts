@@ -15,7 +15,7 @@ describe("program governance gate map (6-phase doctrine)", () => {
 
     expect(rule).toBeTruthy();
     expect(rule?.hard).toBe(true);
-    expect(rule?.approverRole).toBe("sponsor");
+    expect(rule?.approverRole).toBe("approver");
     expect(rule?.checks.map((check) => check.key)).toEqual(
       expect.arrayContaining([
         "handoff_package_signed_off",
@@ -32,7 +32,7 @@ describe("program governance gate map (6-phase doctrine)", () => {
 
     expect(rule).toBeTruthy();
     expect(rule?.hard).toBe(true);
-    expect(rule?.approverRole).toBe("sponsor");
+    expect(rule?.approverRole).toBe("approver");
     expect(rule?.checks.map((check) => check.key)).toEqual(
       expect.arrayContaining([
         "program_seed_recorded",
@@ -45,12 +45,12 @@ describe("program governance gate map (6-phase doctrine)", () => {
     );
   });
 
-  it("treats P1 → P2 (Charter → Discover & Diagnose) as a sponsor-signed charter gate", () => {
+  it("treats P1 → P2 (Charter → Discover & Diagnose) as an authorized-user charter gate", () => {
     const rule = findGateRule(1, 2);
 
     expect(rule).toBeTruthy();
     expect(rule?.hard).toBe(true);
-    expect(rule?.approverRole).toBe("sponsor");
+    expect(rule?.approverRole).toBe("approver");
     expect(rule?.checks.map((check) => check.key)).toEqual(
       expect.arrayContaining(["charter_signed_off", "sponsor_assigned"]),
     );
@@ -61,7 +61,7 @@ describe("program governance gate map (6-phase doctrine)", () => {
 
     expect(rule).toBeTruthy();
     expect(rule?.hard).toBe(true);
-    expect(rule?.approverRole).toBe("sponsor");
+    expect(rule?.approverRole).toBe("approver");
     expect(rule?.checks.map((check) => check.key)).toEqual(
       expect.arrayContaining([
         "discovery_report_signed_off",
@@ -78,7 +78,7 @@ describe("program governance gate map (6-phase doctrine)", () => {
 
     expect(rule).toBeTruthy();
     expect(rule?.hard).toBe(true);
-    expect(rule?.approverRole).toBe("sponsor");
+    expect(rule?.approverRole).toBe("approver");
     expect(rule?.checks.map((check) => check.key)).toEqual(
       expect.arrayContaining([
         "design_approved",
@@ -94,7 +94,7 @@ describe("program governance gate map (6-phase doctrine)", () => {
 
     expect(rule).toBeTruthy();
     expect(rule?.hard).toBe(true);
-    expect(rule?.approverRole).toBe("sponsor");
+    expect(rule?.approverRole).toBe("approver");
     expect(rule?.checks.map((check) => check.key)).toEqual(
       expect.arrayContaining([
         "execution_roadmap_drafted",
@@ -121,7 +121,7 @@ describe("program governance gate map (6-phase doctrine)", () => {
       const rule = findGateRule(1, 5, { fastLaneEligible: true });
       expect(rule).toBeTruthy();
       expect(rule?.hard).toBe(true);
-      expect(rule?.approverRole).toBe("sponsor");
+      expect(rule?.approverRole).toBe("approver");
       expect(rule?.checks.map((c) => c.key)).toEqual([
         "fast_lane_decision_recorded",
       ]);

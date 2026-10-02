@@ -105,7 +105,7 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
             severity: "hard",
           },
           {
-            label: "Charter signed off by sponsor",
+            label: "Charter approved by an authorized Move user",
             met: false,
             severity: "hard",
           },

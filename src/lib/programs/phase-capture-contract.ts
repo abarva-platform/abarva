@@ -15,7 +15,11 @@ export interface PhaseCaptureSection {
    * rows (stored as JSON in the value) rather than free text — see
    * `diagnosis-facts.ts`. The workspace renders a facts table for it.
    */
-  structured?: "facts" | "business-change" | "solution-route" | "estimate-model";
+  structured?:
+    | "facts"
+    | "business-change"
+    | "solution-route"
+    | "estimate-model";
 }
 
 export interface PhaseCaptureSectionStatus extends PhaseCaptureSection {
@@ -80,9 +84,9 @@ const P0_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "stakeholder_owner_view",
-    label: "Stakeholder / owner view",
+    label: "Outcome owner and stakeholder view",
     description:
-      "Sponsor candidate, decision authority, operating owner, or role-level accountability.",
+      "Outcome owner, operating owner, and role-level accountability. Capture a sponsor only as a progress contact with an explicit email preference; Moves approvals belong to an authorized workspace user.",
     required: true,
   },
   {
@@ -110,10 +114,12 @@ const P0_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
 
 const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   {
+    // Keep the legacy storage key so existing phase-capture records remain
+    // readable; its governed content is now contact data, never approval.
     key: "sponsor_commitment",
-    label: "Sponsor commitment",
+    label: "Sponsor contact and progress updates",
     description:
-      "Sponsor engagement, authority, and decision cadence for the Move.",
+      "Listed sponsor contact, email address or resolvable workspace identity, and explicit phase-progress email preference. No sponsor approval or participation is requested.",
     required: true,
   },
   {
@@ -155,7 +161,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
     key: "business_change_assessment",
     label: "Business change & adoption owner",
     description:
-      "Record the sponsor-validated expected workflow and role impact, who owns adoption, and the evidence and person validating the assessment. This is a P1 hypothesis to test in P2, not the final route decision.",
+      "Record the expected workflow and role impact from approved evidence or accountable business-owner input, who owns adoption, and who validates the assessment. This is a P1 hypothesis to test in P2, not the final route decision.",
     structured: "business-change",
     required: true,
   },
@@ -498,16 +504,16 @@ export function evaluatePhaseCapture(
     const structuredComplete =
       section.structured === "business-change"
         ? isBusinessChangeAssessmentComplete(value)
-          : section.structured === "solution-route"
+        : section.structured === "solution-route"
           ? isSolutionRouteValidationComplete({
               businessChangeAssessment: context.businessChangeAssessment,
               routeValidation: value,
               approvedEvidenceReferences:
                 context.approvedEvidenceReferences ?? [],
             })
-            : section.structured === "estimate-model"
-              ? evaluateEstimateModel(value).readyForApproval
-              : true;
+          : section.structured === "estimate-model"
+            ? evaluateEstimateModel(value).readyForApproval
+            : true;
     return {
       ...section,
       value,

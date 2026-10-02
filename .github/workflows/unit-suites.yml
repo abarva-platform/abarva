@@ -171,6 +171,7 @@ jobs:
           src/app/api/v1/deliverables/generate/__tests__/route.test.ts
           src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/role-approvals/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
           --no-coverage --ci
 

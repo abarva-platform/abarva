@@ -46,7 +46,7 @@ const CHARTER_EVIDENCE_FIELDS: ReadonlyArray<{
 }> = [
   {
     keys: ["sponsor_commitment", "sponsor"],
-    label: "Sponsor commitment",
+    label: "Sponsor contact and progress-email preference",
     evidenceFamily: "charter_sponsor",
   },
   {

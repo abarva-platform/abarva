@@ -1,5 +1,5 @@
 // Phase gate lifecycle handler. When the orchestrator emits a
-// gate_approval signal (typically after a sponsor confirms Phase 0),
+// explicit authenticated workspace-user approval signal,
 // this module:
 //   1. Triggers charter deliverable generation asynchronously
 //   2. Advances the engagement's current_phase
@@ -158,7 +158,9 @@ export function resolveMovePackContext(
   return { packBindings, businessCase };
 }
 
-async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryContext> {
+async function loadPhaseEntryContext(
+  engagementId: string,
+): Promise<PhaseEntryContext> {
   const sb = getAzureWriteFluentClient();
   const { data: engagement } = await sb
     .from('engagements')
@@ -168,7 +170,7 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
     .eq('id', engagementId)
     .maybeSingle();
 
-  const row = (engagement as {
+  const row = engagement as {
     id: string;
     name: string;
     industry_code: string | null;
@@ -179,10 +181,12 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
     baseline_metrics: unknown;
     sponsor_person_id: string | null;
     co_sponsor_person_id: string | null;
-  } | null);
+  } | null;
   if (!row) throw new Error(`engagement not found: ${engagementId}`);
 
-  const personIds = [row.sponsor_person_id, row.co_sponsor_person_id].filter((value): value is string => Boolean(value));
+  const personIds = [row.sponsor_person_id, row.co_sponsor_person_id].filter(
+    (value): value is string => Boolean(value),
+  );
   let peopleById = new Map<string, { name: string; role: string }>();
   if (personIds.length > 0) {
     const { data: people } = await sb
@@ -190,10 +194,10 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
       .select('id, name, role')
       .in('id', personIds);
     peopleById = new Map(
-      ((people as Array<{ id: string; name: string; role: string }> | null) ?? []).map((person) => [
-        person.id,
-        { name: person.name, role: person.role },
-      ]),
+      (
+        (people as Array<{ id: string; name: string; role: string }> | null) ??
+        []
+      ).map((person) => [person.id, { name: person.name, role: person.role }]),
     );
   }
 
@@ -219,14 +223,20 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
       function_code: row.function_code,
       objective_code: row.objective_code,
     },
-    sponsor: row.sponsor_person_id ? peopleById.get(row.sponsor_person_id) ?? null : null,
-    coSponsor: row.co_sponsor_person_id ? peopleById.get(row.co_sponsor_person_id) ?? null : null,
+    sponsor: row.sponsor_person_id
+      ? (peopleById.get(row.sponsor_person_id) ?? null)
+      : null,
+    coSponsor: row.co_sponsor_person_id
+      ? (peopleById.get(row.co_sponsor_person_id) ?? null)
+      : null,
     packBindings,
     businessCase,
   };
 }
 
-async function ensureDeliverableTypeExists(spec: PhaseEntryDeliverableSpec): Promise<void> {
+async function ensureDeliverableTypeExists(
+  spec: PhaseEntryDeliverableSpec,
+): Promise<void> {
   const sb = getAzureWriteFluentClient();
   const { data: existing } = await sb
     .from('deliverable_types')
@@ -355,7 +365,7 @@ function packBoundStructuredContent(
         bound: false,
         note:
           binding?.fallbackNote ??
-          'No curated Domain Function Pack covers this Move\'s function yet — ' +
+          "No curated Domain Function Pack covers this Move's function yet — " +
             'this deliverable uses the general intake template, surfaced ' +
             'honestly, not fabricated curated depth.',
       },
@@ -434,7 +444,9 @@ function packBoundMarkdown(
 
 // ── Charter — fallback builders (used when no curated pack binds) ────────────
 
-function charterStructuredFallback(ctx: PhaseEntryContext): Record<string, unknown> {
+function charterStructuredFallback(
+  ctx: PhaseEntryContext,
+): Record<string, unknown> {
   return {
     program_name: ctx.engagement.name,
     objective: ctx.engagement.objective_code,
@@ -490,13 +502,14 @@ function charterKernelValueFraming(
   const bc = ctx.businessCase;
   if (!bc || !bc.bound || !bc.skeleton) return null;
   return {
-    source: 'AbarVa expert kernel — compiled from the bound Domain Function Pack',
+    source:
+      'AbarVa expert kernel — compiled from the bound Domain Function Pack',
     recommendation: bc.skeleton.recommendation,
     recommendation_rationale: bc.skeleton.recommendationRationale,
     derivation_notes: bc.derivationNotes,
     honesty_note:
       'This value framing is kernel-compiled from curated planning ranges, ' +
-      'not the tenant\'s own measured unit economics — the kernel blocks a ' +
+      "not the tenant's own measured unit economics — the kernel blocks a " +
       'claimable dollar payback until the seed-gapped metrics are closed.',
   };
 }
@@ -506,7 +519,9 @@ function charterIntro(ctx: PhaseEntryContext): string {
   return (
     `Phase 0 gate passed for **${ctx.engagement.name}** and the program is ` +
     `moving into diagnostic work` +
-    (ctx.sponsor ? `, with ${ctx.sponsor.name} (${ctx.sponsor.role}) sponsoring` : '') +
+    (ctx.sponsor
+      ? `, with ${ctx.sponsor.name} (${ctx.sponsor.role}) sponsoring`
+      : '') +
     `. The intake framed a ${ctx.engagement.objective_code ?? 'priority'} ` +
     `problem in ${ctx.engagement.industry_code ?? 'the client context'}.`
   );
@@ -514,7 +529,9 @@ function charterIntro(ctx: PhaseEntryContext): string {
 
 // ── Stakeholder map — fallback builders ──────────────────────────────────────
 
-function stakeholderStructuredFallback(ctx: PhaseEntryContext): Record<string, unknown> {
+function stakeholderStructuredFallback(
+  ctx: PhaseEntryContext,
+): Record<string, unknown> {
   return {
     stakeholders: [
       ctx.sponsor
@@ -522,7 +539,8 @@ function stakeholderStructuredFallback(ctx: PhaseEntryContext): Record<string, u
             ...ctx.sponsor,
             relationship_to_program: 'sponsor',
             commitment_status: 'committed',
-            what_we_need: 'Confirm scope, escalation path, and Phase 1 diagnostic framing.',
+            what_we_need:
+              'Confirm scope, escalation path, and Phase 1 diagnostic framing.',
             timing: 'Immediate',
           }
         : {
@@ -530,7 +548,8 @@ function stakeholderStructuredFallback(ctx: PhaseEntryContext): Record<string, u
             role: 'Pending',
             relationship_to_program: 'sponsor',
             commitment_status: 'aware',
-            what_we_need: 'Confirm named executive sponsor and decision rights.',
+            what_we_need:
+              'Confirm named executive sponsor and decision rights.',
             timing: 'Immediate',
           },
       ...(ctx.coSponsor
@@ -539,7 +558,8 @@ function stakeholderStructuredFallback(ctx: PhaseEntryContext): Record<string, u
               ...ctx.coSponsor,
               relationship_to_program: 'co_sponsor',
               commitment_status: 'engaged',
-              what_we_need: 'Validate cross-functional support and unlock additional stakeholders as needed.',
+              what_we_need:
+                'Validate cross-functional support and unlock additional stakeholders as needed.',
               timing: 'Week 1',
             },
           ]
@@ -579,36 +599,44 @@ function stakeholderIntro(ctx: PhaseEntryContext): string {
 
 // ── Risk register — fallback builders ────────────────────────────────────────
 
-function riskStructuredFallback(ctx: PhaseEntryContext): Record<string, unknown> {
+function riskStructuredFallback(
+  ctx: PhaseEntryContext,
+): Record<string, unknown> {
   return {
     risks: [
       {
         id: 'risk_001',
         category: 'stakeholder',
-        description: 'Sponsor alignment softens after gate approval and Phase 1 loses decision speed.',
+        description:
+          'Sponsor alignment softens after gate approval and Phase 1 loses decision speed.',
         likelihood: 'medium',
         impact: 'high',
-        mitigation_strategy: 'Keep a visible Week 1 milestone and review it directly with the sponsor.',
+        mitigation_strategy:
+          'Keep a visible Week 1 milestone and review it directly with the sponsor.',
         owner: ctx.sponsor?.name ?? 'Program sponsor',
         status: 'active',
       },
       {
         id: 'risk_002',
         category: 'data',
-        description: 'Data access takes longer than expected once the team starts converting the intake into real requests.',
+        description:
+          'Data access takes longer than expected once the team starts converting the intake into real requests.',
         likelihood: 'high',
         impact: 'high',
-        mitigation_strategy: 'Translate access needs into named requests quickly and route them through the strongest executive sponsor.',
+        mitigation_strategy:
+          'Translate access needs into named requests quickly and route them through the strongest executive sponsor.',
         owner: ctx.coSponsor?.name ?? ctx.sponsor?.name ?? 'Program lead',
         status: 'active',
       },
       {
         id: 'risk_003',
         category: 'scope',
-        description: 'The diagnostic expands beyond a first-win scope before the team has evidence.',
+        description:
+          'The diagnostic expands beyond a first-win scope before the team has evidence.',
         likelihood: 'medium',
         impact: 'medium',
-        mitigation_strategy: 'Use the Phase 1 opener to force a narrow first-win scope and defer broad redesign questions.',
+        mitigation_strategy:
+          'Use the Phase 1 opener to force a narrow first-win scope and defer broad redesign questions.',
         owner: 'Nexus / Maestro',
         status: 'active',
       },
@@ -663,8 +691,12 @@ export const PHASE1_ENTRY_DELIVERABLES: PhaseEntryDeliverableSpec[] = [
       return packBoundStructuredContent(ctx, 'discover_brief', withKernel);
     },
     buildMarkdown: (ctx) =>
-      packBoundMarkdown(ctx, 'discover_brief', 'Program Charter', charterIntro(ctx)) ??
-      charterMarkdownFallback(ctx),
+      packBoundMarkdown(
+        ctx,
+        'discover_brief',
+        'Program Charter',
+        charterIntro(ctx),
+      ) ?? charterMarkdownFallback(ctx),
   },
   {
     typeKey: 'stakeholder_map',
@@ -679,8 +711,12 @@ export const PHASE1_ENTRY_DELIVERABLES: PhaseEntryDeliverableSpec[] = [
         stakeholderStructuredFallback(ctx),
       ),
     buildMarkdown: (ctx) =>
-      packBoundMarkdown(ctx, 'discover_brief', 'Stakeholder Map', stakeholderIntro(ctx)) ??
-      stakeholderMarkdownFallback(ctx),
+      packBoundMarkdown(
+        ctx,
+        'discover_brief',
+        'Stakeholder Map',
+        stakeholderIntro(ctx),
+      ) ?? stakeholderMarkdownFallback(ctx),
   },
   {
     typeKey: 'risk_register',
@@ -689,14 +725,24 @@ export const PHASE1_ENTRY_DELIVERABLES: PhaseEntryDeliverableSpec[] = [
     applicablePhases: [0, 1, 2, 3, 4],
     packArtifact: 'discover_brief',
     buildStructuredContent: (ctx) =>
-      packBoundStructuredContent(ctx, 'discover_brief', riskStructuredFallback(ctx)),
+      packBoundStructuredContent(
+        ctx,
+        'discover_brief',
+        riskStructuredFallback(ctx),
+      ),
     buildMarkdown: (ctx) =>
-      packBoundMarkdown(ctx, 'discover_brief', 'Risk Register', riskIntro(ctx)) ??
-      riskMarkdownFallback(),
+      packBoundMarkdown(
+        ctx,
+        'discover_brief',
+        'Risk Register',
+        riskIntro(ctx),
+      ) ?? riskMarkdownFallback(),
   },
 ];
 
-export async function applyGateSignal(input: GateLifecycleInput): Promise<GateLifecycleOutput> {
+export async function applyGateSignal(
+  input: GateLifecycleInput,
+): Promise<GateLifecycleOutput> {
   const { signal, engagementId, actorUserId } = input;
   if (signal.type !== 'gate_approval' && signal.type !== 'phase_transition') {
     return { applied: false, fromPhase: null, toPhase: null };
@@ -713,7 +759,9 @@ export async function applyGateSignal(input: GateLifecycleInput): Promise<GateLi
       .select('current_phase')
       .eq('id', engagementId)
       .maybeSingle();
-    const currentPhase = (engagement as { current_phase: number | null } | null)?.current_phase ?? 0;
+    const currentPhase =
+      (engagement as { current_phase: number | null } | null)?.current_phase ??
+      0;
     fromPhase = fromPhase ?? currentPhase;
     toPhase = toPhase ?? currentPhase + 1;
   }

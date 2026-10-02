@@ -18,7 +18,7 @@ export const timelineResourceEstimateTemplateStructure = {
       key: 'commitment_summary',
       title: 'Commitment Summary',
       required: true,
-      description: 'State the locked percentile commitment, approval date, and the headline timeline the sponsor is actually signing.',
+      description: 'State the locked percentile commitment, approval date, and the headline timeline recorded by the authorized workspace user.',
       example_completed:
         'Commitment locked at P80 on 2026-07-28 with a 31-week envelope, explicit decision-hour budgeting, and named reestimation triggers.',
     },
@@ -122,7 +122,7 @@ export const timelineResourceEstimateQualityRubric: TimelineResourceEstimateRubr
   {
     criterion: 'tone_reads_like_an_approval_artifact',
     rationale:
-      'This document carries contractual and sponsor-signoff weight, so the writing must feel rigorous, adult, and board-safe.',
+      'This document carries planning and workspace-approval weight, so the writing must feel rigorous, adult, and board-safe.',
     severity: 'minor',
   },
 ];
@@ -155,11 +155,11 @@ QUALITY RUBRIC
 
 RULES
 - Use the section order and section names from STRUCTURE exactly.
-- State the sponsor commitment percentile explicitly and keep P50 / P80 / P95 visible wherever timeline or effort is summarized.
+- State the approved commitment percentile explicitly and keep P50 / P80 / P95 visible wherever timeline or effort is summarized. The authorized workspace user records approval.
 - Keep calendar timeline and effort composition separate; do not flatten the dual-ledger model into one synthetic estimate.
 - Name political decision moments, stall scenarios, and flex-mode adjustments directly.
 - Every quantitative claim, confidence statement, or assumption must cite one or more bracketed turn references like [turn 09] or be marked [DATA GAP: what is missing].
-- Keep the tone sponsor-ready, rigorous, and commercially credible.
+- Keep the tone executive-ready, rigorous, and commercially credible.
 
 Write the full Timeline + Resource Estimate now.`;
 

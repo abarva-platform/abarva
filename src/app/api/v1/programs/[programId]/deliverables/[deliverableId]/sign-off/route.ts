@@ -1,5 +1,5 @@
 // POST /api/v1/programs/:programId/deliverables/:deliverableId/sign-off
-// in_review → signed_off. Requires sponsor or approver authority per Packet 4 matrix.
+// in_review → signed_off. Requires an authorized workspace-user capability.
 //
 // Two modes, both real client approval — not just an AI-generation trigger:
 //   - JSON body (or no body): approve the AI-drafted content as-is.
@@ -36,7 +36,7 @@ import {
   extractOfficeText,
   type OfficeFormat,
 } from "@/lib/deliverables/shared/office-text-extract";
-import { hasAuthority } from "@/lib/programs/governance";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
@@ -230,13 +230,17 @@ export async function POST(
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-    const canApprove =
-      (await hasAuthority(ctx, programId, "approver", { supabase })) ||
-      ctx.role === "founder" ||
-      ctx.role === "maestro";
-    if (!canApprove) {
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
-        { error: "forbidden", detail: "approver authority or higher required" },
+        {
+          error: "forbidden",
+          detail: "Authorized Move approval permission required.",
+        },
         { status: 403 },
       );
     }
@@ -289,12 +293,17 @@ export async function POST(
       const rationaleValue = uploadForm.get("approvalRationale");
       if (rationaleValue !== null && typeof rationaleValue !== "string") {
         return Response.json(
-          { error: "invalid_approval_rationale", detail: "Approval note must be text." },
+          {
+            error: "invalid_approval_rationale",
+            detail: "Approval note must be text.",
+          },
           { status: 400 },
         );
       }
       approvalRationale =
-        typeof rationaleValue === "string" ? rationaleValue.trim() || null : null;
+        typeof rationaleValue === "string"
+          ? rationaleValue.trim() || null
+          : null;
       const uploadedFile = uploadForm.get("file");
       if (!(uploadedFile instanceof File) || uploadedFile.size === 0) {
         return Response.json(
@@ -317,7 +326,10 @@ export async function POST(
         typeof parsedBody.approvalRationale !== "string"
       ) {
         return Response.json(
-          { error: "invalid_approval_rationale", detail: "Approval note must be text." },
+          {
+            error: "invalid_approval_rationale",
+            detail: "Approval note must be text.",
+          },
           { status: 400 },
         );
       }
@@ -328,7 +340,10 @@ export async function POST(
     }
     if (approvalRationale && approvalRationale.length > 1000) {
       return Response.json(
-        { error: "invalid_approval_rationale", detail: "Approval note must be 1,000 characters or fewer." },
+        {
+          error: "invalid_approval_rationale",
+          detail: "Approval note must be 1,000 characters or fewer.",
+        },
         { status: 400 },
       );
     }
@@ -363,9 +378,11 @@ export async function POST(
         } | null
       )?.structured_data?.source;
       const versionStructuredData =
-        (versionRow as {
-          structured_data?: Record<string, unknown> | null;
-        } | null)?.structured_data ?? {};
+        (
+          versionRow as {
+            structured_data?: Record<string, unknown> | null;
+          } | null
+        )?.structured_data ?? {};
       if (source === "phase_capture") {
         return Response.json(
           {
@@ -460,14 +477,16 @@ export async function POST(
           ...(typeof versionStructuredData.generatedArtifactId === "string"
             ? { generatedArtifactId: versionStructuredData.generatedArtifactId }
             : typeof versionStructuredData.generated_artifact_id === "string"
-              ? { generatedArtifactId: versionStructuredData.generated_artifact_id }
+              ? {
+                  generatedArtifactId:
+                    versionStructuredData.generated_artifact_id,
+                }
               : {}),
           evidenceSnapshotHash: evidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash:
-            approvedMoveEvidenceRevisionForPhase(
-              evidenceSnapshot,
-              deliverablePhase,
-            ),
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            evidenceSnapshot,
+            deliverablePhase,
+          ),
           evidenceSnapshotScope: "phase",
           approvalMode: "approve_generated_deliverable_as_is",
         };

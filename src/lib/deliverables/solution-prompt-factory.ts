@@ -92,7 +92,7 @@ function p3FutureStateBoundaryBlock(args: {
   return `\nP3 FUTURE-STATE BLUEPRINT BOUNDARY
 ${draftStatus}
 ${optionRule}
-- Carry forward P2 caveats, missing evidence, sponsor/signoff limits, and client-to-complete fields.
+- Carry forward P2 caveats, missing evidence, the listed sponsor contact and progress-email preference, and client-to-complete fields. Product approval is recorded by an authorized workspace user.
 - AbarVa's role is to shape, govern, prove, and help the client decide. The client and delivery teams own detailed process redesign, BPMN/workflow design, system configuration, data engineering, implementation, training, adoption execution, and run-state operations.
 - Use client-facing labels: Future-State Direction, New Way of Working Blueprint, Target Operating Concept, Implementation work packages for client/delivery teams.
 - Do not write that AbarVa implements, executes, configures systems, trains users, runs operations, or completes end-to-end automation.`;
@@ -158,7 +158,7 @@ export function buildArtifactPrompt(args: {
 
   const draftBlock =
     generationMode === "draft"
-      ? `\nDRAFT STATUS REQUIREMENT:\n- This is a pre-gate review draft, not a final or board-ready artifact.\n- Include this visible caveat near the top of the artifact: "${args.draftCaveat ?? "Draft status: This artifact was generated before formal phase approval and is intended for review only."}"\n- Write for sponsor review, workshop preparation, and refinement.\n- Do not imply phase approval, sponsor signoff, final acceptance, or board-ready quality.\n- Include a concise "Client to Complete Before Final" exhibit listing the open gate items and missing evidence.\n- The artifact may be visually strong, but every recommendation must be phrased as draft/review-ready until the gate is approved.`
+      ? `\nDRAFT STATUS REQUIREMENT:\n- This is a pre-gate review draft, not a final or board-ready artifact.\n- Include this visible caveat near the top of the artifact: "${args.draftCaveat ?? "Draft status: This artifact was generated before formal phase approval and is intended for review only."}"\n- Write for workspace review, workshop preparation, and refinement; sponsors receive progress updates only when explicitly selected.\n- Do not imply phase approval, sponsor signoff, final acceptance, or board-ready quality.\n- Include a concise "Client to Complete Before Final" exhibit listing the open gate items and missing evidence.\n- The artifact may be visually strong, but every recommendation must be phrased as draft/review-ready until the gate is approved.`
       : "";
 
   const user = `You are generating "${profile.title}" for phase P${phase}.
