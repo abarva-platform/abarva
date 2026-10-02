@@ -15,7 +15,10 @@ import {
 import { generateDeliverable as defaultGenerate } from "./model-caller";
 import { persistDeliverable as defaultPersist } from "./persistence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { generateArchitectureModel } from "@/lib/visual-system/architecture-generation";
+import {
+  generateArchitectureModel,
+  ArchitectureRefusalError,
+} from "@/lib/visual-system/architecture-generation";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
 import { governedArchitectureToolCall } from "@/lib/deliverables/quality/architecture-egress-adapter";
@@ -378,6 +381,21 @@ export async function runDeliverableForTenant(
         .join("\n\n")
         .slice(0, 48000);
     } catch (err) {
+      if (err instanceof ArchitectureRefusalError) {
+        // A policy refusal blocks — it is never silently re-routed to another
+        // model. Surface the category/explanation so a human can narrow or
+        // rephrase the input and re-request, or confirm it is out of bounds.
+        return {
+          ok: false,
+          qualityPass: false,
+          blockers: [
+            `Target Architecture generation was refused by the model under a usage policy (${err.category ?? "category not named"}). This deliverable is blocked and is never routed to a different model; a reviewer should narrow or rephrase the architecture input and re-request, or confirm the content is genuinely out of bounds.`,
+          ],
+          blockedReason: `architecture_generation_refused: ${err.message}`,
+          retrievedEvidence: retrievedCount,
+          contextCoverage: coverage,
+        };
+      }
       return {
         ok: false,
         qualityPass: false,

@@ -5,6 +5,7 @@ import { type ReactNode, useCallback, useState } from "react";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { ChatMessage } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 
 let messageCounter = 0;
@@ -92,12 +93,19 @@ export function HomeAvaChat({
         }
         const data = (await res.json()) as { answer: AvaAnswerPacket };
         const answer = data.answer;
+        const citations: AskSource[] = (answer.citations ?? []).map((citation) => ({
+          type: "SURFACE",
+          name: citation.label,
+          id: citation.recordId ?? null,
+          detail: citation.excerpt ?? "Source-linked Home record; review its declared basis and date.",
+        }));
         setThread((prev) => [
           ...prev,
           {
             id: nextMessageId("home-ava-agent"),
             role: "agent",
             body: answer.prose?.trim() || answer.directAnswer,
+            citations,
             agentAnswer: answer,
             at: new Date().toISOString(),
           },

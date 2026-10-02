@@ -137,7 +137,10 @@ beforeAll(async () => {
       display_name: item.name,
       source_record_id: `source-${item.id}`,
       value_state: "known",
-      attributes_json: item.attributes,
+      attributes_json: {
+        ...item.attributes,
+        source_as_of: item.source_as_of,
+      },
     })),
   ).map((row) => ({
     page_key: row.page_key,
@@ -199,6 +202,26 @@ describe("the enterprise context read from the generated source", () => {
     assert.ok(riskBrowser.rows.every((row) => row.controlOwner === context.riskTriage.attentionRisks[0].ownerRole));
     assert.equal(context.unlinkedPrograms.length, 1);
     assert.ok(context.unlinkedPrograms[0].sourceRefs.length > 0);
+    assert.equal(context.valueProof.programCount, 24);
+    assert.equal(context.valueProof.asOf, "2026-09-30");
+    assert.equal(context.valueProof.approvedBudgetUsd, 302_800_000);
+    assert.equal(context.valueProof.forecastUsd, 323_169_000);
+    assert.equal(context.valueProof.overBudgetProgramCount, 15);
+    assert.equal(context.valueProof.modelledClaimCount, 23);
+    assert.equal(context.valueProof.unsupportedClaimCount, 1);
+    assert.equal(context.valueProof.otherClaimCount, 0);
+    assert.equal(context.valueProof.completedPeriodSpendLines, 360);
+    assert.equal(context.valueProof.excludedSpendLines, 120);
+    assert.equal(context.valueProof.priorities.length, 6);
+    assert.equal(
+      context.valueProof.priorities.reduce((sum, priority) => sum + priority.programCount, 0),
+      24,
+    );
+    assert.ok(context.valueProof.priorities.every((priority) => priority.sourceRefs.length > 0));
+    assert.equal(context.valueProof.priorities.at(-1)?.title, "No declared priority");
+    assert.equal(context.valueProof.priorities.at(-1)?.programCount, 1);
+    assert.equal(context.valueProof.priorities.at(-1)?.ownerRole, null);
+    assert.ok(context.valueProof.priorities.slice(0, -1).every((priority) => priority.ownerRole));
     const total = (domain: string) =>
       context.segmentSpine.segments.reduce(
         (sum, segment) => sum + segment.domains[domain].count,
@@ -206,7 +229,7 @@ describe("the enterprise context read from the generated source", () => {
       ) + context.segmentSpine.unattributed[domain];
     assert.equal(total("applications"), 344);
     assert.equal(total("programs"), 24);
-    assert.equal(total("spend"), 480);
+    assert.equal(total("spend"), 360);
     assert.equal(total("risks"), 200);
     // A profile nothing links to a source is not a profile the page may speak from.
     assert.equal(
@@ -366,49 +389,88 @@ describe("the enterprise context read from the generated source", () => {
     assert.equal(actualSplit("data assets").outsideSegments, 174);
   });
 
-  test("totals spend from the amounts the lines record, and only those", () => {
+  test("totals completed-period spend into the spine, and reports what it excludes", () => {
+    // Independent replica of completedFiscalPeriod, guarded below against the builder's own count,
+    // so a wrong replica fails loudly rather than silently agreeing with a wrong build.
+    const profileRow = rows.find((row) => row.row_type === "enterprise_profile");
+    assert.ok(profileRow, "no enterprise_profile row in the generated pack");
+    const profileAsOf = String(
+      (profileRow.display_payload_json as Record<string, unknown>)
+        .source_as_of ?? "",
+    );
+    const validDate = (value: string) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const [year, month, day] = value.split("-").map(Number);
+      return (
+        new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10) ===
+        value
+      );
+    };
+    const completedPeriod = (object: SourceObject) => {
+      const period = attribute(object, "fiscal_period");
+      const rowAsOf = object.source_as_of;
+      if (
+        !/^\d{4}-\d{2}$/.test(period) ||
+        !validDate(profileAsOf) ||
+        !validDate(rowAsOf)
+      )
+        return false;
+      const [year, month] = period.split("-").map(Number);
+      if (month < 1 || month > 12) return false;
+      const end = `${period}-${String(
+        new Date(Date.UTC(year, month, 0)).getUTCDate(),
+      ).padStart(2, "0")}`;
+      return end <= profileAsOf && end <= rowAsOf;
+    };
     const expected = expectedSplit(
       "spend_line",
       "business_function_id",
       "actual_usd",
+      (object) =>
+        completedPeriod(object) && attribute(object, "actual_usd") !== "",
     );
     const actual = actualSplit("spend");
     assert.deepEqual(actual.perSegment, expected.perSegment);
     assert.equal(actual.outsideSegments, expected.underFunctionsWithoutSegment);
     assert.deepEqual(actual.amountPerSegment, expected.amountPerSegment);
-    assert.deepEqual(actual.perSegment, [142, 75, 66]);
-    assert.deepEqual(
-      actual.amountPerSegment,
-      [612_255_573, 310_572_708, 281_142_585],
+    // The spine's completed-period count is exactly what the value proof reports, two code paths.
+    assert.equal(expected.total, context.valueProof.completedPeriodSpendLines);
+    assert.equal(
+      context.valueProof.completedPeriodSpendLines +
+        context.valueProof.excludedSpendLines,
+      objectsOf("spend_line").length,
     );
     assert.equal(context.unrecordedSpendAmounts, 0);
 
-    // A hundred lines with no amount: still counted, adding nothing, and said to be so.
+    // Removing an amount drops the line from completed spend and is reported; the total is conserved.
     const withoutAmounts = built(
       edited((row) => row.row_type === "spend_line", { actual_usd: "" }, 100),
     );
     assert.equal(withoutAmounts.unrecordedSpendAmounts, 100);
-    assert.deepEqual(
-      actualSplit("spend", withoutAmounts).perSegment,
-      [142, 75, 66],
-    );
     assert.ok(
-      actualSplit("spend", withoutAmounts).amountPerSegment.every(
-        (amount, index) =>
-          typeof amount === "number" &&
-          amount < expected.amountPerSegment![index],
-      ),
+      withoutAmounts.valueProof.excludedSpendLines >=
+        context.valueProof.excludedSpendLines,
     );
-    // No line records an amount: no total at all, rather than a total of zero.
+    assert.equal(
+      withoutAmounts.valueProof.completedPeriodSpendLines +
+        withoutAmounts.valueProof.excludedSpendLines,
+      objectsOf("spend_line").length,
+    );
+
+    // No line records an amount: no spend domain at all, rather than a total of zero.
     const noAmounts = built(
       edited((row) => row.row_type === "spend_line", { actual_usd: "" }),
     );
-    assert.equal(noAmounts.unrecordedSpendAmounts, expected.total);
-    assert.deepEqual(actualSplit("spend", noAmounts).amountPerSegment, [
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    assert.equal(
+      noAmounts.unrecordedSpendAmounts,
+      objectsOf("spend_line").length,
+    );
+    assert.equal(noAmounts.valueProof.completedPeriodSpendLines, 0);
+    assert.ok(
+      noAmounts.segmentSpine.segments.every(
+        (segment) => segment.domains.spend === undefined,
+      ),
+    );
   });
 
   test("counts each function's applications, programs and risks", () => {
@@ -763,6 +825,58 @@ describe("the enterprise context read from the generated source", () => {
     assert.deepEqual(fromServing.functions, context.functions);
     assert.deepEqual(fromServing.attributionGaps, context.attributionGaps);
     assert.deepEqual(fromServing.riskTriage, context.riskTriage);
+    assert.deepEqual(fromServing.valueProof, context.valueProof);
+    const undatedRows = rows.map((row) =>
+      row.row_type === "enterprise_profile"
+        ? {
+            ...row,
+            display_payload_json: {
+              ...row.display_payload_json,
+              source_as_of: null,
+            },
+          }
+        : row,
+    );
+    const undated = built(undatedRows);
+    assert.equal(undated.valueProof.completedPeriodSpendLines, 0);
+    assert.equal(undated.valueProof.excludedSpendLines, 480);
+    assert.ok(
+      undated.segmentSpine.segments.every(
+        (segment) => segment.domains.spend === undefined,
+      ),
+    );
+    assert.ok(
+      undated.segmentSpine.shareVsRevenue.every(
+        (segment) => segment.shares.spend === undefined,
+      ),
+    );
+    const invalidDateRows = rows.map((row) =>
+      row.row_type === "enterprise_profile"
+        ? {
+            ...row,
+            display_payload_json: {
+              ...row.display_payload_json,
+              source_as_of: "2026-09-31",
+            },
+          }
+        : row,
+    );
+    const invalidDateContext = built(invalidDateRows);
+    assert.equal(invalidDateContext.valueProof.completedPeriodSpendLines, 0);
+    const missingActualRows = rows.map((row) =>
+      row.row_key === "FIN-0008"
+        ? {
+            ...row,
+            display_payload_json: {
+              ...row.display_payload_json,
+              actual_usd: null,
+            },
+          }
+        : row,
+    );
+    const missingActual = built(missingActualRows);
+    assert.equal(missingActual.valueProof.completedPeriodSpendLines, 359);
+    assert.equal(missingActual.valueProof.excludedSpendLines, 121);
   });
 });
 

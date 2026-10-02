@@ -367,6 +367,7 @@ export function validateDeliverableQuality(
     const verdict = judgeSlideCount(
       req.deliverableType as Parameters<typeof judgeSlideCount>[0],
       doc.deckSlides.length,
+      qb.slideFloor,
     );
     if (!verdict.ok) blockers.push(verdict.message);
   }

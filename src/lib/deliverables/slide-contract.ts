@@ -70,13 +70,23 @@ export type SlideVerdict =
  * profile forgot its band is caught by `deckProfilesHaveBands` instead, so the
  * two gaps stay distinguishable.
  */
-export function judgeSlideCount(key: DeliverableKey, slides: number): SlideVerdict {
+export function judgeSlideCount(
+  key: DeliverableKey,
+  slides: number,
+  floorOverride?: number,
+): SlideVerdict {
   const band = SLIDE_BANDS[key];
   if (!band) return { ok: true, slides };
-  if (slides < band.min) {
+  // A depth-aware floor may LOWER the min for a smaller-scope Move; it can never
+  // raise it, and the ceiling is untouched. See QualityBar.slideFloor.
+  const effectiveMin =
+    typeof floorOverride === 'number'
+      ? Math.max(1, Math.min(band.min, Math.round(floorOverride)))
+      : band.min;
+  if (slides < effectiveMin) {
     return {
       ok: false, slides, reason: 'too_few', band,
-      message: `${slides} slides; ${band.purpose} needs at least ${band.min}. A deck this short is usually a section list, not an argument.`,
+      message: `${slides} slides; ${band.purpose} needs at least ${effectiveMin}. A deck this short is usually a section list, not an argument.`,
     };
   }
   if (slides > band.max) {

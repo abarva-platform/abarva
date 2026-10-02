@@ -126,6 +126,37 @@ const context: HomeEnterpriseContext = {
       metricCount: 7,
     },
   ],
+  valueProof: {
+    asOf: "2026-09-30",
+    programCount: 4,
+    approvedBudgetUsd: 4_000_000,
+    forecastUsd: 4_500_000,
+    overBudgetProgramCount: 2,
+    missingFinancialCount: 0,
+    modelledClaimCount: 3,
+    unsupportedClaimCount: 1,
+    otherClaimCount: 0,
+    completedPeriodSpendLines: 8,
+    excludedSpendLines: 2,
+    priorities: [{
+      ...fact("PRI-1", "Claims modernization"),
+      ownerRole: "COO",
+      programCount: 3,
+      approvedBudgetUsd: 3_000_000,
+      forecastUsd: 3_500_000,
+      overBudgetProgramCount: 2,
+      missingFinancialCount: 0,
+    }, {
+      ...fact("unlinked-programs", "No declared priority"),
+      unlinked: true,
+      ownerRole: null,
+      programCount: 1,
+      approvedBudgetUsd: 1_000_000,
+      forecastUsd: 1_000_000,
+      overBudgetProgramCount: 0,
+      missingFinancialCount: 0,
+    }],
+  },
   riskTriage: {
     totalRisks: 4,
     highOrCritical: 2,
@@ -520,4 +551,58 @@ test("attention view ranks source-linked risk review without calling unknown unc
   assert.match(html, /View risk/);
   assert.match(html, /As of 2026-09-30/);
   assert.ok(html.indexOf("resilience") < html.indexOf("vendor"));
+});
+
+test("business, strategy, and operating views answer different questions", () => {
+  const render = (
+    chapterId: "our_business" | "strategy_value_creation" | "how_we_operate",
+  ) =>
+    renderToStaticMarkup(
+      createElement(EnterpriseContextPanel, {
+        chapterId,
+        context,
+        onOpenRows: () => undefined,
+        onOpenMatch: () => undefined,
+      }),
+    );
+  const business = render("our_business");
+  const strategy = render("strategy_value_creation");
+  const operating = render("how_we_operate");
+  assert.match(business, /Revenue share/);
+  assert.match(business, /Plan CEO/);
+  assert.match(strategy, /Claims modernization/);
+  assert.match(strategy, /Faster claims/);
+  assert.match(strategy, /Targets and KPIs are not proof of realized value/);
+  assert.match(operating, /Claims/);
+  assert.match(operating, /Executive owner/);
+  assert.match(operating, /Function-level accountability is recorded/);
+  const withUncited = renderToStaticMarkup(
+    createElement(EnterpriseContextPanel, {
+      chapterId: "our_business",
+      context: { ...context, excludedUncitedRows: 2 },
+      onOpenRows: () => undefined,
+      onOpenMatch: () => undefined,
+    }),
+  );
+  assert.match(withUncited, /2 records were excluded from these totals/);
+});
+
+test("performance view separates declared investment from unvalidated value", () => {
+  const html = renderToStaticMarkup(createElement(EnterpriseContextPanel, {
+    chapterId: "performance_value",
+    context,
+    onOpenRows: () => undefined,
+    onOpenMatch: () => undefined,
+  }));
+  assert.match(html, /Investment versus proof/);
+  assert.match(html, /\$4M/);
+  assert.match(html, /Client-attested realized benefits/);
+  assert.match(html, /As of 2026-09-30/);
+  assert.match(html, /COO/);
+  assert.match(html, /Not established/);
+  assert.match(html, /3 value claims are/);
+  assert.match(html, /2 of 10 spend records lack a verifiable completed-period actual/);
+  assert.match(html, /View programs/);
+  assert.match(html, /No declared priority/);
+  assert.doesNotMatch(html, /serving\.home_|source_record_id/);
 });

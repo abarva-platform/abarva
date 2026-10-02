@@ -149,6 +149,34 @@ export function enterpriseContextExportSection(
     };
   }
 
+  if (chapterId === "performance_value") {
+    const value = context.valueProof;
+    return {
+      title: "Investment versus proof",
+      paragraphs: [
+        `${value.programCount} source-linked program records; ${value.asOf ? `as of ${value.asOf}` : "source date not established"}.`,
+        `Across ${value.programCount} programs, approved budgets total ${money(value.approvedBudgetUsd)} and forecasts total ${money(value.forecastUsd)}. ${value.overBudgetProgramCount} programs forecast above budget. These are declared estimates, not realized benefits.`,
+        `${value.modelledClaimCount} value claims are modelled but not finance-validated; ${value.unsupportedClaimCount} are unsupported. Client-attested realized value is not established by this synthetic record.`,
+        `Totals include ${context.unlinkedPrograms.length} programs without a declared priority. ${value.missingFinancialCount} program financial records are incomplete. ${value.otherClaimCount} claim statuses need separate review. ${value.excludedSpendLines} of ${value.completedPeriodSpendLines + value.excludedSpendLines} spend records lack a verifiable completed-period actual and are excluded from current-period spend.`,
+        caveat,
+      ],
+      tables: [{
+        caption: "Program investment by declared priority",
+        columns: ["Priority", "Owner", "Programs", "Approved budget", "Forecast", "Above budget", "Evidence"],
+        rows: value.priorities.map((priority) => [
+          priority.title,
+          priority.ownerRole ?? "Not recorded",
+          priority.programCount,
+          money(priority.approvedBudgetUsd),
+          money(priority.forecastUsd),
+          priority.overBudgetProgramCount,
+          evidence(priority),
+        ]),
+        note: "Synthetic reference; not client-attested. The no-declared-priority row is included in enterprise totals.",
+      }],
+    };
+  }
+
   if (chapterId === "what_needs_attention") {
     return {
       title: "Risk review queue",

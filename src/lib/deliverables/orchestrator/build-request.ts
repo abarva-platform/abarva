@@ -17,6 +17,8 @@ import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
 import { resolveQualityBar } from "./quality-bar-registry";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
+import { depthAwareFloors } from "@/lib/deliverables/shared/depth-aware-floor";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 
 export interface BuildRequestParams {
   module: DeliverableModule;
@@ -54,6 +56,24 @@ export function buildDeliverableRequest(
   evidence: GovernedEvidenceItem[],
   sourceRegister: SourceRegisterEntry[],
 ): DeliverableIntelligenceRequest {
+  const baseQualityBar = resolveQualityBar(
+    params.module,
+    params.deliverableType,
+  );
+  // Depth-aware floor: a smaller-confirmed-scope Move is not forced to a
+  // large-floor artifact's full-scope word/slide count. Prefers the sanctioned
+  // deterministic complexity tier (resolveAdaptiveDepth); falls back to the
+  // confirmed-evidence volume. No-op for every type not in the depth-scaled set.
+  const slideBandKey = deliverableKeyForOrchestratorType(
+    params.deliverableType,
+  );
+  const floors = depthAwareFloors({
+    deliverableType: params.deliverableType,
+    baseMinWords: baseQualityBar.minBodyWords,
+    baseSlideMin: slideBandKey ? SLIDE_BANDS[slideBandKey]?.min : undefined,
+    complexityTier: params.adaptiveDepth?.complexityTier,
+    confirmedEvidenceCount: evidence.length,
+  });
   return {
     module: params.module,
     useCaseArchetype: params.useCaseArchetype,
@@ -82,7 +102,11 @@ export function buildDeliverableRequest(
       includeSourceRegisterSection: true,
     },
     qualityBar: {
-      ...resolveQualityBar(params.module, params.deliverableType),
+      ...baseQualityBar,
+      minBodyWords: floors.minBodyWords,
+      ...(floors.slideMin !== undefined
+        ? { slideFloor: floors.slideMin }
+        : {}),
       // A source register is a register OF governed evidence. Require it only
       // when there is governed evidence to register — with an empty bundle there
       // is nothing to cite, so blocking on a missing register is a false gate
