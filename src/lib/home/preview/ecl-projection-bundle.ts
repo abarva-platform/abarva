@@ -6,6 +6,7 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 import {
   selectHomeAssessment,
+  type HomeAssessmentSelection,
   type HomeDeclaredProjection,
 } from "./home-assessment-selection";
 import {
@@ -3120,6 +3121,7 @@ async function readHomeSourceCatalog(
 
 export async function getHomeEclProjectionBundle(
   tenantKey: HomePreviewTenantKey,
+  selected?: HomeAssessmentSelection,
 ): Promise<HomeReviewBundle> {
   const base = getHomeReviewBundle(tenantKey);
   if (!base) {
@@ -3128,7 +3130,15 @@ export async function getHomeEclProjectionBundle(
     );
   }
 
-  const { assessmentId, declared } = await selectHomeAssessment(tenantKey);
+  const { assessmentId, declared, retired } =
+    selected ?? (await selectHomeAssessment(tenantKey));
+  if (retired) {
+    throw new HomeProjectionFault(
+      "retired_declaration",
+      `Home ECL preview: the declared assessment for ${tenantKey} is retired.`,
+      { assessmentId },
+    );
+  }
   const { rows, absentViews } = await readHomeProjectionRows(
     tenantKey,
     assessmentId,
@@ -3214,7 +3224,17 @@ export async function getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
   }
 
   try {
-    const bundle = await getHomeEclProjectionBundle(tenantKey);
+    const selection = await selectHomeAssessment(tenantKey);
+    if (selection.retired) {
+      return {
+        bundle: base,
+        recordSource: {
+          kind: "reviewed_snapshot",
+          canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
+        },
+      };
+    }
+    const bundle = await getHomeEclProjectionBundle(tenantKey, selection);
     return {
       bundle,
       recordSource: {

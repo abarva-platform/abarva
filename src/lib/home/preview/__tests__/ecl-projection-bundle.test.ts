@@ -713,6 +713,29 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     });
   });
 
+  it("serves the reviewed record deliberately after an explicit retirement", async () => {
+    jest.mocked(selectHomeAssessment).mockResolvedValueOnce({
+      assessmentId: denseAssessmentIdForTenant("meridian-health"),
+      declared: null,
+      retired: true,
+    });
+    const query = jest.spyOn(azureRead, "query");
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+
+    const result =
+      await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
+        "meridian-health",
+      );
+
+    expect(result.bundle).toBe(base);
+    expect(result.recordSource).toEqual({
+      kind: "reviewed_snapshot",
+      canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
+    });
+    expect(query).not.toHaveBeenCalled();
+  });
+
   it("does not label an entirely refused projection as live", async () => {
     jest
       .spyOn(azureRead, "query")
