@@ -99,7 +99,7 @@ export function answerHomeCurrentContext(args: {
         context.segmentFacts[segment.segmentKey]?.sourceRefs ?? [],
       );
     }
-    directAnswer = `The current record describes ${context.profile.businessModel}.`;
+    directAnswer = `Declared business model: ${context.profile.businessModel}.`;
     bullets = segments
       .slice(0, 4)
       .map(
@@ -148,7 +148,7 @@ export function answerHomeCurrentContext(args: {
         context.segmentFacts[segment.segmentKey]?.sourceRefs ?? [],
       );
     }
-    for (const item of context.functions)
+    for (const item of context.functions.slice(0, 3))
       addCitation(item.title, item.sourceRefs);
     directAnswer = `${context.functions.length} declared business functions map to ${segments.length} segments; ${context.sharedFunctionIds.length} functions serve the enterprise across segments.`;
     bullets = segments.slice(0, 4).map((segment) => {
