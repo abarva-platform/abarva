@@ -1,4 +1,4 @@
-import { deliverableModel } from '../model-policy';
+import { deliverableModel } from "../model-policy";
 import {
   validateDeliverablePlan,
   type DeliverablePlan,
@@ -146,18 +146,51 @@ export function buildDeliverablePlanUserMessage(
   ].join("\n");
 }
 
+/**
+ * Output budget for the plan, and the one larger budget tried if the first is
+ * exhausted.
+ *
+ * A plan cut off at the limit still arrives as a well-formed object: the
+ * streaming client parses the partial tool input, so the fields emitted before
+ * the cut are present and the later ones are simply absent. Validated as if it
+ * were complete, that reads as "story spine has fewer than 3 beats" and "no
+ * planned exhibits" — a verdict on the plan's reasoning, when the plan was
+ * never finished. The stop reason is the only signal that distinguishes the
+ * two, so it is checked before validation.
+ */
+export const DELIVERABLE_PLAN_MAX_TOKENS = 12_000;
+export const DELIVERABLE_PLAN_RETRY_MAX_TOKENS = 24_000;
+
 export async function generateDeliverablePlan(
   req: DeliverablePlanGenRequest,
   call: GovernedToolCall,
 ): Promise<GeneratedDeliverablePlan> {
   const model = req.model ?? DEFAULT_DELIVERABLE_PLAN_MODEL;
-  const { toolInput, modelId } = await call({
-    system: DELIVERABLE_PLAN_SYSTEM_PROMPT,
-    userMessage: buildDeliverablePlanUserMessage(req),
-    tool: DELIVERABLE_PLAN_TOOL,
-    model,
-    maxTokens: req.maxTokens ?? 5000,
-  });
+  const firstBudget = req.maxTokens ?? DELIVERABLE_PLAN_MAX_TOKENS;
+  const request = (maxTokens: number) =>
+    call({
+      system: DELIVERABLE_PLAN_SYSTEM_PROMPT,
+      userMessage: buildDeliverablePlanUserMessage(req),
+      tool: DELIVERABLE_PLAN_TOOL,
+      model,
+      maxTokens,
+    });
+
+  let result = await request(firstBudget);
+  if (result.stopReason === "max_tokens") {
+    const retryBudget = Math.max(
+      firstBudget * 2,
+      DELIVERABLE_PLAN_RETRY_MAX_TOKENS,
+    );
+    result = await request(retryBudget);
+    if (result.stopReason === "max_tokens") {
+      throw new Error(
+        `Deliverable plan generation was cut off at the ${retryBudget}-token output limit` +
+          ` after an earlier cut-off at ${firstBudget}; the plan is incomplete and was not validated.`,
+      );
+    }
+  }
+  const { toolInput, modelId } = result;
   if (!toolInput || typeof toolInput !== "object") {
     throw new Error("Deliverable plan generation returned no structured plan.");
   }
