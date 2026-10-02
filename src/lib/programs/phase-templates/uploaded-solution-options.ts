@@ -245,3 +245,29 @@ export function inferSelectedOptionId(
   const recommended = options.find((option) => option.recommended);
   return recommended && /\brecommended\b/.test(lower) ? recommended.id : "";
 }
+
+/**
+ * The option a recorded approval points at, among the options now on screen.
+ *
+ * Selection is local to the page, so a reload forgot a decision the server
+ * had already recorded and asked for it again. The approved option is
+ * restored only when it is still one of the options offered: matched by name,
+ * because an id like "B" means a different option in a different option set.
+ */
+export function restoreApprovedOptionId(
+  approved: { selectedOptionId?: string; chosenOption?: string } | null | undefined,
+  options: ReadonlyArray<{ id: string; label: string }>,
+): string {
+  const name = String(approved?.chosenOption ?? "").trim().toLowerCase();
+  if (!name) return "";
+  const byName = options.filter(
+    (option) => option.label.trim().toLowerCase() === name,
+  );
+  if (byName.length === 1) return byName[0].id;
+  if (byName.length > 1) {
+    return (
+      byName.find((option) => option.id === approved?.selectedOptionId)?.id ?? ""
+    );
+  }
+  return "";
+}
