@@ -87,6 +87,63 @@ export function assessExtractedTextSensitivity(
   });
 }
 
+/**
+ * The check a Move upload must pass BEFORE its bytes are stored anywhere.
+ *
+ * Layer 1 scans the raw bytes (text, CSV, JSON, PDF text) and honours a
+ * declared regulated classification. Layer 2 decodes the document and scans
+ * the extracted text, because Office files are ZIP containers whose content a
+ * raw-byte scan cannot see. Extraction here is the document parser only: no
+ * reasoning model sees the text, and no artifact or evidence record is
+ * written.
+ *
+ * If the parser cannot read the file, the layer-1 result stands: there is no
+ * decoded text to scan, and the upload is not refused for being unreadable.
+ */
+export async function assessMoveUploadSensitivity(
+  args: {
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+    declaredClassification?: unknown;
+    cacheScope?: string;
+  },
+  extract: typeof extractProgramEvidenceFromUploadBuffer = extractProgramEvidenceFromUploadBuffer,
+): Promise<UploadProtectionResult> {
+  const declaredClassification =
+    typeof args.declaredClassification === "string"
+      ? args.declaredClassification
+      : null;
+  const raw = evaluateSensitiveUpload({
+    filename: args.filename,
+    mimeType: args.mimeType,
+    bytes: args.buffer,
+    declaredClassification,
+  });
+  if (raw.decision === "quarantine") return raw;
+
+  let decoded: string;
+  try {
+    const evidence = await extract({
+      filename: args.filename,
+      mimeType: args.mimeType,
+      buffer: args.buffer,
+      cacheScope: args.cacheScope,
+    });
+    decoded = [evidence.extractedText ?? "", evidence.summary ?? ""]
+      .filter(Boolean)
+      .join("\n");
+  } catch {
+    return raw;
+  }
+  if (!decoded) return raw;
+  return assessExtractedTextSensitivity(decoded, {
+    filename: args.filename,
+    mimeType: args.mimeType,
+    declaredClassification,
+  });
+}
+
 export interface DocIngestResult {
   ok: boolean;
   evidenceId: string;

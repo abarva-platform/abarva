@@ -1981,7 +1981,11 @@ export function FileCabinetPanel({
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.ok)
-          throw new Error(j.error || j.detail || `HTTP ${r.status}`);
+          throw new Error(
+            j.error === "sensitive_data_quarantined"
+              ? `${file.name} was not uploaded. It appears to contain personal or regulated identifiers, so nothing was stored. Remove the identifiers and upload again.`
+              : j.error || j.detail || `HTTP ${r.status}`,
+          );
         const evidence = j.evidence as
           | {
               status?: string;
