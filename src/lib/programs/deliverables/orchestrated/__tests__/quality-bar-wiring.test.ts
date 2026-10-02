@@ -77,21 +77,44 @@ describe("the canonical quality contract reaches the runtime request", () => {
     expect(architecture.enforceMaxAsBlocker).toBe(false);
   });
 
-  it("matches the registry exactly, so the runtime cannot drift from the contract", () => {
-    for (const type of [
-      "business_case",
-      "charter",
-      "target_state_architecture",
-      "solution_design",
-      "roadmap",
-    ]) {
+  it("matches the registry exactly for non-depth-scaled types, so the runtime cannot drift from the contract", () => {
+    // These types carry a single calibrated floor; the runtime bar must equal
+    // the registry contract exactly (bar the deliberate source-register
+    // override). target_state_architecture is deliberately excluded here — its
+    // floor is depth-aware (asserted in the next test).
+    for (const type of ["business_case", "charter", "solution_design", "roadmap"]) {
       const expected = resolveQualityBar("moves", type);
       const actual = barFor(type);
-      // Everything except the deliberate source-register override.
       const actualRest = { ...actual, requiresSourceRegister: undefined };
       const expectedRest = { ...expected, requiresSourceRegister: undefined };
       expect(actualRest).toEqual(expectedRest);
     }
+  });
+
+  it("derives a depth-aware architecture floor from confirmed scope, without drifting from the rest of the contract", () => {
+    const registry = resolveQualityBar("moves", "target_state_architecture");
+    const actual = barFor("target_state_architecture");
+
+    // This fixture has only a handful of confirmed charter evidence items, so
+    // the floor scales DOWN from the full-scope calibration — a small Move is
+    // not forced to pad to the 9,000-word floor a transformation needs.
+    expect(registry.minBodyWords).toBe(9_000);
+    expect(actual.minBodyWords).toBeLessThan(registry.minBodyWords);
+    expect(actual.minBodyWords).toBeGreaterThanOrEqual(4_500); // never below half
+    expect(actual.slideFloor).toBeDefined();
+    expect(actual.slideFloor!).toBeLessThan(10);
+
+    // Everything OTHER than the depth-aware floor still matches the registry
+    // exactly — the ceiling, the warn-only rule, the spine requirements.
+    const stripped = (bar: typeof actual) => ({
+      ...bar,
+      minBodyWords: undefined,
+      slideFloor: undefined,
+      requiresSourceRegister: undefined,
+    });
+    expect(stripped(actual)).toEqual(stripped(registry as typeof actual));
+    expect(actual.enforceMaxAsBlocker).toBe(false);
+    expect(actual.targetBodyWordsMax).toBe(registry.targetBodyWordsMax);
   });
 
   it("keeps the source register mandatory for board-grade Move artifacts", () => {

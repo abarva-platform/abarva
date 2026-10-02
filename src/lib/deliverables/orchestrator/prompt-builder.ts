@@ -535,7 +535,14 @@ export function deckLengthInstruction(
   if (!req.outputFormats.includes("pptx")) return "";
   const band = SLIDE_BANDS[req.deliverableType as DeliverableKey];
   if (!band) return "";
-  return `DECK LENGTH: "deckSlides" must contain between ${band.min} and ${band.max} slides. This deck is for: ${band.purpose}. Fewer than ${band.min} reads as a section list, not an argument, and fails the quality gate; more than ${band.max} stops being read. One governing message per slide. Reach the band by giving each distinct step of the argument its own slide — never by repeating a message or adding a slide with nothing to decide.`;
+  // Honour a depth-aware slide floor so the generator is told the SAME min the
+  // gate will enforce (a bar the writer cannot see is a coin toss). It can only
+  // lower the band's min for a smaller-scope Move; the ceiling is unchanged.
+  const min =
+    typeof req.qualityBar.slideFloor === "number"
+      ? Math.max(1, Math.min(band.min, Math.round(req.qualityBar.slideFloor)))
+      : band.min;
+  return `DECK LENGTH: "deckSlides" must contain between ${min} and ${band.max} slides. This deck is for: ${band.purpose}. Fewer than ${min} reads as a section list, not an argument, and fails the quality gate; more than ${band.max} stops being read. One governing message per slide. Reach the band by giving each distinct step of the argument its own slide — never by repeating a message or adding a slide with nothing to decide.`;
 }
 
 /**
