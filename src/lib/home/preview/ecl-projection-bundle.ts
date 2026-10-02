@@ -576,6 +576,10 @@ function isFactualHomeRow(row: HomeProjectionRow): boolean {
   }
   const payload = rowPayload(row);
   switch (row.row_type) {
+    case "enterprise_profile":
+      return Boolean(
+        text(payload.business_model) && text(payload.business_model_basis),
+      );
     case "business_segment":
       return Boolean(text(payload.segment_key) && text(payload.segment_name));
     case "business_function":
