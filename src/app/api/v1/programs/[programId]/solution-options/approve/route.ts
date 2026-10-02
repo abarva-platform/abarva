@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { completeDeliverable } from "@/lib/programs/mutations";
 import type { SolutionOption } from "@/lib/programs/solution-context";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
@@ -97,6 +98,20 @@ export async function POST(
   const { programId } = await params;
   const program = await getProgramById(ctx, programId);
   if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+  const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+  if (
+    !accessPolicy.canApproveGates ||
+    (Array.isArray(accessPolicy.programIdsAllowed) &&
+      !accessPolicy.programIdsAllowed.includes(programId))
+  ) {
+    return Response.json(
+      {
+        error: "forbidden",
+        detail: "Authorized Move approval permission required.",
+      },
+      { status: 403 },
+    );
+  }
 
   let body: ApproveOptionBody;
   try {
@@ -132,7 +147,7 @@ export async function POST(
   }
   const rationale =
     body.rationale?.trim() ||
-    "Human reviewer approved the option that will drive target architecture.";
+    "Authorized workspace user approved the option that will drive target architecture.";
   const selectedOptionVersion = body.selectedOptionVersion?.trim() || "1";
   const approach = body.approach?.trim();
   const tradeoffsAccepted = body.tradeoffsAccepted ?? [];
@@ -196,7 +211,7 @@ export async function POST(
     phase: 3,
     decision: `Approved solution option: ${chosenOption}`,
     rationale,
-    approvedByRole: "sponsor",
+    approvedByRole: "authorized_workspace_user",
     auditReference: decisionId,
     approvedAt: now,
   };
@@ -245,7 +260,7 @@ export async function POST(
     // stays in `decisionLineage` only.
     decisions: [clientSafeDecision],
     humanApprovalNotes: [
-      `P3 solution option approved by the sponsor at ${now}: ${chosenOption} (audit ref ${decisionId}).`,
+      `P3 solution option approved by an authorized workspace user at ${now}: ${chosenOption} (audit ref ${decisionId}).`,
     ],
   };
 

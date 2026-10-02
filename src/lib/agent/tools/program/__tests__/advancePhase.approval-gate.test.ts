@@ -7,8 +7,8 @@
  * asserts the two things the control exists to guarantee:
  *
  *   1. an agent cannot advance a phase without an explicit human rationale, and
- *   2. an agent never satisfies a gate approval — when one is required it
- *      queues a request and refuses.
+ *   2. an agent never satisfies a gate approval or creates a sponsor request —
+ *      it routes an eligible gate to the authorized workspace user.
  *
  * Both assertions are about the mutation: the proof is that `advancePhase` was
  * never called, not that a particular string came back.
@@ -49,17 +49,15 @@ jest.mock("@/lib/programs/governance", () => ({
     requiresApproval: false,
     approverRole: "sponsor",
   })),
-  requestFounderApproval: jest.fn(async () => undefined),
 }));
 
 import { advancePhaseTool } from "../advancePhase";
 import { advancePhase } from "@/lib/programs/mutations";
-import { evaluateGate, requestFounderApproval } from "@/lib/programs/governance";
+import { evaluateGate } from "@/lib/programs/governance";
 import { getProgramById } from "@/lib/programs/queries";
 
 const mockAdvancePhase = jest.mocked(advancePhase);
 const mockEvaluateGate = jest.mocked(evaluateGate);
-const mockRequestFounderApproval = jest.mocked(requestFounderApproval);
 const mockGetProgramById = jest.mocked(getProgramById);
 
 const ctx = {
@@ -81,7 +79,6 @@ function gateCheck(overrides: Partial<GateCheckShape> = {}): GateCheckShape {
 describe("advance_phase tool · human approval gate", () => {
   beforeEach(() => {
     mockAdvancePhase.mockClear();
-    mockRequestFounderApproval.mockClear();
     mockEvaluateGate.mockClear();
     mockGetProgramById.mockResolvedValue({
       id: "program-1",
@@ -100,7 +97,7 @@ describe("advance_phase tool · human approval gate", () => {
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
-  it("queues an approval request instead of satisfying the gate itself", async () => {
+  it("directs approval to the authorized workspace user without creating a sponsor request", async () => {
     mockEvaluateGate.mockResolvedValue(gateCheck({ requiresApproval: true }));
 
     const result = await advancePhaseTool.handler(
@@ -108,14 +105,13 @@ describe("advance_phase tool · human approval gate", () => {
         program_id: "program-1",
         to_phase: 2,
         rationale:
-          "The sponsor confirmed the privacy attestation is complete and asked to move on.",
+          "I reviewed the privacy attestation and approve moving to the next phase.",
       },
       ctx,
     );
 
     expect(result).toMatchObject({ success: false, error: "approval_required" });
-    // The whole point of the control: a pending request, never an advance.
-    expect(mockRequestFounderApproval).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(result)).toContain("No sponsor approval is requested");
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 

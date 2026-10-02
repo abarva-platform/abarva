@@ -1,9 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
-import {
-  getModuleState,
-  getStrategicMoveById,
-} from "@/lib/programs/queries";
+import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -12,6 +9,7 @@ import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { MovesPhaseStandaloneClient } from "@/components/strategic-moves/MovesPhaseStandaloneClient";
 import {
   isStrategicMoveRouteId,
@@ -334,6 +332,10 @@ export default async function StrategicMovePhaseWorkspacePage({
 
   const loadedMove = await getStrategicMoveById(ctx, moveId);
   if (!loadedMove) notFound();
+  const approvalPolicy = await loadUserProgramAccessPolicy(ctx, {
+    programId: moveId,
+  }).catch(() => null);
+  const canApproveGates = approvalPolicy?.canApproveGates === true;
   const {
     effectivePhase: effectiveCurrentPhase,
     reopenedForEvidenceReview,
@@ -650,13 +652,19 @@ export default async function StrategicMovePhaseWorkspacePage({
   let carriesForwardContent: DeliverableContentSignal[] = [];
   let p3PriorPhaseContent: DeliverableContentSignal[] = [];
   try {
-    carriesForwardContent = await readPhaseGateContentSignals(moveId, parsedPhase);
+    carriesForwardContent = await readPhaseGateContentSignals(
+      moveId,
+      parsedPhase,
+    );
   } catch {
     carriesForwardContent = [];
   }
   if (parsedPhase === 3) {
     try {
-      p3PriorPhaseContent = await readApprovedPhaseGateContentSignals(moveId, 2);
+      p3PriorPhaseContent = await readApprovedPhaseGateContentSignals(
+        moveId,
+        2,
+      );
     } catch {
       p3PriorPhaseContent = [];
     }
@@ -770,6 +778,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       }}
     >
       <MovesPhaseStandaloneClient
+        canApproveGates={canApproveGates}
         carriesForwardContent={carriesForwardContent}
         p3PriorPhaseContent={p3PriorPhaseContent}
         currentStateReadiness={currentStateReadiness}

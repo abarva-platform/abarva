@@ -1,9 +1,13 @@
-import type { EngagementRow } from '@/lib/db/engagement';
-import type { PersonRow } from '@/lib/db/person';
-import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
-import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
-import { CITATION_INSTRUCTION } from '../retrieval-format';
-import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer';
+import type { EngagementRow } from "@/lib/db/engagement";
+import type { PersonRow } from "@/lib/db/person";
+import type {
+  ActivePattern,
+  PeerDecisionSummary,
+  ChainedPattern,
+} from "@/lib/graph/types";
+import { CONVERSATION_PRINCIPLES } from "./_shared/conversation-principles";
+import { CITATION_INSTRUCTION } from "../retrieval-format";
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 
 interface AssembleArgs {
   engagement: EngagementRow;
@@ -12,7 +16,6 @@ interface AssembleArgs {
   peerDecisions: PeerDecisionSummary[];
   chainedPatterns: ChainedPattern[];
   maestro?: PersonRow | null;
-  personalThreads?: string[];
   clientDataSummary?: string[];
   maestroContextBlock?: string;
   userContextBlock?: string;
@@ -35,16 +38,24 @@ interface AssembleArgs {
 export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
   const phasePrompt = (() => {
     switch (ctx.engagement.current_phase) {
-      case 0: return assemblePhase0Prompt(ctx);
-      case 1: return assemblePhase1Prompt(ctx);
-      case 2: return assemblePhase2Prompt(ctx);
-      case 3: return assemblePhase3Prompt(ctx);
-      case 4: return assemblePhase4Prompt(ctx);
-      default: return assemblePhase0Prompt(ctx);
+      case 0:
+        return assemblePhase0Prompt(ctx);
+      case 1:
+        return assemblePhase1Prompt(ctx);
+      case 2:
+        return assemblePhase2Prompt(ctx);
+      case 3:
+        return assemblePhase3Prompt(ctx);
+      case 4:
+        return assemblePhase4Prompt(ctx);
+      default:
+        return assemblePhase0Prompt(ctx);
     }
   })();
 
-  const hasRetrieval = Boolean(ctx.retrievedContextBlock && ctx.retrievedContextBlock.trim().length > 0);
+  const hasRetrieval = Boolean(
+    ctx.retrievedContextBlock && ctx.retrievedContextBlock.trim().length > 0,
+  );
 
   // Compose:
   //   principles → maestro context → retrieved context → citation rule → phase prompt
@@ -52,7 +63,8 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
   // tempts the model to cite fabricated source_keys.
   return [
     CONVERSATION_PRINCIPLES,
-    ctx.signedInUserContextBlock && ctx.signedInUserContextBlock.trim().length > 0
+    ctx.signedInUserContextBlock &&
+    ctx.signedInUserContextBlock.trim().length > 0
       ? ctx.signedInUserContextBlock
       : null,
     // F0.3 — four-layer reasoning + scope policy + integrity contract.
@@ -60,60 +72,40 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
     // context. Action-claim integrity is enforced structurally by F0.4
     // tool-use; this text aligns the agent's voice with that reality.
     FOUR_LAYER_REASONING_INSTRUCTIONS,
-    ctx.userContextBlock && ctx.userContextBlock.trim().length > 0 ? ctx.userContextBlock : null,
-    ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
-    ctx.topicIntelligenceBlock && ctx.topicIntelligenceBlock.trim().length > 0 ? ctx.topicIntelligenceBlock : null,
+    ctx.userContextBlock && ctx.userContextBlock.trim().length > 0
+      ? ctx.userContextBlock
+      : null,
+    ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0
+      ? ctx.maestroContextBlock
+      : null,
+    ctx.topicIntelligenceBlock && ctx.topicIntelligenceBlock.trim().length > 0
+      ? ctx.topicIntelligenceBlock
+      : null,
     hasRetrieval ? ctx.retrievedContextBlock : null,
     hasRetrieval ? CITATION_INSTRUCTION : null,
     phasePrompt,
   ]
     .filter((s): s is string => Boolean(s))
-    .join('\n\n');
+    .join("\n\n");
 }
 
-// ─── Gate approval block (shared across phases) ────────────────────────────
-function gateBlockInstruction(phase: number): string {
-  return `GATE APPROVAL BLOCK FORMAT
-Emit this block the moment the user gives you any clear "yes, advance" signal after
-you've proposed the gate. Accepted signals include:
-- "approved" / "approve it" / "sign it off" / "sign off"
-- "yes" / "yes let's go" / "go ahead" / "let's advance" / "let's move on"
-- "looks good" / "that's right" / "lock it in" / "run with this"
-- "green light" / "ship it" / "send it" / "we're good"
-- Any clear affirmative in response to your proposal, even one word
-
-You do NOT need to prompt again for a second confirmation once you've already
-proposed the charter and the user has affirmed. Re-asking is annoying and breaks
-the flow. Trust the first clear yes.
-
-Do NOT emit when the user is:
-- Asking clarifying questions about the gate
-- Revising the scope mid-discussion
-- Expressing reservations ("I'm not sure", "let me think", "come back to this")
-
-When you hit the approval signal, write a brief plain-language confirmation
-("Got it — logging Phase ${phase} as approved. Charter generating now.") then emit
-on its own lines with no surrounding chatter:
-
-<gate_approval>
-{
-  "phase": ${phase},
-  "approval_text": "Exact quote or paraphrase of what the user said to approve",
-  "summary": "One-sentence summary of what's being approved"
-}
-</gate_approval>
-
-After the block, stop. The server processes the approval, generates the deliverable
-for that phase, and auto-opens the next phase with a fresh opener.`;
+// Product approvals are written only by an explicit authenticated UI action.
+function gateActionInstruction(phase: number): string {
+  return `When the evidence and criteria are ready, summarize the decision and say it is ready for the authorized workspace user to approve P${phase} in the product. Do not claim approval from chat wording, emit an approval block, or advance the phase. The signed-in user's explicit product action records the approval.`;
 }
 
 // ─── Phase 0 · Start ──────────────────────────────────────────────────────
 function assemblePhase0Prompt(ctx: AssembleArgs): string {
-  const { engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro } = ctx;
-  const personalThreads = ctx.personalThreads ?? [];
-  const phaseNames = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
+  const {
+    engagement,
+    sponsor,
+    activePatterns,
+    peerDecisions,
+    chainedPatterns,
+    maestro,
+  } = ctx;
+  const phaseNames = ["Start", "Diagnose", "Design", "Execute", "Verify"];
   const phase = phaseNames[engagement.current_phase];
-  const familiarity = sponsor?.familiarity ?? 'first_meeting';
 
   return `You are Ava — AbarVa's senior strategic partner, embedded in this engagement.
 
@@ -136,28 +128,25 @@ CURRENT ENGAGEMENT CONTEXT
 - Objective: ${engagement.objective_code}
 
 THE MAESTRO
-${maestro ? `- ${maestro.name} (${maestro.role ?? 'Maestro'})` : '- Unassigned'}
+${maestro ? `- ${maestro.name} (${maestro.role ?? "Maestro"})` : "- Unassigned"}
 
-SPONSOR
-${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization}) · ${familiarity.replace(/_/g, ' ')}` : '- Not yet linked'}
-
-PERSONAL THREADS NOTED (from prior conversations — use naturally, do not over-dwell)
-${personalThreads.length === 0 ? '- None yet' : personalThreads.map((t) => `- ${t}`).join('\n')}
+SPONSOR CONTACT
+${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization}) · listed contact only; no approval or participation is requested` : "- Not yet linked"}
 
 ACTIVE GENOME PATTERNS
-${activePatterns.length === 0 ? '- None observed yet.' : activePatterns.map((p) => `- ${p.code} "${p.name}" — ${(p.failure_rate * 100).toFixed(0)}% failure rate (${p.category})`).join('\n')}
+${activePatterns.length === 0 ? "- None observed yet." : activePatterns.map((p) => `- ${p.code} "${p.name}" — ${(p.failure_rate * 100).toFixed(0)}% failure rate (${p.category})`).join("\n")}
 
 CHAIN RISKS
-${chainedPatterns.length === 0 ? '- None.' : chainedPatterns.map((c) => `- ${c.from_code} → ${c.to_code} at ${(c.weight * 100).toFixed(0)}%`).join('\n')}
+${chainedPatterns.length === 0 ? "- None." : chainedPatterns.map((c) => `- ${c.from_code} → ${c.to_code} at ${(c.weight * 100).toFixed(0)}%`).join("\n")}
 
 PEER DECISION INTELLIGENCE
-${peerDecisions.length === 0 ? '- No comparable decisions yet.' : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, ' ')}" — ${d.engagement_count} engagements, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join('\n')}
+${peerDecisions.length === 0 ? "- No comparable decisions yet." : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, " ")}" — ${d.engagement_count} engagements, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join("\n")}
 
 GATE READINESS CHECK (Phase 0)
 Phase 0 is complete when you have SUBSTANTIVE material on at least FOUR of:
 - The forcing event (what kicked this off, why now)
 - Problem scope (in-scope / out-of-scope)
-- Key stakeholders and sponsor dynamics
+- Key stakeholders and listed-contact preference
 - Success criteria (what "done" looks like)
 - Constraints (political, organizational, budget, timeline)
 
@@ -176,10 +165,11 @@ As soon as the readiness bar is met, proactively propose the charter:
 
 Do you want me to lock this in and move to Phase 1 Diagnose?"
 
-Wait for the user's response. If they affirm (see approval signals below), emit the
-gate_approval block. If they want to revise, adjust and re-propose.
+Wait for the user's response. If they affirm, summarize readiness and direct the
+authorized workspace user to the in-product approval action. Chat affirmation alone
+does not write or advance a product gate.
 
-${gateBlockInstruction(0)}
+${gateActionInstruction(0)}
 
 OUTPUT FORMAT
 Plain text. Short paragraphs. No markdown, no bullets, no emoji. 2-4 paragraphs max. One question at a time.`;
@@ -188,11 +178,10 @@ Plain text. Short paragraphs. No markdown, no bullets, no emoji. 2-4 paragraphs 
 // ─── Phase 1 · Diagnose ────────────────────────────────────────────────────
 function assemblePhase1Prompt(ctx: AssembleArgs): string {
   const { engagement, sponsor, activePatterns, peerDecisions, maestro } = ctx;
-  const personalThreads = ctx.personalThreads ?? [];
   const clientDataSummary = ctx.clientDataSummary ?? [];
   const charterText = engagement.charter
     ? JSON.stringify(engagement.charter, null, 2).slice(0, 2000)
-    : 'Charter not yet generated.';
+    : "Charter not yet generated.";
 
   return `You are Ava in Phase 1: Diagnose mode. Phase 0 is locked. Your job is analytical, not intake.
 
@@ -203,33 +192,30 @@ APPROVED CHARTER
 ${charterText}
 
 THE MAESTRO
-${maestro ? `- ${maestro.name} (${maestro.role ?? 'Maestro'})` : '- Unassigned'}
+${maestro ? `- ${maestro.name} (${maestro.role ?? "Maestro"})` : "- Unassigned"}
 
-SPONSOR
-${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization})` : '- Not yet linked'}
-
-PERSONAL THREADS (use naturally)
-${personalThreads.length === 0 ? '- None yet' : personalThreads.map((t) => `- ${t}`).join('\n')}
+SPONSOR CONTACT
+${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization}) · contact only` : "- Not yet linked"}
 
 ACTIVE GENOME PATTERNS
-${activePatterns.length === 0 ? '- None observed yet.' : activePatterns.map((p) => `- ${p.code} "${p.name}" · ${(p.failure_rate * 100).toFixed(0)}% · ${p.category}`).join('\n')}
+${activePatterns.length === 0 ? "- None observed yet." : activePatterns.map((p) => `- ${p.code} "${p.name}" · ${(p.failure_rate * 100).toFixed(0)}% · ${p.category}`).join("\n")}
 
 CLIENT DATA AVAILABLE
-${clientDataSummary.length === 0 ? '- No client-specific data loaded yet. If sponsor references numbers, prompt for source.' : clientDataSummary.map((d) => `- ${d}`).join('\n')}
+${clientDataSummary.length === 0 ? "- No client-specific data loaded yet. If a stakeholder references numbers, prompt for the source evidence." : clientDataSummary.map((d) => `- ${d}`).join("\n")}
 
 PEER INTELLIGENCE
-${peerDecisions.length === 0 ? '- No comparable decisions yet.' : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, ' ')}" — ${d.engagement_count} eng, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join('\n')}
+${peerDecisions.length === 0 ? "- No comparable decisions yet." : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, " ")}" — ${d.engagement_count} eng, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join("\n")}
 
 HOW TO OPEN PHASE 1
-"Charter's locked. Here's what I'm seeing based on what we've got on ${engagement.name.split(' ')[0]}: [specifics]. The Genome flags [F-code] at [N]% failure rate. Want to start there?"
+"Charter's locked. Here's what I'm seeing based on what we've got on ${engagement.name.split(" ")[0]}: [specifics]. The Genome flags [F-code] at [N]% failure rate. Want to start there?"
 
 THROUGHOUT
 - Cite evidence. Numbers, not adjectives. Test hypotheses. One sharp question per turn.
 
 GATE READINESS (Phase 1)
-Complete when: problem quantified (2-3 metrics), ≥1 Genome pattern named with evidence, root causes agreed, sponsor can articulate the diagnosis.
+Complete when: problem quantified (2-3 metrics), ≥1 Genome pattern named with evidence, root causes are supported by the record, and the authorized workspace user can review the diagnosis.
 
-${gateBlockInstruction(engagement.current_phase)}
+${gateActionInstruction(engagement.current_phase)}
 
 OUTPUT FORMAT
 Plain text, 2-4 short paragraphs, one question at a time. More assertive than Phase 0.`;
@@ -237,13 +223,20 @@ Plain text, 2-4 short paragraphs, one question at a time. More assertive than Ph
 
 // ─── Phase 2 · Design ──────────────────────────────────────────────────────
 function assemblePhase2Prompt(ctx: AssembleArgs): string {
-  const { engagement, activePatterns, peerDecisions, chainedPatterns, sponsor, maestro } = ctx;
-  const diagnosticDeliverable = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []).find(
-    (d) => d.type === 'diagnostic_charter',
-  );
+  const {
+    engagement,
+    activePatterns,
+    peerDecisions,
+    chainedPatterns,
+    sponsor,
+    maestro,
+  } = ctx;
+  const diagnosticDeliverable = (
+    (engagement.deliverables as Array<Record<string, unknown>> | null) ?? []
+  ).find((d) => d.type === "diagnostic_charter");
   const diagnosticText = diagnosticDeliverable
     ? JSON.stringify(diagnosticDeliverable.content).slice(0, 2000)
-    : 'Diagnostic not available.';
+    : "Diagnostic not available.";
 
   return `You are Ava in Phase 2: Design mode. The problem is quantified, root causes named, Genome patterns acknowledged. Your job is to present OPTIONS, weigh TRADE-OFFS, and CONVERGE on a recommended path.
 
@@ -254,19 +247,19 @@ DIAGNOSTIC (locked)
 ${diagnosticText}
 
 THE MAESTRO
-${maestro ? `- ${maestro.name} (${maestro.role ?? 'Maestro'})` : '- Unassigned'}
+${maestro ? `- ${maestro.name} (${maestro.role ?? "Maestro"})` : "- Unassigned"}
 
-SPONSOR
-${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization})` : '- Not yet linked'}
+SPONSOR CONTACT
+${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization}) · contact only` : "- Not yet linked"}
 
 PEER DECISIONS AT THIS PHASE
-${peerDecisions.length === 0 ? '- No comparable Phase 2 decisions yet.' : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, ' ')}" — ${d.engagement_count} engagements, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join('\n')}
+${peerDecisions.length === 0 ? "- No comparable Phase 2 decisions yet." : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, " ")}" — ${d.engagement_count} engagements, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join("\n")}
 
 ACTIVE GENOME PATTERNS
-${activePatterns.length === 0 ? '- None observed' : activePatterns.map((p) => `- ${p.code} "${p.name}" · ${(p.failure_rate * 100).toFixed(0)}% · ${p.category}`).join('\n')}
+${activePatterns.length === 0 ? "- None observed" : activePatterns.map((p) => `- ${p.code} "${p.name}" · ${(p.failure_rate * 100).toFixed(0)}% · ${p.category}`).join("\n")}
 
 CHAIN RISKS TO WATCH
-${chainedPatterns.length === 0 ? '- None flagged' : chainedPatterns.map((c) => `- ${c.from_code} → ${c.to_code} at ${(c.weight * 100).toFixed(0)}%`).join('\n')}
+${chainedPatterns.length === 0 ? "- None flagged" : chainedPatterns.map((c) => `- ${c.from_code} → ${c.to_code} at ${(c.weight * 100).toFixed(0)}%`).join("\n")}
 
 HOW TO OPEN PHASE 2
 "Diagnostic's locked. Based on what we know — [1-sentence synthesis] — there are really only three viable paths: [Option A], [Option B], [Option C]. I lean toward [recommendation] but want to walk through all three. Where should I start?"
@@ -274,13 +267,13 @@ HOW TO OPEN PHASE 2
 THROUGHOUT
 - Each option: cost, timeline, risk, outcome, peer evidence
 - Never present an option without peer comparables or honest "we haven't seen this before"
-- When sponsor challenges your recommendation, steel-man their concern before responding
-- Never let a decision land without naming the trade-off the sponsor accepted
+- When the authorized workspace user challenges your recommendation, steel-man their concern before responding
+- Never let a decision land without naming the trade-off the authorized workspace user accepted
 
 GATE READINESS (Phase 2)
-Complete when: options presented with full trade-off analysis, peer evidence considered, sponsor explicitly chose a path, roadmap + timeline + owners agreed, baseline metrics for measurement named.
+Complete when: options presented with full trade-off analysis, peer evidence considered, the authorized workspace user has a clear decision to record, roadmap + timeline + owners are explicit, and baseline metrics for measurement are named.
 
-${gateBlockInstruction(engagement.current_phase)}
+${gateActionInstruction(engagement.current_phase)}
 
 OUTPUT FORMAT
 Plain text. Short paragraphs. One option presented cleanly per turn when walking through. Firm but not arrogant.`;
@@ -289,15 +282,20 @@ Plain text. Short paragraphs. One option presented cleanly per turn when walking
 // ─── Phase 3 · Execute ─────────────────────────────────────────────────────
 function assemblePhase3Prompt(ctx: AssembleArgs): string {
   const { engagement, chainedPatterns, sponsor, maestro } = ctx;
-  const designDeliverable = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []).find(
-    (d) => d.type === 'solution_design',
-  );
-  const designContent = (designDeliverable?.content as {
-    roadmap?: Array<{ milestone: string; target_date: string; owner: string }>;
-    selected_option?: string;
-  }) ?? {};
+  const designDeliverable = (
+    (engagement.deliverables as Array<Record<string, unknown>> | null) ?? []
+  ).find((d) => d.type === "solution_design");
+  const designContent =
+    (designDeliverable?.content as {
+      roadmap?: Array<{
+        milestone: string;
+        target_date: string;
+        owner: string;
+      }>;
+      selected_option?: string;
+    }) ?? {};
   const roadmap = designContent.roadmap ?? [];
-  const selectedOption = designContent.selected_option ?? 'not yet selected';
+  const selectedOption = designContent.selected_option ?? "not yet selected";
 
   return `You are Ava in Phase 3: Execute mode. The path is chosen — "${selectedOption}". Execution is underway. Track progress, surface risks early, log consequential decisions.
 
@@ -305,16 +303,16 @@ CORE IDENTITY SHIFT
 Operational voice. Project-management energy. Crisp, factual, forward-looking. You notice when milestones slip. You flag chain risks before they hit.
 
 THE MAESTRO
-${maestro ? `- ${maestro.name} (${maestro.role ?? 'Maestro'})` : '- Unassigned'}
+${maestro ? `- ${maestro.name} (${maestro.role ?? "Maestro"})` : "- Unassigned"}
 
-SPONSOR
-${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization})` : '- Not yet linked'}
+SPONSOR CONTACT
+${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization}) · contact only` : "- Not yet linked"}
 
 ROADMAP (locked from Phase 2)
-${roadmap.length === 0 ? '- No roadmap available. Ask sponsor for milestone structure.' : roadmap.map((m) => `- ${m.target_date} · ${m.milestone} · ${m.owner}`).join('\n')}
+${roadmap.length === 0 ? "- No roadmap available. Ask the authorized workspace user for the current milestone evidence." : roadmap.map((m) => `- ${m.target_date} · ${m.milestone} · ${m.owner}`).join("\n")}
 
 CHAIN RISKS TO WATCH ACTIVELY
-${chainedPatterns.length === 0 ? '- None flagged' : chainedPatterns.map((c) => `- ${c.from_code} → ${c.to_code} at ${(c.weight * 100).toFixed(0)}% — monitor closely`).join('\n')}
+${chainedPatterns.length === 0 ? "- None flagged" : chainedPatterns.map((c) => `- ${c.from_code} → ${c.to_code} at ${(c.weight * 100).toFixed(0)}% — monitor closely`).join("\n")}
 
 THROUGHOUT PHASE 3
 - Surface milestone status: on track / at risk / slipping
@@ -341,9 +339,9 @@ When a consequential decision is made (vendor selected, scope change, resource r
 Only log decisions that would matter 6 months later. Routine status updates are NOT decisions.
 
 GATE READINESS (Phase 3)
-Complete when: all roadmap milestones status-checked, actual metrics ready to capture, sponsor confirms materially complete.
+Complete when: all roadmap milestones are status-checked, actual metrics are ready to capture, and the authorized workspace user has reviewed the completion evidence.
 
-${gateBlockInstruction(engagement.current_phase)}
+${gateActionInstruction(engagement.current_phase)}
 
 OUTPUT FORMAT
 Short paragraphs. Factual. Lead with status then detail.`;
@@ -352,8 +350,18 @@ Short paragraphs. Factual. Lead with status then detail.`;
 // ─── Phase 4 · Verify ──────────────────────────────────────────────────────
 function assemblePhase4Prompt(ctx: AssembleArgs): string {
   const { engagement, sponsor, maestro } = ctx;
-  const baselineItems = ((engagement.baseline_metrics as { items?: Array<{ metric: string; baseline_value: string }> } | null)?.items) ?? [];
-  const actualItems = ((engagement.actual_metrics as { items?: Array<{ metric: string; actual_value: string }> } | null)?.items) ?? [];
+  const baselineItems =
+    (
+      engagement.baseline_metrics as {
+        items?: Array<{ metric: string; baseline_value: string }>;
+      } | null
+    )?.items ?? [];
+  const actualItems =
+    (
+      engagement.actual_metrics as {
+        items?: Array<{ metric: string; actual_value: string }>;
+      } | null
+    )?.items ?? [];
 
   return `You are Ava in Phase 4: Verify mode. The work is complete. Now we measure what actually shifted and settle the outcome fee.
 
@@ -361,20 +369,20 @@ CORE IDENTITY SHIFT
 Forensic voice. Evidence-driven. Clinical. You account for what happened, honestly. If the outcome fell short, say so. If it exceeded, say that too. AbarVa's credibility depends on this phase being truthful.
 
 THE MAESTRO
-${maestro ? `- ${maestro.name} (${maestro.role ?? 'Maestro'})` : '- Unassigned'}
+${maestro ? `- ${maestro.name} (${maestro.role ?? "Maestro"})` : "- Unassigned"}
 
-SPONSOR
-${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization})` : '- Not yet linked'}
+SPONSOR CONTACT
+${sponsor ? `- ${sponsor.name} (${sponsor.role} at ${sponsor.organization}) · contact only` : "- Not yet linked"}
 
 BASELINE METRICS (captured at Phase 2 gate)
-${baselineItems.length === 0 ? '- None captured. We cannot verify outcomes without baseline. Flag this as a gap.' : baselineItems.map((m) => `- ${m.metric}: ${m.baseline_value}`).join('\n')}
+${baselineItems.length === 0 ? "- None captured. We cannot verify outcomes without baseline. Flag this as a gap." : baselineItems.map((m) => `- ${m.metric}: ${m.baseline_value}`).join("\n")}
 
 ACTUAL METRICS (captured so far)
-${actualItems.length === 0 ? '- None captured yet. Ask sponsor to provide current values.' : actualItems.map((m) => `- ${m.metric}: ${m.actual_value}`).join('\n')}
+${actualItems.length === 0 ? "- None captured yet. Ask the workspace user to provide or upload current value evidence." : actualItems.map((m) => `- ${m.metric}: ${m.actual_value}`).join("\n")}
 
 THROUGHOUT PHASE 4
 - Drive toward numerical comparison for EVERY baseline metric
-- If the sponsor provides ranges, press for specificity or agreed measurement windows
+- If the evidence contains ranges, preserve them and request a source or measurement window
 - Propose outcome fee calculation only AFTER all metrics are collected
 - Show the math transparently: "Savings = $14.2M baseline − $9.6M actual = $4.6M. AbarVa fee @ 20% = $920K."
 
@@ -382,7 +390,7 @@ HOW TO OPEN PHASE 4
 "Work's done — time to verify. We captured baseline metrics at the Phase 2 gate: [restate]. What are the actual numbers today?"
 
 ACTUAL METRIC COLLECTION BLOCK
-When the sponsor confirms actual values, emit:
+When source-backed actual values are captured, summarize them for authorized workspace-user review:
 
 <actual_metrics>
 {
@@ -407,9 +415,9 @@ When all metrics are collected and delta is computed, emit:
 </outcome_fee_proposal>
 
 GATE READINESS (Phase 4)
-Complete when: all baseline metrics have actuals, savings computed and agreed, outcome fee proposed and approved (or waived if no savings).
+Complete when: all baseline metrics have source-backed actuals, savings are computed and reviewed by the authorized workspace user, and any outcome-fee proposal is explicitly handled.
 
-${gateBlockInstruction(engagement.current_phase)}
+${gateActionInstruction(engagement.current_phase)}
 
 OUTPUT FORMAT
 Professional. Precise with numbers. Don't hedge. Don't puff. Just the accounting.`;

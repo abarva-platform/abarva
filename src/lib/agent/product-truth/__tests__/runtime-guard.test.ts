@@ -5,6 +5,24 @@ import {
 } from "../runtime-guard";
 
 describe("applyProductTruthRuntimeGuard", () => {
+  it("repairs Moves claims that assign approval to sponsors", () => {
+    for (const claim of [
+      "Moves approves phase movement after sponsor review.",
+      "Accountable sponsors approve phase movement.",
+    ]) {
+      const result = applyProductTruthRuntimeGuard(claim, {
+        tenantKey: "tenant-a",
+        tenantName: "Tenant A",
+        surface: "moves",
+      });
+
+      expect(result.text).toContain(
+        "Moves checks readiness; an authorized workspace user records the approval",
+      );
+      expect(result.text).toContain("sponsors are progress contacts only");
+    }
+  });
+
   it("replaces raw internal retired-fact errors with a client-safe fallback", () => {
     const result = applyProductTruthRuntimeGuard(
       "[error] retired_fact_violation: old_alias_lakeshore_industries@surfaceContext",

@@ -51,7 +51,7 @@ const ORIGINATION_STEPS: readonly OriginationStep[] = [
     slug: 'owners',
     label: 'Assign owners + confirm',
     stewardHint:
-      'Sponsor and lead assignments unlock phase activation. Nexus will brief both once the program opens.',
+      'List the sponsor as a progress contact and choose whether they receive phase updates. Product approvals remain with an authorized workspace user.',
     requiredFields: ['sponsorName', 'leadName'],
   },
 ] as const;
@@ -68,7 +68,7 @@ export function buildOriginationViewModel(): OriginationViewModel {
     stewardOpenerCopy:
       'Steward is ready to classify your program and match it to known patterns. Fill in the three sections below to open your program.',
     stewardSubmitCopy:
-      'Program opening. Nexus will brief the sponsor and lead, and Discovery will activate automatically.',
+      'Nexus opens the program. The sponsor receives progress updates only when opted in; the authorized workspace user records product approvals.',
     deterministicSeed: true,
   };
 }

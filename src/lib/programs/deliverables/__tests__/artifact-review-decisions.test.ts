@@ -82,9 +82,11 @@ describe("artifact review decisions", () => {
     expect(packet.strongestEvidence).toEqual([
       "The cited work extract covers the review period.",
     ]);
-    expect(packet.diagnosticThesis).toBe("A throughput gap is driving manual handling.");
+    expect(packet.diagnosticThesis).toBe(
+      "A throughput gap is driving manual handling.",
+    );
     expect(packet.knownLimitations.join(" ")).toContain(
-      "does not satisfy final P2 sponsor sign-off",
+      "does not satisfy final P2 approval by an authorized workspace user",
     );
     expect(packet.approvalOptions.map((option) => option.decision)).toEqual([
       "approve_for_p3_draft",
@@ -113,7 +115,11 @@ describe("artifact review decisions", () => {
       /payment|invoice|accounts payable/,
     );
     expect(
-      [packet.diagnosticThesis, ...packet.strongestEvidence, ...packet.knownLimitations]
+      [
+        packet.diagnosticThesis,
+        ...packet.strongestEvidence,
+        ...packet.knownLimitations,
+      ]
         .join(" ")
         .toLowerCase(),
     ).not.toMatch(/payment|invoice|accounts payable|duplicate-payment/);
@@ -129,7 +135,11 @@ describe("artifact review decisions", () => {
   });
 
   it("keeps P3 blocked for revision or evidence hold decisions", () => {
-    expect(readinessForDecision("request_revisions").readyForP3Draft).toBe(false);
-    expect(readinessForDecision("hold_for_evidence").readyForP3Draft).toBe(false);
+    expect(readinessForDecision("request_revisions").readyForP3Draft).toBe(
+      false,
+    );
+    expect(readinessForDecision("hold_for_evidence").readyForP3Draft).toBe(
+      false,
+    );
   });
 });

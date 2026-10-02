@@ -68,7 +68,7 @@ export const executionPlanTemplateStructure = {
       required: true,
       description: 'Describe how progress, decisions, and escalations will be governed during Execute.',
       example_completed:
-        'Weekly workstream stand-up, biweekly sponsor review, and same-day escalation for timeline, cost, or labor-policy drift.',
+        'Weekly workstream stand-up, biweekly workspace-user progress review, and same-day escalation for timeline, cost, or labor-policy drift. The sponsor receives an informational update only when selected.',
     },
     {
       key: 'readiness_to_start',
@@ -101,7 +101,7 @@ export const executionPlanQualityRubric: ExecutionPlanRubricCriterion[] = [
   },
   {
     criterion: 'claims_and_commitments_are_cited',
-    rationale: 'Key execution assumptions, sponsor commitments, and target dates must trace back to turns or explicit plan context.',
+    rationale: 'Key execution assumptions, accountable-owner commitments, and target dates must trace back to turns or explicit plan context.',
     severity: 'blocker',
   },
   {

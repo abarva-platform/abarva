@@ -229,11 +229,18 @@ function tableResult(table: string) {
       select: jest.Mock;
       eq: jest.Mock;
       in: jest.Mock;
-      then: <TResult1 = { data: typeof moveArtifactsFixture }, TResult2 = never>(
+      then: <
+        TResult1 = { data: typeof moveArtifactsFixture },
+        TResult2 = never,
+      >(
         onfulfilled?:
-          | ((value: { data: typeof moveArtifactsFixture }) => TResult1 | PromiseLike<TResult1>)
+          | ((value: {
+              data: typeof moveArtifactsFixture;
+            }) => TResult1 | PromiseLike<TResult1>)
           | null,
-        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+        onrejected?:
+          | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
+          | null,
       ) => Promise<TResult1 | TResult2>;
     } = {
       select: jest.fn(() => chain),
@@ -694,7 +701,10 @@ describe("evaluateGate", () => {
     const stale = await evaluateGate(ctx, "program-1", 1, 2);
     expect(stale.failedChecks).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+        expect.objectContaining({
+          check: "charter_signed_off",
+          severity: "hard",
+        }),
       ]),
     );
 
@@ -747,7 +757,10 @@ describe("evaluateGate", () => {
 
     expect(result.failedChecks).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+        expect.objectContaining({
+          check: "charter_signed_off",
+          severity: "hard",
+        }),
       ]),
     );
   });
@@ -842,7 +855,10 @@ describe("evaluateGate", () => {
 
     expect(result.failedChecks).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+        expect.objectContaining({
+          check: "charter_signed_off",
+          severity: "hard",
+        }),
       ]),
     );
   });
@@ -881,10 +897,7 @@ describe("evaluateGate", () => {
     );
   });
 
-  it("blocks business_case_approved when the deliverable is signed off but its required roles are not all approved", async () => {
-    // business_case requires business+finance approval (REQUIRED_APPROVAL_ROLES
-    // in deliverable-role-approvals.ts). Single-actor sign-off alone must no
-    // longer be sufficient for a covered type.
+  it("does not require separate business and finance approvals after the authorized user signs off", async () => {
     deliverablesFixture = [
       {
         id: "business-case",
@@ -902,17 +915,7 @@ describe("evaluateGate", () => {
         status: "signed_off",
       },
     ];
-    roleApprovalsFixture = [
-      {
-        role: "business",
-        status: "approved",
-        approver_user_id: "person-1",
-        approver_name: "Jane Doe, CEO",
-        outstanding_conditions: null,
-        decided_at: "2026-07-20T00:00:00Z",
-      },
-      // finance still pending — not all required roles approved.
-    ];
+    roleApprovalsFixture = [];
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },
@@ -921,18 +924,14 @@ describe("evaluateGate", () => {
       5,
     );
 
-    expect(result.pass).toBe(false);
-    expect(result.failedChecks).toEqual(
+    expect(result.failedChecks).not.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          check: "business_case_approved",
-          severity: "hard",
-        }),
+        expect.objectContaining({ check: "business_case_approved" }),
       ]),
     );
   });
 
-  it("passes business_case_approved once the deliverable is signed off AND every required role is approved", async () => {
+  it("keeps the business-case gate tied to the single deliverable approval record", async () => {
     deliverablesFixture = [
       {
         id: "business-case",
@@ -950,24 +949,7 @@ describe("evaluateGate", () => {
         status: "signed_off",
       },
     ];
-    roleApprovalsFixture = [
-      {
-        role: "business",
-        status: "approved",
-        approver_user_id: "person-1",
-        approver_name: "Jane Doe, CEO",
-        outstanding_conditions: null,
-        decided_at: "2026-07-20T00:00:00Z",
-      },
-      {
-        role: "finance",
-        status: "approved",
-        approver_user_id: "person-2",
-        approver_name: "John Smith, CFO",
-        outstanding_conditions: null,
-        decided_at: "2026-07-20T00:05:00Z",
-      },
-    ];
+    roleApprovalsFixture = [];
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },
@@ -983,11 +965,7 @@ describe("evaluateGate", () => {
     );
   });
 
-  it("does not require any role approval for a deliverable type absent from REQUIRED_APPROVAL_ROLES (existing single-actor sign-off is unaffected)", async () => {
-    // 'design_brief' is a design_approved alias but NOT itself a key in
-    // REQUIRED_APPROVAL_ROLES (only target_state_architecture and
-    // operating_model_design are) — signed_off alone must remain sufficient,
-    // with no deliverable_role_approvals row needed at all.
+  it("uses the same single-actor sign-off rule for all gate deliverable types", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
       currentPhase: 3,
@@ -2048,7 +2026,7 @@ describe("evaluateGate — classify fast lane (moves_classify_fast_lane_v1)", ()
     expect(result.pass).toBe(true);
     expect(result.failedChecks).toEqual([]);
     expect(result.requiresApproval).toBe(true);
-    expect(result.approverRole).toBe("sponsor");
+    expect(result.approverRole).toBe("approver");
   });
 
   it("does not touch the normal P1 -> P2 transition even for an enrolled, straightforward-tagged Move", async () => {

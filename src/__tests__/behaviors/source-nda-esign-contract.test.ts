@@ -18,6 +18,9 @@ describe("Source NDA e-signature configuration", () => {
       state: "not_configured",
       fallback: "upload",
     });
+    expect(resolveSourceNdaEsignConfig("meridian-health", {
+      SOURCE_NDA_ESIGN_PROVIDER: "disabled",
+    })).toEqual({ state: "not_configured", fallback: "upload" });
   });
 
   it("refuses demo delivery for a different tenant", () => {

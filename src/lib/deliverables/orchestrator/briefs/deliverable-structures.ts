@@ -86,7 +86,7 @@ const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
   purpose:
-    "Authorize a strategic move with a clear mandate, sponsor commitment, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
+    "Authorize a strategic move with a clear mandate, accountable owner, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
   decisionToSupport:
     "Approve chartering of the move (a funded discovery & design gate, NOT a build authorization).",
   sections: [
@@ -101,7 +101,7 @@ const MOVES_CHARTER: DeliverableStructure = {
     s(
       "opportunity_context",
       "Opportunity, Context & Intended Outcomes",
-      "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected business value direction, and the outcomes Discovery is intended to evaluate. Only approved P0 capture, sponsor input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
+      "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected business value direction, and the outcomes Discovery is intended to evaluate. Only approved P0 capture, workspace-team input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
       [],
       `Keep this section under ${charterSectionMaxWords("opportunity_context")} words. This is hypothesis framing, not P2 findings.`,

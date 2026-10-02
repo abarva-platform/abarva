@@ -72,7 +72,9 @@ describe("real answers it must NOT suppress", () => {
   it("passes a long answer even when it opens with a promise", () => {
     const long =
       "Let me walk through the blockers. " +
-      "The hard criterion is sponsor sign-off on the charter. ".repeat(12);
+      "The hard criterion is authorized-user approval of the charter. ".repeat(
+        12,
+      );
     expect(long.length).toBeGreaterThan(400);
     expect(assessDeferralOnlyAnswer(long).reason).toBe(
       "too_long_to_be_a_deferral",

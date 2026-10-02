@@ -132,7 +132,7 @@ describe('GW-01 · P1 phase summary', () => {
     const view = sapView();
     expect(view.viewingPhase).toBe(1);
     expect(view.phasePanel.summary).toContain('P1 Charter is validating');
-    expect(view.phasePanel.summary).toContain('sponsor review still need to close');
+    expect(view.phasePanel.summary).toContain('An authorized workspace user records the phase approval.');
   });
 
   it('surfaces P1 deliverables in the phase panel', () => {

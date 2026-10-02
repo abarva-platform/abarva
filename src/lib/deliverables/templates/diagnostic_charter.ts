@@ -111,7 +111,7 @@ export const diagnosticCharterQualityRubric: DiagnosticRubricCriterion[] = [
   },
   {
     criterion: 'decision_at_end_of_phase_is_explicit',
-    rationale: 'The sponsor should know exactly what they are being asked to approve at the Diagnose-to-Design gate.',
+    rationale: 'The authorized workspace user should know exactly what they are approving at the Diagnose-to-Design gate; sponsors receive progress updates only when selected.',
     severity: 'major',
   },
   {

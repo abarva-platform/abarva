@@ -11,12 +11,12 @@
   ],
   "counts": {
     "routes": 397,
-    "fenced": 221,
-    "fencedDirect": 97,
+    "fenced": 222,
+    "fencedDirect": 98,
     "fencedIndirect": 124,
-    "unfenced": 176,
-    "unfencedButReachesFenceModule": 94,
-    "behavioral": 76,
+    "unfenced": 175,
+    "unfencedButReachesFenceModule": 95,
+    "behavioral": 77,
     "byteScannerOnly": 6,
     "none": 139
   },
@@ -2281,7 +2281,7 @@
       "fence": "none",
       "fenceSymbols": [],
       "fenceVia": [],
-      "reachesFenceModule": false,
+      "reachesFenceModule": true,
       "coverage": null,
       "suites": {
         "behavioral": [],
@@ -3095,13 +3095,17 @@
     },
     {
       "route": "src/app/api/programs/approve/route.ts",
-      "fence": "none",
-      "fenceSymbols": [],
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
       "fenceVia": [],
-      "reachesFenceModule": false,
-      "coverage": null,
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
       "suites": {
-        "behavioral": [],
+        "behavioral": [
+          "src/app/api/programs/phase-gate/__tests__/route.test.ts"
+        ],
         "byteScanner": []
       }
     },

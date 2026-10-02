@@ -33,7 +33,7 @@ export interface GateReadinessSources {
   gateApproved: (moveId: string, phase: number) => Promise<boolean>;
   /**
    * Optional next-phase draft exception. Used for governed handoffs such as:
-   * P2 sponsor review explicitly approved for P3 draft shaping. This is not
+   * P2 review explicitly approved by an authorized workspace user for P3 draft shaping. This is not
    * final approval and must return caveats that are carried into the draft.
    */
   priorPhaseDraftApproval?: (

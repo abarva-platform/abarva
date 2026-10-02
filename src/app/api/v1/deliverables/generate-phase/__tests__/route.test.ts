@@ -428,7 +428,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         "SAVED PHASE CAPTURE (authoritative input for this build)",
       );
       expect(decisionContext).toContain(
-        "Sponsor commitment: VP Member Services sponsors the Move",
+        "Sponsor contact and progress updates: VP Member Services sponsors the Move",
       );
       expect(decisionContext).toContain(
         "Scope boundary: Include member-service contacts",

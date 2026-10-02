@@ -592,10 +592,11 @@ function StrategicMovesEmptyState({ tenantName }: { tenantName: string }) {
             color: SHELL.INK_SOFT,
           }}
         >
-          Use this portfolio to track phase gates, sponsor decisions, evidence,
-          value at stake, and next actions across every Move in flight. Start a
-          Move from a qualified Intelligence pressure or originate one directly
-          when the sponsor already knows the business problem.
+          Use this portfolio to track phase gates, authorized-user decisions,
+          evidence, value at stake, and next actions across every Move in
+          flight. Start a Move from a qualified Intelligence pressure or
+          originate one directly when the sponsor already knows the business
+          problem.
         </p>
         <Link
           href="/strategic-moves/new"

@@ -13,7 +13,11 @@
 // Routes that approve / reject / waive a gate MUST call
 // `requireGateApprovalRole()` before the write.
 
-import { requireTenancy, tenancyErrorResponse, TenancyError } from '@/lib/auth/tenancy';
+import {
+  requireTenancy,
+  tenancyErrorResponse,
+  TenancyError,
+} from '@/lib/auth/tenancy';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { resolveAnyInstance } from '@/lib/reasoning/instance-resolver';
 import { isGateApprovalStrictMode } from '@/lib/auth/gate-approval-strict-mode';
@@ -38,7 +42,8 @@ export async function requireReasoningTenancy(): Promise<TenancyCtx> {
  * preamble to a single line.
  */
 export async function guardReasoning(): Promise<
-  { ctx: TenancyCtx; response?: undefined } | { ctx?: undefined; response: Response }
+  | { ctx: TenancyCtx; response?: undefined }
+  | { ctx?: undefined; response: Response }
 > {
   try {
     const ctx = await requireReasoningTenancy();
@@ -71,14 +76,19 @@ export function reasoningTenantId(ctx: TenancyCtx): string {
  * underlying stores are still tenant-gated by the auth check. Only a
  * resolvable instance owned by a *different* tenant is rejected.
  */
-export function isInstanceInTenant(ctx: TenancyCtx, instanceId: string): boolean {
+export function isInstanceInTenant(
+  ctx: TenancyCtx,
+  instanceId: string,
+): boolean {
   if (!instanceId) return false;
   const resolvedGlobal = resolveAnyInstance(instanceId);
   if (!resolvedGlobal) {
     // Not a known program/source instance — nothing cross-tenant to leak.
     return true;
   }
-  const scoped = resolveAnyInstance(instanceId, { tenantId: reasoningTenantId(ctx) });
+  const scoped = resolveAnyInstance(instanceId, {
+    tenantId: reasoningTenantId(ctx),
+  });
   return scoped !== null;
 }
 
@@ -104,7 +114,6 @@ const GATE_APPROVAL_ROLES = new Set([
   'client_admin',
   'abarva_super_admin',
   'founder',
-  'sponsor',
   'approver',
 ]);
 
@@ -119,8 +128,8 @@ const STRICT_GATE_APPROVAL_ROLES = new Set([
 /**
  * Enforce that the caller may approve / reject a gate criterion.
  *
- * - Default (pilot): any client member with an approval-bearing role
- *   (sponsor / approver / admin / maestro) may approve.
+ * - Default (pilot): only an explicitly approval-bearing workspace role
+ *   (approver / admin / maestro) may approve. Sponsor status is contact-only.
  * - GATE_APPROVAL_STRICT_MODE on: only admin / maestro may approve.
  *
  * Returns a 403 Response when the role check fails, otherwise null.
@@ -136,7 +145,7 @@ export function requireGateApprovalRole(ctx: TenancyCtx): Response | null {
       error: 'forbidden',
       detail: isGateApprovalStrictMode()
         ? 'Gate approval requires an admin or maestro role (GATE_APPROVAL_STRICT_MODE).'
-        : 'Gate approval requires an approval-bearing role (sponsor, approver, admin, or maestro).',
+        : 'Gate approval requires an authorized workspace-user role (approver, admin, or maestro). Sponsor contacts cannot approve.',
     },
     { status: 403 },
   );

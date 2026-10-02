@@ -100,7 +100,10 @@ jobs:
         run: npx jest --runTestsByPath src/components/setup/__tests__/ConnectorReconnectPage.assumption-disclosure.test.tsx --runInBand
 
       - name: Exercise Moves phase-gate route approval
-        run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
+        # The catalog credits the route suite for proving both the authorized
+        # workspace-user success path and the missing-rationale refusal. Keep
+        # the focused denial suite as an additional check.
+        run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts --runInBand
 
       - name: Exercise Intelligence gate-waiver decision controls
         run: npx jest --runTestsByPath src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts --runInBand
@@ -248,7 +251,6 @@ jobs:
           src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx
-          src/components/strategic-moves/__tests__/PhaseRoleApprovalsSummary.test.tsx
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx
           src/components/strategic-moves/__tests__/composeOriginateFirstMessage.grounding.test.ts
@@ -778,7 +780,6 @@ jobs:
         run: >-
           npx jest --runTestsByPath
           "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/escalate-approval.test.ts"
-          "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/notify-sponsor.test.ts"
           --runInBand
 
       - name: Exercise Source award and SOW handoff readiness

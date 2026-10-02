@@ -67,7 +67,7 @@ describe("roadmapLifecycleSentence — no contradiction with the artifact's exis
       /Review draft generated after Phase 4 entry and capture completion/i,
     );
     expect(s).toMatch(
-      /exit approval and final sponsor acceptance remain pending/i,
+      /exit approval by an authorized workspace user remains pending/i,
     );
     expect(s).not.toMatch(
       /no generation until the (gate|Phase 4 gate) is approved/i,
@@ -80,7 +80,7 @@ describe("roadmapLifecycleSentence — no contradiction with the artifact's exis
       4,
     );
     expect(s).toMatch(/Final/i);
-    expect(s).toMatch(/exit gate is approved/i);
+    expect(s).toMatch(/authorized workspace user approved the Phase 4 exit gate/i);
   });
 
   it("tags are compact and state-specific", () => {

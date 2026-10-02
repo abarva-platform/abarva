@@ -32,7 +32,7 @@ export function resolveSourceNdaEsignConfig(
   tenantKey: string,
   env: Env = process.env,
 ): SourceNdaEsignConfig {
-  if (!env.SOURCE_NDA_ESIGN_PROVIDER) {
+  if (!env.SOURCE_NDA_ESIGN_PROVIDER || env.SOURCE_NDA_ESIGN_PROVIDER === "disabled") {
     return { state: "not_configured", fallback: "upload" };
   }
   if (env.SOURCE_NDA_ESIGN_PROVIDER !== "docusign" ||

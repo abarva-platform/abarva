@@ -5,6 +5,52 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
 
 describe("Moves File Cabinet evidence review", () => {
+  it("does not expose evidence approval controls without workspace approval permission", async () => {
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        artifacts: [],
+        pendingEvidenceReviews: [
+          {
+            evidenceId: "evidence-1",
+            title: "workshop-notes.md",
+            phase: 2,
+            parseMethod: "markdown-line-parser",
+            confidence: 0.8,
+            sourceTextPreview: "Workshop notes",
+            extraction: {
+              version: 1,
+              summary: "Notes",
+              structured: {
+                decisions: [],
+                risks: [],
+                baselineCandidates: [],
+                actionItems: [],
+                observations: [],
+                assumptions: [],
+                openQuestions: [],
+                citations: [],
+              },
+            },
+          },
+        ],
+        evidenceReviewStatus: "available",
+      }),
+    })) as unknown as typeof fetch;
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} />);
+
+    expect(
+      await screen.findByText(
+        "Awaiting review by an authorized workspace user.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Review extracted information/)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Approve reviewed version" }),
+    ).toBeNull();
+  });
+
   it("makes absent review facts and evidence explicit", async () => {
     const fetchMock = jest.fn(async (url: string) => {
       if (url.endsWith("/review-decision")) {
@@ -61,7 +107,8 @@ describe("Moves File Cabinet evidence review", () => {
               fileSize: 1000,
               stored: "azure_blob",
               openItems: [],
-              downloadUrl: "/api/v1/programs/move-1/artifacts/artifact-1/download",
+              downloadUrl:
+                "/api/v1/programs/move-1/artifacts/artifact-1/download",
             },
           ],
           pendingEvidenceReviews: [],
@@ -190,6 +237,7 @@ describe("Moves File Cabinet evidence review", () => {
       <FileCabinetPanel
         moveId="move-1"
         phase={2}
+        canApproveGates
         onEvidenceChanged={onEvidenceChanged}
       />,
     );
@@ -287,7 +335,7 @@ describe("Moves File Cabinet evidence review", () => {
       } as Response;
     }) as typeof fetch;
 
-    render(<FileCabinetPanel moveId="move-1" phase={1} />);
+    render(<FileCabinetPanel moveId="move-1" phase={1} canApproveGates />);
     await screen.findByText("1 evidence item awaiting review");
     fireEvent.click(screen.getByText(/Review extracted information/));
 
@@ -359,8 +407,7 @@ describe("Moves File Cabinet evidence review", () => {
       { id: "kpi_family", label: "Baseline KPIs" },
       { id: "controls_family", label: "Risk controls" },
     ];
-    const file = () =>
-      new File(["a,b"], "controls.csv", { type: "text/csv" });
+    const file = () => new File(["a,b"], "controls.csv", { type: "text/csv" });
 
     it("sends the declared family with the upload", async () => {
       const forms: FormData[] = [];
