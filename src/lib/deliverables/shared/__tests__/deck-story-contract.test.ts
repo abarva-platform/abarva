@@ -4,6 +4,8 @@ import {
   DECK_OUTPUT_TOKEN_BUDGET,
   DECK_STORY_CONTRACTS,
   deckContract,
+  deckContractExpectsDiagram,
+  deckContractIdForDeliverable,
   isGenericSlideTitle,
   MAX_SUPPORTING_POINTS,
   renderDeckContractPrompt,
@@ -287,6 +289,49 @@ describe("renderDeckContractPrompt", () => {
   it("renders every deck without throwing", () => {
     for (const id of ALL) {
       expect(renderDeckContractPrompt(id)).toMatch(/DECK STORY CONTRACT/);
+    }
+  });
+});
+
+describe("deckContractIdForDeliverable", () => {
+  it("maps each deck deliverable type to a defined contract", () => {
+    const cases: Array<[string, DeckContractId]> = [
+      ["discovery_report", "REF_DECK_P2_DISCOVERY_READOUT"],
+      ["root_cause_worksheet", "REF_DECK_P2_DISCOVERY_READOUT"],
+      ["target_state_architecture", "REF_DECK_P3_SOLUTION_DECISION"],
+      ["solution_design", "REF_DECK_P3_SOLUTION_DECISION"],
+      ["operating_model_design", "REF_DECK_P3_SOLUTION_DECISION"],
+      ["business_case", "REF_DECK_P4_BUSINESS_CASE"],
+      ["roadmap", "REF_DECK_P4_ROADMAP"],
+    ];
+    for (const [type, id] of cases) {
+      expect(deckContractIdForDeliverable(type)).toBe(id);
+      // Every mapped id must resolve to a real contract.
+      expect(deckContract(id).id).toBe(id);
+    }
+  });
+
+  it("returns null for a deliverable with no deck contract", () => {
+    expect(deckContractIdForDeliverable("charter")).toBeNull();
+    expect(deckContractIdForDeliverable("value_measurement_contract")).toBeNull();
+    expect(deckContractIdForDeliverable("unknown_type")).toBeNull();
+  });
+});
+
+describe("deckContractExpectsDiagram", () => {
+  it("is true for the architecture/solution decision deck", () => {
+    expect(deckContractExpectsDiagram("REF_DECK_P3_SOLUTION_DECISION")).toBe(
+      true,
+    );
+  });
+
+  it("is true for every contract that declares a drawn visual slide", () => {
+    for (const id of ALL) {
+      const declaresDrawn = deckContract(id).slides.some(
+        (s) => s.primaryVisual !== "none" && s.primaryVisual !== "decision_card"
+          && s.primaryVisual !== "summary_panel" && s.primaryVisual !== "table",
+      );
+      if (declaresDrawn) expect(deckContractExpectsDiagram(id)).toBe(true);
     }
   });
 });
