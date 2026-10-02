@@ -17,6 +17,12 @@ export interface DiscoveryEvidenceReadinessItem {
   phase: number | null;
   confidence: number | string | null;
   createdAt: string | null;
+  /**
+   * The evidence family the uploader declared for this item, when it was
+   * uploaded against one. Declared identity outranks anything inferred from
+   * the item's text.
+   */
+  declaredFamilyKey?: string | null;
 }
 
 export interface DiscoveryFamilyCoverage {
@@ -380,6 +386,58 @@ function familyScore(
   return score;
 }
 
+/**
+ * Declared upload family → the discovery families it evidences.
+ *
+ * The readiness map a file is uploaded against and the discovery blueprint the
+ * build gate reads are two taxonomies of the same archetype. They were joined
+ * only by re-inferring a family from keywords in the item's title and summary,
+ * one family per item. A workflow walkthrough whose rows mention claims and
+ * eligibility outscores its own family and is filed under data access, so the
+ * workflow map reads as missing while the approved file that is the workflow
+ * map sits in the Move. The uploader already said what the file is; this table
+ * carries that statement across instead of discarding it.
+ *
+ * A key maps to more than one family where its label covers both.
+ */
+const DECLARED_FAMILY_CROSSWALK: Record<string, readonly string[]> = {
+  member_service_process_map: ["current_state_workflow_map"],
+  member_service_metrics_baseline: ["contact_center_kpis"],
+  member_service_systems_data_landscape: [
+    "crm_contact_center_system_map",
+    "claims_eligibility_benefits_data_access",
+  ],
+  knowledge_policy_content_inventory: ["knowledge_base_ownership_freshness"],
+  contact_center_transcripts_intents: [
+    "call_recording_transcript_availability",
+  ],
+  phi_controls_and_human_approval: [
+    "phi_privacy_security_controls",
+    "human_in_loop_model",
+  ],
+  member_service_org_change_readiness: ["change_adoption_owner"],
+};
+
+/**
+ * The blueprint families an item's DECLARED family evidences, or an empty list
+ * when it declared none this blueprint recognises. A declared key that is
+ * itself a blueprint family id maps to that family.
+ */
+export function declaredDiscoveryFamilies(
+  item: DiscoveryEvidenceReadinessItem,
+  blueprint: DiscoveryBlueprint,
+): string[] {
+  const declared = item.declaredFamilyKey?.trim();
+  if (!declared) return [];
+  const blueprintIds = new Set(
+    blueprint.evidenceFamilies.map((family) => family.id),
+  );
+  if (blueprintIds.has(declared)) return [declared];
+  return (DECLARED_FAMILY_CROSSWALK[declared] ?? []).filter((id) =>
+    blueprintIds.has(id),
+  );
+}
+
 export function mapEvidenceToDiscoveryFamily(
   item: DiscoveryEvidenceReadinessItem,
   blueprint: DiscoveryBlueprint,
@@ -398,11 +456,20 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
 }): DiscoveryEvidenceReadiness {
   const coverage = new Map<string, DiscoveryEvidenceReadinessItem[]>();
   for (const item of args.evidenceItems) {
-    const familyId = mapEvidenceToDiscoveryFamily(item, args.blueprint);
-    if (!familyId) continue;
-    const items = coverage.get(familyId) ?? [];
-    items.push(item);
-    coverage.set(familyId, items);
+    // What the uploader declared wins. Keyword inference is the fallback for
+    // items that declared nothing this blueprint recognises — it never
+    // overrides, and never adds to, a declaration.
+    const declared = declaredDiscoveryFamilies(item, args.blueprint);
+    const inferred =
+      declared.length > 0
+        ? null
+        : mapEvidenceToDiscoveryFamily(item, args.blueprint);
+    const familyIds = declared.length > 0 ? declared : inferred ? [inferred] : [];
+    for (const familyId of familyIds) {
+      const items = coverage.get(familyId) ?? [];
+      items.push(item);
+      coverage.set(familyId, items);
+    }
   }
 
   const families = args.blueprint.evidenceFamilies.map((family) => {
@@ -471,6 +538,7 @@ export async function loadDiscoveryEvidenceReadiness(
       phase: number | null;
       confidence: number | string | null;
       created_at: string | null;
+      family_key: string | null;
     }>(
       `
         SELECT
@@ -480,7 +548,8 @@ export async function loadDiscoveryEvidenceReadiness(
           pei.evidence_type,
           pei.phase,
           pei.confidence,
-          pei.created_at
+          pei.created_at,
+          per.family_key
         FROM program_evidence_reviews per
         INNER JOIN program_evidence_items pei
           ON pei.id = per.evidence_id
@@ -506,6 +575,7 @@ export async function loadDiscoveryEvidenceReadiness(
       phase: row.phase,
       confidence: row.confidence,
       createdAt: row.created_at,
+      declaredFamilyKey: row.family_key,
     })),
   });
 }

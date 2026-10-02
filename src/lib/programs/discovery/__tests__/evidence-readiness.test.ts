@@ -1,5 +1,6 @@
 import {
   buildDiscoveryBlueprintInputFromProgram,
+  declaredDiscoveryFamilies,
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
   type DiscoveryEvidenceReadinessItem,
@@ -222,5 +223,116 @@ describe("discovery evidence readiness", () => {
     expect(agentAssistBlueprint.blueprintId).toBe(
       "healthcare_contact_center_agent_assist",
     );
+  });
+});
+
+// An upload made against a declared evidence family must be credited to that
+// family. The keyword scorer reads the item's title and summary and awards the
+// item to the single best-scoring family, so a file is routed by whatever
+// words its first rows happen to contain.
+describe("declared evidence family outranks keyword inference", () => {
+  const memberService = getDiscoveryBlueprint(
+    "healthcare member service contact center agent assist",
+  );
+
+  // The shape of a real workflow walkthrough: its opening rows name the systems
+  // the agent visits, so "claims", "eligibility" and "source" all appear.
+  const WALKTHROUGH_SUMMARY =
+    "case_id,contact_intent,step,time_seconds,actor,system_or_artifact,effort_or_wait,exception_or_control,evidence_ref " +
+    "WF-01,status inquiry,1,42,agent,CRM,agent effort,verify caller in approved workflow,SESSION-01 " +
+    "WF-01,status inquiry,2,68,agent,claims status view,agent effort,source timestamp not always visible,SYS-01 " +
+    "WF-01,status inquiry,3,53,agent,eligibility view,agent effort,agent confirms effective date,SYS-01";
+
+  function walkthrough(
+    declaredFamilyKey: string | null,
+  ): DiscoveryEvidenceReadinessItem {
+    return {
+      ...item("wf", "workflow_walkthrough.csv", WALKTHROUGH_SUMMARY),
+      declaredFamilyKey,
+    };
+  }
+
+  it("the keyword scorer alone files a workflow walkthrough under data access", () => {
+    // The defect, pinned: without a declaration this is what inference does.
+    expect(mapEvidenceToDiscoveryFamily(walkthrough(null), memberService)).toBe(
+      "claims_eligibility_benefits_data_access",
+    );
+  });
+
+  it("credits the declared family instead", () => {
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [walkthrough("member_service_process_map")],
+    });
+    const covered = readiness.families
+      .filter((family) => family.status === "covered")
+      .map((family) => family.familyId);
+    expect(covered).toEqual(["current_state_workflow_map"]);
+  });
+
+  it("a declaration is not also keyword-scored into a second family", () => {
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [walkthrough("member_service_process_map")],
+    });
+    expect(
+      readiness.families.find(
+        (family) =>
+          family.familyId === "claims_eligibility_benefits_data_access",
+      )?.status,
+    ).toBe("missing");
+  });
+
+  it("maps a declared family whose label spans two discovery families to both", () => {
+    const systems = {
+      ...item("sys", "system_inventory.csv", "system_id,domain,system_role"),
+      declaredFamilyKey: "member_service_systems_data_landscape",
+    };
+    expect(declaredDiscoveryFamilies(systems, memberService)).toEqual([
+      "crm_contact_center_system_map",
+      "claims_eligibility_benefits_data_access",
+    ]);
+  });
+
+  it("accepts a declared key that is itself a blueprint family id", () => {
+    const direct = {
+      ...item("k", "anything.csv", "no keywords here"),
+      declaredFamilyKey: "knowledge_base_ownership_freshness",
+    };
+    expect(declaredDiscoveryFamilies(direct, memberService)).toEqual([
+      "knowledge_base_ownership_freshness",
+    ]);
+  });
+
+  it("falls back to keyword inference when nothing recognised is declared", () => {
+    for (const declared of [null, undefined, "", "uploaded_move_evidence"]) {
+      const undeclared = {
+        ...item(
+          "kpi",
+          "contact center kpi baseline",
+          "AHT, transfer, repeat contact and CSAT metric baseline.",
+        ),
+        declaredFamilyKey: declared,
+      };
+      expect(declaredDiscoveryFamilies(undeclared, memberService)).toEqual([]);
+      const readiness = evaluateDiscoveryEvidenceReadiness({
+        blueprint: memberService,
+        evidenceItems: [undeclared],
+      });
+      expect(
+        readiness.families.find(
+          (family) => family.familyId === "contact_center_kpis",
+        )?.status,
+      ).toBe("covered");
+    }
+  });
+
+  it("ignores a crosswalk target the blueprint does not contain", () => {
+    const foreign = {
+      ...item("wf", "workflow.csv", "workflow"),
+      declaredFamilyKey: "member_service_process_map",
+    };
+    // `blueprint` above is a different archetype with no member-service families.
+    expect(declaredDiscoveryFamilies(foreign, blueprint)).toEqual([]);
   });
 });
