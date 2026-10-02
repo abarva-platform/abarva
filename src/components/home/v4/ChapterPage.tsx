@@ -8,7 +8,6 @@ import type {
   EnterpriseSignalPacket,
   GroundedClaim,
   Signal,
-  VisualOpportunity,
 } from "@/lib/home/preview/types";
 import {
   ChapterHeader,
@@ -18,7 +17,8 @@ import {
   QuestionsSection,
   RecordBand,
 } from "./bands";
-import { Exhibit, ExhibitBars } from "./Exhibit";
+import { CockpitChartGrid } from "./CockpitChartGrid";
+import { TechCockpit } from "./TechCockpit";
 import { splitChapterIntoBands } from "./chapter-bands";
 import {
   FindingsBlock,
@@ -61,21 +61,19 @@ export function ChapterPage({
   chapterNumber,
   signalPacket,
   visualDatasets,
-  exhibitMeta,
   depth,
   contracts,
   asOf,
   onOpenRows,
   metrics,
   queue,
+  estate,
   briefingOpening,
 }: {
   chapter: ChapterView;
   chapterNumber: number;
   signalPacket: EnterpriseSignalPacket;
   visualDatasets: Record<string, Array<Record<string, unknown>>>;
-  /** Per-dataset counts line, derived by the caller from real records. */
-  exhibitMeta?: Record<string, string>;
   /** Tables and findings computed from the estate rows in the bundle -- no model, no packet claim.
    * Absent, or empty, renders nothing: a chapter whose rows produce no table has no table set. */
   depth?: ChapterDepth;
@@ -93,6 +91,15 @@ export function ChapterPage({
     programs?: EstateRow[];
     contracts?: EstateRow[];
   };
+  /** The technology estate the cross-dimensional cockpit pivots over, passed only on the chapter
+   * that renders it. Every row is a canonical application/vendor record the bundle already carries;
+   * the pivot re-projects them and invents nothing. Absent elsewhere, so the cockpit draws on no
+   * other chapter. */
+  estate?: {
+    applications?: EstateRow[];
+    vendors?: EstateRow[];
+    dataAssetCount?: number;
+  };
   /**
    * Briefing chapters answer an enterprise-orientation question. They should never promote a
    * specialist finding into the opening simply because authored claims are absent.
@@ -105,7 +112,10 @@ export function ChapterPage({
   const exhibits = chapter.visual_opportunities.filter((v) =>
     Boolean(visualDatasets[v.dataset_ref]),
   );
-  const [lead, ...rest] = exhibits;
+  // The Technology & Data chapter is dense enough to explore, not only read: it swaps the exhibit
+  // grid for the cross-dimensional estate cockpit. Every other chapter renders its generator-proposed
+  // exhibits as a responsive dashboard grid.
+  const isTechChapter = chapter.chapterId === "technology_data";
 
   // When the generator declined to write this chapter, the rows still answer it. Lead with the
   // strongest thing they say rather than with the generator's status.
@@ -172,28 +182,23 @@ export function ChapterPage({
         })}
       />
 
-      {/* The exhibits, through the governed exhibit path unchanged: every bar is a share the
-          deterministic dataset already carries, and the model supplies no plotted value. */}
-      {lead ? (
-        <ExhibitFor
-          visual={lead}
-          index={1}
+      {/* The exhibits, through the governed chart path: every bar is a value the deterministic dataset
+          already carries, and the model supplies no plotted figure. The Technology & Data chapter
+          reads its estate as an interactive pivot instead -- same governance, denser evidence. */}
+      {isTechChapter ? (
+        <TechCockpit
+          applications={estate?.applications}
+          vendors={estate?.vendors}
+          dataAssetCount={estate?.dataAssetCount}
+          onOpenRows={onOpenRows}
+        />
+      ) : (
+        <CockpitChartGrid
+          visuals={exhibits}
           signalPacket={signalPacket}
           visualDatasets={visualDatasets}
-          meta={exhibitMeta?.[lead.dataset_ref]}
-          dark
         />
-      ) : null}
-      {rest.map((visual, i) => (
-        <ExhibitFor
-          key={visual.dataset_ref}
-          visual={visual}
-          index={i + 2}
-          signalPacket={signalPacket}
-          visualDatasets={visualDatasets}
-          meta={exhibitMeta?.[visual.dataset_ref]}
-        />
-      ))}
+      )}
 
       {/* The deterministic evidence stays visible rather than hidden behind a tab: the findings a
           reader must act on, the tables the rows support, and the honesty markers for what the rows
@@ -1434,36 +1439,6 @@ function compact(value: string, limit: number): string {
   if (value.length <= limit) return value;
   const cut = value.slice(0, limit);
   return `${cut.slice(0, Math.max(0, cut.lastIndexOf(" ")))}...`;
-}
-
-function ExhibitFor({
-  visual,
-  index,
-  signalPacket,
-  visualDatasets,
-  meta,
-  dark,
-}: {
-  visual: VisualOpportunity;
-  index: number;
-  signalPacket: EnterpriseSignalPacket;
-  visualDatasets: Record<string, Array<Record<string, unknown>>>;
-  meta?: string;
-  dark?: boolean;
-}) {
-  const rows = visualDatasets[visual.dataset_ref];
-  if (!rows || rows.length === 0) return null;
-  return (
-    <Exhibit
-      index={index}
-      visual={visual}
-      signalPacket={signalPacket}
-      meta={meta}
-      dark={dark}
-    >
-      <ExhibitBars rows={rows} dark={dark} />
-    </Exhibit>
-  );
 }
 
 const readoutShellStyle = {

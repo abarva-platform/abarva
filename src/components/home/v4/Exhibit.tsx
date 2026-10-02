@@ -33,7 +33,7 @@ interface Row {
  * their own data as evidence assembled for an argument. The subject label is what belongs on the
  * page; the purpose string stays internal.
  */
-const DATASET_SUBJECT: Record<string, string> = {
+export const DATASET_SUBJECT: Record<string, string> = {
   vendor_spend_concentration: "Third-party spend",
   technology_spend_mix: "Technology spend",
   application_landscape_by_function: "Application estate",

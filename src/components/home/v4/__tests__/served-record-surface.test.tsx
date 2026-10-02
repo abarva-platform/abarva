@@ -428,8 +428,16 @@ describe("the served path", () => {
     document.querySelectorAll("style").forEach((n) => n.remove());
     const text = container.textContent ?? "";
 
-    expect(text).toContain("2 applications");
-    expect(text).toContain("2 contracts · $1.3M");
+    // The Technology & Data chapter reads the estate through the cross-dimensional cockpit; its scale
+    // strip counts the same live rows the exhibit used to -- two applications, two contracts at $1.3M.
+    const techScale =
+      container.querySelector("[data-home-tech-scale]")?.textContent ?? "";
+    expect(techScale).toContain("applications in the estate");
+    expect(techScale).toContain("vendor contracts");
+    expect(techScale).toContain("$1.3M");
+    expect(
+      container.querySelectorAll("[data-home-tech-table] tbody tr").length,
+    ).toBe(2);
     expect(text).not.toMatch(/\bECL\b/);
     expect(text).not.toMatch(/\bprojection\b/i);
     expect(text).not.toMatch(/\bloaded\b/i);
@@ -437,25 +445,41 @@ describe("the served path", () => {
   });
 
   it("does not render stale authored counts or concentration copy over live rows", () => {
-    window.location.hash = "technology_data";
-    const { container } = render(
-      <HomeV4App
-        bundle={bundleWithReviewedNarrativeAndLiveRows()}
-        tenantKey="meridian-health"
-      />,
-    );
-    document.querySelectorAll("style").forEach((n) => n.remove());
-    const text = container.textContent ?? "";
+    const concentrationCopy =
+      /Epic(?: Systems Corporation)?[^.]{0,120}Microsoft(?: Corporation)?[^.]{0,120}(?:over|more than)[^.]{0,80}quarter/i;
+    const liveBundle = bundleWithReviewedNarrativeAndLiveRows();
 
-    expect(text).toContain("230 contracts");
-    expect(text).toContain(
+    // Technology & Data reads the estate through the cockpit: the live contract count reaches the
+    // reader via its scale strip, counted from the 230 live rows, not the reviewed narrative's figure.
+    window.location.hash = "technology_data";
+    const tech = render(
+      <HomeV4App bundle={liveBundle} tenantKey="meridian-health" />,
+    );
+    tech.container.querySelectorAll("style").forEach((n) => n.remove());
+    const techScale =
+      tech.container.querySelector("[data-home-tech-scale]")?.textContent ?? "";
+    expect(techScale).toContain("230");
+    expect(techScale).toContain("vendor contracts");
+    const techText = tech.container.textContent ?? "";
+    expect(techText).not.toMatch(/\b72 declared vendor contracts\b/i);
+    expect(techText).not.toMatch(/\b395 of 540 tracked data assets/i);
+    expect(techText).not.toMatch(concentrationCopy);
+    tech.unmount();
+
+    // The vendor-concentration exhibit now lives on the Executive Brief; its message is the live
+    // supplier concentration (IBM, recomputed from live rows by the stale-claim guard), never the
+    // reviewed narrative's Epic/Microsoft copy.
+    window.location.hash = "executive_brief";
+    const brief = render(
+      <HomeV4App bundle={liveBundle} tenantKey="meridian-health" />,
+    );
+    brief.container.querySelectorAll("style").forEach((n) => n.remove());
+    const briefText = brief.container.textContent ?? "";
+    expect(briefText).toContain(
       "IBM Corporation is the largest supplier group at 12.2% of the current contract value.",
     );
-    expect(text).not.toMatch(/\b72 declared vendor contracts\b/i);
-    expect(text).not.toMatch(/\b395 of 540 tracked data assets/i);
-    expect(text).not.toMatch(
-      /Epic(?: Systems Corporation)?[^.]{0,120}Microsoft(?: Corporation)?[^.]{0,120}(?:over|more than)[^.]{0,80}quarter/i,
-    );
+    expect(briefText).not.toMatch(concentrationCopy);
+    brief.unmount();
   });
 
   it("states the leadership response basis before modelled interview content can be read as testimony", () => {

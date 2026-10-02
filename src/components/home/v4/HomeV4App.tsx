@@ -612,37 +612,6 @@ export function HomeV4App({
     selectActiveView(`tech:${objectType}`, undefined, match);
   };
 
-  /** Exhibit count lines, computed from the estate rather than asserted. An exhibit whose totals
-   * cannot be derived shows no counts line at all -- an estimated total on a governed surface is
-   * worse than a missing one. */
-  const exhibitMeta = useMemo(() => {
-    const meta: Record<string, string> = {};
-    if (applications) {
-      meta.application_landscape_by_function = `${applications.rows.length.toLocaleString()} applications`;
-    }
-    const contracts = techRecordTypes.find(
-      (t) => t.objectType === "vendor_contract",
-    );
-    if (contracts) {
-      const total = contracts.rows.reduce(
-        (sum, row) => sum + (Number(row.annualSpendUsd) || 0),
-        0,
-      );
-      if (total > 0) {
-        meta.vendor_spend_concentration = `${contracts.rows.length} contracts · $${(total / 1_000_000).toFixed(1)}M`;
-      }
-    }
-    if (integrations) {
-      const workloads = integrations.rows.filter(
-        (row) => row.recordKind === "data_analytics_workload",
-      );
-      if (workloads.length > 0) {
-        meta.data_workload_by_function = `${workloads.length.toLocaleString()} workload segments`;
-        meta.data_workload_by_technology = `${workloads.length.toLocaleString()} workload segments`;
-      }
-    }
-    return meta;
-  }, [applications, integrations, techRecordTypes]);
 
   /** A chapter counts as drafted when the writer produced a headline for it. That is a property of
    * the generated record, not an inference from empty arrays -- a chapter can legitimately hold
@@ -858,13 +827,25 @@ export function HomeV4App({
                   chapterNumber={activeIndex + 1}
                   signalPacket={signalPacket}
                   visualDatasets={visualDatasets}
-                  exhibitMeta={exhibitMeta}
                   onOpenRows={openRecordRows}
                   contracts={
                     chapterArguesFrom(activeChapter.chapterId, "vendors")
                       ? techRecordTypes.find(
                           (r) => r.objectType === "vendor_contract",
                         )?.rows
+                      : undefined
+                  }
+                  estate={
+                    activeChapter.chapterId === "technology_data"
+                      ? {
+                          applications: applications?.rows as
+                            | EstateRow[]
+                            | undefined,
+                          vendors: techRecordTypes.find(
+                            (r) => r.objectType === "vendor_contract",
+                          )?.rows as EstateRow[] | undefined,
+                          dataAssetCount: integrations?.rows.length,
+                        }
                       : undefined
                   }
                   asOf={displayBundle.contextVersion?.dataAsOf ?? undefined}
