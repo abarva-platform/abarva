@@ -8,8 +8,8 @@
 //     (artifact_family=generated_deliverable) via the existing File Cabinet
 //     write path, then linked back via deliverables_v2.approved_artifact_id.
 // Either way, deliverables_v2.signed_off_version is set to the version being
-// approved so later regeneration (v2-generator.ts) can never silently clobber
-// the approval record, and moves-generate-deps.ts / deliverable-content-signals.ts
+// approved so later governed regeneration can never silently clobber the
+// approval record, and moves-generate-deps.ts / deliverable-content-signals.ts
 // prefer this version when feeding content forward to the next phase.
 //
 // PHASE CAPTURE EVIDENCE INTEGRITY: this route accepts only deliberately

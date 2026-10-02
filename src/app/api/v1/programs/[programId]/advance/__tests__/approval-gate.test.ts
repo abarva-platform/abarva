@@ -75,14 +75,17 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
 
 import { POST } from "../route";
 import { advancePhase } from "@/lib/programs/mutations";
-import {
-  evaluateGate,
-  requestFounderApproval,
-} from "@/lib/programs/governance";
+import { evaluateGate } from "@/lib/programs/governance";
 
 const mockAdvancePhase = jest.mocked(advancePhase);
 const mockEvaluateGate = jest.mocked(evaluateGate);
-const mockRequestApproval = jest.mocked(requestFounderApproval);
+const mockRequestFounderApproval = jest.mocked(
+  jest.requireMock("@/lib/programs/governance")
+    .requestFounderApproval as jest.Mock,
+);
+const mockConsumeApproval = jest.mocked(
+  jest.requireMock("@/lib/programs/governance").consumeApproval as jest.Mock,
+);
 
 type GateShape = Awaited<ReturnType<typeof evaluateGate>>;
 
@@ -112,7 +115,8 @@ function advanceRequest(body: Record<string, unknown>) {
 describe("program advance route · human approval gate", () => {
   beforeEach(() => {
     mockAdvancePhase.mockClear();
-    mockRequestApproval.mockClear();
+    mockRequestFounderApproval.mockClear();
+    mockConsumeApproval.mockClear();
     mockEvaluateGate.mockClear();
     mockEvaluateGate.mockResolvedValue(gate());
   });
@@ -139,7 +143,8 @@ describe("program advance route · human approval gate", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: "explicit_approval_required",
     });
-    expect(mockRequestApproval).not.toHaveBeenCalled();
+    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
+    expect(mockConsumeApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
@@ -152,7 +157,8 @@ describe("program advance route · human approval gate", () => {
 
     expect(response.status).toBe(200);
     expect(mockAdvancePhase).toHaveBeenCalledTimes(1);
-    expect(mockRequestApproval).not.toHaveBeenCalled();
+    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
+    expect(mockConsumeApproval).not.toHaveBeenCalled();
   });
 
   it("refuses an unmet hard gate, and writes nothing", async () => {

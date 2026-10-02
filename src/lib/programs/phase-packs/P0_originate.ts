@@ -80,7 +80,7 @@ export const P0_ORIGINATE: PhasePack = {
       label: 'Discovery funding or capacity envelope stated',
       severity: 'soft',
       evaluationHint:
-        'Business case, founder_approval_requests context_jsonb, or program seed ' +
+        'Business case, approved origination brief, or program seed ' +
         'states the budget/capacity/time box for Discovery. P0 can proceed with ' +
         'a soft flag if the envelope is provisional, but not if Discovery has no ' +
         'named capacity at all.',

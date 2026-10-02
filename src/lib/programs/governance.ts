@@ -16,7 +16,8 @@
 //
 // Hard gates block advance until approval; soft gates allow advance
 // with an unresolved marker. Every check returns a GateCheck (shape in
-// types.ts). Approvals route through founder_approval_requests.
+// types.ts). Current gate approvals are explicit Moves actions by an
+// authorized workspace user; legacy approval requests do not advance phases.
 //
 // P2 may return a "discontinue" recommendation — the gate is allowed
 // to kill the move. P3 explicitly rejects tool-first solutions without
@@ -27,14 +28,8 @@ import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
-import {
-  createSupabaseProgramsWriteAdapter,
-  selectProgramsWriteAdapter,
-} from "@/lib/data-plane/write-adapters/programsWriteAdapter";
-import { resolveDataPlaneForTenant } from "@/lib/data-plane/read-adapters/resolveDataPlane";
 import type {
   ApprovalAuthority,
-  FounderApprovalRequestRow,
   GateCheck,
   TenancyCtx,
 } from "./types.db";
@@ -1431,60 +1426,6 @@ export async function evaluateGate(
     requiresApproval: rule.hard && !hardFails,
     approverRole: rule.hard ? rule.approverRole : null,
   };
-}
-
-export async function requestFounderApproval(
-  ctx: TenancyCtx,
-  programId: string,
-  input: {
-    requestType: FounderApprovalRequestRow["requestType"];
-    headline: string;
-    context?: Record<string, unknown>;
-    approverUserId?: string;
-    approverRole?: ApprovalAuthority;
-    deadlineHours?: number;
-  },
-  opts: { supabase?: SupabaseClient } = {},
-): Promise<string> {
-  assertTenancy(ctx);
-  const deadline = input.deadlineHours
-    ? new Date(Date.now() + input.deadlineHours * 3_600_000).toISOString()
-    : null;
-  // Physical insert goes through the programs write seam (Slice 3f). Supabase
-  // stays the default; the route-scoped client (if any) is threaded through so
-  // RLS / auth-mode is unchanged. Azure is opt-in via `ABARVA_DATA_PLANE`.
-  const adapter =
-    resolveDataPlaneForTenant(ctx.clientKey) === "azure-postgres"
-      ? selectProgramsWriteAdapter(undefined, ctx.clientKey)
-      : opts.supabase
-        ? createSupabaseProgramsWriteAdapter(
-            () => opts.supabase as SupabaseClient,
-          )
-        : selectProgramsWriteAdapter("supabase", ctx.clientKey);
-  const written = await adapter.insertFounderApproval({
-    programId,
-    requestedByUserId: ctx.userId,
-    requestType: input.requestType,
-    headline: input.headline,
-    context: input.context ?? {},
-    approverUserId: input.approverUserId ?? null,
-    approverRole: input.approverRole ?? null,
-    deadlineAtIso: deadline,
-  });
-  if (!written.ok || !written.data) {
-    throw new Error(written.error ?? "[requestFounderApproval] write failed");
-  }
-  const approvalId = written.data.approvalId;
-  await writeProgramAuditLogBestEffort(ctx, {
-    programId,
-    engagementId: programId,
-    action: "phase_approval_requested",
-    fromState: null,
-    toState: "approval_pending",
-    rationale: input.headline,
-    evidenceRefs: [approvalId],
-  });
-  return approvalId;
 }
 
 export async function decideApproval(

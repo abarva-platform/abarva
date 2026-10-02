@@ -19,10 +19,6 @@ import { selectProgramsWriteAdapter } from "@/lib/data-plane/write-adapters/prog
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
-  isGateApprovalStrictMode,
-  isStrictModeApprovalRole,
-} from "@/lib/auth/gate-approval-strict-mode";
-import {
   buildMovesPhaseDecisionAuditRefs,
   buildMovesPhaseDecisionEvidencePacket,
   coerceDecisionSupportList,
@@ -207,10 +203,10 @@ export async function POST(request: NextRequest) {
   let policyCtx: Awaited<ReturnType<typeof requireTenancy>> | null = null;
   try {
     policyCtx = await requireTenancy();
+    advancerRole = policyCtx.role ?? null;
     const accessPolicy = await loadUserProgramAccessPolicy(policyCtx, {
       programId: engRow.id,
     });
-    advancerRole = policyCtx.role ?? null;
     if (
       !accessPolicy.canApproveGates ||
       (Array.isArray(accessPolicy.programIdsAllowed) &&
@@ -221,18 +217,6 @@ export async function POST(request: NextRequest) {
           error: "forbidden",
           detail:
             "Advancing a program across a phase gate requires gate-approval permission from the authenticated workspace user.",
-        },
-        { status: 403 },
-      );
-    }
-    // P1-4 · GATE_APPROVAL_STRICT_MODE — when on, the gate advance
-    // additionally requires an admin / maestro role.
-    if (isGateApprovalStrictMode() && !isStrictModeApprovalRole(advancerRole)) {
-      return NextResponse.json(
-        {
-          error: "forbidden",
-          detail:
-            "GATE_APPROVAL_STRICT_MODE is enabled — phase-gate advance requires an admin or maestro role.",
         },
         { status: 403 },
       );

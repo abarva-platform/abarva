@@ -10,6 +10,7 @@ import {
 import {
   createSupabaseProgramsReadAdapter,
   selectProgramsReadAdapter,
+  type ProgramTurnEngagementRow,
 } from "@/lib/data-plane/read-adapters/programsReadAdapter";
 import type { PostgresCompatClient as SupabaseClient } from "@/lib/data-plane/postgresCompat";
 import type {
@@ -224,6 +225,18 @@ export async function getProgramById(
     rowToProgram(row as unknown as EngagementRow),
   ]);
   return program ?? null;
+}
+
+/** Resolve the legacy conversation route id with tenancy and per-Move RBAC applied. */
+export async function getProgramForTurnByGraphNodeId(
+  ctx: TenancyCtx,
+  graphNodeId: string,
+): Promise<ProgramTurnEngagementRow | null> {
+  assertTenancy(ctx);
+  const row = await selectProgramsReadAdapter(undefined, ctx.clientKey)
+    .getProgramByGraphNodeIdRow(graphNodeId, ctx.clientId);
+  if (!row || !(await canReadProgram(ctx, row.id))) return null;
+  return row;
 }
 
 async function assertProgramReadable(

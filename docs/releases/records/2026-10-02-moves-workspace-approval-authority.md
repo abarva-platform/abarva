@@ -31,6 +31,7 @@ Moves product approvals are recorded by an authenticated workspace user with app
 ## Changes Included
 
 - Retires separate sponsor workflow-commitment and approval-request writes.
+- Retires per-role deliverable approval writes; existing role rows remain read-only history and cannot gate sign-off.
 - Removes sponsor approval panels and actions from Moves.
 - Enforces Move-scoped approval permission on phase advancement, deliverable sign-off, evidence review, artifact decisions, and option approval.
 - Stores sponsor contacts without approval authority and sends phase-progress messages only to opted-in sponsor contacts.
@@ -38,11 +39,12 @@ Moves product approvals are recorded by an authenticated workspace user with app
 
 ## QA / Validation
 
-- Affected-path test sweep: 41 suites passed; 617 tests passed. One existing canonical-admin-roster assertion failed on the branch baseline and is unrelated to these changes.
+- Approval-path regression sweep: 24 suites, 305 tests passed.
+- AI surface controls: 24 suites, 235 tests passed; all 40 credited controls and 129 named cases were found and passed.
 - TypeScript check passed with Node 24 and a 6 GB heap.
-- Full ESLint passed with zero errors; warnings are existing repository warnings.
-- Focused approval, notification, and affected integration suites passed: 12 suites, 224 tests. The broader affected-path sweep also passed 41 suites with 617 tests; one existing canonical-admin-roster assertion failed on the branch baseline and is unrelated to these changes.
-- AI surface controls, route/export reachability, DOM integrity, and tenancy-fence census checks passed. Local release-check passed all 11 gates. GitHub CI results are pending PR revalidation.
+- Focused ESLint passed with zero errors; the full-source lint also reported zero errors and repository warnings.
+- Test-CI census is current; the library orphan audit reports no change against baseline.
+- Release-check and GitHub CI results are pending PR revalidation.
 - Signed-in production verification is pending deployment and must not be inferred from these tests.
 
 ## Rollout Plan
@@ -72,4 +74,4 @@ Revert the release through a follow-up PR and deploy it through the ACA main dep
 
 ## Known Gaps
 
-Production signed-in verification and email-delivery proof have not yet been completed. Legacy approval requests remain available for authorized workspace review, but sponsor reminder notifications and new sponsor-approval requests are retired.
+Production signed-in verification and email-delivery proof have not yet been completed. Historical approval requests remain reviewable by an authorized workspace user; sponsors cannot decide them, and no new sponsor approval requests are created.

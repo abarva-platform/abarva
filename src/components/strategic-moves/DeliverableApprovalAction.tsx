@@ -4,8 +4,8 @@
 // Two modes: approve the AI-drafted content as-is, or upload an edited
 // replacement file. Either way calls POST .../deliverables/:id/sign-off,
 // which sets deliverables_v2.signed_off_version so later regeneration can
-// never silently clobber the approval record (see v2-generator.ts /
-// moves-generate-deps.ts).
+// never silently clobber the approved version; governed regeneration uses the
+// deliverable-version persistence contract.
 
 import { useRef, useState } from "react";
 

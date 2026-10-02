@@ -1,19 +1,11 @@
-// Gate approval strict mode — audit 2026-05-22, finding P1-4.
+// Shared strict-mode checks for legacy Source and reasoning approval flows.
 //
-// `GATE_APPROVAL_STRICT_MODE` is an env-flag-gated hardening of every gate
-// approval / phase-advance path. Per Memory · Gate self-approval model:
+// Moves uses its explicit per-workspace capability (`canApproveGates`) for
+// ordinary approvals. This helper remains for Source and reasoning flows, and
+// for the explicit hard-gate bypass path; it does not grant sponsor authority.
+// `GATE_APPROVAL_STRICT_MODE` is an env-flag-gated hardening of those paths.
 //
-//   - Pilot (flag OFF, default): any tenant member with an approval-bearing
-//     capability (canApproveGates / sponsor / approver) may approve a gate,
-//     and a requester may approve their own request.
-//   - Production (flag ON): gate approval additionally requires an
-//     admin / maestro role AND enforces separation of duties — the
-//     approver must differ from the requester.
-//
-// The flag is the single switch wired into the phase-gate route, the
-// programs advance route, the gate-criterion routes, and the reasoning
-// gate routes. This module is the one place that reads the env var so the
-// behavior cannot drift between call sites.
+// The flag is read here so those remaining call sites share one policy.
 
 /** Roles that may approve a gate when GATE_APPROVAL_STRICT_MODE is ON. */
 const STRICT_MODE_APPROVAL_ROLES = new Set([

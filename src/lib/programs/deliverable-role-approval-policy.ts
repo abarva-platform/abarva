@@ -11,15 +11,7 @@ export const APPROVAL_ROLE_LABELS: Record<ApprovalRole, string> = {
   risk_security: "Risk/security approver",
 };
 
-/**
- * Which roles a deliverable TYPE requires, keyed by deliverableTypeKey. A type
- * absent from this map requires no role approvals; the existing single-actor
- * sign-off behavior remains unaffected unless a type opts in.
- *
- * These keys MUST match `deliverables_v2.deliverable_type_key` verbatim. That
- * column stores the phase-registry key from `deliverable-registry.ts`, not the
- * orchestrator's internal `deliverableType` name.
- */
+/** Moves approvals are recorded by one authorized workspace user, not role buckets. */
 export const REQUIRED_APPROVAL_ROLES: Partial<Record<string, ApprovalRole[]>> =
   {};
 

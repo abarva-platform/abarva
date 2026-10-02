@@ -1,9 +1,5 @@
-// GET  /api/v1/programs/:programId/deliverables/:deliverableId/role-approvals
-//   Read the per-role (business/technology/finance/risk_security) approval
-//   status for a deliverable. Only roles required by the deliverable's TYPE
-//   (see REQUIRED_APPROVAL_ROLES) are meaningful; a type with no required
-//   roles returns an empty required set (the existing single-actor sign-off
-//   remains the only gate for it).
+// GET returns historical role-specific rows for audit context only. Moves
+// approval is the single authorized workspace-user deliverable sign-off.
 //
 // POST is retired: Moves has one authorized workspace-user approval, not
 // separate business, technology, finance, or risk sign-off actors.

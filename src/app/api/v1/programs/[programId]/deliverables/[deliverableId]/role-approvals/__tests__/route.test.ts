@@ -63,9 +63,9 @@ describe("POST role-approvals", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: "role_approvals_retired",
     });
-    const { recordRoleApprovalDecision } = await import(
+    const roleApprovals = (await import(
       "@/lib/programs/deliverable-role-approvals"
-    );
-    expect(recordRoleApprovalDecision).not.toHaveBeenCalled();
+    )) as unknown as Record<string, jest.Mock>;
+    expect(roleApprovals.recordRoleApprovalDecision).not.toHaveBeenCalled();
   });
 });

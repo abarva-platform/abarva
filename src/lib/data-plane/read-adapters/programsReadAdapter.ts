@@ -19,6 +19,7 @@ import {
 import { createDefaultSession, type SessionRunner } from "./azureSession";
 import { resolveDataPlaneForTenant } from "./resolveDataPlane";
 import type { DataPlane } from "./types";
+import type { EngagementRow } from "@/lib/db/engagement";
 
 /**
  * Raw engagement row as stored — snake_case, untransformed. Mirrors the
@@ -66,6 +67,15 @@ export interface EngagementPortfolioRow {
   function_pack_confidence: number | null;
   gates_passed: unknown[] | null;
 }
+
+/** Full legacy chat prompt context, always resolved within one client. */
+export type ProgramTurnEngagementRow = EngagementRow & { client_id: string };
+
+const PROGRAM_TURN_ENGAGEMENT_COLUMNS =
+  "id, client_id, graph_node_id, name, industry_code, function_code, objective_code, topic_code, " +
+  "sponsor_person_id, co_sponsor_person_id, maestro_person_id, current_phase, status, charter, " +
+  "gates_passed, decisions, deliverables, sponsor_approvals, baseline_metrics, actual_metrics, " +
+  "outcome_fee_status, outcome_fee_usd, created_at, updated_at, phase_0_started_at, phase_4_completed_at";
 
 /** Query inputs for a single portfolio read. */
 export interface PortfolioQuery {
@@ -115,6 +125,11 @@ export interface ProgramsReadAdapter {
     programId: string,
     clientId: string,
   ): Promise<EngagementPortfolioRow | null>;
+  /** Resolve a conversation route id without reading outside the active client. */
+  getProgramByGraphNodeIdRow(
+    graphNodeId: string,
+    clientId: string,
+  ): Promise<ProgramTurnEngagementRow | null>;
 }
 
 /** The engagements column projection — identical to the pre-seam select. */
@@ -187,6 +202,17 @@ export function createSupabaseProgramsReadAdapter(
       if (error) throw error;
       return (data as unknown as EngagementPortfolioRow | null) ?? null;
     },
+    async getProgramByGraphNodeIdRow(graphNodeId, clientId) {
+      const sb = getClient();
+      const { data, error } = await sb
+        .from("engagements")
+        .select(PROGRAM_TURN_ENGAGEMENT_COLUMNS)
+        .eq("graph_node_id", graphNodeId)
+        .eq("client_id", clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as ProgramTurnEngagementRow | null) ?? null;
+    },
   };
 }
 
@@ -234,6 +260,16 @@ export function createAzureProgramsReadAdapter(
           `SELECT ${ENGAGEMENT_COLUMNS} FROM engagements ` +
             "WHERE id = $1 AND client_id = $2 LIMIT 1",
           [programId, clientId],
+        );
+        return rows[0] ?? null;
+      });
+    },
+    async getProgramByGraphNodeIdRow(graphNodeId, clientId) {
+      return session(async (run) => {
+        const rows = await run<ProgramTurnEngagementRow>(
+          `SELECT ${PROGRAM_TURN_ENGAGEMENT_COLUMNS} ` +
+            "FROM engagements WHERE graph_node_id = $1 AND client_id = $2 LIMIT 1",
+          [graphNodeId, clientId],
         );
         return rows[0] ?? null;
       });

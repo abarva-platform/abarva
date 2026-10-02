@@ -1,6 +1,5 @@
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { NextRequest } from 'next/server';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import { selectEngageTurnWriteAdapter } from '@/lib/data-plane/write-adapters/engageTurnWriteAdapter';
@@ -20,7 +19,7 @@ import { streamAgentTurn } from '@/lib/agent/stream';
 import { TurnTrace } from '@/lib/agent/trace';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { requireTenancy } from '@/app/api/v1/programs/_auth';
-import { getProgramById } from '@/lib/programs/queries';
+import { getProgramForTurnByGraphNodeId } from '@/lib/programs/queries';
 import {
   parseDecisionBlocks,
   parseActualMetricsBlock,
@@ -66,15 +65,6 @@ export async function POST(
     });
   }
 
-  const engagement = await getEngagementByGraphId(engagementId);
-  if (!engagement) {
-    return new Response(JSON.stringify({ error: 'engagement not found' }), {
-      status: 404,
-    });
-  }
-
-  // Resolve access through the active-workspace policy. A sponsor contact row
-  // alone grants no product access.
   let tenancy;
   try {
     tenancy = await requireTenancy();
@@ -83,10 +73,15 @@ export async function POST(
       status: 401,
     });
   }
-  const program = await getProgramById(tenancy, engagement.id);
-  if (!program) {
-    return new Response(JSON.stringify({ error: 'forbidden' }), {
-      status: 403,
+  // Resolve the graph id only inside the active client, then apply the
+  // per-Move read policy. Sponsor-contact rows do not grant product access.
+  const engagement = await getProgramForTurnByGraphNodeId(
+    tenancy,
+    engagementId,
+  );
+  if (!engagement) {
+    return new Response(JSON.stringify({ error: 'engagement not found' }), {
+      status: 404,
     });
   }
 

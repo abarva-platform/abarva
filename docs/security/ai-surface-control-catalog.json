@@ -636,13 +636,10 @@
             "aiDecisionEvidencePacket"
           ],
           "behavioralTest": {
-            "path": "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts",
+            "path": "src/app/api/programs/phase-gate/__tests__/route.test.ts",
             "provenCases": [
-              "phase-gate route · human approval gate refuses a gate advance with no human rationale, before any tenant lookup",
-              "phase-gate route · human approval gate refuses a rationale that is present but empty of reasoning",
-              "phase-gate route · human approval gate refuses a tenant member who does not hold gate-approval permission",
-              "phase-gate route · human approval gate refuses an ordinary approver when strict mode demands an admin",
-              "phase-gate route · human approval gate refuses a caller whose tenant access does not check out"
+              "POST /api/programs/phase-gate read plane lets a capability-authorized workspace user approve without a sponsor or admin title",
+              "POST /api/programs/phase-gate read plane rejects phase-gate advances without a human rationale"
             ]
           }
         }
@@ -690,7 +687,8 @@
             "path": "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts",
             "provenCases": [
               "program advance route · human approval gate refuses to advance without a human rationale, and writes nothing",
-              "program advance route · human approval gate creates an approval request instead of advancing when the gate requires one",
+              "program advance route · human approval gate requires explicit approval and does not queue a sponsor approval request",
+              "program advance route · human approval gate advances only after the authorized workspace user explicitly approves",
               "program advance route · human approval gate refuses an unmet hard gate, and writes nothing"
             ]
           }
@@ -715,7 +713,7 @@
             "path": "src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts",
             "provenCases": [
               "advance_phase tool · human approval gate refuses to advance without an explicit human rationale, and writes nothing",
-              "advance_phase tool · human approval gate queues an approval request instead of satisfying the gate itself",
+              "advance_phase tool · human approval gate directs approval to the authorized workspace user without creating a sponsor request",
               "advance_phase tool · human approval gate refuses a bypass from a session without gate-approval rights",
               "advance_phase tool · human approval gate still blocks on an unmet hard gate before any rationale question arises"
             ]

@@ -286,7 +286,7 @@ describe("program access policy", () => {
     expect(fromMock).not.toHaveBeenCalled();
   });
 
-  it("keeps canonical client-admin emails as all-program Moves admins after JIT person provisioning resolves a UUID user id", async () => {
+  it("does not grant client-admin access from a tenant-looking email domain alone", async () => {
     setupRows({});
     const { loadUserProgramAccessPolicy, canReadProgram } =
       await import("../program-access-policy");
@@ -301,15 +301,15 @@ describe("program access policy", () => {
 
     const policy = await loadUserProgramAccessPolicy(ctx);
 
-    expect(policy.accessLevel).toBe("client_admin");
-    expect(policy.programScope).toBe("all_client_programs");
-    expect(policy.programIdsAllowed).toBeNull();
-    expect(policy.canCreatePrograms).toBe(true);
-    expect(policy.canApproveGates).toBe(true);
-    expect(policy.canGenerateDeliverables).toBe(true);
+    expect(policy.accessLevel).toBe("no_program_access");
+    expect(policy.programScope).toBe("assigned_programs_only");
+    expect(policy.programIdsAllowed).toEqual([]);
+    expect(policy.canCreatePrograms).toBe(false);
+    expect(policy.canApproveGates).toBe(false);
+    expect(policy.canGenerateDeliverables).toBe(false);
     expect(policy.canViewFinancialData).toBe(false);
-    await expect(canReadProgram(ctx, "lakeshore-move-any")).resolves.toBe(true);
-    expect(fromMock).not.toHaveBeenCalled();
+    await expect(canReadProgram(ctx, "tenant-move-any")).resolves.toBe(false);
+    expect(fromMock).toHaveBeenCalled();
   });
 
   it("does not grant an automation agent access to a different active tenant", async () => {
