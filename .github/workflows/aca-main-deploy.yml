@@ -104,6 +104,21 @@ jobs:
             exit 1
           fi
 
+      - name: Validate Source NDA demo configuration
+        shell: bash
+        env:
+          SOURCE_NDA_ESIGN_PROVIDER: ${{ vars.SOURCE_NDA_ESIGN_PROVIDER || 'disabled' }}
+          SOURCE_NDA_ESIGN_ENVIRONMENT: ${{ vars.SOURCE_NDA_ESIGN_ENVIRONMENT || '' }}
+          SOURCE_NDA_ESIGN_INTEGRATION_KEY: ${{ vars.SOURCE_NDA_ESIGN_INTEGRATION_KEY || '' }}
+          SOURCE_NDA_ESIGN_ACCOUNT_ID: ${{ vars.SOURCE_NDA_ESIGN_ACCOUNT_ID || '' }}
+          SOURCE_NDA_ESIGN_USER_ID: ${{ vars.SOURCE_NDA_ESIGN_USER_ID || '' }}
+          SOURCE_NDA_ESIGN_KEY_ID: ${{ vars.SOURCE_NDA_ESIGN_KEY_ID || '' }}
+          SOURCE_NDA_ESIGN_TEST_INBOX: ${{ vars.SOURCE_NDA_ESIGN_TEST_INBOX || '' }}
+        run: |
+          set -euo pipefail
+          source scripts/ops/source-nda-esign-deploy-env.sh
+          build_source_nda_esign_env_args
+
       - name: Capture deploy identity
         shell: bash
         run: |
@@ -268,8 +283,18 @@ jobs:
       - name: Deploy new revision
         id: deploy_revision
         shell: bash
+        env:
+          SOURCE_NDA_ESIGN_PROVIDER: ${{ vars.SOURCE_NDA_ESIGN_PROVIDER || 'disabled' }}
+          SOURCE_NDA_ESIGN_ENVIRONMENT: ${{ vars.SOURCE_NDA_ESIGN_ENVIRONMENT || '' }}
+          SOURCE_NDA_ESIGN_INTEGRATION_KEY: ${{ vars.SOURCE_NDA_ESIGN_INTEGRATION_KEY || '' }}
+          SOURCE_NDA_ESIGN_ACCOUNT_ID: ${{ vars.SOURCE_NDA_ESIGN_ACCOUNT_ID || '' }}
+          SOURCE_NDA_ESIGN_USER_ID: ${{ vars.SOURCE_NDA_ESIGN_USER_ID || '' }}
+          SOURCE_NDA_ESIGN_KEY_ID: ${{ vars.SOURCE_NDA_ESIGN_KEY_ID || '' }}
+          SOURCE_NDA_ESIGN_TEST_INBOX: ${{ vars.SOURCE_NDA_ESIGN_TEST_INBOX || '' }}
         run: |
           set -euo pipefail
+          source scripts/ops/source-nda-esign-deploy-env.sh
+          build_source_nda_esign_env_args
           expected_image="${{ steps.image.outputs.image }}"
           IMAGE="$expected_image"
           base_suffix="${{ steps.release.outputs.revision_suffix }}"
@@ -316,6 +341,17 @@ jobs:
           if revision_exists "$base_revision"; then
             existing_image="$(jq -r '.properties.template.containers[0].image // ""' /tmp/aca-existing-revision.json)"
             if [[ "$existing_image" == "$expected_image" ]]; then
+              for setting in "${source_nda_esign_env_args[@]}"; do
+                setting_name="${setting%%=*}"
+                expected_value="${setting#*=}"
+                existing_value="$(jq -r --arg name "$setting_name" \
+                  '[.properties.template.containers[0].env[]? | select(.name == $name) | .value // ""][0] // ""' \
+                  /tmp/aca-existing-revision.json)"
+                if [[ "$existing_value" != "$expected_value" ]]; then
+                  echo "Existing canonical revision has different Source NDA configuration; a new main commit is required." >&2
+                  exit 1
+                fi
+              done
               echo "Revision $base_revision already exists with the expected image; reusing it."
               cp /tmp/aca-existing-revision.json audit-artifacts/aca-main-deploy/revision.json
               printf '{"status":"reused","revision":"%s","image":"%s"}\n' "$base_revision" "$expected_image" \
@@ -348,6 +384,8 @@ jobs:
                 "CLERK_SECRET_KEY=secretref:clerk-secret-key" \
                 "ABARVA_PRIVATE_BROWSER_PROOF_ENABLED=1" \
                 "ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=secretref:parallel-run-token" \
+                "${source_nda_esign_env_args[@]}" \
+              --query '{properties:{latestRevisionName:properties.latestRevisionName}}' \
               --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json; then
               actual_latest="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-main-deploy/containerapp-update.json)"
               if [[ -z "$actual_latest" || "$actual_latest" == "null" ]]; then
@@ -460,7 +498,8 @@ jobs:
               consecutive_provisioning_failures=$((consecutive_provisioning_failures + 1))
               if (( consecutive_provisioning_failures >= 3 )); then
                 echo "Revision $revision reported provisioningState=Failed $consecutive_provisioning_failures times; aborting wait." >&2
-                cat audit-artifacts/aca-main-deploy/revision.json >&2
+                jq '{name, properties: {provisioningState: .properties.provisioningState, runningState: .properties.runningState, healthState: .properties.healthState}}' \
+                  audit-artifacts/aca-main-deploy/revision.json >&2
                 exit 1
               fi
             else
@@ -472,7 +511,8 @@ jobs:
 
           if [[ "$healthy" != "true" ]]; then
             echo "Revision $revision did not become Healthy/Running in time." >&2
-            cat audit-artifacts/aca-main-deploy/revision.json >&2
+            jq '{name, properties: {provisioningState: .properties.provisioningState, runningState: .properties.runningState, healthState: .properties.healthState}}' \
+              audit-artifacts/aca-main-deploy/revision.json >&2
             exit 1
           fi
           echo "Revision $revision is Provisioned + Running + Healthy; safe to pin traffic."
@@ -721,8 +761,23 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload deployment evidence
+      - name: Redact Source NDA configuration from deployment evidence
+        id: redact_source_nda_evidence
         if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -d audit-artifacts/aca-main-deploy ]]; then
+            while IFS= read -r -d '' file; do
+              redacted="$(mktemp)"
+              jq 'walk(if type == "object" and (.name? | type) == "string" and (.name | startswith("SOURCE_NDA_ESIGN_")) then .value = "[redacted]" else . end)' \
+                "$file" > "$redacted"
+              mv "$redacted" "$file"
+            done < <(find audit-artifacts/aca-main-deploy -type f -name '*.json' -print0)
+          fi
+
+      - name: Upload deployment evidence
+        if: always() && steps.redact_source_nda_evidence.outcome == 'success'
         uses: actions/upload-artifact@v7
         with:
           name: aca-main-deploy
