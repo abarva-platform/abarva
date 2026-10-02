@@ -240,7 +240,7 @@ describe('buildMoveEstimateModel — a Move with no resolvable function', () => 
     const html = renderMoveEstimateModelHtml(UNBOUND_MOVE, GENERATED_ON);
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).toContain('Honest unbound state');
-    expect(html).toContain('No curated Domain Function Pack');
+    expect(html).toContain('No curated domain reference model');
     // No verdict word, no fabricated economics — the unbound deck states the
     // gap and stops.
     expect(html).toContain('Kernel');
