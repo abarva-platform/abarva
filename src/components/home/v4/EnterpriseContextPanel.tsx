@@ -1,11 +1,16 @@
 import type { ReactNode } from "react";
 import type {
+  AttributionGap,
   EnterpriseContextFact,
   HomeEnterpriseContext,
 } from "@/lib/home/preview/ecl-enterprise-context";
 import type { ChapterId } from "@/lib/home/preview/types";
+import type { RecordRowMatch } from "./RecordBrowser";
 import { formatValueMoney } from "@/lib/home/preview/value-proof-format";
 import { PAGE_X, SANS, V4 } from "./tokens";
+
+/** What a reader is told when the record holds no value. Never a zero, never a blank. */
+const NOT_RECORDED = "Not recorded";
 
 const HEADER_STYLE = {
   color: V4.slate,
@@ -44,22 +49,12 @@ function Evidence({ fact }: { fact: EnterpriseContextFact }) {
   );
 }
 
-function Drill({
-  label,
-  type,
-  filter,
-  onOpenRows,
-}: {
-  label: string;
-  type: string;
-  filter: string;
-  onOpenRows: (type: string, filter: string) => void;
-}) {
+function Drill({ label, onOpen }: { label: string; onOpen: () => void }) {
   return (
     <button
       type="button"
-      onClick={() => onOpenRows(type, filter)}
-      title={`Open ${label.toLowerCase()} in the governed record`}
+      onClick={onOpen}
+      title={`Open ${label.toLowerCase()} in the record`}
       style={{
         border: 0,
         background: "none",
@@ -131,10 +126,13 @@ export function EnterpriseContextPanel({
   chapterId,
   context,
   onOpenRows,
+  onOpenMatch,
 }: {
   chapterId: ChapterId;
   context: HomeEnterpriseContext;
   onOpenRows: (type: string, filter: string) => void;
+  /** Opens the rows a figure was counted from, found by the identifier the count joined on. */
+  onOpenMatch: (type: string, match: RecordRowMatch) => void;
 }) {
   if (
     ![
@@ -158,7 +156,24 @@ export function EnterpriseContextPanel({
     (context.segmentSpine.unattributed[domain] ?? 0);
   const segmentName = (key: string | null) =>
     segments.find((segment) => segment.segmentKey === key)?.segmentName ??
-    "Enterprise shared";
+    "No declared segment";
+  const gaps = context.attributionGaps;
+  // Counted outside every segment, by the reason. One figure for all three would read as a
+  // deliberate arrangement when part of it is a link that does not resolve.
+  const outsideSegments = (cause: keyof AttributionGap) => ({
+    applications: gaps.applications[cause],
+    programs: gaps.programs[cause],
+    risks: gaps.risks[cause],
+  });
+  const noSegment = outsideSegments("functionWithoutSegment");
+  const notInRecord = outsideSegments("functionNotInRecord");
+  const noFunction = outsideSegments("noFunctionRecorded");
+  const any = (counts: typeof noSegment) =>
+    counts.applications + counts.programs + counts.risks > 0;
+  const counted = (count: number, noun: string) =>
+    `${count.toLocaleString()} ${noun}${count === 1 ? "" : "s"}`;
+  const listed = (counts: typeof noSegment) =>
+    `${counted(counts.applications, "application")}, ${counted(counts.programs, "program")}, ${counted(counts.risks, "risk")}`;
 
   return (
     <section
@@ -176,7 +191,7 @@ export function EnterpriseContextPanel({
           margin: "0 0 20px",
         }}
       >
-        Synthetic reference · Not client-attested · Source-linked governed rows
+        Synthetic reference · Not client-attested · Source-linked records
       </p>
       {chapterId === "executive_brief" ? (
         <>
@@ -202,12 +217,12 @@ export function EnterpriseContextPanel({
               margin: "26px 0",
             }}
           >
-            {context.profile.annualRevenueUsd !== null
-              ? metric(
-                  "Declared annual revenue",
-                  money(context.profile.annualRevenueUsd),
-                )
-              : null}
+            {metric(
+              "Declared annual revenue",
+              context.profile.annualRevenueUsd !== null
+                ? money(context.profile.annualRevenueUsd)
+                : NOT_RECORDED,
+            )}
             {metric("Business segments", String(segments.length))}
             {metric("Declared priorities", String(context.priorities.length))}
             {metric("Programs", String(total("programs")))}
@@ -226,8 +241,9 @@ export function EnterpriseContextPanel({
               margin: 0,
             }}
           >
-            {context.sharedFunctionIds.length} functions serve the enterprise
-            across segments; {context.unlinkedPrograms.length} program
+            {context.sharedFunctionIds.length} function
+            {context.sharedFunctionIds.length === 1 ? " has" : "s have"} no
+            declared segment; {context.unlinkedPrograms.length} program
             {context.unlinkedPrograms.length === 1 ? " has" : "s have"} no
             declared priority. Changes over time are not established by this
             view.
@@ -235,9 +251,7 @@ export function EnterpriseContextPanel({
           <div style={{ marginTop: 16 }}>
             <Drill
               label="Examine segments"
-              type="business_segment"
-              filter=""
-              onOpenRows={onOpenRows}
+              onOpen={() => onOpenRows("business_segment", "")}
             />
           </div>
         </>
@@ -253,9 +267,8 @@ export function EnterpriseContextPanel({
               margin: "0 0 14px",
             }}
           >
-            Revenue shares are declared in the source. Resource shares count
-            only segment-attributed rows; shared functions remain outside the
-            denominator.
+            Revenue shares are declared in the source. Segment counts include
+            only records whose function has a declared segment.
           </p>
           <Table
             headers={[
@@ -279,17 +292,27 @@ export function EnterpriseContextPanel({
                     <br />
                     <Drill
                       label="View segment"
-                      type="business_segment"
-                      filter={segment.segmentKey}
-                      onOpenRows={onOpenRows}
+                      onOpen={() =>
+                        onOpenMatch("business_segment", {
+                          field: "segmentKey",
+                          value: segment.segmentKey,
+                          label: segment.segmentName,
+                        })
+                      }
                     />
                   </td>
-                  <td style={CELL_STYLE}>{money(segment.revenueUsd)}</td>
                   <td style={CELL_STYLE}>
-                    {segment.revenueSharePct.toFixed(1)}%
+                    {fact.revenueUsd !== null
+                      ? money(fact.revenueUsd)
+                      : NOT_RECORDED}
                   </td>
                   <td style={CELL_STYLE}>
-                    {segment.pnlOwnerRole || "Not recorded"}
+                    {fact.revenueSharePct !== null
+                      ? `${fact.revenueSharePct.toFixed(1)}%`
+                      : NOT_RECORDED}
+                  </td>
+                  <td style={CELL_STYLE}>
+                    {segment.pnlOwnerRole || NOT_RECORDED}
                   </td>
                   <td style={CELL_STYLE}>
                     {segment.domains.applications.count.toLocaleString()}
@@ -316,11 +339,14 @@ export function EnterpriseContextPanel({
               margin: "14px 0 0",
             }}
           >
-            Shared or unattributed:{" "}
-            {context.segmentSpine.unattributed.applications} applications,{" "}
-            {context.segmentSpine.unattributed.programs} programs,{" "}
-            {context.segmentSpine.unattributed.risks} risks. Customer/channel
-            economics are not established by this record.
+            Under functions with no declared segment: {listed(noSegment)}.{" "}
+            {any(notInRecord)
+              ? `Naming a function that is not in this record: ${listed(notInRecord)}. `
+              : null}
+            {any(noFunction)
+              ? `With no function recorded: ${listed(noFunction)}. `
+              : null}
+            Customer/channel economics are not established by this record.
           </p>
         </>
       ) : null}
@@ -345,16 +371,18 @@ export function EnterpriseContextPanel({
                   <br />
                   <Drill
                     label="View programs"
-                    type="program_initiative"
-                    filter={priority.rowKey}
-                    onOpenRows={onOpenRows}
+                    onOpen={() =>
+                      onOpenMatch("program_initiative", {
+                        field: "priorityId",
+                        value: priority.priorityId,
+                        label: priority.title,
+                      })
+                    }
                   />
                 </td>
+                <td style={CELL_STYLE}>{priority.ownerRole ?? NOT_RECORDED}</td>
                 <td style={CELL_STYLE}>
-                  {priority.ownerRole ?? "Not recorded"}
-                </td>
-                <td style={CELL_STYLE}>
-                  {priority.targetOutcome ?? "Not recorded"}
+                  {priority.targetOutcome ?? NOT_RECORDED}
                 </td>
                 <td style={CELL_STYLE}>{priority.programCount}</td>
                 <td style={CELL_STYLE}>{priority.atRiskProgramCount}</td>
@@ -382,9 +410,13 @@ export function EnterpriseContextPanel({
                   {index > 0 ? ", " : ""}
                   <Drill
                     label={program.title}
-                    type="program_initiative"
-                    filter={program.rowKey}
-                    onOpenRows={onOpenRows}
+                    onOpen={() =>
+                      onOpenMatch("program_initiative", {
+                        field: "originalRowId",
+                        value: program.programId,
+                        label: program.title,
+                      })
+                    }
                   />
                 </span>
               ))}
@@ -414,15 +446,17 @@ export function EnterpriseContextPanel({
                   <br />
                   <Drill
                     label="View function"
-                    type="business_function"
-                    filter={fn.rowKey}
-                    onOpenRows={onOpenRows}
+                    onOpen={() =>
+                      onOpenMatch("business_function", {
+                        field: "functionId",
+                        value: fn.functionId,
+                        label: fn.title,
+                      })
+                    }
                   />
                 </td>
                 <td style={CELL_STYLE}>{segmentName(fn.segmentKey)}</td>
-                <td style={CELL_STYLE}>
-                  {fn.executiveOwner ?? "Not recorded"}
-                </td>
+                <td style={CELL_STYLE}>{fn.executiveOwner ?? NOT_RECORDED}</td>
                 <td style={CELL_STYLE}>{fn.applicationCount}</td>
                 <td style={CELL_STYLE}>{fn.programCount}</td>
                 <td style={CELL_STYLE}>{fn.riskCount}</td>
@@ -440,9 +474,10 @@ export function EnterpriseContextPanel({
               margin: "14px 0 0",
             }}
           >
-            {context.sharedFunctionIds.length} shared functions are deliberately
-            not allocated to one segment. Function-level accountability is
-            recorded; decision rights are not inferred.
+            {context.sharedFunctionIds.length} function
+            {context.sharedFunctionIds.length === 1 ? " has" : "s have"} no
+            declared segment. Function-level accountability is recorded;
+            decision rights are not inferred.
           </p>
         </>
       ) : null}
@@ -483,7 +518,7 @@ export function EnterpriseContextPanel({
                   <strong>{priority.title}</strong>
                   <br />
                   {priority.unlinked ? null : (
-                    <Drill label="View programs" type="program_initiative" filter={priority.rowKey} onOpenRows={onOpenRows} />
+                    <Drill label="View programs" onOpen={() => onOpenRows("program_initiative", priority.rowKey)} />
                   )}
                 </td>
                 <td style={CELL_STYLE}>{priority.ownerRole ?? "Not recorded"}</td>
@@ -502,7 +537,7 @@ export function EnterpriseContextPanel({
             {` ${context.valueProof.excludedSpendLines} of ${context.valueProof.completedPeriodSpendLines + context.valueProof.excludedSpendLines} spend records lack a verifiable completed-period actual and are excluded from current-period spend.`}
           </p>
           <div style={{ marginTop: 16 }}>
-            <Drill label="Examine all programs" type="program_initiative" filter="" onOpenRows={onOpenRows} />
+            <Drill label="Examine all programs" onOpen={() => onOpenRows("program_initiative", "")} />
           </div>
         </>
       ) : null}
@@ -543,7 +578,10 @@ export function EnterpriseContextPanel({
                         {[risk.functionName, risk.riskType?.replaceAll("_", " ")].filter(Boolean).join(" · ")}
                       </span>
                     ) : null}
-                    <Drill label="View risk" type="risk_control" filter={risk.rowKey} onOpenRows={onOpenRows} />
+                    <Drill
+                      label="View risk"
+                      onOpen={() => onOpenRows("risk_control", risk.rowKey)}
+                    />
                   </td>
                   <td style={CELL_STYLE}>{risk.severity}</td>
                   <td style={CELL_STYLE}>{risk.controlState === "unknown" ? "Unknown" : "Partially effective"}</td>
@@ -574,7 +612,7 @@ export function EnterpriseContextPanel({
             margin: "20px 0 0",
           }}
         >
-          {context.excludedUncitedRows} source row
+          {context.excludedUncitedRows} record
           {context.excludedUncitedRows === 1 ? " was" : "s were"} excluded from
           these totals because a verified citation was unavailable.
         </p>

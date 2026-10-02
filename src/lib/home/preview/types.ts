@@ -111,6 +111,12 @@ export interface HomeExecutiveStoryPlanV1 {
  * `src/lib/home/preview/golden-snapshots/<tenantKey>.json` deserializes to. */
 export interface HomeReviewBundle {
   tenantKey: string;
+  /**
+   * Whether the tenant input registry declares every input of this tenant to be synthetic
+   * demonstration data. Set where the bundle is loaded. Absent means nothing was declared, and
+   * a surface must then make no statement about the tenant being a demonstration.
+   */
+  declaredSyntheticDemo?: boolean;
   provenance: HomeReviewBundleProvenance;
   /** Read-time lineage for a served projection. Absent on stored snapshots. */
   contextVersion?: HomeContextVersion;
@@ -150,11 +156,16 @@ export interface HomeContextVersion {
     linkedRecordRows: number;
     families: Array<{ pageKey: string; totalRows: number; linkedRows: number }>;
   };
-  /** Null when the source catalog cannot be read; hashes file quality, not human approval. */
+  /** Null when the source catalog cannot be read. Changes when a file's state, or the approval
+   * recorded for its load, changes. */
   sourceCatalogHash?: string | null;
   sourceFileReview?: {
     totalFiles: number;
+    /** Files in the accepted state whose load carries a recorded approval. */
     acceptedFiles: number;
+    /** Files in the accepted state with no recorded approval: registered, and reviewed by no one
+     * on record. Absent on a version built before this was counted. */
+    notReviewedFiles?: number;
     partialFiles: number;
     blockedFiles: number;
     supersededFiles: number;

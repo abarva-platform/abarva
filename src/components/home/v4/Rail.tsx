@@ -117,6 +117,7 @@ const sectionLinkStyle: CSSProperties = {
 
 export function Rail({
   clientLabel,
+  declaredSyntheticDemo,
   groups,
   activeId,
   onSelect,
@@ -125,6 +126,12 @@ export function Rail({
   exportHrefBase,
 }: {
   clientLabel: string;
+  /**
+   * Whether this tenant is declared synthetic demonstration data. The statements that say so are
+   * shown for a tenant that is declared so and for no other: they are facts about one tenant, not
+   * furniture of the rail.
+   */
+  declaredSyntheticDemo: boolean;
   groups: RailGroup[];
   activeId: string;
   onSelect: (id: string) => void;
@@ -151,33 +158,43 @@ export function Rail({
         scrollbarGutter: "stable",
       }}
     >
-      <div>
-        <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
+      <div
+        data-home-tenant-declaration={
+          declaredSyntheticDemo ? "synthetic-demo" : "none"
+        }
+      >
+        {declaredSyntheticDemo ? (
+          <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
+        ) : null}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto minmax(0,1fr)",
+            gridTemplateColumns: declaredSyntheticDemo
+              ? "auto minmax(0,1fr)"
+              : "minmax(0,1fr)",
             alignItems: "baseline",
             gap: 8,
             marginTop: 7,
           }}
         >
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: V4.paper,
-              background: V4.navy,
-              borderRadius: 3,
-              padding: "4px 7px 3px",
-              flexShrink: 0,
-            }}
-          >
-            DEMO
-          </span>
+          {declaredSyntheticDemo ? (
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: V4.paper,
+                background: V4.navy,
+                borderRadius: 3,
+                padding: "4px 7px 3px",
+                flexShrink: 0,
+              }}
+            >
+              DEMO
+            </span>
+          ) : null}
           <span
             style={{
               fontFamily: SERIF,
@@ -225,17 +242,19 @@ export function Rail({
             Candidate · unreviewed
           </span>
         </div>
-        <p
-          style={{
-            margin: "11px 0 0",
-            fontFamily: SANS,
-            fontSize: 12,
-            lineHeight: 1.5,
-            color: V4.slate,
-          }}
-        >
-          Synthetic portfolio. Not a customer, not a case study.
-        </p>
+        {declaredSyntheticDemo ? (
+          <p
+            style={{
+              margin: "11px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: V4.slate,
+            }}
+          >
+            Synthetic portfolio. Not a customer, not a case study.
+          </p>
+        ) : null}
       </div>
 
       {groups.map((group, gi) => (
