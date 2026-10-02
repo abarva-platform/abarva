@@ -257,10 +257,10 @@ function chapterHtml(
     <p class="eyebrow">Chapter ${String(index + 1).padStart(2, "0")} · ${escapeHtml(chapter.title)}</p>
     ${
       mixed
-        ? `<div class="chapter-state"><h2>Current record, interpretation pending review</h2>
+        ? `<div class="chapter-state"><h2>${contextSection ? "Current source-linked record" : "Current record, interpretation pending review"}</h2>
           <p>${escapeHtml(homeRecordSourceLabel(recordSource))} · ${escapeHtml(homeNarrativeStatusLabel(recordSource))}</p>
           ${noInterviews ? "<p>No leadership interview rows are served here. The prior interpretation cannot establish what leaders said.</p>" : ""}
-          ${!depth.findings.length && !depth.tables.length ? "<p>No current chapter-specific tables or findings are available in this export.</p>" : ""}
+          ${!contextSection && !depth.findings.length && !depth.tables.length ? "<p>No current chapter-specific tables or findings are available in this export.</p>" : ""}
         </div>${currentContext}${currentDepth}
         <section class="prior-interpretation"><h3>${escapeHtml(priorLabel)}</h3>${prior}</section>`
         : `${prior}${currentDepth}`
@@ -560,7 +560,7 @@ function PdfChapter({
         <>
           <View style={pdfStyles.scope} wrap={false}>
             <Text style={pdfStyles.h2}>
-              Current record, interpretation pending review
+              {contextSection ? "Current source-linked record" : "Current record, interpretation pending review"}
             </Text>
             <Text style={pdfStyles.meta}>
               {homeRecordSourceLabel(recordSource)} ·{" "}
@@ -573,7 +573,7 @@ function PdfChapter({
                 interpretation cannot establish what leaders said.
               </Text>
             ) : null}
-            {!depth.findings.length && !depth.tables.length ? (
+            {!contextSection && !depth.findings.length && !depth.tables.length ? (
               <Text style={pdfStyles.text}>
                 No current chapter-specific tables or findings are available in
                 this export.

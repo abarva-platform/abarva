@@ -190,6 +190,7 @@ describe("Home walkthrough export", () => {
         "Segment scale and governed footprint",
         "Priority ownership and delivery",
         "Function ownership and footprint",
+        "High and critical risks needing control review",
       ]) {
         expect(html).toContain(label);
         expect(pdfMarkup).toContain(label);
@@ -198,6 +199,12 @@ describe("Home walkthrough export", () => {
       expect(pdfMarkup).toContain("Not client-attested");
       expect(html).toContain("At-risk linked programs");
       expect(pdfMarkup).toContain("At-risk linked programs");
+      expect(html).toContain("Unknown is not uncontrolled");
+      expect(pdfMarkup).toContain("Unknown is not uncontrolled");
+      const businessChapter = html.slice(html.indexOf("Chapter 02"), html.indexOf("Chapter 03"));
+      expect(businessChapter).toContain("Current source-linked record");
+      expect(businessChapter).not.toContain("No current chapter-specific tables");
+      expect(pdfMarkup).toContain("Current source-linked record");
       expect(html).toContain("Vendor Contracts</td><td>230");
       expect(html).not.toContain("Vendor Contracts</td><td>72");
     } finally {
