@@ -34,8 +34,6 @@ export type EsignWebhookInput = {
 export type VerifiedEsignEvent = {
   envelopeId: string;
   status: EsignEnvelopeStatus;
-  tenantKey: string;
-  eventId: string;
 };
 
 export type CompletedEsignDocuments = {
@@ -47,7 +45,9 @@ export interface EsignProvider {
   createEnvelope(input: CreateEsignEnvelopeInput): Promise<EsignEnvelope>;
   getSigningLink(input: {
     envelopeId: string;
-    recipientId: string;
+    eventId: string;
+    vendorId: string;
+    signer: EsignSigner;
     returnUrl: string;
   }): Promise<string>;
   verifyWebhook(input: EsignWebhookInput): Promise<VerifiedEsignEvent>;

@@ -38,16 +38,22 @@ export function createInMemoryEsignProvider() {
       envelopes.set(envelopeId, { input, documents: null });
       return { envelopeId, status: "sent" };
     },
-    async getSigningLink({ envelopeId, recipientId, returnUrl }) {
+    async getSigningLink({ envelopeId, eventId, vendorId, signer, returnUrl }) {
       const envelope = envelopes.get(envelopeId);
       if (!envelope) throw new Error("envelope_not_found");
-      if (!envelope.input.signers.some((signer) =>
-        signer.recipientId === recipientId && signer.delivery === "embedded")) {
+      if (envelope.input.eventId !== eventId || envelope.input.vendorId !== vendorId) {
+        throw new Error("envelope_identity_mismatch");
+      }
+      if (!envelope.input.signers.some((candidate) =>
+        candidate.recipientId === signer.recipientId &&
+        candidate.name === signer.name &&
+        candidate.clientUserId === signer.clientUserId &&
+        candidate.delivery === "embedded")) {
         throw new Error("recipient_not_found");
       }
       const target = new URL("https://esign-fake.invalid/sign");
       target.searchParams.set("envelope", envelopeId);
-      target.searchParams.set("recipient", recipientId);
+      target.searchParams.set("recipient", signer.recipientId);
       target.searchParams.set("return", returnUrl);
       return target.toString();
     },
@@ -71,8 +77,6 @@ export function createInMemoryEsignProvider() {
       return {
         envelopeId: parsed.envelopeId!,
         status: "completed",
-        tenantKey: envelope.input.tenantKey,
-        eventId: envelope.input.eventId,
       };
     },
     async fetchCompletedDocuments(envelopeId) {
