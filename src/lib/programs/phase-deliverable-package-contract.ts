@@ -68,7 +68,7 @@ const P1_CHARTER_SECTIONS = [
 
 const P1_CHARTER_EVIDENCE = [
   "Approved P0 origination answers",
-  "Sponsor/title and operating-owner role attestation",
+  "Sponsor contact listing and operating-owner role attestation",
   "Scope boundary attestation",
   "Directional value hypothesis and success criteria",
   "Evidence family plan for P2 discovery",
@@ -88,7 +88,7 @@ function baseOutputs(): PhaseDeliverableOutput[] {
       required: true,
       clientFacingLabel: "Editable Word phase deliverable",
       purpose:
-        "Formal client-editable record for redlines, sponsor comments, and approval workflow.",
+        "Formal client-editable record for redlines, stakeholder comments, and authorized-user approval workflow.",
     },
     {
       kind: "html_visual_review_companion",
@@ -128,7 +128,7 @@ function p1CharterOutputs(): PhaseDeliverableOutput[] {
       required: true,
       clientFacingLabel: "P1 Charter brief / decision record",
       purpose:
-        "Concise editable record of the approved P0 bet, sponsor/title, scope, value hypothesis, evidence plan, caveats, and P2 entry decision.",
+        "Concise editable record of the approved P0 bet, listed sponsor contact, scope, value hypothesis, evidence plan, caveats, and P2 entry decision.",
     },
     {
       kind: "evidence_provenance_manifest",
@@ -142,7 +142,7 @@ function p1CharterOutputs(): PhaseDeliverableOutput[] {
       required: false,
       clientFacingLabel: "Optional HTML review companion",
       purpose:
-        "Browser-friendly copy for sponsor review; not a separate board pack.",
+        "Browser-friendly copy for authorized workspace-user review; sponsors receive progress updates only.",
     },
   ];
 }
@@ -161,7 +161,7 @@ function p2CurrentStateSections(): string[] {
     "What breaks today, why it breaks, and operational implications",
     "Change, adoption, culture, and readiness observations",
     "Root causes, gaps, and evidence confidence",
-    "Sponsor review packet: approve for draft design, request revisions, or hold for evidence",
+    "Authorized-user review packet: approve for draft design, request revisions, or hold for evidence",
   ];
 }
 
@@ -178,7 +178,9 @@ function p2WorkshopEvidence(): string[] {
   ];
 }
 
-function businessCaseOutputs(outputs: PhaseDeliverableOutput[]): PhaseDeliverableOutput[] {
+function businessCaseOutputs(
+  outputs: PhaseDeliverableOutput[],
+): PhaseDeliverableOutput[] {
   return [
     ...outputs,
     {
@@ -197,14 +199,18 @@ export function getPhaseDeliverablePackageContract(args: {
 }): PhaseDeliverablePackageContract {
   const artifactKey = String(args.artifact);
   const isP1Charter =
-    args.phase === 1 || artifactKey === "program_charter" || artifactKey === "charter";
+    args.phase === 1 ||
+    artifactKey === "program_charter" ||
+    artifactKey === "charter";
   const outputs = isP1Charter
     ? p1CharterOutputs()
     : args.artifact === "business_case"
       ? businessCaseOutputs(baseOutputs())
       : baseOutputs();
   const isP2CurrentState =
-    args.phase === 2 || args.artifact === "discovery_report" || args.artifact === "root_cause_worksheet";
+    args.phase === 2 ||
+    args.artifact === "discovery_report" ||
+    args.artifact === "root_cause_worksheet";
 
   return {
     artifact: args.artifact,
@@ -213,8 +219,8 @@ export function getPhaseDeliverablePackageContract(args: {
     primaryEditableRecordLabel: isP1Charter
       ? "P1 Charter Brief / Decision Record"
       : isP2CurrentState
-      ? "Current State Process and Diagnostic Word Document"
-      : "Editable Phase Deliverable Word Document",
+        ? "Current State Process and Diagnostic Word Document"
+        : "Editable Phase Deliverable Word Document",
     outputs,
     wordDocumentSections: isP1Charter
       ? P1_CHARTER_SECTIONS
@@ -226,7 +232,9 @@ export function getPhaseDeliverablePackageContract(args: {
       : isP2CurrentState
         ? p2WorkshopEvidence()
         : DEFAULT_WORKSHOP_EVIDENCE,
-    provenanceRules: isP1Charter ? P1_CHARTER_PROVENANCE_RULES : DEFAULT_PROVENANCE_RULES,
+    provenanceRules: isP1Charter
+      ? P1_CHARTER_PROVENANCE_RULES
+      : DEFAULT_PROVENANCE_RULES,
   };
 }
 
@@ -241,9 +249,15 @@ export function renderPhaseDeliverablePackagePrompt(args: {
         `- ${output.clientFacingLabel} (${output.kind}) — ${output.required ? "required" : "optional"}: ${output.purpose}`,
     )
     .join("\n");
-  const wordSections = contract.wordDocumentSections.map((section) => `- ${section}`).join("\n");
-  const workshopEvidence = contract.requiredWorkshopEvidence.map((item) => `- ${item}`).join("\n");
-  const provenanceRules = contract.provenanceRules.map((rule) => `- ${rule}`).join("\n");
+  const wordSections = contract.wordDocumentSections
+    .map((section) => `- ${section}`)
+    .join("\n");
+  const workshopEvidence = contract.requiredWorkshopEvidence
+    .map((item) => `- ${item}`)
+    .join("\n");
+  const provenanceRules = contract.provenanceRules
+    .map((rule) => `- ${rule}`)
+    .join("\n");
 
   const isP1Charter =
     contract.phase === 1 ||

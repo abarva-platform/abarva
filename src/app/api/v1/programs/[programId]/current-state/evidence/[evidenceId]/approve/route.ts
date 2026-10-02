@@ -11,6 +11,7 @@ import { decideEvidenceReview } from "@/lib/programs/current-state-doc-ingest";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import { normalizeReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,15 @@ export async function POST(
     const { supabase } = await getProgramsRouteSupabase("mutation");
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
+      return Response.json({ error: "forbidden" }, { status: 403 });
+    }
 
     const body = (await req.json().catch(() => ({}))) as {
       decision?: string;

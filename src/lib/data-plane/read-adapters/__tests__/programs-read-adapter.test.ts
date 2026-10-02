@@ -335,6 +335,30 @@ describe("supabaseProgramsReadAdapter.getProgramByIdRow", () => {
   });
 });
 
+describe("supabaseProgramsReadAdapter.getProgramByGraphNodeIdRow", () => {
+  it("resolves the conversation row with graph id + client predicates", async () => {
+    const turnRow = {
+      id: "eng-1",
+      client_id: "client-1",
+      graph_node_id: "graph-1",
+      name: "Contact Center AI",
+      industry_code: "HEALTHCARE_IDN",
+      function_code: "SERVICE",
+      objective_code: "OPTIMISE",
+      topic_code: null,
+      sponsor_person_id: "contact-1",
+      current_phase: 1,
+    };
+    const { client, calls } = fakeSupabaseSingle({ data: turnRow, error: null });
+    const adapter = createSupabaseProgramsReadAdapter(() => client);
+    const row = await adapter.getProgramByGraphNodeIdRow("graph-1", "client-1");
+
+    expect(row).toEqual(turnRow);
+    expect(calls.some((c) => c.method === "eq" && c.args[0] === "graph_node_id")).toBe(true);
+    expect(calls.some((c) => c.method === "eq" && c.args[0] === "client_id")).toBe(true);
+  });
+});
+
 describe("azureProgramsReadAdapter.getProgramByIdRow", () => {
   it("reads the row with id + client_id predicates", async () => {
     let seenSql = "";
@@ -356,5 +380,25 @@ describe("azureProgramsReadAdapter.getProgramByIdRow", () => {
   it("returns null when the query yields no rows", async () => {
     const adapter = createAzureProgramsReadAdapter(fakeSession(() => []));
     expect(await adapter.getProgramByIdRow("ghost", "client-1")).toBeNull();
+  });
+});
+
+describe("azureProgramsReadAdapter.getProgramByGraphNodeIdRow", () => {
+  it("uses parameterized graph-id and client predicates", async () => {
+    let seenSql = "";
+    let seenParams: unknown[] = [];
+    const session = fakeSession((sql, params) => {
+      seenSql = sql;
+      seenParams = params;
+      return [{ id: "eng-1", graph_node_id: "graph-1", client_id: "client-1" }];
+    });
+    const adapter = createAzureProgramsReadAdapter(session);
+
+    const row = await adapter.getProgramByGraphNodeIdRow("graph-1", "client-1");
+
+    expect(row?.id).toBe("eng-1");
+    expect(seenSql).toContain("graph_node_id = $1");
+    expect(seenSql).toContain("client_id = $2");
+    expect(seenParams).toEqual(["graph-1", "client-1"]);
   });
 });

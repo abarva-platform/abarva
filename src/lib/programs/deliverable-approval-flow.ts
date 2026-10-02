@@ -32,7 +32,6 @@ export type ApprovalState =
 export type LockReason =
   | 'approved_final'
   | 'board_presented'
-  | 'client_signed_off'
   | 'archived';
 
 export type SupersedeReason =
@@ -44,16 +43,14 @@ export type SupersedeReason =
 export type ReviewerRole =
   | 'maestro'
   | 'steward'
-  | 'client_sponsor'
-  | 'cxo_sponsor'
+  | 'authorized_workspace_user'
   | 'external_reviewer';
 
 export type ApprovalBlocker =
   | 'missing_evidence'
   | 'unresolved_risk'
   | 'pending_review'
-  | 'locked_by_prior'
-  | 'needs_sponsor_signoff';
+  | 'locked_by_prior';
 
 export interface ApprovalTransition {
   from: ApprovalState;
@@ -161,11 +158,11 @@ const TRANSITION_TABLE: ReadonlyArray<
   {
     from: 'approved',
     to: 'locked',
-    requiredRole: 'client_sponsor',
+    requiredRole: 'authorized_workspace_user',
     requiresRationale: true,
     requiresEvidenceTrace: true,
     auditBasis:
-      'Client sponsor locks an approved deliverable; rationale and evidence trace required for governance record.',
+      'An authorized workspace user locks an approved deliverable; rationale and evidence trace required for governance record.',
   },
   // approved → superseded
   {
@@ -181,11 +178,11 @@ const TRANSITION_TABLE: ReadonlyArray<
   {
     from: 'approved',
     to: 'rejected',
-    requiredRole: 'cxo_sponsor',
+    requiredRole: 'authorized_workspace_user',
     requiresRationale: true,
     requiresEvidenceTrace: true,
     auditBasis:
-      'CXO sponsor revokes approval; full rationale and evidence trace required for executive record.',
+      'An authorized workspace user revokes approval; full rationale and evidence trace required for the audit record.',
   },
   // rejected → draft (reinstate for revision)
   {
@@ -211,11 +208,11 @@ const TRANSITION_TABLE: ReadonlyArray<
   {
     from: 'locked',
     to: 'superseded',
-    requiredRole: 'cxo_sponsor',
+    requiredRole: 'authorized_workspace_user',
     requiresRationale: true,
     requiresEvidenceTrace: true,
     auditBasis:
-      'CXO sponsor unlocks and supersedes a locked deliverable (strategic pivot only); rationale and evidence trace required.',
+      'An authorized workspace user unlocks and supersedes a locked deliverable (strategic pivot only); rationale and evidence trace required.',
   },
 ];
 
@@ -295,7 +292,7 @@ const SAMPLE_DELIVERABLES: ReadonlyArray<DeliverableApprovalRecord> = [
     deliverableName: 'CDP Architecture Decision Record',
     currentState: 'pending_review',
     allowedTransitions: getAllowedTransitions('pending_review'),
-    blockers: ['unresolved_risk', 'needs_sponsor_signoff'],
+    blockers: ['unresolved_risk', 'pending_review'],
     lockReason: null,
     supersedeReason: null,
     isDecisionGrade: true,
@@ -318,7 +315,7 @@ const SAMPLE_DELIVERABLES: ReadonlyArray<DeliverableApprovalRecord> = [
     requiresEvidenceTrace: true,
     proposedOnly: true,
     auditBasis:
-      'Value ledger approved by Steward after evidence-backed review; awaiting client sponsor lock.',
+      'Value ledger approved after evidence-backed review; awaiting an authorized workspace user lock.',
   },
   // 4. Locked — Store Associate Productivity Program Charter (Apex Retail)
   {
@@ -327,13 +324,13 @@ const SAMPLE_DELIVERABLES: ReadonlyArray<DeliverableApprovalRecord> = [
     currentState: 'locked',
     allowedTransitions: getAllowedTransitions('locked'),
     blockers: [],
-    lockReason: 'client_signed_off',
+    lockReason: 'approved_final',
     supersedeReason: null,
     isDecisionGrade: false,
     requiresEvidenceTrace: false,
     proposedOnly: true,
     auditBasis:
-      'Program charter locked following client sign-off; no further edits permitted without CXO unlock.',
+      'Program charter locked following authorized workspace approval; edits require an authorized workspace user to unlock it.',
   },
   // 5. Rejected — Meridian Intelligence Workshop Notes v1
   {
@@ -384,7 +381,6 @@ export const APPROVAL_STATES_IN_ORDER: ReadonlyArray<ApprovalState> = [
 export const LOCK_REASONS_IN_ORDER: ReadonlyArray<LockReason> = [
   'approved_final',
   'board_presented',
-  'client_signed_off',
   'archived',
 ];
 
@@ -398,8 +394,7 @@ export const SUPERSEDE_REASONS_IN_ORDER: ReadonlyArray<SupersedeReason> = [
 export const REVIEWER_ROLES_IN_ORDER: ReadonlyArray<ReviewerRole> = [
   'maestro',
   'steward',
-  'client_sponsor',
-  'cxo_sponsor',
+  'authorized_workspace_user',
   'external_reviewer',
 ];
 
@@ -408,5 +403,4 @@ export const APPROVAL_BLOCKERS_IN_ORDER: ReadonlyArray<ApprovalBlocker> = [
   'unresolved_risk',
   'pending_review',
   'locked_by_prior',
-  'needs_sponsor_signoff',
 ];

@@ -291,17 +291,16 @@ export function PhaseApproveAndBuild({
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
   const initialArtifactSignature = initialArtifacts
-    .map(
-      (artifact) =>
-        [
-          artifact.artifactId,
-          artifact.deliverableTypeKey,
-          artifact.documentTitle,
-          artifact.phase,
-          artifact.status,
-          artifact.version,
-          artifact.downloadUrl,
-        ].join(":"),
+    .map((artifact) =>
+      [
+        artifact.artifactId,
+        artifact.deliverableTypeKey,
+        artifact.documentTitle,
+        artifact.phase,
+        artifact.status,
+        artifact.version,
+        artifact.downloadUrl,
+      ].join(":"),
     )
     .join("|");
   const rowSourceSignature = `${phaseNum}::${initialArtifactSignature}`;
@@ -566,7 +565,8 @@ export function PhaseApproveAndBuild({
         padding: "10px 16px",
         background:
           building || anyRunning || hasParentBlocker ? "#D8DDE5" : "#147C5B",
-        color: building || anyRunning || hasParentBlocker ? "#596579" : "#FFFFFF",
+        color:
+          building || anyRunning || hasParentBlocker ? "#596579" : "#FFFFFF",
         border: "1px solid transparent",
         borderRadius: 8,
         fontSize: 13,
@@ -712,7 +712,7 @@ export function PhaseApproveAndBuild({
       <GateApprovalConfirmDialog
         open={confirmOpen}
         title={`Approve & build ${phaseLabel}?`}
-        summary={`This authorizes a governed build of all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one batch. It does not sign off the generated document${specs.length === 1 ? "" : "s"} or record the sponsor approval required by the phase gate; the gate remains blocked until each required deliverable is reviewed and signed off in Files & Evidence. There is no per-document regenerate afterward — if an input changes, you'll re-run the whole phase build.`}
+        summary={`This authorizes a governed build of all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one batch. It does not approve the generated document${specs.length === 1 ? "" : "s"} or the phase gate. The authorized Move user reviews each required deliverable in Files & Evidence, then approves the ready phase gate. There is no per-document regenerate afterward — if an input changes, you'll re-run the whole phase build.`}
         approverLabel={approverLabel}
         actorLabelPrefix="Authorizing build as"
         confirmLabel="Approve & Build"

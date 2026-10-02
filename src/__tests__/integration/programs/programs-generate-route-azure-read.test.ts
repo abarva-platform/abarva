@@ -318,8 +318,7 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
           reviewStatus: "pre_gate_review_required",
           preliminaryCaveat: expect.stringContaining("not final or board-ready"),
           openItems: expect.arrayContaining([
-            "Sponsor assignment required before final approval.",
-            "Charter signoff required before final approval.",
+            "Confirm the listed sponsor contact and progress-email preference; sponsor approval is not required.",
             "Phase gate approval required before final generation.",
           ]),
         }),

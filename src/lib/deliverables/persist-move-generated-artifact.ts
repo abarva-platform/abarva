@@ -116,13 +116,11 @@ export async function persistMoveGeneratedArtifact({
       ? "Passed"
       : "Failed";
   const draftCaveat =
-    "Draft status: This artifact was generated before formal phase approval. It reflects available evidence and is intended for sponsor review, workshop preparation, and refinement. It is not final or board-ready until sponsor assignment, charter signoff, and phase gate approval are completed.";
+    "Draft status: This artifact was generated before formal phase approval. It reflects available evidence and is intended for workspace review, workshop preparation, and refinement. It is not final or board-ready until required evidence is reviewed and an authorized workspace user records phase approval.";
   const openItems = isPreGateDraft
     ? [
-        "Sponsor assignment required before final approval.",
-        "Charter signoff required before final approval.",
+        "Confirm the listed sponsor contact and progress-email preference; sponsor approval is not required.",
         "Phase gate approval required before final generation.",
-        "Baseline capture may require sponsor ratification before final approval.",
         ...gateCaveatReasons(result),
       ]
     : [];

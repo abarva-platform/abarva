@@ -76,8 +76,12 @@ const UNSAFE_CAPABILITY_REPAIR_PATTERNS: ReadonlyArray<
     "use Tower to track evidence for Finance and outcome-owner certification",
   ],
   [
+    /\b(?:accountable\s+)?sponsors?\s+(?:approve|approves|sign off on)\s+(?:Moves\s+)?(?:phase movement|phase gates?|deliverables?)\b/gi,
+    "Moves checks readiness; an authorized workspace user records the approval, while sponsors are progress contacts only",
+  ],
+  [
     /\bMoves (?:automatically )?approves?\b/gi,
-    "Moves structures readiness for sponsor approval; it does not approve by itself",
+    "Moves checks readiness; an authorized workspace user records the approval, while sponsors are progress contacts only",
   ],
   [
     /\bAbarVa (?:automatically )?approves?\b/gi,

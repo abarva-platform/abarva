@@ -664,11 +664,13 @@ export function CurrentStateReadinessPanel({
   recommendation,
   plan,
   programId,
+  canApproveGates = false,
 }: {
   readiness: ReadinessReport | null;
   recommendation?: CurrentStateRecommendation | null;
   plan?: CurrentStatePlan | null;
   programId: string;
+  canApproveGates?: boolean;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -1109,18 +1111,24 @@ export function CurrentStateReadinessPanel({
                     {pendingReviews.length} parsed document
                     {pendingReviews.length > 1 ? "s" : ""} awaiting review
                   </div>
-                  {pendingReviews.map((review) => (
-                    <EvidenceReviewEditor
-                      key={review.evidenceId}
-                      review={review}
-                      programId={programId}
-                      busy={busy === `${i.key}:${review.evidenceId}`}
-                      disabled={busy !== null}
-                      onDecision={(decision, extraction) =>
-                        decide(i.key, review.evidenceId, decision, extraction)
-                      }
-                    />
-                  ))}
+                  {canApproveGates ? (
+                    pendingReviews.map((review) => (
+                      <EvidenceReviewEditor
+                        key={review.evidenceId}
+                        review={review}
+                        programId={programId}
+                        busy={busy === `${i.key}:${review.evidenceId}`}
+                        disabled={busy !== null}
+                        onDecision={(decision, extraction) =>
+                          decide(i.key, review.evidenceId, decision, extraction)
+                        }
+                      />
+                    ))
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 11, color: "#655b4a" }}>
+                      Awaiting review by an authorized workspace user.
+                    </p>
+                  )}
                 </div>
               )}
 

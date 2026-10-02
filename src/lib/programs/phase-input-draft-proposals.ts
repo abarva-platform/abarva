@@ -93,10 +93,10 @@ function buildP1Proposals(
       materiality: "governed_material",
       proposedValue: clean(p0.stakeholder_owner_view),
       rationale:
-        "Drafted from the approved origination stakeholder and owner view. Confirm cadence or authority before saving if the source is incomplete.",
+        "Drafted from the approved origination stakeholder and owner view. Confirm the sponsor contact and explicit progress-email preference before saving; do not infer approval authority from sponsor status.",
       evidenceRefs: [evidenceRef(0, "stakeholder_owner_view")],
       unresolvedGaps: [
-        "Confirm meeting cadence and named approval authority if not explicit in P0.",
+        "Confirm sponsor contact details and whether phase-progress emails should be sent.",
       ],
     }),
     proposal({
@@ -141,10 +141,10 @@ function buildP1Proposals(
       materiality: "governed_material",
       proposedValue: clean(p0.stakeholder_owner_view),
       rationale:
-        "Uses the approved sponsor and owner view as the decision-rights baseline. The user must confirm any missing authority boundaries.",
+        "Uses the approved owner view to record business accountability. Product gate authority remains with the authorized workspace user; capture any separate external funding authority as context, not as a Moves approval request.",
       evidenceRefs: [evidenceRef(0, "stakeholder_owner_view")],
       unresolvedGaps: [
-        "Confirm who can approve scope, investment, and phase advancement.",
+        "Confirm any external funding decision required; the authorized workspace user records Moves phase approval.",
       ],
     }),
     proposal({

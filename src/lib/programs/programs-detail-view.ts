@@ -30,7 +30,8 @@ function buildAgentRail(
   currentPhase: ProgramPhaseId,
   viewingPhase: ProgramPhaseId,
 ): ProgramAgentRailItem[] {
-  const isActive = (targetPhase: ProgramPhaseId) => viewingPhase === targetPhase;
+  const isActive = (targetPhase: ProgramPhaseId) =>
+    viewingPhase === targetPhase;
   const isCurrentOrPast = (targetPhase: ProgramPhaseId) =>
     targetPhase <= currentPhase;
 
@@ -38,11 +39,12 @@ function buildAgentRail(
   const nexus: ProgramAgentRailItem = {
     initials: 'Nx',
     name: 'Nexus',
-    job: viewingPhase === currentPhase
-      ? `Orchestrating P${viewingPhase} · ${PHASE_LABEL_MAP[viewingPhase as ProgramPhaseId]}`
-      : viewingPhase < currentPhase
-      ? `Completed P${viewingPhase} orchestration`
-      : `Waiting for P${currentPhase} completion`,
+    job:
+      viewingPhase === currentPhase
+        ? `Orchestrating P${viewingPhase} · ${PHASE_LABEL_MAP[viewingPhase as ProgramPhaseId]}`
+        : viewingPhase < currentPhase
+          ? `Completed P${viewingPhase} orchestration`
+          : `Waiting for P${currentPhase} completion`,
     state: viewingPhase === currentPhase ? 'active' : 'advisory',
   };
 
@@ -53,33 +55,50 @@ function buildAgentRail(
     job: isActive(currentPhase)
       ? 'Monitoring evidence + risk signals'
       : isCurrentOrPast(viewingPhase)
-      ? 'Evidence archived for this phase'
-      : 'Awaiting phase activation',
-    state: viewingPhase === currentPhase ? 'active' : viewingPhase < currentPhase ? 'on_call' : 'idle',
+        ? 'Evidence archived for this phase'
+        : 'Awaiting phase activation',
+    state:
+      viewingPhase === currentPhase
+        ? 'active'
+        : viewingPhase < currentPhase
+          ? 'on_call'
+          : 'idle',
   };
 
   // Atlas — impact and value tracking
   const atlas: ProgramAgentRailItem = {
     initials: 'At',
     name: 'Atlas',
-    job: viewingPhase >= 4
-      ? 'Tracking value realization metrics'
-      : isCurrentOrPast(viewingPhase)
-      ? 'Tracking baseline inputs'
-      : 'Impact model not yet active',
-    state: viewingPhase >= 4 ? 'active' : viewingPhase < currentPhase ? 'on_call' : 'idle',
+    job:
+      viewingPhase >= 4
+        ? 'Tracking value realization metrics'
+        : isCurrentOrPast(viewingPhase)
+          ? 'Tracking baseline inputs'
+          : 'Impact model not yet active',
+    state:
+      viewingPhase >= 4
+        ? 'active'
+        : viewingPhase < currentPhase
+          ? 'on_call'
+          : 'idle',
   };
 
   // Steward — gate readiness and compliance
   const steward: ProgramAgentRailItem = {
     initials: 'St',
     name: 'Steward',
-    job: viewingPhase === currentPhase
-      ? `Assessing gate readiness for P${viewingPhase + 1} entry`
-      : viewingPhase < currentPhase
-      ? 'Gate passed — archived'
-      : 'Gate criteria not yet active',
-    state: viewingPhase === currentPhase ? 'on_call' : viewingPhase < currentPhase ? 'advisory' : 'idle',
+    job:
+      viewingPhase === currentPhase
+        ? `Assessing gate readiness for P${viewingPhase + 1} entry`
+        : viewingPhase < currentPhase
+          ? 'Gate passed — archived'
+          : 'Gate criteria not yet active',
+    state:
+      viewingPhase === currentPhase
+        ? 'on_call'
+        : viewingPhase < currentPhase
+          ? 'advisory'
+          : 'idle',
   };
 
   return [nexus, sentinel, atlas, steward];
@@ -132,7 +151,7 @@ const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'C',
       text: 'Schedule approval/mobilization review',
-      detail: 'Sponsor + IT sign-off · target May 15',
+      detail: 'Authorized workspace-user approval · target May 15',
     },
   ],
 };
@@ -141,12 +160,25 @@ const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
 
 const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
   title: 'P5 Mobilize & Handoff · Pending',
-  prose: 'P5 Mobilize & Handoff is locked until the execution roadmap gate clears. IVR migration scope and dashboard delivery plan are the remaining roadmap blockers. Once cleared, P5 packages the business case, funding ask, readiness plan, change plan, and sponsor approval.',
+  prose:
+    'P5 Mobilize & Handoff is locked until the execution roadmap gate clears. IVR migration scope and dashboard delivery plan are the remaining roadmap blockers. Once cleared, P5 packages the business case, funding ask, readiness plan, change plan, and authorized workspace-user approval record.',
   actionsLabel: 'Unlock path',
   actions: [
-    { letter: 'A', text: 'Complete IVR migration scope', detail: 'Last roadmap blocker — 3 sprints estimated' },
-    { letter: 'B', text: 'Confirm supervisor dashboard plan', detail: 'Final roadmap dependency — UX review pending' },
-    { letter: 'C', text: 'Preview approval packet', detail: 'Business case, funding, readiness, and change plan' },
+    {
+      letter: 'A',
+      text: 'Complete IVR migration scope',
+      detail: 'Last roadmap blocker — 3 sprints estimated',
+    },
+    {
+      letter: 'B',
+      text: 'Confirm supervisor dashboard plan',
+      detail: 'Final roadmap dependency — UX review pending',
+    },
+    {
+      letter: 'C',
+      text: 'Preview approval packet',
+      detail: 'Business case, funding, readiness, and change plan',
+    },
   ],
 };
 
@@ -154,12 +186,25 @@ const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
 
 const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
   title: 'P6 Tower Track Outcomes · Monitoring Active',
-  prose: 'Demand Forecasting v2 has a Tower monitoring contract in place. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Tower/Atlas monitor weekly value movement, drift, and escalation thresholds.',
+  prose:
+    'Demand Forecasting v2 has a Tower monitoring contract in place. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Tower/Atlas monitor weekly value movement, drift, and escalation thresholds.',
   actionsLabel: 'Tower monitors',
   actions: [
-    { letter: 'A', text: 'Review outcome actuals', detail: '$1.4M/yr savings vs $1.2M projection — 17% ahead' },
-    { letter: 'B', text: 'Check model drift report', detail: 'Q2 retraining cycle due in 3 weeks' },
-    { letter: 'C', text: 'View full outcome report', detail: 'Tower value lens · APX-DFV2 deep-dive' },
+    {
+      letter: 'A',
+      text: 'Review outcome actuals',
+      detail: '$1.4M/yr savings vs $1.2M projection — 17% ahead',
+    },
+    {
+      letter: 'B',
+      text: 'Check model drift report',
+      detail: 'Q2 retraining cycle due in 3 weeks',
+    },
+    {
+      letter: 'C',
+      text: 'View full outcome report',
+      detail: 'Tower value lens · APX-DFV2 deep-dive',
+    },
   ],
 };
 
@@ -207,12 +252,14 @@ const GENERIC_P5_ACTIVATE_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'B',
       text: 'Preview approval criteria',
-      detail: 'Business case, funding, sponsor alignment, readiness, and change sign-off',
+      detail:
+        'Business case, funding, stakeholder alignment, readiness, and authorized-user approval',
     },
     {
       letter: 'C',
       text: 'Prepare mobilization readiness',
-      detail: 'Stakeholder comms, training/change plan, governance, and escalation criteria',
+      detail:
+        'Stakeholder comms, training/change plan, governance, and escalation criteria',
     },
   ],
 };
@@ -229,17 +276,20 @@ const GENERIC_P6_OPERATE_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'A',
       text: 'Complete mobilization approval first',
-      detail: 'Tower Track Outcomes unlocks when P5 approval and monitoring prerequisites are cleared',
+      detail:
+        'Tower Track Outcomes unlocks when P5 approval and monitoring prerequisites are cleared',
     },
     {
       letter: 'B',
       text: 'Preview value metrics plan',
-      detail: 'Atlas will track forecast accuracy, cost savings, or adoption KPIs',
+      detail:
+        'Atlas will track forecast accuracy, cost savings, or adoption KPIs',
     },
     {
       letter: 'C',
       text: 'See operating model template',
-      detail: 'Quarterly review cadence, drift thresholds, and escalation criteria',
+      detail:
+        'Quarterly review cadence, drift thresholds, and escalation criteria',
     },
   ],
 };
@@ -255,7 +305,8 @@ const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'A',
       text: 'Review architecture blueprint',
-      detail: 'CDP data layer + identity graph schema — draft ready for sponsor review',
+      detail:
+        'CDP data layer + identity graph schema — draft ready for authorized workspace-user review',
     },
     {
       letter: 'B',
@@ -265,7 +316,8 @@ const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'C',
       text: 'Brief on T3-H03 Loyalty pattern',
-      detail: 'Sentinel validated Unified Loyalty Intelligence — apply to personalization layer',
+      detail:
+        'Sentinel validated Unified Loyalty Intelligence — apply to personalization layer',
       href: '/intelligence/t3-h03',
     },
   ],
@@ -310,17 +362,20 @@ const MH_AGENTIC_CARE_DATA_ACCELERATOR_P3_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'A',
       text: 'Review source artifact spine',
-      detail: '5 source artifacts · strategy, architecture, steering, actions, solution inputs',
+      detail:
+        '5 source artifacts · strategy, architecture, steering, actions, solution inputs',
     },
     {
       letter: 'B',
       text: 'Close Design gate evidence gaps',
-      detail: 'Control testing, rollback ownership, and PHI retrieval guardrails',
+      detail:
+        'Control testing, rollback ownership, and PHI retrieval guardrails',
     },
     {
       letter: 'C',
       text: 'Run app-wiring validation pack',
-      detail: '6 query prompts · capture returned corpus IDs before claiming app-wired',
+      detail:
+        '6 query prompts · capture returned corpus IDs before claiming app-wired',
     },
   ],
 };
@@ -336,20 +391,36 @@ function buildWorkbenchContent(
   programId?: string,
 ): ProgramWorkbenchContent {
   // Demo program overrides — specific phase workbench content
-  if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-sap-2026' &&
+    viewingPhase === 1 &&
+    viewingPhaseState === 'current'
+  ) {
     return APX_SAP_2026_P1_WORKBENCH;
   }
-  if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-cc-2026' &&
+    viewingPhase === 4 &&
+    viewingPhaseState === 'current'
+  ) {
     return APX_CC_2026_P4_WORKBENCH;
   }
   if (programId === 'apx-cc-2026' && viewingPhase === 5) {
     return APX_CC_2026_P5_WORKBENCH;
   }
-  if (programId === 'apx-dfv2-2025' && viewingPhase === 6 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-dfv2-2025' &&
+    viewingPhase === 6 &&
+    viewingPhaseState === 'current'
+  ) {
     return APX_DFV2_P6_WORKBENCH;
   }
   // APX-LPM-2026 P2 Synthesis — solution options under review
-  if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-lpm-2026' &&
+    viewingPhase === 2 &&
+    viewingPhaseState === 'current'
+  ) {
     return APX_LPM_2026_P2_WORKBENCH;
   }
   // Generic P5 Mobilize & Handoff preview — for any program without a flagship P5 override.
@@ -363,11 +434,19 @@ function buildWorkbenchContent(
     return GENERIC_P6_OPERATE_WORKBENCH;
   }
   // Demo flagship override — P2 Synthesis active view
-  if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-cdp-2026' &&
+    viewingPhase === 2 &&
+    viewingPhaseState === 'current'
+  ) {
     return APX_CDP_2026_P2_WORKBENCH;
   }
   // Demo flagship override — P3 Design active view (post gate-approval)
-  if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-cdp-2026' &&
+    viewingPhase === 3 &&
+    viewingPhaseState === 'current'
+  ) {
     return APX_CDP_2026_P3_WORKBENCH;
   }
   if (
@@ -384,9 +463,21 @@ function buildWorkbenchContent(
         prose: `This phase was successfully completed. All required deliverables were produced and the phase gate was cleared. You're reviewing archived outputs from P${viewingPhase} — ${viewingPhaseLabel}.`,
         actionsLabel: 'Review actions',
         actions: [
-          { letter: 'A', text: 'View deliverables', detail: 'Browse artifacts produced in this phase' },
-          { letter: 'B', text: 'Review gate record', detail: 'Approval chain and gate criteria met' },
-          { letter: 'C', text: 'Open evidence log', detail: 'Supporting evidence captured here' },
+          {
+            letter: 'A',
+            text: 'View deliverables',
+            detail: 'Browse artifacts produced in this phase',
+          },
+          {
+            letter: 'B',
+            text: 'Review gate record',
+            detail: 'Approval chain and gate criteria met',
+          },
+          {
+            letter: 'C',
+            text: 'Open evidence log',
+            detail: 'Supporting evidence captured here',
+          },
         ],
       };
     case 'current':
@@ -395,9 +486,21 @@ function buildWorkbenchContent(
         prose: `You're in P${viewingPhase} — ${viewingPhaseLabel}. Nexus is orchestrating active workstreams. Review next actions below and clear open blockers to advance toward the gate.`,
         actionsLabel: 'Next actions',
         actions: [
-          { letter: 'A', text: 'Open workshop', detail: 'Resume active modules for this phase' },
-          { letter: 'B', text: 'Review gate criteria', detail: 'Check what\'s needed to advance' },
-          { letter: 'C', text: 'Brief sponsor', detail: 'Share current status and blockers' },
+          {
+            letter: 'A',
+            text: 'Open workshop',
+            detail: 'Resume active modules for this phase',
+          },
+          {
+            letter: 'B',
+            text: 'Review gate criteria',
+            detail: "Check what's needed to advance",
+          },
+          {
+            letter: 'C',
+            text: 'Brief sponsor',
+            detail: 'Share current status and blockers',
+          },
         ],
       };
     case 'pending': {
@@ -408,9 +511,22 @@ function buildWorkbenchContent(
         prose: `P${viewingPhase} entry requires clearing the P${prevPhase} ${prevLabel} gate. Review the gate criteria and resolve any outstanding items to unlock this phase.`,
         actionsLabel: 'Gate actions',
         actions: [
-          { letter: 'A', text: 'Review gate criteria', detail: `Check P${prevPhase} gate requirements` },
-          { letter: 'B', text: 'Resolve blockers', detail: 'Address open items blocking gate approval' },
-          { letter: 'C', text: 'Request gate review', detail: 'Notify sponsor to approve phase advance' },
+          {
+            letter: 'A',
+            text: 'Review gate criteria',
+            detail: `Check P${prevPhase} gate requirements`,
+          },
+          {
+            letter: 'B',
+            text: 'Resolve blockers',
+            detail: 'Address open items blocking gate approval',
+          },
+          {
+            letter: 'C',
+            text: 'Approve phase gate',
+            detail:
+              'Authorized workspace user records the decision; listed sponsors receive a progress update',
+          },
         ],
       };
     }
@@ -420,9 +536,21 @@ function buildWorkbenchContent(
         prose: `Complete P${currentPhase} — ${PHASE_LABEL_MAP[currentPhase]} to unlock this phase. Phases must be completed sequentially.`,
         actionsLabel: 'Unlock path',
         actions: [
-          { letter: 'A', text: `Return to P${currentPhase}`, detail: `Resume active phase: ${PHASE_LABEL_MAP[currentPhase]}` },
-          { letter: 'B', text: 'View prerequisites', detail: 'See what must be completed first' },
-          { letter: 'C', text: 'Preview phase brief', detail: 'Read what this phase will cover' },
+          {
+            letter: 'A',
+            text: `Return to P${currentPhase}`,
+            detail: `Resume active phase: ${PHASE_LABEL_MAP[currentPhase]}`,
+          },
+          {
+            letter: 'B',
+            text: 'View prerequisites',
+            detail: 'See what must be completed first',
+          },
+          {
+            letter: 'C',
+            text: 'Preview phase brief',
+            detail: 'Read what this phase will cover',
+          },
         ],
       };
   }
@@ -438,10 +566,14 @@ function buildPhasePanel(
   programId?: string,
 ): ProgramPhasePanel {
   // APX-SAP-2026 P1 gate criteria
-  if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-sap-2026' &&
+    viewingPhase === 1 &&
+    viewingPhaseState === 'current'
+  ) {
     return {
       summary:
-        'P1 Charter is validating the SAP finance modernization seed against current-state evidence. Nexus has stakeholder alignment logged, but interviews, data-access confirmation, value hypothesis detail, and sponsor review still need to close before P2 Discover & Diagnose can make a credible options call.',
+        'P1 Charter is validating the SAP finance modernization seed against current-state evidence. Nexus has stakeholder alignment logged, but interviews, data-access confirmation, and value-hypothesis detail still need to close before P2 Discover & Diagnose can make a credible options call. An authorized workspace user records the phase approval.',
       deliverables: [
         { label: 'Origination approval', status: 'done' },
         { label: 'Discovery interview schedule', status: 'pending' },
@@ -452,14 +584,24 @@ function buildPhasePanel(
       gateCriteria: [
         { criterion: 'Discovery interviews completed (4 of 6)', met: false },
         { criterion: 'Value hypothesis drafted', met: false },
-        { criterion: 'Data access confirmed for all source systems', met: false },
+        {
+          criterion: 'Data access confirmed for all source systems',
+          met: false,
+        },
         { criterion: 'Stakeholder alignment documented', met: true },
-        { criterion: 'Discovery brief reviewed by sponsor', met: false },
+        {
+          criterion: 'Discovery brief reviewed by authorized workspace user',
+          met: false,
+        },
       ],
     };
   }
   // APX-CC-2026 P4 gate criteria
-  if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-cc-2026' &&
+    viewingPhase === 4 &&
+    viewingPhaseState === 'current'
+  ) {
     return {
       gateCriteria: [
         { criterion: 'NLP intent classifier deployed to staging', met: true },
@@ -467,7 +609,11 @@ function buildPhasePanel(
         { criterion: 'IVR routing rules complete', met: false },
         { criterion: 'Operator dashboard MVP complete', met: false },
         { criterion: 'Load test passing at 2× peak traffic', met: false },
-        { criterion: 'Sponsor sign-off on Mobilize & Handoff criteria', met: false },
+        {
+          criterion:
+            'Authorized workspace-user approval of Mobilize & Handoff criteria',
+          met: false,
+        },
       ],
     };
   }
@@ -478,9 +624,14 @@ function buildPhasePanel(
         { criterion: 'IVR migration complete', met: false },
         { criterion: 'Supervisor dashboard delivered', met: false },
         { criterion: 'Load test passed (500 concurrent)', met: false },
-        { criterion: 'Sponsor sign-off on execution roadmap gate', met: false },
+        {
+          criterion:
+            'Authorized workspace-user approval of execution roadmap gate',
+          met: false,
+        },
       ],
-      blockerNote: 'P5 Mobilize & Handoff entry requires clearing the P4 Roadmap & Business Case gate. Two blockers remain: IVR migration scope and dashboard delivery plan.',
+      blockerNote:
+        'P5 Mobilize & Handoff entry requires clearing the P4 Roadmap & Business Case gate. Two blockers remain: IVR migration scope and dashboard delivery plan.',
     };
   }
   // APX-DFV2-2025 P6 gate — steady state operating view
@@ -495,13 +646,27 @@ function buildPhasePanel(
     };
   }
   // APX-LPM-2026 P2 Synthesis gate — three-option decision criteria
-  if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-lpm-2026' &&
+    viewingPhase === 2 &&
+    viewingPhaseState === 'current'
+  ) {
     return {
       gateCriteria: [
         { criterion: 'Three solution options fully documented', met: true },
-        { criterion: 'Cost model conflict resolved (Option 2 vs 3)', met: false },
-        { criterion: 'CDP dependency assessment complete (APX-CDP-2026)', met: false },
-        { criterion: 'Business case draft reviewed by sponsor', met: false },
+        {
+          criterion: 'Cost model conflict resolved (Option 2 vs 3)',
+          met: false,
+        },
+        {
+          criterion: 'CDP dependency assessment complete (APX-CDP-2026)',
+          met: false,
+        },
+        {
+          criterion:
+            'Business case draft reviewed by authorized workspace user',
+          met: false,
+        },
         { criterion: 'Design gate review scheduled', met: false },
       ],
       evidenceItems: [
@@ -509,15 +674,18 @@ function buildPhasePanel(
           id: 'lpm-ev-1',
           citation: 'Sentinel pattern review · Apr 24 2026',
           source: 'Sentinel / T2-L04',
-          excerpt: 'Composable loyalty architecture (Option 3) is a validated pattern — three retail case studies available. Dependency on CDP identity graph maturity is the primary risk.',
+          excerpt:
+            'Composable loyalty architecture (Option 3) is a validated pattern — three retail case studies available. Dependency on CDP identity graph maturity is the primary risk.',
           confidence: 'high' as const,
-          provenanceNote: 'Deterministic intelligence citation · /intelligence/t2-l04',
+          provenanceNote:
+            'Deterministic intelligence citation · /intelligence/t2-l04',
         },
         {
           id: 'lpm-ev-2',
           citation: 'Cost model analysis · Apr 26 2026',
           source: 'Nexus / Budget Review',
-          excerpt: 'Option 2 (SaaS) projects $820K/yr licensing cost. Option 3 (CDP-composable) projects $340K/yr marginal cost but carries CDP readiness risk. Delta is $480K/yr — conflict unresolved.',
+          excerpt:
+            'Option 2 (SaaS) projects $820K/yr licensing cost. Option 3 (CDP-composable) projects $340K/yr marginal cost but carries CDP readiness risk. Delta is $480K/yr — conflict unresolved.',
           confidence: 'medium' as const,
           hasContradiction: true,
           provenanceNote: 'Deterministic cost model · pre-synthesis baseline',
@@ -532,10 +700,20 @@ function buildPhasePanel(
       blockerNote:
         'P5 Mobilize & Handoff entry requires P4 Roadmap & Business Case gate approval. The gate criteria are managed in the active roadmap phase.',
       gateCriteria: [
-        { criterion: 'P4 Roadmap & Business Case gate formally approved', met: false },
-        { criterion: 'Business case reviewed by sponsor', met: false },
+        {
+          criterion: 'P4 Roadmap & Business Case gate formally approved',
+          met: false,
+        },
+        {
+          criterion: 'Business case reviewed by authorized workspace user',
+          met: false,
+        },
         { criterion: 'Change management plan filed', met: false },
-        { criterion: 'Mobilization governance and escalation criteria documented', met: false },
+        {
+          criterion:
+            'Mobilization governance and escalation criteria documented',
+          met: false,
+        },
       ],
     };
   }
@@ -546,7 +724,10 @@ function buildPhasePanel(
       blockerNote:
         'P6 Tower Track Outcomes entry requires P5 Mobilize & Handoff gate approval. Programs enter Tower Track Outcomes once monitoring metrics, data feeds, owners, and escalation thresholds are ready.',
       gateCriteria: [
-        { criterion: 'P5 Mobilize & Handoff gate formally approved', met: false },
+        {
+          criterion: 'P5 Mobilize & Handoff gate formally approved',
+          met: false,
+        },
         { criterion: 'Tower monitoring metrics defined', met: false },
         { criterion: 'Data-feed owners confirmed', met: false },
         { criterion: 'Escalation thresholds filed', met: false },
@@ -554,21 +735,29 @@ function buildPhasePanel(
     };
   }
   // APX-CDP-2026 P2 gate — real blockers surfaced from demo anchor
-  if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-cdp-2026' &&
+    viewingPhase === 2 &&
+    viewingPhaseState === 'current'
+  ) {
     return {
       gateCriteria: [
         { criterion: 'Workshop 5 completed', met: false },
         { criterion: 'Value hypothesis evidence logged', met: false },
         { criterion: 'Privacy boundary confirmed', met: false },
         { criterion: 'AMS vendor architecture alignment noted', met: true },
-        { criterion: 'Sponsor sign-off on P2 findings', met: false },
+        {
+          criterion: 'Authorized workspace-user approval of P2 findings',
+          met: false,
+        },
       ],
       evidenceItems: [
         {
           id: 'ev-1',
           citation: 'Workshop 4 output · Apr 14 2026',
           source: 'Priya Sharma / Workshop',
-          excerpt: 'CDP identity stitching is technically feasible with the existing Snowflake schema — 3-week implementation estimate confirmed by engineering lead.',
+          excerpt:
+            'CDP identity stitching is technically feasible with the existing Snowflake schema — 3-week implementation estimate confirmed by engineering lead.',
           confidence: 'high' as const,
           provenanceNote: 'Deterministic workshop record · discovery archive',
         },
@@ -576,7 +765,8 @@ function buildPhasePanel(
           id: 'ev-2',
           citation: 'Vendor RFP response · Apr 18 2026',
           source: 'Vendor B / AMS BAFO',
-          excerpt: 'Vendor B proposes a managed CDP layer that overlaps with the planned in-house implementation. Scope conflict unresolved.',
+          excerpt:
+            'Vendor B proposes a managed CDP layer that overlaps with the planned in-house implementation. Scope conflict unresolved.',
           confidence: 'medium' as const,
           hasContradiction: true,
           provenanceNote: 'Deterministic source import · BAFO response',
@@ -585,7 +775,8 @@ function buildPhasePanel(
           id: 'ev-3',
           citation: 'Stakeholder interview · Apr 20 2026',
           source: 'Marcus Webb / Discovery',
-          excerpt: 'Privacy team confirmed that loyalty data can be included in the identity graph subject to a documented boundary policy — this policy is not yet written.',
+          excerpt:
+            'Privacy team confirmed that loyalty data can be included in the identity graph subject to a documented boundary policy — this policy is not yet written.',
           confidence: 'medium' as const,
           provenanceNote: 'Deterministic interview note · sponsor packet',
         },
@@ -593,7 +784,8 @@ function buildPhasePanel(
           id: 'ev-4',
           citation: 'AI usage audit · Apr 22 2026',
           source: 'Atlas / Automated',
-          excerpt: 'Evidence coverage for this phase is at 36% against a 70% target for gate readiness. 3 key items are outstanding.',
+          excerpt:
+            'Evidence coverage for this phase is at 36% against a 70% target for gate readiness. 3 key items are outstanding.',
           confidence: 'high' as const,
           provenanceNote: 'Deterministic audit snapshot · pre-gate baseline',
         },
@@ -601,21 +793,37 @@ function buildPhasePanel(
     };
   }
   // APX-CDP-2026 P3 gate — Design phase active deliverables + Execution Roadmap gate criteria
-  if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
+  if (
+    programId === 'apx-cdp-2026' &&
+    viewingPhase === 3 &&
+    viewingPhaseState === 'current'
+  ) {
     return {
       gateCriteria: [
-        { criterion: 'Architecture blueprint reviewed by sponsor', met: true },
+        {
+          criterion:
+            'Architecture blueprint reviewed by an authorized workspace user',
+          met: true,
+        },
         { criterion: 'Data model approved by engineering lead', met: true },
-        { criterion: 'Vendor integration contract signed (Vendor C)', met: false },
+        {
+          criterion: 'Vendor integration contract signed (Vendor C)',
+          met: false,
+        },
         { criterion: 'Privacy architecture signed off by Steward', met: false },
-        { criterion: 'Execution roadmap brief scoped and sponsor-approved', met: false },
+        {
+          criterion:
+            'Execution roadmap brief scoped and authorized-user-approved',
+          met: false,
+        },
       ],
       evidenceItems: [
         {
           id: 'ev-p3-1',
           citation: 'Gate approval record · Apr 27 2026',
           source: 'Steward / Gate Review',
-          excerpt: 'Design gate (P2 → P3) approved. Workshop 5 findings accepted; privacy boundary policy filed. AMS BAFO outcome locked Vendor C.',
+          excerpt:
+            'Design gate (P2 → P3) approved. Workshop 5 findings accepted; privacy boundary policy filed. AMS BAFO outcome locked Vendor C.',
           confidence: 'high' as const,
           provenanceNote: 'Deterministic gate record · approval ledger',
         },
@@ -623,17 +831,21 @@ function buildPhasePanel(
           id: 'ev-p3-2',
           citation: 'AMS Vendor Consolidation · BAFO Award · Apr 27 2026',
           source: 'Source Event / APX-AMS-2026',
-          excerpt: 'Vendor C selected as managed CDP layer provider. Reduces in-house build scope by ~40%. Integration contract in final review.',
+          excerpt:
+            'Vendor C selected as managed CDP layer provider. Reduces in-house build scope by ~40%. Integration contract in final review.',
           confidence: 'high' as const,
-          provenanceNote: 'Deterministic source link · apex-retail-ams-outsourcing-2026',
+          provenanceNote:
+            'Deterministic source link · apex-retail-ams-outsourcing-2026',
         },
         {
           id: 'ev-p3-3',
           citation: 'Intelligence pattern validation · Apr 27 2026',
           source: 'Sentinel / T3-H03',
-          excerpt: 'Unified Loyalty Intelligence pattern validated for personalization layer. Sentinel recommends applying T3-H03 reference architecture to identity graph design.',
+          excerpt:
+            'Unified Loyalty Intelligence pattern validated for personalization layer. Sentinel recommends applying T3-H03 reference architecture to identity graph design.',
           confidence: 'high' as const,
-          provenanceNote: 'Deterministic intelligence citation · /intelligence/t3-h03',
+          provenanceNote:
+            'Deterministic intelligence citation · /intelligence/t3-h03',
         },
       ],
     };
@@ -648,11 +860,26 @@ function buildPhasePanel(
       summary:
         'P3 Design is evidence-backed by the Meridian simulation handoff. The corpus entries are published, but the app must still prove live retrieval against the validation query pack before this can be marked app-wired.',
       gateCriteria: [
-        { criterion: 'Strategy/current-state minutes indexed in handoff', met: true },
-        { criterion: 'Architecture workshop minutes indexed in handoff', met: true },
-        { criterion: 'Steering decision log and action register captured', met: true },
-        { criterion: 'PHI retrieval guardrails validated in app query path', met: false },
-        { criterion: 'Live corpus IDs captured from app/API smoke test', met: false },
+        {
+          criterion: 'Strategy/current-state minutes indexed in handoff',
+          met: true,
+        },
+        {
+          criterion: 'Architecture workshop minutes indexed in handoff',
+          met: true,
+        },
+        {
+          criterion: 'Steering decision log and action register captured',
+          met: true,
+        },
+        {
+          criterion: 'PHI retrieval guardrails validated in app query path',
+          met: false,
+        },
+        {
+          criterion: 'Live corpus IDs captured from app/API smoke test',
+          met: false,
+        },
       ],
       evidenceItems: [
         {
@@ -701,11 +928,13 @@ function buildPhasePanel(
       };
     case 'current':
       return {
-        summary:
-          `P${viewingPhase} ${viewingPhaseLabel} is active. Nexus is tracking the phase deliverables, sponsor sign-off path, linked evidence, and unresolved risks needed to clear the next gate.`,
+        summary: `P${viewingPhase} ${viewingPhaseLabel} is active. Nexus is tracking the phase deliverables, authorized-user approval path, linked evidence, and unresolved risks needed to clear the next gate.`,
         gateCriteria: [
           { criterion: 'All required deliverables submitted', met: false },
-          { criterion: 'Sponsor sign-off obtained', met: false },
+          {
+            criterion: 'Authorized workspace-user approval recorded',
+            met: false,
+          },
           { criterion: 'Evidence artifacts linked', met: true },
           { criterion: 'No critical risks unresolved', met: true },
           { criterion: 'Workshop modules completed', met: false },
@@ -739,14 +968,15 @@ export function buildProgramDetailView(
 ): ProgramDetailView {
   // Look up program by id; fall back to APX-01 for demo safety
   const apexProgram = APEX_PROGRAMS_FIXTURE.find((p) => p.id === programId);
-  const meridianProgram = MERIDIAN_PROGRAMS_FIXTURE.find((p) => p.id === programId);
-  const fixtureMatch =
-    apexProgram
-      ? {
-          program: apexProgram,
-          tenant: 'Apex Retail Group',
-        }
-      : meridianProgram
+  const meridianProgram = MERIDIAN_PROGRAMS_FIXTURE.find(
+    (p) => p.id === programId,
+  );
+  const fixtureMatch = apexProgram
+    ? {
+        program: apexProgram,
+        tenant: 'Apex Retail Group',
+      }
+    : meridianProgram
       ? {
           program: meridianProgram,
           tenant: 'Meridian Health System',
@@ -772,15 +1002,23 @@ export function buildProgramDetailView(
       : program.phases;
 
   // Resolve viewing phase: default to currentPhase, clamped to P0-P6.
-  const clampedCurrent = Math.max(0, Math.min(6, effectiveCurrentPhase)) as ProgramPhaseId;
+  const clampedCurrent = Math.max(
+    0,
+    Math.min(6, effectiveCurrentPhase),
+  ) as ProgramPhaseId;
   let viewingPhase: ProgramPhaseId;
-  if (requestedPhase !== undefined && requestedPhase >= 0 && requestedPhase <= 6) {
+  if (
+    requestedPhase !== undefined &&
+    requestedPhase >= 0 &&
+    requestedPhase <= 6
+  ) {
     viewingPhase = requestedPhase as ProgramPhaseId;
   } else {
     viewingPhase = clampedCurrent;
   }
 
-  const viewingSlot = railPhases.find((s) => s.id === viewingPhase) ?? railPhases[0];
+  const viewingSlot =
+    railPhases.find((s) => s.id === viewingPhase) ?? railPhases[0];
   const viewingPhaseState = viewingSlot?.state ?? 'locked';
   const viewingPhaseLabel = PHASE_LABEL_MAP[viewingPhase] ?? '';
 

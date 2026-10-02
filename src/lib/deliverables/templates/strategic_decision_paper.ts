@@ -83,7 +83,7 @@ export const strategicDecisionPaperTemplateStructure = {
       description:
         "List the approvals, owners, and evidence required to proceed.",
       example_completed:
-        "Approval path: CIO sponsor sign-off, CFO range review, Customer Care QA owner, and Legal/privacy review of customer-data handling.",
+        "Approval path: an authorized workspace user records the product decision; CFO, Customer Care QA, and Legal/privacy contribute their respective reviews.",
     },
   ],
   format: "markdown",

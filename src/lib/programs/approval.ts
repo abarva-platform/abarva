@@ -431,11 +431,7 @@ export async function decideApprovalRequest(
         !Array.isArray(request.brief_snapshot)
           ? (request.brief_snapshot as Record<string, unknown>)
           : {};
-      const requestPhase = readBriefString(
-        briefSnapshot,
-        "phase",
-        "",
-      );
+      const requestPhase = readBriefString(briefSnapshot, "phase", "");
       let isP0Request = requestPhase === "0";
       if (!requestPhase) {
         const { data: engagement, error: engagementError } = await sb
@@ -453,9 +449,7 @@ export async function decideApprovalRequest(
         const currentPhase = (engagement as { current_phase?: unknown })
           .current_phase;
         isP0Request =
-          currentPhase === 0 ||
-          currentPhase === "0" ||
-          currentPhase === null;
+          currentPhase === 0 || currentPhase === "0" || currentPhase === null;
       }
       if (isP0Request) {
         await assertP0SourceEvidenceReady({ tenantKey, moveId: programId });
@@ -545,9 +539,8 @@ export async function decideApprovalRequest(
     },
   );
 
-  // One approval closes P0 (founder spec 2026-06-11): the sponsor's approval
-  // of the origination request IS the origination-brief sign-off, and the Move
-  // advances P0→P1 through the governed gate in the same act. Best-effort —
+  // One authorized workspace-user approval closes P0 and advances the Move
+  // through the governed gate in the same act. Best-effort —
   // a failure logs loudly and leaves the Move at P0 with the approval intact.
   if (request.requestStatus === "approved") {
     try {

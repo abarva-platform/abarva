@@ -65,7 +65,10 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
       latestEvidenceActivityAtByPhase:
         snapshot.latestEvidenceActivityAtByPhase ??
         Object.fromEntries(
-          phases.map((phase) => [phase, snapshot.latestEvidenceActivityAt ?? null]),
+          phases.map((phase) => [
+            phase,
+            snapshot.latestEvidenceActivityAt ?? null,
+          ]),
         ),
     };
   },
@@ -128,6 +131,10 @@ jest.mock("@/lib/programs/p0-phase-capture", () => ({
     programId: string,
     input: unknown,
   ) => mockPersistP0PhaseCaptureFromSource(ctx, programId, input),
+}));
+
+jest.mock("@/lib/programs/move-progress-notifications", () => ({
+  sendMoveProgressUpdate: jest.fn().mockResolvedValue(undefined),
 }));
 
 function req(body: unknown): Request {
@@ -300,6 +307,37 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     );
   });
 
+  it("lets the authorized user approve P1 without becoming the sponsor", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      name: "Synthetic Move",
+      currentPhase: 1,
+      gatesPassed: [],
+    });
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_review", status: "completed" },
+    ]);
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: true,
+    });
+    mockSbFrom.mockClear();
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 1 }) as never, { params });
+
+    expect(res.status).toBe(200);
+    expect(mockLoadUserProgramAccessPolicy).toHaveBeenCalledWith(ctx, {
+      programId: "prog-1",
+    });
+    expect(mockSbFrom).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({ approvedByUserId: ctx.userId }),
+      expect.anything(),
+    );
+  });
+
   it("shows a prior approval as stale after approved evidence changes", async () => {
     mockGetProgramById.mockResolvedValue({
       id: "prog-1",
@@ -422,7 +460,10 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       canApprove: false,
       gate: {
         failedChecks: [
-          expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+          expect.objectContaining({
+            check: "charter_signed_off",
+            severity: "hard",
+          }),
         ],
       },
     });
@@ -1096,7 +1137,11 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     const res = await GET(getReq(3) as never, { params });
     const json = await res.json();
 
-    expect(mockListApprovedPhaseEvidence).toHaveBeenCalledWith(ctx, "prog-1", 2);
+    expect(mockListApprovedPhaseEvidence).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      2,
+    );
     expect(mockResolveConfirmedSolutionRoute).toHaveBeenCalledWith({
       businessChangeAssessment: "p1-assessment",
       routeValidation: "p2-validation",

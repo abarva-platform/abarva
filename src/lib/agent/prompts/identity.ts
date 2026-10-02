@@ -1,15 +1,17 @@
-import type { PersonRow } from '@/lib/db/person';
-import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
+import type { PersonRow } from "@/lib/db/person";
+import { CONVERSATION_PRINCIPLES } from "./_shared/conversation-principles";
 
 export interface AssembleIdentityArgs {
   maestro?: PersonRow | null;
   maestroContextBlock?: string;
 }
 
-export function assembleIdentitySystemPrompt(args: AssembleIdentityArgs): string {
+export function assembleIdentitySystemPrompt(
+  args: AssembleIdentityArgs,
+): string {
   const greeting = args.maestro
-    ? `You are helping ${args.maestro.name}, a Maestro at AbarVa. Greet them by name: "Hi ${args.maestro.name.split(' ')[0]} — who are we setting up today?"`
-    : 'Maestro identity not yet known.';
+    ? `You are helping ${args.maestro.name}, a Maestro at AbarVa. Greet them by name: "Hi ${args.maestro.name.split(" ")[0]} — who are we setting up today?"`
+    : "Maestro identity not yet known.";
 
   const body = `You are Ava — AbarVa's partner agent. Right now you are in Identity mode, helping a Maestro add a new user to the platform.
 
@@ -45,7 +47,7 @@ End your response with a structured confirmation block on its own line(s):
   "organization": "Meridian Health",
   "role": "sponsor_cxo",
   "cxo_function": "IT",
-  "primary_focus": "Sponsoring the analytics modernization engagement; will review phase gates and outcomes."
+  "primary_focus": "Listed as an informational progress contact for the analytics modernization program."
 }
 </user_ready>
 
@@ -62,9 +64,11 @@ ROLE ENUM (normalize to one of these in the JSON)
 
   return [
     CONVERSATION_PRINCIPLES,
-    args.maestroContextBlock && args.maestroContextBlock.trim().length > 0 ? args.maestroContextBlock : null,
+    args.maestroContextBlock && args.maestroContextBlock.trim().length > 0
+      ? args.maestroContextBlock
+      : null,
     body,
   ]
     .filter((s): s is string => Boolean(s))
-    .join('\n\n');
+    .join("\n\n");
 }

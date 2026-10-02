@@ -28,8 +28,12 @@ export async function POST(
 
     // Same capability that gates a phase advance: approving the brief feeds the
     // P0 gate and advances the phase, so it requires canApproveGates.
-    const policy = await loadUserProgramAccessPolicy(ctx);
-    if (!policy.canApproveGates) {
+    const policy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !policy.canApproveGates ||
+      (Array.isArray(policy.programIdsAllowed) &&
+        !policy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
         {
           error: "forbidden",

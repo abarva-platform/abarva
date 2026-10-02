@@ -210,16 +210,15 @@ folded in.
 
 ---
 
-### Step 10 — Phase-1 entry deliverables in `gateLifecycle.ts`
+### Step 10 — Reference outline availability (not runtime generation)
 
-**What happened.** Called `bindMoveFunctionPack` for all 4 phase-artifact
-keys (`business_case`, `discover_brief`, `solution_architecture`,
-`mobilization_plan`). All 4 bind with real outlines (6-8 sections) and 5
-honest seed gaps each. This is the same code path `gateLifecycle.ts` uses
-when a charter advances to Phase 1, so phase-entry deliverable generation
-inherits real kernel structure rather than improvising it.
+**What happened.** Called `bindMoveFunctionPack` for four artifact keys
+(`business_case`, `discover_brief`, `solution_architecture`, and
+`mobilization_plan`). The bindings returned outlines (6-8 sections) and five
+seed gaps each. This probes reference-structure availability only; it does not
+exercise product generation, persistence, review, approval, or phase transition.
 
-**Gap call.** ✅ **works**.
+**Gap call.** Reference only; runtime workflow is not proven by this step.
 
 ---
 
@@ -349,7 +348,7 @@ getDemoTenantDataTier('northwind') → NULL
 No demo-tenant-data-tiers entry means Source and Tower routes have no caveat / availability bound to Northwind; surfaces fall back to apex-retail or show a generic empty state.
 Risk: a real Northwind user would see Apex-tenant Source events via the getTenantRouteFallback default. Cross-tenant leak class.
 
---- Step 10: Phase-1 entry deliverables (gateLifecycle bindings) [ok] ---
+--- Step 10: Reference outline availability (not runtime generation) [reference only] ---
 business_case: bound=true, outline=7 sections, seedGaps=5
 discover_brief: bound=true, outline=8 sections, seedGaps=5
 solution_architecture: bound=true, outline=6 sections, seedGaps=5

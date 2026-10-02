@@ -3,7 +3,6 @@
 // Slice 3f migrates the DB writes inside three shared `src/lib` helpers behind
 // the write seam:
 //   - programs `advancePhase`            -> ProgramsWriteAdapter.runAdvancePhase
-//   - programs `requestFounderApproval`  -> ProgramsWriteAdapter.insertFounderApproval
 //   - programs `draftModuleDeliverable`  -> ProgramsWriteAdapter.runDraftModuleDeliverable
 //   - source  `registerSourceArtifactUpload` -> SourceArtifactsWriteAdapter
 //   - intel   `attachThreadToEngagement`     -> ThreadWriteAdapter
@@ -210,57 +209,6 @@ describe("programs runAdvancePhase", () => {
     const res = await adapter.runAdvancePhase(ADVANCE_INPUT);
     expect(res.ok).toBe(false);
     expect(res.error).toBe("deadlock");
-  });
-});
-
-// --- programs.insertFounderApproval ----------------------------------------
-
-const APPROVAL_INPUT = {
-  programId: "prog-1",
-  requestedByUserId: "user-1",
-  requestType: "phase_gate",
-  headline: "Approve P1 → P2",
-  context: { from_phase: 1 },
-  approverUserId: null,
-  approverRole: "sponsor",
-  deadlineAtIso: "2026-06-01T00:00:00.000Z",
-};
-
-describe("programs insertFounderApproval", () => {
-  it("supabase: inserts the verbatim founder_approval_requests row", async () => {
-    const { client, calls } = fakeSupabase({
-      rowFor: () => ({ id: "appr-7" }),
-    });
-    const adapter = createSupabaseProgramsWriteAdapter(() => client);
-    const res = await adapter.insertFounderApproval(APPROVAL_INPUT);
-    expect(res.ok).toBe(true);
-    expect(res.data?.approvalId).toBe("appr-7");
-    expect(calls[0].table).toBe("founder_approval_requests");
-    expect(calls[0].body).toMatchObject({
-      engagement_id: "prog-1",
-      request_type: "phase_gate",
-      status: "pending",
-      approver_role: "sponsor",
-    });
-  });
-
-  it("supabase: a DB error is surfaced as ok:false", async () => {
-    const { client } = fakeSupabase({
-      errFor: () => ({ message: "fk violation" }),
-    });
-    const adapter = createSupabaseProgramsWriteAdapter(() => client);
-    const res = await adapter.insertFounderApproval(APPROVAL_INPUT);
-    expect(res.ok).toBe(false);
-    expect(res.error).toBe("fk violation");
-  });
-
-  it("azure: inserts inside a transaction and returns the approval id", async () => {
-    const tx = fakeTxSession(() => [{ id: "appr-az" }]);
-    const adapter = createAzureProgramsWriteAdapter(tx.session);
-    const res = await adapter.insertFounderApproval(APPROVAL_INPUT);
-    expect(res.ok).toBe(true);
-    expect(res.data?.approvalId).toBe("appr-az");
-    expect(tx.statements[0]).toContain("INSERT INTO founder_approval_requests");
   });
 });
 

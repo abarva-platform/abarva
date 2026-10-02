@@ -1,7 +1,7 @@
 const mockRequireTenancy = jest.fn();
 const mockTenancyErrorResponse = jest.fn();
 const mockGetProgramById = jest.fn();
-const mockHasAuthority = jest.fn();
+const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockSignOffDeliverable = jest.fn();
 const mockSaveMoveArtifact = jest.fn();
 const mockListMoveArtifacts = jest.fn();
@@ -20,8 +20,9 @@ jest.mock("@/lib/programs/queries", () => ({
   getProgramById: (...args: unknown[]) => mockGetProgramById(...args),
 }));
 
-jest.mock("@/lib/programs/governance", () => ({
-  hasAuthority: (...args: unknown[]) => mockHasAuthority(...args),
+jest.mock("@/lib/auth/program-access-policy", () => ({
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    mockLoadUserProgramAccessPolicy(...args),
 }));
 
 jest.mock("@/lib/programs/mutations", () => ({
@@ -95,8 +96,7 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
                       ? {
                           ...versionRow,
                           created_at:
-                            versionRow.created_at ??
-                            "2026-09-29T17:00:00.000Z",
+                            versionRow.created_at ?? "2026-09-29T17:00:00.000Z",
                         }
                       : null,
                     error: null,
@@ -178,7 +178,9 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       throw err;
     });
     mockGetProgramById.mockResolvedValue({ id: "prog-1", name: "Test Move" });
-    mockHasAuthority.mockResolvedValue(true);
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: true,
+    });
     mockSignOffDeliverable.mockResolvedValue(true);
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "revision-current",
@@ -328,7 +330,8 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
   });
 
   it("passes an approval rationale to the lifecycle mutation", async () => {
-    const rationale = "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+    const rationale =
+      "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
     const { POST } = await import("../route");
     const res = await POST(req({ approvalRationale: rationale }), { params });
 
@@ -342,7 +345,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
   });
 
   it("requires approver authority before checking type key or provenance", async () => {
-    mockHasAuthority.mockResolvedValue(false);
+    mockRequireTenancy.mockResolvedValue({ ...ctx, role: "maestro" });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: false,
+    });
     deliverableRow = {
       deliverable_type_key: "design_spec",
       title: "Solution Design Specification",
@@ -367,7 +373,9 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       const res = await POST(emptyUploadReq(), { params });
 
       expect(res.status).toBe(400);
-      await expect(res.json()).resolves.toMatchObject({ error: "file_required" });
+      await expect(res.json()).resolves.toMatchObject({
+        error: "file_required",
+      });
       expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
       expect(mockSignOffDeliverable).not.toHaveBeenCalled();
     });
@@ -418,7 +426,9 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
           warnings: [],
         },
       });
-      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-approved-1" });
+      mockSaveMoveArtifact.mockResolvedValue({
+        artifactId: "artifact-approved-1",
+      });
 
       const { POST } = await import("../route");
       const res = await POST(uploadReq(LEAKY), { params });
@@ -426,9 +436,9 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       expect(res.status).toBe(422);
       const body = await res.json();
       expect(body.error).toBe("client_readiness_blockers");
-      expect(body.blockers.map((finding: { kind: string }) => finding.kind).sort()).toEqual(
-        ["model_name", "uuid"],
-      );
+      expect(
+        body.blockers.map((finding: { kind: string }) => finding.kind).sort(),
+      ).toEqual(["model_name", "uuid"]);
       expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
       expect(mockSignOffDeliverable).not.toHaveBeenCalled();
     });
@@ -441,7 +451,9 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
           warnings: [],
         },
       });
-      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-approved-1" });
+      mockSaveMoveArtifact.mockResolvedValue({
+        artifactId: "artifact-approved-1",
+      });
 
       const { POST } = await import("../route");
       const res = await POST(uploadReq(LEAKY, true), { params });
@@ -473,15 +485,22 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     });
 
     it("passes an uploaded approval rationale to the lifecycle mutation", async () => {
-      const rationale = "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+      const rationale =
+        "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
       mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
-        extractedText: "A bounded charter with supported scope and clear limitations.",
+        extractedText:
+          "A bounded charter with supported scope and clear limitations.",
         extractedStructured: { parse_method: "docx-mammoth", warnings: [] },
       });
-      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-approved-1" });
+      mockSaveMoveArtifact.mockResolvedValue({
+        artifactId: "artifact-approved-1",
+      });
 
       const { POST } = await import("../route");
-      const res = await POST(uploadReq("clean reviewed charter", false, rationale), { params });
+      const res = await POST(
+        uploadReq("clean reviewed charter", false, rationale),
+        { params },
+      );
 
       expect(res.status).toBe(200);
       expect(mockSignOffDeliverable).toHaveBeenCalledWith(

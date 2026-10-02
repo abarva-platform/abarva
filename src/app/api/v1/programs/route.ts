@@ -33,10 +33,14 @@ export async function GET() {
   try {
     const ctx = await requireTenancy();
     const programs = await getProgramPortfolio(ctx, { limit: 100 });
-    const summaries: ProgramSummary[] = await Promise.all(programs.map(buildProgramSummary));
+    const summaries: ProgramSummary[] = await Promise.all(
+      programs.map(buildProgramSummary),
+    );
     return Response.json({ programs: summaries });
   } catch (err) {
-    try { return tenancyErrorResponse(err); } catch {}
+    try {
+      return tenancyErrorResponse(err);
+    } catch {}
     console.error('[GET /api/v1/programs]', err);
     return Response.json({ error: 'internal_error' }, { status: 500 });
   }
@@ -52,9 +56,13 @@ interface CreateProgramPayload extends CreateProgramRequest {
 // Keep enough to reproduce the request, drop anything that could be a token.
 function redactPayload(payload: unknown): unknown {
   if (!payload || typeof payload !== 'object') return payload;
-  const SENSITIVE = /(token|secret|password|key|authorization|cookie|api[_-]?key)/i;
+  const SENSITIVE =
+    /(token|secret|password|key|authorization|cookie|api[_-]?key)/i;
   const trim = (v: unknown): unknown => {
-    if (typeof v === 'string') return v.length > 500 ? `${v.slice(0, 500)}…<+${v.length - 500} chars>` : v;
+    if (typeof v === 'string')
+      return v.length > 500
+        ? `${v.slice(0, 500)}…<+${v.length - 500} chars>`
+        : v;
     if (Array.isArray(v)) return v.map(trim);
     if (v && typeof v === 'object') {
       const out: Record<string, unknown> = {};
@@ -75,7 +83,10 @@ export async function POST(req: NextRequest) {
     const accessPolicy = await loadUserProgramAccessPolicy(ctx);
     if (!accessPolicy.canCreatePrograms) {
       return Response.json(
-        { error: 'forbidden', detail: 'can_create_programs permission is required.' },
+        {
+          error: 'forbidden',
+          detail: 'can_create_programs permission is required.',
+        },
         { status: 403 },
       );
     }
@@ -103,7 +114,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const archetype = (payload!.shapeModifications?.shape === 'template' ? null : (deriveArchetype(form!.useCase) as ArchetypeKey | null));
+    const archetype =
+      payload!.shapeModifications?.shape === 'template'
+        ? null
+        : (deriveArchetype(form!.useCase) as ArchetypeKey | null);
 
     const program = await originateProgram(ctx, {
       name: form!.name,
@@ -129,7 +143,7 @@ export async function POST(req: NextRequest) {
         userId: form!.sponsorPersonId,
         userName: form!.sponsorPersonId,
         role: 'sponsor',
-        approvalAuthority: 'sponsor',
+        approvalAuthority: 'contributor',
       });
     }
     if (form!.leadPersonId && form!.leadPersonId !== form!.sponsorPersonId) {
@@ -144,24 +158,42 @@ export async function POST(req: NextRequest) {
 
     // Seed program_modules from canonical shape (if pattern accepted)
     if (payload.acceptedPatternKey) {
-      const topic = await azureRead.maybeSingle<{ canonical_shape_json: Record<string, unknown> | null }>({
+      const topic = await azureRead.maybeSingle<{
+        canonical_shape_json: Record<string, unknown> | null;
+      }>({
         table: 'engagement_topics',
         columns: ['canonical_shape_json'],
         where: { topic_key: payload.acceptedPatternKey },
       });
       const canonical = topic?.canonical_shape_json ?? null;
-      const moduleList: Array<{ moduleKey: string; name: string; phase: number }> = [];
+      const moduleList: Array<{
+        moduleKey: string;
+        name: string;
+        phase: number;
+      }> = [];
       if (canonical && Array.isArray(canonical.modules)) {
-        for (const m of canonical.modules as Array<{ moduleKey?: string; name?: string; phase?: number }>) {
+        for (const m of canonical.modules as Array<{
+          moduleKey?: string;
+          name?: string;
+          phase?: number;
+        }>) {
           if (m.moduleKey && m.name != null && typeof m.phase === 'number') {
-            moduleList.push({ moduleKey: m.moduleKey, name: m.name, phase: m.phase });
+            moduleList.push({
+              moduleKey: m.moduleKey,
+              name: m.name,
+              phase: m.phase,
+            });
           }
         }
       }
       // Fallback: seed one placeholder per phase 1-5 so the UI has something
       if (moduleList.length === 0) {
         for (let p = 1; p <= 5; p += 1) {
-          moduleList.push({ moduleKey: `phase_${p}_work`, name: `Phase ${p} deliverable`, phase: p });
+          moduleList.push({
+            moduleKey: `phase_${p}_work`,
+            name: `Phase ${p} deliverable`,
+            phase: p,
+          });
         }
       }
       const moduleSeeds: ProgramModuleSeed[] = moduleList.map((m, order) => ({
@@ -199,12 +231,15 @@ export async function POST(req: NextRequest) {
       redirectTo: `/programs/${program.id}`,
     });
   } catch (err) {
-    try { return tenancyErrorResponse(err); } catch {}
+    try {
+      return tenancyErrorResponse(err);
+    } catch {}
     // Log the offending payload (redacted) and the error so future failures
     // are diagnosable from server logs rather than just an internal_error chip.
     // TODO(observability): forward to Sentry/PostHog once an error sink is wired up.
     console.error('[POST /api/v1/programs]', {
-      error: err instanceof Error ? { message: err.message, stack: err.stack } : err,
+      error:
+        err instanceof Error ? { message: err.message, stack: err.stack } : err,
       payload: redactPayload(payload),
     });
     const detail =
@@ -218,8 +253,10 @@ export async function POST(req: NextRequest) {
 function deriveArchetype(useCase: string): string | null {
   const lc = useCase.toLowerCase();
   if (/(automation|workflow|process)/.test(lc)) return 'workflow_automation';
-  if (/(platform|cloud|modernization|migration)/.test(lc)) return 'platform_modernization';
+  if (/(platform|cloud|modernization|migration)/.test(lc))
+    return 'platform_modernization';
   if (/(ai product|copilot|agent|llm)/.test(lc)) return 'ai_product_enablement';
-  if (/(cost|efficiency|optimization|opex)/.test(lc)) return 'operational_optimization';
+  if (/(cost|efficiency|optimization|opex)/.test(lc))
+    return 'operational_optimization';
   return 'strategic_transformation';
 }

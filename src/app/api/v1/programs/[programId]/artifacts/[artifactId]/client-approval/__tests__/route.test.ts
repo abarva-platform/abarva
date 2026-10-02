@@ -15,6 +15,8 @@ const mockPackerToBuffer = jest.fn();
 const mockRenderDeliverableDocx = jest.fn();
 const mockRenderDeliverablePptx = jest.fn();
 const mockRenderValidatedDeck = jest.fn();
+let sponsorParticipantExists = true;
+let routeSupabase: ReturnType<typeof makeSupabase>;
 
 jest.mock("docx", () => ({
   Packer: { toBuffer: (doc: unknown) => mockPackerToBuffer(doc) },
@@ -205,7 +207,10 @@ function makeSupabase() {
       api.eq = jest.fn(() => api);
       api.limit = jest.fn(async () => {
         if (table === "engagement_participants") {
-          return { data: [{ id: "other-sponsor" }], error: null };
+          return {
+            data: sponsorParticipantExists ? [{ id: "other-sponsor" }] : [],
+            error: null,
+          };
         }
         return { data: [], error: null };
       });
@@ -251,7 +256,9 @@ beforeEach(() => {
   jest.resetModules();
   jest.clearAllMocks();
   mockRequireTenancy.mockResolvedValue(ctx);
-  mockGetProgramsRouteSupabase.mockResolvedValue({ supabase: makeSupabase() });
+  sponsorParticipantExists = true;
+  routeSupabase = makeSupabase();
+  mockGetProgramsRouteSupabase.mockResolvedValue({ supabase: routeSupabase });
   mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 1 });
   mockGetGeneratedArtifactById.mockResolvedValue(generatedArtifact);
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
@@ -312,6 +319,25 @@ beforeEach(() => {
 export {};
 
 describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approval", () => {
+  it("does not create sponsor authority while an authorized user approves a generated artifact", async () => {
+    sponsorParticipantExists = false;
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({
+        reason: "Authorized user reviewed the generated charter.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    expect(
+      routeSupabase.from.mock.calls.filter(
+        ([table]) => table === "engagement_participants",
+      ),
+    ).toEqual([]);
+  });
+
   it("allows policy-approved Moves admins even when participant-row authority alone denies", async () => {
     const { POST } = await import("../route");
 
@@ -495,7 +521,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       },
     });
     mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
-      extractedText: "$8,000,000 in savings is Finance validated and confirmed.",
+      extractedText:
+        "$8,000,000 in savings is Finance validated and confirmed.",
       extractedStructured: {
         parse_method: "docx-mammoth",
         warnings: [],
@@ -532,8 +559,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       },
     });
     mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
-      extractedText:
-        "$8,000,000 remains an unvalidated value hypothesis.",
+      extractedText: "$8,000,000 remains an unvalidated value hypothesis.",
       extractedStructured: {
         parse_method: "docx-mammoth",
         warnings: [],
@@ -667,7 +693,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(mockSignOffDeliverable).toHaveBeenCalled();
   });
 
-  it("still denies callers without policy or participant approval authority", async () => {
+  it("still denies callers without authorized-user gate permission", async () => {
+    mockRequireTenancy.mockResolvedValue({ ...ctx, role: "founder" });
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
       canApproveGates: false,
     });
@@ -682,7 +709,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(res.status).toBe(403);
     expect(json).toMatchObject({
       error: "forbidden",
-      detail: "approver authority or higher required",
+      detail: "Authorized Move approval permission required.",
     });
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();

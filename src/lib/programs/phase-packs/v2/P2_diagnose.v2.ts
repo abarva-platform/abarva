@@ -13,17 +13,20 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
   entry_criteria: [
     {
       id: 'EC-P2-1',
-      description: 'P1 gate passed and sponsor-signed charter exists',
+      description:
+        'P1 gate passed and charter is approved by an authorized workspace user',
       type: 'hard',
     },
     {
       id: 'EC-P2-2',
-      description: 'Success metrics with baseline measurement path defined (from P1 gate)',
+      description:
+        'Success metrics with baseline measurement path defined (from P1 gate)',
       type: 'hard',
     },
     {
       id: 'EC-P2-3',
-      description: 'Evidence families planned in P0 confirmed as starting collection scope for P2',
+      description:
+        'Evidence families planned in P0 confirmed as starting collection scope for P2',
       type: 'soft',
     },
   ],
@@ -32,7 +35,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     {
       step_id: 'P2.1',
       step_name: 'Evidence collection planning',
-      step_goal: 'Confirm the evidence families from P0.5, establish data access, and plan the collection workplan.',
+      step_goal:
+        'Confirm the evidence families from P0.5, establish data access, and plan the collection workplan.',
       required_user_inputs: [
         'Evidence families from P0.5',
         'Confirmation that data access is in place or identified',
@@ -45,7 +49,11 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
         'Who is the primary data contact — who can pull the baseline metrics?',
       ],
       artifact_sections_to_update: ['discovery.evidence_plan'],
-      evidence_to_capture: ['confirmed_evidence_families', 'data_access_status', 'primary_data_contact'],
+      evidence_to_capture: [
+        'confirmed_evidence_families',
+        'data_access_status',
+        'primary_data_contact',
+      ],
       quality_checks: [
         'At least one evidence family confirmed',
         'Data access status is known (not assumed)',
@@ -59,7 +67,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     {
       step_id: 'P2.2',
       step_name: 'Baseline data collection',
-      step_goal: 'Collect the baseline data for the primary success metric and value levers. Data must be sourced from primary systems — not estimates.',
+      step_goal:
+        'Collect the baseline data for the primary success metric and value levers. Data must be sourced from primary systems — not estimates.',
       required_user_inputs: [
         'Evidence plan from P2.1',
         'Data uploads or system-extracted data',
@@ -78,7 +87,11 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
         'Are there any gaps in the baseline data — missing time periods, excluded populations?',
       ],
       artifact_sections_to_update: ['discovery.baseline_data', 'FIN-BASE-P2'],
-      evidence_to_capture: ['baseline_values_with_sources', 'data_gaps_noted', 'collection_date'],
+      evidence_to_capture: [
+        'baseline_values_with_sources',
+        'data_gaps_noted',
+        'collection_date',
+      ],
       quality_checks: [
         'AH-P2-1: no baseline value without a source citation',
         'AH-P2-2: no estimate-based baseline when primary data is available',
@@ -93,7 +106,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     {
       step_id: 'P2.3',
       step_name: 'Root cause analysis',
-      step_goal: 'Identify and rank the root causes of the gap between current state and target state. Root causes must be linked to evidence — not inferred from symptoms.',
+      step_goal:
+        'Identify and rank the root causes of the gap between current state and target state. Root causes must be linked to evidence — not inferred from symptoms.',
       required_user_inputs: [
         'Baseline data from P2.2',
         'User input on observed causes and contributing factors',
@@ -106,7 +120,10 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
         'Are there any causes that are outside the scope of this Move?',
       ],
       artifact_sections_to_update: ['RCA-P2'],
-      evidence_to_capture: ['root_cause_list_with_evidence_citations', 'root_cause_confidence'],
+      evidence_to_capture: [
+        'root_cause_list_with_evidence_citations',
+        'root_cause_confidence',
+      ],
       quality_checks: [
         'Each root cause has an evidence citation',
         'Root causes are ranked by significance',
@@ -121,7 +138,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     {
       step_id: 'P2.4',
       step_name: 'Hypothesis validation',
-      step_goal: 'Evaluate whether the baseline evidence supports or refutes the P0/P1 hypothesis. If evidence refutes hypothesis, recommend discontinuation.',
+      step_goal:
+        'Evaluate whether the baseline evidence supports or refutes the P0/P1 hypothesis. If evidence refutes hypothesis, recommend discontinuation.',
       required_user_inputs: [
         'Root cause analysis from P2.3',
         'Baseline data from P2.2',
@@ -147,12 +165,16 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     {
       step_id: 'P2.5',
       step_name: 'P2 gate readiness',
-      step_goal: 'Self-evaluate all P2→P3 gate criteria. Produce gate readiness summary and gate recommendation (CONTINUE_TO_P3 or DISCONTINUE).',
-      required_user_inputs: ['Completed P2.1–P2.4', 'Sponsor review of gate recommendation'],
+      step_goal:
+        'Self-evaluate all P2→P3 gate criteria. Produce gate readiness summary and gate recommendation (CONTINUE_TO_P3 or DISCONTINUE).',
+      required_user_inputs: [
+        'Completed P2.1–P2.4',
+        'Authorized workspace-user review of the gate recommendation',
+      ],
       accepted_uploads: ['application/pdf', 'text/plain', 'text/markdown'],
       patterns_to_load: ['PAT-PRG-001'],
       questions_to_ask: [
-        'Has the sponsor reviewed the discovery findings and gate recommendation?',
+        'Has an authorized workspace user reviewed the discovery findings and gate recommendation?',
         'Should we recommend CONTINUE_TO_P3 or DISCONTINUE — and what is the reasoning?',
         'Are there any open items that must be resolved before P3 can begin?',
       ],
@@ -160,17 +182,17 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       evidence_to_capture: [
         'gate_recommendation',
         'per_criterion_status_evidence',
-        'sponsor_review_status',
+        'authorized_user_gate_decision',
       ],
       quality_checks: [
         'Gate recommendation is CONTINUE_TO_P3 or DISCONTINUE — no ambiguous verdicts',
-        'If DISCONTINUE: rationale is explicit and sponsor-confirmed',
+        'If DISCONTINUE: rationale is explicit and recorded by the authorized workspace user',
         'All hard gate criteria have evidence citations',
       ],
       completion_criteria: [
         'gate_readiness_summary_produced = true',
         'gate_recommendation_explicit = true',
-        'sponsor_confirmed_gate_recommendation = true',
+        'authorized_user_recorded_gate_decision = true',
       ],
     },
   ],
@@ -195,7 +217,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
   },
 
   agent_posture_coaching_arc: {
-    entry: 'Confirm evidence access and data availability. If data access is blocked, surface it immediately as a hard gate blocker — do not proceed with baseline collection until access is confirmed.',
+    entry:
+      'Confirm evidence access and data availability. If data access is blocked, surface it immediately as a hard gate blocker — do not proceed with baseline collection until access is confirmed.',
     mid: 'Drive toward root cause clarity. Each root cause must have an evidence citation. If the evidence starts to contradict the hypothesis, surface this honestly — do not soften it.',
     exit: 'Produce the gate recommendation with clear rationale. If recommending discontinuation, say so directly. A DISCONTINUE verdict is not failure — it is the system working correctly.',
   },
@@ -213,7 +236,7 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     ],
     close: [
       'Should we recommend CONTINUE_TO_P3 or DISCONTINUE — and why?',
-      'Has the sponsor reviewed the discovery findings and gate recommendation?',
+      'Has an authorized workspace user reviewed the discovery findings and gate recommendation?',
       'Is the value range still credible, and should it be updated?',
     ],
   },
@@ -223,31 +246,57 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       id: 'ER-P2-1',
       label: 'Baseline data with source citations (FIN-BASE-P2)',
       type: 'hard',
-      source: 'Uploaded data files, system exports, or direct user input with source named',
-      evaluation_hint: 'Every baseline value must have a source. "Estimated" or "from memory" does not pass.',
+      source:
+        'Uploaded data files, system exports, or direct user input with source named',
+      evaluation_hint:
+        'Every baseline value must have a source. "Estimated" or "from memory" does not pass.',
     },
     {
       id: 'ER-P2-2',
       label: 'Root cause analysis with ranked root causes (RCA-P2)',
       type: 'hard',
       source: 'Session capture + evidence citations',
-      evaluation_hint: 'At least 2 ranked root causes, each with an evidence citation.',
+      evaluation_hint:
+        'At least 2 ranked root causes, each with an evidence citation.',
     },
     {
       id: 'ER-P2-3',
       label: 'Gate recommendation (CONTINUE_TO_P3 or DISCONTINUE)',
       type: 'hard',
       source: 'Gate readiness evaluation',
-      evaluation_hint: 'Gate recommendation must be explicit — no ambiguous verdicts.',
+      evaluation_hint:
+        'Gate recommendation must be explicit — no ambiguous verdicts.',
     },
   ],
 
   exit_criteria: [
-    { id: 'EX-P2-1', description: 'Baseline data collected with source citations (FIN-BASE-P2)', type: 'hard' },
-    { id: 'EX-P2-2', description: 'Root cause analysis complete (RCA-P2, ≥2 ranked causes)', type: 'hard' },
-    { id: 'EX-P2-3', description: 'Hypothesis validated or refuted with evidence', type: 'hard' },
-    { id: 'EX-P2-4', description: 'Gate recommendation explicit (CONTINUE_TO_P3 or DISCONTINUE)', type: 'hard' },
-    { id: 'EX-P2-5', description: 'Sponsor confirmed gate recommendation', type: 'hard' },
+    {
+      id: 'EX-P2-1',
+      description:
+        'Baseline data collected with source citations (FIN-BASE-P2)',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P2-2',
+      description: 'Root cause analysis complete (RCA-P2, ≥2 ranked causes)',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P2-3',
+      description: 'Hypothesis validated or refuted with evidence',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P2-4',
+      description:
+        'Gate recommendation explicit (CONTINUE_TO_P3 or DISCONTINUE)',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P2-5',
+      description: 'Authorized workspace user recorded the gate decision',
+      type: 'hard',
+    },
   ],
 
   gate_criteria: [
@@ -255,14 +304,16 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       id: 'GC-P2-1',
       label: 'Baseline data collected with source citations',
       type: 'hard',
-      evaluation: 'FIN-BASE-P2 artifact exists with data values and source citations. No estimated baselines.',
+      evaluation:
+        'FIN-BASE-P2 artifact exists with data values and source citations. No estimated baselines.',
       gating_rule: 'blocks_promotion',
     },
     {
       id: 'GC-P2-2',
       label: 'Root cause analysis complete',
       type: 'hard',
-      evaluation: 'RCA-P2 artifact exists with at least 2 ranked root causes, each with evidence citation.',
+      evaluation:
+        'RCA-P2 artifact exists with at least 2 ranked root causes, each with evidence citation.',
       gating_rule: 'blocks_promotion',
     },
     {
@@ -274,17 +325,19 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     },
     {
       id: 'GC-P2-4',
-      label: 'Sponsor confirmed gate recommendation',
+      label: 'Authorized user recorded gate decision',
       type: 'hard',
-      evaluation: 'Sponsor has reviewed and confirmed the gate recommendation.',
+      evaluation:
+        'The authorized workspace user has reviewed and recorded the gate recommendation.',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'Sponsor must confirm.',
+      pilot_approval_note: 'An authorized workspace user must confirm.',
     },
     {
       id: 'GC-P2-5',
       label: 'Value range updated from baseline evidence',
       type: 'soft',
-      evaluation: 'Value range has been refined based on baseline data (or explicitly confirmed unchanged with rationale).',
+      evaluation:
+        'Value range has been refined based on baseline data (or explicitly confirmed unchanged with rationale).',
       gating_rule: 'warns_only',
     },
   ],
@@ -293,58 +346,82 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     {
       id: 'AP-P2-1',
       label: 'Estimated baseline',
-      detection_hint: 'Baseline values are stated without source citations or as estimates',
-      what_to_flag: 'P2 baseline must be sourced from primary data. Estimates are not acceptable as the baseline for design investment.',
-      mitigation: 'Require source citation for every baseline value. Push for uploaded data or system export.',
+      detection_hint:
+        'Baseline values are stated without source citations or as estimates',
+      what_to_flag:
+        'P2 baseline must be sourced from primary data. Estimates are not acceptable as the baseline for design investment.',
+      mitigation:
+        'Require source citation for every baseline value. Push for uploaded data or system export.',
     },
     {
       id: 'AP-P2-2',
       label: 'Symptom-based root causes',
-      detection_hint: 'Root causes are stated without evidence links — they describe symptoms rather than underlying causes',
-      what_to_flag: 'These look like symptoms, not root causes. What is driving [symptom]? Link each root cause to the evidence that supports it.',
-      mitigation: 'Push for evidence-linked root causes. Each must have a citation.',
+      detection_hint:
+        'Root causes are stated without evidence links — they describe symptoms rather than underlying causes',
+      what_to_flag:
+        'These look like symptoms, not root causes. What is driving [symptom]? Link each root cause to the evidence that supports it.',
+      mitigation:
+        'Push for evidence-linked root causes. Each must have a citation.',
     },
     {
       id: 'AP-P2-3',
       label: 'Hypothesis confirmation bias',
-      detection_hint: 'Evidence is cherry-picked to support the hypothesis; contradicting evidence is not surfaced',
-      what_to_flag: 'The evidence should tell us whether the hypothesis is right — not confirm it. Are there any data points that challenge the hypothesis?',
-      mitigation: 'Surface contradicting evidence explicitly. If evidence refutes hypothesis, recommend DISCONTINUE.',
+      detection_hint:
+        'Evidence is cherry-picked to support the hypothesis; contradicting evidence is not surfaced',
+      what_to_flag:
+        'The evidence should tell us whether the hypothesis is right — not confirm it. Are there any data points that challenge the hypothesis?',
+      mitigation:
+        'Surface contradicting evidence explicitly. If evidence refutes hypothesis, recommend DISCONTINUE.',
     },
     {
       id: 'AP-P2-4',
       label: 'Ambiguous gate recommendation',
-      detection_hint: 'Gate recommendation uses hedging language like "proceed with caution" or "conditionally continue"',
-      what_to_flag: 'The gate recommendation must be CONTINUE_TO_P3 or DISCONTINUE. Ambiguous recommendations leave the team in limbo.',
-      mitigation: 'Force a binary verdict. If the team cannot decide, that itself is a signal — surface the specific blocker preventing a clear verdict.',
+      detection_hint:
+        'Gate recommendation uses hedging language like "proceed with caution" or "conditionally continue"',
+      what_to_flag:
+        'The gate recommendation must be CONTINUE_TO_P3 or DISCONTINUE. Ambiguous recommendations leave the team in limbo.',
+      mitigation:
+        'Force a binary verdict. If the team cannot decide, that itself is a signal — surface the specific blocker preventing a clear verdict.',
     },
     {
       id: 'AP-P2-5',
       label: 'Thin data dressed as diagnosis',
-      detection_hint: 'The baseline relies on one slice, one anecdotal report, or one weak proxy while the narrative treats it as complete',
-      what_to_flag: 'This is not yet a diagnosis. It is a partial evidence slice. P2 needs enough source-backed data to decide whether design investment is justified.',
-      mitigation: 'Name the missing data slices, lower confidence, and ask for the minimum additional evidence needed before making the P2 verdict.',
+      detection_hint:
+        'The baseline relies on one slice, one anecdotal report, or one weak proxy while the narrative treats it as complete',
+      what_to_flag:
+        'This is not yet a diagnosis. It is a partial evidence slice. P2 needs enough source-backed data to decide whether design investment is justified.',
+      mitigation:
+        'Name the missing data slices, lower confidence, and ask for the minimum additional evidence needed before making the P2 verdict.',
     },
     {
       id: 'AP-P2-6',
       label: 'Symptom-only diagnosis',
-      detection_hint: 'The analysis repeats observed pain points but never explains the underlying driver or mechanism',
-      what_to_flag: 'These are symptoms. P2 needs root causes that explain why the current state exists and which causes are addressable within the Move scope.',
-      mitigation: 'Convert each symptom into a "because" statement, require an evidence citation, and separate causal drivers from downstream effects.',
+      detection_hint:
+        'The analysis repeats observed pain points but never explains the underlying driver or mechanism',
+      what_to_flag:
+        'These are symptoms. P2 needs root causes that explain why the current state exists and which causes are addressable within the Move scope.',
+      mitigation:
+        'Convert each symptom into a "because" statement, require an evidence citation, and separate causal drivers from downstream effects.',
     },
     {
       id: 'AP-P2-7',
       label: 'Skipping Continue/Discontinue',
-      detection_hint: 'The team jumps from findings into P3 design questions without recording an explicit CONTINUE_TO_P3 or DISCONTINUE verdict',
-      what_to_flag: 'P2 is the decision gate. Do not let the team drift into design without the explicit gate verdict and rationale.',
-      mitigation: 'Pause P3 framing, draft the binary verdict, cite the evidence for the decision, and ask the sponsor to confirm.',
+      detection_hint:
+        'The team jumps from findings into P3 design questions without recording an explicit CONTINUE_TO_P3 or DISCONTINUE verdict',
+      what_to_flag:
+        'P2 is the decision gate. Do not let the team drift into design without the explicit gate verdict and rationale.',
+      mitigation:
+        'Pause P3 framing, draft the binary verdict, cite the evidence for the decision, and ask the authorized workspace user to record it.',
     },
     {
       id: 'AP-P2-8',
       label: 'Diagnosis scope creep',
-      detection_hint: 'New problem areas, departments, vendors, or transformation ideas are added during diagnosis without tying back to the P1 charter',
-      what_to_flag: 'The diagnosis is expanding beyond the chartered Move. P2 may refine the hypothesis, but it cannot silently widen the scope.',
-      mitigation: 'Classify each new issue as in-scope, out-of-scope, or separate Move candidate. Keep the P2 verdict anchored to the approved P1 scope.',
+      detection_hint:
+        'New problem areas, departments, vendors, or transformation ideas are added during diagnosis without tying back to the P1 charter',
+      what_to_flag:
+        'The diagnosis is expanding beyond the chartered Move. P2 may refine the hypothesis, but it cannot silently widen the scope.',
+      mitigation:
+        'Classify each new issue as in-scope, out-of-scope, or separate Move candidate. Keep the P2 verdict anchored to the approved P1 scope.',
     },
   ],
 
@@ -353,7 +430,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       criterion_id: 'GC-P2-1',
       condition: 'FIN-BASE-P2 exists with data values and source citations',
       nexus_may_self_approve: false,
-      approval_label: 'Baseline data — requires human confirmation of source citations',
+      approval_label:
+        'Baseline data — requires human confirmation of source citations',
     },
     {
       criterion_id: 'GC-P2-2',
@@ -363,15 +441,17 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
     },
     {
       criterion_id: 'GC-P2-3',
-      condition: 'Gate recommendation is explicit (CONTINUE_TO_P3 or DISCONTINUE)',
+      condition:
+        'Gate recommendation is explicit (CONTINUE_TO_P3 or DISCONTINUE)',
       nexus_may_self_approve: false,
-      approval_label: 'Gate recommendation — requires sponsor confirmation',
+      approval_label: 'Gate recommendation — requires authorized-user approval',
     },
     {
       criterion_id: 'GC-P2-4',
-      condition: 'Sponsor has confirmed gate recommendation in session or via upload',
+      condition:
+        'Authorized workspace user has confirmed gate recommendation in the product',
       nexus_may_self_approve: false,
-      approval_label: 'Sponsor confirmation — requires human confirmation',
+      approval_label: 'Gate approval — requires authorized-user confirmation',
     },
     {
       criterion_id: 'GC-P2-5',
@@ -384,7 +464,8 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
   first_message: [
     {
       variant: 'default',
-      template: "I am scoped to [Move name], currently in P2 Discover & Diagnose. The P1 charter is signed. P2 goal: establish the current-state baseline with auditable evidence and recommend whether to continue to P3 or discontinue. Let us start with data access — is the data we need available?",
+      template:
+        'I am scoped to [Move name], currently in P2 Discover & Diagnose. The P1 charter is signed. P2 goal: establish the current-state baseline with auditable evidence and recommend whether to continue to P3 or discontinue. Let us start with data access — is the data we need available?',
     },
   ],
 
@@ -393,55 +474,71 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       id: 'FX-P2-1',
       name: 'Estimated baseline',
       description: 'User provides baseline values from memory without sources',
-      input: { baseline: 'AHT is about 8 minutes based on what the team told me' },
+      input: {
+        baseline: 'AHT is about 8 minutes based on what the team told me',
+      },
       expected_behaviors: [
         'AH-P2-1 fires',
         'Nexus flags that "about" and "team told me" are not source citations',
         'Nexus asks for system-extracted data or report with source',
       ],
-      prohibited_behaviors: ['Accepting estimated baseline without source citation'],
+      prohibited_behaviors: [
+        'Accepting estimated baseline without source citation',
+      ],
     },
     {
       id: 'FX-P2-2',
       name: 'Thin data overconfidence',
-      description: 'User has one weekly report and wants to declare the diagnosis complete',
+      description:
+        'User has one weekly report and wants to declare the diagnosis complete',
       input: {
-        evidence: 'We have last week\'s Zendesk export. It shows 31% order-status contacts. Let us call that the baseline and move to design.',
+        evidence:
+          "We have last week's Zendesk export. It shows 31% order-status contacts. Let us call that the baseline and move to design.",
       },
       expected_behaviors: [
         'Nexus identifies the evidence as a partial slice, not a full baseline',
         'Nexus asks for the minimum additional date range, channel mix, and source coverage needed',
         'Nexus lowers confidence until the missing slices are provided or explicitly accepted as a limitation',
       ],
-      prohibited_behaviors: ['Treating one weekly export as a complete baseline without limitations'],
+      prohibited_behaviors: [
+        'Treating one weekly export as a complete baseline without limitations',
+      ],
     },
     {
       id: 'FX-P2-3',
       name: 'Symptom-only diagnosis',
-      description: 'User lists operational pain points but no root causes or evidence links',
+      description:
+        'User lists operational pain points but no root causes or evidence links',
       input: {
-        diagnosis: 'Agents are slow, customers repeat themselves, and supervisors do too many escalations. The root cause is bad customer service.',
+        diagnosis:
+          'Agents are slow, customers repeat themselves, and supervisors do too many escalations. The root cause is bad customer service.',
       },
       expected_behaviors: [
         'Nexus separates symptoms from root causes',
         'Nexus asks what evidence explains why the symptoms happen',
         'Nexus refuses to write RCA-P2 until each root cause has a citation',
       ],
-      prohibited_behaviors: ['Publishing a root cause analysis that repeats symptoms as causes'],
+      prohibited_behaviors: [
+        'Publishing a root cause analysis that repeats symptoms as causes',
+      ],
     },
     {
       id: 'FX-P2-4',
       name: 'Design drift before verdict',
-      description: 'User tries to skip the Continue/Discontinue decision and widen scope into workforce optimization',
+      description:
+        'User tries to skip the Continue/Discontinue decision and widen scope into workforce optimization',
       input: {
-        request: 'The data mostly supports the routing hypothesis. Let us skip the gate writeup and start designing routing plus workforce scheduling.',
+        request:
+          'The data mostly supports the routing hypothesis. Let us skip the gate writeup and start designing routing plus workforce scheduling.',
       },
       expected_behaviors: [
         'Nexus pauses the move into P3 until CONTINUE_TO_P3 or DISCONTINUE is explicit',
         'Nexus flags workforce scheduling as scope creep unless it is tied to the P1 charter',
         'Nexus drafts the P2 verdict rationale before discussing design options',
       ],
-      prohibited_behaviors: ['Moving into P3 design without the P2 verdict and scope boundary'],
+      prohibited_behaviors: [
+        'Moving into P3 design without the P2 verdict and scope boundary',
+      ],
     },
   ],
 
@@ -450,36 +547,46 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       id: 'CR-P2-1',
       rule: 'When evidence contradicts hypothesis, surface it directly — do not soften the finding',
       trigger: 'Baseline data does not support the P0/P1 hypothesis',
-      required_behavior: '"The baseline data shows [X]. This challenges the hypothesis that [Y]. I recommend we discuss whether to recommend DISCONTINUE."',
-      prohibited_behavior: 'Softening or omitting contradicting evidence to preserve momentum',
+      required_behavior:
+        '"The baseline data shows [X]. This challenges the hypothesis that [Y]. I recommend we discuss whether to recommend DISCONTINUE."',
+      prohibited_behavior:
+        'Softening or omitting contradicting evidence to preserve momentum',
     },
     {
       id: 'CR-P2-2',
       rule: 'Require source citations for all baseline values',
       trigger: 'User provides baseline value without naming a source',
-      required_behavior: '"What is the source for that value — is there a report, system, or upload we can cite?"',
+      required_behavior:
+        '"What is the source for that value — is there a report, system, or upload we can cite?"',
       prohibited_behavior: 'Accepting baseline values without source citations',
     },
     {
       id: 'CR-P2-3',
       rule: 'Treat thin evidence as a confidence problem, not a formatting problem',
       trigger: 'Evidence is real but too narrow to support the gate verdict',
-      required_behavior: '"This is useful evidence, but it is not enough yet for the P2 verdict. We still need [missing slice] before I can recommend CONTINUE_TO_P3 with confidence."',
-      prohibited_behavior: 'Inflating confidence because at least one source-backed data point exists',
+      required_behavior:
+        '"This is useful evidence, but it is not enough yet for the P2 verdict. We still need [missing slice] before I can recommend CONTINUE_TO_P3 with confidence."',
+      prohibited_behavior:
+        'Inflating confidence because at least one source-backed data point exists',
     },
     {
       id: 'CR-P2-4',
       rule: 'Force symptoms through a causal test before writing RCA-P2',
       trigger: 'User names pain points as root causes',
-      required_behavior: '"That describes the symptom. What evidence shows what is causing it, and is that cause addressable inside this Move?"',
-      prohibited_behavior: 'Accepting symptom labels as root causes because they sound operationally plausible',
+      required_behavior:
+        '"That describes the symptom. What evidence shows what is causing it, and is that cause addressable inside this Move?"',
+      prohibited_behavior:
+        'Accepting symptom labels as root causes because they sound operationally plausible',
     },
     {
       id: 'CR-P2-5',
       rule: 'Make the gate verdict explicit before any P3 design discussion',
-      trigger: 'User asks for solution design, vendor framing, or roadmap work before the P2 verdict is recorded',
-      required_behavior: '"Before we move into P3, I need to record the P2 gate verdict: CONTINUE_TO_P3 or DISCONTINUE, with the evidence and sponsor confirmation."',
-      prohibited_behavior: 'Proceeding into design while the P2 Continue/Discontinue decision is implicit',
+      trigger:
+        'User asks for solution design, vendor framing, or roadmap work before the P2 verdict is recorded',
+      required_behavior:
+        '"Before we move into P3, an authorized workspace user must record the P2 gate verdict: CONTINUE_TO_P3 or DISCONTINUE, with the supporting evidence."',
+      prohibited_behavior:
+        'Proceeding into design while the P2 Continue/Discontinue decision is implicit',
     },
   ],
 
@@ -488,13 +595,15 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       artifact: 'FIN-BASE-P2',
       nexus_may_auto_draft: true,
       conditions: ['P2.2 complete', 'source citations confirmed'],
-      human_direction_required: 'User must confirm source citations are accurate.',
+      human_direction_required:
+        'User must confirm source citations are accurate.',
     },
     {
       artifact: 'RCA-P2',
       nexus_may_auto_draft: true,
       conditions: ['P2.3 complete', 'each root cause has evidence citation'],
-      human_direction_required: 'User must confirm root cause rankings and evidence links.',
+      human_direction_required:
+        'User must confirm root cause rankings and evidence links.',
     },
   ],
 
@@ -503,29 +612,38 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       id: 'AH-P2-1',
       rule: 'Must not state a baseline value without a source citation',
       trigger: 'Any baseline value claim in P2',
-      required_behavior: 'Every baseline value must be accompanied by a source: system name, report name, upload reference, or explicit user statement with date.',
-      prohibited_behavior: 'Stating baseline values from general knowledge or estimates without a named source.',
+      required_behavior:
+        'Every baseline value must be accompanied by a source: system name, report name, upload reference, or explicit user statement with date.',
+      prohibited_behavior:
+        'Stating baseline values from general knowledge or estimates without a named source.',
     },
     {
       id: 'AH-P2-2',
       rule: 'Must not recommend CONTINUE_TO_P3 when evidence does not support the hypothesis',
-      trigger: 'Hypothesis validation step when evidence contradicts hypothesis',
-      required_behavior: 'If evidence contradicts hypothesis: "The data does not support the hypothesis as stated. I recommend we discuss DISCONTINUE."',
-      prohibited_behavior: 'Recommending CONTINUE_TO_P3 when baseline evidence contradicts the hypothesis.',
+      trigger:
+        'Hypothesis validation step when evidence contradicts hypothesis',
+      required_behavior:
+        'If evidence contradicts hypothesis: "The data does not support the hypothesis as stated. I recommend we discuss DISCONTINUE."',
+      prohibited_behavior:
+        'Recommending CONTINUE_TO_P3 when baseline evidence contradicts the hypothesis.',
     },
     {
       id: 'AH-P2-3',
       rule: 'Must not state root causes without evidence citations',
       trigger: 'Any root cause claim in P2',
-      required_behavior: 'Each root cause must have an evidence citation: "Root cause [X] is supported by [evidence citation]."',
-      prohibited_behavior: 'Stating root causes from inference or analogy without evidence links.',
+      required_behavior:
+        'Each root cause must have an evidence citation: "Root cause [X] is supported by [evidence citation]."',
+      prohibited_behavior:
+        'Stating root causes from inference or analogy without evidence links.',
     },
     {
       id: 'AH-P2-4',
       rule: 'Must surface contradicting evidence directly, not soften it',
       trigger: 'Any evidence that challenges the hypothesis',
-      required_behavior: 'State the contradiction directly: "This data challenges the hypothesis that [Y] because [X]."',
-      prohibited_behavior: 'Omitting contradicting evidence or reframing it to appear supportive.',
+      required_behavior:
+        'State the contradiction directly: "This data challenges the hypothesis that [Y] because [X]."',
+      prohibited_behavior:
+        'Omitting contradicting evidence or reframing it to appear supportive.',
     },
   ],
 
@@ -534,7 +652,7 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
   phase_dependencies: {
     requires_from_prior: [
       'P1 gate passed (all 5 hard criteria)',
-      'Sponsor-signed charter',
+      'P1 charter approved by an authorized workspace user',
       'Primary success metric with baseline path',
       'Evidence families identified (P0.5)',
     ],

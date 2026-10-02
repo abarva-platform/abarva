@@ -63,7 +63,7 @@ import type {
  * Steward signoff event.
  */
 export type PhaseGateAdvancementSource =
-  | 'deterministic_phase_gate_advancement_seed';
+  'deterministic_phase_gate_advancement_seed';
 
 /**
  * The advancement disposition the Steward / Maestro can act on. Pure
@@ -304,12 +304,13 @@ const CREATED_FROM: PhaseGateAdvancementSource =
 const HONEST_FALLBACK_REASON =
   'Derived from deterministic phase gate advancement seed; production gate state machine + audit log are not wired.';
 
-const REQUIRED_AUDIT_EVENTS_BASE: PhaseGateAuditRequirement['requiredAuditEvents'] = [
-  'gate_advancement_proposed',
-  'gate_advancement_evaluated',
-  'steward_signoff_recorded',
-  'evidence_capture_attached',
-];
+const REQUIRED_AUDIT_EVENTS_BASE: PhaseGateAuditRequirement['requiredAuditEvents'] =
+  [
+    'gate_advancement_proposed',
+    'gate_advancement_evaluated',
+    'steward_signoff_recorded',
+    'evidence_capture_attached',
+  ];
 
 // ---------------------------------------------------------------------
 // Public API
@@ -651,8 +652,7 @@ function composeMissingInputs(
   // the time. The classifier treats those as non-blocking so a
   // passed gate with reconstructable gaps surfaces as
   // `partially_ready` rather than `blocked`.
-  const gateIsBehind =
-    gateEntry !== null && gateEntry.isPassed === true;
+  const gateIsBehind = gateEntry !== null && gateEntry.isPassed === true;
 
   // Per-gate canonical missing inputs. Each gate names what the
   // production state machine would require before advancing.
@@ -660,9 +660,9 @@ function composeMissingInputs(
     case 1:
       out.push({
         id: `${program.programSlug}:missing:g1-charter-signature`,
-        label: 'Charter signature from executive sponsor',
+        label: 'Charter approval recorded by an authorized workspace user',
         reason:
-          'G1 requires charter signature capture; the canonical seed does not record signature events.',
+          'G1 requires an authorized-user approval event; the canonical seed does not record approval events.',
         blocking: true,
       });
       out.push({
@@ -728,10 +728,7 @@ function composeMissingInputs(
   // (G2 CXO interview capture, G3 projected value, G4 realized
   // value). G1 (charter signature) is decoupled from the evidence
   // registry and therefore does not surface this gap.
-  if (
-    readinessSummary.evidence.signal === 'not_seeded' &&
-    gate.index !== 1
-  ) {
+  if (readinessSummary.evidence.signal === 'not_seeded' && gate.index !== 1) {
     out.push({
       id: `${program.programSlug}:missing:evidence-registry-not-seeded`,
       label: 'Evidence registry capture',
@@ -778,9 +775,9 @@ function composeEvidenceRequirements(
     case 1:
       out.push({
         id: `evidence:g1:charter-signature`,
-        label: 'Executive sponsor charter signature',
+        label: 'Authorized workspace-user charter approval',
         reason:
-          'G1 audit requires a captured signature event; honest default until charter capture lands.',
+          'G1 audit requires a captured authorized-user approval event; honest default until charter capture lands.',
         kind: 'charter_signature',
         evidenceRegistryWired: false,
       });
@@ -1024,9 +1021,7 @@ function composeRecommendedNextAction(
           ? `Resolve blocker: ${firstBlocking.label}`
           : `Resolve G${gate.index} blocker`,
         routePath: program.routePath,
-        reason: firstBlocking
-          ? firstBlocking.reason
-          : HONEST_FALLBACK_REASON,
+        reason: firstBlocking ? firstBlocking.reason : HONEST_FALLBACK_REASON,
         kind: 'resolve_blocker',
       };
     }

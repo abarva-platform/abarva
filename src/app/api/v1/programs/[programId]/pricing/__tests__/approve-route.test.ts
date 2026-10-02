@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 const requireTenancyMock = jest.fn();
+const loadUserProgramAccessPolicyMock = jest.fn();
 const getProgramByIdMock = jest.fn();
 const getEstimateMock = jest.fn();
 const listEstimateInputsMock = jest.fn();
@@ -17,6 +18,10 @@ jest.mock("@/app/api/v1/programs/_auth", () => ({
 }));
 jest.mock("@/lib/programs/queries", () => ({
   getProgramById: (ctx: unknown, programId: string) => getProgramByIdMock(ctx, programId),
+}));
+jest.mock("@/lib/auth/program-access-policy", () => ({
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    loadUserProgramAccessPolicyMock(...args),
 }));
 
 class FakeEstimateNotReadyError extends Error {
@@ -37,11 +42,6 @@ jest.mock("@/lib/pricing/moves-workflow", () => ({
   EstimateTenantMismatchError: FakeEstimateTenantMismatchError,
 }));
 
-class FakeSelfApprovalViolationError extends Error {
-  constructor(public readonly approvedBy: string, public readonly preparedBy: string) {
-    super(`self_approval_violation: '${approvedBy}' === '${preparedBy}'`);
-  }
-}
 class FakeUnresolvedRateGapError extends Error {
   constructor(public readonly gapCount: number) {
     super(`unresolved_rate_gap: ${gapCount} line item(s)`);
@@ -61,7 +61,6 @@ jest.mock("@/lib/pricing/effort-engine/snapshot-service", () => ({
     overrideReason: row.override_reason,
     confidence: row.confidence,
   }),
-  SelfApprovalViolationError: FakeSelfApprovalViolationError,
   UnresolvedRateGapError: FakeUnresolvedRateGapError,
 }));
 
@@ -149,6 +148,10 @@ const snapshotRow = {
 beforeEach(() => {
   jest.clearAllMocks();
   requireTenancyMock.mockResolvedValue(ctx);
+  loadUserProgramAccessPolicyMock.mockResolvedValue({
+    canApproveGates: true,
+    programIdsAllowed: ["move-1"],
+  });
   getProgramByIdMock.mockResolvedValue(program);
   getEstimateMock.mockResolvedValue(estimateRow);
   listEstimateInputsMock.mockResolvedValue([
@@ -209,18 +212,34 @@ describe("POST /api/v1/programs/[programId]/pricing/estimates/[estimateId]/appro
     expect(updateEstimateHeaderMock).not.toHaveBeenCalled();
   });
 
-  it("same-user violation: rejects when the approver is the same identity that last confirmed the estimate's inputs", async () => {
-    // The approving session IS the preparer this time.
+  it("allows the authorized workspace user to approve an estimate they prepared", async () => {
     listEstimateInputsMock.mockResolvedValue([
       { input_key: "integration_count", value: 4, confirmed_by: "approver-1", confirmed_at: "2026-07-24T00:00:00Z", override_reason: null, confidence: null },
     ]);
-    createEstimateSnapshotMock.mockRejectedValue(new FakeSelfApprovalViolationError("approver-1", "approver-1"));
 
     const res = await postApprove({ approvalRationale: "Reviewed and holds up." });
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(201);
     const json = await res.json();
-    expect(json.error).toBe("self_approval_violation");
-    expect(updateEstimateHeaderMock).not.toHaveBeenCalled();
+    expect(json.ok).toBe(true);
+    expect(createEstimateSnapshotMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        approvedBy: "approver-1",
+        preparedBy: "approver-1",
+      }),
+    );
+    expect(updateEstimateHeaderMock).toHaveBeenCalledWith("estimate-1", { status: "approved" });
+  });
+
+  it("forbids an authenticated user without Move-scoped approval permission", async () => {
+    loadUserProgramAccessPolicyMock.mockResolvedValue({
+      canApproveGates: false,
+      programIdsAllowed: ["move-1"],
+    });
+
+    const res = await postApprove({ approvalRationale: "Reviewed and holds up." });
+    expect(res.status).toBe(403);
+    expect(runEstimateMock).not.toHaveBeenCalled();
+    expect(createEstimateSnapshotMock).not.toHaveBeenCalled();
   });
 
   // PR7 hardening: brief §12's "missing all fallbacks blocks the estimate" —

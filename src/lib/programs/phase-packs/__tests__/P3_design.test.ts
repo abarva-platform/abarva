@@ -7,7 +7,7 @@
 //     simple steps for cohort-name, criteria-lock, sign-off).
 //   • docs/build/PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md D.3.1 —
 //     failures prevented by P3 (#5 operating-model, #6 governance, #7
-//     vendor, #1 sponsor commitment).
+//     vendor, #1 executive ownership).
 
 import { P3_DESIGN } from '../P3_design';
 import type { PhasePack } from '../types';
@@ -236,7 +236,7 @@ describe('P3 Design · 9-step decomposition (D.3.4)', () => {
     expect(vendor!.preventsFailureModes).toContain(7);
   });
 
-  it('p3-cxo-interview preventsFailureModes contains 1 (sponsor commitment)', () => {
+  it('p3-cxo-interview preventsFailureModes contains 1 (executive ownership)', () => {
     const cxo = (P3_DESIGN.steps ?? []).find(
       (s) => s.id === 'p3-cxo-interview',
     );

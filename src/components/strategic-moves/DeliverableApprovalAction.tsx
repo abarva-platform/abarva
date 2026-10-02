@@ -1,19 +1,18 @@
 "use client";
 
-// Client approval action for a single deliverable — the real
-// "AI Draft → Client Approved" step, not another AI-generation trigger.
+// Authorized workspace-user approval action for one generated deliverable.
 // Two modes: approve the AI-drafted content as-is, or upload an edited
 // replacement file. Either way calls POST .../deliverables/:id/sign-off,
 // which sets deliverables_v2.signed_off_version so later regeneration can
-// never silently clobber the approval record (see v2-generator.ts /
-// moves-generate-deps.ts).
+// never silently clobber the approved version; governed regeneration uses the
+// deliverable-version persistence contract.
 
 import { useRef, useState } from "react";
 
 interface Props {
   moveId: string;
   deliverableId: string;
-  /** True once this exact version has already been client-approved. */
+  /** True once this exact version has already been approved in the workspace. */
   alreadyApproved: boolean;
 }
 
@@ -50,7 +49,9 @@ export function DeliverableApprovalAction({
     try {
       const rationale = approvalRationale.trim();
       const init: RequestInit = file
-          ? { method: "POST", body: (() => {
+        ? {
+            method: "POST",
+            body: (() => {
               const form = new FormData();
               form.append("file", file);
               if (rationale) form.append("approvalRationale", rationale);
@@ -58,7 +59,8 @@ export function DeliverableApprovalAction({
                 form.append("acknowledgeReadinessBlockers", "true");
               }
               return form;
-            })() }
+            })(),
+          }
         : acknowledgeReadinessBlockers || rationale
           ? {
               method: "POST",
@@ -117,7 +119,14 @@ export function DeliverableApprovalAction({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 6,
+      }}
+    >
       <label
         htmlFor={`approval-rationale-${deliverableId}`}
         style={{ fontSize: 11, fontWeight: 600, color: "#475569" }}
@@ -144,7 +153,14 @@ export function DeliverableApprovalAction({
           lineHeight: 1.4,
         }}
       />
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          flexWrap: "wrap",
+        }}
+      >
         <button
           type="button"
           disabled={busy !== "idle"}
@@ -207,7 +223,9 @@ export function DeliverableApprovalAction({
             lineHeight: 1.45,
           }}
         >
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>{error.message}</div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>
+            {error.message}
+          </div>
           {error.blockers?.length ? (
             <ul style={{ margin: "4px 0 8px 16px", padding: 0 }}>
               {error.blockers.map((blocker, index) => (
