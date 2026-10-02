@@ -42,6 +42,7 @@ import { getProgramById } from "@/lib/programs/queries";
 import { getGeneratedArtifactById } from "@/lib/artifacts/repository";
 import { phaseForOrchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { countSolutionContextEvidenceSignals } from "@/lib/programs/solution-context";
 import type {
   AudienceRole,
   DeliverableModule,
@@ -186,6 +187,9 @@ async function runMovesPremiumArtifact(
       return;
     }
     if (result.status === "blocked_quality") {
+      const retrievedEvidence = countSolutionContextEvidenceSignals(
+        result.context,
+      );
       await completeDeliverableRun(run.id, {
         status: "blocked",
         blockers: result.goldenBar.reasons,
@@ -193,8 +197,10 @@ async function runMovesPremiumArtifact(
           `golden_bar_pass=false`,
           `word_count=${result.goldenBar.wordCount}`,
           `svg_count=${result.goldenBar.svgCount}`,
+          `governed_context_evidence=${retrievedEvidence}`,
         ],
         sectionCount: result.goldenBar.wordCount,
+        retrievedEvidence,
         error: "golden bar failed",
       }).catch(() => {});
       return;
@@ -218,16 +224,20 @@ async function runMovesPremiumArtifact(
       phaseEvidenceSnapshotHash:
         approvedMoveEvidenceRevisionForPhase(evidenceSnapshot, payload.phase),
     });
+    const retrievedEvidence = countSolutionContextEvidenceSignals(
+      result.context,
+    );
 
     await completeDeliverableRun(run.id, {
       status: "succeeded",
       artifactId: persisted.artifactId,
       sectionCount: result.goldenBar.wordCount,
-      retrievedEvidence: result.goldenBar.svgCount,
+      retrievedEvidence,
       warnings: [
         `golden_bar_pass=${result.goldenBar.pass}`,
         `word_count=${result.goldenBar.wordCount}`,
         `svg_count=${result.goldenBar.svgCount}`,
+        `governed_context_evidence=${retrievedEvidence}`,
         `artifact_version=${persisted.artifactVersion}`,
         `artifact_blob_stored=${persisted.artifactBlobStored}`,
         ...(result.draftOnly ? ["draft_only=true"] : []),

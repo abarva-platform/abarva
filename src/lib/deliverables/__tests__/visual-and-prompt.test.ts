@@ -95,6 +95,49 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.system).toMatch(/visual-first/i);
   });
 
+  it("binds approved evidence packets into the prompt as citeable governed context", () => {
+    const ctx = applyPhaseDigest(richContext(), {
+      evidencePackets: [
+        {
+          evidenceId: "0f0b9acc-25f4-4764-85de-67050f2bac10",
+          title: "P2 workshop evidence pack",
+          evidenceType: "workshop_notes",
+          phase: 2,
+          summary: "The workshop confirmed manual queue review and policy handoffs.",
+          observations: ["Manual queue review creates handoff delay."],
+          assumptions: ["Future-state automation remains human-supervised."],
+          openQuestions: ["Which control owner signs off policy updates?"],
+          citations: [
+            {
+              quote: "Manual queue review creates handoff delay.",
+              locator: "workshop-notes p.2",
+            },
+          ],
+          approvedAt: "2026-09-27T00:00:00.000Z",
+        },
+      ],
+      evidenceMap: [
+        {
+          claim: "Policy handoffs constrain automation scope.",
+          source: "Approved P2 diagnostic",
+        },
+      ],
+    });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: ctx,
+    });
+
+    expect(p.user).toContain("GOVERNED SOURCE REGISTER");
+    expect(p.user).toContain("[1] P2 workshop evidence pack");
+    expect(p.user).toContain("Manual queue review creates handoff delay.");
+    expect(p.user).toContain("CARRIED-FORWARD EVIDENCE MAP");
+    expect(p.user).toContain("[2] Policy handoffs constrain automation scope.");
+    expect(p.user).toContain("numeric [n] marker");
+    expect(p.user).not.toContain("0f0b9acc-25f4-4764-85de-67050f2bac10");
+  });
+
   it("architecture prompt uses the approved chosenOption", () => {
     const p = buildArtifactPrompt({
       artifact: "target_state_architecture",
