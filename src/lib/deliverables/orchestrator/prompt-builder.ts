@@ -647,10 +647,11 @@ export function requiredExhibitsInstruction(
 const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
-  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx"}],
+  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx","statusColumn":n}],
   "exhibits":[{"key","title","kind","description","targetFormat":"pptx","data":{}}],
   "clientCompleteChecklist":[{"key","label","owner","reason":"client_judgment|legal_review|procurement_signoff|pricing_signoff","placeholderText"}] }
 If PPTX is an output format, populate deckSlides. Each deck slide must have one governingMessage (the argument), 0-4 short supporting points, optional speakerNotes for evidence/traceability, and an optional exhibitKey pointing to an exhibit below. Do not make the renderer infer slide craft from prose.
+A decision table should end in a column that names the owner or the decision, not raw detail. When a table has a status/RAG/ownership column (e.g. risk level, acceptance pass/fail, readiness state, owner), set "statusColumn" to that column's zero-based index so the renderer colours it by value; omit statusColumn for a table with no such column.
 For exhibits, do not merely repeat the exhibit name or purpose. Populate data with the concrete values the renderer should draw. Supported payloads:
 - flow: {"kind":"flow","nodes":[{"id","label","role"}],"edges":[{"from","to","label"}]}
 - matrix/heatmap/comparison: {"kind":"matrix","axes":{"x","y"},"cells":[{"x","y","label","value","weight"}]}
@@ -664,7 +665,7 @@ const RENDER_SCHEMA_HINT = `Return ONLY JSON matching RenderableDeliverable:
 { "title","subtitle","clientDisplayName","initiativeDisplayName",
   "generatedSections":[{"key","title","bodyMarkdown","groundingMode","citationsUsed":[n]}],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
-  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat"}],
+  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat","statusColumn":n}],
   "exhibits":[{"key","title","kind","description","targetFormat","data":{}}],
   "sourceRegister":[{"citationNumber","label","evidenceFamily","confidence","asOf"}],
   "assumptions":[...], "clientCompleteChecklist":[...], "recommendation", "nextActions":[] }`;
