@@ -54,6 +54,8 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import {
   loadApprovedMoveEvidenceSnapshot,
@@ -128,8 +130,29 @@ async function captureCompletion(
   program?: Awaited<ReturnType<typeof getProgramById>> | null,
 ): Promise<{ complete: boolean; missing: string[] }> {
   const modules = await getModuleState(ctx, programId);
+  // P3 asks for a different, smaller set of inputs once the solution route is
+  // confirmed. Check the set this Move was actually asked for — resolved the
+  // same way the capture endpoint resolves it — not the default list.
+  const moduleValue = (capturePhase: number, key: string): string => {
+    const row = modules.find(
+      (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
+    );
+    const value = (row?.state as Record<string, unknown> | null | undefined)
+      ?.value;
+    return typeof value === "string" ? value : "";
+  };
+  const confirmedSolutionRoute =
+    phase === 3
+      ? resolveConfirmedSolutionRoute({
+          businessChangeAssessment: moduleValue(1, "business_change_assessment"),
+          routeValidation: moduleValue(2, "solution_route_validation"),
+          approvedEvidenceReferences: (
+            await listApprovedPhaseEvidence(ctx, programId, 2)
+          ).map((item) => item.evidenceId),
+        })
+      : null;
   const missing: string[] = [];
-  for (const section of getPhaseCaptureSections(phase)) {
+  for (const section of getPhaseCaptureSections(phase, confirmedSolutionRoute)) {
     const capturedModule = modules.find(
       (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
     );

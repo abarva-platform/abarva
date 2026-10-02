@@ -22,6 +22,8 @@ const mockCloseP0OnApproval = jest.fn();
 const mockWriteProgramAuditLogBestEffort = jest.fn();
 const mockSaveGateDecisionArtifact = jest.fn();
 const mockGetPhaseCaptureSections = jest.fn();
+const mockListApprovedPhaseEvidence = jest.fn();
+const mockResolveConfirmedSolutionRoute = jest.fn();
 const mockPersistP0PhaseCaptureFromSource = jest.fn();
 const mockSbFrom = jest.fn();
 
@@ -103,9 +105,19 @@ jest.mock("@/lib/programs/deliverables/gate-override-artifact", () => ({
     mockSaveGateDecisionArtifact(ctx, input),
 }));
 
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  listApprovedPhaseEvidence: (ctx: unknown, programId: string, phase: number) =>
+    mockListApprovedPhaseEvidence(ctx, programId, phase),
+}));
+
+jest.mock("@/lib/programs/solution-route-assessment", () => ({
+  resolveConfirmedSolutionRoute: (args: unknown) =>
+    mockResolveConfirmedSolutionRoute(args),
+}));
+
 jest.mock("@/lib/programs/phase-capture-contract", () => ({
-  getPhaseCaptureSections: (phase: number) =>
-    mockGetPhaseCaptureSections(phase),
+  getPhaseCaptureSections: (phase: number, confirmedSolutionRoute?: unknown) =>
+    mockGetPhaseCaptureSections(phase, confirmedSolutionRoute),
   phaseCaptureModuleKey: (phase: number, sectionKey: string) =>
     `phase_${phase}_${sectionKey}`,
 }));
@@ -152,6 +164,8 @@ beforeEach(() => {
     currentPhase: 3,
     gatesPassed: [],
   });
+  mockListApprovedPhaseEvidence.mockResolvedValue([]);
+  mockResolveConfirmedSolutionRoute.mockReturnValue(null);
   // Capture is complete by default so tests can focus on the gate check.
   mockGetPhaseCaptureSections.mockReturnValue([
     { key: "review", label: "Review" },
@@ -1036,6 +1050,73 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
         ],
       }),
     );
+  });
+
+  it("checks P3 capture against the sections of the confirmed solution route, not the default list", async () => {
+    // A limited process change is asked for a smaller, different set of P3
+    // inputs. The gate used to check the default list, so it reported
+    // sections the Move was never asked for as missing and could never
+    // report capture complete.
+    const limitedRoute = {
+      route: "process_change",
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+    };
+    mockGetPhaseCaptureSections.mockImplementation(
+      (_phase: number, route?: unknown) =>
+        route
+          ? [{ key: "workflow_delta", label: "Workflow change delta" }]
+          : [
+              {
+                key: "operating_model",
+                label: "Operating model & work split",
+              },
+            ],
+    );
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: "phase_1_business_change_assessment",
+        status: "completed",
+        state: { value: "p1-assessment" },
+      },
+      {
+        moduleKey: "phase_2_solution_route_validation",
+        status: "completed",
+        state: { value: "p2-validation" },
+      },
+      { moduleKey: "phase_3_workflow_delta", status: "completed" },
+    ]);
+    mockListApprovedPhaseEvidence.mockResolvedValue([
+      { evidenceId: "evidence-p2-1" },
+    ]);
+    mockResolveConfirmedSolutionRoute.mockReturnValue(limitedRoute);
+    mockEvaluateGate.mockResolvedValue({ pass: true, failedChecks: [] });
+    const { GET } = await import("../route");
+
+    const res = await GET(getReq(3) as never, { params });
+    const json = await res.json();
+
+    expect(mockListApprovedPhaseEvidence).toHaveBeenCalledWith(ctx, "prog-1", 2);
+    expect(mockResolveConfirmedSolutionRoute).toHaveBeenCalledWith({
+      businessChangeAssessment: "p1-assessment",
+      routeValidation: "p2-validation",
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    expect(mockGetPhaseCaptureSections).toHaveBeenCalledWith(3, limitedRoute);
+    expect(json.capture).toEqual({ complete: true, missing: [] });
+  });
+
+  it("does not resolve a solution route for phases other than P3", async () => {
+    mockEvaluateGate.mockResolvedValue({ pass: true, failedChecks: [] });
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_2_review", status: "completed" },
+    ]);
+    const { GET } = await import("../route");
+
+    await GET(getReq(2) as never, { params });
+
+    expect(mockResolveConfirmedSolutionRoute).not.toHaveBeenCalled();
+    expect(mockGetPhaseCaptureSections).toHaveBeenCalledWith(2, null);
   });
 
   it("short-circuits when the phase is already approved", async () => {
