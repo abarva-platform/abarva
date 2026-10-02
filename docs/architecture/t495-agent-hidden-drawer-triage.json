@@ -52,7 +52,19 @@
         "sourceTextScanner": true
       },
       "priorVerdictStatus": "discharged_here",
-      "rationale": "The fifteen deleted cases asserted what two files say. Measured against ten mutations that change what the component renders or what the builder returns, the deleted scanner caught two -- data-drawer-state removed, and the panel built from the wrong variant (the latter through a kept builder case, not a scanner case) -- and missed eight, including a plain Date.now() field added to the view, which its own 'does not call Date.now' case should have caught and did not because its single-quote stripping regex, /'[^']*'/g, matches across newlines and removed the code lying between two quote characters on different lines (traced step by step: the call survives the template and double-quote passes and is gone after the single-quote pass). The new suite caught all ten."
+      "rationale": "The fifteen deleted cases asserted what two files say. Measured against ten mutations that change what the component renders or what the builder returns, the deleted scanner caught two -- data-drawer-state removed, and the panel built from the wrong variant (the latter through a kept builder case, not a scanner case) -- and missed eight, including a plain Date.now() field added to the view, which its own 'does not call Date.now' case should have caught and did not because its single-quote stripping regex, /'[^']*'/g, matches across newlines and removed the code lying between two quote characters on different lines (traced step by step: the call survives the template and double-quote passes and is gone after the single-quote pass). The new suite caught all ten.",
+      "subjectReachability": {
+        "reachable": false,
+        "pendingDecision": "T-775",
+        "computedBy": "src/__tests__/behaviors/t770-scanner-wiring-refusal.test.ts, over scripts/audit/lib/route-reachability.mjs (route walk, src/components and src/app) and scripts/audit/lib/module-referrers.mjs (src/lib referrer classes), across the suite import closure with tests and __fixtures__ excluded",
+        "unreachableAtAmendment": [
+          "src/components/abarva/AgentBadge.tsx (no route reaches it)",
+          "src/components/agents/AgentHiddenDrawer.tsx (no route reaches it)",
+          "src/lib/agent/agent-hidden-drawer-view.ts (testOnly)",
+          "src/lib/tower/ai-portfolio-inventory.ts (testOnly)"
+        ],
+        "note": "Amendment, not a restamp: recordedAt is unchanged. The verdict wired and the mutation scores stand as measurements, but they measure code no user can reach, so the census coverage this row earns is coverage of dead code. T-770 refuses this row unless it is in the T-775 pending set, and holds this field to the live computation. Retire versus mount is the T-775 owner decision; either outcome takes the row out of the pending set by its effect."
+      }
     }
   ],
   "mutations": [
@@ -120,5 +132,12 @@
   "residualsNotClosedHere": [
     "The directory src/__tests__/integration/agents still cannot be wired whole: agent-mission-surface-wiring and ask-anything-bar are red on base, and five suites remain T-495 scanners. The suite is named individually for that reason.",
     "OBSERVED, not acted on: src/components/agents/AgentHiddenDrawer.tsx is imported by no file under src other than this suite -- no route mounts it. The suite now proves what the component renders, not that any user sees it. Delete-versus-mount is a product call and not this change's to take."
+  ],
+  "amendments": [
+    {
+      "item": "T-775",
+      "amendedAt": "2026-09-28T12:00:12.985Z",
+      "change": "Added suites[].subjectReachability, computed rather than declared; see the row note."
+    }
   ]
 }
