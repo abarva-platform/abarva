@@ -70,6 +70,7 @@ describe("buildSourceNewStage05NdaCoverage", () => {
     });
 
     expect(result.status).toBe("ready");
+    expect(result.publishedTemplateVersions).toEqual(["MUTUAL-NDA-v3"]);
     expect(result.suppliers).toEqual([
       expect.objectContaining({
         legalEntityId: "vendor-1",
@@ -101,6 +102,7 @@ describe("buildSourceNewStage05NdaCoverage", () => {
     });
 
     expect(result.status).toBe("blocked");
+    expect(result.publishedTemplateVersions).toEqual([]);
     expect(result.suppliers[0]).toEqual(
       expect.objectContaining({
         state: "unavailable",
