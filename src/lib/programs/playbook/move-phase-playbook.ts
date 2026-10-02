@@ -134,8 +134,8 @@ export const WORKSHOP_TEMPLATES: Record<
   },
   approval_page: {
     kind: "approval_page",
-    label: "Approval Page",
-    columns: ["Role", "Name", "Status", "Date"],
+    label: "Product Approval Record",
+    columns: ["Decision", "Authorized workspace approver", "Date", "Rationale"],
   },
 };
 
