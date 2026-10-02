@@ -18,7 +18,6 @@ export type RecordExecutedNdaInput = {
   effectiveFrom: string;
   effectiveTo: string | null;
   executedAt: string;
-  uploadedByUserId: string;
   recordedByUserId: string;
   evidenceReference: string | null;
   signatureMethod: NdaSignatureMethod;
@@ -61,7 +60,6 @@ export async function recordExecutedNda(
       input.vendorId,
       input.ndaId,
       input.templateVersion,
-      input.uploadedByUserId,
       input.recordedByUserId,
     ].every(nonempty) ||
     Number.isNaN(Date.parse(input.effectiveFrom)) ||
@@ -93,19 +91,22 @@ export async function recordExecutedNda(
         return { ok: false, code: "candidate_not_accepted" };
       }
 
-      const artifacts = await run<{ document_sha256: string }>(
-        `SELECT NULLIF(BTRIM(COALESCE(blob_sha256, sha256)), '') AS document_sha256
+      const artifacts = await run<{ document_sha256: string; uploader_user_id: string | null }>(
+        `SELECT NULLIF(BTRIM(COALESCE(blob_sha256, sha256)), '') AS document_sha256,
+                uploader_user_id
          FROM source_artifacts
          WHERE tenant_key = $1
            AND (source_event_id = $2 OR source_event_row_id = $2::uuid)
            AND id = $3::uuid
+           AND artifact_group = 'upload'
            AND artifact_type = 'nda_executed'
            AND lifecycle_state = 'current'
          FOR SHARE`,
         [input.clientKey, input.eventId, input.artifactId],
       );
       const documentHash = artifacts[0]?.document_sha256;
-      if (artifacts.length !== 1 || !documentHash || !validHash(documentHash)) {
+      if (artifacts.length !== 1 || !documentHash || !validHash(documentHash) ||
+        !nonempty(artifacts[0].uploader_user_id)) {
         return { ok: false, code: "executed_artifact_unavailable" };
       }
 
@@ -163,7 +164,7 @@ export async function recordExecutedNda(
           input.ndaId, input.clientKey, input.eventId, input.artifactId,
           input.vendorId, input.templateVersion, input.scopeLevel,
           input.coveredAffiliateEntityIds, input.effectiveFrom, input.effectiveTo,
-          input.executedAt, input.uploadedByUserId, input.recordedByUserId,
+          input.executedAt, artifacts[0].uploader_user_id, input.recordedByUserId,
           input.evidenceReference, input.signatureMethod, input.supplierSignatoryName,
           input.buyerSignatoryName, input.certificateSha256, input.privateEvidenceRef,
         ],

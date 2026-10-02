@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
+import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AnswerCitation } from "@/lib/ava-answer/contract";
@@ -614,6 +615,8 @@ export function SourceNewWorkspace({
                     <SourceNewStage05NdaReadiness
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
+                      eventId={event.id}
+                      files={files}
                     />
                   )}
                 </>
@@ -649,6 +652,8 @@ export function SourceNewWorkspace({
                     <SourceNewStage05NdaReadiness
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
+                      eventId={event.id}
+                      files={files}
                     />
                   )}
                 </>
@@ -685,6 +690,8 @@ export function SourceNewWorkspace({
                     <SourceNewStage05NdaReadiness
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
+                      eventId={event.id}
+                      files={files}
                     />
                   )}
                   {scorecardAuthorityStage && (
@@ -733,6 +740,8 @@ export function SourceNewWorkspace({
                     <SourceNewStage05NdaReadiness
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
+                      eventId={event.id}
+                      files={files}
                     />
                   )}
                   {scorecardAuthorityStage && (
@@ -1357,9 +1366,13 @@ function SourceNewStage04VendorPanelView({
 function SourceNewStage05NdaReadiness({
   coverage,
   eventHref,
+  eventId,
+  files,
 }: {
   coverage: SourceNewStage05NdaCoverage;
   eventHref: string;
+  eventId: string;
+  files: readonly SourceNewFileRow[];
 }) {
   const posture =
     coverage.status === "ready"
@@ -1372,9 +1385,10 @@ function SourceNewStage05NdaReadiness({
       <p className="snw-eyebrow">Stage 05 · NDA readiness</p>
       <h3>Supplier NDA coverage</h3>
       <p>
-        This read-only check summarizes existing NDA evidence. It does not send
-        supplier communications, approve legal terms, or infer supplier identity
-        from filenames.
+        This check summarizes recorded NDA evidence. When an accepted supplier,
+        Legal-published template and uploaded signed file are present, a named
+        reviewer can record the execution details here. It does not contact
+        suppliers or approve legal terms.
       </p>
       <dl className="snw-facts">
         <div>
@@ -1460,6 +1474,7 @@ function SourceNewStage05NdaReadiness({
             : "No supplier has explicit candidate-panel acceptance for this event."}
         </p>
       )}
+      <SourceNewNdaCapture eventId={eventId} files={files} coverage={coverage} />
       <div className="snw-nda-next">
         <strong>{coverage.nextAction.label}</strong>
         <p>{coverage.nextAction.detail}</p>

@@ -18,7 +18,6 @@ const input = {
   effectiveFrom: "2026-09-30",
   effectiveTo: null,
   executedAt: "2026-09-30T12:00:00.000Z",
-  uploadedByUserId: "uploader-1",
   recordedByUserId: "reviewer-1",
   evidenceReference: "EVID-SYN-001",
   signatureMethod: "wet_ink" as const,
@@ -31,9 +30,11 @@ const input = {
 function fakeTransaction(options: {
   candidateEventId?: string;
   artifactEventId?: string;
+  artifactUploaderId?: string | null;
   published?: boolean;
 } = {}) {
   const statements: string[] = [];
+  const insertParams: unknown[][] = [];
   const run: SqlRunner = async <R>(sql: string, params: unknown[]): Promise<R[]> => {
     statements.push(sql);
     if (sql.includes("FROM source_event_candidate_supplier_authority")) {
@@ -50,28 +51,30 @@ function fakeTransaction(options: {
       const hasTenantFence = sql.includes("tenant_key = $1");
       return ((hasEventFence && artifactEventId !== params[1]) || !hasTenantFence
         ? []
-        : [{ document_sha256: documentHash }]) as R[];
+        : [{ document_sha256: documentHash, uploader_user_id: options.artifactUploaderId === undefined ? "uploader-1" : options.artifactUploaderId }]) as R[];
     }
     if (sql.includes("FROM source_nda_template_versions")) {
       return (options.published === false ? [] : [{ template_version: "NDA-V1" }]) as R[];
     }
     if (sql.includes("INSERT INTO source_executed_nda_authority")) {
+      insertParams.push(params);
       return [{ id: "44444444-4444-4444-8444-444444444444" }] as R[];
     }
     return [];
   };
   const tx: TxSessionRunner = async (body) => body(run);
-  return { tx, statements };
+  return { tx, statements, insertParams };
 }
 
 describe("recordExecutedNda", () => {
   it("records complete bilateral evidence only for accepted event authority", async () => {
-    const { tx, statements } = fakeTransaction();
+    const { tx, statements, insertParams } = fakeTransaction();
     expect(await recordExecutedNda(input, tx, "2026-10-01T00:00:00.000Z")).toEqual({
       ok: true,
       id: "44444444-4444-4444-8444-444444444444",
     });
     expect(statements.some((sql) => sql.includes("INSERT INTO source_executed_nda_authority"))).toBe(true);
+    expect(insertParams[0][11]).toBe("uploader-1");
   });
 
   it("refuses a supplier accepted for another event before inserting", async () => {
@@ -85,6 +88,15 @@ describe("recordExecutedNda", () => {
 
   it("refuses an executed artifact bound to another event", async () => {
     const { tx, statements } = fakeTransaction({ artifactEventId: foreignEventId });
+    expect(await recordExecutedNda(input, tx, "2026-10-01T00:00:00.000Z")).toEqual({
+      ok: false,
+      code: "executed_artifact_unavailable",
+    });
+    expect(statements.some((sql) => sql.includes("INSERT INTO"))).toBe(false);
+  });
+
+  it("refuses an uploaded artifact without a recorded uploader identity", async () => {
+    const { tx, statements } = fakeTransaction({ artifactUploaderId: null });
     expect(await recordExecutedNda(input, tx, "2026-10-01T00:00:00.000Z")).toEqual({
       ok: false,
       code: "executed_artifact_unavailable",

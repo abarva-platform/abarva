@@ -72,6 +72,11 @@
 .snw-scorecard-form label { display: grid; gap: 5px; min-width: 0; color: #5f5f5b; font-size: 11px; font-weight: 650; text-transform: uppercase; }
 .snw-scorecard-form input, .snw-scorecard-form select { width: 100%; min-width: 0; border: 1px solid #cfcac1; border-radius: 4px; padding: 9px 10px; background: #fff; color: #1f2b25; font: 13px Inter, system-ui, sans-serif; text-transform: none; }
 .snw-scorecard-form .snw-primary { width: fit-content; margin: 0; }
+.snw-nda-capture h4, .snw-nda-capture-wide { grid-column: 1 / -1; }
+.snw-nda-capture h4 { margin: 0; font-size: 14px; color: #1f2b25; }
+.snw-nda-capture .snw-primary { border-color: #156442; background: #156442; }
+.snw-nda-capture .snw-primary:hover { background: #0e5135; }
+.snw-nda-capture .snw-primary:disabled { border-color: #9ba49d; background: #9ba49d; }
 .snw-nda-readiness button.snw-text-action { margin-left: 8px; border: 0; padding: 0; background: none; cursor: pointer; text-decoration: underline; }
 .snw-nda-readiness button:disabled { opacity: .55; cursor: default; }
 .snw-nda-suppliers { display: grid; gap: 10px; margin-top: 14px; }
