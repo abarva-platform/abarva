@@ -317,6 +317,17 @@ describe("current Home context answers", () => {
     expect(answer?.caveats[0].detail).toContain(
       "item-level accountability is not established",
     );
+    expect(answer?.prose).toContain("item-level accountability is not established");
+    const ownerQuestion = answerHomeCurrentContext({
+      context,
+      version,
+      tenantKey: "meridian-health",
+      question: "Which risks need attention first, and who owns each item?",
+    });
+    expect(ownerQuestion?.directAnswer).toContain(
+      "item-level accountability is not established",
+    );
+    expect(ownerQuestion?.prose).not.toContain("owner: Care president");
   });
 
   it("routes a mixed-version Home bundle to current facts without consulting stored chapter prose", async () => {

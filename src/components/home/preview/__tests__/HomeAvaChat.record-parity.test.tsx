@@ -24,7 +24,7 @@ jest.mock("@/components/ava-chat/AvaChatShell", () => ({
           {message.body}
           {message.role === "agent" ? (
             <span data-testid="home-answer-metadata">
-              {message.agentAnswer?.directAnswer ?? ""} | {message.citations?.[0]?.name ?? ""}
+              {message.agentAnswer?.directAnswer ?? ""} | {message.citations?.[0]?.name ?? ""} | {message.citations?.[0]?.detail ?? ""}
             </span>
           ) : null}
         </p>
@@ -42,6 +42,12 @@ const recordSource: HomeRecordRenderSource = {
     sourceSetHash: null,
     sourceLineageHash: "lineage-a",
     sourceCoverage: { totalRecordRows: 2, linkedRecordRows: 1, families: [] },
+    sourceDateCoverage: {
+      earliest: "2026-09-30",
+      latest: "2026-09-30",
+      datedFiles: 2,
+      totalFiles: 2,
+    },
     deterministicPacketHash: "packet-a",
     narrativePacketHash: "narrative-old",
     narrativeGeneratedAt: "2026-08-21T00:00:00.000Z",
@@ -122,6 +128,11 @@ it("keeps the direct answer and source citations on the Home chat turn", async (
         prose: "Two priorities account for most of the difference.",
         citations: [
           {
+            id: "home-current-record",
+            label: "Current Home record",
+            recordId: "current-projection",
+          },
+          {
             id: "citation-1",
             label: "Approved program budget row",
             recordId: "internal-row-1",
@@ -140,6 +151,6 @@ it("keeps the direct answer and source citations on the Home chat turn", async (
   fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
   expect(await screen.findByTestId("home-answer-metadata")).toHaveTextContent(
-    "The budget forecast exceeds the approved plan. | Approved program budget row",
+    "The budget forecast exceeds the approved plan. | Current Home record | Current Home record; registered source files dated through 2026-09-30. Data currency is not attested.",
   );
 });

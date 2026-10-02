@@ -1,17 +1,9 @@
 import type { AvaAnswerPacket, AvaCitation, AvaMetricRef } from "@/lib/ava-answer/contract";
 import type { HomeEnterpriseContext } from "./ecl-enterprise-context";
 import type { HomeContextVersion } from "./types";
+import { formatValueMoney } from "./value-proof-format";
 
 type AnswerArea = "business" | "priorities" | "operating" | "value" | "risk";
-
-function money(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
-}
 
 function areaForQuestion(question: string): AnswerArea | null {
   if (
@@ -181,16 +173,16 @@ export function answerHomeCurrentContext(args: {
       addCitation(priority.title, priority.sourceRefs);
       addCitation(`${priority.title} program records`, priority.sourceRefs.slice(1));
     }
-    directAnswer = `Across ${proof.programCount} source-linked programs, recorded approved budgets total ${money(proof.approvedBudgetUsd)} and forecasts total ${money(proof.forecastUsd)}; ${proof.overBudgetProgramCount} forecast above budget. Client-attested realized value is not established.`;
+    directAnswer = `Across ${proof.programCount} source-linked programs, recorded approved budgets total ${formatValueMoney(proof.approvedBudgetUsd)} and forecasts total ${formatValueMoney(proof.forecastUsd)}; ${proof.overBudgetProgramCount} forecast above budget. Client-attested realized value is not established.`;
     bullets = priorities.slice(0, 4).map((priority) =>
-      `${priority.title}: ${priority.programCount} program${priority.programCount === 1 ? "" : "s"}; budget ${money(priority.approvedBudgetUsd)}, forecast ${money(priority.forecastUsd)}; owner: ${priority.ownerRole || "not recorded"}.`,
+      `${priority.title}: ${priority.programCount} program${priority.programCount === 1 ? "" : "s"}; budget ${formatValueMoney(priority.approvedBudgetUsd)}, forecast ${formatValueMoney(priority.forecastUsd)}; owner: ${priority.ownerRole || "not recorded"}.`,
     );
     metricsUsed = [
-      { id: "home-program-budget", label: "Recorded approved program budgets", value: money(proof.approvedBudgetUsd), unit: "USD", citationIds: ["home-current-record"] },
-      { id: "home-program-forecast", label: "Recorded program forecasts", value: money(proof.forecastUsd), unit: "USD", citationIds: ["home-current-record"] },
+      { id: "home-program-budget", label: "Recorded approved program budgets", value: formatValueMoney(proof.approvedBudgetUsd), unit: "USD", citationIds: ["home-current-record"] },
+      { id: "home-program-forecast", label: "Recorded program forecasts", value: formatValueMoney(proof.forecastUsd), unit: "USD", citationIds: ["home-current-record"] },
       ...priorities.slice(0, 4).flatMap((priority, index): AvaMetricRef[] => [
-        { id: `home-priority-${index}-budget`, label: `${priority.title} recorded budget`, value: money(priority.approvedBudgetUsd), unit: "USD", citationIds: ["home-current-record"] },
-        { id: `home-priority-${index}-forecast`, label: `${priority.title} forecast`, value: money(priority.forecastUsd), unit: "USD", citationIds: ["home-current-record"] },
+        { id: `home-priority-${index}-budget`, label: `${priority.title} recorded budget`, value: formatValueMoney(priority.approvedBudgetUsd), unit: "USD", citationIds: ["home-current-record"] },
+        { id: `home-priority-${index}-forecast`, label: `${priority.title} forecast`, value: formatValueMoney(priority.forecastUsd), unit: "USD", citationIds: ["home-current-record"] },
       ]),
     ];
     evidenceLimit = `${proof.modelledClaimCount} value claims are modelled, not finance-validated; ${proof.unsupportedClaimCount} are unsupported. ${proof.excludedSpendLines} spend records lack a verifiable completed-period actual. This is synthetic reference material, not client-attested value.`;
@@ -199,10 +191,17 @@ export function answerHomeCurrentContext(args: {
     const top = triage.attentionRisks.slice(0, 3);
     for (const risk of top) addCitation(risk.title, risk.sourceRefs);
     directAnswer = `${triage.highOrCritical} of ${triage.totalRisks} registered risks are high or critical; ${triage.attentionRisks.length} combine that severity with a partial or unknown control state.`;
+    const ownerLimit = triage.ownerIsConstant
+      ? "The same role appears on every risk; item-level accountability is not established."
+      : null;
+    if (ownerLimit && /\b(who owns|owners?|accountab\w*)\b/i.test(question)) {
+      directAnswer += ` ${ownerLimit}`;
+    }
     bullets = top.map(
       (risk) =>
         `${risk.title}: ${risk.severity} severity, control ${risk.controlState === "unknown" ? "not assessed" : "partially effective"}${triage.ownerIsConstant ? "" : `; owner: ${risk.ownerRole || "not established"}`}.`,
     );
+    if (ownerLimit && !directAnswer.includes(ownerLimit)) bullets.push(ownerLimit);
     evidenceLimit = `Unknown control state means not assessed, not confirmed uncontrolled.${triage.ownerIsConstant ? " The same role appears on every risk; item-level accountability is not established." : ""} The register is synthetic and not client-attested.`;
   }
 

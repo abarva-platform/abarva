@@ -209,6 +209,16 @@ describe("Home walkthrough export", () => {
       expect(pdfMarkup).toContain("Recovery capacity gap: Informatica PowerCenter");
       expect(html).toContain("Client-attested realized value is not established");
       expect(pdfMarkup).toContain("Client-attested realized value is not established");
+      expect(html).toContain("$302.8M");
+      expect(html).toContain("$323.2M");
+      expect(pdfMarkup).toContain("$302.8M");
+      expect(pdfMarkup).toContain("$323.2M");
+      expect(html).toContain("1 is unsupported");
+      expect(pdfMarkup).toContain("1 is unsupported");
+      expect(html).toContain("1 program without a declared priority");
+      expect(pdfMarkup).toContain("1 program without a declared priority");
+      expect(html).not.toContain("0 program financial records are incomplete");
+      expect(pdfMarkup).not.toContain("0 claim statuses need separate review");
       expect(html).toContain("120 of 480 spend records lack a verifiable completed-period actual");
       const businessChapter = html.slice(html.indexOf("Chapter 02"), html.indexOf("Chapter 03"));
       expect(businessChapter).toContain("Current source-linked record");
