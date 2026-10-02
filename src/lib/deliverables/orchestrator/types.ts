@@ -167,6 +167,16 @@ export interface QualityBar {
    * still being tuned against real generations.
    */
   advisoryBandMax?: number;
+  /**
+   * Depth-aware override for this deck's slide floor. When set, it REPLACES the
+   * fixed SLIDE_BANDS[type].min for both the generator instruction
+   * (deckLengthInstruction) and the gate (judgeSlideCount), so a smaller-scope
+   * Move is not forced to the full-scope slide count. Derived in build-request
+   * from confirmed scope (see shared/depth-aware-floor.ts); only ever lowers the
+   * band's min, never raises it, and the band ceiling is untouched. Undefined
+   * preserves the fixed band exactly.
+   */
+  slideFloor?: number;
   requiresCitations: boolean;
   requiresDecisionSection: boolean;
   requiresRecommendation: boolean;
