@@ -40,6 +40,7 @@ No product surface changes. The builder still refuses to generate for every tena
   - a row is admitted on its own proof, not on a context id it may share with another row;
   - labels used to replace raw identifiers in generated prose come from admitted rows only.
 - `scripts/ecl/home-narrative-readiness.ts`: one shared definition of the signal source hash, for the builder and for whatever later records signal proofs.
+- `scripts/data-build/build-enterprise-thesis.ts` and `scripts/data-build/build-home-chapters.ts`, which the builder imports: each decided whether it was run or imported by testing whether the invoking path contained its own name, so an importer whose path contained that name started a build. Both now compare resolved files.
 - `scripts/ecl/__tests__/home-narrative-admission-boundary.test.ts` (new) and `scripts/ecl/__tests__/home-narrative-readiness.test.ts`: behaviour tests.
 - `scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`: runs both test files, fails if either found no tests or skipped one, and checks the workflow's path filter against the files the suite loads and reads.
 - `.github/workflows/ecl-home-narrative-boundary.yml` (new): runs `npm run test:ecl-home-narrative-layer` on pull requests that touch those files.
@@ -47,8 +48,9 @@ No product surface changes. The builder still refuses to generate for every tena
 
 ## QA / Validation
 
-- PASS: `npm run test:ecl-home-narrative-layer` on Node 24, the version the workflow uses. 91 assertions, which include 12 behaviour tests: 10 for the builder and 2 for the readiness check.
-- PASS: mutation check. 45 mutants of the builder, the readiness module, the tests, and the workflow; 44 fail the suite, each on an assertion. The one that does not is an edit to an unchanged filter that only ever receives admitted rows, so no input can observe it.
+- PASS: `npm run test:ecl-home-narrative-layer` on Node 24, the version the workflow uses. 91 assertions, which include 13 behaviour tests: 11 for the builder and the scripts it imports, and 2 for the readiness check.
+- PASS: mutation check. 49 mutants of the builder, the readiness module, the two imported build scripts' entry checks, the tests, and the workflow; 48 fail the suite, each on an assertion. The one that does not is an edit to an unchanged filter that only ever receives admitted rows, so no input can observe it.
+- PASS: the three Jest suites that import the two build scripts (`tests/behaviors/build-home-chapters.test.ts`, `tests/behaviors/enterprise-thesis-validation.test.ts`, `scripts/data-build/__tests__/build-home-chapters-cli.test.ts`), 41 tests.
 - PASS: for a fixture with no shared context ids, no stored story plan, and no source rows, the packet is byte-identical to the one the previous builder produced.
 - PASS: `tsc --noEmit --pretty false` under an 8 GB heap, exit 0.
 - PASS: ESLint on the touched files, zero errors. The five existing unused-function warnings in the dormant source path are unchanged.

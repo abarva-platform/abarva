@@ -579,3 +579,38 @@ test("the builder runs when invoked directly, through a symlinked root too, and 
     fs.rmSync(scratch, { recursive: true, force: true });
   }
 });
+
+test("the thesis and chapter builders the job imports run only when invoked directly", () => {
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "home-narrative-data-build-entry-"));
+  const linkedRoot = path.join(scratch, "linked-root");
+  // With no model key, a run that reaches main() says so and stops. An unknown tenant keeps the
+  // thesis builder from building anything on the way.
+  const env = { ...process.env };
+  for (const key of ["ANTHROPIC_API_KEY", "DATABASE_URL", "THESIS_WRITE", "THESIS_WRITE_APPROVED"]) delete env[key];
+  const run = (cwd: string, args: string[]) =>
+    spawnSync(process.execPath, ["--import", "tsx", ...args], { cwd, env, encoding: "utf8" });
+  const scope = ["--tenant", "no-such-tenant", "--out-dir", path.join(scratch, "out")];
+  try {
+    fs.symlinkSync(repoRoot, linkedRoot, "dir");
+    for (const script of ["scripts/data-build/build-home-chapters.ts", "scripts/data-build/build-enterprise-thesis.ts"]) {
+      // An importer whose own path contains the script's name.
+      const importer = path.join(scratch, `imports-${path.basename(script, ".ts")}.mjs`);
+      fs.writeFileSync(importer, 'await import(process.argv[2]);\nconsole.log("imported without running");\n');
+      const imported = run(repoRoot, [importer, pathToFileURL(path.join(repoRoot, script)).href, ...scope]);
+      assert.equal(imported.status, 0, `${script}: ${imported.stderr}`);
+      assert.equal(imported.stdout, "imported without running\n", script);
+
+      const direct = run(repoRoot, [script, ...scope]);
+      assert.equal(direct.status, 0, `${script}: ${direct.stderr}`);
+      assert.match(direct.stdout, /ANTHROPIC_API_KEY absent/, script);
+
+      const linked = run(linkedRoot, [path.join(linkedRoot, script), ...scope]);
+      assert.equal(linked.status, 0, `${script}: ${linked.stderr}`);
+      assert.match(linked.stdout, /ANTHROPIC_API_KEY absent/, script);
+    }
+  } finally {
+    if (fs.lstatSync(linkedRoot, { throwIfNoEntry: false })) fs.unlinkSync(linkedRoot);
+    fs.rmSync(scratch, { recursive: true, force: true });
+  }
+});
