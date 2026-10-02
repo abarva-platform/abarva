@@ -492,6 +492,7 @@ test("executive context flags the unresolved risk work", () => {
       chapterId: "executive_brief",
       context,
       onOpenRows: () => undefined,
+      onOpenMatch: () => undefined,
     }),
   );
   assert.match(html, /At-risk linked programs/);
@@ -505,6 +506,7 @@ test("attention view ranks source-linked risk review without calling unknown unc
       chapterId: "what_needs_attention",
       context,
       onOpenRows: () => undefined,
+      onOpenMatch: () => undefined,
     }),
   );
   assert.match(html, /Risk review queue/);

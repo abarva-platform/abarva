@@ -3,7 +3,7 @@
 /** Governed, new-assessment load for the synthetic enterprise source set. */
 
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -12,6 +12,12 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { ManagedIdentityCredential } from "@azure/identity";
 import Papa from "papaparse";
 import pg from "pg";
+import {
+  resolveLoadApproval,
+  type LoadApproval,
+  type LoadBinding,
+} from "../../src/lib/governance/dataset-manifest";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -20,6 +26,7 @@ const root = path.resolve(
 type SourceVersion = "v1" | "v2";
 const definitionPath = (version: SourceVersion) =>
   path.join(root, `datasets/synthetic/enterprise-${version}/definition.json`);
+const manifestsDir = path.join(root, "docs/governance/dataset-manifests");
 const containerName = "ecl-synthetic-intake";
 const batchSize = 400;
 
@@ -202,6 +209,123 @@ export async function sourceRows(
   return result;
 }
 
+/** Every manifest in the dataset registry, parsed. An unreadable one stops the load. */
+export async function readDatasetManifests(
+  dir: string = manifestsDir,
+): Promise<unknown[]> {
+  const names = (await readdir(dir))
+    .filter((name) => name.endsWith(".json") && !name.startsWith("_"))
+    .sort();
+  const manifests: unknown[] = [];
+  for (const name of names) {
+    try {
+      manifests.push(JSON.parse(await readFile(path.join(dir, name), "utf8")));
+    } catch {
+      throw new Error(`Unreadable dataset manifest: ${name}`);
+    }
+  }
+  return manifests;
+}
+
+export function loadBinding(
+  pack: Pick<GeneratedPack, "manifest" | "normalized">,
+): LoadBinding {
+  return {
+    dataset_id: pack.manifest.dataset_id,
+    tenant_key: pack.manifest.tenant_key,
+    assessment_id: pack.manifest.assessment_id,
+    source_set_hash: pack.manifest.source_set_hash,
+    object_count: pack.normalized.objects.length,
+    ingestion_method: "operator_aca_job",
+  };
+}
+
+const requiredBindings = [
+  "DATABASE_URL",
+  "ECL_SYNTHETIC_RUN_ID",
+  "ECL_SYNTHETIC_OPERATOR_IDENTITY",
+  "ECL_SYNTHETIC_BUILD_VERSION",
+  "ECL_SYNTHETIC_INPUT_SOURCE_VERSION",
+  "ECL_SYNTHETIC_IDEMPOTENCY_KEY",
+  "ECL_SYNTHETIC_IMAGE_DIGEST",
+  "ECL_SYNTHETIC_RELEASE_RECORD",
+];
+
+/**
+ * Every gate an executing run must pass, decided before anything is written.
+ * The job's own bindings can only restate what the dataset registry already
+ * approved: a named person's load approval for this assessment and this
+ * source-set hash, and the release record that approval names.
+ */
+export function resolveExecutionBinding(
+  pack: Pick<GeneratedPack, "manifest" | "normalized">,
+  env: Record<string, string | undefined>,
+  manifests: unknown[],
+): { runId: string; approval: LoadApproval } {
+  const missing = requiredBindings.filter((key) => !env[key]);
+  if (missing.length)
+    throw new Error(`Missing governed job bindings: ${missing.join(", ")}`);
+  const storageAccount = env.AZURE_STORAGE_ACCOUNT_NAME;
+  if (
+    !env.AZURE_STORAGE_CONNECTION_STRING &&
+    (!storageAccount || !env.ECL_SYNTHETIC_STORAGE_IDENTITY_CLIENT_ID)
+  ) {
+    throw new Error(
+      "Blob storage requires a connection string or an explicit account and managed identity",
+    );
+  }
+  if (storageAccount && !/^[a-z0-9]{3,24}$/.test(storageAccount)) {
+    throw new Error("Invalid Azure storage account name");
+  }
+  if (
+    env.ECL_SYNTHETIC_LAB_APPROVAL !== "accepted_lab" ||
+    env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION !== pack.manifest.source_set_hash ||
+    env.ECL_SYNTHETIC_IDEMPOTENCY_KEY !==
+      `${pack.manifest.assessment_id}:${pack.manifest.source_set_hash}` ||
+    !env.ECL_SYNTHETIC_IMAGE_DIGEST?.includes("@sha256:")
+  ) {
+    throw new Error(
+      "Synthetic review, source version, idempotency, or digest gate failed",
+    );
+  }
+  const decision = resolveLoadApproval(manifests, loadBinding(pack));
+  if (!decision.approved) {
+    throw new Error(
+      `Load approval gate failed: ${decision.reasons.join("; ")}`,
+    );
+  }
+  if (env.ECL_SYNTHETIC_RELEASE_RECORD !== decision.approval.release_record) {
+    throw new Error(
+      "The release record bound to this run is not the one the load approval names",
+    );
+  }
+  const runId = env.ECL_SYNTHETIC_RUN_ID!;
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId))
+    throw new Error("Unsafe run id");
+  return { runId, approval: decision.approval };
+}
+
+/**
+ * Runs staged work, reporting each stage as it starts. A failure is recorded
+ * against the stage it reached, then rethrown; a failure to record it never
+ * replaces the error that caused it.
+ */
+export async function runStages<T>(
+  report: (stage: string, status: string) => Promise<void>,
+  work: (enter: (stage: string) => Promise<void>) => Promise<T>,
+): Promise<T> {
+  let stage = "not_started";
+  try {
+    return await work(async (next) => {
+      stage = next;
+      await report(next, "running");
+    });
+  } catch (error) {
+    await report(stage, "failed").catch(() => undefined);
+    throw error;
+  }
+}
+
 async function insertBatch(
   client: pg.Client,
   table: string,
@@ -252,8 +376,17 @@ export async function loadIntoNewAssessment(
   connectionString: string,
   pack: GeneratedPack,
   blobUris: Map<string, string>,
+  approval: LoadApproval,
 ): Promise<Record<string, unknown>> {
   const { manifest, normalized } = pack;
+  if (
+    approval.assessment_id !== manifest.assessment_id ||
+    approval.source_set_hash !== manifest.source_set_hash
+  ) {
+    throw new Error(
+      "Load approval does not bind this assessment and source-set hash",
+    );
+  }
   const nativeRows = await sourceRows(pack);
   const expectedSourceRows = [...nativeRows.values()].reduce(
     (sum, rows) => sum + rows.length,
@@ -275,6 +408,11 @@ export async function loadIntoNewAssessment(
       source_set_hash: manifest.source_set_hash,
       client_attestation_state: manifest.client_attestation_state,
       synthetic_review_state: "accepted_lab",
+      load_approval: {
+        approved_by: approval.approved_by,
+        approved_at: approval.approved_at,
+        release_record: approval.release_record,
+      },
     },
   }));
   if (sourceFileRows.some((row) => !row.blob_uri))
@@ -313,7 +451,8 @@ export async function loadIntoNewAssessment(
         ? "model_inferred"
         : "source_recorded",
     value_state: valueState(object),
-    review_state: "confirmed",
+    // Approving a load is not reviewing its rows.
+    review_state: "not_reviewed",
     attributes_json: {
       ...object.attributes,
       source_as_of: object.source_as_of,
@@ -335,7 +474,7 @@ export async function loadIntoNewAssessment(
     ),
     basis: "source_recorded",
     value_state: "known",
-    review_state: "confirmed",
+    review_state: "not_reviewed",
     attributes_json: {
       native_relationship_id: edge.id,
       native_type: edge.native_type,
@@ -516,6 +655,7 @@ export async function loadIntoNewAssessment(
       source_set_hash: manifest.source_set_hash,
       client_attestation_state: manifest.client_attestation_state,
       synthetic_review_state: "accepted_lab",
+      load_approval: approval,
       counts,
       unresolved_relationships: normalized.unresolved_relationships.map(
         (edge) => edge.id,
@@ -559,52 +699,28 @@ async function main(): Promise<void> {
       unresolved_relationships: pack.normalized.unresolved_relationships.length,
       client_attestation_state: pack.manifest.client_attestation_state,
     };
+    const manifests = await readDatasetManifests();
     if (!args.length) {
+      const decision = resolveLoadApproval(manifests, loadBinding(pack));
       process.stdout.write(
-        `${JSON.stringify({ mode: "read_only", ...summary })}\n`,
+        `${JSON.stringify({
+          mode: "read_only",
+          ...summary,
+          load_approval: decision.approved ? "approved" : "not_approved",
+          load_approval_reasons: decision.approved ? [] : decision.reasons,
+        })}\n`,
       );
       return;
     }
-    const required = [
-      "DATABASE_URL",
-      "ECL_SYNTHETIC_RUN_ID",
-      "ECL_SYNTHETIC_OPERATOR_IDENTITY",
-      "ECL_SYNTHETIC_BUILD_VERSION",
-      "ECL_SYNTHETIC_INPUT_SOURCE_VERSION",
-      "ECL_SYNTHETIC_IDEMPOTENCY_KEY",
-      "ECL_SYNTHETIC_IMAGE_DIGEST",
-      "ECL_SYNTHETIC_RELEASE_RECORD",
-    ];
-    const missing = required.filter((key) => !process.env[key]);
-    if (missing.length)
-      throw new Error(`Missing governed job bindings: ${missing.join(", ")}`);
+    const { runId, approval } = resolveExecutionBinding(
+      pack,
+      process.env,
+      manifests,
+    );
     const storageConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     const storageAccount = process.env.AZURE_STORAGE_ACCOUNT_NAME;
     const storageIdentity =
       process.env.ECL_SYNTHETIC_STORAGE_IDENTITY_CLIENT_ID;
-    if (!storageConnectionString && (!storageAccount || !storageIdentity)) {
-      throw new Error(
-        "Blob storage requires a connection string or an explicit account and managed identity",
-      );
-    }
-    if (storageAccount && !/^[a-z0-9]{3,24}$/.test(storageAccount)) {
-      throw new Error("Invalid Azure storage account name");
-    }
-    if (
-      process.env.ECL_SYNTHETIC_LAB_APPROVAL !== "accepted_lab" ||
-      process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION !==
-        pack.manifest.source_set_hash ||
-      process.env.ECL_SYNTHETIC_IDEMPOTENCY_KEY !==
-        `${pack.manifest.assessment_id}:${pack.manifest.source_set_hash}` ||
-      !process.env.ECL_SYNTHETIC_IMAGE_DIGEST?.includes("@sha256:")
-    ) {
-      throw new Error(
-        "Synthetic review, source version, idempotency, or digest gate failed",
-      );
-    }
-    const runId = process.env.ECL_SYNTHETIC_RUN_ID!;
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId))
-      throw new Error("Unsafe run id");
     const service = storageConnectionString
       ? BlobServiceClient.fromConnectionString(storageConnectionString)
       : new BlobServiceClient(
@@ -659,93 +775,100 @@ async function main(): Promise<void> {
           { blobHTTPHeaders: { blobContentType: "application/json" } },
         );
     };
-    await uploadProgress("validation", "running");
-    await uploadImmutable(
-      `${runPrefix}/validation.json`,
-      Buffer.from(JSON.stringify(summary, null, 2)),
-    );
-    const blobUris = new Map<string, string>();
-    for (const file of pack.manifest.files) {
-      const bytes = await readFile(path.join(pack.dir, "pack", file.file_path));
-      blobUris.set(
-        file.source_room_family,
-        await uploadImmutable(
-          `${prefix}/sources/${file.source_room_family}/${path.basename(file.file_path)}`,
-          bytes,
+    await runStages(uploadProgress, async (enter) => {
+      await enter("validation");
+      await uploadImmutable(
+        `${runPrefix}/validation.json`,
+        Buffer.from(JSON.stringify(summary, null, 2)),
+      );
+      const blobUris = new Map<string, string>();
+      for (const file of pack.manifest.files) {
+        const bytes = await readFile(
+          path.join(pack.dir, "pack", file.file_path),
+        );
+        blobUris.set(
+          file.source_room_family,
+          await uploadImmutable(
+            `${prefix}/sources/${file.source_room_family}/${path.basename(file.file_path)}`,
+            bytes,
+          ),
+        );
+      }
+      await uploadImmutable(
+        `${prefix}/enterprise_manifest.json`,
+        await readFile(path.join(pack.dir, "pack", "enterprise_manifest.json")),
+      );
+      await enter("canonical_load");
+      const proof = await loadIntoNewAssessment(
+        process.env.DATABASE_URL!,
+        pack,
+        blobUris,
+        approval,
+      );
+      // The rows are committed from here on; a failure below is a proof-output
+      // failure and is reported as one.
+      await enter("proof_output");
+      const applicationCount = (proof.counts as Record<string, number>)
+        .applications;
+      const servingEligible = applicationCount >= 300;
+      const result = {
+        ...proof,
+        serving_eligible: servingEligible,
+        job_name: "ecl-synthetic-enterprise-v1-load",
+        run_id: runId,
+        operator_identity: process.env.ECL_SYNTHETIC_OPERATOR_IDENTITY,
+        build_version: process.env.ECL_SYNTHETIC_BUILD_VERSION,
+        input_source_version: process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION,
+        idempotency_key: process.env.ECL_SYNTHETIC_IDEMPOTENCY_KEY,
+        image_digest: process.env.ECL_SYNTHETIC_IMAGE_DIGEST,
+        release_record: process.env.ECL_SYNTHETIC_RELEASE_RECORD,
+        retry_count: Number(process.env.ECL_SYNTHETIC_RETRY_COUNT ?? "0"),
+        timeout_seconds: Number(
+          process.env.ECL_SYNTHETIC_TIMEOUT_SECONDS ?? "1800",
+        ),
+        status: "succeeded",
+        started_at: startedAt,
+        finished_at: new Date().toISOString(),
+        blob_proof_bundle: `${container.url}/${runPrefix}/proof.json`,
+        validation_output: `${container.url}/${runPrefix}/validation.json`,
+        quality_gate_output: `${container.url}/${runPrefix}/quality-gate.json`,
+        progress_output: `${container.url}/${runPrefix}/progress.json`,
+      };
+      await uploadImmutable(
+        `${runPrefix}/quality-gate.json`,
+        Buffer.from(
+          JSON.stringify(
+            {
+              load_integrity_pass: true,
+              serving_eligible: servingEligible,
+              serving_blockers: servingEligible
+                ? []
+                : ["logical_application_depth_below_300"],
+              counts: proof.counts,
+              unresolved_relationships: proof.unresolved_relationships,
+              serving_state: "not_promoted",
+              client_attestation_state: pack.manifest.client_attestation_state,
+            },
+            null,
+            2,
+          ),
         ),
       );
-    }
-    await uploadImmutable(
-      `${prefix}/enterprise_manifest.json`,
-      await readFile(path.join(pack.dir, "pack", "enterprise_manifest.json")),
-    );
-    await uploadProgress("canonical_load", "running");
-    const proof = await loadIntoNewAssessment(
-      process.env.DATABASE_URL!,
-      pack,
-      blobUris,
-    );
-    const applicationCount = (proof.counts as Record<string, number>)
-      .applications;
-    const servingEligible = applicationCount >= 300;
-    const result = {
-      ...proof,
-      serving_eligible: servingEligible,
-      job_name: "ecl-synthetic-enterprise-v1-load",
-      run_id: runId,
-      operator_identity: process.env.ECL_SYNTHETIC_OPERATOR_IDENTITY,
-      build_version: process.env.ECL_SYNTHETIC_BUILD_VERSION,
-      input_source_version: process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION,
-      idempotency_key: process.env.ECL_SYNTHETIC_IDEMPOTENCY_KEY,
-      image_digest: process.env.ECL_SYNTHETIC_IMAGE_DIGEST,
-      release_record: process.env.ECL_SYNTHETIC_RELEASE_RECORD,
-      retry_count: Number(process.env.ECL_SYNTHETIC_RETRY_COUNT ?? "0"),
-      timeout_seconds: Number(
-        process.env.ECL_SYNTHETIC_TIMEOUT_SECONDS ?? "1800",
-      ),
-      status: "succeeded",
-      started_at: startedAt,
-      finished_at: new Date().toISOString(),
-      blob_proof_bundle: `${container.url}/${runPrefix}/proof.json`,
-      validation_output: `${container.url}/${runPrefix}/validation.json`,
-      quality_gate_output: `${container.url}/${runPrefix}/quality-gate.json`,
-      progress_output: `${container.url}/${runPrefix}/progress.json`,
-    };
-    await uploadImmutable(
-      `${runPrefix}/quality-gate.json`,
-      Buffer.from(
-        JSON.stringify(
-          {
-            load_integrity_pass: true,
-            serving_eligible: servingEligible,
-            serving_blockers: servingEligible
-              ? []
-              : ["logical_application_depth_below_300"],
-            counts: proof.counts,
-            unresolved_relationships: proof.unresolved_relationships,
-            serving_state: "not_promoted",
-            client_attestation_state: pack.manifest.client_attestation_state,
-          },
-          null,
-          2,
-        ),
-      ),
-    );
-    await uploadImmutable(
-      `${runPrefix}/proof.json`,
-      Buffer.from(JSON.stringify(result, null, 2)),
-    );
-    await uploadProgress("complete", "succeeded");
-    process.stdout.write(`${JSON.stringify(result)}\n`);
+      await uploadImmutable(
+        `${runPrefix}/proof.json`,
+        Buffer.from(JSON.stringify(result, null, 2)),
+      );
+      await uploadProgress("complete", "succeeded");
+      process.stdout.write(`${JSON.stringify(result)}\n`);
+    });
   } finally {
     await rm(pack.dir, { recursive: true, force: true });
   }
 }
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+// Compares resolved files: a path comparison answers "imported" for a run
+// through a symlinked directory, and the job would exit 0 having done nothing.
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error: unknown) => {
     process.stderr.write(
       `${error instanceof Error ? error.message : String(error)}\n`,

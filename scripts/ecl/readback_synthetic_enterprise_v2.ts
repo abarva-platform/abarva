@@ -6,6 +6,7 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { ManagedIdentityCredential } from "@azure/identity";
 import path from "node:path";
 import pg from "pg";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 import { generatePack } from "./load_synthetic_enterprise_v1";
 
 type CountRow = Record<string, string>;
@@ -184,7 +185,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (process.argv[1]?.endsWith("readback_synthetic_enterprise_v2.ts")) {
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exitCode = 1;
