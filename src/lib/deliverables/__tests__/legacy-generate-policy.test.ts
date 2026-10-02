@@ -4,17 +4,13 @@ import path from "node:path";
 import { resolveDocumentPolicy } from "@/lib/ai/document-generation-policy";
 
 describe("legacy engagement deliverable model policy", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/lib/deliverables/generate.ts"),
-    "utf8",
+  const legacyGeneratorPath = path.join(
+    process.cwd(),
+    "src/lib/deliverables/generate.ts",
   );
 
-  it("routes the reachable legacy deliverable path through document-generation policy", () => {
-    expect(source).toContain("assertDeliverablePolicy");
-    expect(source).toContain("runLegacyDeliverableModel");
-    expect(source).not.toContain("runHaiku");
-    expect(source).not.toContain("claude-haiku-4-5-20251001");
-    expect(source).not.toMatch(/max_tokens:\s*2048/);
+  it("keeps the retired legacy generator entry point absent", () => {
+    expect(fs.existsSync(legacyGeneratorPath)).toBe(false);
   });
 
   it("resolves legacy phase artifacts to board-grade or better defaults", () => {
