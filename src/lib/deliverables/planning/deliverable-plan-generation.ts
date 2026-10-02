@@ -189,11 +189,25 @@ export function missingPlanFields(toolInput: unknown): string[] {
 function describeStop(result: {
   stopReason?: string | null;
   outputTokens?: number;
+  stopDetails?: { category: string | null; explanation: string | null } | null;
 }): string {
   const reason = result.stopReason ?? "not reported";
-  return typeof result.outputTokens === "number"
-    ? `stop reason: ${reason}, ${result.outputTokens} output tokens`
-    : `stop reason: ${reason}`;
+  const parts = [`stop reason: ${reason}`];
+  if (typeof result.outputTokens === "number") {
+    parts.push(`${result.outputTokens} output tokens`);
+  }
+  // A refusal is the provider stopping the response under a usage policy. Its
+  // category is the only thing that says which policy, so it is reported
+  // whenever one was given.
+  if (result.stopDetails) {
+    parts.push(
+      `policy category: ${result.stopDetails.category ?? "not named"}`,
+    );
+    if (result.stopDetails.explanation) {
+      parts.push(`provider explanation: ${result.stopDetails.explanation}`);
+    }
+  }
+  return parts.join(", ");
 }
 
 /**
