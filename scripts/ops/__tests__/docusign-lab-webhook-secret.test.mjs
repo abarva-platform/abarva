@@ -105,6 +105,13 @@ test('job spec refuses mutable images and missing secret without writing a file'
       path, secret: 'marker', jobName: 'nda-hmac-test', environmentId: 'test', identityId: 'test',
       clientId: 'test', image: 'registry.invalid/web:latest',
     }));
+    await assert.rejects(writeWebhookJobSpec({
+      path, secret: '', jobName: 'nda-hmac-12345',
+      environmentId: '/subscriptions/test/resourceGroups/test/providers/Microsoft.App/managedEnvironments/cae-abarva-scale-lab-eastus',
+      identityId: '/subscriptions/test/resourceGroups/test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/test',
+      clientId: '00000000-0000-4000-8000-000000000001',
+      image: 'acrabarvalab001.azurecr.io/abarva/web@sha256:' + 'a'.repeat(64),
+    }));
     await assert.rejects(readFile(path));
   } finally {
     await rm(dir, { recursive: true, force: true });
