@@ -133,6 +133,7 @@ export async function writeShadowHomeProjection(
     const count = (type: string) =>
       rows.filter((row) => row.row_type === type).length;
     if (
+      count("enterprise_profile") !== 1 ||
       count("application") !== 344 ||
       count("contract") !== 230 ||
       count("business_segment") !== 3 ||

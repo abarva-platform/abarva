@@ -25,6 +25,7 @@ export interface SyntheticHomeRow {
 }
 
 const PAGE_BY_TYPE: Record<string, [string, string]> = {
+  enterprise: ["business_unit_profile", "enterprise_profile"],
   business_segment: ["business_unit_profile", "business_segment"],
   business_function: ["business_unit_profile", "business_function"],
   application: ["applications_systems", "application"],

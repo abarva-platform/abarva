@@ -46,6 +46,7 @@ async function main(): Promise<void> {
       );
     assert.equal(count("applications_systems", "application"), 344);
     assert.equal(count("vendor_contracts", "contract"), 230);
+    assert.equal(count("business_unit_profile", "enterprise_profile"), 1);
     assert.equal(count("business_unit_profile", "business_segment"), 3);
     assert.equal(count("business_unit_profile", "business_function"), 14);
     assert.equal(count("business_unit_profile", "workforce_role"), 72);

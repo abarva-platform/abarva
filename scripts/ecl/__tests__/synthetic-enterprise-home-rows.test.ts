@@ -25,6 +25,10 @@ function object(
 
 test("projection preserves logical application grain and declared segment identity", () => {
   const rows = buildSyntheticHomeRows([
+    object("ENT-1", "enterprise", {
+      business_model: "Integrated health services",
+      source: { internal: true },
+    }),
     object("SEG-1", "business_segment", { segment_name: "Health Plan" }),
     object("FUNC-1", "business_function", { business_segment_id: "SEG-1" }),
     object("FUNC-2", "business_function", { business_segment_id: "" }),
@@ -35,6 +39,15 @@ test("projection preserves logical application grain and declared segment identi
     object("APP-2", "application_module", { parent_application_id: "APP-1" }),
   ]);
   assert.equal(rows.filter((row) => row.row_type === "application").length, 1);
+  assert.equal(
+    rows.find((row) => row.row_key === "ENT-1")?.display_payload_json
+      .business_model,
+    "Integrated health services",
+  );
+  assert.equal(
+    rows.find((row) => row.row_key === "ENT-1")?.display_payload_json.source,
+    undefined,
+  );
   assert.equal(
     rows.some((row) => row.row_key === "APP-2"),
     false,
@@ -85,6 +98,7 @@ test("pinned V2 canonical graph projects the intended executive families", async
     const count = (type: string) =>
       rows.filter((row) => row.row_type === type).length;
     assert.equal(count("application"), 344);
+    assert.equal(count("enterprise_profile"), 1);
     assert.equal(count("contract"), 230);
     assert.equal(count("business_segment"), 3);
     assert.equal(count("business_function"), 14);
