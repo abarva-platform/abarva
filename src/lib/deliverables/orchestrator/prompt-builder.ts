@@ -549,6 +549,37 @@ export function deckStoryContractInstruction(
   return renderDeckContractPrompt(id);
 }
 
+/** Deck deliverable types technical enough to earn a plain-English mirror slide. */
+const PLAIN_ENGLISH_MIRROR_TYPES: ReadonlySet<string> = new Set([
+  "target_state_architecture",
+  "solution_design",
+  "operating_model_design",
+]);
+
+/**
+ * For a technical deck, ask for ONE plain-English mirror slide near the front —
+ * the same story the deck tells, for the executive in the room who does not need
+ * the jargon. It restates, it does not add: no figure or claim that is not
+ * already made (and grounded) elsewhere in the deck. Empty for a non-PPTX request
+ * or a non-technical deliverable. (The PHS gold-standard deck's "same
+ * architecture, no jargon" slide.)
+ */
+export function plainEnglishMirrorInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!req.outputFormats.includes("pptx")) return "";
+  if (!PLAIN_ENGLISH_MIRROR_TYPES.has(req.deliverableType)) return "";
+  return (
+    "PLAIN-ENGLISH MIRROR: include exactly one early slide that retells this " +
+    "deck's story in plain English for the executive who does not need the " +
+    "technical vocabulary — the same architecture, no jargon. Its governing " +
+    "message is the outcome in business terms; its points name the steps the way " +
+    "a non-technical sponsor would say them. It RESTATES only: introduce no " +
+    "figure, system name or claim that is not already made and grounded elsewhere " +
+    "in the deck, and point it at the technical slides that carry the detail."
+  );
+}
+
 export function deckLengthInstruction(
   req: DeliverableIntelligenceRequest,
 ): string {
@@ -852,6 +883,7 @@ export function buildPassPrompt(
         `Requirements: ${recommendationRequirement} ${nextActionsRequirement} ${riskTableRequirement} If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
         deckLengthInstruction(req),
         deckStoryContractInstruction(req),
+        plainEnglishMirrorInstruction(req),
         requiredExhibitsInstruction(req),
         SYNTHESIS_SCHEMA_HINT,
         ``,
