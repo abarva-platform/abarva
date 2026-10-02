@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type {
   CompletedEsignDocuments,
   CreateEsignEnvelopeInput,
@@ -25,9 +25,13 @@ export function createInMemoryEsignProvider() {
     async createEnvelope(input): Promise<EsignEnvelope> {
       if (!input.tenantKey || !input.eventId || !input.vendorId ||
           !/^[a-f0-9]{64}$/.test(input.documentSha256) ||
+          createHash("sha256").update(input.documentPdf).digest("hex") !== input.documentSha256 ||
           input.signers.length !== 2 ||
           new Set(input.signers.map((signer) => signer.role)).size !== 2 ||
-          new Set(input.signers.map((signer) => signer.recipientId)).size !== 2) {
+          new Set(input.signers.map((signer) => signer.recipientId)).size !== 2 ||
+          input.signers.some((signer) => !signer.name.trim() || !signer.email.trim() ||
+            !signer.signatureAnchor.trim() ||
+            (signer.delivery === "embedded") !== Boolean(signer.clientUserId?.trim()))) {
         throw new Error("invalid_envelope");
       }
       const envelopeId = randomUUID();
@@ -37,7 +41,8 @@ export function createInMemoryEsignProvider() {
     async getSigningLink({ envelopeId, recipientId, returnUrl }) {
       const envelope = envelopes.get(envelopeId);
       if (!envelope) throw new Error("envelope_not_found");
-      if (!envelope.input.signers.some((signer) => signer.recipientId === recipientId)) {
+      if (!envelope.input.signers.some((signer) =>
+        signer.recipientId === recipientId && signer.delivery === "embedded")) {
         throw new Error("recipient_not_found");
       }
       const target = new URL("https://esign-fake.invalid/sign");

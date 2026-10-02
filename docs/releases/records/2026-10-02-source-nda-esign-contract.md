@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a provider-neutral contract and in-memory test provider for optional NDA e-signature work. The feature remains off by default; existing executed-document upload is unchanged. A configuration guard permits only the declared lab tenant with the demo provider environment and a pinned signing-key location. An authenticated, read-only route reports whether the capability is available without exposing configuration identifiers. No envelope can be sent by this release.
+Adds a provider-neutral contract and in-memory test provider for optional NDA e-signature work. The contract carries document bytes pinned to their SHA-256 and explicit signer placement and embedded identity. The feature remains off by default; existing executed-document upload is unchanged. A configuration guard permits only the declared lab tenant with the demo provider environment and a pinned signing-key location. An authenticated, read-only route reports whether the capability is available without exposing configuration identifiers. No envelope can be sent by this release.
 
 ## Layer Impact
 
@@ -34,7 +34,7 @@ Adds a provider-neutral contract and in-memory test provider for optional NDA e-
 
 ## QA / Validation
 
-- Red-first missing-module and missing-route tests, then 11 passing behavior cases.
+- Red-first missing-module and missing-route tests, then 13 passing behavior cases.
 - Mutation removing the tenant guard failed the cross-tenant demo test; the guard was restored.
 - TypeScript, scoped ESLint, orphan audit, tenancy-fence census, release checks and CI results are recorded with the PR.
 

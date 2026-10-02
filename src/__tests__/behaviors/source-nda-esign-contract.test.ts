@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createInMemoryEsignProvider } from "@/__tests__/helpers/source-nda-in-memory-provider";
 import { resolveSourceNdaEsignConfig } from "@/lib/source/esign/config";
 
@@ -68,17 +69,37 @@ describe("Source NDA e-signature configuration", () => {
 });
 
 describe("in-memory Source NDA e-signature provider", () => {
+  const documentPdf = new Uint8Array([1, 2, 3]);
   const request = {
     tenantKey: "meridian-health",
     eventId: "event-1",
     vendorId: "vendor-1",
     templateVersion: "v1",
-    documentSha256: "a".repeat(64),
+    documentPdf,
+    documentSha256: createHash("sha256").update(documentPdf).digest("hex"),
     signers: [
-      { recipientId: "supplier-1", role: "supplier" as const, name: "Test supplier", email: "supplier@example.test" },
-      { recipientId: "buyer-1", role: "buyer" as const, name: "Test buyer", email: "buyer@example.test" },
+      { recipientId: "supplier-1", role: "supplier" as const, name: "Test supplier", email: "supplier@example.test", signatureAnchor: "/supplier-signature/", delivery: "embedded" as const, clientUserId: "supplier-test-1" },
+      { recipientId: "buyer-1", role: "buyer" as const, name: "Test buyer", email: "buyer@example.test", signatureAnchor: "/buyer-signature/", delivery: "embedded" as const, clientUserId: "buyer-test-1" },
     ],
   };
+
+  it("refuses document bytes that do not match the governed hash", async () => {
+    const provider = createInMemoryEsignProvider();
+    await expect(provider.createEnvelope({ ...request, documentPdf: new Uint8Array([9]) }))
+      .rejects.toThrow("invalid_envelope");
+  });
+
+  it("requires explicit signer placement and embedded identity", async () => {
+    const provider = createInMemoryEsignProvider();
+    await expect(provider.createEnvelope({
+      ...request,
+      signers: [{ ...request.signers[0], signatureAnchor: "" }, request.signers[1]],
+    })).rejects.toThrow("invalid_envelope");
+    await expect(provider.createEnvelope({
+      ...request,
+      signers: [{ ...request.signers[0], clientUserId: null }, request.signers[1]],
+    })).rejects.toThrow("invalid_envelope");
+  });
 
   it("creates an envelope and gives only its named signer a link", async () => {
     const provider = createInMemoryEsignProvider();

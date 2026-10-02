@@ -6,6 +6,9 @@ export type EsignSigner = {
   role: "supplier" | "buyer";
   name: string;
   email: string;
+  signatureAnchor: string;
+  delivery: "embedded" | "email";
+  clientUserId: string | null;
 };
 
 export type CreateEsignEnvelopeInput = {
@@ -13,6 +16,7 @@ export type CreateEsignEnvelopeInput = {
   eventId: string;
   vendorId: string;
   templateVersion: string;
+  documentPdf: Uint8Array;
   documentSha256: string;
   signers: readonly EsignSigner[];
 };
