@@ -3,7 +3,7 @@
 // registers it in move_artifacts so it appears in the File Cabinet. This is the
 // in-tool entry point for the off-platform evidence (meeting notes, session
 // outputs, data exports, filled templates) that grounds deliverables and closes
-// gates. Fields: file (required), phase, family, title.
+// gates. Fields: file (required), phase, family, title, evidenceFamily.
 
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
@@ -20,6 +20,11 @@ import {
 } from "@/lib/programs/attachments/mime";
 import { getProgramById } from "@/lib/programs/queries";
 import { ingestUploadedMoveEvidence } from "@/lib/programs/current-state-doc-ingest";
+import {
+  buildDiscoveryBlueprintInputFromProgram,
+  resolveDeclaredEvidenceFamily,
+} from "@/lib/programs/discovery/evidence-readiness";
+import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +81,30 @@ export async function POST(
         ? familyRaw
         : "uploaded_evidence"
     ) as ArtifactFamily;
+    // Optional: the required evidence family the uploader says this file
+    // covers. Without it the file is routed by keywords in its name and
+    // opening lines, which credits it to whichever family those words happen
+    // to favour. Validated here, before anything is stored, against the
+    // families this Move's discovery actually requires — an unknown key is
+    // refused rather than silently falling back to inference.
+    let declaredFamilyKey: string | null = null;
+    if (String(form.get("evidenceFamily") ?? "").trim()) {
+      const declared = resolveDeclaredEvidenceFamily(
+        form.get("evidenceFamily"),
+        getDiscoveryBlueprint(
+          buildDiscoveryBlueprintInputFromProgram(
+            await getProgramById(ctx, programId),
+          ),
+        ),
+      );
+      if (!declared.ok) {
+        return Response.json(
+          { error: "unknown_evidence_family", detail: declared.detail },
+          { status: 400 },
+        );
+      }
+      declaredFamilyKey = declared.familyKey;
+    }
     const title = String(form.get("title") ?? "").trim() || file.name;
     const ext = (file.name.split(".").pop() || "bin").toLowerCase();
     const body = Buffer.from(await file.arrayBuffer());
@@ -135,6 +164,7 @@ export async function POST(
           // IngestUploadedMoveEvidenceArgs.moveArtifactId).
           moveArtifactId: saved.artifactId,
           declaredClassification: form.get("dataClassification"),
+          declaredFamilyKey,
         });
       } catch (err) {
         evidenceWarning =

@@ -3,6 +3,7 @@ import {
   declaredDiscoveryFamilies,
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
+  resolveDeclaredEvidenceFamily,
   type DiscoveryEvidenceReadinessItem,
 } from "../evidence-readiness";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
@@ -334,5 +335,60 @@ describe("declared evidence family outranks keyword inference", () => {
     };
     // `blueprint` above is a different archetype with no member-service families.
     expect(declaredDiscoveryFamilies(foreign, blueprint)).toEqual([]);
+  });
+});
+
+describe("a family declared at upload", () => {
+  const memberService = getDiscoveryBlueprint(
+    "healthcare member service contact center agent assist",
+  );
+
+  it("accepts a family this Move's discovery requires", () => {
+    expect(
+      resolveDeclaredEvidenceFamily(
+        "model_risk_responsible_ai_controls",
+        memberService,
+      ),
+    ).toEqual({ ok: true, familyKey: "model_risk_responsible_ai_controls" });
+  });
+
+  it("treats empty input as nothing declared", () => {
+    for (const raw of ["", "   ", null, undefined]) {
+      expect(resolveDeclaredEvidenceFamily(raw, memberService)).toEqual({
+        ok: true,
+        familyKey: null,
+      });
+    }
+  });
+
+  it("refuses a family this Move does not require instead of ignoring it", () => {
+    const result = resolveDeclaredEvidenceFamily("cost_pools", memberService);
+    expect(result.ok).toBe(false);
+  });
+
+  it("a declared blueprint family is credited whatever the file's text says", () => {
+    // The observed case: a controls file whose opening rows mention knowledge
+    // and freshness is scored into the knowledge family by keywords.
+    const controls: DiscoveryEvidenceReadinessItem = {
+      ...item(
+        "mr",
+        "controls.csv",
+        "control,guardrail,evaluation test,owner Stale knowledge article presented as authoritative; show source and freshness; knowledge owner; test policy",
+      ),
+    };
+    expect(mapEvidenceToDiscoveryFamily(controls, memberService)).toBe(
+      "knowledge_base_ownership_freshness",
+    );
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [
+        { ...controls, declaredFamilyKey: "model_risk_responsible_ai_controls" },
+      ],
+    });
+    expect(
+      readiness.families
+        .filter((family) => family.status === "covered")
+        .map((family) => family.familyId),
+    ).toEqual(["model_risk_responsible_ai_controls"]);
   });
 });

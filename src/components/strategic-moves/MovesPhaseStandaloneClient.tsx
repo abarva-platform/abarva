@@ -973,6 +973,16 @@ export function MovesPhaseStandaloneClient({
       cancelled = true;
     };
   }, [move.id, phase.phase]);
+  // What the file cabinet's uploader can declare a file as covering: the
+  // evidence families this Move's discovery requires, once each.
+  const declarableEvidenceFamilies = useMemo(() => {
+    const seen = new Set<string>();
+    return evidenceNeedPackets.flatMap((packet) => {
+      if (!packet.familyId || seen.has(packet.familyId)) return [];
+      seen.add(packet.familyId);
+      return [{ id: packet.familyId, label: packet.evidenceSlot }];
+    });
+  }, [evidenceNeedPackets]);
   const p3OptionSet = useMemo(
     () =>
       assembleP3SolutionOptions({
@@ -2423,6 +2433,7 @@ export function MovesPhaseStandaloneClient({
                     moveId={move.id}
                     phase={phase.phase}
                     onEvidenceChanged={refreshPhase}
+                    evidenceFamilies={declarableEvidenceFamilies}
                   />
                 </>
               ) : workspaceView === "intelligence" ? (

@@ -551,6 +551,13 @@ export interface IngestUploadedMoveEvidenceArgs {
   /** The `move_artifacts.id` for this upload, if the caller's surface uses that table. Traceability only — never written to the `attachment_id` FK column. */
   moveArtifactId?: string | null;
   declaredClassification?: unknown;
+  /**
+   * The required evidence family the uploader says this file covers. When
+   * present it is recorded as the review's family instead of the family
+   * inferred from the file's name and text, so readiness credits the file to
+   * what its uploader declared it to be. The caller validates the key.
+   */
+  declaredFamilyKey?: string | null;
 }
 
 export interface IngestUploadedMoveEvidenceResult {
@@ -637,9 +644,10 @@ export async function ingestUploadedMoveEvidence(
     moveId: args.moveId,
     evidenceId,
     familyKey:
-      classification.slotIds[0] ??
-      classification.evidenceType ??
-      rawEvidence.evidenceType,
+      args.declaredFamilyKey?.trim() ||
+      (classification.slotIds[0] ??
+        classification.evidenceType ??
+        rawEvidence.evidenceType),
     archetypeId: args.archetypeId,
     phase: args.phase,
     filename: args.filename,
@@ -660,6 +668,7 @@ export async function ingestUploadedMoveEvidence(
       where_used: classification.whereUsed,
       quarantined,
       move_artifact_id: args.moveArtifactId ?? undefined,
+      family_declared_by_uploader: Boolean(args.declaredFamilyKey?.trim()),
     },
   });
 

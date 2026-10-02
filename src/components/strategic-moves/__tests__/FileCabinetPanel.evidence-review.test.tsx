@@ -324,4 +324,115 @@ describe("Moves File Cabinet evidence review", () => {
       }),
     );
   });
+
+  // A general upload is routed by keywords in the file's name and opening
+  // lines unless the uploader says what it is. These pin that the statement
+  // reaches the request, and that silence sends nothing.
+  describe("declaring which required evidence a file covers", () => {
+    function mockUpload(uploadedForms: FormData[]) {
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/artifacts/upload") && init?.method === "POST") {
+          uploadedForms.push(init.body as FormData);
+          return {
+            ok: true,
+            json: async () => ({
+              ok: true,
+              blobStored: true,
+              evidence: {
+                reviewStatus: "pending_review",
+                parseMethod: "csv-line-parser",
+              },
+            }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            artifacts: [],
+            pendingEvidenceReviews: [],
+            evidenceReviewStatus: "available",
+          }),
+        } as Response;
+      }) as typeof fetch;
+    }
+    const families = [
+      { id: "kpi_family", label: "Baseline KPIs" },
+      { id: "controls_family", label: "Risk controls" },
+    ];
+    const file = () =>
+      new File(["a,b"], "controls.csv", { type: "text/csv" });
+
+    it("sends the declared family with the upload", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={2}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(
+        screen.getByLabelText("Required evidence this file covers"),
+        { target: { value: "controls_family" } },
+      );
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].get("evidenceFamily")).toBe("controls_family");
+    });
+
+    it("sends no family when none is stated", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={2}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].has("evidenceFamily")).toBe(false);
+    });
+
+    it("does not send a family for session notes, and hides the choice", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={2}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(
+        screen.getByLabelText("Required evidence this file covers"),
+        { target: { value: "controls_family" } },
+      );
+      fireEvent.change(screen.getByLabelText("File Cabinet upload type"), {
+        target: { value: "session_artifact" },
+      });
+      expect(
+        screen.queryByLabelText("Required evidence this file covers"),
+      ).toBeNull();
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].has("evidenceFamily")).toBe(false);
+    });
+
+    it("offers no choice when the phase has no required families", () => {
+      mockUpload([]);
+      render(<FileCabinetPanel moveId="move-1" phase={2} />);
+      expect(
+        screen.queryByLabelText("Required evidence this file covers"),
+      ).toBeNull();
+    });
+  });
 });
