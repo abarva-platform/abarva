@@ -606,3 +606,54 @@ test("performance view separates declared investment from unvalidated value", ()
   assert.match(html, /No declared priority/);
   assert.doesNotMatch(html, /serving\.home_|source_record_id/);
 });
+
+test("technology view shows bounded, source-linked dependency paths", () => {
+  const withDependencies: HomeEnterpriseContext = {
+    ...context,
+    dependencyProof: {
+      projectedLinks: 346,
+      asOf: "2026-09-30",
+      riskPaths: [{
+        primaryLinkKey: "edge-risk-1",
+        subject: { id: "risk-id", name: "Recovery gap", type: "risk" },
+        subjectKind: "risk",
+        subjectState: "critical; unknown",
+        asset: { id: "app-id", name: "Claims platform", type: "application" },
+        supplier: { id: "vendor-id", name: "Vendor A", type: "vendor" },
+        contract: null,
+        dataProduct: { id: "data-id", name: "Claims data", type: "data_product" },
+        platform: { id: "platform-id", name: "Database cluster", type: "data_platform" },
+        sourceRefs: ["risk", "edge", "asset", "vendor", "data"],
+        asOf: "2026-09-30",
+      }],
+      programPaths: [],
+    },
+  };
+  const html = renderToStaticMarkup(createElement(EnterpriseContextPanel, {
+    chapterId: "technology_data",
+    context: withDependencies,
+    onOpenRows: () => undefined,
+    onOpenMatch: () => undefined,
+  }));
+  assert.match(html, /Where critical work relies on shared assets/);
+  assert.match(html, /Claims platform/);
+  assert.match(html, /Vendor A/);
+  assert.match(html, /Claims data/);
+  assert.match(html, /Database cluster/);
+  assert.match(html, /View link/);
+  assert.match(html, /bounded dependency slice/);
+  assert.doesNotMatch(html, /serving\.home_|source_record_id/);
+  const onOpenMatch = jest.fn();
+  render(createElement(EnterpriseContextPanel, {
+    chapterId: "technology_data",
+    context: withDependencies,
+    onOpenRows: () => undefined,
+    onOpenMatch,
+  }));
+  fireEvent.click(screen.getByRole("button", { name: "View link" }));
+  expect(onOpenMatch).toHaveBeenCalledWith("relationship_edge", {
+    field: "originalRowId",
+    value: "edge-risk-1",
+    label: "Recovery gap to Claims platform",
+  });
+});

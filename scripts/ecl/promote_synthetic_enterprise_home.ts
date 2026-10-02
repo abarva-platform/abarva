@@ -50,7 +50,7 @@ import {
 } from "./synthetic_enterprise_home_rows";
 
 const surface = "home_enterprise_landscape";
-const version = 1;
+const version = 2;
 
 export type ProjectionProof = {
   status: string;
@@ -60,6 +60,9 @@ export type ProjectionProof = {
   readback_proof_uri: string;
   rows: number;
   source_linked_rows: number;
+  projection_version?: number;
+  canonical_relationships?: number;
+  dependency_relationship_rows?: number;
   row_types: Record<string, number>;
   client_attestation_state: string;
   serving_state: string;
@@ -77,9 +80,13 @@ export function assertProjectionProof(
     proof.source_set_hash !== expected.sourceSetHash ||
     proof.client_attestation_state !== "not_client_attested" ||
     proof.serving_state !== "shadow_not_promoted" ||
+    proof.projection_version !== version ||
     !/^[a-f0-9]{64}$/.test(proof.projection_hash) ||
-    proof.rows !== 3643 ||
+    proof.rows !== 3989 ||
+    proof.canonical_relationships !== 11727 ||
+    proof.dependency_relationship_rows !== 346 ||
     proof.source_linked_rows !== proof.rows ||
+    proof.row_types.relationship !== 346 ||
     proof.row_types.enterprise_profile !== 1 ||
     proof.row_types.business_segment !== 3 ||
     proof.row_types.business_function !== 14 ||
@@ -247,6 +254,7 @@ export type ServedHomeSummary = {
     functions: number;
     priorities: number;
     excludedUncitedRows: number;
+    dependencyLinks: number;
   } | null;
   /** Rows per record type of the estate Home shows. */
   estate: Record<string, number>;
@@ -285,6 +293,7 @@ export async function buildServedHome(
       functions: context.functions.length,
       priorities: context.priorities.length,
       excludedUncitedRows: context.excludedUncitedRows,
+      dependencyLinks: context.dependencyProof?.projectedLinks ?? 0,
     },
     estate: Object.fromEntries(
       (bundle.technologyEstate?.recordTypes ?? []).map((type) => [
@@ -310,6 +319,7 @@ type ProjectionRead = {
     projection_entry_id: string;
     source_record_id: string;
     source_hash: string;
+    ref_role: string;
   }[];
   sourceRecordIds: Set<string>;
 };
@@ -323,6 +333,7 @@ type ProjectionRead = {
 async function readProjection(
   db: JobDatabase,
   scope: [string, string],
+  manifestId: string,
 ): Promise<ProjectionRead> {
   const landscape = await db.query<LandscapeRow>(
     `select page_key, row_key, row_type, section_key, title, summary,
@@ -331,16 +342,18 @@ async function readProjection(
             projection_manifest_id::text, projection_version, quality_state,
             admission_status
      from ecl_projection.home_enterprise_landscape
-     where tenant_key = $1 and assessment_id = $2`,
-    scope,
+     where tenant_key = $1 and assessment_id = $2
+       and projection_manifest_id = $3 and projection_version = $4`,
+    [...scope, manifestId, version],
   );
   const entries = await db.query<{ id: string; source_hash: string }>(
     `select id::text, source_hash from ecl_projection.projection_entry
-     where tenant_key = $1 and assessment_id = $2`,
-    scope,
+     where tenant_key = $1 and assessment_id = $2
+       and projection_manifest_id = $3 and projection_version = $4`,
+    [...scope, manifestId, version],
   );
   const links = await db.query<ProjectionRead["links"][number]>(
-    `select projection_entry_id::text, source_record_id::text, source_hash
+    `select projection_entry_id::text, source_record_id::text, source_hash, ref_role
      from ecl_projection.projection_entry_source_record_ref
      where tenant_key = $1 and assessment_id = $2`,
     scope,
@@ -366,7 +379,7 @@ async function readProjection(
  */
 function verifiedLinks(read: ProjectionRead): {
   refs: VerifiedSourceRefs;
-  linkCount: (entryId: string, sourceHash: string) => number;
+  linkCount: (entryId: string, sourceHash: string, role: string) => number;
 } {
   const entryHash = new Map(
     read.entries.map((entry) => [entry.id, entry.source_hash]),
@@ -386,13 +399,13 @@ function verifiedLinks(read: ProjectionRead): {
     linked.add(link.source_record_id);
     byHash.set(link.source_hash, linked);
     refs.set(link.projection_entry_id, byHash);
-    const key = `${link.projection_entry_id}|${link.source_hash}`;
+    const key = `${link.projection_entry_id}|${link.source_hash}|${link.ref_role}`;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return {
     refs,
-    linkCount: (entryId, sourceHash) =>
-      counts.get(`${entryId}|${sourceHash}`) ?? 0,
+    linkCount: (entryId, sourceHash, role) =>
+      counts.get(`${entryId}|${sourceHash}|${role}`) ?? 0,
   };
 }
 
@@ -422,11 +435,13 @@ function projectionDrift(
     );
   }
   const unlinked = count(
-    (row) => links.linkCount(row.projection_entry_id, row.source_hash) !== 1,
+    (row) => links.linkCount(row.projection_entry_id, row.source_hash, "primary_source") !== 1 ||
+      links.linkCount(row.projection_entry_id, row.source_hash, "endpoint_source") !==
+        (row.row_type === "relationship" ? 2 : 0),
   );
   if (unlinked) {
     issues.push(
-      `${unlinked} rows do not have exactly one verified source link`,
+      `${unlinked} rows do not have their required verified source links`,
     );
   }
   const unpassed = count((row) => row.quality_state !== "passed");
@@ -578,6 +593,7 @@ export async function admitHomeProjection(
   let before: HomeDeclaration | null = null;
   let switchedTo: HomeDeclaration | null = null;
   let alreadyActive = false;
+  let replaceActiveV1 = false;
   let pendingProofUri: string | null = null;
   let evidence: Record<string, unknown> = {};
   let committing = false;
@@ -626,9 +642,31 @@ export async function admitHomeProjection(
     };
     alreadyActive =
       active.rows.length === 1 && sameDeclaration(active.rows[0], binding);
+    if (active.rows.length === 1 && !alreadyActive) {
+      const current = active.rows[0];
+      const prior = await db.query<{
+        projection_version: number;
+        row_count: number;
+        source_hash: string;
+        projection_hash: string;
+        proof_uri: string;
+      }>(
+        `select projection_version, row_count, source_hash, projection_hash, proof_uri
+         from ecl_projection.projection_manifest
+         where tenant_key = $1 and assessment_id = $2 and id = $3`,
+        [...scope, current.projection_manifest_id],
+      );
+      const old = prior.rows[0];
+      replaceActiveV1 = current.assessment_id === manifest.assessment_id &&
+        current.source_set_hash === manifest.source_set_hash &&
+        prior.rows.length === 1 && old.projection_version === 1 &&
+        old.row_count === 3643 && old.source_hash === manifest.source_set_hash &&
+        old.projection_hash === current.projection_hash &&
+        old.proof_uri === current.projection_proof_uri;
+    }
     if (
       active.rows.length > 1 ||
-      (active.rows.length === 1 && !alreadyActive)
+      (active.rows.length === 1 && !alreadyActive && !replaceActiveV1)
     ) {
       throw new Error("A different Home assessment is already active");
     }
@@ -638,7 +676,7 @@ export async function admitHomeProjection(
     }
 
     const read = await timed("projection_read", () =>
-      readProjection(db, scope),
+      readProjection(db, scope, proved.id),
     );
     const links = verifiedLinks(read);
     const drift = projectionDrift(read, links, proof, proved.id);
@@ -697,7 +735,8 @@ export async function admitHomeProjection(
       context.segments !== spine.segments ||
       context.functions !== spine.functions ||
       context.priorities !== spine.priorities ||
-      context.excludedUncitedRows !== 0
+      context.excludedUncitedRows !== 0 ||
+      context.dependencyLinks !== proof.dependency_relationship_rows
     ) {
       throw new Error(
         "Home business spine cannot be built from the served projection",
@@ -728,6 +767,7 @@ export async function admitHomeProjection(
       validation: {
         projected_rows: read.landscape.length,
         source_linked_rows: read.landscape.length,
+        dependency_relationship_rows: context.dependencyLinks,
         row_types: proof.row_types,
         projected_rows_hash_compared_with_proof:
           proof.projected_rows_hash !== undefined,
@@ -750,7 +790,22 @@ export async function admitHomeProjection(
     };
 
     if (mode === "promote" && !alreadyActive) {
-      const selected = await db.query<HomeDeclaration>(
+      const selected = replaceActiveV1
+        ? await db.query<HomeDeclaration>(
+          `update ecl_projection.home_active_assessment
+           set projection_manifest_id = $3, projection_hash = $4,
+               projection_proof_uri = $5, activated_at = now(), retired_at = null
+           where tenant_key = $1 and assessment_id = $2 and state = 'active'
+             and projection_manifest_id = $6 and source_set_hash = $7
+             and projection_hash = $8 and projection_proof_uri = $9
+           returning ${declarationColumns}`,
+          [
+            ...scope, proved.id, proof.projection_hash, projectionProofUri,
+            active.rows[0].projection_manifest_id, manifest.source_set_hash,
+            active.rows[0].projection_hash, active.rows[0].projection_proof_uri,
+          ],
+        )
+        : await db.query<HomeDeclaration>(
         `insert into ecl_projection.home_active_assessment
          (tenant_key, assessment_id, projection_manifest_id, source_set_hash,
           projection_hash, projection_proof_uri, state)
@@ -770,7 +825,7 @@ export async function admitHomeProjection(
           proof.projection_hash,
           projectionProofUri,
         ],
-      );
+        );
       if (selected.rows.length !== 1) {
         throw new Error(
           "Existing retired Home declaration has a different proof",

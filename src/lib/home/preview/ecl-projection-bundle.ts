@@ -1296,7 +1296,10 @@ function recordType(
     : null;
   return {
     objectType,
-    label: LABELS[objectType],
+    label: objectType === "relationship_edge" && sourceRows?.length && sourceRows.every((row) =>
+      rowPayload(row).scope === "risk_and_program_dependency_slice")
+      ? "Priority Dependency Links"
+      : LABELS[objectType],
     columns,
     rows,
     ...(sourceRows && verifiedSourceRefs

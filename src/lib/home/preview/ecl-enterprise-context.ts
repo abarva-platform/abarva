@@ -7,6 +7,10 @@ import {
   type SegmentSpineReport,
 } from "../../../../scripts/data-build/segment-spine";
 import type { HomeProjectionRow } from "./ecl-projection-bundle";
+import {
+  buildHomeDependencyProof,
+  type EnterpriseDependencyProof,
+} from "./ecl-dependency-proof";
 import { homeProjectionPayload } from "./projection-row-payload";
 
 export interface EnterpriseContextFact {
@@ -118,6 +122,7 @@ export interface HomeEnterpriseContext {
   priorities: EnterpriseContextPriority[];
   valueProof: EnterpriseValueProof;
   riskTriage: EnterpriseRiskTriage;
+  dependencyProof?: EnterpriseDependencyProof | null;
   /** Functions whose row declares no segment. Says nothing about why. */
   sharedFunctionIds: string[];
   unlinkedPrograms: EnterpriseContextProgram[];
@@ -506,6 +511,7 @@ export function buildHomeEnterpriseContext(
     priorities,
     valueProof,
     riskTriage,
+    dependencyProof: buildHomeDependencyProof(cited, sourceRefs),
     sharedFunctionIds: sharedFunctionIds.sort(),
     unlinkedPrograms,
     attributionGaps,
