@@ -73,5 +73,6 @@ jobs:
           psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260902100000_home_serving_view_relationships.sql
       - name: Project canonical enterprise rows to shadow Home serving views
         env:
+          NODE_OPTIONS: --conditions=react-server
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
         run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts

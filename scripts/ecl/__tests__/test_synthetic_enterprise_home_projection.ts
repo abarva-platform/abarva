@@ -3,6 +3,10 @@ import { rm } from "node:fs/promises";
 import pg from "pg";
 import { generatePack } from "../load_synthetic_enterprise_v1";
 import { writeShadowHomeProjection } from "../project_synthetic_enterprise_home";
+import {
+  buildTechnologyEstateFromHomeProjectionRows,
+  type HomeProjectionRow,
+} from "../../../src/lib/home/preview/ecl-projection-bundle";
 
 async function main(): Promise<void> {
   const connectionString = process.env.ECL_ADMISSION_TEST_DATABASE_URL ?? "";
@@ -54,6 +58,22 @@ async function main(): Promise<void> {
       [pack.manifest.tenant_key, pack.manifest.assessment_id],
     );
     assert.equal(Number(serving.rows[0].n), 344);
+    const productRows = await db.query<HomeProjectionRow>(`
+      select page_key, row_key, row_type, title, summary, display_payload_json,
+        source_hash, source_refs_json, projection_entry_id::text,
+        primary_object_id::text, admission_status
+      from ecl_projection.home_enterprise_landscape
+      where tenant_key = $1 and assessment_id = $2
+    `, [pack.manifest.tenant_key, pack.manifest.assessment_id]);
+    const estate = buildTechnologyEstateFromHomeProjectionRows(productRows.rows);
+    const productCount = (type: string) => estate.recordTypes.find(
+      (record) => record.objectType === type,
+    )?.rows.length ?? 0;
+    assert.equal(productCount("application_system"), 344);
+    assert.equal(productCount("vendor_contract"), 230);
+    assert.equal(productCount("business_segment"), 3);
+    assert.equal(productCount("business_function"), 14);
+    assert.equal(productCount("data_asset_or_integration"), 1710);
     const links = await db.query<{ missing: string }>(
       `
       select count(*) as missing
