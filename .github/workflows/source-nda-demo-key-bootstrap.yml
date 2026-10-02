@@ -138,10 +138,15 @@ jobs:
               (.[0].permissions[0].dataActions | sort == ["Microsoft.KeyVault/vaults/keys/create/action","Microsoft.KeyVault/vaults/keys/read"])' \
               <<< "$role_json" >/dev/null || { echo 'Existing bootstrap role is over-permissioned' >&2; exit 1; }
           fi
-          az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
-            --role AcrPull --scope "$acr_id" --output none
-          az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
-            --role "$BOOTSTRAP_ROLE_NAME" --scope "$VAULT_ID" --output none
+          acr_assignment_id="$(az role assignment create --assignee-object-id "$principal_id" \
+            --assignee-principal-type ServicePrincipal --role AcrPull --scope "$acr_id" --query id -o tsv)"
+          [[ "$acr_assignment_id" == */providers/Microsoft.Authorization/roleAssignments/* ]]
+          echo "acr_assignment_id=$acr_assignment_id" >> "$GITHUB_OUTPUT"
+          vault_assignment_id="$(az role assignment create --assignee-object-id "$principal_id" \
+            --assignee-principal-type ServicePrincipal --role "$BOOTSTRAP_ROLE_NAME" \
+            --scope "$VAULT_ID" --query id -o tsv)"
+          [[ "$vault_assignment_id" == */providers/Microsoft.Authorization/roleAssignments/* ]]
+          echo "vault_assignment_id=$vault_assignment_id" >> "$GITHUB_OUTPUT"
 
       - name: Run one-off job inside the private environment
         if: inputs.mode == 'create'
@@ -244,14 +249,19 @@ jobs:
               <<< "$role_json" >/dev/null || { echo 'Existing sign role is over-permissioned' >&2; exit 1; }
           fi
           runtime_principal="$(az identity show -g "$RESOURCE_GROUP" -n "$RUNTIME_IDENTITY" --query principalId -o tsv)"
-          existing_assignment="$(az role assignment list --assignee "$runtime_principal" --scope "$key_scope" \
+          existing_assignment="$(az role assignment list --assignee-object-id "$runtime_principal" --scope "$key_scope" \
             --role "$SIGN_ROLE_NAME" --query '[].id' -o tsv)"
           if [[ -z "$existing_assignment" ]]; then
             az role assignment create --assignee-object-id "$runtime_principal" --assignee-principal-type ServicePrincipal \
               --role "$SIGN_ROLE_NAME" --scope "$key_scope" --output none
           fi
-          az role assignment list --assignee "$runtime_principal" --scope "$key_scope" \
-            --role "$SIGN_ROLE_NAME" --query '[].scope' -o tsv | grep -Fxi "$key_scope"
+          for attempt in 1 2 3 4 5; do
+            matching_scope="$(az role assignment list --assignee-object-id "$runtime_principal" \
+              --scope "$key_scope" --role "$SIGN_ROLE_NAME" --query '[].scope' -o tsv)"
+            grep -Fxiq "$key_scope" <<< "$matching_scope" && break
+            sleep 5
+          done
+          grep -Fxi "$key_scope" <<< "$matching_scope"
           echo 'Runtime key-scoped read/sign grant verified; no create or export grant retained.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove bootstrap job and temporary permissions
@@ -259,24 +269,37 @@ jobs:
         shell: bash
         env:
           VAULT_ID: ${{ steps.preflight.outputs.vault_id }}
+          ACR_ASSIGNMENT_ID: ${{ steps.identity.outputs.acr_assignment_id }}
+          VAULT_ASSIGNMENT_ID: ${{ steps.identity.outputs.vault_assignment_id }}
         run: |
           set -euo pipefail
           job_name="nda-jwt-key-$GITHUB_RUN_ID"
           identity_name="id-nda-jwt-bootstrap-$GITHUB_RUN_ID"
           az containerapp job delete -g "$RESOURCE_GROUP" -n "$job_name" --yes --output none 2>/dev/null || true
           principal="$(az identity show -g "$RESOURCE_GROUP" -n "$identity_name" --query principalId -o tsv 2>/dev/null || true)"
+          if [[ -z "$principal" && ( -n "$VAULT_ASSIGNMENT_ID" || -n "$ACR_ASSIGNMENT_ID" ) ]]; then
+            echo 'Bootstrap identity is missing while recorded RBAC grants may remain; manual cleanup required' >&2
+            exit 1
+          fi
           if [[ -n "$principal" ]]; then
             acr_id="$(az acr show -n "$ACR_NAME" --query id -o tsv)"
-            for entry in "$BOOTSTRAP_ROLE_NAME|$VAULT_ID" "AcrPull|$acr_id"; do
+            for entry in "$BOOTSTRAP_ROLE_NAME|$VAULT_ID|$VAULT_ASSIGNMENT_ID" "AcrPull|$acr_id|$ACR_ASSIGNMENT_ID"; do
               role="${entry%%|*}"
-              scope="${entry#*|}"
-              assignments="$(az role assignment list --assignee "$principal" --role "$role" \
-                --scope "$scope" --query '[].id' -o tsv)"
+              remainder="${entry#*|}"
+              scope="${remainder%%|*}"
+              assignment_id="${remainder#*|}"
+              if [[ -n "$assignment_id" ]]; then
+                az role assignment delete --ids "$assignment_id"
+                assignments=''
+              else
+                assignments="$(az role assignment list --assignee-object-id "$principal" --role "$role" \
+                  --scope "$scope" --query '[].id' -o tsv)"
+              fi
               while IFS= read -r assignment; do
                 [[ -n "$assignment" ]] && az role assignment delete --ids "$assignment"
               done <<< "$assignments"
               for attempt in 1 2 3 4 5; do
-                remaining="$(az role assignment list --assignee "$principal" --role "$role" \
+                remaining="$(az role assignment list --assignee-object-id "$principal" --role "$role" \
                   --scope "$scope" --query '[].id' -o tsv)"
                 [[ -z "$remaining" ]] && break
                 sleep 5
