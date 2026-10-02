@@ -350,7 +350,20 @@ export function validateDeliverableQuality(
   // The ceiling is the half that matters. An artifact can satisfy every section
   // and citation rule and still fail in the room by being thirty slides long,
   // and that is a failure this pipeline has no other way to see.
-  if (doc.deckSlides && doc.deckSlides.length > 0) {
+  //
+  // Judge the deck only when a deck is actually produced — when PPTX is an
+  // output format. A document-primary deliverable (DOCX/XLSX) can carry
+  // latent deckSlides the synthesis volunteered that no renderer turns into a
+  // deck; judging those against the deck's slide band blocked a DOCX business
+  // case for having three slides, a band its writer was never given and its
+  // output never shows. This is the same PPTX condition under which the writer
+  // is told the band (deckLengthInstruction) and the slides are contracted
+  // (ensureContractedDeckSlides), so the three now agree.
+  if (
+    req.outputFormats.includes("pptx") &&
+    doc.deckSlides &&
+    doc.deckSlides.length > 0
+  ) {
     const verdict = judgeSlideCount(
       req.deliverableType as Parameters<typeof judgeSlideCount>[0],
       doc.deckSlides.length,
