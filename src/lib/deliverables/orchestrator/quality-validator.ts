@@ -9,6 +9,7 @@
 import type {
   DeliverableIntelligenceRequest,
   ExpectedExhibit,
+  GovernedEvidenceItem,
   QualityValidationResult,
   RenderableDeliverable,
   RenderableExhibit,
@@ -18,6 +19,7 @@ import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
 import { findExcludedNumericClaims } from "./excluded-numeric-claims";
+import { untracedFigures } from "./numeric-lineage-tokens";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
@@ -143,7 +145,10 @@ function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
 }
 
 /** Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
-function collectUnsupportedClaims(body: string): string[] {
+function collectUnsupportedClaims(
+  body: string,
+  evidence: readonly GovernedEvidenceItem[] = [],
+): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
   const sentences = body.split(/(?<=[.!?])\s+/);
   const factLike =
@@ -157,7 +162,14 @@ function collectUnsupportedClaims(body: string): string[] {
       !supported.test(s) &&
       !isSupportedExternalBenchmarkClaim(s)
     ) {
-      claims.push(excerptSentence(s));
+      // Name the figures that trace to nothing. The claim is blocked either
+      // way; this is what lets a reader find the figure inside a long table.
+      const untraced = untracedFigures(s, evidence).slice(0, 6);
+      claims.push(
+        untraced.length > 0
+          ? `${excerptSentence(s)} [figures with no match in evidence: ${untraced.join(", ")}]`
+          : excerptSentence(s),
+      );
     }
   }
   return claims;
@@ -227,6 +239,7 @@ export function validateDeliverableQuality(
     doc.generatedSections
       .map((s) => s.rawBodyMarkdown ?? s.bodyMarkdown)
       .join("\n\n"),
+    req.governedEvidenceBundle,
   );
   const unsupportedClaimCount = unsupportedClaimExamples.length;
 
@@ -273,10 +286,16 @@ export function validateDeliverableQuality(
       ])
       .join("\n"),
     doc.exhibits
-      .map((exhibit) => `${exhibit.title}\n${exhibit.description}\n${JSON.stringify(exhibit.data ?? {})}`)
+      .map(
+        (exhibit) =>
+          `${exhibit.title}\n${exhibit.description}\n${JSON.stringify(exhibit.data ?? {})}`,
+      )
       .join("\n\n"),
     doc.sourceRegister
-      .map((source) => `${source.label} ${source.evidenceFamily} ${source.asOf ?? ""}`)
+      .map(
+        (source) =>
+          `${source.label} ${source.evidenceFamily} ${source.asOf ?? ""}`,
+      )
       .join("\n"),
     doc.assumptions.map((assumption) => assumption.statement).join("\n"),
     doc.clientCompleteChecklist
@@ -331,7 +350,20 @@ export function validateDeliverableQuality(
   // The ceiling is the half that matters. An artifact can satisfy every section
   // and citation rule and still fail in the room by being thirty slides long,
   // and that is a failure this pipeline has no other way to see.
-  if (doc.deckSlides && doc.deckSlides.length > 0) {
+  //
+  // Judge the deck only when a deck is actually produced — when PPTX is an
+  // output format. A document-primary deliverable (DOCX/XLSX) can carry
+  // latent deckSlides the synthesis volunteered that no renderer turns into a
+  // deck; judging those against the deck's slide band blocked a DOCX business
+  // case for having three slides, a band its writer was never given and its
+  // output never shows. This is the same PPTX condition under which the writer
+  // is told the band (deckLengthInstruction) and the slides are contracted
+  // (ensureContractedDeckSlides), so the three now agree.
+  if (
+    req.outputFormats.includes("pptx") &&
+    doc.deckSlides &&
+    doc.deckSlides.length > 0
+  ) {
     const verdict = judgeSlideCount(
       req.deliverableType as Parameters<typeof judgeSlideCount>[0],
       doc.deckSlides.length,

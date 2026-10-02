@@ -6,6 +6,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
+
 const BASE_URL = process.env.BASE_URL || process.env.ECL_PRODUCT_BROWSER_BASE_URL || "https://app.abarva.ai";
 const RAW_TENANT_KEY = process.env.E2E_ACTIVE_CLIENT || "meridian-health";
 const TENANT_PROFILES = {
@@ -90,10 +92,21 @@ function homeRoutePath() {
   return diagnosticsPath(eclPath(`/home/preview?tenant=${tenantValue}`, "&"));
 }
 
+// A finding check can only be satisfied by rows the diagnostics findings panel
+// renders, and the default Home route does not mount that panel. In default-route
+// mode Home's finding checks are therefore read from the Home diagnostics surface,
+// while the default route stays the one proven for route health, named surfaces
+// and counts. In provider opt-in mode the Home route already is that surface.
+function homeFindingsPath() {
+  if (ROUTE_MODE !== "default_routes") return null;
+  return diagnosticsPath(`/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}`);
+}
+
 const ROUTES = [
   {
     key: "home_preview_ecl",
     path: homeRoutePath(),
+    findingsPath: homeFindingsPath(),
     requiredText: [
       new RegExp(EXPECTED_TENANT_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
       /750\s+applications/i,
@@ -249,6 +262,48 @@ const SURFACE_BROWSER_ASSERTIONS = [
   { surfaceKey: "intelligence_context_summary", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Context Summary|context pack/i] },
 ];
 
+// The pathnames on which the product mounts the diagnostics findings panel. It is
+// mounted only when the diagnostics lane is requested, and the source workspace
+// entry is a compatibility redirect that carries its query string to the route
+// that mounts it. Every finding assertion above matches rows that panel renders, so
+// a finding check evaluated on any other URL can never pass, whatever the product
+// state.
+const FINDINGS_PANEL_PATHNAMES = [
+  "/home/preview",
+  "/source/preview/workspace",
+  "/tower",
+  "/intelligence",
+];
+
+function findingsPathFor(route) {
+  return route.findingsPath ?? route.path;
+}
+
+function canMountFindingsPanel(routePath) {
+  const url = new URL(String(routePath), "https://findings-panel.invalid");
+  return FINDINGS_PANEL_PATHNAMES.includes(url.pathname)
+    && url.searchParams.get("diagnostics") === "ecl";
+}
+
+function describeFindingSurfaceBindings(routes, assertions) {
+  return routes
+    .map((route) => {
+      const findingsPath = findingsPathFor(route);
+      return {
+        route_key: route.key,
+        route_path: route.path,
+        findings_path: findingsPath,
+        separate_from_route: findingsPath !== route.path,
+        mounts_findings_panel: canMountFindingsPanel(findingsPath),
+        finding_ids: assertions
+          .filter((assertion) =>
+            (assertion.routeChecks ?? []).some((routeCheck) => routeCheck.routeKey === route.key))
+          .map((assertion) => assertion.id),
+      };
+    })
+    .filter((surface) => surface.finding_ids.length > 0);
+}
+
 function loadDemoFindingsSpec() {
   if (fs.existsSync(FINDINGS_SPEC_PATH)) {
     return {
@@ -265,12 +320,12 @@ function loadDemoFindingsSpec() {
   };
 }
 
-function validateDemoFindingContract() {
+function validateDemoFindingContract({ routes = ROUTES, assertions = DEMO_FINDING_ASSERTIONS } = {}) {
   const issues = [];
   const { source, spec } = loadDemoFindingsSpec();
   const specIds = new Set((spec.findings ?? []).map((finding) => finding.id));
-  const assertionIds = new Set(DEMO_FINDING_ASSERTIONS.map((finding) => finding.id));
-  const routeKeys = new Set(ROUTES.map((route) => route.key));
+  const assertionIds = new Set(assertions.map((finding) => finding.id));
+  const routesByKey = new Map(routes.map((route) => [route.key, route]));
 
   if (spec.denominator?.denominator !== 10) {
     issues.push("findings spec denominator must remain 10");
@@ -278,12 +333,18 @@ function validateDemoFindingContract() {
   for (const id of specIds) {
     if (!assertionIds.has(id)) issues.push(`missing_demo_finding_assertion_${id}`);
   }
-  for (const assertion of DEMO_FINDING_ASSERTIONS) {
+  for (const assertion of assertions) {
     if (!specIds.has(assertion.id)) issues.push(`assertion_id_not_in_spec_${assertion.id}`);
     if (!assertion.routeChecks?.length) issues.push(`finding_has_no_route_checks_${assertion.id}`);
     for (const routeCheck of assertion.routeChecks ?? []) {
-      if (!routeKeys.has(routeCheck.routeKey)) {
+      const route = routesByKey.get(routeCheck.routeKey);
+      if (!route) {
         issues.push(`finding_${assertion.id}_unknown_route_${routeCheck.routeKey}`);
+      } else if (!canMountFindingsPanel(findingsPathFor(route))) {
+        // Self-consistency: the URL this check is evaluated on has to be one that can
+        // show the rows it looks for. Without this the check fails on every run and
+        // nothing short of a browser reports it.
+        issues.push(`finding_${assertion.id}_${routeCheck.routeKey}_not_evaluated_on_findings_panel_surface`);
       }
       if (!routeCheck.requiredText?.length) {
         issues.push(`finding_${assertion.id}_${routeCheck.routeKey}_has_no_required_text`);
@@ -298,6 +359,7 @@ function validateDemoFindingContract() {
     denominator: 10,
     finding_ids: [...assertionIds].sort(),
     source,
+    finding_surface_bindings: describeFindingSurfaceBindings(routes, assertions),
     issues,
   };
 }
@@ -339,7 +401,7 @@ function validateSurfaceAssertionContract() {
   };
 }
 
-function routeDemoFindingChecks(routeKey, bodyText) {
+function routeDemoFindingChecks(routeKey, bodyText, evaluatedUrl = null) {
   if (!TENANT_PROFILE.requiresDemoFindings) return [];
   return DEMO_FINDING_ASSERTIONS.flatMap((finding) =>
     finding.routeChecks
@@ -351,6 +413,7 @@ function routeDemoFindingChecks(routeKey, bodyText) {
         return {
           id: finding.id,
           route_key: routeKey,
+          evaluated_url: evaluatedUrl,
           accepted: missing.length === 0,
           missing,
         };
@@ -383,8 +446,24 @@ function summarizeDemoFindings(routes) {
       status: "not_applicable",
       reason: "demo_findings_spec_is_scoped_to_primary_healthcare_fixture",
       findings: [],
+      finding_surfaces: [],
     };
   }
+  // A findings surface that is loaded separately from its route reports its own
+  // load here, so a surface that did not load is neither a route failure nor only
+  // a list of missing findings.
+  const findingSurfaces = routes
+    .filter((route) => route.finding_surface)
+    .map((route) => ({
+      route_key: route.key,
+      url: route.finding_surface.url,
+      final_url: route.finding_surface.final_url,
+      status: route.finding_surface.status,
+      text_length: route.finding_surface.text_length,
+      text_sha256: route.finding_surface.text_sha256,
+      accepted: route.finding_surface.accepted,
+      issues: route.finding_surface.issues,
+    }));
   const routeChecks = routes.flatMap((route) => route.demo_finding_checks ?? []);
   const checksByFinding = new Map();
   for (const check of routeChecks) {
@@ -409,8 +488,9 @@ function summarizeDemoFindings(routes) {
     metric: "findings demonstrable on a real surface",
     numerator: demonstrable,
     denominator: 10,
-    accepted: demonstrable === 10,
+    accepted: demonstrable === 10 && findingSurfaces.every((surface) => surface.accepted),
     findings,
+    finding_surfaces: findingSurfaces,
   };
 }
 
@@ -601,13 +681,7 @@ async function smokeRoute(page, route) {
   for (const expected of route.requiredText) {
     if (!expected.test(bodyText)) issues.push(`missing_required_text_${expected}`);
   }
-  const demoFindingChecks = routeDemoFindingChecks(route.key, bodyText);
   const surfaceChecks = routeSurfaceChecks(route.key, bodyText);
-  for (const check of demoFindingChecks) {
-    for (const missing of check.missing) {
-      issues.push(`missing_demo_finding_${check.id}_${missing}`);
-    }
-  }
   for (const check of surfaceChecks) {
     for (const missing of check.missing) {
       issues.push(`missing_named_surface_${check.surface_key}_${missing}`);
@@ -617,6 +691,18 @@ async function smokeRoute(page, route) {
     if (pattern.test(bodyText)) issues.push(`client_visible_builder_vocabulary_${pattern}`);
   }
   for (const error of errors) issues.push(`pageerror_${error}`);
+
+  // Finding checks are their own verdict, not part of route health. They are read
+  // from the route's findings surface when it has one, a miss is reported against
+  // the finding, and a findings surface that fails to load is reported as that.
+  const findingSurface = route.findingsPath && TENANT_PROFILE.requiresDemoFindings
+    ? await loadFindingSurface(page, route)
+    : null;
+  const demoFindingChecks = routeDemoFindingChecks(
+    route.key,
+    findingSurface ? findingSurface.bodyText : bodyText,
+    findingSurface ? findingSurface.record.url : url,
+  );
 
   return {
     key: route.key,
@@ -630,10 +716,66 @@ async function smokeRoute(page, route) {
     text_snapshot: path.relative(OUT_DIR, textPath),
     text_sha256: sha256(textPath),
     text_excerpt: textExcerpt(bodyText),
+    finding_surface: findingSurface ? findingSurface.record : null,
     demo_finding_checks: demoFindingChecks,
     surface_checks: surfaceChecks,
     issues,
     accepted: issues.length === 0,
+  };
+}
+
+async function loadFindingSurface(page, route) {
+  const pageErrors = [];
+  page.removeAllListeners("pageerror");
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  const url = new URL(route.findingsPath, BASE_URL).toString();
+  const screenshotPath = path.join(OUT_DIR, "screenshots", `${route.key}.findings.png`);
+  const textPath = path.join(OUT_DIR, "text", `${route.key}.findings.txt`);
+  const issues = [];
+  let status = null;
+  let bodyText = "";
+  let screenshot = null;
+  let screenshotSha256 = null;
+  try {
+    const response = await page.goto(url, { waitUntil: "networkidle", timeout: 45_000 });
+    status = response?.status() ?? null;
+    bodyText = await page.locator("body").innerText({ timeout: 15_000 });
+  } catch (error) {
+    issues.push(`load_error_${error?.message || String(error)}`);
+  }
+  const finalUrl = page.url();
+  if (issues.length === 0) {
+    if (status !== null && status >= 400) issues.push(`http_status_${status}`);
+    if (/\/sign-in\b/.test(finalUrl)) issues.push("redirected_to_sign_in");
+    if (!bodyText || bodyText.trim().length < 200) issues.push("body_text_too_short");
+    try {
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+      screenshot = path.relative(OUT_DIR, screenshotPath);
+      screenshotSha256 = sha256(screenshotPath);
+    } catch (error) {
+      issues.push(`screenshot_error_${error?.message || String(error)}`);
+    }
+  }
+  for (const error of pageErrors) issues.push(`pageerror_${error}`);
+  fs.mkdirSync(path.dirname(textPath), { recursive: true });
+  fs.writeFileSync(textPath, bodyText, "utf8");
+
+  return {
+    bodyText,
+    record: {
+      url,
+      final_url: finalUrl,
+      status,
+      text_length: bodyText.length,
+      screenshot,
+      screenshot_sha256: screenshotSha256,
+      text_snapshot: path.relative(OUT_DIR, textPath),
+      text_sha256: sha256(textPath),
+      text_excerpt: textExcerpt(bodyText),
+      issues,
+      accepted: issues.length === 0,
+    },
   };
 }
 
@@ -649,8 +791,49 @@ function emitProofBundle() {
   console.log(`__SEMANTIC2_PROOF_ROOT__${rootName}`);
 }
 
-function emitStructuredSummary(summary) {
-  console.log(JSON.stringify({
+function buildSmokeSummary({ results, authProof, contractValidation, surfaceContractValidation }) {
+  const summary = {
+    accepted: results.every((result) => result.accepted),
+    actual_browser_execution: true,
+    actual_route_repointing: ROUTE_MODE === "default_routes",
+    auth_attempts: authProof?.attempts ?? [],
+    auth_method: authProof?.authMethod ?? null,
+    base_url: BASE_URL,
+    checked_at: new Date().toISOString(),
+    email: authProof?.email ?? null,
+    expected_tenant_name: EXPECTED_TENANT_NAME,
+    issue_count: results.reduce((sum, result) => sum + result.issues.length, 0),
+    issues: results.flatMap((result) => result.issues.map((issue) => `${result.key}: ${issue}`)),
+    provider: "ecl_projection_db",
+    route_mode: ROUTE_MODE,
+    route_count: results.length,
+    routes: results,
+    tenant_key: TENANT_KEY,
+  };
+  summary.demo_finding_contract = contractValidation;
+  summary.named_surface_contract = surfaceContractValidation;
+  summary.findings_demonstrable_on_real_surface = summarizeDemoFindings(results);
+  summary.named_surfaces_browser_proven = summarizeNamedSurfaces(results);
+  // Route issues above are route health only. A findings surface that failed to
+  // load and a finding that was not found are listed after them under their own
+  // names, and both fail the run through the findings verdict.
+  summary.issues = [
+    ...summary.issues,
+    ...results.flatMap((result) =>
+      (result.finding_surface?.issues ?? []).map((issue) => `${result.key}: finding_surface_${issue}`)),
+    ...results.flatMap((result) =>
+      (result.demo_finding_checks ?? []).flatMap((check) =>
+        check.missing.map((missing) => `${result.key}: missing_demo_finding_${check.id}_${missing}`))),
+  ];
+  summary.accepted = summary.accepted
+    && summary.findings_demonstrable_on_real_surface.accepted
+    && summary.named_surfaces_browser_proven.accepted;
+  summary.issue_count = summary.issues.length;
+  return summary;
+}
+
+function structuredSummaryEvent(summary) {
+  return {
     structured_event: "ecl_product_browser_smoke_summary",
     accepted: summary.accepted,
     actual_browser_execution: summary.actual_browser_execution,
@@ -682,7 +865,11 @@ function emitStructuredSummary(summary) {
       accepted: route.accepted,
     })),
     tenant_key: summary.tenant_key,
-  }));
+  };
+}
+
+function emitStructuredSummary(summary) {
+  console.log(JSON.stringify(structuredSummaryEvent(summary)));
 }
 
 async function main() {
@@ -692,6 +879,7 @@ async function main() {
     console.log(JSON.stringify({
       accepted: contractValidation.accepted && surfaceContractValidation.accepted,
       checked_at: new Date().toISOString(),
+      route_mode: ROUTE_MODE,
       demo_finding_contract: contractValidation,
       named_surface_contract: surfaceContractValidation,
     }, null, 2));
@@ -725,32 +913,7 @@ async function main() {
     await browser.close();
   }
 
-  const summary = {
-    accepted: results.every((result) => result.accepted),
-    actual_browser_execution: true,
-    actual_route_repointing: ROUTE_MODE === "default_routes",
-    auth_attempts: authProof?.attempts ?? [],
-    auth_method: authProof?.authMethod ?? null,
-    base_url: BASE_URL,
-    checked_at: new Date().toISOString(),
-    email: authProof?.email ?? null,
-    expected_tenant_name: EXPECTED_TENANT_NAME,
-    issue_count: results.reduce((sum, result) => sum + result.issues.length, 0),
-    issues: results.flatMap((result) => result.issues.map((issue) => `${result.key}: ${issue}`)),
-    provider: "ecl_projection_db",
-    route_mode: ROUTE_MODE,
-    route_count: results.length,
-    routes: results,
-    tenant_key: TENANT_KEY,
-  };
-  summary.demo_finding_contract = contractValidation;
-  summary.named_surface_contract = surfaceContractValidation;
-  summary.findings_demonstrable_on_real_surface = summarizeDemoFindings(results);
-  summary.named_surfaces_browser_proven = summarizeNamedSurfaces(results);
-  summary.accepted = summary.accepted
-    && summary.findings_demonstrable_on_real_surface.accepted
-    && summary.named_surfaces_browser_proven.accepted;
-  summary.issue_count = summary.issues.length;
+  const summary = buildSmokeSummary({ results, authProof, contractValidation, surfaceContractValidation });
   writeJson(path.join(OUT_DIR, "ecl_product_browser_smoke_summary.json"), summary);
   console.log(JSON.stringify(summary, null, 2));
   if (EMIT_PROOF) emitProofBundle();
@@ -758,12 +921,31 @@ async function main() {
   if (!summary.accepted) process.exitCode = 1;
 }
 
-main().catch((error) => {
-  writeJson(path.join(OUT_DIR, "ecl_product_browser_smoke_summary.json"), {
-    accepted: false,
-    actual_browser_execution: true,
-    error: error?.stack || error?.message || String(error),
+export {
+  BASE_URL,
+  DEMO_FINDING_ASSERTIONS,
+  ROUTE_MODE,
+  ROUTES,
+  SURFACE_BROWSER_ASSERTIONS,
+  buildSmokeSummary,
+  canMountFindingsPanel,
+  smokeRoute,
+  structuredSummaryEvent,
+  validateDemoFindingContract,
+  validateSurfaceAssertionContract,
+};
+
+// The contract suite imports this module, so the CLI body runs only when the file
+// itself is the entry point. The shared predicate compares resolved files, which
+// keeps a symlinked checkout from being read as an import and exiting 0 unrun.
+if (isDirectInvocation(import.meta.url)) {
+  main().catch((error) => {
+    writeJson(path.join(OUT_DIR, "ecl_product_browser_smoke_summary.json"), {
+      accepted: false,
+      actual_browser_execution: true,
+      error: error?.stack || error?.message || String(error),
+    });
+    console.error(error);
+    process.exitCode = 1;
   });
-  console.error(error);
-  process.exitCode = 1;
-});
+}

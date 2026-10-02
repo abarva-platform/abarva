@@ -87,6 +87,63 @@ export function assessExtractedTextSensitivity(
   });
 }
 
+/**
+ * The check a Move upload must pass BEFORE its bytes are stored anywhere.
+ *
+ * Layer 1 scans the raw bytes (text, CSV, JSON, PDF text) and honours a
+ * declared regulated classification. Layer 2 decodes the document and scans
+ * the extracted text, because Office files are ZIP containers whose content a
+ * raw-byte scan cannot see. Extraction here is the document parser only: no
+ * reasoning model sees the text, and no artifact or evidence record is
+ * written.
+ *
+ * If the parser cannot read the file, the layer-1 result stands: there is no
+ * decoded text to scan, and the upload is not refused for being unreadable.
+ */
+export async function assessMoveUploadSensitivity(
+  args: {
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+    declaredClassification?: unknown;
+    cacheScope?: string;
+  },
+  extract: typeof extractProgramEvidenceFromUploadBuffer = extractProgramEvidenceFromUploadBuffer,
+): Promise<UploadProtectionResult> {
+  const declaredClassification =
+    typeof args.declaredClassification === "string"
+      ? args.declaredClassification
+      : null;
+  const raw = evaluateSensitiveUpload({
+    filename: args.filename,
+    mimeType: args.mimeType,
+    bytes: args.buffer,
+    declaredClassification,
+  });
+  if (raw.decision === "quarantine") return raw;
+
+  let decoded: string;
+  try {
+    const evidence = await extract({
+      filename: args.filename,
+      mimeType: args.mimeType,
+      buffer: args.buffer,
+      cacheScope: args.cacheScope,
+    });
+    decoded = [evidence.extractedText ?? "", evidence.summary ?? ""]
+      .filter(Boolean)
+      .join("\n");
+  } catch {
+    return raw;
+  }
+  if (!decoded) return raw;
+  return assessExtractedTextSensitivity(decoded, {
+    filename: args.filename,
+    mimeType: args.mimeType,
+    declaredClassification,
+  });
+}
+
 export interface DocIngestResult {
   ok: boolean;
   evidenceId: string;
@@ -551,6 +608,13 @@ export interface IngestUploadedMoveEvidenceArgs {
   /** The `move_artifacts.id` for this upload, if the caller's surface uses that table. Traceability only — never written to the `attachment_id` FK column. */
   moveArtifactId?: string | null;
   declaredClassification?: unknown;
+  /**
+   * The required evidence family the uploader says this file covers. When
+   * present it is recorded as the review's family instead of the family
+   * inferred from the file's name and text, so readiness credits the file to
+   * what its uploader declared it to be. The caller validates the key.
+   */
+  declaredFamilyKey?: string | null;
 }
 
 export interface IngestUploadedMoveEvidenceResult {
@@ -637,9 +701,10 @@ export async function ingestUploadedMoveEvidence(
     moveId: args.moveId,
     evidenceId,
     familyKey:
-      classification.slotIds[0] ??
-      classification.evidenceType ??
-      rawEvidence.evidenceType,
+      args.declaredFamilyKey?.trim() ||
+      (classification.slotIds[0] ??
+        classification.evidenceType ??
+        rawEvidence.evidenceType),
     archetypeId: args.archetypeId,
     phase: args.phase,
     filename: args.filename,
@@ -660,6 +725,7 @@ export async function ingestUploadedMoveEvidence(
       where_used: classification.whereUsed,
       quarantined,
       move_artifact_id: args.moveArtifactId ?? undefined,
+      family_declared_by_uploader: Boolean(args.declaredFamilyKey?.trim()),
     },
   });
 

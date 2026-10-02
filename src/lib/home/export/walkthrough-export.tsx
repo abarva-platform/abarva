@@ -15,6 +15,8 @@ import {
   type EstateRecordTypes,
 } from "@/components/home/v4/chapter-page-content";
 import type { Finding, TableSpec } from "@/components/home/v4/page-tables";
+import { enterpriseContextExportSection } from "./enterprise-context";
+import type { HomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
 import {
   homeNarrativeStatusLabel,
   homePriorInterpretationLabel,
@@ -209,9 +211,21 @@ function chapterHtml(
   estate: EstateRecordTypes,
   recordSource: HomeRecordRenderSource,
   narrativeDate: string,
+  enterpriseContext: HomeEnterpriseContext | null | undefined,
 ): string {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
+  const contextSection = mixed
+    ? enterpriseContextExportSection(chapter.chapterId, enterpriseContext)
+    : null;
+  const currentContext = contextSection
+    ? `<section class="enterprise-context">
+        <h3>${escapeHtml(contextSection.title)}</h3>
+        <p class="note">Synthetic reference · Not client-attested · Source-linked governed rows</p>
+        ${contextSection.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+        ${contextSection.tables.map(tableHtml).join("")}
+      </section>`
+    : "";
   const currentDepth = `
     ${
       depth.findings.length
@@ -243,11 +257,11 @@ function chapterHtml(
     <p class="eyebrow">Chapter ${String(index + 1).padStart(2, "0")} · ${escapeHtml(chapter.title)}</p>
     ${
       mixed
-        ? `<div class="chapter-state"><h2>Current record, interpretation pending review</h2>
+        ? `<div class="chapter-state"><h2>${contextSection ? "Current source-linked record" : "Current record, interpretation pending review"}</h2>
           <p>${escapeHtml(homeRecordSourceLabel(recordSource))} · ${escapeHtml(homeNarrativeStatusLabel(recordSource))}</p>
           ${noInterviews ? "<p>No leadership interview rows are served here. The prior interpretation cannot establish what leaders said.</p>" : ""}
-          ${!depth.findings.length && !depth.tables.length ? "<p>No current chapter-specific tables or findings are available in this export.</p>" : ""}
-        </div>${currentDepth}
+          ${!contextSection && !depth.findings.length && !depth.tables.length ? "<p>No current chapter-specific tables or findings are available in this export.</p>" : ""}
+        </div>${currentContext}${currentDepth}
         <section class="prior-interpretation"><h3>${escapeHtml(priorLabel)}</h3>${prior}</section>`
         : `${prior}${currentDepth}`
     }
@@ -301,6 +315,7 @@ export function renderHomeWalkthroughHtml({
     .chapter-state h2 { font-family: Inter, Arial, sans-serif; font-size: 20px; }
     .chapter-state p { font-size: 13px; }
     .prior-interpretation { border-top: 1px solid #d6cfc1; margin-top: 28px; padding-top: 10px; }
+    .enterprise-context { border-top: 2px solid #0c6b65; margin: 20px 0; padding-top: 10px; }
     .question { font-family: Georgia, serif; font-style: italic; color: #334155; }
     .findings li { margin: 0 0 12px; }
     .findings strong, .findings span { display: block; }
@@ -323,7 +338,7 @@ export function renderHomeWalkthroughHtml({
   </section>
   ${familySummaryHtml(bundle)}
   ${architectureSummaryHtml(bundle)}
-  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled)).join("")}
+  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled, bundle.thesis.signalPacket.homeEnterpriseContext)).join("")}
 </main>
 </body>
 </html>`;
@@ -483,15 +498,20 @@ function PdfChapter({
   estate,
   recordSource,
   narrativeDate,
+  enterpriseContext,
 }: {
   chapter: ChapterView;
   index: number;
   estate: EstateRecordTypes;
   recordSource: HomeRecordRenderSource;
   narrativeDate: string;
+  enterpriseContext: HomeEnterpriseContext | null | undefined;
 }) {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
+  const contextSection = mixed
+    ? enterpriseContextExportSection(chapter.chapterId, enterpriseContext)
+    : null;
   const priorLabel = homePriorInterpretationLabel(recordSource, narrativeDate);
   const currentDepth = (
     <>
@@ -532,7 +552,7 @@ function PdfChapter({
     </View>
   );
   return (
-    <Page size="LETTER" style={pdfStyles.page}>
+    <Page size="LETTER" orientation={contextSection ? "landscape" : "portrait"} style={pdfStyles.page}>
       <Text style={pdfStyles.eyebrow}>
         Chapter {String(index + 1).padStart(2, "0")} · {chapter.title}
       </Text>
@@ -540,7 +560,7 @@ function PdfChapter({
         <>
           <View style={pdfStyles.scope} wrap={false}>
             <Text style={pdfStyles.h2}>
-              Current record, interpretation pending review
+              {contextSection ? "Current source-linked record" : "Current record, interpretation pending review"}
             </Text>
             <Text style={pdfStyles.meta}>
               {homeRecordSourceLabel(recordSource)} ·{" "}
@@ -553,13 +573,27 @@ function PdfChapter({
                 interpretation cannot establish what leaders said.
               </Text>
             ) : null}
-            {!depth.findings.length && !depth.tables.length ? (
+            {!contextSection && !depth.findings.length && !depth.tables.length ? (
               <Text style={pdfStyles.text}>
                 No current chapter-specific tables or findings are available in
                 this export.
               </Text>
             ) : null}
           </View>
+          {contextSection ? (
+            <View>
+              <Text style={pdfStyles.h3}>{contextSection.title}</Text>
+              <Text style={pdfStyles.meta}>
+                Synthetic reference · Not client-attested · Source-linked governed rows
+              </Text>
+              {contextSection.paragraphs.map((paragraph, paragraphIndex) => (
+                <Text key={paragraphIndex} style={pdfStyles.text}>{paragraph}</Text>
+              ))}
+              {contextSection.tables.map((table) => (
+                <PdfTable key={table.caption} table={table} />
+              ))}
+            </View>
+          ) : null}
           {currentDepth}
           {prior}
         </>
@@ -654,6 +688,7 @@ export function buildHomeWalkthroughPdf({
           estate={estate}
           recordSource={recordSource}
           narrativeDate={compiled}
+          enterpriseContext={bundle.thesis.signalPacket.homeEnterpriseContext}
         />
       ))}
     </Document>

@@ -3,14 +3,22 @@
 /** Admit one independently proved synthetic Home projection for Home only. */
 
 import { rm } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { BlobServiceClient } from "@azure/storage-blob";
 import { ManagedIdentityCredential } from "@azure/identity";
 import pg from "pg";
 import { buildHomeEnterpriseContext } from "../../src/lib/home/preview/ecl-enterprise-context";
 import type { HomeProjectionRow } from "../../src/lib/home/preview/ecl-projection-bundle";
-import { generatePack } from "./load_synthetic_enterprise_v1";
+import {
+  resolveServingApproval,
+  type ServingApprovalDecision,
+} from "../../src/lib/governance/dataset-manifest";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
+import {
+  generatePack,
+  loadBinding,
+  readDatasetManifests,
+  type GeneratedPack,
+} from "./load_synthetic_enterprise_v1";
 
 const containerName = "ecl-synthetic-intake";
 
@@ -52,6 +60,28 @@ export function assertProjectionProof(
   }
 }
 
+/**
+ * A promoting run changes what Home serves, so it needs the dataset registry's
+ * serving approval for this exact version: a named person's, on top of the
+ * load approval. A check run changes nothing and only reports the decision.
+ */
+export function homeServingDecision(
+  mode: string,
+  manifests: unknown[],
+  pack: Pick<GeneratedPack, "manifest" | "normalized">,
+): ServingApprovalDecision {
+  const decision = resolveServingApproval(manifests, {
+    ...loadBinding(pack),
+    surface: "home",
+  });
+  if (mode !== "check" && !decision.approved) {
+    throw new Error(
+      `Home admission gate failed: ${decision.reasons.join("; ")}`,
+    );
+  }
+  return decision;
+}
+
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
   const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
@@ -77,6 +107,7 @@ async function main(): Promise<void> {
     if (process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION !== manifest.source_set_hash) {
       throw new Error("Home admission source version is not pinned");
     }
+    const serving = homeServingDecision(mode, await readDatasetManifests(), pack);
     const service = new BlobServiceClient(
       `https://${account}.blob.core.windows.net`,
       new ManagedIdentityCredential({ clientId: identity }),
@@ -303,6 +334,8 @@ async function main(): Promise<void> {
       projection_proof_uri: projectionProofUri,
       serving_state: mode === "check" ? "shadow_verified" : "home_active",
       client_attestation_state: "not_client_attested",
+      serving_approval: serving.approved ? serving.approval : null,
+      serving_approval_reasons: serving.approved ? [] : serving.reasons,
       status: "passed",
     };
     const outputPath = `${manifest.tenant_key}/${manifest.assessment_id}/${manifest.source_set_hash}/runs/${runId}/${mode === "check" ? "home-preflight-proof.json" : "home-admission-proof.json"}`;
@@ -317,10 +350,9 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+// Compares resolved files: a path comparison answers "imported" for a run
+// through a symlinked directory, and the job would exit 0 having done nothing.
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exitCode = 1;

@@ -5,12 +5,15 @@
 import { createHash } from "node:crypto";
 import { rm } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { BlobServiceClient } from "@azure/storage-blob";
 import { ManagedIdentityCredential } from "@azure/identity";
 import pg from "pg";
+import { resolveLoadApproval } from "../../src/lib/governance/dataset-manifest";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 import {
   generatePack,
+  loadBinding,
+  readDatasetManifests,
   type GeneratedPack,
 } from "./load_synthetic_enterprise_v1";
 import {
@@ -345,6 +348,20 @@ export async function writeShadowHomeProjection(
   }
 }
 
+/**
+ * A projection is written only for a version whose load the dataset registry
+ * approved: a named person's approval for this assessment and source-set hash.
+ */
+export function assertProjectionApproved(
+  manifests: unknown[],
+  pack: Pick<GeneratedPack, "manifest" | "normalized">,
+): void {
+  const decision = resolveLoadApproval(manifests, loadBinding(pack));
+  if (!decision.approved) {
+    throw new Error(`Projection gate failed: ${decision.reasons.join("; ")}`);
+  }
+}
+
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
   const runId = process.env.ECL_SYNTHETIC_RUN_ID;
@@ -369,6 +386,7 @@ async function main(): Promise<void> {
   const pack = await generatePack("v2");
   try {
     const { manifest } = pack;
+    assertProjectionApproved(await readDatasetManifests(), pack);
     const service = new BlobServiceClient(
       `https://${account}.blob.core.windows.net`,
       new ManagedIdentityCredential({ clientId: identity }),
@@ -438,10 +456,9 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+// Compares resolved files: a path comparison answers "imported" for a run
+// through a symlinked directory, and the job would exit 0 having done nothing.
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exitCode = 1;

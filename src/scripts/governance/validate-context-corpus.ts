@@ -22,7 +22,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateExceptions } from "@/lib/governance/policy-exceptions";
-import { validateManifest } from "@/lib/governance/dataset-manifest";
+import {
+  validateManifest,
+  validateManifestRegistry,
+} from "@/lib/governance/dataset-manifest";
 
 const ROOT = process.cwd();
 const POLICY_FILE = "src/lib/governance/context-corpus-policy.ts";
@@ -159,6 +162,7 @@ function checkManifests(): Check {
   const files = fs
     .readdirSync(dir)
     .filter((f) => f.endsWith(".json") && !f.startsWith("_"));
+  const entries: Array<{ file: string; raw: unknown }> = [];
   for (const f of files) {
     const p = path.join(dir, f);
     let raw: unknown;
@@ -173,7 +177,13 @@ function checkManifests(): Check {
     const v = validateManifest(raw);
     errors.push(...v.errors.map((e) => `${f}: ${e}`));
     warnings.push(...v.warnings.map((w) => `${f}: ${w}`));
+    entries.push({ file: f, raw });
   }
+  errors.push(
+    ...validateManifestRegistry(entries, (record) =>
+      fs.existsSync(path.join(ROOT, record)),
+    ),
+  );
   return { name: "manifests", errors, warnings };
 }
 

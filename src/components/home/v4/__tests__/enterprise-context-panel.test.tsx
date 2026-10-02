@@ -59,6 +59,32 @@ const context: HomeEnterpriseContext = {
       metricCount: 2,
     },
   ],
+  riskTriage: {
+    totalRisks: 4,
+    highOrCritical: 2,
+    partialControl: 1,
+    unknownControl: 1,
+    attentionRisks: [
+      {
+        ...fact("RISK-1", "Recovery gap"),
+        riskType: "resilience",
+        severity: "critical",
+        controlState: "unknown",
+        ownerRole: "Risk chief",
+        functionName: "Claims",
+        affectedObject: "Claims platform",
+      },
+      {
+        ...fact("RISK-2", "Supplier dependency"),
+        riskType: "vendor",
+        severity: "high",
+        controlState: "partially_effective",
+        ownerRole: "Risk chief",
+        functionName: "Claims",
+        affectedObject: "Billing service",
+      },
+    ],
+  },
   sharedFunctionIds: ["FUNC-2"],
   unlinkedPrograms: [fact("PROG-4", "Unlinked program")],
   excludedUncitedRows: 0,
@@ -75,9 +101,27 @@ test("executive context is concise and flags the unresolved work", () => {
   );
   assert.match(html, /Integrated payer and care delivery/);
   assert.match(html, /At-risk linked programs/);
+  assert.match(html, /High\/critical risks with partial or unknown controls/);
   assert.match(html, /1 program has no declared priority/);
   assert.match(html, /Changes over time are not established/);
   assert.doesNotMatch(html, /serving\.home_|source_record_id/);
+});
+
+test("attention view ranks source-linked risk review without calling unknown uncontrolled", () => {
+  const html = renderToStaticMarkup(
+    createElement(EnterpriseContextPanel, {
+      chapterId: "what_needs_attention",
+      context,
+      onOpenRows: () => undefined,
+    }),
+  );
+  assert.match(html, /Risk review queue/);
+  assert.match(html, /Risk chief/);
+  assert.match(html, /Claims platform/);
+  assert.match(html, /Unknown is not the same as uncontrolled/);
+  assert.match(html, /View risk/);
+  assert.match(html, /As of 2026-09-30/);
+  assert.ok(html.indexOf("resilience") < html.indexOf("vendor"));
 });
 
 test("business, strategy, and operating views answer different questions", () => {

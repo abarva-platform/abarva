@@ -276,7 +276,15 @@ export function formatEstimateModelForPrompt(value: string): string | null {
   const result = evaluateEstimateModel(value);
   if (!result.model || result.errors.length > 0) return null;
   const { model, totals } = result;
-  const money = (n: number) => `${model.currency} ${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  // Figures are written the way a document writes them, because a deliverable's
+  // figures are traced back to this text by exact match: a US dollar amount
+  // with its symbol, and every quantity with thousands separators. Hours were
+  // written bare ("1015"), so a correctly reproduced total of "1,015" hours
+  // matched nothing; a rate had no symbol, so "$150" matched nothing either.
+  const quantity = (n: number | null) =>
+    (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const money = (n: number) =>
+    model.currency === "USD" ? `$${quantity(n)}` : `${model.currency} ${quantity(n)}`;
   const lines = [
     "DETERMINISTIC ROADMAP ESTIMATE MODEL (human-reviewed inputs; calculated totals are authoritative)",
     `Currency: ${model.currency}`,
@@ -290,11 +298,11 @@ export function formatEstimateModelForPrompt(value: string): string | null {
       const toolAssumption = input.aiToolAssumption.trim()
         ? `; Claude Code/Codex assumption ${input.aiToolAssumption.trim()}`
         : "";
-      return `- ${calculation.workPackage} / ${calculation.role} / ${calculation.deliveryModel}: input hours ${input.lowHours}/${input.baseHours}/${input.highHours}; AI sensitivity ${input.aiEligiblePct}%; human review ${calculation.humanReviewHours}h; rate ${model.currency} ${input.ratePerHour}/h (${input.rateSource}); adjusted hours ${calculation.lowHours}/${calculation.baseHours}/${calculation.highHours}; cost ${money(calculation.lowCost)}/${money(calculation.baseCost)}/${money(calculation.highCost)} low/base/high; ${basis}; confidence ${input.confidence}${toolAssumption}.`;
+      return `- ${calculation.workPackage} / ${calculation.role} / ${calculation.deliveryModel}: input hours ${quantity(input.lowHours)}/${quantity(input.baseHours)}/${quantity(input.highHours)}; AI sensitivity ${input.aiEligiblePct}%; human review ${quantity(calculation.humanReviewHours)}h; rate ${money(input.ratePerHour ?? 0)}/h (${input.rateSource}); adjusted hours ${quantity(calculation.lowHours)}/${quantity(calculation.baseHours)}/${quantity(calculation.highHours)}; cost ${money(calculation.lowCost)}/${money(calculation.baseCost)}/${money(calculation.highCost)} low/base/high; ${basis}; confidence ${input.confidence}${toolAssumption}.`;
     }),
     ...(["internal", "vendor"] as const).map((scenario) => {
       const total = totals[scenario];
-      return `${scenario}: effort ${total.lowHours}/${total.baseHours}/${total.highHours} hours; cost ${money(total.lowCost)}/${money(total.baseCost)}/${money(total.highCost)} (low/base/high); assumed coding-assistant hours saved ${total.aiHoursSavedAtBase}; human review ${total.humanReviewHours} hours.`;
+      return `${scenario}: effort ${quantity(total.lowHours)}/${quantity(total.baseHours)}/${quantity(total.highHours)} hours; cost ${money(total.lowCost)}/${money(total.baseCost)}/${money(total.highCost)} (low/base/high); assumed coding-assistant hours saved ${quantity(total.aiHoursSavedAtBase)}; human review ${quantity(total.humanReviewHours)} hours.`;
     }),
     "Every line is editable and labelled as evidence or assumption. Preserve the calculations exactly; never turn a planning range into a quote or savings claim.",
   ];

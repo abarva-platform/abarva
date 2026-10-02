@@ -74,10 +74,12 @@ import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import {
   assembleP3SolutionOptions,
   buildP3DesignInputsPackFromSignals,
+  p2SourceEvidenceTitle,
   type P3OptionSet,
 } from "@/lib/programs/phase-templates/p3-option-assembler";
 import {
   inferSelectedOptionId,
+  restoreApprovedOptionId,
   type UploadedSolutionOptionSet,
 } from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
@@ -164,6 +166,12 @@ interface MovesPhaseStandaloneClientProps {
   initialConfirmedSolutionRoute?: ConfirmedSolutionRoute | null;
   /** The option set declared in the Move's approved design-phase evidence. */
   uploadedSolutionOptionSet?: UploadedSolutionOptionSet | null;
+  /** The design decision already recorded for this Move, if any — restored as
+   *  the selected option after a reload. */
+  approvedSolutionOption?: {
+    selectedOptionId: string;
+    chosenOption: string;
+  } | null;
   move: StrategicMove;
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
@@ -619,6 +627,25 @@ export const MOVES_STANDALONE_SUGGESTED_QUESTIONS = PHASES.map((phase) => ({
   suggestedPrompts: phase.avaQuestions,
 }));
 
+/**
+ * What approving a satisfied gate does, in the confirmation dialog.
+ *
+ * `currentOpenPhase` is the phase the Move is in. Approving that phase's own
+ * gate opens the NEXT phase — the dialog used to name the current one ("opens
+ * P2" while approving the P2 gate). Re-approving an earlier gate opens
+ * nothing: the Move stays where it is.
+ */
+export function gateOnlyConfirmSummaryFor(
+  phase: Pick<PhaseContract, "phase" | "code">,
+  currentOpenPhase: Pick<PhaseContract, "phase" | "code" | "title">,
+): string {
+  if (currentOpenPhase.phase > phase.phase) {
+    return `This re-submits the already-satisfied ${phase.code} gate against current evidence. The Move stays in ${currentOpenPhase.code} ${currentOpenPhase.title}. It does not regenerate artifacts.`;
+  }
+  const opens = phaseFor(Math.min(phase.phase + 1, 5));
+  return `This submits the already-satisfied ${phase.code} gate and opens ${opens.code} ${opens.title}. It does not regenerate artifacts.`;
+}
+
 function phaseFor(phaseNum: number): PhaseContract {
   return PHASES.find((phase) => phase.phase === phaseNum) ?? PHASES[0];
 }
@@ -691,6 +718,7 @@ export function MovesPhaseStandaloneClient({
   initialApprovedEvidenceReferences = [],
   initialConfirmedSolutionRoute = null,
   uploadedSolutionOptionSet = null,
+  approvedSolutionOption = null,
   move,
   phaseNum,
   phaseTallies,
@@ -973,6 +1001,16 @@ export function MovesPhaseStandaloneClient({
       cancelled = true;
     };
   }, [move.id, phase.phase]);
+  // What the file cabinet's uploader can declare a file as covering: the
+  // evidence families this Move's discovery requires, once each.
+  const declarableEvidenceFamilies = useMemo(() => {
+    const seen = new Set<string>();
+    return evidenceNeedPackets.flatMap((packet) => {
+      if (!packet.familyId || seen.has(packet.familyId)) return [];
+      seen.add(packet.familyId);
+      return [{ id: packet.familyId, label: packet.evidenceSlot }];
+    });
+  }, [evidenceNeedPackets]);
   const p3OptionSet = useMemo(
     () =>
       assembleP3SolutionOptions({
@@ -1042,7 +1080,15 @@ export function MovesPhaseStandaloneClient({
       p3OptionSet.options,
     ],
   );
-  const effectiveSelectedOption = selectedOption || inferredSelectedOption;
+  const approvedOptionId = useMemo(
+    () =>
+      phase.phase === 3
+        ? restoreApprovedOptionId(approvedSolutionOption, p3OptionSet.options)
+        : "",
+    [approvedSolutionOption, p3OptionSet.options, phase.phase],
+  );
+  const effectiveSelectedOption =
+    selectedOption || approvedOptionId || inferredSelectedOption;
   const selectedP3Option = useMemo(
     () =>
       p3OptionSet.options.find(
@@ -2423,6 +2469,7 @@ export function MovesPhaseStandaloneClient({
                     moveId={move.id}
                     phase={phase.phase}
                     onEvidenceChanged={refreshPhase}
+                    evidenceFamilies={declarableEvidenceFamilies}
                   />
                 </>
               ) : workspaceView === "intelligence" ? (
@@ -4931,7 +4978,7 @@ function PhaseBody({
   const gateOnlyConfirmSummary =
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
-      : `This submits the already-satisfied ${phase.code} gate and opens ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}. It does not regenerate artifacts.`;
+      : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
   const primaryHardBlocker = openHardCriteria[0]?.label ?? null;
   const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
@@ -7636,7 +7683,7 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
           {clientOptions
             ? `Move evidence: ${optionSet.sourceTitle ?? "uploaded options"}`
             : optionSet.sourceEvidenceLabels?.length
-              ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.join(", ")}`
+              ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.map(p2SourceEvidenceTitle).join(", ")}`
               : "P2 source evidence unavailable"}
         </strong>
         <small>

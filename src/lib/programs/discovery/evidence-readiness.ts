@@ -438,6 +438,31 @@ export function declaredDiscoveryFamilies(
   );
 }
 
+/**
+ * Validate an evidence family an uploader declared for a file.
+ *
+ * Empty means nothing was declared (null). A key the Move's discovery does not
+ * require is refused: silently falling back to inference would record the
+ * upload as if nothing had been declared, and the uploader would have no way
+ * to know their statement was dropped.
+ */
+export function resolveDeclaredEvidenceFamily(
+  raw: unknown,
+  blueprint: DiscoveryBlueprint,
+): { ok: true; familyKey: string | null } | { ok: false; detail: string } {
+  const declared = typeof raw === "string" ? raw.trim() : "";
+  if (!declared) return { ok: true, familyKey: null };
+  const known = blueprint.evidenceFamilies.some(
+    (family) => family.id === declared,
+  );
+  return known
+    ? { ok: true, familyKey: declared }
+    : {
+        ok: false,
+        detail: `'${declared}' is not an evidence family this Move requires.`,
+      };
+}
+
 export function mapEvidenceToDiscoveryFamily(
   item: DiscoveryEvidenceReadinessItem,
   blueprint: DiscoveryBlueprint,

@@ -16,6 +16,7 @@ import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
 import {
   MovesPhaseStandaloneClient,
+  gateOnlyConfirmSummaryFor,
   movesPhaseCopyAuditBlocks,
 } from "../MovesPhaseStandaloneClient";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -803,6 +804,81 @@ describe("MovesPhaseStandaloneClient", () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  describe("design decision after a reload", () => {
+    function optionCards(container: HTMLElement) {
+      return Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".mxw-options > button"),
+      );
+    }
+
+    it("selects nothing when no decision is recorded", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      fireEvent.click(
+        within(screen.getByLabelText("P3 steps")).getByRole("button", {
+          name: /Record Decision/i,
+        }),
+      );
+      const cards = optionCards(container);
+      expect(cards.length).toBeGreaterThan(1);
+      expect(cards.filter((card) => card.classList.contains("selected"))).toEqual(
+        [],
+      );
+    });
+
+    it("restores the recorded option as selected, without a click", () => {
+      // Find what the second option is called in this fixture, then render a
+      // fresh page that is told that option was approved.
+      const first = render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      fireEvent.click(
+        within(screen.getByLabelText("P3 steps")).getByRole("button", {
+          name: /Record Decision/i,
+        }),
+      );
+      const second = optionCards(first.container)[1];
+      const id = second.querySelector("span")?.textContent ?? "";
+      const label = second.querySelector("strong")?.textContent ?? "";
+      expect(label).not.toBe("");
+      first.unmount();
+
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          approvedSolutionOption={{ selectedOptionId: id, chosenOption: label }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      fireEvent.click(
+        within(screen.getByLabelText("P3 steps")).getByRole("button", {
+          name: /Record Decision/i,
+        }),
+      );
+      const selected = optionCards(container).filter((card) =>
+        card.classList.contains("selected"),
+      );
+      expect(selected).toHaveLength(1);
+      expect(selected[0].querySelector("strong")?.textContent).toBe(label);
+    });
   });
 
   describe("retired legacy shell paths", () => {
@@ -4366,6 +4442,25 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeDisabled();
 
     jest.useRealTimers();
+  });
+
+  it("says which phase approving a gate opens — the next one, not the one being approved", () => {
+    const p2 = { phase: 2, code: "P2", title: "Discover & Diagnose" };
+    const p3 = { phase: 3, code: "P3", title: "Design Future State" };
+    // Approving the gate of the phase the Move is in.
+    expect(gateOnlyConfirmSummaryFor(p2, p2)).toBe(
+      "This submits the already-satisfied P2 gate and opens P3 Design Future State. It does not regenerate artifacts.",
+    );
+    // Re-approving an earlier gate opens nothing.
+    expect(gateOnlyConfirmSummaryFor(p2, p3)).toBe(
+      "This re-submits the already-satisfied P2 gate against current evidence. The Move stays in P3 Design Future State. It does not regenerate artifacts.",
+    );
+    expect(
+      gateOnlyConfirmSummaryFor(
+        { phase: 4, code: "P4" },
+        { phase: 4, code: "P4", title: "Roadmap & Business Case" },
+      ),
+    ).toContain("opens P5 Mobilize & Handoff");
   });
 
   it("submits an already-satisfied P5 gate without regenerating artifacts", async () => {
