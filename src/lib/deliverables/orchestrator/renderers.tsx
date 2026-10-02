@@ -66,6 +66,7 @@ import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
 import {
   MAX_SLIDE_BULLETS,
+  bulletFontSize,
   governingFontSize,
   normaliseSlideText,
   sectionSlideText,
@@ -2242,7 +2243,7 @@ export async function renderDeliverablePptx(
             w: 11.1,
             h: 4,
             fontFace: "Arial",
-            fontSize: 14,
+            fontSize: bulletFontSize(bullets),
             color: PPTX_COLOR.ink,
             fit: "shrink",
             breakLine: false,
