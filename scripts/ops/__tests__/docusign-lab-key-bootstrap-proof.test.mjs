@@ -15,6 +15,17 @@ test('extracts only one validated public PEM record from job output', () => {
   assert.deepEqual(parsePublicKeyProof(`start\n${JSON.stringify(valid)}\nend\n`), valid);
 });
 
+test('extracts proof from the Azure Container Apps JSON log envelope', () => {
+  const log = JSON.stringify({ TimeStamp: '2026-10-02T15:37:10Z', Log: `F ${JSON.stringify(valid)}` });
+  assert.deepEqual(parsePublicKeyProof(`${log}\n`), valid);
+});
+
+test('extracts proof when Azure emits an unescaped Log field', () => {
+  const serialized = JSON.stringify({ ...valid, publicKeyPem: valid.publicKeyPem.replaceAll('\n', '\\n') });
+  const log = `{"TimeStamp":"2026-10-02T15:37:10Z","Log":"F ${serialized}"}`;
+  assert.deepEqual(parsePublicKeyProof(`${log}\n`), valid);
+});
+
 test('rejects private material, wrong vault, duplicate records, and missing proof', () => {
   for (const log of [
     '',
@@ -22,5 +33,7 @@ test('rejects private material, wrong vault, duplicate records, and missing proo
     JSON.stringify({ ...valid, privateKey: 'do-not-publish' }),
     JSON.stringify({ ...valid, exportable: true }),
     JSON.stringify({ ...valid, keyId: valid.keyId.replace('kv-abarva-lab-001', 'other-vault') }),
+    JSON.stringify({ Log: `F ${JSON.stringify({ ...valid, privateKey: 'do-not-publish' })}` }),
+    `${JSON.stringify({ Log: `F ${JSON.stringify(valid)}` })}\n${JSON.stringify({ Log: `F ${JSON.stringify(valid)}` })}`,
   ]) assert.throws(() => parsePublicKeyProof(log), /public-key proof record/);
 });
