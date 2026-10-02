@@ -16,6 +16,7 @@ let mockDeliverablesData: unknown[] = [];
 let mockActiveClient: { id: string } | null = null;
 let mockRunHistory: Array<[string, unknown]> = [];
 let mockDeliverableSelect: string | undefined;
+let mockCanApproveGates = true;
 
 jest.mock("@/lib/supabase-server", () => ({
   getServerSupabase: () => ({
@@ -47,16 +48,21 @@ jest.mock("@/lib/deliverables/orchestrator/runs-repository", () => ({
   listDeliverableRunHistoryForMove: async () => new Map(mockRunHistory),
 }));
 
-// `PhaseDocumentsPanel` resolves tenancy to decide whether it can load discovery
-// evidence readiness. `getStrategicMovesTenancy` reaches `requireTenancy` →
-// `@/lib/auth/current-user` → `@clerk/nextjs/server`, whose `@clerk/backend`
-// dependency ships bare ESM that next/jest's transform ignores — so importing
-// this component under jsdom made the whole suite fail to parse before a single
-// test ran. The panel already treats a null context as "no tenancy, no evidence
-// packets", which is exactly the truth in jsdom, so returning null here is the
-// component's own unauthenticated branch and not a weakened assertion.
+// `PhaseDocumentsPanel` resolves tenancy and the scoped approval capability.
+// Mock the boundary so the suite can exercise both authorized and denied UI
+// states without importing Clerk's ESM-only server dependency under jsdom.
 jest.mock("@/lib/programs/strategic-moves-context", () => ({
-  getStrategicMovesTenancy: async () => null,
+  getStrategicMovesTenancy: async () => ({
+    userId: "workspace-user",
+    clientId: "client-1",
+    clientKey: "tenant-1",
+    role: "workspace_approver",
+  }),
+}));
+jest.mock("@/lib/auth/program-access-policy", () => ({
+  loadUserProgramAccessPolicy: async () => ({
+    canApproveGates: mockCanApproveGates,
+  }),
 }));
 
 /**
@@ -85,6 +91,7 @@ describe("Strategic Moves visible AI liability controls", () => {
     mockActiveClient = null;
     mockRunHistory = [];
     mockDeliverableSelect = undefined;
+    mockCanApproveGates = true;
   });
 
   it("labels the phase Approve & Build action as AI drafts requiring human edit before commit", () => {
@@ -171,6 +178,40 @@ describe("Strategic Moves visible AI liability controls", () => {
       screen.getByRole("button", { name: /Approve as-is/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
+  });
+
+  it("does not offer sign-off when the workspace user lacks gate-approval capability", async () => {
+    mockCanApproveGates = false;
+    mockDeliverablesData = [
+      {
+        id: "deliverable-charter-1",
+        deliverable_type_key: "charter",
+        title: "Program Charter",
+        status: "draft",
+        current_version: 1,
+        updated_at: "2026-09-26T00:00:00Z",
+        signed_off_version: null,
+        approved_artifact_id: null,
+        deliverable_versions: [
+          { content: "<p>Generated charter content.</p>", version: 1 },
+        ],
+      },
+    ];
+
+    render(
+      await PhaseDocumentsPanel({
+        moveId: "5f5d7993-18ba-4eb6-84a3-72373aab042b",
+        currentPhase: 1,
+        compact: false,
+        archetype: "ai_enabled_sdlc",
+        moveName: "Contact Center AI",
+        clientDisplayName: "Apex Retail",
+      }),
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /Approve as-is/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a run-built gate artifact signable when its deliverable row has no readable version content", async () => {
