@@ -21,6 +21,7 @@ import { validateDeliverableQuality } from "../quality-validator";
 import { runDeliverableOrchestration, extractJson } from "../orchestrator";
 import { resolveQualityBar } from "../quality-bar-registry";
 import type { ModelCaller } from "../orchestrator";
+import type { DeliverableIntelligenceRequest } from "../types";
 import { amsRfpRequest, goodPlan, goodDocument } from "../__fixtures__/ams-rfp";
 
 describe("source register + citation discipline", () => {
@@ -672,7 +673,7 @@ describe("full multi-pass orchestration (injected stub model)", () => {
 
     it("repairs each short section to its share of the floor, then passes the unchanged gate", async () => {
       const targets: number[] = [];
-      const caller: ModelCaller = async (prompt) => {
+      const caller: ModelCaller = async (prompt, callReq) => {
         if (prompt.pass === "section_repair") {
           const target = Number(
             prompt.user.match(/at least (\d+) prose words/)?.[1],
@@ -688,7 +689,7 @@ describe("full multi-pass orchestration (injected stub model)", () => {
             }),
           };
         }
-        return stub(prompt);
+        return stub(prompt, callReq);
       };
 
       const result = await runDeliverableOrchestration(underFloorReq, caller);
@@ -713,8 +714,10 @@ describe("full multi-pass orchestration (injected stub model)", () => {
     });
 
     it("never takes a repair that is no longer than the draft, and stays blocked", async () => {
-      const caller: ModelCaller = async (prompt) =>
-        prompt.pass === "section_repair" ? { text: "{}" } : stub(prompt);
+      const caller: ModelCaller = async (prompt, callReq) =>
+        prompt.pass === "section_repair"
+          ? { text: "{}" }
+          : stub(prompt, callReq);
 
       const before = await runDeliverableOrchestration(req, stub);
       const result = await runDeliverableOrchestration(underFloorReq, caller);
