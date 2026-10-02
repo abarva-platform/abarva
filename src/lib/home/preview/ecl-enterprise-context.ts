@@ -51,6 +51,31 @@ export interface EnterpriseRiskTriage {
   attentionRisks: EnterpriseContextRisk[];
 }
 
+export interface EnterpriseValuePriority extends EnterpriseContextFact {
+  unlinked?: boolean;
+  ownerRole: string | null;
+  programCount: number;
+  approvedBudgetUsd: number;
+  forecastUsd: number;
+  overBudgetProgramCount: number;
+  missingFinancialCount: number;
+}
+
+export interface EnterpriseValueProof {
+  asOf: string | null;
+  programCount: number;
+  approvedBudgetUsd: number;
+  forecastUsd: number;
+  overBudgetProgramCount: number;
+  missingFinancialCount: number;
+  modelledClaimCount: number;
+  unsupportedClaimCount: number;
+  otherClaimCount: number;
+  completedPeriodSpendLines: number;
+  excludedSpendLines: number;
+  priorities: EnterpriseValuePriority[];
+}
+
 export interface HomeEnterpriseContext {
   profile: EnterpriseContextFact & {
     businessModel: string;
@@ -60,6 +85,7 @@ export interface HomeEnterpriseContext {
   segmentFacts: Record<string, EnterpriseContextFact>;
   functions: EnterpriseContextFunction[];
   priorities: EnterpriseContextPriority[];
+  valueProof: EnterpriseValueProof;
   riskTriage: EnterpriseRiskTriage;
   sharedFunctionIds: string[];
   unlinkedPrograms: EnterpriseContextFact[];
@@ -95,6 +121,22 @@ function fact(
     sourceRefs: sourceRefs(row),
     asOf: stringValue(payload(row).source_as_of) || null,
   };
+}
+
+function completedFiscalPeriod(row: HomeProjectionRow, recordAsOf: string): boolean {
+  const data = payload(row);
+  const period = stringValue(data.fiscal_period);
+  const rowAsOf = stringValue(data.source_as_of);
+  const validDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10) === value;
+  };
+  if (!/^\d{4}-\d{2}$/.test(period) || !validDate(recordAsOf) || !validDate(rowAsOf)) return false;
+  const [year, month] = period.split("-").map(Number);
+  if (month < 1 || month > 12) return false;
+  const end = `${period}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, "0")}`;
+  return end <= recordAsOf && end <= rowAsOf;
 }
 
 /** A source-linked, ID-joined business spine for one governed Home assessment. */
@@ -174,16 +216,22 @@ export function buildHomeEnterpriseContext(
         stringValue(payload(row)[key]),
       ),
   );
-  contributions.push(
-    attributeByFunction(
+  const spendRows = byType("spend_line");
+  const completedSpendRows = spendRows.filter((row) =>
+    completedFiscalPeriod(row, stringValue(profilePayload.source_as_of)) &&
+    numberValue(payload(row).actual_usd) !== null,
+  );
+  if (completedSpendRows.length > 0) {
+    const spend = attributeByFunction(
       "spend",
-      byType("spend_line"),
+      completedSpendRows,
       functionMap,
       (row) => stringValue(payload(row).business_function_id),
       (row) => numberValue(payload(row).actual_usd) ?? 0,
-    ),
-  );
-  contributions[contributions.length - 1].moneyLabel = "actual spend (USD)";
+    );
+    spend.moneyLabel = "actual spend in completed fiscal periods (USD)";
+    contributions.push(spend);
+  }
   const segmentSpine = buildSegmentSpine(segments, contributions);
   const segmentFacts = Object.fromEntries(
     segmentRows.map((row) => [
@@ -223,8 +271,10 @@ export function buildHomeEnterpriseContext(
   const priorityIds = new Set(
     priorityRows.map((row) => stringValue(payload(row).priority_id)),
   );
-  const unlinkedPrograms = programRows
-    .filter((row) => !priorityIds.has(stringValue(payload(row).priority_id)))
+  const unlinkedProgramRows = programRows.filter((row) =>
+    !priorityIds.has(stringValue(payload(row).priority_id)),
+  );
+  const unlinkedPrograms = unlinkedProgramRows
     .map((row) => fact(row, sourceRefs))
     .sort((a, b) => a.rowKey.localeCompare(b.rowKey));
   const priorities: EnterpriseContextPriority[] = priorityRows.map((row) => {
@@ -247,6 +297,65 @@ export function buildHomeEnterpriseContext(
       ).length,
     };
   });
+
+  const programAmounts = (programs: HomeProjectionRow[]) => {
+    const withAmounts = programs.map((program) => ({
+      budget: numberValue(payload(program).approved_budget_usd),
+      forecast: numberValue(payload(program).forecast_usd),
+    }));
+    return {
+      programCount: programs.length,
+      approvedBudgetUsd: withAmounts.reduce((sum, item) => sum + (item.budget ?? 0), 0),
+      forecastUsd: withAmounts.reduce((sum, item) => sum + (item.forecast ?? 0), 0),
+      overBudgetProgramCount: withAmounts.filter((item) =>
+        item.budget !== null && item.forecast !== null && item.forecast > item.budget,
+      ).length,
+      missingFinancialCount: withAmounts.filter((item) =>
+        item.budget === null || item.forecast === null,
+      ).length,
+    };
+  };
+  const valueProof: EnterpriseValueProof = {
+    ...programAmounts(programRows),
+    asOf: (() => {
+      const dates = programRows.map((row) => stringValue(payload(row).source_as_of));
+      return dates.length > 0 && dates.every((date) => date && date === dates[0])
+        ? dates[0]
+        : null;
+    })(),
+    modelledClaimCount: programRows.filter((row) =>
+      stringValue(payload(row).value_claim_status) === "modelled_not_finance_validated",
+    ).length,
+    unsupportedClaimCount: programRows.filter((row) =>
+      stringValue(payload(row).value_claim_status) === "unsupported_hypothesis",
+    ).length,
+    otherClaimCount: programRows.filter((row) =>
+      !["modelled_not_finance_validated", "unsupported_hypothesis"].includes(
+        stringValue(payload(row).value_claim_status),
+      ),
+    ).length,
+    completedPeriodSpendLines: completedSpendRows.length,
+    excludedSpendLines: spendRows.length - completedSpendRows.length,
+    priorities: [...priorityRows.map((row): EnterpriseValuePriority => {
+      const programs = programRows.filter((program) =>
+        stringValue(payload(program).priority_id) === stringValue(payload(row).priority_id),
+      );
+      return {
+        ...fact(row, sourceRefs),
+        ownerRole: ownerById.get(stringValue(payload(row).owner_id)) || null,
+        sourceRefs: [...new Set([sourceRefs(row), ...programs.map(sourceRefs)].flat())],
+        ...programAmounts(programs),
+      };
+    }), ...(unlinkedProgramRows.length > 0 ? [{
+      rowKey: "unlinked-programs",
+      title: "No declared priority",
+      sourceRefs: [...new Set(unlinkedProgramRows.map(sourceRefs).flat())],
+      asOf: null,
+      unlinked: true,
+      ownerRole: null,
+      ...programAmounts(unlinkedProgramRows),
+    }] : [])],
+  };
 
   const namedObjects = new Map(cited.map((row) => [row.row_key, row.title]));
   const functionNames = new Map(
@@ -309,6 +418,7 @@ export function buildHomeEnterpriseContext(
     segmentFacts,
     functions,
     priorities,
+    valueProof,
     riskTriage,
     sharedFunctionIds: sharedFunctionIds.sort(),
     unlinkedPrograms,

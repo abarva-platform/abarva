@@ -1,17 +1,28 @@
-import type { AvaAnswerPacket, AvaCitation } from "@/lib/ava-answer/contract";
+import type { AvaAnswerPacket, AvaCitation, AvaMetricRef } from "@/lib/ava-answer/contract";
 import type { HomeEnterpriseContext } from "./ecl-enterprise-context";
 import type { HomeContextVersion } from "./types";
 
-type AnswerArea = "business" | "priorities" | "operating" | "risk";
+type AnswerArea = "business" | "priorities" | "operating" | "value" | "risk";
+
+function money(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
 
 function areaForQuestion(question: string): AnswerArea | null {
   if (
-    /\b(graphs?|charts?|diagrams?|connect(?:ion|ions)?|dependenc(?:y|ies)|commercial|contracts?|vendors?|finance|value|benefits?|savings|returns?|spend|costs?|roi|realiz\w*|chang(?:e|ed|es|ing)|previous|since|trend|quarter)\b|\bover time\b/i.test(
+    /\b(graphs?|charts?|diagrams?|connect(?:ion|ions)?|dependenc(?:y|ies)|commercial|contracts?|vendors?|spend|costs?|chang(?:e|ed|es|ing)|previous|since|trend|quarter)\b|\bover time\b/i.test(
       question,
     )
   )
     return null;
   if (/\bdata estate\b/i.test(question)) return null;
+  if (/\b(value|benefits?|investment|returns?|roi|realiz\w*|cfo|chief financial officer)\b|\bprogram (?:budgets?|forecasts?)\b|\bforecasts? (?:above|over) budgets?\b/i.test(question))
+    return "value";
   if (/\b(risks?|controls?|attention|address first)\b/i.test(question))
     return "risk";
   if (
@@ -85,6 +96,7 @@ export function answerHomeCurrentContext(args: {
   let directAnswer: string;
   let bullets: string[];
   let evidenceLimit: string;
+  let metricsUsed: AvaMetricRef[] = [];
 
   if (area === "business") {
     const segments = [...context.segmentSpine.segments].sort(
@@ -159,6 +171,29 @@ export function answerHomeCurrentContext(args: {
     });
     evidenceLimit =
       "Function and P&L ownership are declared; decision rights have not been established.";
+  } else if (area === "value") {
+    const proof = context.valueProof;
+    const priorities = [...proof.priorities].sort((a, b) =>
+      b.forecastUsd - b.approvedBudgetUsd - (a.forecastUsd - a.approvedBudgetUsd) ||
+      a.title.localeCompare(b.title),
+    );
+    for (const priority of priorities.slice(0, 4)) {
+      addCitation(priority.title, priority.sourceRefs);
+      addCitation(`${priority.title} program records`, priority.sourceRefs.slice(1));
+    }
+    directAnswer = `Across ${proof.programCount} source-linked programs, recorded approved budgets total ${money(proof.approvedBudgetUsd)} and forecasts total ${money(proof.forecastUsd)}; ${proof.overBudgetProgramCount} forecast above budget. Client-attested realized value is not established.`;
+    bullets = priorities.slice(0, 4).map((priority) =>
+      `${priority.title}: ${priority.programCount} program${priority.programCount === 1 ? "" : "s"}; budget ${money(priority.approvedBudgetUsd)}, forecast ${money(priority.forecastUsd)}; owner: ${priority.ownerRole || "not recorded"}.`,
+    );
+    metricsUsed = [
+      { id: "home-program-budget", label: "Recorded approved program budgets", value: money(proof.approvedBudgetUsd), unit: "USD", citationIds: ["home-current-record"] },
+      { id: "home-program-forecast", label: "Recorded program forecasts", value: money(proof.forecastUsd), unit: "USD", citationIds: ["home-current-record"] },
+      ...priorities.slice(0, 4).flatMap((priority, index): AvaMetricRef[] => [
+        { id: `home-priority-${index}-budget`, label: `${priority.title} recorded budget`, value: money(priority.approvedBudgetUsd), unit: "USD", citationIds: ["home-current-record"] },
+        { id: `home-priority-${index}-forecast`, label: `${priority.title} forecast`, value: money(priority.forecastUsd), unit: "USD", citationIds: ["home-current-record"] },
+      ]),
+    ];
+    evidenceLimit = `${proof.modelledClaimCount} value claims are modelled, not finance-validated; ${proof.unsupportedClaimCount} are unsupported. ${proof.excludedSpendLines} spend records lack a verifiable completed-period actual. This is synthetic reference material, not client-attested value.`;
   } else {
     const triage = context.riskTriage;
     const top = triage.attentionRisks.slice(0, 3);
@@ -185,7 +220,7 @@ export function answerHomeCurrentContext(args: {
     directAnswer,
     prose: bullets.map((bullet) => `- ${bullet}`).join("\n"),
     factsUsed: [],
-    metricsUsed: [],
+    metricsUsed,
     relationshipsUsed: [],
     artifacts: [],
     citations,

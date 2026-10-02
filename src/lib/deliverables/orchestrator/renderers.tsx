@@ -1749,6 +1749,10 @@ function addPptxChrome(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
+  // The closing slide carries its own full status footer; every other content
+  // slide gets a short running confidentiality mark so no page leaves the room
+  // unmarked (the gold-standard decks footer every slide).
+  addFooter = true,
 ): void {
   slide.addText(
     `${doc.clientDisplayName.toUpperCase()} · ${doc.title.toUpperCase()}`,
@@ -1781,6 +1785,21 @@ function addPptxChrome(
     h: 0,
     line: { color: PPTX_COLOR.line, width: 0.75 },
   });
+  if (addFooter) {
+    slide.addText(
+      `${doc.clientDisplayName} · Confidential · AI-generated working draft`,
+      {
+        x: 0.55,
+        y: 7.17,
+        w: 12.2,
+        h: 0.22,
+        fontFace: "Arial",
+        fontSize: 7,
+        color: PPTX_COLOR.muted,
+        charSpacing: 0.5,
+      },
+    );
+  }
 }
 
 function addPptxExhibitSlide(
@@ -2005,14 +2024,17 @@ function addPptxTableSlide(
     });
     return;
   }
+  // A dark header row reads as a board table rather than a spreadsheet dump —
+  // it is the single change that most distinguishes an executive exhibit from a
+  // printed grid (the gold-standard decks use a dark header band on every table).
   const header = table.columns.map((c) => ({
     text: c,
     options: {
       bold: true,
-      color: PPTX_COLOR.muted,
+      color: PPTX_COLOR.white,
       fontFace: "Arial",
       fontSize: 9,
-      fill: { color: PPTX_COLOR.paper },
+      fill: { color: PPTX_COLOR.ink },
     },
   }));
   const bodyRows = table.rows.slice(0, 14).map((row) =>
@@ -2284,7 +2306,7 @@ export async function renderDeliverablePptx(
   // Closing slide: recommendation, next actions, client-to-complete checklist.
   const closingSlide = pptx.addSlide();
   closingSlide.background = { color: PPTX_COLOR.cream };
-  addPptxChrome(closingSlide, doc, slideNumber, totalSlides);
+  addPptxChrome(closingSlide, doc, slideNumber, totalSlides, false);
   closingSlide.addText("RECOMMENDATION & NEXT ACTIONS", {
     x: 0.72,
     y: 0.85,
