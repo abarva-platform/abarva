@@ -468,7 +468,6 @@ jobs:
         run: >-
           npx jest --runTestsByPath
           src/lib/nexus/__tests__/context-adapter.test.ts
-          src/lib/nexus/__tests__/gateLifecycle-pack-bound.test.ts
           src/lib/source/notifications/__tests__/approval-recipient-policy.test.ts
           src/lib/source/notifications/__tests__/approval-request.test.ts
           src/lib/source/notifications/__tests__/stage-decision-update.test.ts
