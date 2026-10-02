@@ -183,12 +183,15 @@ describe("the enterprise context read from the generated source", () => {
     assert.equal(context.riskTriage.highOrCritical, 62);
     assert.equal(context.riskTriage.partialControl, 19);
     assert.equal(context.riskTriage.unknownControl, 5);
+    assert.equal(context.riskTriage.ownerIsConstant, true);
     assert.equal(context.riskTriage.attentionRisks.length, 24);
     assert.ok(context.riskTriage.attentionRisks.every((risk) =>
       risk.sourceRefs.length > 0 && risk.ownerRole && risk.functionName,
     ));
     assert.equal(context.riskTriage.attentionRisks[0].severity, "critical");
     assert.equal(context.riskTriage.attentionRisks[0].controlState, "unknown");
+    assert.match(context.riskTriage.attentionRisks[0].title, /Recovery capacity gap/);
+    assert.doesNotMatch(context.riskTriage.attentionRisks[0].title, /RISK-\d+/);
     const riskBrowser = buildTechnologyEstateFromHomeProjectionRows(rows)
       .recordTypes.find((recordType) => recordType.objectType === "risk_control");
     assert.ok(riskBrowser);

@@ -504,14 +504,18 @@ export function EnterpriseContextPanel({
           </p>
           {context.riskTriage.attentionRisks.length ? (
             <Table
-              headers={["Risk", "Severity", "Control state", "Owner", "Affected record", "Evidence"]}
+              headers={["Risk", "Severity", "Control state", "Recorded role", "Affected record", "Evidence"]}
               minWidth={980}
             >
               {context.riskTriage.attentionRisks.slice(0, 10).map((risk) => (
                 <tr key={risk.rowKey}>
                   <td style={CELL_STYLE}>
-                    <strong style={{ textTransform: "capitalize" }}>{risk.riskType?.replaceAll("_", " ") ?? risk.title}</strong>
-                    {risk.functionName ? <span style={{ display: "block", color: V4.slate }}>{risk.functionName}</span> : null}
+                    <strong>{risk.title}</strong>
+                    {risk.functionName || risk.riskType ? (
+                      <span style={{ display: "block", color: V4.slate }}>
+                        {[risk.functionName, risk.riskType?.replaceAll("_", " ")].filter(Boolean).join(" · ")}
+                      </span>
+                    ) : null}
                     <Drill
                       label="View risk"
                       onOpen={() => onOpenRows("risk_control", risk.rowKey)}
@@ -533,6 +537,7 @@ export function EnterpriseContextPanel({
           <p style={{ color: V4.slate, fontFamily: SANS, fontSize: 12, margin: "14px 0 0" }}>
             Showing {Math.min(10, context.riskTriage.attentionRisks.length)} of {context.riskTriage.attentionRisks.length} review items.
             Control effectiveness has not been independently attested here.
+            {context.riskTriage.ownerIsConstant ? " The same role appears on every risk; item-level accountability is not established." : ""}
           </p>
         </>
       ) : null}

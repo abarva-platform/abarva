@@ -74,6 +74,7 @@ export interface EnterpriseRiskTriage {
   highOrCritical: number;
   partialControl: number;
   unknownControl: number;
+  ownerIsConstant: boolean;
   attentionRisks: EnterpriseContextRisk[];
 }
 
@@ -353,8 +354,14 @@ export function buildHomeEnterpriseContext(
       (severity !== "critical" && severity !== "high") ||
       (controlState !== "partially_effective" && controlState !== "unknown")
     ) return [];
+    const sourceTitle = stringValue(data.risk_name) || row.title;
+    const riskId = stringValue(data.risk_or_control_id);
+    const idSuffix = riskId ? ` (${riskId})` : "";
     return [{
       ...fact(row, sourceRefs),
+      title: idSuffix && sourceTitle.endsWith(idSuffix)
+        ? sourceTitle.slice(0, -idSuffix.length)
+        : sourceTitle,
       riskType: stringValue(data.risk_type) || null,
       severity,
       controlState,
@@ -368,6 +375,10 @@ export function buildHomeEnterpriseContext(
       (risk.controlState === "unknown" ? 0 : 1);
     return priority(a) - priority(b) || a.rowKey.localeCompare(b.rowKey);
   });
+  const riskOwnerRoles = riskRows.map((row) => {
+    const data = payload(row);
+    return ownerById.get(stringValue(data.owner_id)) || stringValue(data.control_owner) || "";
+  });
   const riskTriage: EnterpriseRiskTriage = {
     totalRisks: riskRows.length,
     highOrCritical: riskRows.filter((row) =>
@@ -375,6 +386,7 @@ export function buildHomeEnterpriseContext(
     ).length,
     partialControl: attentionRisks.filter((risk) => risk.controlState === "partially_effective").length,
     unknownControl: attentionRisks.filter((risk) => risk.controlState === "unknown").length,
+    ownerIsConstant: riskOwnerRoles.length > 1 && Boolean(riskOwnerRoles[0]) && new Set(riskOwnerRoles).size === 1,
     attentionRisks,
   };
 

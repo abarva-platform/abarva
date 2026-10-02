@@ -131,6 +131,7 @@ const context: HomeEnterpriseContext = {
     highOrCritical: 2,
     partialControl: 1,
     unknownControl: 1,
+    ownerIsConstant: true,
     attentionRisks: [
       {
         ...fact("RISK-1", "Recovery gap"),
@@ -510,9 +511,12 @@ test("attention view ranks source-linked risk review without calling unknown unc
     }),
   );
   assert.match(html, /Risk review queue/);
+  assert.match(html, /Recovery gap/);
+  assert.match(html, /Supplier dependency/);
   assert.match(html, /Risk chief/);
   assert.match(html, /Claims platform/);
   assert.match(html, /Unknown is not the same as uncontrolled/);
+  assert.match(html, /item-level accountability is not established/);
   assert.match(html, /View risk/);
   assert.match(html, /As of 2026-09-30/);
   assert.ok(html.indexOf("resilience") < html.indexOf("vendor"));

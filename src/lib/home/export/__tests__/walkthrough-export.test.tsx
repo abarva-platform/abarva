@@ -201,6 +201,8 @@ describe("Home walkthrough export", () => {
       expect(pdfMarkup).toContain("At-risk linked programs");
       expect(html).toContain("Unknown is not uncontrolled");
       expect(pdfMarkup).toContain("Unknown is not uncontrolled");
+      expect(html).toContain("Recovery capacity gap: Informatica PowerCenter");
+      expect(pdfMarkup).toContain("Recovery capacity gap: Informatica PowerCenter");
       const businessChapter = html.slice(html.indexOf("Chapter 02"), html.indexOf("Chapter 03"));
       expect(businessChapter).toContain("Current source-linked record");
       expect(businessChapter).not.toContain("No current chapter-specific tables");
