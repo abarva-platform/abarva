@@ -38,6 +38,7 @@ on:
       - "supabase/migrations/20260902090000_home_serving_view_executive_interviews.sql"
       - "supabase/migrations/20260902100000_home_serving_view_relationships.sql"
       - "supabase/migrations/20261002013000_home_active_assessment.sql"
+      - "supabase/migrations/20261002060000_home_active_assessment_tenant_fk.sql"
       - "src/lib/home/preview/golden-snapshots/**"
   workflow_dispatch:
 
