@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 import pg from "pg";
+import type { LoadApproval } from "../../../src/lib/governance/dataset-manifest";
 import {
   generatePack,
   loadIntoNewAssessment,
@@ -20,7 +21,20 @@ async function main(): Promise<void> {
         `https://synthetic.invalid/${pack.manifest.source_set_hash}/${file.source_room_family}`,
       ]),
     );
-    const readback = await loadIntoNewAssessment(connectionString, pack, blobUris);
+    const approval: LoadApproval = {
+      approved_by: "Jordan Rivera",
+      approved_at: "2026-01-01",
+      assessment_id: pack.manifest.assessment_id,
+      source_set_hash: pack.manifest.source_set_hash,
+      release_record: "docs/releases/records/2026-01-01-fixture-load.md",
+    };
+    const readback = await loadIntoNewAssessment(
+      connectionString,
+      pack,
+      blobUris,
+      approval,
+    );
+    assert.deepEqual(readback.load_approval, approval);
     assert.equal(readback.serving_state, "not_promoted");
     assert.deepEqual(readback.counts, {
       source_files: 22,
@@ -48,7 +62,7 @@ async function main(): Promise<void> {
       await client.end();
     }
     await assert.rejects(
-      loadIntoNewAssessment(connectionString, pack, blobUris),
+      loadIntoNewAssessment(connectionString, pack, blobUris, approval),
       /already contains source or canonical rows/,
     );
     console.log(JSON.stringify({ accepted: true, ...readback }));

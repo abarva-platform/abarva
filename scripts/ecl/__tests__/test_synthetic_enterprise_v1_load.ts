@@ -5,6 +5,7 @@ import {
   loadIntoNewAssessment,
 } from "../load_synthetic_enterprise_v1";
 import { rm } from "node:fs/promises";
+import type { LoadApproval } from "../../../src/lib/governance/dataset-manifest";
 
 async function main(): Promise<void> {
   const connectionString = process.env.ECL_ADMISSION_TEST_DATABASE_URL ?? "";
@@ -20,12 +21,28 @@ async function main(): Promise<void> {
         `https://synthetic.invalid/${pack.manifest.source_set_hash}/${file.source_room_family}`,
       ]),
     );
+    const approval: LoadApproval = {
+      approved_by: "Jordan Rivera",
+      approved_at: "2026-01-01",
+      assessment_id: pack.manifest.assessment_id,
+      source_set_hash: pack.manifest.source_set_hash,
+      release_record: "docs/releases/records/2026-01-01-fixture-load.md",
+    };
+    await assert.rejects(
+      loadIntoNewAssessment(connectionString, pack, blobUris, {
+        ...approval,
+        source_set_hash: "0".repeat(64),
+      }),
+      /Load approval does not bind this assessment and source-set hash/,
+    );
     const readback = await loadIntoNewAssessment(
       connectionString,
       pack,
       blobUris,
+      approval,
     );
     assert.equal(readback.serving_state, "not_promoted");
+    assert.deepEqual(readback.load_approval, approval);
     assert.deepEqual(
       readback.unresolved_relationships,
       pack.normalized.unresolved_relationships.map((edge) => edge.id),
@@ -76,6 +93,36 @@ async function main(): Promise<void> {
         ),
         1,
       );
+      // The load is approved as a whole; no row is recorded as reviewed.
+      const reviewStates = await client.query<{
+        review_state: string;
+        count: string;
+      }>(
+        `select review_state, count(*) from (
+           select review_state from ecl_context.object where assessment_id = $1
+           union all
+           select review_state from ecl_context.relationship where assessment_id = $1
+         ) loaded group by review_state`,
+        [pack.manifest.assessment_id],
+      );
+      assert.deepEqual(
+        reviewStates.rows.map((row) => [row.review_state, Number(row.count)]),
+        [["not_reviewed", 5759 + 10619]],
+      );
+      const approvedFiles = await client.query<{ count: string }>(
+        `select count(*) from ecl_source.source_file
+          where assessment_id = $1
+            and metadata_json -> 'load_approval' = $2::jsonb`,
+        [
+          pack.manifest.assessment_id,
+          JSON.stringify({
+            approved_by: approval.approved_by,
+            approved_at: approval.approved_at,
+            release_record: approval.release_record,
+          }),
+        ],
+      );
+      assert.equal(Number(approvedFiles.rows[0].count), 22);
       const unresolvedId = pack.normalized.unresolved_relationships[0].id;
       const unresolved = await client.query<{ count: string }>(
         "select count(*) from ecl_context.relationship where assessment_id = $1 and attributes_json ->> 'native_relationship_id' = $2",
@@ -92,7 +139,7 @@ async function main(): Promise<void> {
       await client.end();
     }
     await assert.rejects(
-      loadIntoNewAssessment(connectionString, pack, blobUris),
+      loadIntoNewAssessment(connectionString, pack, blobUris, approval),
       /already contains source or canonical rows/,
     );
     console.log(JSON.stringify({ accepted: true, ...readback }));

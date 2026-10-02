@@ -3,9 +3,8 @@
 /** Retire a synthetic Home declaration without deleting its governed evidence. */
 
 import { rm } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 import { generatePack } from "./load_synthetic_enterprise_v1";
 
 async function main(): Promise<void> {
@@ -71,10 +70,9 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+// Compares resolved files: a path comparison answers "imported" for a run
+// through a symlinked directory, and the job would exit 0 having done nothing.
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exitCode = 1;
