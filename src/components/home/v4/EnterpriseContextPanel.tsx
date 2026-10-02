@@ -141,6 +141,7 @@ export function EnterpriseContextPanel({
       "our_business",
       "strategy_value_creation",
       "how_we_operate",
+      "performance_value",
       "what_needs_attention",
     ].includes(chapterId)
   )
@@ -442,6 +443,66 @@ export function EnterpriseContextPanel({
             not allocated to one segment. Function-level accountability is
             recorded; decision rights are not inferred.
           </p>
+        </>
+      ) : null}
+      {chapterId === "performance_value" ? (
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,170px),1fr))",
+              gap: 18,
+              marginBottom: 24,
+            }}
+          >
+            {metric("Approved program budgets", money(context.valueProof.approvedBudgetUsd))}
+            {metric("Program forecasts", money(context.valueProof.forecastUsd))}
+            {metric("Forecast above budget", `${context.valueProof.overBudgetProgramCount} of ${context.valueProof.programCount}`)}
+            {metric("Client-attested realized benefits", "Not established")}
+          </div>
+          <h2 style={{ fontFamily: SANS, fontSize: 20, margin: "0 0 8px" }}>
+            Investment versus proof
+          </h2>
+          <p style={{ color: V4.slate, fontFamily: SANS, fontSize: 12, margin: "0 0 8px" }}>
+            {context.valueProof.programCount} source-linked program records · {context.valueProof.asOf ? `As of ${context.valueProof.asOf}` : "Source date not established"}
+          </p>
+          <p style={{ color: V4.inkSoft, fontFamily: SANS, fontSize: 13, lineHeight: 1.5 }}>
+            Program budgets and forecasts are declared estimates, not realized
+            benefits. {context.valueProof.modelledClaimCount} value claims are
+            modelled but not finance-validated; {context.valueProof.unsupportedClaimCount} {context.valueProof.unsupportedClaimCount === 1 ? "is" : "are"} unsupported.
+            This synthetic record does not establish client-attested realized value.
+          </p>
+          <Table
+            headers={["Declared priority", "Owner", "Programs", "Approved budget", "Forecast", "Above budget", "Evidence"]}
+            minWidth={950}
+          >
+            {context.valueProof.priorities.map((priority) => (
+              <tr key={priority.rowKey}>
+                <td style={CELL_STYLE}>
+                  <strong>{priority.title}</strong>
+                  <br />
+                  {priority.unlinked ? null : (
+                    <Drill label="View programs" type="program_initiative" filter={priority.rowKey} onOpenRows={onOpenRows} />
+                  )}
+                </td>
+                <td style={CELL_STYLE}>{priority.ownerRole ?? "Not recorded"}</td>
+                <td style={CELL_STYLE}>{priority.programCount}</td>
+                <td style={CELL_STYLE}>{money(priority.approvedBudgetUsd)}</td>
+                <td style={CELL_STYLE}>{money(priority.forecastUsd)}</td>
+                <td style={CELL_STYLE}>{priority.overBudgetProgramCount}</td>
+                <td style={CELL_STYLE}><Evidence fact={priority} /></td>
+              </tr>
+            ))}
+          </Table>
+          <p style={{ color: V4.slate, fontFamily: SANS, fontSize: 12, lineHeight: 1.5, margin: "14px 0 0" }}>
+            Totals include {context.unlinkedPrograms.length} program{context.unlinkedPrograms.length === 1 ? "" : "s"} without a declared priority.
+            {context.valueProof.missingFinancialCount > 0 ? ` ${context.valueProof.missingFinancialCount} program financial records are incomplete.` : ""}
+            {context.valueProof.otherClaimCount > 0 ? ` ${context.valueProof.otherClaimCount} claim statuses need separate review.` : ""}
+            {` ${context.valueProof.excludedSpendLines} of ${context.valueProof.completedPeriodSpendLines + context.valueProof.excludedSpendLines} spend records lack a verifiable completed-period actual and are excluded from current-period spend.`}
+          </p>
+          <div style={{ marginTop: 16 }}>
+            <Drill label="Examine all programs" type="program_initiative" filter="" onOpenRows={onOpenRows} />
+          </div>
         </>
       ) : null}
       {chapterId === "what_needs_attention" ? (

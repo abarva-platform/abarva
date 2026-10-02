@@ -1368,6 +1368,46 @@ describe("AgentDock · thread render", () => {
     expect(screen.queryByTestId("evidence-basis")).not.toBeInTheDocument();
   });
 
+  it("shows a focused Home direct answer and its source basis", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="home-preview"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "Two priorities need review.",
+            citations: [
+              {
+                type: "SURFACE",
+                name: "Program investment record",
+                id: "internal-row-1",
+                detail: "Approved budget and current forecast.",
+              },
+            ],
+            agentAnswer: {
+              directAnswer: "The forecast exceeds the approved budget.",
+              prose: "Two priorities need review.",
+              citations: [],
+              artifacts: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("The forecast exceeds the approved budget.");
+    expect(turn).toHaveTextContent("Two priorities need review.");
+    expect(screen.getByTestId("evidence-basis")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Evidence basis/ }));
+    expect(screen.getByText("Program investment record")).toBeInTheDocument();
+    expect(turn).not.toHaveTextContent("internal-row-1");
+  });
+
   it("exports the current chat session without making a model call", async () => {
     const submitSpy = jest
       .spyOn(HTMLFormElement.prototype, "submit")
