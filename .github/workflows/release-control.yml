@@ -38,6 +38,9 @@ jobs:
       - name: Prove the release record template matches the gate
         run: npm run check:release-record-template-contract
 
+      - name: Prove the release check runs every gate it lists
+        run: npm run check:release-check-runs-every-gate
+
       - name: Check release record
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}

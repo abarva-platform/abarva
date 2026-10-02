@@ -72,4 +72,9 @@ PR, CI, exact-SHA ACA deploy and runtime-invariant output, private migration/adm
 
 ## Known Gaps
 
-This release does not publish a new executive narrative, change aVa, or update export composition. Those remain separate acceptance gates.
+This release does not publish a new executive narrative, and it does not change how the advisor or the walkthrough export compose their output. Those remain separate acceptance gates.
+
+Corrected on 2026-10-02: an earlier version of this section said the release does not change the advisor or the export. Both read Home's record through the same reader as the page (`src/app/api/home/preview/ask/route.ts`, `src/app/api/home/walkthrough-export/route.ts`), so a declaration changes the record they answer from and export, not only the page.
+
+- A declaration row, active or retired, references its projection manifest, so that projection's rows cannot be removed while the row exists.
+- This record has not been updated since it was written as a candidate. The migration run, the admission run and its proof, and the signed-in check that its Audit Evidence section requires are not recorded here.

@@ -237,4 +237,202 @@ describe("Moves File Cabinet evidence review", () => {
     );
     expect(onEvidenceChanged).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps a reviewer's spaces and new lines while typing, and normalises them on save", async () => {
+    // Each change event below is what one keystroke produces. The list fields
+    // used to be rebuilt from trimmed, non-empty lines on every change, so the
+    // keystroke that added a trailing space or a new line was undone before
+    // the next one: corrections could be pasted but not typed.
+    let pending = [
+      {
+        evidenceId: "evidence-1",
+        reviewId: "review-1",
+        sourceArtifactId: "source-artifact-1",
+        title: "notes.md",
+        familyKey: "baseline",
+        phase: 1,
+        parseMethod: "markdown-line-parser",
+        confidence: 0.78,
+        sourceTextPreview: "Queue and cohort remain assumptions.",
+        extraction: {
+          version: 1,
+          summary: "Notes.",
+          structured: {
+            decisions: [],
+            risks: [],
+            baselineCandidates: [],
+            actionItems: [],
+            observations: [],
+            assumptions: ["An assumption the source never states"],
+            openQuestions: [],
+            citations: [],
+          },
+        },
+      },
+    ];
+    let postedBody: Record<string, unknown> | null = null;
+    global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        postedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
+        pending = [];
+        return { ok: true, json: async () => ({ ok: true }) } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          artifacts: [],
+          pendingEvidenceReviews: pending,
+          evidenceReviewStatus: "available",
+        }),
+      } as Response;
+    }) as typeof fetch;
+
+    render(<FileCabinetPanel moveId="move-1" phase={1} />);
+    await screen.findByText("1 evidence item awaiting review");
+    fireEvent.click(screen.getByText(/Review extracted information/));
+
+    const assumptions = screen.getByRole("textbox", {
+      name: "notes.md reviewed assumptions",
+    }) as HTMLTextAreaElement;
+
+    // A word, then the space after it.
+    fireEvent.change(assumptions, { target: { value: "Queue " } });
+    expect(assumptions.value).toBe("Queue ");
+    // A finished line, then Enter to start the next one.
+    fireEvent.change(assumptions, {
+      target: { value: "Queue and cohort remain assumptions\n" },
+    });
+    expect(assumptions.value).toBe("Queue and cohort remain assumptions\n");
+    fireEvent.change(assumptions, {
+      target: {
+        value: "Queue and cohort remain assumptions\n\n  No PHI  \n",
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Approve reviewed version" }),
+    );
+    await waitFor(() => expect(postedBody).not.toBeNull());
+    expect(postedBody).toEqual(
+      expect.objectContaining({
+        reviewedExtraction: expect.objectContaining({
+          structured: expect.objectContaining({
+            // Blank lines dropped and edges trimmed — once, at save.
+            assumptions: ["Queue and cohort remain assumptions", "No PHI"],
+          }),
+        }),
+      }),
+    );
+  });
+
+  // A general upload is routed by keywords in the file's name and opening
+  // lines unless the uploader says what it is. These pin that the statement
+  // reaches the request, and that silence sends nothing.
+  describe("declaring which required evidence a file covers", () => {
+    function mockUpload(uploadedForms: FormData[]) {
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/artifacts/upload") && init?.method === "POST") {
+          uploadedForms.push(init.body as FormData);
+          return {
+            ok: true,
+            json: async () => ({
+              ok: true,
+              blobStored: true,
+              evidence: {
+                reviewStatus: "pending_review",
+                parseMethod: "csv-line-parser",
+              },
+            }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            artifacts: [],
+            pendingEvidenceReviews: [],
+            evidenceReviewStatus: "available",
+          }),
+        } as Response;
+      }) as typeof fetch;
+    }
+    const families = [
+      { id: "kpi_family", label: "Baseline KPIs" },
+      { id: "controls_family", label: "Risk controls" },
+    ];
+    const file = () =>
+      new File(["a,b"], "controls.csv", { type: "text/csv" });
+
+    it("sends the declared family with the upload", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={2}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(
+        screen.getByLabelText("Required evidence this file covers"),
+        { target: { value: "controls_family" } },
+      );
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].get("evidenceFamily")).toBe("controls_family");
+    });
+
+    it("sends no family when none is stated", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={2}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].has("evidenceFamily")).toBe(false);
+    });
+
+    it("does not send a family for session notes, and hides the choice", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={2}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(
+        screen.getByLabelText("Required evidence this file covers"),
+        { target: { value: "controls_family" } },
+      );
+      fireEvent.change(screen.getByLabelText("File Cabinet upload type"), {
+        target: { value: "session_artifact" },
+      });
+      expect(
+        screen.queryByLabelText("Required evidence this file covers"),
+      ).toBeNull();
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].has("evidenceFamily")).toBe(false);
+    });
+
+    it("offers no choice when the phase has no required families", () => {
+      mockUpload([]);
+      render(<FileCabinetPanel moveId="move-1" phase={2} />);
+      expect(
+        screen.queryByLabelText("Required evidence this file covers"),
+      ).toBeNull();
+    });
+  });
 });

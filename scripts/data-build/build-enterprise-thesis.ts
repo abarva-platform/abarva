@@ -46,6 +46,7 @@ import {
   type RelationshipRow,
   type SourceSummary,
 } from "./enterprise-signal-packet";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 const TENANTS = (() => {
   const i = process.argv.indexOf("--tenant");
@@ -1787,7 +1788,7 @@ async function main() {
 // Only run when invoked directly -- importing this module (e.g. from a test) must not execute a
 // build. The same mistake, fixed once already this session in the orientation-pack generator when
 // the dimension registry lived in a script that ran its own build on import.
-if (process.argv[1] && process.argv[1].includes("build-enterprise-thesis")) {
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exit(1);

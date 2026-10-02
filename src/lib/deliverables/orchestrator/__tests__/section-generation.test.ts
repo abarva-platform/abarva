@@ -7,6 +7,7 @@ import {
   buildSourceRegister,
   assembleDeliverable,
   consolidateOpenInputPlaceholders,
+  exhibitRejectionReason,
   type SynthesisResult,
 } from "../section-generation";
 import { validateDeliverableQuality } from "../quality-validator";
@@ -784,5 +785,49 @@ describe("consolidateOpenInputPlaceholders", () => {
       consolidateOpenInputPlaceholders(sections);
     expect(cleaned[0]).toBe(sections[0]);
     expect(harvested).toHaveLength(0);
+  });
+});
+
+describe("exhibitRejectionReason", () => {
+  const kept = {
+    key: "raci",
+    title: "Handoff RACI",
+    kind: "matrix",
+    description:
+      "Shows who is accountable for each handoff item. Three items have no named owner; those block launch.",
+    targetFormat: "docx",
+    data: {
+      kind: "matrix",
+      axes: { x: "Role", y: "Work" },
+      cells: [
+        { x: "Sponsor", y: "Scope", label: "A" },
+        { x: "Data owner", y: "Access", label: "A" },
+      ],
+    },
+  } as never;
+
+  it("keeps an exhibit with typed data and a description of three statements", () => {
+    expect(exhibitRejectionReason(kept)).toBeNull();
+  });
+
+  it("says why an exhibit is not kept", () => {
+    expect(
+      exhibitRejectionReason({ ...(kept as object), data: {} } as never),
+    ).toMatch(/not a supported payload kind/);
+    expect(
+      exhibitRejectionReason({
+        ...(kept as object),
+        data: { kind: "matrix", cells: [{ x: "a", y: "b" }] },
+      } as never),
+    ).toMatch(/below that kind's minimum content/);
+    expect(
+      exhibitRejectionReason({
+        ...(kept as object),
+        description: "Shows who is accountable.",
+      } as never),
+    ).toBe("description has fewer than three distinct statements");
+    expect(
+      exhibitRejectionReason({ ...(kept as object), title: " " } as never),
+    ).toBe("key, title or description is empty");
   });
 });

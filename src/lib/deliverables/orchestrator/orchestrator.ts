@@ -24,7 +24,10 @@ import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildGenerationProgress, type GenerationProgress } from "./progress";
 import { buildPassPrompt } from "./prompt-builder";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
-import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
+import {
+  countBodyWords,
+  sectionShareOfFloor,
+} from "@/lib/deliverables/shared/body-word-count";
 import {
   sanitizeGenerationPlan,
   validateGenerationPlan,
@@ -297,23 +300,38 @@ export async function runDeliverableOrchestration(
     },
   );
 
+  // A document under its length floor is repaired before it is judged, by the
+  // same counting rule the quality gate uses. This was a charter-only step.
+  // Every other deliverable was drafted with no per-section target, judged
+  // against a floor its section writers were never given, and blocked when
+  // the sections happened to total less — with no attempt to close the gap.
+  // The floor itself is untouched; a document still under it after repair is
+  // still blocked.
+  const excludeNonProse = isMovesCharter
+    ? true
+    : req.qualityBar.excludeNonProseFromBody === true;
   if (
-    isMovesCharter &&
-    countBodyWords(sections, { excludeNonProse: true }) <
-      req.qualityBar.minBodyWords
+    countBodyWords(sections, { excludeNonProse }) < req.qualityBar.minBodyWords
   ) {
-    const targetByKey = new Map(
-      CHARTER_CONTRACT.sections
-        .filter((section) => (section.targetProseWords ?? 0) > 0)
-        .map((section) => [section.key, section.targetProseWords!]),
-    );
+    const targetByKey = isMovesCharter
+      ? new Map(
+          CHARTER_CONTRACT.sections
+            .filter((section) => (section.targetProseWords ?? 0) > 0)
+            .map((section) => [section.key, section.targetProseWords!]),
+        )
+      : new Map(
+          sections.map((section) => [
+            section.key,
+            sectionShareOfFloor(req.qualityBar.minBodyWords, sections.length),
+          ]),
+        );
     const repairs = sections.flatMap((section) => {
       const targetProseWords = targetByKey.get(section.key);
       const plannedSection = plan.sectionPlan.find(
         (planned) => planned.key === section.key,
       );
       const currentWordCount = countBodyWords([section], {
-        excludeNonProse: true,
+        excludeNonProse,
       });
       return targetProseWords &&
         plannedSection &&
@@ -377,21 +395,28 @@ export async function runDeliverableOrchestration(
             ? parsed.citationsUsed
             : section.citationsUsed
         ).filter((n) => validCitation.has(n));
-        return {
-          section: {
-            ...section,
-            title: (parsed && parsed.title) || section.title,
-            bodyMarkdown: repairUncitedFigures(citationRepairedBody),
-            rawBodyMarkdown: citationRepairedBody,
-            citationsUsed,
-          },
-          unsupportedClaims,
+        const repairedSection = {
+          ...section,
+          title: (parsed && parsed.title) || section.title,
+          bodyMarkdown: repairUncitedFigures(citationRepairedBody),
+          rawBodyMarkdown: citationRepairedBody,
+          citationsUsed,
         };
+        // A repair exists to add substance. One that comes back no longer
+        // than the draft (an empty or malformed response included) is not
+        // taken, so a failed repair can never shorten the document.
+        const grew =
+          countBodyWords([repairedSection], { excludeNonProse }) >
+          currentWordCount;
+        return grew ? { section: repairedSection, unsupportedClaims } : null;
       },
+    );
+    const accepted = repaired.filter(
+      (result): result is NonNullable<typeof result> => result !== null,
     );
 
     const repairedByKey = new Map(
-      repaired.map((result) => [result.section.key, result.section]),
+      accepted.map((result) => [result.section.key, result.section]),
     );
     const repairedKeys = new Set(repairedByKey.keys());
     for (let index = unsupportedFigureClaims.length - 1; index >= 0; index--) {
@@ -400,7 +425,7 @@ export async function runDeliverableOrchestration(
       }
     }
     unsupportedFigureClaims.push(
-      ...repaired.flatMap((result) => result.unsupportedClaims),
+      ...accepted.flatMap((result) => result.unsupportedClaims),
     );
     sections = sections.map(
       (section) => repairedByKey.get(section.key) ?? section,

@@ -43,6 +43,7 @@ import { HOME_PAGE_PROMPT_CONTRACT } from "./home_page_prompt_contracts";
 import {
   createHomeNarrativePacketArtifact,
   hashHomeNarrativeValue,
+  homeNarrativeFactualRows,
   type HomeNarrativePacketArtifact,
   type HomeVerifiedSourceRefs,
 } from "../../src/lib/home/preview/home-narrative-packet";
@@ -50,9 +51,11 @@ import {
   PROJECTION_READINESS_TABLE,
   SIGNAL_READINESS_TABLE,
   readinessKey,
+  signalSourceHash,
   verifiedReadiness,
   type NarrativeReadinessProof,
 } from "./home-narrative-readiness";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
@@ -237,7 +240,7 @@ type ApprovedHomeNarrativePlanResult = HomeNarrativePlanResult & {
   thesisResult: VerifiedEnterpriseThesisResult;
 };
 
-interface HomeProjectionWriteRow {
+export interface HomeProjectionWriteRow {
   id: string;
   tenant_key: string;
   assessment_id: string;
@@ -266,12 +269,6 @@ interface HomeProjectionWriteRow {
   source_hash: string;
 }
 
-interface ExecutiveSignalContent {
-  row?: HomeProjectionWriteRow;
-  statement: string;
-  domains: string[];
-}
-
 interface ContextPolicyProof {
   policy_version: string;
   candidate_count: number;
@@ -285,9 +282,13 @@ interface ContextPolicyProof {
   source_hashes: string[];
 }
 
-interface GovernedSignalPacketBuild {
+export interface GovernedSignalPacketBuild {
   signalPacket: EnterpriseSignalPacket;
   contextPolicyProof: ContextPolicyProof;
+  /** Signals derived from the admitted rows, before each signal's own readiness proof is applied. Not part of the packet. */
+  candidateSignals: Signal[];
+  /** Display labels for raw identifiers, taken from admitted rows only. */
+  visibleIdentifierLabels: Map<string, string>;
 }
 
 interface EclSourceRecordSummaryRow {
@@ -1085,6 +1086,12 @@ function contextId(row: HomeProjectionWriteRow): string {
   return `ctx_ecl_${row.page_key}_${row.row_type}_${row.row_key}`.replace(/[^a-zA-Z0-9_]/g, "_");
 }
 
+// Chapter summaries, chapter claims and the stored story plan are this job's own output, never
+// fact candidates. The packet artifact's factual-row hash excludes the same rows.
+function isFactCandidateRow(row: HomeProjectionWriteRow): boolean {
+  return homeNarrativeFactualRows([row]).length === 1;
+}
+
 function candidateIsReady(row: HomeProjectionWriteRow): boolean {
   const sourceRefs = sourceRefIds(row.source_refs_json);
   const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
@@ -1152,15 +1159,18 @@ function governedCandidateForRow(
   };
 }
 
-function governedCandidateForSignal(
+export function governedCandidateForSignal(
   signal: Signal,
   tenantKey: string,
   proof: NarrativeReadinessProof | undefined,
-  permittedRowIds: Set<string>,
+  permittedRowSourceHashes: Map<string, string>,
 ): GovernedCandidate {
   const citations = stringArray(signal.evidenceRefs);
-  const ready = citations.length > 0 && citations.every((ref) => permittedRowIds.has(ref)) &&
-    verifiedReadiness(proof, tenantKey, hashJson(signal), hashJson(signal));
+  // A signal is bound to the source version of every row it cites: a cited row outside the
+  // admitted set, or re-sourced since the proof was recorded, withholds the signal.
+  const citedSourceHashes = citations.map((ref) => permittedRowSourceHashes.get(ref));
+  const ready = citations.length > 0 && citedSourceHashes.every((hash): hash is string => Boolean(hash)) &&
+    verifiedReadiness(proof, tenantKey, signalSourceHash(citedSourceHashes), hashJson(signal));
   return {
     id: signal.id,
     client_key: tenantKey,
@@ -1986,7 +1996,7 @@ function emitHomeNarrativeProofBundle(outFile: string, result: unknown, options:
   console.log("__HOME_ECL_NARRATIVE_PROOF_TGZ_END__");
 }
 
-function buildGovernedSignalPacket(
+export function buildGovernedSignalPacket(
   rows: HomeProjectionWriteRow[],
   tenantKey: string,
   assessmentId: string,
@@ -1994,34 +2004,36 @@ function buildGovernedSignalPacket(
   sourceRows: EclSourceRecordSummaryRow[] = [],
   proofs: Map<string, NarrativeReadinessProof> = new Map(),
 ): GovernedSignalPacketBuild {
-  const rowContentByCandidateId = new Map<string, ExecutiveSignalContent>();
-  const rowCandidates: GovernedCandidate[] = [];
+  // Source-record context is built below without any readiness check, so it is refused here
+  // rather than left to each caller to pass nothing.
+  if (sourceSummaries.length > 0 || sourceRows.length > 0) {
+    throw new Error(
+      "Home ECL narrative refused: source-record context has no admitted readiness path yet, " +
+        "so source rows and source summaries cannot enter the narrative packet.",
+    );
+  }
 
-  for (const row of rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim")) {
-    const candidate = governedCandidateForRow(
+  const factRows = rows.filter(isFactCandidateRow);
+  const rowCandidatePairs = factRows.map((row) => ({
+    row,
+    candidate: governedCandidateForRow(
       row,
       tenantKey,
       proofs.get(readinessKey(PROJECTION_READINESS_TABLE, row.projection_entry_id)),
-    );
-    rowCandidates.push(candidate);
-  }
+    ),
+  }));
+  const rowCandidates = rowCandidatePairs.map((pair) => pair.candidate);
 
   const validatedRows = buildValidatedAgentContextBundle(rowCandidates, { requireAgentReady: true });
-  const readinessCounts = rowReadinessCounts(
-    rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim"),
-    tenantKey,
-    proofs,
-  );
-  const permittedRowIds = new Set(validatedRows.usable.map((candidate) => candidate.id));
-  const permittedRows = rows.filter((row) => permittedRowIds.has(contextId(row)));
+  const readinessCounts = rowReadinessCounts(factRows, tenantKey, proofs);
+  // Admission is per row, not per context id: two rows whose keys normalise to the same id must
+  // not admit each other.
+  const usableRowCandidates = new Set(validatedRows.usable);
+  const permittedRows = rowCandidatePairs
+    .filter((pair) => usableRowCandidates.has(pair.candidate))
+    .map((pair) => pair.row);
+  const permittedRowSourceHashes = new Map(permittedRows.map((row) => [contextId(row), row.source_hash]));
   const labelByIdentifier = buildVisibleIdentifierLabels(permittedRows);
-  for (const row of permittedRows) {
-    rowContentByCandidateId.set(contextId(row), {
-      row,
-      statement: rowStatement(row, labelByIdentifier),
-      domains: rowDomains(row),
-    });
-  }
 
   const permittedApplications = rowsOf(permittedRows, "applications_systems", "application");
   const permittedContracts = rowsOf(permittedRows, "vendor_contracts", "contract");
@@ -2046,7 +2058,7 @@ function buildGovernedSignalPacket(
     signal,
     tenantKey,
     proofs.get(readinessKey(SIGNAL_READINESS_TABLE, signal.id)),
-    permittedRowIds,
+    permittedRowSourceHashes,
   ));
   const validatedSignals = buildValidatedAgentContextBundle(signalCandidates, { requireAgentReady: true });
   const usableSignalIds = new Set(validatedSignals.usable.map((candidate) => candidate.id));
@@ -2060,12 +2072,8 @@ function buildGovernedSignalPacket(
     },
     ...sourceContextItems,
     ...buildScopeContextItems({ rows: permittedRows, sourceSummaries, sourceRows }),
-    ...validatedRows.usable
-      .map((candidate) => {
-        const content = rowContentByCandidateId.get(candidate.id);
-        return content ? { id: candidate.id, statement: content.statement, domains: content.domains } : null;
-      })
-      .filter((item): item is ContextItem => Boolean(item))
+    ...permittedRows
+      .map((row) => ({ id: contextId(row), statement: rowStatement(row, labelByIdentifier), domains: rowDomains(row) }))
       .slice(0, 900),
   ];
   if (validatedRows.blocked.length > 0) {
@@ -2164,7 +2172,29 @@ function buildGovernedSignalPacket(
       ],
     },
   };
-  return { signalPacket: packet, contextPolicyProof };
+  return {
+    signalPacket: packet,
+    contextPolicyProof,
+    candidateSignals: rawSignals,
+    visibleIdentifierLabels: labelByIdentifier,
+  };
+}
+
+/**
+ * Why generation must stop before any model call, or null when governed evidence reached the
+ * packet. A packet with no admitted row or no admitted signal has nothing a claim may cite.
+ */
+export function narrativeEvidenceRefusal(
+  build: Pick<GovernedSignalPacketBuild, "signalPacket" | "contextPolicyProof">,
+): string | null {
+  const { signalPacket, contextPolicyProof } = build;
+  if (contextPolicyProof.usable_count === 0 || signalPacket.signals.length === 0) {
+    return (
+      `Home ECL narrative refused: no governed usable evidence reached the executive packet. ` +
+      `readiness=${JSON.stringify(contextPolicyProof.row_readiness_counts)}`
+    );
+  }
+  return null;
 }
 
 async function readEclSourceRecordRows(db: Client, tenantKey: string, assessmentId: string): Promise<EclSourceRecordSummaryRow[]> {
@@ -3102,7 +3132,7 @@ async function main() {
     // indexed, cited, source-version-matched admission path is available.
     const sourceRows: EclSourceRecordSummaryRow[] = [];
     const sourceSummaries: SourceSummary[] = [];
-    const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(
+    const { signalPacket, contextPolicyProof, visibleIdentifierLabels } = buildGovernedSignalPacket(
       rows,
       options.tenantKey,
       options.assessmentId,
@@ -3125,12 +3155,8 @@ async function main() {
         `${contextPolicyProof.usable_count}/${contextPolicyProof.candidate_count} governed candidates usable`,
     );
     console.log(`row readiness: ${JSON.stringify(contextPolicyProof.row_readiness_counts)}`);
-    if (contextPolicyProof.usable_count === 0 || signalPacket.signals.length === 0) {
-      throw new Error(
-        `Home ECL narrative refused: no governed usable evidence reached the executive packet. ` +
-          `readiness=${JSON.stringify(contextPolicyProof.row_readiness_counts)}`,
-      );
-    }
+    const refusal = narrativeEvidenceRefusal({ signalPacket, contextPolicyProof });
+    if (refusal) throw new Error(refusal);
 
     if (options.fromPlanPath) {
       const { plan, planSha256 } = readApprovedNarrativePlan(options, rows, signalPacket, narrativePacketArtifact);
@@ -3175,11 +3201,10 @@ async function main() {
 
     const { getAnthropicDirectClient } = await import("../../src/lib/integrations/ai-egress/anthropic-direct");
     const anthropic = getAnthropicDirectClient({ workload: "home_ecl_narrative" }) as AnthropicLikeClient;
-    const labelByIdentifier = buildVisibleIdentifierLabels(rows);
     const rawThesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic, {
       deterministicClaimPlan: true,
     });
-    const thesisResult = scrubThesisResultVisibleIds(rawThesisResult, labelByIdentifier);
+    const thesisResult = scrubThesisResultVisibleIds(rawThesisResult, visibleIdentifierLabels);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
     const publicationIssues = publicationGateIssues(thesisResult, signalPacket);
     logPublicationGateEvent(options, thesisResult, signalPacket, publicationIssues);
@@ -3196,7 +3221,7 @@ async function main() {
       anthropic,
       options.chapterIds,
     );
-    const chapters = scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[];
+    const chapters = scrubVisibleIdsInValue(generatedChapters, visibleIdentifierLabels) as ChapterView[];
     const verificationSummary = {
       structural_issue_count: thesisResult.structuralIssues.length,
       verdict_tally: verdictTally(thesisResult.verificationLedger),
@@ -3266,7 +3291,7 @@ async function main() {
   }
 }
 
-if (process.argv[1] && process.argv[1].includes("build_home_ecl_narrative_layer")) {
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exit(1);

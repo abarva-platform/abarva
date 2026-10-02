@@ -369,6 +369,14 @@ type ReviewSignalField =
   | "assumptions"
   | "openQuestions";
 
+/** One reviewed list item per non-empty line, trimmed. Applied on save only. */
+export function normalizeReviewSignalLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export function EvidenceReviewEditor({
   review,
   programId,
@@ -391,16 +399,41 @@ export function EvidenceReviewEditor({
       .map((citation) => `${citation.quote} | ${citation.locator}`)
       .join("\n"),
   );
+  // The text of each list field as the reviewer is typing it.
+  //
+  // These used to be normalised into trimmed, non-empty lines on every change
+  // and rendered back from that list. A trailing space or a new empty line is
+  // removed by that normalisation, so the keystroke that produced it was
+  // undone before the next one: a reviewer could not type a space after a
+  // word or start a second line — only paste finished text. The instruction
+  // above the form is to correct the parser's facts, so the raw text is kept
+  // while editing and normalised once, when the reviewed version is saved.
+  const [signalText, setSignalText] = useState<
+    Record<ReviewSignalField, string>
+  >(() => ({
+    decisions: review.extraction.structured.decisions.join("\n"),
+    risks: review.extraction.structured.risks.join("\n"),
+    baselineCandidates:
+      review.extraction.structured.baselineCandidates.join("\n"),
+    actionItems: review.extraction.structured.actionItems.join("\n"),
+    observations: review.extraction.structured.observations.join("\n"),
+    assumptions: review.extraction.structured.assumptions.join("\n"),
+    openQuestions: review.extraction.structured.openQuestions.join("\n"),
+  }));
   const setSignalLines = (field: ReviewSignalField, value: string) => {
-    const lines = value
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
-    setExtraction((current) => ({
-      ...current,
-      structured: { ...current.structured, [field]: lines },
-    }));
+    setSignalText((current) => ({ ...current, [field]: value }));
   };
+  const reviewedSignals = (): Record<ReviewSignalField, string[]> => ({
+    decisions: normalizeReviewSignalLines(signalText.decisions),
+    risks: normalizeReviewSignalLines(signalText.risks),
+    baselineCandidates: normalizeReviewSignalLines(
+      signalText.baselineCandidates,
+    ),
+    actionItems: normalizeReviewSignalLines(signalText.actionItems),
+    observations: normalizeReviewSignalLines(signalText.observations),
+    assumptions: normalizeReviewSignalLines(signalText.assumptions),
+    openQuestions: normalizeReviewSignalLines(signalText.openQuestions),
+  });
   const fieldLabels: Array<[ReviewSignalField, string]> = [
     ["decisions", "Decisions"],
     ["baselineCandidates", "Baseline candidates"],
@@ -504,7 +537,7 @@ export function EvidenceReviewEditor({
               {label}
               <textarea
                 aria-label={`${review.title} reviewed ${label.toLowerCase()}`}
-                value={extraction.structured[field].join("\n")}
+                value={signalText[field]}
                 onChange={(event) => setSignalLines(field, event.target.value)}
                 rows={3}
                 placeholder="One item per line"
@@ -600,6 +633,7 @@ export function EvidenceReviewEditor({
                   ...extraction,
                   structured: {
                     ...extraction.structured,
+                    ...reviewedSignals(),
                     citations: parsedCitations,
                   },
                 })

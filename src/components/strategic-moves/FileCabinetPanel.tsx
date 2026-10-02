@@ -1706,7 +1706,7 @@ function ArtifactRow({
                 value={clientApprovalReason}
                 onChange={(e) => setClientApprovalReason(e.target.value)}
                 rows={2}
-                placeholder="Approval rationale, e.g. Sponsor reviewed the charter and approved this version for P1 gate closure."
+                placeholder="Approval rationale, e.g. the sponsor reviewed this version and approved it for gate closure."
                 style={{
                   width: "100%",
                   resize: "vertical",
@@ -1863,12 +1863,19 @@ export function FileCabinetPanel({
   phase = 0,
   presentationMode = false,
   onEvidenceChanged,
+  evidenceFamilies = [],
 }: {
   moveId: string;
   phase?: number;
   presentationMode?: boolean;
   onEvidenceChanged?: () => void;
+  /**
+   * The evidence families this phase requires. When supplied, the uploader
+   * can say which one a file covers instead of leaving it to inference.
+   */
+  evidenceFamilies?: ReadonlyArray<{ id: string; label: string }>;
 }) {
+  const [declaredFamily, setDeclaredFamily] = useState("");
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [pendingEvidenceReviews, setPendingEvidenceReviews] = useState<
     PendingEvidenceReview[]
@@ -1964,6 +1971,9 @@ export function FileCabinetPanel({
         fd.append("file", file);
         fd.append("phase", String(phase));
         fd.append("family", uploadFamily);
+        if (uploadFamily === "uploaded_evidence" && declaredFamily) {
+          fd.append("evidenceFamily", declaredFamily);
+        }
         const r = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
           method: "POST",
           credentials: "include",
@@ -1971,7 +1981,11 @@ export function FileCabinetPanel({
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.ok)
-          throw new Error(j.error || j.detail || `HTTP ${r.status}`);
+          throw new Error(
+            j.error === "sensitive_data_quarantined"
+              ? `${file.name} was not uploaded. It appears to contain personal or regulated identifiers, so nothing was stored. Remove the identifiers and upload again.`
+              : j.error || j.detail || `HTTP ${r.status}`,
+          );
         const evidence = j.evidence as
           | {
               status?: string;
@@ -1996,7 +2010,7 @@ export function FileCabinetPanel({
         setUploadMsg(e instanceof Error ? e.message : "upload failed");
       }
     },
-    [moveId, phase, load, uploadFamily, onEvidenceChanged],
+    [moveId, phase, load, uploadFamily, declaredFamily, onEvidenceChanged],
   );
 
   useEffect(() => {
@@ -2110,6 +2124,41 @@ export function FileCabinetPanel({
               <option value="session_artifact">Workshop / session notes</option>
             </select>
           </label>
+          {evidenceFamilies.length > 0 && uploadFamily === "uploaded_evidence" ? (
+            <label
+              style={{
+                display: "grid",
+                gap: 3,
+                color: "#5A6472",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              <span>Covers required evidence</span>
+              <select
+                aria-label="Required evidence this file covers"
+                onChange={(event) => setDeclaredFamily(event.target.value)}
+                value={declaredFamily}
+                style={{
+                  minHeight: 32,
+                  maxWidth: 260,
+                  border: "1px solid #D5DAE2",
+                  borderRadius: 5,
+                  background: "#fff",
+                  color: "#1A1A18",
+                  fontSize: 11.5,
+                  padding: "5px 8px",
+                }}
+              >
+                <option value="">Not stated</option>
+                {evidenceFamilies.map((family) => (
+                  <option key={family.id} value={family.id}>
+                    {family.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <input
             aria-label="Upload Move file"
             ref={fileRef}

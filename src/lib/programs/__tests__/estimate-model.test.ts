@@ -111,7 +111,7 @@ describe("deterministic Moves estimate model", () => {
     expect(prompt).toContain("Reporting foundation / Data engineer / internal");
     expect(prompt).toContain("Reporting foundation / Data engineer / vendor");
     expect(prompt).toContain("assumption One bounded reporting release");
-    expect(prompt).toContain("USD 2,000");
+    expect(prompt).toContain("$2,000");
     expect(prompt).toContain("Claude Code assists tests and scaffolding");
     expect(formatEstimateModelForPrompt(JSON.stringify(model({ reviewConfirmed: false })))).toBeNull();
   });

@@ -61,3 +61,5 @@ Do not promote the shadow projection. Revert the job via PR; use a governed data
 ## Known Gaps
 
 - Shadow projection alone does not provide verified chapter narrative, aVa parity, export parity, or a CXO-ready active Home experience.
+- Corrected on 2026-10-02: the governed data job the Rollback Plan refers to for removing projection rows does not exist in the repository. Once a projection's manifest has been named by a Home declaration, active or retired, its rows cannot be removed while that declaration row exists.
+- The Rollout Plan's statement that the projection remains shadowed describes this release alone. A later release, `2026-10-02-home-active-assessment`, adds the job that selects a projection for Home.

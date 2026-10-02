@@ -9,7 +9,7 @@ import {
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { selectedHomeAssessmentId } from "../home-assessment-selection";
+import { selectHomeAssessment } from "../home-assessment-selection";
 import { getHomeReviewBundle } from "../golden-snapshot";
 import { createHomeNarrativePacketArtifact } from "../home-narrative-packet";
 import { homeRecordSourceToken } from "../record-source-token";
@@ -20,8 +20,10 @@ import {
 import type { HomeReviewBundle } from "../types";
 
 jest.mock("../home-assessment-selection", () => ({
-  selectedHomeAssessmentId: jest.fn(async () =>
-    "assessment-dense-source-room-20260823"),
+  selectHomeAssessment: jest.fn(async () => ({
+    assessmentId: "assessment-dense-source-room-20260823",
+    declared: null,
+  })),
 }));
 
 type PacketWithCategorySummaries = ReturnType<
@@ -446,10 +448,17 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
   });
 
-  it("reads the explicitly selected Home assessment without changing other product selectors", async () => {
-    jest.mocked(selectedHomeAssessmentId).mockResolvedValueOnce(
-      "assessment-synthetic-enterprise-v2",
-    );
+  it("reads the declared Home assessment as the projection its declaration names", async () => {
+    jest.mocked(selectHomeAssessment).mockResolvedValueOnce({
+      assessmentId: "assessment-synthetic-enterprise-v2",
+      declared: {
+        manifestId: "11111111-1111-4111-8111-111111111111",
+        projectionVersion: 3,
+        projectionHash: "a".repeat(64),
+        sourceSetHash: "b".repeat(64),
+        rowCount: 1,
+      },
+    });
     const query = jest
       .spyOn(azureRead, "query")
       .mockResolvedValueOnce([{ full_name: "serving.home_applications_systems" }])
@@ -468,9 +477,45 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
 
     await getHomeEclProjectionBundle("meridian-health");
 
+    expect(selectHomeAssessment).toHaveBeenLastCalledWith("meridian-health");
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining(
+        "projection_manifest_id = $3::uuid and projection_version = $4",
+      ),
+    );
     expect(query.mock.calls[1]?.[1]).toEqual([
       "meridian-health",
       "assessment-synthetic-enterprise-v2",
+      "11111111-1111-4111-8111-111111111111",
+      3,
+    ]);
+  });
+
+  it("reads an undeclared assessment by tenant and assessment, as before", async () => {
+    const query = jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([{ full_name: "serving.home_applications_systems" }])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "Default application",
+          admission_status: "admitted",
+        }),
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    await getHomeEclProjectionBundle("meridian-health");
+
+    expect(query.mock.calls[1]?.[0]).not.toEqual(
+      expect.stringContaining("projection_manifest_id"),
+    );
+    expect(query.mock.calls[1]?.[1]).toEqual([
+      "meridian-health",
+      "assessment-dense-source-room-20260823",
     ]);
   });
 
@@ -558,7 +603,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
 
   it("falls back to the reviewed Home bundle when the Meridian ECL serving projection is empty", async () => {
     jest.spyOn(azureRead, "query").mockResolvedValueOnce([]);
-    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const error = jest.spyOn(console, "error").mockImplementation(() => {});
 
     const base = getHomeReviewBundle("meridian-health");
     const bundle =
@@ -566,15 +611,21 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
 
     expect(bundle).toBe(base);
     expect(bundle.technologyEstate?.recordTypes[0]?.rows.length).toBe(306);
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("ECL projection unavailable for meridian-health"),
-      expect.any(Error),
-    );
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(error.mock.calls[0]?.[0] as string)).toMatchObject({
+      level: "error",
+      event: "home_projection_fault",
+      metadata: {
+        tenantKey: "meridian-health",
+        reason: "default_assessment_has_no_rows",
+        served: "reviewed_snapshot",
+      },
+    });
   });
 
   it("reports fallback provenance when the Meridian ECL serving projection is empty", async () => {
     jest.spyOn(azureRead, "query").mockResolvedValueOnce([]);
-    jest.spyOn(console, "warn").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
 
     const base = getHomeReviewBundle("meridian-health");
     if (!base) throw new Error("stored copy missing");
@@ -609,7 +660,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           },
         }),
       ]);
-    jest.spyOn(console, "warn").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
 
     const result =
       await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(

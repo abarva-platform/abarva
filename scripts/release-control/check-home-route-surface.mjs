@@ -22,15 +22,19 @@ function readFile(relativePath) {
 
 const homePageSource = readFile('src/app/(maestro)/home/page.tsx');
 
-if (!homePageSource.includes("@/components/home/HomeSurface")) {
-  failures.push('/home must import the canonical HomeSurface component.');
+// `/home` mounts the v4 executive readout, `HomePreviewAppRoot`. The reader it
+// replaced, `HomeSurface`, is retired from this route, so it is refused below
+// as a retired marker instead of being required here.
+if (!homePageSource.includes('@/components/home/preview/HomePreviewAppRoot')) {
+  failures.push('/home must import the canonical HomePreviewAppRoot component.');
 }
 
-if (!homePageSource.includes('<HomeSurface')) {
-  failures.push('/home must mount HomeSurface directly.');
+if (!homePageSource.includes('<HomePreviewAppRoot')) {
+  failures.push('/home must mount HomePreviewAppRoot directly.');
 }
 
 const forbiddenHomeRouteMarkers = [
+  'HomeSurface',
   'EnterpriseLandscapeHome',
   'getEnterpriseLandscapeViewModel',
   'HomeOverviewV2',
