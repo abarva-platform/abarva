@@ -375,6 +375,33 @@ describe("deliverable plan generation pass", () => {
       expect(calls).toBe(2);
     });
 
+    it("reports the policy category and explanation the provider gave for a refusal", async () => {
+      const call: GovernedToolCall = async () => ({
+        toolInput: ENDED_EARLY,
+        modelId: "m",
+        stopReason: "refusal",
+        outputTokens: 3832,
+        stopDetails: { category: "cyber", explanation: "Flagged by policy." },
+      });
+
+      await expect(generateDeliverablePlan(REQUEST, call)).rejects.toThrow(
+        /first attempt stop reason: refusal, 3832 output tokens, policy category: cyber, provider explanation: Flagged by policy\.;/,
+      );
+    });
+
+    it("says so when a refusal names no category", async () => {
+      const call: GovernedToolCall = async () => ({
+        toolInput: ENDED_EARLY,
+        modelId: "m",
+        stopReason: "refusal",
+        stopDetails: { category: null, explanation: null },
+      });
+
+      await expect(generateDeliverablePlan(REQUEST, call)).rejects.toThrow(
+        /stop reason: refusal, policy category: not named;/,
+      );
+    });
+
     it("validates the retried plan like any other", async () => {
       let calls = 0;
       const call: GovernedToolCall = async () => {
