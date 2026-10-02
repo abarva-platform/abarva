@@ -139,6 +139,7 @@ export function EnterpriseContextPanel({
       "our_business",
       "strategy_value_creation",
       "how_we_operate",
+      "what_needs_attention",
     ].includes(chapterId)
   )
     return null;
@@ -224,6 +225,10 @@ export function EnterpriseContextPanel({
             {metric("Declared priorities", String(context.priorities.length))}
             {metric("Programs", String(total("programs")))}
             {metric("At-risk linked programs", String(atRiskPrograms))}
+            {metric(
+              "High/critical risks with partial or unknown controls",
+              String(context.riskTriage.attentionRisks.length),
+            )}
           </div>
           <p
             style={{
@@ -471,6 +476,63 @@ export function EnterpriseContextPanel({
             {context.sharedFunctionIds.length === 1 ? " has" : "s have"} no
             declared segment. Function-level accountability is recorded;
             decision rights are not inferred.
+          </p>
+        </>
+      ) : null}
+      {chapterId === "what_needs_attention" ? (
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,170px),1fr))",
+              gap: 18,
+              marginBottom: 24,
+            }}
+          >
+            {metric("Risks in the record", String(context.riskTriage.totalRisks))}
+            {metric("High or critical", String(context.riskTriage.highOrCritical))}
+            {metric("High/critical with partial control", String(context.riskTriage.partialControl))}
+            {metric("High/critical with unknown control", String(context.riskTriage.unknownControl))}
+          </div>
+          <h2 style={{ fontFamily: SANS, fontSize: 20, margin: "0 0 8px" }}>
+            Risk review queue
+          </h2>
+          <p style={{ color: V4.inkSoft, fontFamily: SANS, fontSize: 13, lineHeight: 1.5 }}>
+            High and critical risks with a partially effective or unknown control
+            state lead this queue. Unknown is not the same as uncontrolled. This
+            is a review order, not a calculated risk score.
+          </p>
+          {context.riskTriage.attentionRisks.length ? (
+            <Table
+              headers={["Risk", "Severity", "Control state", "Owner", "Affected record", "Evidence"]}
+              minWidth={980}
+            >
+              {context.riskTriage.attentionRisks.slice(0, 10).map((risk) => (
+                <tr key={risk.rowKey}>
+                  <td style={CELL_STYLE}>
+                    <strong style={{ textTransform: "capitalize" }}>{risk.riskType?.replaceAll("_", " ") ?? risk.title}</strong>
+                    {risk.functionName ? <span style={{ display: "block", color: V4.slate }}>{risk.functionName}</span> : null}
+                    <Drill
+                      label="View risk"
+                      onOpen={() => onOpenRows("risk_control", risk.rowKey)}
+                    />
+                  </td>
+                  <td style={CELL_STYLE}>{risk.severity}</td>
+                  <td style={CELL_STYLE}>{risk.controlState === "unknown" ? "Unknown" : "Partially effective"}</td>
+                  <td style={CELL_STYLE}>{risk.ownerRole ?? "Not recorded"}</td>
+                  <td style={CELL_STYLE}>{risk.affectedObject ?? "Not resolved"}</td>
+                  <td style={CELL_STYLE}><Evidence fact={risk} /></td>
+                </tr>
+              ))}
+            </Table>
+          ) : (
+            <p style={{ color: V4.slate, fontFamily: SANS, fontSize: 13 }}>
+              No high or critical risk has a partially effective or unknown control state in this record.
+            </p>
+          )}
+          <p style={{ color: V4.slate, fontFamily: SANS, fontSize: 12, margin: "14px 0 0" }}>
+            Showing {Math.min(10, context.riskTriage.attentionRisks.length)} of {context.riskTriage.attentionRisks.length} review items.
+            Control effectiveness has not been independently attested here.
           </p>
         </>
       ) : null}

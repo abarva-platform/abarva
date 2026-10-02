@@ -28,6 +28,7 @@ import { humanizeSourceFamily } from "./source-register";
 import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import { factTokens } from "./numeric-lineage-tokens";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -52,8 +53,6 @@ export async function mapWithConcurrency<T, R>(
 // Mirror of quality-validator.ts countUnsupportedClaims — keep in lockstep.
 const FACT_LIKE =
   /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
-const FACT_TOKEN_RE =
-  /(\$\s?\d[\d,]*(?:\.\d+)?[kmb]?|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:\.\d+)?%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/gi;
 const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
 const DECISIVE_RECOMMENDATION =
@@ -72,15 +71,6 @@ export function extractUnsupportedFigureClaims(markdown: string): string[] {
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
-}
-
-function normalizeFactToken(value: string): string {
-  return value.toLowerCase().replace(/[\s,$]/g, "");
-}
-
-function factTokens(value: string): string[] {
-  const matches = value.match(FACT_TOKEN_RE) ?? [];
-  return Array.from(new Set(matches.map(normalizeFactToken)));
 }
 
 function sentenceEvidenceCitations(
@@ -182,8 +172,29 @@ export interface ConsolidatedOpenInput {
   detail: string;
 }
 
-function normalizeOpenInputDetail(detail: string): string {
-  const normalized = detail
+/**
+ * A structured field from the model, as text.
+ *
+ * The synthesis pass returns JSON, and a field typed as text here can arrive
+ * as a number, a boolean, null, or a nested value — a table cell holding 64
+ * rather than "64". Every repair below calls string methods on these fields,
+ * so one numeric cell failed the whole build with a TypeError.
+ */
+export function structuredText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeOpenInputDetail(detail: unknown): string {
+  const normalized = structuredText(detail)
     .replace(
       /\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi,
       (_match, inner: string) =>
@@ -205,16 +216,20 @@ function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
   return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
 }
 
-function repairStructuredClientFactText(value: string): string {
+function repairStructuredClientFactText(value: unknown): string {
   return repairUncitedFigures(normalizeOpenInputDetail(value));
 }
 
 function repairStructuredTable(table: RenderableTable): RenderableTable {
+  const columns: unknown[] = Array.isArray(table.columns) ? table.columns : [];
+  const rows: unknown[] = Array.isArray(table.rows) ? table.rows : [];
   return {
     ...table,
-    columns: table.columns.map((column) => normalizeOpenInputDetail(column)),
-    rows: table.rows.map((row) =>
-      row.map((cell) => repairStructuredClientFactText(cell)),
+    columns: columns.map((column) => normalizeOpenInputDetail(column)),
+    rows: rows.map((row) =>
+      (Array.isArray(row) ? row : [row]).map((cell) =>
+        repairStructuredClientFactText(cell),
+      ),
     ),
   };
 }
@@ -245,7 +260,9 @@ function repairStructuredDeckSlides(
         ? { title: repairStructuredClientFactText(slide.title) }
         : {}),
       governingMessage: repairStructuredClientFactText(slide.governingMessage),
-      points: (slide.points ?? []).map(repairStructuredClientFactText),
+      points: (Array.isArray(slide.points) ? slide.points : []).map(
+        repairStructuredClientFactText,
+      ),
       ...(slide.speakerNotes
         ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
         : {}),
@@ -667,18 +684,34 @@ function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
   }
 }
 
-function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
-  if (!exhibitHasStructuredData(exhibit)) return false;
+/**
+ * Why an authored exhibit is not kept, or null when it is.
+ *
+ * The rules are the same as before; they are named so a dropped exhibit can
+ * be reported. An exhibit that failed one of them used to vanish without a
+ * trace, and the artifact was then blocked for "missing exhibits" with no
+ * way to tell a missing exhibit from a rejected one.
+ */
+export function exhibitRejectionReason(
+  exhibit: RenderableExhibit,
+): string | null {
+  if (!exhibitHasStructuredData(exhibit)) {
+    return "data is missing, is not a supported payload kind, or is below that kind's minimum content";
+  }
   const description = exhibit.description?.trim() ?? "";
   if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
-    return false;
+    return "key, title or description is empty";
   }
-  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) return false;
+  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) {
+    return "description is a generic placeholder";
+  }
   const clauses = description
     .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
     .map((p) => p.trim())
     .filter(Boolean);
-  return clauses.length >= 3;
+  return clauses.length >= 3
+    ? null
+    : "description has fewer than three distinct statements";
 }
 
 function renderableExhibitsFromSynthesis(
@@ -687,7 +720,13 @@ function renderableExhibitsFromSynthesis(
   const byKey = new Map<string, RenderableExhibit>();
   for (const exhibit of synth.exhibits ?? []) {
     const repaired = repairStructuredExhibit(exhibit);
-    if (!exhibitHasDiagramReadyContent(repaired)) continue;
+    const rejection = exhibitRejectionReason(repaired);
+    if (rejection) {
+      console.warn(
+        `[section-generation] authored exhibit not kept: key=${JSON.stringify(repaired.key ?? null)} reason=${rejection}`,
+      );
+      continue;
+    }
     byKey.set(repaired.key, repaired);
   }
   return [...byKey.values()];

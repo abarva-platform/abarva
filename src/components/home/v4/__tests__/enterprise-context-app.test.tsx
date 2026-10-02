@@ -159,12 +159,14 @@ afterEach(() => {
 });
 
 describe("the enterprise context on the Home page", () => {
-  it("is on the four chapters it has a view for, and on no other", () => {
+  it("is on the five chapters it has a view for, and on no other", () => {
     const expected: Record<string, string> = {
       executive_brief: "The enterprise, in evidence",
       our_business: "Business model and segment economics",
       strategy_value_creation: "Priorities and execution",
       how_we_operate: "How accountability runs",
+      // The risk review view, added alongside source-linked risk context.
+      what_needs_attention: "Where risk needs review",
     };
     for (const [chapterId, heading] of Object.entries(expected)) {
       const { container, unmount } = open(chapterId);
@@ -178,7 +180,7 @@ describe("the enterprise context on the Home page", () => {
       );
       unmount();
     }
-    for (const chapterId of ["technology_data", "what_needs_attention"]) {
+    for (const chapterId of ["technology_data"]) {
       const { container, unmount } = open(chapterId);
       expect(text(container.querySelector("h1"))).toBe(
         "Current record, interpretation pending review",

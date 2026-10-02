@@ -29,6 +29,8 @@ import {
   toStoredReviewedStructured,
 } from "@/lib/programs/evidence-review-contract";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import { PROGRAM_MODULE_EVIDENCE_COLUMNS } from "./program-module-evidence-columns";
+import { estimateCaptureStatement } from "./estimate-capture-evidence";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
@@ -103,6 +105,14 @@ function confidenceFromScore(
   score: number,
 ): GovernedCandidateLike["confidence"] {
   return score >= 0.75 ? "high" : score >= 0.5 ? "medium" : "low";
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return String(err);
 }
 
 function sourceRefObject(value: unknown): Record<string, unknown> {
@@ -333,12 +343,26 @@ function phaseCaptureCandidates(
     confidence,
     asOf:
       stringOrNull(row.completed_at) ??
-      stringOrNull(row.updated_at) ??
+      stringOrNull(row.started_at) ??
+      stringOrNull(row.created_at) ??
       undefined,
     disclosureTier: "internal_only",
     provenanceRef:
       stringOrNull(row.id) ?? moduleKey ?? `program_modules:${sectionKey}`,
   };
+  // The reviewed estimate is cited as its calculated rendering, whole: the
+  // figures a deliverable presents are the calculated ones, and they are not
+  // in the saved inputs. See estimate-capture-evidence.ts.
+  const estimateStatement = estimateCaptureStatement(sectionKey, value);
+  if (estimateStatement) {
+    return [
+      {
+        ...baseCandidate,
+        label: `${phasePrefix}: reviewed estimate model`,
+        statement: estimateStatement,
+      },
+    ];
+  }
   const signalCandidates = captureValueSignals(label, value).map(
     (signal, index): GovernedCandidateLike => ({
       label: `${phasePrefix}: ${signal.label}`,
@@ -472,17 +496,25 @@ async function loadMoveCurrentStateCandidates(
   try {
     let moduleQuery = db
       .from("program_modules")
-      .select(
-        "id, module_key, module_name, phase_number, module_order, status, state_jsonb, updated_at, completed_at",
-      )
+      .select(PROGRAM_MODULE_EVIDENCE_COLUMNS.join(", "))
       .eq("engagement_id", moveId);
     if (params.phase !== undefined) {
       moduleQuery = moduleQuery.lte("phase_number", params.phase);
     }
-    const { data: modules } = await moduleQuery
+    const { data: modules, error: modulesError } = await moduleQuery
       .order("phase_number", { ascending: true })
       .order("module_order", { ascending: true })
       .limit(MOVE_PHASE_CAPTURE_LIMIT);
+    // A failed read is not "no saved inputs". Generation still proceeds on the
+    // remaining evidence, but the failure is reported: when it was silent, a
+    // query naming a column the table does not have removed every saved
+    // input from evidence and nothing showed it.
+    if (modulesError) {
+      console.error(
+        "[evidence-assembler] saved phase inputs could not be read; they are absent from this build's evidence",
+        { moveId, message: errorMessage(modulesError) },
+      );
+    }
     if (Array.isArray(modules)) {
       for (const row of modules as Array<Record<string, unknown>>) {
         if (
@@ -497,9 +529,13 @@ async function loadMoveCurrentStateCandidates(
         candidates.push(...phaseCaptureCandidates(row));
       }
     }
-  } catch {
+  } catch (err) {
     // Older tenants or fixtures may not have phase-capture rows. Fall through to
     // reviewed evidence and tenant context instead of failing generation.
+    console.error(
+      "[evidence-assembler] saved phase inputs could not be read; they are absent from this build's evidence",
+      { moveId, message: errorMessage(err) },
+    );
   }
 
   // Structured current-state CSVs land in canonical tower_* tables and write a

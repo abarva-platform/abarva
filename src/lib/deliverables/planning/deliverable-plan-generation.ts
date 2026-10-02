@@ -161,16 +161,85 @@ export function buildDeliverablePlanUserMessage(
 export const DELIVERABLE_PLAN_MAX_TOKENS = 12_000;
 export const DELIVERABLE_PLAN_RETRY_MAX_TOKENS = 24_000;
 
+/**
+ * Fields the plan cannot be judged without. `readerTakeaway` is absent from
+ * the list because a missing one is repaired from the target hypothesis.
+ */
+const STRUCTURAL_PLAN_FIELDS = [
+  "storyline",
+  "currentStateInterpretation",
+  "majorGaps",
+  "targetStateHypothesis",
+  "requiredDecisions",
+  "requiredExhibits",
+  "narrativeSequence",
+] as const;
+
+/** Structural fields the model never emitted — absent, not merely weak. */
+export function missingPlanFields(toolInput: unknown): string[] {
+  if (!toolInput || typeof toolInput !== "object") {
+    return [...STRUCTURAL_PLAN_FIELDS];
+  }
+  const record = toolInput as Record<string, unknown>;
+  return STRUCTURAL_PLAN_FIELDS.filter(
+    (field) => record[field] === undefined || record[field] === null,
+  );
+}
+
+function describeStop(result: {
+  stopReason?: string | null;
+  outputTokens?: number;
+  stopDetails?: { category: string | null; explanation: string | null } | null;
+}): string {
+  const reason = result.stopReason ?? "not reported";
+  const parts = [`stop reason: ${reason}`];
+  if (typeof result.outputTokens === "number") {
+    parts.push(`${result.outputTokens} output tokens`);
+  }
+  // A refusal is the provider stopping the response under a usage policy. Its
+  // category is the only thing that says which policy, so it is reported
+  // whenever one was given.
+  if (result.stopDetails) {
+    parts.push(
+      `policy category: ${result.stopDetails.category ?? "not named"}`,
+    );
+    if (result.stopDetails.explanation) {
+      parts.push(`provider explanation: ${result.stopDetails.explanation}`);
+    }
+  }
+  return parts.join(", ");
+}
+
+/**
+ * Generate and validate the plan.
+ *
+ * Two ways a response can be unfinished rather than wrong, both retried once:
+ *
+ * - It hit the output limit (`max_tokens`). Retried with a larger budget.
+ * - It ended for any other reason with structural fields never emitted. The
+ *   streaming client returns whatever was parsed before the end as a
+ *   well-formed object, so an early end looks exactly like a plan with no
+ *   target state, no decisions and no exhibits. The first version of this
+ *   check recognised only `max_tokens`; a build then failed on a plan that
+ *   stopped after two fields with a different stop reason, and the failure
+ *   said nothing about why. Retried with the missing fields named.
+ *
+ * A response with every field present is validated as it stands and never
+ * retried: a weak plan is a verdict, an unfinished one is not. Every failure
+ * reports the stop reason, so the cause is in the run record.
+ */
 export async function generateDeliverablePlan(
   req: DeliverablePlanGenRequest,
   call: GovernedToolCall,
 ): Promise<GeneratedDeliverablePlan> {
   const model = req.model ?? DEFAULT_DELIVERABLE_PLAN_MODEL;
   const firstBudget = req.maxTokens ?? DELIVERABLE_PLAN_MAX_TOKENS;
-  const request = (maxTokens: number) =>
+  const request = (maxTokens: number, retryNote?: string) =>
     call({
       system: DELIVERABLE_PLAN_SYSTEM_PROMPT,
-      userMessage: buildDeliverablePlanUserMessage(req),
+      userMessage: retryNote
+        ? `${buildDeliverablePlanUserMessage(req)}\n\n${retryNote}`
+        : buildDeliverablePlanUserMessage(req),
       tool: DELIVERABLE_PLAN_TOOL,
       model,
       maxTokens,
@@ -189,6 +258,24 @@ export async function generateDeliverablePlan(
           ` after an earlier cut-off at ${firstBudget}; the plan is incomplete and was not validated.`,
       );
     }
+  } else {
+    const missing = missingPlanFields(result.toolInput);
+    if (missing.length > 0) {
+      const firstStop = describeStop(result);
+      result = await request(
+        firstBudget,
+        `Your previous attempt ended before these required fields were emitted: ${missing.join(", ")}. ` +
+          "Emit every required field of the plan in this call.",
+      );
+      const stillMissing = missingPlanFields(result.toolInput);
+      if (stillMissing.length > 0) {
+        throw new Error(
+          `Deliverable plan generation ended early twice without required fields (${stillMissing.join(", ")}); ` +
+            `first attempt ${firstStop}; second attempt ${describeStop(result)}. ` +
+            "The plan is incomplete and was not validated.",
+        );
+      }
+    }
   }
   const { toolInput, modelId } = result;
   if (!toolInput || typeof toolInput !== "object") {
@@ -203,7 +290,7 @@ export async function generateDeliverablePlan(
       `Generated deliverable plan failed validation: ${issues
         .filter((i) => i.level === "error")
         .map((i) => i.message)
-        .join("; ")}`,
+        .join("; ")} (${describeStop(result)})`,
     );
   }
   return { plan, issues, modelId };

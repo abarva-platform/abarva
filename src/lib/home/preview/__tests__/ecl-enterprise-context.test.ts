@@ -12,6 +12,7 @@ import {
 } from "../ecl-enterprise-context";
 import {
   buildHomeReviewBundleFromEclProjectionRows,
+  buildTechnologyEstateFromHomeProjectionRows,
   type HomeProjectionRow,
 } from "../ecl-projection-bundle";
 import {
@@ -173,6 +174,37 @@ describe("the enterprise context read from the generated source", () => {
     assert.ok(profile);
     assert.equal(build([...rows, { ...profile, row_key: "ENT-EXTRA" }]), null);
     assert.equal(build(rows.filter((row) => !isProfile(row))), null);
+
+    assert.equal(context.segmentSpine.segments.length, 3);
+    assert.equal(context.functions.length, 14);
+    assert.equal(context.sharedFunctionIds.length, 6);
+    assert.equal(context.priorities.length, 5);
+    assert.equal(context.riskTriage.totalRisks, 200);
+    assert.equal(context.riskTriage.highOrCritical, 62);
+    assert.equal(context.riskTriage.partialControl, 19);
+    assert.equal(context.riskTriage.unknownControl, 5);
+    assert.equal(context.riskTriage.attentionRisks.length, 24);
+    assert.ok(context.riskTriage.attentionRisks.every((risk) =>
+      risk.sourceRefs.length > 0 && risk.ownerRole && risk.functionName,
+    ));
+    assert.equal(context.riskTriage.attentionRisks[0].severity, "critical");
+    assert.equal(context.riskTriage.attentionRisks[0].controlState, "unknown");
+    const riskBrowser = buildTechnologyEstateFromHomeProjectionRows(rows)
+      .recordTypes.find((recordType) => recordType.objectType === "risk_control");
+    assert.ok(riskBrowser);
+    assert.equal(riskBrowser.rows.length, 200);
+    assert.ok(riskBrowser.rows.every((row) => row.controlOwner === context.riskTriage.attentionRisks[0].ownerRole));
+    assert.equal(context.unlinkedPrograms.length, 1);
+    assert.ok(context.unlinkedPrograms[0].sourceRefs.length > 0);
+    const total = (domain: string) =>
+      context.segmentSpine.segments.reduce(
+        (sum, segment) => sum + segment.domains[domain].count,
+        0,
+      ) + context.segmentSpine.unattributed[domain];
+    assert.equal(total("applications"), 344);
+    assert.equal(total("programs"), 24);
+    assert.equal(total("spend"), 480);
+    assert.equal(total("risks"), 200);
     // A profile nothing links to a source is not a profile the page may speak from.
     assert.equal(
       build(rows, (row) => (isProfile(row) ? [] : cite(row))),
@@ -727,6 +759,7 @@ describe("the enterprise context read from the generated source", () => {
     assert.deepEqual(fromServing.priorities, context.priorities);
     assert.deepEqual(fromServing.functions, context.functions);
     assert.deepEqual(fromServing.attributionGaps, context.attributionGaps);
+    assert.deepEqual(fromServing.riskTriage, context.riskTriage);
   });
 });
 

@@ -59,6 +59,7 @@ import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { parseUploadedSolutionOptions } from "@/lib/programs/phase-templates/uploaded-solution-options";
+import { loadApprovedSolutionApproach } from "@/lib/programs/approved-solution-approach";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
@@ -714,6 +715,24 @@ export default async function StrategicMovePhaseWorkspacePage({
           )
           .catch(() => null)
       : null;
+  // The design decision already recorded for this Move. The page restores it
+  // as the selected option, so a reload does not ask for it again.
+  const approvedSolutionOption =
+    parsedPhase === 3
+      ? await loadApprovedSolutionApproach({
+          moveId,
+          clientId: ctx.clientId,
+        })
+          .then((approved) =>
+            approved
+              ? {
+                  selectedOptionId: approved.selectedOptionId,
+                  chosenOption: approved.chosenOption,
+                }
+              : null,
+          )
+          .catch(() => null)
+      : null;
   const initialConfirmedSolutionRoute = resolveConfirmedSolutionRoute({
     businessChangeAssessment: initialBusinessChangeAssessment,
     routeValidation: captureValue(2, "solution_route_validation"),
@@ -766,6 +785,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}
         initialConfirmedSolutionRoute={initialConfirmedSolutionRoute}
         uploadedSolutionOptionSet={uploadedSolutionOptionSet}
+        approvedSolutionOption={approvedSolutionOption}
         initialStageReadinessPreview={initialStageReadinessPreview}
         syntheticEvidencePackHref={syntheticEvidencePackHref}
         phaseBuildArtifacts={phaseBuildArtifacts}

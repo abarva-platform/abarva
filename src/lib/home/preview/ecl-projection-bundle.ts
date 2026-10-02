@@ -673,7 +673,10 @@ function metricOutcomeRow(row: HomeProjectionRow): JsonRecord {
   };
 }
 
-function riskControlRow(row: HomeProjectionRow): JsonRecord {
+function riskControlRow(
+  row: HomeProjectionRow,
+  ownerById: Map<string, string>,
+): JsonRecord {
   const payload = rowPayload(row);
   return {
     riskOrControlName:
@@ -687,7 +690,7 @@ function riskControlRow(row: HomeProjectionRow): JsonRecord {
     systemsImpacted: text(payload.systems_impacted),
     severity: text(payload.severity),
     likelihood: text(payload.likelihood),
-    controlOwner: text(payload.control_owner),
+    controlOwner: text(payload.control_owner) ?? ownerById.get(text(payload.owner_id) ?? ""),
     controlStatus: text(payload.control_status ?? payload.control_state),
     inherentRiskScore: numberValue(payload.inherent_risk_score),
     residualRiskScore: numberValue(payload.residual_risk_score),
@@ -1388,8 +1391,12 @@ export function buildTechnologyEstateFromHomeProjectionRows(
   const aiRows = intakeFamilyRows("ai_use_cases");
   const interviewRows = intakeFamilyRows("executive_interviews");
   const relationshipRows = intakeFamilyRows("relationships");
+  const ownerById = new Map<string, string>(orgRows.map((row): [string, string] => {
+    const data = rowPayload(row);
+    return [text(data.owner_id) ?? "", text(data.owner_role) ?? row.title];
+  }));
   const metrics = metricRows.map((row) => stripEmpty(metricOutcomeRow(row)));
-  const risks = riskRows.map((row) => stripEmpty(riskControlRow(row)));
+  const risks = riskRows.map((row) => stripEmpty(riskControlRow(row, ownerById)));
   const programs = programRows.map((row) =>
     stripEmpty(programInitiativeRow(row)),
   );

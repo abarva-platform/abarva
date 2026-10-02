@@ -5,6 +5,7 @@ import {
   inferSelectedOptionId,
   parseUploadedSolutionOptions,
   type UploadedOptionEvidence,
+  restoreApprovedOptionId,
 } from "../uploaded-solution-options";
 import { assembleP3SolutionOptions } from "../p3-option-assembler";
 import type { P3DesignInputsPack } from "../types";
@@ -271,5 +272,59 @@ describe("assembleP3SolutionOptions with a client option set", () => {
     expect(set.source).toBe("p3_design_inputs_pack");
     expect(set.options.length).toBeGreaterThanOrEqual(2);
     expect(set.options.every((o) => o.clientSupplied === undefined)).toBe(true);
+  });
+});
+
+describe("restoreApprovedOptionId", () => {
+  const options = [
+    { id: "A", label: "Stabilize member-service workflow first" },
+    { id: "B", label: "Governed agent-assist layer on current systems" },
+    { id: "C", label: "Broader member-service orchestration platform" },
+  ];
+
+  it("restores the recorded choice by name after a reload", () => {
+    expect(
+      restoreApprovedOptionId(
+        {
+          selectedOptionId: "B",
+          chosenOption: "Governed agent-assist layer on current systems",
+        },
+        options,
+      ),
+    ).toBe("B");
+  });
+
+  it("does not map a recorded id onto a different option set", () => {
+    // "B" was approved in another set; the option now labelled B is not it.
+    expect(
+      restoreApprovedOptionId(
+        { selectedOptionId: "B", chosenOption: "Context service" },
+        options,
+      ),
+    ).toBe("");
+  });
+
+  it("selects nothing when no decision is recorded", () => {
+    expect(restoreApprovedOptionId(null, options)).toBe("");
+    expect(restoreApprovedOptionId({ chosenOption: "  " }, options)).toBe("");
+  });
+
+  it("uses the recorded id only to choose between options with the same name", () => {
+    const twins = [
+      { id: "OPT-1", label: "Read-only panel" },
+      { id: "OPT-2", label: "Read-only panel" },
+    ];
+    expect(
+      restoreApprovedOptionId(
+        { selectedOptionId: "OPT-2", chosenOption: "read-only panel" },
+        twins,
+      ),
+    ).toBe("OPT-2");
+    expect(
+      restoreApprovedOptionId(
+        { selectedOptionId: "OPT-9", chosenOption: "Read-only panel" },
+        twins,
+      ),
+    ).toBe("");
   });
 });

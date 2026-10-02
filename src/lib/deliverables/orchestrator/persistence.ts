@@ -270,6 +270,28 @@ function buildGenerationMetrics(
   };
 }
 
+/**
+ * The reason an artifact is held, with what each blocking finding found.
+ *
+ * The reason used to be the state and the finding names only — "blocked_
+ * missing_exhibits: exhibit_enforcement" — which says an exhibit is missing
+ * and not which. The finding already carries that; it is now included.
+ */
+export function quarantineReasonWithDetail(
+  state: string,
+  blockingFindings: ReadonlyArray<{
+    dimension?: string;
+    detail?: ReadonlyArray<string>;
+  }>,
+): string {
+  const parts = blockingFindings.map((finding) => {
+    const name = finding.dimension ?? "unnamed";
+    const detail = (finding.detail ?? []).slice(0, 8).join(", ");
+    return detail ? `${name} (${detail})` : name;
+  });
+  return `${state}: ${parts.join(", ")}`;
+}
+
 function renderedVisualsPresent(html: string): boolean {
   return /<(?:svg|img|table)\b/i.test(html);
 }
@@ -574,7 +596,10 @@ export async function persistDeliverable(
       );
       if (opts.enforceQualityContract || profile.visualRendererRequired) {
         qualityQuarantined = true;
-        qualityQuarantineReason = `${assessment.state}: ${reasons}`;
+        qualityQuarantineReason = quarantineReasonWithDetail(
+          assessment.state,
+          blockingFindings,
+        );
       }
     }
   }

@@ -7,6 +7,9 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { HomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
 import { findBuilderLanguage } from "../cxo-language";
 import { EnterpriseContextPanel } from "../EnterpriseContextPanel";
+import assert from "node:assert/strict";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 /**
  * The panel, held to the values it is given.
@@ -123,6 +126,32 @@ const context: HomeEnterpriseContext = {
       metricCount: 7,
     },
   ],
+  riskTriage: {
+    totalRisks: 4,
+    highOrCritical: 2,
+    partialControl: 1,
+    unknownControl: 1,
+    attentionRisks: [
+      {
+        ...fact("RISK-1", "Recovery gap"),
+        riskType: "resilience",
+        severity: "critical",
+        controlState: "unknown",
+        ownerRole: "Risk chief",
+        functionName: "Claims",
+        affectedObject: "Claims platform",
+      },
+      {
+        ...fact("RISK-2", "Supplier dependency"),
+        riskType: "vendor",
+        severity: "high",
+        controlState: "partially_effective",
+        ownerRole: "Risk chief",
+        functionName: "Claims",
+        affectedObject: "Billing service",
+      },
+    ],
+  },
   sharedFunctionIds: ["FUNC-2"],
   unlinkedPrograms: [
     { ...fact("PROG-ROW-4", "Unlinked program"), programId: "PROG-4" },
@@ -453,4 +482,36 @@ describe("the enterprise context panel", () => {
       unmount();
     }
   });
+});
+
+// From #8875 (source-linked risk review): the executive view's risk flags and the
+// attention view's risk review queue, rendered to static markup and matched by text.
+test("executive context flags the unresolved risk work", () => {
+  const html = renderToStaticMarkup(
+    createElement(EnterpriseContextPanel, {
+      chapterId: "executive_brief",
+      context,
+      onOpenRows: () => undefined,
+    }),
+  );
+  assert.match(html, /At-risk linked programs/);
+  assert.match(html, /High\/critical risks with partial or unknown controls/);
+  assert.doesNotMatch(html, /serving\.home_|source_record_id/);
+});
+
+test("attention view ranks source-linked risk review without calling unknown uncontrolled", () => {
+  const html = renderToStaticMarkup(
+    createElement(EnterpriseContextPanel, {
+      chapterId: "what_needs_attention",
+      context,
+      onOpenRows: () => undefined,
+    }),
+  );
+  assert.match(html, /Risk review queue/);
+  assert.match(html, /Risk chief/);
+  assert.match(html, /Claims platform/);
+  assert.match(html, /Unknown is not the same as uncontrolled/);
+  assert.match(html, /View risk/);
+  assert.match(html, /As of 2026-09-30/);
+  assert.ok(html.indexOf("resilience") < html.indexOf("vendor"));
 });

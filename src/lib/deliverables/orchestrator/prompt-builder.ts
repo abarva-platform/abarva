@@ -26,7 +26,13 @@ import {
   storySpineFor,
 } from "@/lib/deliverables/shared/executive-story-contract";
 import { renderAdaptiveDepthPrompt } from "@/lib/deliverables/adaptive-depth";
-import type { MovesDeliverableKey } from "@/lib/deliverables/profiles/types";
+import type {
+  DeliverableKey,
+  MovesDeliverableKey,
+} from "@/lib/deliverables/profiles/types";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
+import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 
 const USE_CASE_TITLE: Record<string, string> = {
@@ -514,6 +520,72 @@ const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:
 const SECTION_SCHEMA_HINT = `Return ONLY JSON for THIS ONE section:
 { "key","title","bodyMarkdown","groundingMode","citationsUsed":[n] }`;
 
+/**
+ * The deck length the artifact will be judged against, stated to the pass that
+ * authors the deck.
+ *
+ * The slide band was enforced by the quality gate and told to no one: the
+ * synthesis pass was asked to "populate deckSlides" with no count, chose its
+ * own, and the artifact was blocked for having too few. A requirement the
+ * writer cannot see is not a quality bar, it is a coin toss.
+ */
+export function deckLengthInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!req.outputFormats.includes("pptx")) return "";
+  const band = SLIDE_BANDS[req.deliverableType as DeliverableKey];
+  if (!band) return "";
+  return `DECK LENGTH: "deckSlides" must contain between ${band.min} and ${band.max} slides. This deck is for: ${band.purpose}. Fewer than ${band.min} reads as a section list, not an argument, and fails the quality gate; more than ${band.max} stops being read. One governing message per slide. Reach the band by giving each distinct step of the argument its own slide — never by repeating a message or adding a slide with nothing to decide.`;
+}
+
+/**
+ * Exhibit keys that are produced by something other than this pass, so asking
+ * for them here would produce a second, competing copy: architecture exhibits
+ * come from the structured architecture model, and the open-inputs exhibit is
+ * the open-inputs table and checklist.
+ */
+const EXHIBITS_PRODUCED_ELSEWHERE: ReadonlySet<string> = new Set([
+  "open_inputs_required",
+  "current_state_architecture",
+  "target_state_architecture",
+  "data_flow",
+  "ai_decision_flow",
+  "agentic_overlay",
+  "integration_pattern",
+  "control_points",
+  "implementation_waves",
+]);
+
+/** Deliverables whose exhibits are projected from a fixed deck outline. */
+const EXHIBITS_FROM_DECK_OUTLINE: ReadonlySet<string> = new Set([
+  "discovery_report",
+  "root_cause_worksheet",
+]);
+
+/**
+ * The exhibits the quality contract will look for, stated to the pass that
+ * authors exhibits.
+ *
+ * The contract counts an exhibit as present only when its key is one of the
+ * deliverable's required ids, spelled exactly. Those ids were known to the
+ * contract and to no prompt: the pass was shown exhibit titles from the brief
+ * and keyed its exhibits however it liked, so a deliverable could carry every
+ * exhibit it needed and still be blocked for having none.
+ */
+export function requiredExhibitsInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (req.module !== "moves") return "";
+  if (EXHIBITS_FROM_DECK_OUTLINE.has(req.deliverableType)) return "";
+  const key = deliverableKeyForOrchestratorType(req.deliverableType);
+  if (!key) return "";
+  const required = DELIVERABLE_PROFILES[key].requiredExhibits.filter(
+    (id) => !EXHIBITS_PRODUCED_ELSEWHERE.has(id),
+  );
+  if (required.length === 0) return "";
+  return `REQUIRED EXHIBITS: "exhibits" must contain one entry for each of these keys, spelled exactly as written: ${required.join(", ")}. The quality gate identifies an exhibit by its key and blocks the artifact when one is missing. Give each a title, a supported payload kind, and "data" populated from the drafted sections and the cited evidence. Never invent a value to fill an exhibit: where the content is not established, the exhibit shows what is open and who owns closing it. An exhibit is kept only if it meets both of these, and is discarded otherwise: (1) "data" uses one of the supported payload kinds below with real content — a flow with at least two nodes and one edge; a matrix, heatmap or comparison with at least two cells; a timeline or roadmap with at least one lane that has items; a value_tree with a root and at least one branch. A table-like exhibit (a RACI, a measurement table, a decision box, risks and mitigations, an operating cadence) is a matrix; lanes or dates over time are a timeline; dependencies are a flow. (2) "description" makes at least three distinct statements, separated by full stops or semicolons: what the exhibit shows, what it means for the decision, and what remains open.`;
+}
+
 const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
@@ -751,6 +823,8 @@ export function buildPassPrompt(
       user = [
         `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
         `Requirements: ${recommendationRequirement} ${nextActionsRequirement} ${riskTableRequirement} If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
+        deckLengthInstruction(req),
+        requiredExhibitsInstruction(req),
         SYNTHESIS_SCHEMA_HINT,
         ``,
         `SECTION SUMMARIES:`,
