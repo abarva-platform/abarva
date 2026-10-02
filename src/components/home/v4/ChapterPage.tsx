@@ -33,7 +33,7 @@ import { MetricDistance } from "./MetricDistance";
 import { RenewalTimeline } from "./RenewalTimeline";
 import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
-import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
+import { MONO, PAGE_X, SANS, SERIF, V4, bandHeading, eyebrow } from "./tokens";
 
 export interface BriefingOpening {
   headline: string;
@@ -254,6 +254,15 @@ export function ChapterPage({
           </p>
         </div>
       ) : null}
+
+      {/* Industry context: the sector lenses the record carries, shown once, on the chapter that
+          orients a new executive. It is kept to this chapter deliberately -- the same orientation
+          repeated down every chapter is clutter, and the content is qualitative, so it sits after
+          the counted evidence and names, in words, that it is not a benchmark. The band renders
+          nothing when the record carries no lens. */}
+      {chapter.chapterId === "executive_brief" ? (
+        <IndustryContextSection signalPacket={signalPacket} />
+      ) : null}
     </>
   );
 }
@@ -328,7 +337,8 @@ function deriveChapterKpis({
     depth && depth.tables.length > 0
       ? {
           value: n(depth.tables.length),
-          label: depth.tables.length === 1 ? "evidence table" : "evidence tables",
+          label:
+            depth.tables.length === 1 ? "evidence table" : "evidence tables",
         }
       : null,
     depth && depth.findings.length > 0
@@ -355,7 +365,10 @@ function deriveChapterKpis({
         }
       : null,
     // Prose and briefing chapters carry no depth; the record's own scale is still a counted fact.
-    { value: n(signalPacket.signals?.length ?? 0), label: "signals on the record" },
+    {
+      value: n(signalPacket.signals?.length ?? 0),
+      label: "signals on the record",
+    },
     {
       value: n(signalPacket.contextItems?.length ?? 0),
       label: "governed facts",
@@ -388,7 +401,9 @@ function CockpitKpiRail({ tiles }: { tiles: KpiTile[] }) {
       <div style={kpiRailGridStyle}>
         {tiles.map((tile) => (
           <div key={tile.label} style={kpiTileStyle}>
-            <div style={{ ...kpiNumberStyle, color: kpiNumberColor(tile.tone) }}>
+            <div
+              style={{ ...kpiNumberStyle, color: kpiNumberColor(tile.tone) }}
+            >
               {tile.value}
             </div>
             <div style={kpiLabelStyle}>{tile.label}</div>
@@ -463,7 +478,11 @@ function CockpitNarrative({
       ? { key: "insights", label: "Insights", count: insightsCount }
       : null,
     bands.exposures.length > 0
-      ? { key: "open-items", label: "Open items", count: bands.exposures.length }
+      ? {
+          key: "open-items",
+          label: "Open items",
+          count: bands.exposures.length,
+        }
       : null,
     bands.gaps.length > 0
       ? { key: "watch", label: "Watch", count: bands.gaps.length }
@@ -600,6 +619,236 @@ const synthesisStyle = {
   color: V4.inkSoft,
   textWrap: "pretty" as const,
 } as const;
+
+/**
+ * The analytical lenses the record carries, grouped by the kind it files them under.
+ *
+ * This is qualitative sector orientation for a new executive -- the patterns and expert lenses used
+ * to read a payer-provider like this one. It is NOT this enterprise's attested fact and it is NOT a
+ * peer benchmark: nothing here says how this enterprise compares to anyone, and the record holds no
+ * competitor or peer figure to compare against. The record carries each lens as a label under a
+ * kind, and that -- the label and the kind -- is all this section shows. It states no number, no
+ * applicability it was not given, and no business-versus-technology column, because none of that is
+ * in the record and inventing it is the model supplying a fact. The grouping is the record's own
+ * `kind`; the lens content itself already spans business and technology, so both are present without
+ * a fabricated split.
+ *
+ * The raw `kind` is a machine token (e.g. the underscore-joined identifier the record stores). It
+ * never reaches the reader: every heading and tag is a human label, so a client surface carries no
+ * machine vocabulary. A kind the dictionary does not name is still shown, under a label derived from
+ * it, so no lens the record carries is ever silently dropped.
+ */
+type IndustryLens = { kind: string; label: string };
+
+const INDUSTRY_LENS_GROUPS: ReadonlyArray<{
+  kind: string;
+  heading: string;
+  tag: string;
+}> = [
+  {
+    kind: "industry_pattern",
+    heading: "Industry patterns",
+    tag: "Industry pattern",
+  },
+  { kind: "expert_lens", heading: "Expert lenses", tag: "Expert lens" },
+];
+
+/** A kind the dictionary does not name, rendered as a human label and never as the raw token -- a
+ * machine identifier on a client surface is the one thing the vocabulary gate reads for. */
+function humanizeLensKind(kind: string): string {
+  const words = kind.split(/[_\s]+/).filter(Boolean);
+  if (words.length === 0) return "Lens";
+  return words
+    .map((word, index) =>
+      index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
+    )
+    .join(" ");
+}
+
+/** The lenses on the packet, kept to the two fields the record actually carries. The field is read
+ * off the packet the same way the business briefing reads it: it rides on the serialized record and
+ * is absent on a record that predates it, in which case this section does not render at all. */
+function readAnalyticalLenses(
+  signalPacket: EnterpriseSignalPacket,
+): IndustryLens[] {
+  const raw =
+    (signalPacket as { analyticalLenses?: Array<Partial<IndustryLens>> })
+      .analyticalLenses ?? [];
+  return raw.filter(
+    (lens): lens is IndustryLens =>
+      Boolean(lens) &&
+      typeof lens.kind === "string" &&
+      lens.kind.trim().length > 0 &&
+      typeof lens.label === "string" &&
+      lens.label.trim().length > 0,
+  );
+}
+
+function IndustryContextSection({
+  signalPacket,
+}: {
+  signalPacket: EnterpriseSignalPacket;
+}) {
+  const lenses = readAnalyticalLenses(signalPacket);
+  if (lenses.length === 0) return null;
+
+  // Group by the record's own kind: the dictionary kinds first, in their stated order, then any kind
+  // the dictionary does not name, in first-seen order. Nothing the record carries is dropped.
+  const order: string[] = [];
+  const seen = new Set<string>();
+  const remember = (kind: string) => {
+    if (!seen.has(kind)) {
+      seen.add(kind);
+      order.push(kind);
+    }
+  };
+  for (const group of INDUSTRY_LENS_GROUPS) {
+    if (lenses.some((lens) => lens.kind === group.kind)) remember(group.kind);
+  }
+  for (const lens of lenses) remember(lens.kind);
+  const groups = order.map((kind) => {
+    const known = INDUSTRY_LENS_GROUPS.find((group) => group.kind === kind);
+    return {
+      kind,
+      heading: known?.heading ?? humanizeLensKind(kind),
+      tag: known?.tag ?? humanizeLensKind(kind),
+      items: lenses.filter((lens) => lens.kind === kind),
+    };
+  });
+
+  return (
+    <section
+      data-home-industry-context={lenses.length}
+      style={{ padding: `0 ${PAGE_X}px`, margin: "58px 0 0" }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+        <h2 style={bandHeading(V4.ink)}>Industry context</h2>
+        <span style={{ flex: 1, height: 1, background: V4.rule }} />
+      </div>
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontFamily: SANS,
+          fontSize: 14,
+          lineHeight: 1.55,
+          color: V4.slate,
+          maxWidth: "58ch",
+        }}
+      >
+        The forces shaping payer-providers like this one.
+      </p>
+
+      {/* The absence stated in words before any pattern is shown: patterns beside an enterprise's own
+          figures read as a comparison, and the record holds none. The same discipline the
+          perspective layer keeps, so the layout cannot assert what the record does not. */}
+      <aside
+        data-home-industry-provenance
+        style={{
+          margin: "16px 0 0",
+          borderTop: `1px solid ${V4.rule}`,
+          borderBottom: `1px solid ${V4.rule}`,
+          padding: "13px 0",
+        }}
+      >
+        <span style={{ ...eyebrow(V4.amber), fontSize: 10 }}>
+          How to read this
+        </span>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontFamily: SANS,
+            fontSize: 13.5,
+            lineHeight: 1.55,
+            color: V4.inkSoft,
+            maxWidth: "80ch",
+          }}
+        >
+          Analytical lenses and sector patterns the record carries as
+          qualitative orientation &mdash; not this enterprise&apos;s attested
+          facts, and not a peer benchmark. Nothing here says how this enterprise
+          compares to anyone; the record holds no competitor or peer figure.
+          Each lens is shown as the record holds it: a short label, under the
+          kind it is filed under.
+        </p>
+      </aside>
+
+      <div style={{ display: "grid", gap: 26, marginTop: 24 }}>
+        {groups.map((group) => (
+          <div key={group.kind} style={{ minWidth: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 10,
+                marginBottom: 10,
+              }}
+            >
+              <span style={eyebrow(V4.slate)}>{group.heading}</span>
+              <span
+                style={{ fontFamily: MONO, fontSize: 10.5, color: V4.stone }}
+              >
+                {group.items.length}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gap: 1,
+                background: V4.rule,
+                border: `1px solid ${V4.rule}`,
+                borderRadius: 8,
+                overflow: "hidden",
+              }}
+            >
+              {group.items.map((lens, index) => (
+                <div
+                  key={`${group.kind}-${index}-${lens.label}`}
+                  data-home-industry-row={group.kind}
+                  style={{
+                    background: V4.surface,
+                    padding: "13px 16px",
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0,1fr) auto",
+                    gap: "6px 18px",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: SANS,
+                      fontSize: 15,
+                      lineHeight: 1.5,
+                      color: V4.ink,
+                      maxWidth: "76ch",
+                      textWrap: "pretty",
+                    }}
+                  >
+                    {lens.label}
+                  </p>
+                  <span
+                    data-home-industry-tag
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: V4.stone,
+                      whiteSpace: "nowrap",
+                      paddingTop: 2,
+                    }}
+                  >
+                    {group.tag}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function BriefingExecutiveReadout({ opening }: { opening: BriefingOpening }) {
   return (
