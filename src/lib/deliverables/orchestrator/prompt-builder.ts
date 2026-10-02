@@ -31,6 +31,10 @@ import type {
   MovesDeliverableKey,
 } from "@/lib/deliverables/profiles/types";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import {
+  deckContractIdForDeliverable,
+  renderDeckContractPrompt,
+} from "@/lib/deliverables/shared/deck-story-contract";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
@@ -529,6 +533,22 @@ const SECTION_SCHEMA_HINT = `Return ONLY JSON for THIS ONE section:
  * own, and the artifact was blocked for having too few. A requirement the
  * writer cannot see is not a quality bar, it is a coin toss.
  */
+/**
+ * The decision-journey contract for this deck — the slide flow, message-led
+ * titles, density, one-message/one-visual discipline and required elements —
+ * stated to the generator. Empty for a non-PPTX request or a deliverable with
+ * no deck contract. This is the richer companion to deckLengthInstruction (which
+ * states only the count band): a bar the writer cannot see is a coin toss.
+ */
+export function deckStoryContractInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!req.outputFormats.includes("pptx")) return "";
+  const id = deckContractIdForDeliverable(req.deliverableType);
+  if (!id) return "";
+  return renderDeckContractPrompt(id);
+}
+
 export function deckLengthInstruction(
   req: DeliverableIntelligenceRequest,
 ): string {
@@ -824,6 +844,7 @@ export function buildPassPrompt(
         `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
         `Requirements: ${recommendationRequirement} ${nextActionsRequirement} ${riskTableRequirement} If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
         deckLengthInstruction(req),
+        deckStoryContractInstruction(req),
         requiredExhibitsInstruction(req),
         SYNTHESIS_SCHEMA_HINT,
         ``,
