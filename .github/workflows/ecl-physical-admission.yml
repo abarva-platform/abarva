@@ -68,6 +68,7 @@ on:
       - "src/lib/home/preview/**"
       - "src/lib/observability/structured-logger.ts"
       - "src/lib/tenant/aliases.ts"
+      - "src/lib/tenant/declared-synthetic-tenant.ts"
       - "tsconfig.json"
   workflow_dispatch:
 
