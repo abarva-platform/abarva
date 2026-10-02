@@ -8,9 +8,12 @@
 import {
   MAX_BULLET_WORDS,
   MAX_GOVERNING_WORDS,
+  SLIDE_BULLET_WORD_BUDGET,
+  bulletFontSize,
   fitWholeClaim,
   governingFontSize,
   sectionSlideText,
+  splitSlideSentences,
   stripScaffoldingLabel,
   stripStructuralScaffolding,
 } from "../slide-text";
@@ -63,7 +66,29 @@ describe("fitWholeClaim", () => {
     const second = "Candidate measures carry conflicting definitions.";
     const claim = `${lead} ${second} Then ${words(60)}.`;
     expect(fitWholeClaim(claim, 12)).toBe(`${lead} ${second}`);
-    expect(fitWholeClaim(claim, 4)).toBe(lead);
+  });
+
+  it("never prints a short opener alone", () => {
+    // Observed on a generated deck: "Workflow timings." was the whole bullet
+    // and the timings were in the notes. An opener with nothing complete after
+    // it is held, not shown — whether it is a label or a short statement.
+    const long = `Agents ${words(60)}.`;
+    for (const opener of [
+      "Workflow timings.",
+      "The metric conflict that blocks value.",
+      "Measurement is unreconciled.",
+    ]) {
+      expect(splitSlideSentences(`${opener} ${long}`)).toHaveLength(2);
+      for (const cap of [1, 4, 12, 32, 48]) {
+        expect(fitWholeClaim(`${opener} ${long}`, cap)).toBeNull();
+      }
+    }
+  });
+
+  it("prints a lead-in with the statement it leads into, and does not charge it to the cap", () => {
+    const statement = `Agents ${words(11)}.`;
+    const claim = `Workflow timings. ${statement} Then ${words(60)}.`;
+    expect(fitWholeClaim(claim, 12)).toBe(`Workflow timings. ${statement}`);
   });
 
   it("extends kept sentences with a semicolon clause of the next one when it fits", () => {
@@ -193,10 +218,24 @@ describe("sectionSlideText", () => {
 
   it("skips a label-only first line and takes the claim after it", () => {
     const result = sectionSlideText(
-      "**Section boundary.**\n\nThis section covers the service desk only.",
+      "**Section boundary.**\n\nThe service desk is the only workflow in scope.",
       "Scope",
     );
-    expect(result.governing).toBe("This section covers the service desk only.");
+    expect(result.governing).toBe(
+      "The service desk is the only workflow in scope.",
+    );
+  });
+
+  it("holds a document-meta opener in the notes of a bulleted section too", () => {
+    const result = sectionSlideText(
+      "This section covers the service desk only.\n\n- A short point stands here.\n- A second point stands beside it.",
+      "Scope",
+    );
+    expect(result.governing).toBe("A short point stands here.");
+    expect(result.bullets).toEqual(["A second point stands beside it."]);
+    expect(result.heldOffFace).toEqual([
+      "This section covers the service desk only.",
+    ]);
   });
 
   it("falls back to the title, and holds the claim in full, when the opening claim cannot fit whole", () => {
@@ -248,6 +287,72 @@ describe("sectionSlideText", () => {
     expect(result.bullets).toEqual(["Another point."]);
   });
 
+  it("no bullet is a bare opener, in a bulleted section", () => {
+    const md = [
+      "The opening claim stands here as the headline.",
+      "",
+      `- Workflow timings. Agents ${words(70, "t")}.`,
+      `- Demand scale. The extract totals a stated number of calls over twelve months.`,
+      `- The metric conflict that blocks value. Finance ${words(70, "m")}.`,
+    ].join("\n");
+    const result = sectionSlideText(md, "Summary");
+    expect(result.bullets).toEqual([
+      "Demand scale. The extract totals a stated number of calls over twelve months.",
+    ]);
+    expect(result.heldOffFace).toHaveLength(2);
+    expect(result.heldOffFace[0]).toContain("t69");
+  });
+
+  it("no bullet is a bare opener, in a prose section", () => {
+    const md = [
+      "The opening claim stands here as the headline.",
+      "",
+      "Workflow timings. The walkthrough totals differ by a stated number of seconds across the two paths.",
+      "",
+      `The metric conflict that blocks value. Finance ${words(70, "m")}.`,
+    ].join("\n");
+    const result = sectionSlideText(md, "Summary");
+    expect(result.bullets).toEqual([
+      "Workflow timings. The walkthrough totals differ by a stated number of seconds across the two paths.",
+    ]);
+    expect(result.heldOffFace).toHaveLength(1);
+  });
+
+  it("a sentence about the document is neither the headline nor a point", () => {
+    const md = [
+      "This section establishes the baseline position. The baseline is unattested and Finance has not signed it.",
+      "",
+      "This slide summarises the workflow evidence gathered so far in discovery.",
+      "",
+      "Three of twenty sampled calls show the article lookup failing outright.",
+    ].join("\n");
+    const result = sectionSlideText(md, "Baseline");
+    expect(result.governing).toBe(
+      "The baseline is unattested and Finance has not signed it.",
+    );
+    expect(result.bullets).toEqual([
+      "Three of twenty sampled calls show the article lookup failing outright.",
+    ]);
+    expect(result.heldOffFace).toEqual([
+      "This section establishes the baseline position.",
+      "This slide summarises the workflow evidence gathered so far in discovery.",
+    ]);
+  });
+
+  it("keeps the slide inside its word budget and holds what does not fit", () => {
+    const point = (i: number) => `- ${words(MAX_BULLET_WORDS, `p${i}x`)}.`;
+    const md = ["Opening claim.", "", ...[0, 1, 2, 3, 4, 5].map(point)].join(
+      "\n",
+    );
+    const result = sectionSlideText(md, "Dense");
+    const total = result.bullets.join(" ").split(" ").length;
+    expect(total).toBeLessThanOrEqual(SLIDE_BULLET_WORD_BUDGET);
+    expect(result.bullets.length).toBe(
+      Math.floor(SLIDE_BULLET_WORD_BUDGET / MAX_BULLET_WORDS),
+    );
+    expect(result.bullets.length + result.heldOffFace.length).toBe(6);
+  });
+
   it("caps the bullet count", () => {
     const md = `Opening.\n\n${Array.from({ length: 9 }, (_, i) => `- Point number ${i} stands.`).join("\n")}`;
     expect(sectionSlideText(md, "S", 6).bullets).toHaveLength(6);
@@ -258,6 +363,25 @@ describe("sectionSlideText", () => {
     expect(result.governing).toBe("Empty");
     expect(result.bullets).toEqual([]);
     expect(result.heldOffFace).toEqual([]);
+  });
+});
+
+describe("bulletFontSize", () => {
+  it("steps down for a full slide and the fullest slide fits its box", () => {
+    expect(bulletFontSize(["short point."])).toBe(14);
+    const full = Array.from({ length: 4 }, () =>
+      Array.from({ length: 50 }, () => "seventy").join(" "),
+    );
+    const size = bulletFontSize(full);
+    expect(size).toBe(13);
+    // 11.1in × 4in box; Arial averages ~0.5em per character.
+    const charsPerLine = Math.floor((11.1 * 72) / (size * 0.5));
+    const lines = full.reduce(
+      (sum, bullet) => sum + Math.ceil(bullet.length / charsPerLine),
+      0,
+    );
+    const height = (lines * size * 1.2) / 72 + (full.length * 6) / 72;
+    expect(height).toBeLessThanOrEqual(4);
   });
 });
 

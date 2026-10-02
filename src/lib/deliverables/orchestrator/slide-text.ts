@@ -18,7 +18,21 @@
 
 export const MAX_SLIDE_BULLETS = 6;
 export const MAX_GOVERNING_WORDS = 34;
-export const MAX_BULLET_WORDS = 32;
+export const MAX_BULLET_WORDS = 48;
+/**
+ * Words of bullet text one slide carries. The per-point cap alone would let
+ * six long points overflow the box; the budget is what the box holds at the
+ * smaller of the two point sizes `bulletFontSize` chooses.
+ */
+export const SLIDE_BULLET_WORD_BUDGET = 200;
+
+/**
+ * A first sentence this short, with more after it, opens a point rather than
+ * making it — a label ("Workflow timings.") or a lead statement ("Measurement
+ * is unreconciled."). The two cannot be told apart without parsing, and need
+ * not be: either way it is printed only together with what it leads into.
+ */
+const LEAD_IN_MAX_WORDS = 8;
 
 /** A shortened claim below this is more likely a fragment than a statement. */
 const MIN_COMPLETE_CLAUSE_WORDS = 5;
@@ -138,24 +152,8 @@ export function stripStructuralScaffolding(markdown: string): string {
     .join("\n");
 }
 
-/**
- * Return the claim whole, or its longest complete prefix, or null when no
- * complete form fits.
- *
- * Authored points are usually a short lead statement followed by its support
- * ("Measurement is unreconciled. Candidate measures carry…"). Sentence ends
- * are the safest cut there is — every sentence kept is whole — so leading
- * sentences are kept while they fit. Inside the first sentence that does not
- * fit, the only boundary used is a semicolon: cutting at a comma, colon, dash,
- * or parenthesis can leave a subject without its predicate ("The baseline —"),
- * which is the defect this replaces.
- */
-export function fitWholeClaim(text: string, maxWords: number): string | null {
-  const clean = normaliseSlideText(text);
-  if (!clean) return null;
-  if (wordCount(clean) <= maxWords) return clean;
-
-  const sentences = splitSlideSentences(clean);
+/** Leading whole sentences that fit, then one semicolon clause of the next. */
+function fitSentences(sentences: string[], maxWords: number): string | null {
   let kept = "";
   let overflow: string | null = null;
   for (const sentence of sentences) {
@@ -185,6 +183,36 @@ export function fitWholeClaim(text: string, maxWords: number): string | null {
   }
 
   return kept || null;
+}
+
+/**
+ * Return the claim whole, or its longest complete prefix, or null when no
+ * complete form fits.
+ *
+ * Authored points are usually a short lead statement followed by its support
+ * ("Measurement is unreconciled. Candidate measures carry…"). Sentence ends
+ * are the safest cut there is — every sentence kept is whole — so leading
+ * sentences are kept while they fit. Inside the first sentence that does not
+ * fit, the only boundary used is a semicolon: cutting at a comma, colon, dash,
+ * or parenthesis can leave a subject without its predicate ("The baseline —"),
+ * which is the defect this replaces.
+ *
+ * A lead-in is never kept alone. The first version of the sentence rule kept
+ * "Workflow timings." and sent the timings to the notes: every word on the
+ * slide was whole and the point was gone. A lead-in is free against the cap,
+ * and is printed only with at least one complete statement after it.
+ */
+export function fitWholeClaim(text: string, maxWords: number): string | null {
+  const clean = normaliseSlideText(text);
+  if (!clean) return null;
+  if (wordCount(clean) <= maxWords) return clean;
+
+  const sentences = splitSlideSentences(clean);
+  if (sentences.length > 1 && wordCount(sentences[0]) <= LEAD_IN_MAX_WORDS) {
+    const body = fitSentences(sentences.slice(1), maxWords);
+    return body ? `${sentences[0]} ${body}` : null;
+  }
+  return fitSentences(sentences, maxWords);
 }
 
 function comparable(text: string): string {
@@ -221,6 +249,34 @@ function claimsFromLine(line: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * A sentence about the document ("This section establishes…") rather than
+ * about the subject. It is never the headline or a point; it is kept in the
+ * notes because it can still carry a statement.
+ */
+const DOCUMENT_META_SENTENCE =
+  /^This (?:section|slide|readout|document|deck|report|page|chapter)\b/i;
+
+/**
+ * In prose, each sentence is a candidate point — except a short opener, which
+ * stays attached to the sentence it leads into. Split apart, "Workflow
+ * timings." would be printed as a point of its own.
+ */
+function joinLeadIns(sentences: string[]): string[] {
+  const joined: string[] = [];
+  for (let i = 0; i < sentences.length; i += 1) {
+    const sentence = sentences[i];
+    const next = sentences[i + 1];
+    if (next && wordCount(sentence) <= LEAD_IN_MAX_WORDS) {
+      joined.push(`${sentence} ${next}`);
+      i += 1;
+    } else {
+      joined.push(sentence);
+    }
+  }
+  return joined;
+}
+
 export function sectionSlideText(
   markdown: string,
   sectionTitle: string,
@@ -231,11 +287,15 @@ export function sectionSlideText(
 
   let openingClaim: string | null = null;
   for (const line of lines) {
-    const claims = claimsFromLine(line);
-    if (claims.length > 0) {
-      openingClaim = claims[0];
+    for (const claim of claimsFromLine(line)) {
+      if (DOCUMENT_META_SENTENCE.test(claim)) {
+        heldOffFace.push(claim);
+        continue;
+      }
+      openingClaim = claim;
       break;
     }
+    if (openingClaim) break;
   }
 
   const title = normaliseSlideText(sectionTitle);
@@ -257,20 +317,37 @@ export function sectionSlideText(
       const cleaned = stripScaffoldingLabel(cleanMarkdownForSlideText(line));
       return cleaned ? [cleaned] : [];
     }
-    return claimsFromLine(line);
+    const sentences = claimsFromLine(line).filter((claim) => {
+      if (openingClaim && comparable(claim) === comparable(openingClaim)) {
+        return false;
+      }
+      if (DOCUMENT_META_SENTENCE.test(claim)) {
+        if (!heldOffFace.includes(claim)) heldOffFace.push(claim);
+        return false;
+      }
+      return true;
+    });
+    return joinLeadIns(sentences);
   });
 
   const openingKey = openingClaim ? comparable(openingClaim) : null;
   const seen = new Set<string>();
   const bullets: string[] = [];
+  let usedWords = 0;
   for (const candidate of candidates) {
     const key = comparable(candidate);
     if (key === openingKey || seen.has(key)) continue;
     seen.add(key);
     if (bullets.length >= maxBullets) break;
     const fitted = fitWholeClaim(candidate, MAX_BULLET_WORDS);
-    if (fitted !== candidate) heldOffFace.push(candidate);
-    if (fitted) bullets.push(fitted);
+    const fits =
+      fitted !== null &&
+      usedWords + wordCount(fitted) <= SLIDE_BULLET_WORD_BUDGET;
+    if (!fits || fitted !== candidate) heldOffFace.push(candidate);
+    if (fits) {
+      bullets.push(fitted);
+      usedWords += wordCount(fitted);
+    }
   }
 
   return {
@@ -293,4 +370,13 @@ export function governingFontSize(text: string): number {
   if (length <= 150) return 22;
   if (length <= 200) return 20;
   return 18;
+}
+
+/**
+ * Point size for the bullet block (11.1in × 4in). Stepped from the amount of
+ * text for the same reason as the headline: the file must fit as written.
+ */
+export function bulletFontSize(bullets: readonly string[]): number {
+  const words = bullets.reduce((sum, bullet) => sum + wordCount(bullet), 0);
+  return words <= 150 ? 14 : 13;
 }
