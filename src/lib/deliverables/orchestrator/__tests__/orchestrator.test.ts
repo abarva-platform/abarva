@@ -736,6 +736,56 @@ describe("full multi-pass orchestration (injected stub model)", () => {
     });
   });
 
+  it("does not fail the build when the model returns non-text table cells", async () => {
+    // Observed: a build failed outright with "detail.replace is not a
+    // function". The synthesis JSON had a table cell that was a number.
+    const caller: ModelCaller = async (prompt, callReq) => {
+      if (prompt.pass !== "synthesis") return stub(prompt, callReq);
+      return {
+        text: JSON.stringify({
+          title: "SkyHarbor Air — AMS RFP",
+          recommendation:
+            "We recommend issuing the RFP to the shortlisted vendors given the validated scope and the costed range.",
+          nextActions: ["Issue RFP", 2, null],
+          tables: [
+            {
+              key: "risk_register",
+              title: "Risk / Issues / Dependencies",
+              columns: ["Risk", "Owner", 3],
+              rows: [
+                ["Transition risk", "PMO", 64],
+                [null, true, { a: 1 }],
+                "loose",
+              ],
+            },
+          ],
+          clientCompleteChecklist: [
+            { key: "k", label: 12, owner: null, reason: "client_judgment" },
+          ],
+          deckSlides: [
+            { governingMessage: "One message.", points: "not a list" },
+          ],
+        }),
+      };
+    };
+
+    const result = await runDeliverableOrchestration(req, caller);
+
+    const table = result.document?.tables.find(
+      (t) => t.key === "risk_register",
+    );
+    expect(table?.columns).toEqual(["Risk", "Owner", "3"]);
+    expect(table?.rows[0]).toEqual(["Transition risk", "PMO", "64"]);
+    // An empty cell is already rendered as an open input; that is unchanged.
+    expect(table?.rows[1]).toEqual([
+      "Client input required",
+      "true",
+      '{"a":1}',
+    ]);
+    expect(table?.rows[2]).toEqual(["loose"]);
+    expect(result.document?.clientCompleteChecklist[0].label).toBe("12");
+  });
+
   it("repairs under-target canonical charter sections before the unchanged prose gate", async () => {
     const repairPrompts: string[] = [];
     const charterStub: ModelCaller = async (prompt) => {
