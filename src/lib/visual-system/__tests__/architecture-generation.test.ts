@@ -3,6 +3,7 @@ import {
   buildArchitectureUserMessage,
   ARCHITECTURE_SYSTEM_PROMPT,
   ARCHITECTURE_TOOL,
+  ArchitectureRefusalError,
   type GovernedToolCall,
 } from "../architecture-generation";
 import { buildGroundedArchitectureFallback } from "../architecture-fallback";
@@ -161,6 +162,43 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     ).rejects.toThrow(
       /truncated.*32,?000-token output limit.*8000 output tokens/i,
     );
+  });
+
+  it("surfaces a policy refusal as a first-class, categorized error — not a generic 'no structured model'", async () => {
+    const call: GovernedToolCall = async () => ({
+      toolInput: null, // a refusal returns no tool input
+      modelId: "m",
+      stopReason: "refusal",
+      stopDetails: { category: "cyber", explanation: "Flagged by policy." },
+    });
+    const err = await generateArchitectureModel(
+      { engagement: "X", client: "Y", contextText: "c" },
+      call,
+    ).catch((e) => e);
+    expect(err).toBeInstanceOf(ArchitectureRefusalError);
+    expect(err.category).toBe("cyber");
+    expect(err.explanation).toBe("Flagged by policy.");
+    expect(err.message).toMatch(/refused by the model under a usage policy/i);
+    expect(err.message).toContain("policy category: cyber");
+    expect(err.message).toContain("Flagged by policy.");
+    // It must NOT be mistaken for the empty-output failure.
+    expect(err.message).not.toMatch(/no structured model/i);
+  });
+
+  it("reports a refusal that names no category without inventing one", async () => {
+    const call: GovernedToolCall = async () => ({
+      toolInput: null,
+      modelId: "m",
+      stopReason: "refusal",
+      stopDetails: { category: null, explanation: null },
+    });
+    const err = await generateArchitectureModel(
+      { engagement: "X", client: "Y", contextText: "c" },
+      call,
+    ).catch((e) => e);
+    expect(err).toBeInstanceOf(ArchitectureRefusalError);
+    expect(err.category).toBeNull();
+    expect(err.message).toContain("policy category: not named");
   });
 
   it("builds a grounded user message", () => {
