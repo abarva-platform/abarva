@@ -200,6 +200,16 @@ describe("required exhibit keys reach the pass that authors exhibits", () => {
     expect(synthesis).toContain(instruction);
   });
 
+  it("states the rule an exhibit must meet to be kept", () => {
+    // An authored exhibit is discarded unless it has typed data and a
+    // description of at least three statements. The writer was told neither.
+    const instruction = requiredExhibitsInstruction(movesRequest("roadmap"));
+    expect(instruction).toContain("at least two nodes and one edge");
+    expect(instruction).toContain("at least two cells");
+    expect(instruction).toContain("at least three distinct statements");
+    expect(instruction).toContain("a RACI");
+  });
+
   it("leaves out exhibits another step produces", () => {
     // The open-inputs exhibit is the open-inputs table and checklist.
     const businessCase = requiredExhibitsInstruction(
