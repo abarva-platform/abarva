@@ -806,6 +806,81 @@ describe("MovesPhaseStandaloneClient", () => {
     jest.restoreAllMocks();
   });
 
+  describe("design decision after a reload", () => {
+    function optionCards(container: HTMLElement) {
+      return Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".mxw-options > button"),
+      );
+    }
+
+    it("selects nothing when no decision is recorded", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      fireEvent.click(
+        within(screen.getByLabelText("P3 steps")).getByRole("button", {
+          name: /Record Decision/i,
+        }),
+      );
+      const cards = optionCards(container);
+      expect(cards.length).toBeGreaterThan(1);
+      expect(cards.filter((card) => card.classList.contains("selected"))).toEqual(
+        [],
+      );
+    });
+
+    it("restores the recorded option as selected, without a click", () => {
+      // Find what the second option is called in this fixture, then render a
+      // fresh page that is told that option was approved.
+      const first = render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      fireEvent.click(
+        within(screen.getByLabelText("P3 steps")).getByRole("button", {
+          name: /Record Decision/i,
+        }),
+      );
+      const second = optionCards(first.container)[1];
+      const id = second.querySelector("span")?.textContent ?? "";
+      const label = second.querySelector("strong")?.textContent ?? "";
+      expect(label).not.toBe("");
+      first.unmount();
+
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          approvedSolutionOption={{ selectedOptionId: id, chosenOption: label }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      fireEvent.click(
+        within(screen.getByLabelText("P3 steps")).getByRole("button", {
+          name: /Record Decision/i,
+        }),
+      );
+      const selected = optionCards(container).filter((card) =>
+        card.classList.contains("selected"),
+      );
+      expect(selected).toHaveLength(1);
+      expect(selected[0].querySelector("strong")?.textContent).toBe(label);
+    });
+  });
+
   describe("retired legacy shell paths", () => {
     it("renders the Finder contract shell even when the old feature flag mock is false", () => {
       render(

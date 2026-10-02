@@ -79,6 +79,7 @@ import {
 } from "@/lib/programs/phase-templates/p3-option-assembler";
 import {
   inferSelectedOptionId,
+  restoreApprovedOptionId,
   type UploadedSolutionOptionSet,
 } from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
@@ -165,6 +166,12 @@ interface MovesPhaseStandaloneClientProps {
   initialConfirmedSolutionRoute?: ConfirmedSolutionRoute | null;
   /** The option set declared in the Move's approved design-phase evidence. */
   uploadedSolutionOptionSet?: UploadedSolutionOptionSet | null;
+  /** The design decision already recorded for this Move, if any — restored as
+   *  the selected option after a reload. */
+  approvedSolutionOption?: {
+    selectedOptionId: string;
+    chosenOption: string;
+  } | null;
   move: StrategicMove;
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
@@ -711,6 +718,7 @@ export function MovesPhaseStandaloneClient({
   initialApprovedEvidenceReferences = [],
   initialConfirmedSolutionRoute = null,
   uploadedSolutionOptionSet = null,
+  approvedSolutionOption = null,
   move,
   phaseNum,
   phaseTallies,
@@ -1072,7 +1080,15 @@ export function MovesPhaseStandaloneClient({
       p3OptionSet.options,
     ],
   );
-  const effectiveSelectedOption = selectedOption || inferredSelectedOption;
+  const approvedOptionId = useMemo(
+    () =>
+      phase.phase === 3
+        ? restoreApprovedOptionId(approvedSolutionOption, p3OptionSet.options)
+        : "",
+    [approvedSolutionOption, p3OptionSet.options, phase.phase],
+  );
+  const effectiveSelectedOption =
+    selectedOption || approvedOptionId || inferredSelectedOption;
   const selectedP3Option = useMemo(
     () =>
       p3OptionSet.options.find(
