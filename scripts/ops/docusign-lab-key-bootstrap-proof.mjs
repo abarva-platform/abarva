@@ -7,9 +7,28 @@ const KEY_ID_PATTERN = /^https:\/\/kv-abarva-lab-001\.vault\.azure\.net\/keys\/s
 
 export function parsePublicKeyProof(log) {
   const records = String(log).split('\n').flatMap((line) => {
-    const start = line.indexOf('{"keyId"');
+    let payload = line;
+    let escapedNewlines = false;
+    try {
+      const envelope = JSON.parse(line);
+      if (typeof envelope?.Log === 'string') payload = envelope.Log;
+    } catch {
+      // Some ACA CLI versions leave the JSON in Log unescaped while double-escaping PEM newlines.
+      const wrapped = /^\{"TimeStamp":"[^"]+","Log":"F (\{"keyId":.*\})"\}$/.exec(line);
+      if (wrapped) {
+        payload = wrapped[1];
+        escapedNewlines = true;
+      }
+    }
+    const start = payload.indexOf('{"keyId"');
     if (start < 0) return [];
-    try { return [JSON.parse(line.slice(start))]; } catch { return []; }
+    try {
+      const record = JSON.parse(payload.slice(start));
+      if (escapedNewlines && typeof record.publicKeyPem === 'string') {
+        record.publicKeyPem = record.publicKeyPem.replaceAll('\\n', '\n');
+      }
+      return [record];
+    } catch { return []; }
   });
   if (records.length !== 1) throw new Error('expected one public-key proof record');
   const record = records[0];
