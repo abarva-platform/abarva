@@ -32,7 +32,12 @@ beforeEach(() => {
 
 describe("Source NDA e-signature capability route", () => {
   it("keeps upload fallback and never exposes configuration identifiers", async () => {
-    configMock.mockReturnValue({ state: "configured", accountId: "private-account", keyId: "private-key" });
+    configMock.mockReturnValue({
+      state: "configured", provider: "docusign", environment: "demo",
+      accountId: "private-account", integrationKey: "integration-1", userId: "user-1",
+      keyId: "https://kv-abarva-lab-001.vault.azure.net/keys/source-nda-docusign-lab-jwt/version-1",
+      testInbox: "tester@example.test",
+    });
     const response = await GET(new Request("https://app.example.test"), context);
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");

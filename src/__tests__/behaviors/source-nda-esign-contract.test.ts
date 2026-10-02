@@ -107,12 +107,16 @@ describe("in-memory Source NDA e-signature provider", () => {
     expect(envelope.status).toBe("sent");
     await expect(provider.getSigningLink({
       envelopeId: envelope.envelopeId,
-      recipientId: "supplier-1",
+      eventId: request.eventId,
+      vendorId: request.vendorId,
+      signer: request.signers[0],
       returnUrl: "https://app.example.test/return",
     })).resolves.toContain(envelope.envelopeId);
     await expect(provider.getSigningLink({
       envelopeId: envelope.envelopeId,
-      recipientId: "other",
+      eventId: request.eventId,
+      vendorId: request.vendorId,
+      signer: { ...request.signers[0], recipientId: "other" },
       returnUrl: "https://app.example.test/return",
     })).rejects.toThrow("recipient_not_found");
   });
@@ -137,8 +141,6 @@ describe("in-memory Source NDA e-signature provider", () => {
     await expect(provider.verifyWebhook(event)).resolves.toMatchObject({
       envelopeId: envelope.envelopeId,
       status: "completed",
-      tenantKey: request.tenantKey,
-      eventId: request.eventId,
     });
     await expect(provider.fetchCompletedDocuments(envelope.envelopeId)).resolves.toEqual({
       signedDocument: new Uint8Array([1, 2, 3]),

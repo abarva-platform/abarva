@@ -2,7 +2,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
-import { resolveSourceNdaEsignConfig } from "@/lib/source/esign/config";
+import { createSourceNdaEsignRuntime } from "@/lib/source/esign/runtime";
 
 type RouteContext = { params: Promise<{ eventId: string }> };
 
@@ -25,8 +25,8 @@ export async function GET(_request: Request, { params }: RouteContext): Promise<
   if (!policy?.canApproveSourceStages) {
     return Response.json({ error: "forbidden" }, { status: 403 });
   }
-  const config = resolveSourceNdaEsignConfig(canonicalTenantKey(activeClient.key));
-  return Response.json({ available: config.state === "configured", fallback: "upload" }, {
+  const runtime = createSourceNdaEsignRuntime(canonicalTenantKey(activeClient.key));
+  return Response.json({ available: runtime.provider !== null, fallback: runtime.fallback }, {
     headers: { "Cache-Control": "private, no-store" },
   });
 }
