@@ -76,6 +76,10 @@ import {
   buildP3DesignInputsPackFromSignals,
   type P3OptionSet,
 } from "@/lib/programs/phase-templates/p3-option-assembler";
+import {
+  inferSelectedOptionId,
+  type UploadedSolutionOptionSet,
+} from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
 import {
   buildNextPhaseReadinessPack,
@@ -158,6 +162,8 @@ interface MovesPhaseStandaloneClientProps {
   initialBusinessChangeAssessment?: string;
   initialApprovedEvidenceReferences?: ApprovedPhaseEvidenceReference[];
   initialConfirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+  /** The option set declared in the Move's approved design-phase evidence. */
+  uploadedSolutionOptionSet?: UploadedSolutionOptionSet | null;
   move: StrategicMove;
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
@@ -323,28 +329,6 @@ function mergeAvaDraftProposals(
   );
   for (const proposal of incoming) byKey.set(proposal.fieldKey, proposal);
   return [...byKey.values()];
-}
-
-function inferP3SelectedOptionIdFromRecommendation(
-  recommendation: unknown,
-  options: P3OptionSet["options"],
-): string {
-  const normalized = String(recommendation ?? "").toLowerCase();
-  if (!normalized.trim()) return "";
-  const direct = options.find((option) => {
-    const id = option.id.toLowerCase();
-    const label = option.label.toLowerCase();
-    return (
-      normalized.includes(`option ${id}`) ||
-      normalized.includes(`${id}:`) ||
-      normalized.includes(label)
-    );
-  });
-  if (direct) return direct.id;
-  const recommended = options.find((option) => option.recommended);
-  return recommended && normalized.includes("recommended")
-    ? recommended.id
-    : "";
 }
 
 interface StageReadinessWorkbookParsePreview {
@@ -706,6 +690,7 @@ export function MovesPhaseStandaloneClient({
   initialBusinessChangeAssessment = "",
   initialApprovedEvidenceReferences = [],
   initialConfirmedSolutionRoute = null,
+  uploadedSolutionOptionSet = null,
   move,
   phaseNum,
   phaseTallies,
@@ -999,6 +984,7 @@ export function MovesPhaseStandaloneClient({
         moveName: displayMoveName,
         readiness: currentStateReadiness,
         tenantName: move.tenant.name,
+        uploadedOptionSet: uploadedSolutionOptionSet,
         valueAtStake: moveValueRange,
       }),
     [
@@ -1011,6 +997,7 @@ export function MovesPhaseStandaloneClient({
       move.tenant.name,
       moveValueRange,
       p3DesignInputsPack,
+      uploadedSolutionOptionSet,
     ],
   );
   const [persistedPhaseCaptureValues, setPersistedPhaseCaptureValues] =
@@ -1044,7 +1031,7 @@ export function MovesPhaseStandaloneClient({
   const inferredSelectedOption = useMemo(
     () =>
       phase.phase === 3
-        ? inferP3SelectedOptionIdFromRecommendation(
+        ? inferSelectedOptionId(
             persistedPhaseCaptureValues.recommendation,
             p3OptionSet.options,
           )
@@ -1986,8 +1973,21 @@ export function MovesPhaseStandaloneClient({
                 ).trim() ||
                 `${selectedP3Option.recommendationLabel}. ${selectedP3Option.evidenceBasis.join(" ")}`,
               tradeoffsAccepted: [
-                `Effort: ${selectedP3Option.effort}`,
-                `Time to value: ${selectedP3Option.timeToValue}`,
+                // A client-supplied option carries no effort or time-to-value
+                // estimate of ours; record what the client stated instead.
+                ...(selectedP3Option.clientSupplied
+                  ? [
+                      selectedP3Option.clientSupplied.condition
+                        ? `Condition: ${selectedP3Option.clientSupplied.condition}`
+                        : "",
+                      selectedP3Option.clientSupplied.scope
+                        ? `Scope: ${selectedP3Option.clientSupplied.scope}`
+                        : "",
+                    ].filter(Boolean)
+                  : [
+                      `Effort: ${selectedP3Option.effort}`,
+                      `Time to value: ${selectedP3Option.timeToValue}`,
+                    ]),
                 ...selectedP3Option.risks.map(
                   (risk) => `Risk accepted for design: ${risk}`,
                 ),
@@ -1996,7 +1996,8 @@ export function MovesPhaseStandaloneClient({
                 id: option.id,
                 name: option.label,
                 summary: option.summary,
-                scores: option.scores,
+                // Template scores are not an assessment of a client option.
+                ...(option.clientSupplied ? {} : { scores: option.scores }),
                 recommended: option.recommended,
               })),
             }),
@@ -7625,30 +7626,42 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
         (option) => option.id === optionSet.recommendedOptionId,
       )
     : null;
+  const clientOptions = optionSet.source === "move_uploaded_options";
 
   return (
     <div className="mxw-option-summary">
       <div>
         <span>Source</span>
         <strong>
-          {optionSet.sourceEvidenceLabels?.length
-            ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.join(", ")}`
-            : "P2 source evidence unavailable"}
+          {clientOptions
+            ? `Move evidence: ${optionSet.sourceTitle ?? "uploaded options"}`
+            : optionSet.sourceEvidenceLabels?.length
+              ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.join(", ")}`
+              : "P2 source evidence unavailable"}
         </strong>
         <small>
-          {optionSet.evidenceBasis.length} grounded signal
-          {optionSet.evidenceBasis.length === 1 ? "" : "s"} in the design pack
+          {clientOptions
+            ? `${optionSet.options.length} options as supplied by the client`
+            : `${optionSet.evidenceBasis.length} grounded signal${
+                optionSet.evidenceBasis.length === 1 ? "" : "s"
+              } in the design pack`}
         </small>
       </div>
       <div>
         <span>Recommendation</span>
         <strong>
-          {recommendation ? recommendation.label : "Provisional only"}
+          {clientOptions
+            ? "Client decision"
+            : recommendation
+              ? recommendation.label
+              : "Provisional only"}
         </strong>
         <small>
-          {recommendation
-            ? `${recommendation.confidence} confidence - human decision still required`
-            : "More evidence needed before a recommendation is safe"}
+          {clientOptions
+            ? "These are the client's options; they are not scored or ranked here"
+            : recommendation
+              ? `${recommendation.confidence} confidence - human decision still required`
+              : "More evidence needed before a recommendation is safe"}
         </small>
       </div>
       <div>
@@ -7686,36 +7699,61 @@ function OptionCards({
           <span>{option.id}</span>
           <strong>{option.label}</strong>
           {option.recommended ? <em>✓ {option.recommendationLabel}</em> : null}
-          <small>{option.summary}</small>
-          <dl>
-            <div>
-              <dt>Impact</dt>
-              <dd>{option.businessImpact}</dd>
-            </div>
-            <div>
-              <dt>Data/platform</dt>
-              <dd>{option.dataPlatformImplications}</dd>
-            </div>
-            <div>
-              <dt>Human + AI split</dt>
-              <dd>{option.humanAiSplit}</dd>
-            </div>
-            <div>
-              <dt>Controls</dt>
-              <dd>{option.controls}</dd>
-            </div>
-          </dl>
-          <div className="mxw-option-meta">
-            <b>{option.timeToValue}</b>
-            <b>{option.effort}</b>
-            <b>Score {option.totalScore}</b>
-            <b>{option.confidence} confidence</b>
-          </div>
-          <div className="mxw-option-blocks">
-            {option.requiredBuildingBlocks.slice(0, 6).map((block) => (
-              <i key={block}>{buildingBlockLabel(block)}</i>
-            ))}
-          </div>
+          {option.clientSupplied ? (
+            // The client's option, as written. No score, confidence, effort or
+            // building blocks: none of those were supplied, and none is ours
+            // to add.
+            <dl>
+              {(
+                [
+                  ["Benefit", option.clientSupplied.benefit],
+                  ["Trade-off", option.clientSupplied.tradeoff],
+                  ["Condition", option.clientSupplied.condition],
+                  ["Scope", option.clientSupplied.scope],
+                ] as const
+              )
+                .filter(([, value]) => value)
+                .map(([term, value]) => (
+                  <div key={term}>
+                    <dt>{term}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+            </dl>
+          ) : (
+            <>
+              <small>{option.summary}</small>
+              <dl>
+                <div>
+                  <dt>Impact</dt>
+                  <dd>{option.businessImpact}</dd>
+                </div>
+                <div>
+                  <dt>Data/platform</dt>
+                  <dd>{option.dataPlatformImplications}</dd>
+                </div>
+                <div>
+                  <dt>Human + AI split</dt>
+                  <dd>{option.humanAiSplit}</dd>
+                </div>
+                <div>
+                  <dt>Controls</dt>
+                  <dd>{option.controls}</dd>
+                </div>
+              </dl>
+              <div className="mxw-option-meta">
+                <b>{option.timeToValue}</b>
+                <b>{option.effort}</b>
+                <b>Score {option.totalScore}</b>
+                <b>{option.confidence} confidence</b>
+              </div>
+              <div className="mxw-option-blocks">
+                {option.requiredBuildingBlocks.slice(0, 6).map((block) => (
+                  <i key={block}>{buildingBlockLabel(block)}</i>
+                ))}
+              </div>
+            </>
+          )}
           {option.notRecommendedYetReasons.length > 0 ? (
             <div className="mxw-option-caution">
               <b>Not recommended yet if:</b>
