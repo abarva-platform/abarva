@@ -93,11 +93,14 @@ export function HomeAvaChat({
         }
         const data = (await res.json()) as { answer: AvaAnswerPacket };
         const answer = data.answer;
+        const sourceDate = recordSource.contextVersion?.sourceDateCoverage?.latest;
         const citations: AskSource[] = (answer.citations ?? []).map((citation) => ({
           type: "SURFACE",
           name: citation.label,
           id: citation.recordId ?? null,
-          detail: citation.excerpt ?? "Source-linked Home record; review its declared basis and date.",
+          detail: citation.excerpt ?? (citation.id === "home-current-record"
+            ? `Current Home record; ${sourceDate ? `registered source files dated through ${sourceDate}` : "source date not established"}. Data currency is not attested.`
+            : "Source-linked governed row."),
         }));
         setThread((prev) => [
           ...prev,
