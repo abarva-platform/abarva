@@ -40,6 +40,7 @@ import {
   PerspectiveSections,
 } from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
+import { EnterpriseContextPanel } from "./EnterpriseContextPanel";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
 import { PAGE_X, SANS, V4, eyebrow } from "./tokens";
@@ -308,6 +309,8 @@ function MixedChapterFrame({
   recordTypes,
   narrativeGeneratedAt,
   onBrowse,
+  enterpriseContext,
+  onOpenRows,
 }: {
   children: ReactNode;
   enabled: boolean;
@@ -317,8 +320,18 @@ function MixedChapterFrame({
   recordTypes: TechRecordType[];
   narrativeGeneratedAt: string | null;
   onBrowse: () => void;
+  enterpriseContext: EnterpriseSignalPacket["homeEnterpriseContext"];
+  onOpenRows: (type: string, filter: string) => void;
 }) {
   if (!enabled || !chapter) return <>{children}</>;
+
+  const contextHeadings: Partial<Record<ChapterId, [string, string]>> = {
+    executive_brief: ["The enterprise, in evidence", "The business, its priorities, and its execution signals from the current governed record."],
+    our_business: ["Business model and segment economics", "Where the enterprise operates, who owns each segment, and how resources are attributed."],
+    strategy_value_creation: ["Priorities and execution", "Declared priorities connected to accountable owners, programs, and measures."],
+    how_we_operate: ["How accountability runs", "Business functions, their owners, and the work and risk attached to them."],
+  };
+  const contextHeading = enterpriseContext ? contextHeadings[chapter.chapterId] : undefined;
 
   const evidence =
     chapter.chapterId === "executive_brief"
@@ -381,7 +394,7 @@ function MixedChapterFrame({
             maxWidth: "28ch",
           }}
         >
-          Current record, interpretation pending review
+          {contextHeading?.[0] ?? "Current record, interpretation pending review"}
         </h1>
         <p
           style={{
@@ -393,9 +406,9 @@ function MixedChapterFrame({
             maxWidth: "70ch",
           }}
         >
-          {noInterviews
+          {contextHeading?.[1] ?? (noInterviews
             ? "No leadership interview rows are served here. The prior interpretation cannot establish what leaders said."
-            : "These are counted records, not a current assessment of business performance or priorities."}
+            : "These are counted records, not a current assessment of business performance or priorities.")}
         </p>
         <div
           style={{
@@ -406,7 +419,7 @@ function MixedChapterFrame({
             paddingTop: 20,
           }}
         >
-          {coverage.map(({ label, count }) => (
+          {(contextHeading ? [] : coverage).map(({ label, count }) => (
             <div key={label}>
               <strong
                 style={{ display: "block", fontSize: 26, lineHeight: 1.2 }}
@@ -451,6 +464,13 @@ function MixedChapterFrame({
           Browse the record
         </button>
       </section>
+      {contextHeading && enterpriseContext ? (
+        <EnterpriseContextPanel
+          chapterId={chapter.chapterId}
+          context={enterpriseContext}
+          onOpenRows={onOpenRows}
+        />
+      ) : null}
       <details
         data-home-reviewed-interpretation
         style={{ padding: `22px ${PAGE_X}px 0` }}
@@ -808,6 +828,8 @@ export function HomeV4App({
               provenance.generated_at
             }
             onBrowse={() => selectActiveView("browse-the-data")}
+            enterpriseContext={signalPacket.homeEnterpriseContext}
+            onOpenRows={openRecordRows}
           >
             {activeChapter ? (
               isDrafted(activeChapter.chapterId) ? (

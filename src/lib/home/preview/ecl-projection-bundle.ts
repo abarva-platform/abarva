@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
+import { buildHomeEnterpriseContext } from "./ecl-enterprise-context";
+import { homeProjectionPayload } from "./projection-row-payload";
 import {
   hashHomeNarrativeValue,
   homeNarrativeSourceLineageHash,
@@ -471,17 +473,7 @@ function endpointLabelsFromRows(
 }
 
 function rowPayload(row: HomeProjectionRow): JsonRecord {
-  if (!row.display_payload_json || typeof row.display_payload_json !== "object")
-    return {};
-  const payload = row.display_payload_json;
-  const nestedPayload = payload.display_payload_json;
-  if (
-    !nestedPayload ||
-    typeof nestedPayload !== "object" ||
-    Array.isArray(nestedPayload)
-  )
-    return payload;
-  return { ...payload, ...(nestedPayload as JsonRecord) };
+  return homeProjectionPayload(row.display_payload_json);
 }
 
 function sourceRefIds(value: unknown): string[] {
@@ -536,6 +528,7 @@ function enterpriseRow(row: HomeProjectionRow): JsonRecord {
       };
     case "business_function":
       return {
+        functionId: text(payload.function_id),
         functionName: text(payload.function_name),
         businessSegment: text(payload.business_segment),
         businessSegmentKey: text(payload.business_segment_key),
@@ -648,6 +641,8 @@ function riskControlRow(row: HomeProjectionRow): JsonRecord {
 function programInitiativeRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
+    priorityId: text(payload.priority_id),
+    sponsorFunctionId: text(payload.sponsor_function_id),
     programName:
       text(payload.program_name ?? payload.initiative_name) ?? row.title,
     businessSponsor: text(payload.business_sponsor ?? payload.sponsor_function),
@@ -783,6 +778,8 @@ function applicationRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
     systemName: text(payload.application_name) ?? row.title,
+    segmentId: text(payload.segment_id),
+    businessFunctionId: text(payload.business_function_id),
     businessFunction: text(payload.business_function),
     systemCategory: text(payload.application_category),
     criticality: criticalityValue(payload.criticality_tier),
@@ -2801,13 +2798,19 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     rowPayload(storyRow).narrative_packet_artifact,
     { tenantKey: base.tenantKey, assessmentId, rows, verifiedSourceRefs },
   ) : null;
-  const signalPacket = narrativePacketArtifact?.packet ?? buildEclSignalPacket(
-    factualRows,
-    technologyEstate,
-    assessmentId,
-    verifiedSourceRefs,
-    rows.length - factualRows.length,
-  );
+  const signalPacket: EnterpriseSignalPacket = {
+    ...(narrativePacketArtifact?.packet ?? buildEclSignalPacket(
+      factualRows,
+      technologyEstate,
+      assessmentId,
+      verifiedSourceRefs,
+      rows.length - factualRows.length,
+    )),
+    homeEnterpriseContext: buildHomeEnterpriseContext(
+      factualRows,
+      (row) => admittedSourceRefs(row, verifiedSourceRefs),
+    ),
+  };
   const claims = chapterClaimsByPage(factualRows);
   const hasPublishedClaims = hasPublishedChapterClaims(claims);
   const contextVersion = contextVersionForRows(

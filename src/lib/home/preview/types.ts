@@ -29,6 +29,7 @@ import type {
   Signal,
   buildEnterpriseSignalPacket,
 } from "../../../../scripts/data-build/enterprise-signal-packet";
+import type { HomeEnterpriseContext } from "./ecl-enterprise-context";
 
 export type {
   ChapterId,
@@ -50,7 +51,7 @@ export type {
 
 export type EnterpriseSignalPacket = ReturnType<
   typeof buildEnterpriseSignalPacket
->;
+> & { homeEnterpriseContext?: HomeEnterpriseContext | null };
 
 export type HomeExecutiveStoryTerminalState =
   | "published"
