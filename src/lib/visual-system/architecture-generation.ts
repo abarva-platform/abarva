@@ -419,6 +419,12 @@ export type GovernedToolCall = (params: {
   modelId: string;
   stopReason?: string | null;
   outputTokens?: number;
+  /**
+   * Present when the provider stopped the response under a usage policy
+   * (`stopReason` "refusal"): the policy area and its explanation, as the
+   * provider reported them. Either may be null.
+   */
+  stopDetails?: { category: string | null; explanation: string | null } | null;
 }>;
 
 export interface GeneratedArchitecture {

@@ -443,6 +443,7 @@ legacy-v-dimension-token,scripts/data-build/__tests__/run-evidence-v4-migration-
 legacy-v-file-name,scripts/data-build/__tests__/run-evidence-v4-migration-tests.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/data-build/evidence-v4-migration-dry-run.mjs,non-loader historical reference
 legacy-v-file-name,scripts/data-build/evidence-v4-migration-dry-run.mjs,non-loader historical reference
+synthetic-v-folder-reference,scripts/ecl/__tests__/test_synthetic_enterprise_home_promotion.ts,non-loader historical reference
 synthetic-v-folder-reference,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 legacy-v-file-name,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference

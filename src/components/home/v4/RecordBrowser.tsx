@@ -1073,6 +1073,22 @@ function buildMetrics(
       ).size
     : 0;
 
+  if (objectType === "risk_control") {
+    const highOrCritical = rows.filter((row) =>
+      ["high", "critical"].includes(String(row.severity ?? "").toLowerCase()),
+    ).length;
+    const controlState = (row: RecordRow) =>
+      String(row.controlStatus ?? "").toLowerCase().replaceAll(" ", "_");
+    const partial = rows.filter((row) => controlState(row) === "partially_effective").length;
+    const unknown = rows.filter((row) => controlState(row) === "unknown").length;
+    return [
+      { label: "risks", value: rows.length.toLocaleString() },
+      { label: "high or critical", value: highOrCritical.toLocaleString(), tone: highOrCritical ? V4.red : undefined },
+      { label: "partial control", value: partial.toLocaleString(), tone: partial ? V4.amber : undefined },
+      { label: "control state unknown", value: unknown.toLocaleString(), tone: unknown ? V4.amber : undefined },
+    ];
+  }
+
   if (objectType === "vendor_contract") {
     const autoRenew = rows.filter((row) => isTruthy(row.autoRenewFlag)).length;
     const highRisk = rows.filter(
@@ -1160,6 +1176,10 @@ function buildMetrics(
       { label: "annual cost", value: moneyShort(spend) },
       { label: "platform types", value: dimensions.toLocaleString() },
     ];
+  }
+
+  if (objectType !== "application_system") {
+    return [{ label: "records", value: rows.length.toLocaleString() }];
   }
 
   return [
@@ -1741,7 +1761,7 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
         key: "severity-control",
         title: "Severity against control state",
         caption:
-          "Where the register records a serious risk and no operating control.",
+          "How recorded severity and control effectiveness intersect; unknown is not uncontrolled.",
         left: "severity",
         right: "controlStatus",
       },

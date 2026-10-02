@@ -4,6 +4,7 @@ import {
   isAppendixHeading,
   stripNonProseMarkdown,
   type ProseSection,
+  sectionShareOfFloor,
 } from "../body-word-count";
 import { P3_P4_WORD_BAND_CONTRACTS } from "../artifact-contracts";
 
@@ -174,5 +175,24 @@ describe("P4 business_case band reconciliation", () => {
       if (key === "business_case") continue;
       expect(band.excludeNonProseFromBody).toBeUndefined();
     }
+  });
+});
+
+describe("sectionShareOfFloor", () => {
+  it("gives shares that sum past the floor, with a small margin", () => {
+    for (const [floor, sections] of [
+      [9_000, 8],
+      [9_000, 7],
+      [1_200, 5],
+      [600, 6],
+    ] as const) {
+      const share = sectionShareOfFloor(floor, sections);
+      expect(share * sections).toBeGreaterThanOrEqual(floor * 1.05);
+      expect((share - 1) * sections).toBeLessThan(floor * 1.05);
+    }
+  });
+
+  it("does not divide by zero", () => {
+    expect(sectionShareOfFloor(600, 0)).toBe(630);
   });
 });

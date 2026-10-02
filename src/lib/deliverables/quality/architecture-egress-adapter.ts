@@ -76,5 +76,11 @@ export const governedArchitectureToolCall: GovernedToolCall = async (params) => 
     modelId: response.model,
     stopReason: response.stop_reason,
     outputTokens: response.usage.output_tokens,
+    stopDetails: response.stop_details
+      ? {
+          category: response.stop_details.category,
+          explanation: response.stop_details.explanation,
+        }
+      : null,
   };
 };

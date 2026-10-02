@@ -1025,7 +1025,7 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     doc.deckSlides = [];
     const longTail =
       "held-in-full-tail-token " +
-      Array.from({ length: 40 }, (_, i) => `detail${i}`).join(" ");
+      Array.from({ length: 70 }, (_, i) => `detail${i}`).join(" ");
     doc.generatedSections = [
       {
         key: "s",
@@ -1055,7 +1055,7 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
       )
     ).join("\n");
     expect(notes).toContain("held-in-full-tail-token");
-    expect(notes).toContain("detail39");
+    expect(notes).toContain("detail69");
   });
 
   it("the cover does not assert a grade the status line beneath it denies", async () => {

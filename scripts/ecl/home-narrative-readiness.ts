@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { POLICY_VERSION } from "../../src/lib/governance/context-corpus-policy";
 
 export interface NarrativeReadinessProof {
@@ -24,6 +25,17 @@ export const SIGNAL_READINESS_TABLE = "home_ecl_narrative_signal";
 
 export function readinessKey(objectTable: string, objectId: string): string {
   return `${objectTable}:${objectId}`;
+}
+
+/**
+ * The source version a derived signal's readiness proof is bound to: the source hash of every
+ * projection row the signal cites, in any order, each counted once. The narrative builder and
+ * whatever records a signal's proof both call this, so the two cannot disagree on the format.
+ */
+export function signalSourceHash(citedRowSourceHashes: readonly string[]): string {
+  return createHash("sha256")
+    .update(JSON.stringify([...new Set(citedRowSourceHashes)].sort()))
+    .digest("hex");
 }
 
 export function verifiedReadiness(

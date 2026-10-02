@@ -1,9 +1,14 @@
 import { pdf, View } from "@react-pdf/renderer";
+import { rm } from "node:fs/promises";
 import { isValidElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import * as chapterPageContent from "@/components/home/v4/chapter-page-content";
 import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
+import { buildHomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
+import { buildTechnologyEstateFromHomeProjectionRows } from "@/lib/home/preview/ecl-projection-bundle";
+import { generatePack } from "../../../../../scripts/ecl/load_synthetic_enterprise_v1";
+import { buildSyntheticHomeRows } from "../../../../../scripts/ecl/synthetic_enterprise_home_rows";
 import {
   buildHomeWalkthroughPdf,
   renderHomeWalkthroughHtml,
@@ -148,6 +153,65 @@ function bundleWithGraph(): HomeReviewBundle {
 }
 
 describe("Home walkthrough export", () => {
+  it("preserves generated enterprise context in HTML and PDF", async () => {
+    const pack = await generatePack("v2");
+    try {
+      const rows = buildSyntheticHomeRows(pack.normalized.objects.map((object) => ({
+        id: object.id,
+        object_key: object.id,
+        object_type: object.type,
+        display_name: object.name,
+        source_record_id: `source-${object.id}`,
+        value_state: "known",
+        attributes_json: object.attributes,
+      })));
+      const sourceByRow = new Map(rows.map((row) => [row.row_key, row.source_record_id]));
+      const context = buildHomeEnterpriseContext(rows, (row) => {
+        const source = sourceByRow.get(row.row_key);
+        return source ? [source] : [];
+      });
+      expect(context).not.toBeNull();
+      const bundle = bundleWithGraph();
+      bundle.technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
+      bundle.thesis.signalPacket.homeEnterpriseContext = context;
+
+      const html = renderHomeWalkthroughHtml({
+        bundle, recordSource, tenantLabel: "Synthetic Enterprise", format: "html",
+      });
+      const pdfDocument = buildHomeWalkthroughPdf({
+        bundle, recordSource, tenantLabel: "Synthetic Enterprise", format: "pdf",
+      });
+      const pdfMarkup = renderToStaticMarkup(pdfDocument);
+      const output = await pdfText(pdfDocument);
+      expect(output.startsWith("%PDF-")).toBe(true);
+      for (const label of [
+        "Source-linked enterprise context",
+        "Declared enterprise scale",
+        "Segment scale and governed footprint",
+        "Priority ownership and delivery",
+        "Function ownership and footprint",
+        "High and critical risks needing control review",
+      ]) {
+        expect(html).toContain(label);
+        expect(pdfMarkup).toContain(label);
+      }
+      expect(html).toContain("Not client-attested");
+      expect(pdfMarkup).toContain("Not client-attested");
+      expect(html).toContain("At-risk linked programs");
+      expect(pdfMarkup).toContain("At-risk linked programs");
+      expect(html).toContain("Unknown is not uncontrolled");
+      expect(pdfMarkup).toContain("Unknown is not uncontrolled");
+      const businessChapter = html.slice(html.indexOf("Chapter 02"), html.indexOf("Chapter 03"));
+      expect(businessChapter).toContain("Current source-linked record");
+      expect(businessChapter).not.toContain("No current chapter-specific tables");
+      expect(pdfMarkup).toContain("Current source-linked record");
+      expect(html).toContain("Vendor Contracts</td><td>230");
+      expect(html).not.toContain("Vendor Contracts</td><td>72");
+    } finally {
+      await rm(pack.dir, { recursive: true, force: true });
+    }
+  });
+
   it("exports Home content and record-source state as HTML", () => {
     const bundle = bundleWithGraph();
     const html = renderHomeWalkthroughHtml({

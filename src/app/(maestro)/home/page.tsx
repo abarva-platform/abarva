@@ -52,6 +52,10 @@ export default async function HomePage({
     toHomeTenantKey(tenant?.appClientKey) ??
     toHomeTenantKey(tenant?.displayName);
   const requestedTenantKey = toHomeTenantKey(requestedTenant);
+  // This serves any preview tenant to any signed-in user and defaults an unresolved one to the
+  // first, which is acceptable only while every key in HOME_PREVIEW_TENANT_KEYS is declared a
+  // synthetic demo tenant in the tenant input registry: this page must gain a tenancy check, as
+  // src/app/api/home/walkthrough-export/route.ts has, before a non-demo tenant is added to it.
   const tenantKey =
     requestedTenantKey ?? activeTenantKey ?? HOME_PREVIEW_TENANT_KEYS[0];
   const productProvider = resolveEclProductProvider(provider);

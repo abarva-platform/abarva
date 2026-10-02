@@ -13,6 +13,7 @@ on:
       - "docs/architecture/sql-drafts/ecl_*.sql"
       - "docs/releases/records/**"
       - "scripts/ecl/**"
+      - "scripts/exec/cli-entry.mjs"
   push:
     branches-ignore:
       - main
@@ -25,6 +26,7 @@ on:
       - "docs/architecture/sql-drafts/ecl_*.sql"
       - "docs/releases/records/**"
       - "scripts/ecl/**"
+      - "scripts/exec/cli-entry.mjs"
   workflow_dispatch:
     inputs:
       action:
@@ -75,6 +77,27 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "24"
+
+      # The product browser smoke runs only after a deploy, from the deployed
+      # image. Its assertion contract (every finding check has to be evaluated
+      # on a URL that can mount the findings panel) needs no browser and no
+      # installed dependency, so it is checked here, before merge. Both route
+      # modes are checked: the route table differs between them, the live proof
+      # runs the default-route one, and a pass in one says nothing about the
+      # other.
+      #
+      # It runs before the Python and Postgres setup because it needs neither,
+      # and a step placed behind them would not report when they fail.
+      #
+      # The first two lines are the contract itself. The suite then proves the
+      # contract refuses a route that cannot mount the findings panel, and that a
+      # missed finding, an unhealthy route and a findings surface that does not
+      # load are reported as three different things.
+      - name: Prove product browser smoke finding-surface contract
+        run: |
+          node scripts/ecl/run_product_ecl_browser_smoke.mjs --validate-demo-findings-contract
+          node scripts/ecl/run_product_ecl_browser_smoke.mjs --default-routes --validate-demo-findings-contract
+          npm run test:ecl-product-browser-smoke-contract
 
       - name: Install Python workbook dependency
         run: python3 -m pip install openpyxl

@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 395,
-    "fenced": 219,
-    "fencedDirect": 95,
+    "routes": 396,
+    "fenced": 220,
+    "fencedDirect": 96,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 94,
-    "behavioral": 74,
+    "behavioral": 75,
     "byteScannerOnly": 6,
     "none": 139
   },
@@ -6467,6 +6467,23 @@
       "suites": {
         "behavioral": [
           "src/__tests__/behaviors/source-rfx-contact-approval-route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/rfx-release/prepare/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/source-rfx-prepare-route.test.ts"
         ],
         "byteScanner": []
       }
