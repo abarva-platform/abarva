@@ -109,6 +109,46 @@ describe("the reviewed estimate as a citable evidence statement", () => {
     expect(extractUnsupportedFigureClaims(cited)).toEqual([]);
   });
 
+  it("traces hours and rates in the forms a document writes them", () => {
+    // Observed: with the costs traced, two tables were still blocked. Total
+    // hours over a thousand are written with a separator, and a rate is
+    // written with its currency symbol; the estimate held them as "1560" and
+    // "USD 150", which match neither.
+    const large = model({
+      rows: [
+        line("p1", "Connectors", "internal", [1200, 1560, 2040], 150, 0, 0),
+        line("p1", "Connectors", "vendor", [1100, 1400, 1900], 190, 0, 0),
+      ],
+    });
+    const statement = estimateCaptureStatement(
+      ESTIMATE_CAPTURE_SECTION_KEY,
+      large,
+    )!;
+    expect(statement).toContain("1,200/1,560/2,040");
+    expect(statement).toContain("$150/h");
+
+    const table = [
+      "| Scenario | Effort hours (low/base/high) | Planning rate |",
+      "|---|---|---|",
+      "| Internal | 1,200 / 1,560 / 2,040 | $150 |",
+      "| Vendor | 1,100 / 1,400 / 1,900 | $190 |",
+    ].join("\n");
+    expect(extractUnsupportedFigureClaims(table)).toHaveLength(1);
+
+    const cited = repairEvidenceBackedUncitedFigures(
+      table,
+      asEvidence(statement),
+    );
+    expect(cited).toContain("[7]");
+    expect(extractUnsupportedFigureClaims(cited)).toEqual([]);
+
+    // An hours figure the estimate does not contain is still unsupported.
+    const wrong = table.replace("1,560", "1,650");
+    expect(
+      repairEvidenceBackedUncitedFigures(wrong, asEvidence(statement)),
+    ).toBe(wrong);
+  });
+
   it("still leaves a figure that is not in the estimate unsupported", () => {
     const statement = estimateCaptureStatement(
       ESTIMATE_CAPTURE_SECTION_KEY,
