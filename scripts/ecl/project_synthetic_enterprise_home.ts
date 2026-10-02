@@ -40,14 +40,48 @@ function stableUuid(...parts: string[]): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-type ReadbackProof = {
+export type ReadbackProof = {
   status: string;
   tenant_scope: string;
   assessment_id: string;
   source_set_hash: string;
   client_attestation_state: string;
+  expected_home_projection?: string;
   actual: Record<string, number>;
+  content?: Record<string, unknown>;
 };
+
+/**
+ * The readback proof a projection run presents must be a passed readback of
+ * this exact assessment and source set, taken while no Home projection of it
+ * existed, and one that compared content: a proof that only counted rows does
+ * not carry a `content` block and is refused.
+ */
+export function assertReadbackProof(
+  readback: ReadbackProof,
+  pack: Pick<GeneratedPack, "manifest" | "normalized">,
+): void {
+  const { manifest, normalized } = pack;
+  if (
+    readback.status !== "passed" ||
+    readback.tenant_scope !== manifest.tenant_key ||
+    readback.assessment_id !== manifest.assessment_id ||
+    readback.source_set_hash !== manifest.source_set_hash ||
+    readback.client_attestation_state !== "not_client_attested" ||
+    readback.expected_home_projection !== "absent" ||
+    typeof readback.content !== "object" ||
+    readback.content === null ||
+    readback.actual.applications !==
+      normalized.objects.filter((object) => object.type === "application")
+        .length ||
+    readback.actual.invalid_source_files !== 0 ||
+    readback.actual.home_projection_manifests !== 0
+  ) {
+    throw new Error(
+      "Admission readback proof did not authorize this projection",
+    );
+  }
+}
 
 async function insertBatch(
   db: pg.Client,
@@ -410,21 +444,12 @@ async function main(): Promise<void> {
         await blobContainer.getBlockBlobClient(proofPath).downloadToBuffer()
       ).toString("utf8"),
     ) as ReadbackProof;
+    assertReadbackProof(readback, pack);
     if (
-      readback.status !== "passed" ||
-      readback.tenant_scope !== manifest.tenant_key ||
-      readback.assessment_id !== manifest.assessment_id ||
-      readback.source_set_hash !== manifest.source_set_hash ||
-      readback.client_attestation_state !== "not_client_attested" ||
-      readback.actual.applications !== 344 ||
-      readback.actual.invalid_source_files !== 0 ||
-      readback.actual.home_projection_manifests !== 0 ||
       process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION !==
-        manifest.source_set_hash
+      manifest.source_set_hash
     ) {
-      throw new Error(
-        "Independent admission proof did not authorize this projection",
-      );
+      throw new Error("Projection source version is not pinned");
     }
     const proofPathOut = `${manifest.tenant_key}/${manifest.assessment_id}/${manifest.source_set_hash}/runs/${runId}/projection-proof.json`;
     const projectionProofUri =

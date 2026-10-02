@@ -36,6 +36,8 @@ export function fixturePack(objectCount = 3): GeneratedPack {
       files: [],
     },
     normalized: {
+      adapter_contract_version: "fixture-enterprise/layer2/v1",
+      dataset_id: "FIXTURE_ENTERPRISE_V1",
       source_set_hash: HASH,
       tenant_key: TENANT,
       assessment_id: ASSESSMENT,
@@ -57,6 +59,17 @@ export function fixturePack(objectCount = 3): GeneratedPack {
         relationship_count: 0,
         unresolved_relationship_count: 0,
       },
+    },
+    source: {
+      key: "fixture",
+      definition_path: "datasets/synthetic/fixture/definition.json",
+      base_version: null,
+      dataset_id: "FIXTURE_ENTERPRISE_V1",
+      assessment_id: ASSESSMENT,
+      id_namespace: "ecl-fixture-enterprise",
+      adapter_contract_version: "fixture-enterprise/layer2/v1",
+      source_system: "fixture_enterprise_generator",
+      application_grain_origin: { fixture_product: "declared_in_definition" },
     },
   };
 }

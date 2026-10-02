@@ -17,19 +17,26 @@ on:
       - "scripts/ecl/generate_synthetic_enterprise_v1.py"
       - "scripts/ecl/normalize_synthetic_enterprise_v1.py"
       - "scripts/ecl/validate_synthetic_enterprise_v1.py"
+      - "scripts/ecl/__tests__/readback-synthetic-enterprise-v2.test.ts"
       - "scripts/ecl/__tests__/synthetic_enterprise_gate_fixtures.ts"
       - "scripts/ecl/__tests__/test_synthetic_ecl_physical_admission.py"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_home_gates.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_published_pins.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_source_identity.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_v2_readback.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_home_promotion.ts"
+      - "scripts/ecl/__tests__/test_synthetic_source_versions.py"
       - "scripts/ecl/project_synthetic_enterprise_home.ts"
       - "scripts/ecl/promote_synthetic_enterprise_home.ts"
       - "scripts/ecl/readback_synthetic_enterprise_v2.ts"
       - "scripts/ecl/retire_synthetic_enterprise_home.ts"
       - "scripts/ecl/synthetic_enterprise_home_rows.ts"
+      - "scripts/ecl/synthetic_source_versions.py"
+      - "scripts/ecl/synthetic_source_versions.ts"
       - "scripts/ecl/load_synthetic_enterprise_v1.ts"
       - "scripts/exec/cli-entry.mjs"
       - "src/config/tenants/CANONICAL_TENANTS.ts"
@@ -70,11 +77,21 @@ jobs:
         env:
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
         run: python3 scripts/ecl/__tests__/test_synthetic_ecl_physical_admission.py
+      - name: Refuse a source version, dataset or definition the registry does not declare
+        run: python3 -m unittest discover -s scripts/ecl/__tests__ -p 'test_synthetic_source_versions.py' -v
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      # A change to either definition runs this: the published bytes and the ids
+      # of loaded rows may not move.
+      - name: Pin each published source version's bytes and row ids
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_published_pins.ts
+      - name: Resolve identity, basis and application depth from declared fields
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_source_identity.ts
+      - name: Compare readback rows and refuse an unbound readback run
+        run: node --import tsx --test scripts/ecl/__tests__/readback-synthetic-enterprise-v2.test.ts
       - name: Refuse a load the dataset registry has not approved
         run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts
       - name: Refuse a projection or a Home promotion the dataset registry has not approved
@@ -87,6 +104,11 @@ jobs:
         env:
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
         run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts
+      - name: Read the versioned load back and refuse changed rows, payloads and blobs
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+          ECL_READBACK_TEST_PHASE: before_projection
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v2_readback.ts
       - name: Apply additive Home serving readers in the disposable database
         env:
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
@@ -99,6 +121,11 @@ jobs:
           NODE_OPTIONS: --conditions=react-server
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
         run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts
+      - name: Read the versioned load back again once a Home projection exists
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+          ECL_READBACK_TEST_PHASE: after_projection
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v2_readback.ts
       - name: Rehearse inert Home selection migration
         env:
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "description": "Declared identity of each synthetic enterprise source version. The generator, validator, adapter and loader resolve a version from this file and refuse one that is not listed. Every value is the one already published: changing an id namespace moves persisted ids, and changing an adapter label moves the normalised output.",
+  "source_versions": {
+    "v1": {
+      "definition_path": "datasets/synthetic/enterprise-v1/definition.json",
+      "base_version": null,
+      "dataset_id": "MERIDIAN_SYNTHETIC_ENTERPRISE_V1",
+      "assessment_id": "assessment-meridian-synthetic-enterprise-v1",
+      "id_namespace": "ecl-synthetic-enterprise-v1",
+      "adapter_contract_version": "synthetic-enterprise-v1/layer2/v1",
+      "source_system": "synthetic_enterprise_v1_generator",
+      "application_grain_origin": {
+        "logical_product": "declared_in_definition",
+        "governed_module": "generated_by_formula"
+      }
+    },
+    "v2": {
+      "definition_path": "datasets/synthetic/enterprise-v2/definition.json",
+      "base_version": "v1",
+      "dataset_id": "MERIDIAN_SYNTHETIC_ENTERPRISE_V2",
+      "assessment_id": "assessment-meridian-synthetic-enterprise-v2",
+      "id_namespace": "ecl-synthetic-enterprise-v2",
+      "adapter_contract_version": "synthetic-enterprise-v2/layer2/v1",
+      "source_system": "synthetic_enterprise_v2_generator",
+      "application_grain_origin": {
+        "logical_product": "declared_in_definition",
+        "governed_module": "generated_by_formula",
+        "logical_service": "generated_by_formula"
+      }
+    }
+  }
+}
