@@ -5486,10 +5486,11 @@ describe("MovesPhaseStandaloneClient", () => {
       });
     });
 
-    it("'Coming up' card: opens by default when real readiness-pack chips exist, then collapses and reopens the same real data", () => {
+    it("'Coming up' on the Approve & Build step opens by default with real readiness-pack chips, then collapses and reopens the same real data", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
+          initialSubstepKey="approve"
           carriesForwardContent={[]}
           evidenceNeedPackets={[
             {
@@ -5556,6 +5557,74 @@ describe("MovesPhaseStandaloneClient", () => {
         within(screen.getByTestId("mxw-contract-comingup-chips")).getByText(
           "Systems inventory",
         ),
+      ).toBeInTheDocument();
+    });
+
+    it("'Coming up' is hidden on the earlier capture steps", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      // P1 opens on the first input step; next-phase preparation must not
+      // appear until the final Approve & Build step.
+      expect(
+        screen.queryByTestId("mxw-contract-comingup"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows a Continue on each input step: disabled until the required value is captured, then advancing to the next step", () => {
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      // First input (Sponsor contact) is required and empty, so Continue is
+      // disabled and tells the user what to do next.
+      const blockedContinue = screen.getByRole("button", {
+        name: "Save & continue",
+      });
+      expect(blockedContinue).toBeDisabled();
+      expect(screen.getByText("Fill this in to continue.")).toBeInTheDocument();
+      unmount();
+
+      // With the sponsor value already captured, Continue is enabled and moves
+      // the user to the next step (Scope boundary).
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={{
+            sponsor_commitment:
+              "Priya Nair, Chief Data & Analytics Officer — priya.nair@company.example",
+          }}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const continueButton = screen.getByRole("button", {
+        name: "Save & continue",
+      });
+      expect(continueButton).toBeEnabled();
+      fireEvent.click(continueButton);
+
+      expect(
+        screen.getByRole("heading", { name: "Scope boundary" }),
       ).toBeInTheDocument();
     });
 

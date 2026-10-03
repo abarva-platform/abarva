@@ -3723,6 +3723,69 @@ function PhaseContractStepsCanvas({
     }
   };
 
+  // Progressive step flow. On an input step, one primary "Continue" advances to
+  // the next input, or — after the last input — into the first workflow substep
+  // after Charter capture. The user stays on a single step with a single clear
+  // next action instead of having to discover the left-nav order themselves.
+  const selectedSectionIndex = selectedSection
+    ? phaseCaptureSections.findIndex(
+        (section) => section.key === selectedSection.key,
+      )
+    : -1;
+  const isLastInputSection =
+    selectedSectionIndex === phaseCaptureSections.length - 1;
+  const prepareSubstepIndex = Math.max(
+    phase.substeps.findIndex((item) => item.key === "prepare"),
+    0,
+  );
+  const afterInputsSubstepIndex = Math.min(
+    prepareSubstepIndex + 1,
+    phase.substeps.length - 1,
+  );
+  const continueTargetLabel = isLastInputSection
+    ? (phase.substeps[afterInputsSubstepIndex]?.label ?? "the next step")
+    : (phaseCaptureSections[selectedSectionIndex + 1]?.label ??
+      "the next step");
+  // Required inputs must be captured (and saved) before advancing; optional
+  // inputs may be skipped. Advancing between steps keys off capture-level
+  // completeness — the value is filled and persisted — NOT the phase-gate
+  // display status, which only turns complete once the gate is approved on the
+  // final step. A value mid-save is not yet complete, so the button stays
+  // disabled until the save lands.
+  const selectedCaptureStatus = selectedSection
+    ? phaseCaptureStatusForSection(
+        selectedSection,
+        phaseCaptureValues,
+        persistedPhaseCaptureValues,
+        phaseCaptureSaveStatus,
+        businessChangeAssessment,
+        approvedEvidenceReferences.map((item) => item.evidenceId),
+        phaseEvidencePassed,
+        evidenceReadinessAvailable,
+      )
+    : null;
+  const canAdvanceFromSection = selectedSection
+    ? selectedSection.required
+      ? Boolean(selectedCaptureStatus?.complete)
+      : true
+    : false;
+  const advanceFromSection = () => {
+    if (!selectedSection) return;
+    if (isLastInputSection) {
+      onSelectSubstep(afterInputsSubstepIndex);
+      onSelectSection(null);
+    } else {
+      const next = phaseCaptureSections[selectedSectionIndex + 1];
+      if (next) onSelectSection(next.key);
+    }
+    scrollContractDetailIntoView();
+  };
+  // "Coming up" lists what the NEXT phase will need — preparation that only
+  // makes sense once this phase's work is done. It surfaces on the final
+  // Approve & Build step and stays hidden on every earlier step.
+  const onApproveStep =
+    selectedWorkflow && phase.substeps[substepIndex]?.key === "approve";
+
   return (
     <section
       className="mxw-contract-card"
@@ -3811,34 +3874,36 @@ function PhaseContractStepsCanvas({
             );
           })}
         </div>
-        <div
-          className="mxw-contract-comingup"
-          data-testid="mxw-contract-comingup"
-        >
-          <button
-            aria-expanded={comingUpExpanded}
-            onClick={onToggleComingUp}
-            type="button"
+        {onApproveStep ? (
+          <div
+            className="mxw-contract-comingup"
+            data-testid="mxw-contract-comingup"
           >
-            What {readinessPack.nextPhaseLabel} will need
-          </button>
-          {comingUpExpanded ? (
-            readinessPack.openNeeds.length > 0 ? (
-              <div data-testid="mxw-contract-comingup-chips">
-                {readinessPack.openNeeds.slice(0, 6).map((need) => (
-                  <span
-                    className={need.priority === "required" ? "req" : ""}
-                    key={need.evidenceSlot}
-                  >
-                    {need.evidenceSlot}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p>No open evidence needs for the next phase yet.</p>
-            )
-          ) : null}
-        </div>
+            <button
+              aria-expanded={comingUpExpanded}
+              onClick={onToggleComingUp}
+              type="button"
+            >
+              What {readinessPack.nextPhaseLabel} will need
+            </button>
+            {comingUpExpanded ? (
+              readinessPack.openNeeds.length > 0 ? (
+                <div data-testid="mxw-contract-comingup-chips">
+                  {readinessPack.openNeeds.slice(0, 6).map((need) => (
+                    <span
+                      className={need.priority === "required" ? "req" : ""}
+                      key={need.evidenceSlot}
+                    >
+                      {need.evidenceSlot}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p>No open evidence needs for the next phase yet.</p>
+              )
+            ) : null}
+          </div>
+        ) : null}
         <div className="mxw-contract-nav-foot">
           Use the left steps in order. Approve &amp; Build remains the governed
           close; it is not a visual-only button.
@@ -4023,6 +4088,27 @@ function PhaseContractStepsCanvas({
                 until this value is saved.
               </p>
             ) : null}
+            <div className="mxw-contract-advance">
+              <button
+                className="mxw-contract-continue"
+                disabled={!canAdvanceFromSection}
+                onClick={advanceFromSection}
+                type="button"
+              >
+                {isLastInputSection
+                  ? `Continue to ${continueTargetLabel}`
+                  : "Save & continue"}
+              </button>
+              {!canAdvanceFromSection ? (
+                <span className="mxw-contract-advance-hint">
+                  Fill this in to continue.
+                </span>
+              ) : (
+                <span className="mxw-contract-advance-next">
+                  Next: {continueTargetLabel}
+                </span>
+              )}
+            </div>
           </div>
         ) : (
           <div className="mxw-contract-legacy-body">{substepBody}</div>
@@ -8596,6 +8682,12 @@ function MovesStandaloneStyles() {
 .mxw-contract-comingup span.req{border-color:rgba(186,117,23,.18);background:#fbf1df;color:#8a5a12}
 .mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
 .mxw-contract-nav-foot{margin-top:4px;border-top:1px solid rgba(12,26,58,.14);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
+.mxw-contract-advance{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(12,26,58,.10)}
+.mxw-contract-continue{appearance:none;border:0;border-radius:9px;background:var(--green);color:#fff;font-size:13px;font-weight:800;padding:10px 18px;cursor:pointer}
+.mxw-contract-continue:hover:not(:disabled){background:#176f51}
+.mxw-contract-continue:disabled{background:rgba(12,26,58,.12);color:#8b95a8;cursor:not-allowed}
+.mxw-contract-advance-hint{font-size:12px;color:#8a5a12}
+.mxw-contract-advance-next{font-size:12px;color:#5b6c8a}
 .mxw-contract-detail{padding:28px 30px 24px;min-width:0;scroll-margin-top:96px}
 .mxw-contract-detail-top{position:sticky;top:72px;z-index:24;display:grid;grid-template-columns:22px auto minmax(0,1fr) auto minmax(0,max-content);align-items:center;gap:10px;margin:-10px -12px 18px;padding:10px 12px;background:rgba(255,255,255,.97);border-bottom:1px solid rgba(12,26,58,.10);box-shadow:0 5px 14px rgba(12,26,58,.06);backdrop-filter:blur(8px)}
 .mxw-contract-detail-top>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
