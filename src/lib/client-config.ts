@@ -22,11 +22,30 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
     /^\s*(?:qa|codex|agent|proof|test)(?:[-_\s]+(?:synthetic|fixture|sandbox|proof|canary))?\s*[-:]\s*/i,
     "",
   ],
-  // The prefix stripper above catches a leading "qa:/test-synthetic:" tag; this
-  // catches the TRAILING end-to-end run identifier that leaks from synthetic run
-  // names (e.g. "Member Service Agent Assist Claude E2E 1002" → drop the run id).
-  // Tight by design so it never touches a real client name.
-  [/\s*\b(?:Claude\s+)?E2E\s+\d+\b/gi, ""],
+  // The prefix stripper above catches a leading "qa:/test-synthetic:" tag; the
+  // two rules below catch the end-to-end run or build identifier that leaks
+  // from synthetic run names. Both are anchored on the harness token `E2E`,
+  // which appears in no client name, business function or move vocabulary, so
+  // neither can reach a real title.
+  //
+  // U-553. This was one rule, `/\s*\b(?:Claude\s+)?E2E\s+\d+\b/gi`, fitted to
+  // one example and asserted with one crafted string. On the real corpus it was
+  // worse than insufficient: on a board title of the form
+  // "<tenant> Synthetic Rich Evidence E2E <YYYY>-<MM>-<DD>T<HH>-<MM>" the `\d+`
+  // matched the YEAR alone, so the rule removed "E2E <YYYY>" and rendered
+  // "<tenant> Synthetic Rich Evidence-<MM>-<DD>T<HH>-<MM>" — turning a leak that
+  // still carried the token into one that no longer did, which no second pass
+  // anchored on `E2E` could ever clean. A stamp must therefore be consumed
+  // whole, longest shape first, which is what the alternation order below is
+  // for. The other observed shape, "Synthetic <tenant> E2E Smoke - <stamp>",
+  // survived untouched because `E2E` was followed by a word rather than a digit.
+  [
+    /\s*[-–—:]?\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\s*[-–—:]?\s*(?:\d{4}-\d{2}-\d{2}T\d{2}[-:]\d{2}(?:[-:]\d{2})?|\d{8}T\d{6}Z?|\d+)\b/gi,
+    "",
+  ],
+  // The token with no stamp after it is still a harness identifier, and leaving
+  // it renders "… Claims Platform E2E Smoke" to an executive.
+  [/\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\b/gi, ""],
   [
     /\bApex Retail Group(?:\s+Retail Group|\s+Group)+\b/gi,
     DEMO_SAFE_CLIENT_NAMES.apexretail,

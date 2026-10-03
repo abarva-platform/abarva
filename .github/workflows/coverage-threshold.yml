@@ -67,6 +67,15 @@ jobs:
       - name: Prove export-level route reachability still flags a real orphan
         run: npx jest --runTestsByPath src/__tests__/behaviors/route-export-reachability.test.ts --no-coverage --ci
 
+      # U-553. The merge that first stripped a run identifier from a move title
+      # asserted one crafted string, and 5 of the 8 names on the live board kept
+      # an identifier. This suite asserts a COUNT over an enumerated corpus
+      # instead, so a rule that cleans one shape and misses another cannot read
+      # as green. Named here, inside the required job, because a name in a job
+      # that cannot block a merge is not a gate.
+      - name: Count identifier-bearing move titles on the client surface
+        run: npx jest --runTestsByPath src/__tests__/behaviors/moves-title-identifier-corpus.test.ts --no-coverage --ci
+
       # T-595's own control. It must run in a required job for the same reason
       # the three steps above moved here.
       - name: Check a named suite step sits in a job that can block a merge
