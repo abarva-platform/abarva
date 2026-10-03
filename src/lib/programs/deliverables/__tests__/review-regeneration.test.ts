@@ -62,6 +62,32 @@ describe("Moves review regeneration helpers", () => {
     expect(plan.body).toContain("Client-To-Complete Fields");
   });
 
+  it("applies the regenerated suffix exactly once", () => {
+    const plan = buildReviewRegenerationPlan({
+      artifact,
+      feedbackText: "Apply the review notes.",
+      now: new Date("2026-06-27T12:00:00Z"),
+    });
+    expect(plan.title).toBe("Discovery Quality Proof — regenerated from review feedback");
+  });
+
+  it("does not stack the suffix when re-regenerating an already-regenerated artifact", () => {
+    const already: MoveArtifactRow = {
+      ...artifact,
+      title: "Discovery Quality Proof — regenerated from review feedback",
+      version: 2,
+    };
+    const plan = buildReviewRegenerationPlan({
+      artifact: already,
+      feedbackText: "Apply the latest review notes.",
+      now: new Date("2026-06-28T12:00:00Z"),
+    });
+    expect(plan.title).toBe("Discovery Quality Proof — regenerated from review feedback");
+    expect((plan.title.match(/regenerated from review feedback/g) ?? []).length).toBe(1);
+    // File name is built from the base title, so the version advances cleanly.
+    expect(plan.fileName).toBe("discovery-quality-proof-v3-review-regenerated.md");
+  });
+
   it("builds a complete-artifact Claude regeneration prompt, not a patch prompt", () => {
     const plan = buildReviewRegenerationPlan({
       artifact,
