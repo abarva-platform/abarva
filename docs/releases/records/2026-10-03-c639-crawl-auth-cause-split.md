@@ -173,15 +173,23 @@ revert is complete and immediate. The crawl returns to reporting the symptom wit
 
 Stated rather than hidden, because three of them matter:
 
-1. **This change does not make the crawl reach a product route.** It makes the lane name whose
+1. **C-639 names two lanes and this addresses one of them.** The item cites both `Post-deploy crawl`
+   and `ECL product live proof`. Only the first goes through the Clerk ticket path changed here.
+   `ECL product live proof` runs its browser proof inside a private-operator Azure Container Apps job
+   and fails earlier and differently: run `37152704867` on `698b83d830` failed at the step
+   *Run default-route product browser proof in private operator* with
+   `ACA job execution job-abarva-private-operator-eus-putjsyo ended with status Failed` — the job's
+   own logs are inside the private VNet and were not read by this run. That is a separate cause with
+   a separate owner, it is **not** repaired by this change, and no attempt was made to repair it here.
+2. **This change does not make the crawl reach a product route.** It makes the lane name whose
    problem it is. If the verdict is `instance_mismatch`, the remedy is a secret an operator
    provisions and this lane must stop there; the acceptance for the item says so explicitly and this
    release does not pre-empt it.
-2. **The verdict for the live instance is not yet observed.** The classifier is proved on both
+3. **The verdict for the live instance is not yet observed.** The classifier is proved on both
    branches by test, and the live evidence available without the secret (mint succeeds, redemption
    refused, 2.5 s elapsed) is consistent with `instance_mismatch`, but the comparison itself has not
    yet run in CI. Until a `main` run prints a `crawl_auth_cause:` line, the live cause is
    **undetermined and is reported as owed, not as established.**
-3. **No item is promoted by this change.** 249 rows sit in the `Signed-in acceptance owed` bucket;
+4. **No item is promoted by this change.** 249 rows sit in the `Signed-in acceptance owed` bucket;
    none of them may move on the strength of a repaired crawl, and `T-439`'s four questions about what
    the crawl actually proves remain unanswered and out of scope here.
