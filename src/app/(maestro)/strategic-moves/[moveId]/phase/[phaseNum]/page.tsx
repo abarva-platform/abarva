@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
 import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import { readSyntheticReferenceDraft } from "@/lib/programs/phase-capture-reference-drafts";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -801,6 +802,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     ),
   });
   const initialPhaseCaptureValues: Record<string, string> = {};
+  const initialReferenceDraftValues: Record<string, string> = {};
   for (const section of getPhaseCaptureSections(
     parsedPhase,
     initialConfirmedSolutionRoute,
@@ -812,6 +814,8 @@ export default async function StrategicMovePhaseWorkspacePage({
     const value = moduleRow?.state?.value;
     initialPhaseCaptureValues[section.key] =
       typeof value === "string" ? value : "";
+    const referenceDraft = readSyntheticReferenceDraft(moduleRow);
+    if (referenceDraft) initialReferenceDraftValues[section.key] = referenceDraft;
   }
   const initialPhaseCaptureRevision = computeCaptureRevision(
     initialPhaseCaptureValues,
@@ -842,6 +846,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        initialReferenceDraftValues={initialReferenceDraftValues}
         initialBusinessChangeAssessment={initialBusinessChangeAssessment}
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}
         initialConfirmedSolutionRoute={initialConfirmedSolutionRoute}

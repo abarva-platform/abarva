@@ -1962,6 +1962,44 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
   });
 
+  it("shows synthetic P1 reference content without capturing it or crediting the gate", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialReferenceDraftValues={{
+          sponsor_commitment:
+            "List the accountable sponsor contact and confirm whether phase-progress emails are wanted.",
+        }}
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByText("AbarVa reference draft")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "List the accountable sponsor contact and confirm whether phase-progress emails are wanted.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/not client-provided, captured, approved, or evidence/i),
+    ).toBeInTheDocument();
+    expect(
+      (
+        screen.getByLabelText(
+          "Sponsor contact and progress updates",
+        ) as HTMLTextAreaElement
+      ).value,
+    ).toBe("");
+    expect(screen.queryByText("Captured · gate open")).not.toBeInTheDocument();
+  });
+
   it("does not mark a typed P1 draft done when the server save fails", async () => {
     const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
     (global.fetch as jest.Mock).mockImplementation(

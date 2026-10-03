@@ -155,6 +155,8 @@ interface MovesPhaseStandaloneClientProps {
    * displayed boilerplate as if it were the client's own answers.
    */
   initialPhaseCaptureValues?: Record<string, string>;
+  /** Synthetic proposals stay separate from client-captured values and never count as complete. */
+  initialReferenceDraftValues?: Record<string, string>;
   /** Revision of those values; echoed on save so a stale write is rejected. */
   initialPhaseCaptureRevision?: string;
   initialBusinessChangeAssessment?: string;
@@ -710,6 +712,7 @@ function samePhaseBuildArtifactIds(
 export function MovesPhaseStandaloneClient({
   canApproveGates = false,
   initialPhaseCaptureValues,
+  initialReferenceDraftValues = {},
   initialPhaseCaptureRevision,
   initialBusinessChangeAssessment = "",
   initialApprovedEvidenceReferences = [],
@@ -2777,6 +2780,7 @@ export function MovesPhaseStandaloneClient({
                       }
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={displayPhaseCaptureValues}
+                      referenceDraftValues={initialReferenceDraftValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
                       phaseCaptureSaveErrors={displayPhaseCaptureSaveErrors}
                       phaseCaptureSaveStatus={displayPhaseCaptureSaveStatus}
@@ -2865,6 +2869,7 @@ export function MovesPhaseStandaloneClient({
                       }
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={phaseCaptureValues}
+                      referenceDraftValues={initialReferenceDraftValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
                       phaseCaptureSaveErrors={phaseCaptureSaveErrors}
                       phaseCaptureSaveStatus={phaseCaptureSaveStatus}
@@ -3562,6 +3567,23 @@ function workflowIndexForSelectedSection(
   );
 }
 
+function ReferenceDraftCallout({ value }: { value: string | undefined }) {
+  if (!value?.trim()) return null;
+  return (
+    <aside aria-label="Synthetic reference draft" className="mxw-reference-draft">
+      <div className="mxw-reference-draft-head">
+        <strong>AbarVa reference draft</strong>
+        <span>Synthetic · review before use</span>
+      </div>
+      <p>{value}</p>
+      <small>
+        Not client-provided, captured, approved, or evidence. This does not
+        complete the input or clear a gate.
+      </small>
+    </aside>
+  );
+}
+
 function PhaseContractStepsCanvas({
   avaDraftProposalsByKey,
   avaDraftSaveStatus,
@@ -3586,6 +3608,7 @@ function PhaseContractStepsCanvas({
   reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
+  referenceDraftValues,
   persistedPhaseCaptureValues,
   phaseCaptureSaveErrors,
   phaseCaptureSaveStatus,
@@ -3618,6 +3641,7 @@ function PhaseContractStepsCanvas({
   reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
+  referenceDraftValues: PhaseCaptureValues;
   persistedPhaseCaptureValues: PhaseCaptureValues;
   phaseCaptureSaveErrors: Record<string, string>;
   phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
@@ -3864,6 +3888,9 @@ function PhaseContractStepsCanvas({
         {selectedSection ? (
           <div className="mxw-contract-form">
             <p>{selectedSection.description}</p>
+            <ReferenceDraftCallout
+              value={referenceDraftValues[selectedSection.key]}
+            />
             {selectedAvaProposal ? (
               <div className="mxw-ava-draft-card">
                 <div className="mxw-ava-draft-card-head">
@@ -4018,6 +4045,7 @@ function FinderStepsColumns({
   reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
+  referenceDraftValues,
   persistedPhaseCaptureValues,
   phaseCaptureSaveErrors,
   phaseCaptureSaveStatus,
@@ -4042,6 +4070,7 @@ function FinderStepsColumns({
   reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
+  referenceDraftValues: PhaseCaptureValues;
   persistedPhaseCaptureValues: PhaseCaptureValues;
   phaseCaptureSaveErrors: Record<string, string>;
   phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
@@ -4271,6 +4300,9 @@ function FinderStepsColumns({
             <header>
               <p>{selectedSection.description}</p>
             </header>
+            <ReferenceDraftCallout
+              value={referenceDraftValues[selectedSection.key]}
+            />
             {selectedSection.structured === "facts" ? (
               <FinderFactsTable
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
@@ -8579,6 +8611,12 @@ button.mxw-step-progress-status{cursor:pointer}
 .mxw-phase-progress-button:focus-visible,.mxw-step-gate-button:focus-visible{outline:3px solid rgba(42,90,168,.35);outline-offset:2px}
 .mxw-contract-form{display:grid;gap:13px}
 .mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
+.mxw-reference-draft{display:grid;gap:8px;border:1px solid #d8e0e8;border-left:3px solid #587a9f;border-radius:8px;background:#f7f9fb;padding:12px}
+.mxw-reference-draft-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mxw-reference-draft-head strong{color:#263b52;font-size:12px}
+.mxw-reference-draft-head span{color:#5d6e80;font-size:11px;font-weight:700}
+.mxw-reference-draft p{white-space:pre-wrap}
+.mxw-reference-draft small{color:#59697a;font-size:11px;line-height:1.45}
 .mxw-ava-draft-card{display:grid;gap:10px;border:1px solid rgba(29,158,117,.22);border-radius:11px;background:#f8fffc;padding:12px}
 .mxw-ava-draft-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .mxw-ava-draft-card-head span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#147c5b;font-weight:900}
