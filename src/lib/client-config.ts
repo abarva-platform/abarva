@@ -22,6 +22,11 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
     /^\s*(?:qa|codex|agent|proof|test)(?:[-_\s]+(?:synthetic|fixture|sandbox|proof|canary))?\s*[-:]\s*/i,
     "",
   ],
+  // The prefix stripper above catches a leading "qa:/test-synthetic:" tag; this
+  // catches the TRAILING end-to-end run identifier that leaks from synthetic run
+  // names (e.g. "Member Service Agent Assist Claude E2E 1002" → drop the run id).
+  // Tight by design so it never touches a real client name.
+  [/\s*\b(?:Claude\s+)?E2E\s+\d+\b/gi, ""],
   [
     /\bApex Retail Group(?:\s+Retail Group|\s+Group)+\b/gi,
     DEMO_SAFE_CLIENT_NAMES.apexretail,

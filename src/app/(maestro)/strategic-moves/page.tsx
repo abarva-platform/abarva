@@ -49,9 +49,6 @@ function PortfolioReconciliationPanel({
         <h2 className="text-lg font-semibold text-[#111827]">
           Declared vs tracked portfolio
         </h2>
-        <p className="font-mono text-[11px] uppercase tracking-wider text-[#667085]">
-          canonical build {reconciliation.buildVersion}
-        </p>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
