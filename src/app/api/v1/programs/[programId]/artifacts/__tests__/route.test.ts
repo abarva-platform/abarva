@@ -204,6 +204,80 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     expect(json.artifacts[1]!.artifactId).toBe("mv-1");
   });
 
+  it("returns vault and generated quality scores on the same 0-100 scale", async () => {
+    moveRows = [
+      {
+        artifact_id: "vault-fractional",
+        artifact_type: "move_board_pack",
+        artifact_family: "generated_deliverable",
+        title: "Vault artifact",
+        phase: 1,
+        file_format: "docx",
+        file_name: "charter.docx",
+        version: 1,
+        status: "ready",
+        lifecycle_state: "current",
+        quality_score: 0.6,
+        unsupported_claims_count: 0,
+        generated_by: "u",
+        created_at: "2026-06-01T00:00:00Z",
+        file_size: 10,
+        metadata: {},
+      },
+      {
+        artifact_id: "vault-percent",
+        artifact_type: "move_board_pack",
+        artifact_family: "generated_deliverable",
+        title: "Vault artifact with percentage score",
+        phase: 1,
+        file_format: "docx",
+        file_name: "charter-v2.docx",
+        version: 2,
+        status: "ready",
+        lifecycle_state: "current",
+        quality_score: 60,
+        unsupported_claims_count: 0,
+        generated_by: "u",
+        created_at: "2026-06-02T00:00:00Z",
+        file_size: 10,
+        metadata: {},
+      },
+    ];
+    generatedRecs = [
+      {
+        id: "generated-fractional",
+        artifactType: "program_charter",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.6,
+        renderedAt: "2026-06-03T00:00:00Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        metadata: { renderableDoc: { title: "Generated charter" } },
+      },
+    ];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      artifacts: Array<{ artifactId: string; qualityScore: number | null }>;
+    };
+
+    expect(res.status).toBe(200);
+    expect(
+      Object.fromEntries(
+        json.artifacts.map((artifact) => [
+          artifact.artifactId,
+          artifact.qualityScore,
+        ]),
+      ),
+    ).toEqual({
+      "generated-fractional": 60,
+      "vault-percent": 60,
+      "vault-fractional": 60,
+    });
+  });
+
   it("labels generated output stale when approved evidence has changed", async () => {
     generatedRecs = [
       {
