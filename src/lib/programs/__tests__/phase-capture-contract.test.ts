@@ -218,3 +218,22 @@ describe("phase-capture-contract", () => {
     ]);
   });
 });
+
+describe("P1 charter capture guidance (clarity)", () => {
+  const sections = getPhaseCaptureSections(1);
+
+  it("gives every free-text charter input a worked example for the placeholder", () => {
+    for (const s of sections) {
+      if (s.structured) continue; // structured widgets render their own guidance
+      expect(typeof s.example).toBe("string");
+      expect((s.example ?? "").toLowerCase()).toContain("e.g.");
+    }
+  });
+
+  it("phrases the sponsor input in plain language, not system jargon", () => {
+    const sponsor = sections.find((s) => s.key === "sponsor_commitment");
+    // No internal phrasing on the client surface, and a worked example to fill.
+    expect(sponsor?.description ?? "").not.toMatch(/resolvable workspace identity/i);
+    expect((sponsor?.example ?? "").toLowerCase()).toContain("e.g.");
+  });
+});
