@@ -1,59 +1,55 @@
-# Meridian clean demo Move set
+# Clean Demo Move Set
 
-`clean-demo-moves.ts` is a **reviewable content spec** for a small,
-realistic Strategic Moves portfolio to show a client. It replaces the test-named
-/ placeholder moves that currently clutter the Meridian demo board (e.g.
-"Synthetic Agent Assist Claude E2E 1002"; charter text like "ROLE-01 …
-authority_matrix.csv") with five moves a healthcare CXO would recognise.
+This is a five-Move synthetic reference portfolio for product demonstration. It
+is grounded in the registered demo intake and candidate-opportunity analysis,
+but it is not client-attested evidence, approved scope, a measured baseline, or
+an approved investment.
 
-## The five moves
+## Content Contract
 
-| Code | Name | Entry | Sponsor role | Value stance |
-|---|---|---|---|---|
-| MER-2026-GOV-DATA | Governed data foundation for AI / LLM automation | P1 Charter | Chief Data & Analytics Officer | foundation enabler, to be validated |
-| MER-2026-CALLCTR | Call center optimization | P2 Discover | Chief Experience Officer | to be validated |
-| MER-2026-PAYINT | Payment integrity and leakage reduction | P1 Charter | VP Payment Integrity | to be validated |
-| MER-2026-COST-TRANSP | End-to-end cost transparency | P0 Originate | Chief Financial Officer | no funded value at Originate |
-| MER-2026-AGENT-ASSIST | Member Service Agent Assist Transformation | P2 Discover | Chief Experience Officer | candidate, not funded |
+The five entries cover governed data foundations, contact-center optimization,
+payment integrity, cost transparency, and member-service agent assistance. Each
+has a stable `graph_node_id`, a human-facing display code, an archetype, and
+explicit open-evidence items. Four carry a P1 charter scaffold; the Originate
+entry correctly has no P1 capture.
 
-## Grounding and honesty
+Every entry is synthetic reference material. The load keeps projected value
+null, value verification pending, gates empty, lifecycle `shaping`, and current
+phase at the entry phase (P0–P2). Evidence gaps remain open. Sponsor records
+are informational contacts with observer authority; phase-progress email is
+disabled until a user explicitly configures it. All approvals belong to an
+authorized workspace user.
 
-Every move is drawn from the interview-derived candidate opportunities in
-`datasets/tenant-inputs/meridian-health/derived/module-context/moves-context-view.json`.
-Systems, data domains, open evidence and the boundary come from that artifact —
-not invented. The source is explicit that interview support "does not create
-approved funding, realized value, or program execution status", so this set:
+Charter scaffolds are copied to `engagements.charter`. P1 sections are mapped
+to `program_modules` as tagged `synthetic_reference_draft` content with empty
+capture `value`, status `not_started`, `requires_human_review=true`, and no gate
+credit. This keeps reusable content available without presenting it as captured
+client input or a completed step. `business_change_assessment` remains open.
 
-- stays in **early phases (P0–P2)** — nothing is staged into Design/Roadmap/Mobilize;
-- asserts **no funded value** (value is "to be validated" / "candidate, not funded");
-- names each move's **open evidence** honestly.
+## Governed Load
 
-That keeps the demo aligned with the evidence-gate discipline that is the
-product's actual differentiator — never a false green.
+The planner is intentionally read-only:
 
-## Applying it (coordinated — NOT a solo step)
+```bash
+npx tsx scripts/demo/load-clean-demo-moves.ts --json --clean-test
+```
 
-This file does **not** touch the database. Loading these onto the live board is a
-mutating operator data-build on the Meridian tenant, which:
+Apply only through the shared digest-pinned ACA operator job, using
+`scripts/demo/clean-demo-moves-aca-job.ts` and the contract in
+`docs/ops/aca-data-build-job-rule.md`. The job resolves tenant identity from
+`tenant-input-registry.json` plus the exact canonical `clients.tenant_key`,
+prints the exact test-move archive candidates in a read-only preflight, and
+requires the apply run to present the same archive-plan hash. It archives via
+`lifecycle_state='archived'` (never hard-deletes or overloads legacy `status`),
+then inserts or idempotently reuses the five graph IDs in one transaction.
 
-- goes through an **ACA data-build job** (per `docs/ops/aca-data-build-job-rule.md`),
-  not a product web request or a local `az containerapp exec`;
-- must be **coordinated with the workstream actively advancing that tenant's
-  evidence/phase state** (see PR #8907 "require evidence before phase
-  transitions") so the two do not collide — decide together whether to clean the
-  existing test-named moves first, and upsert these idempotently by
-  `initiativeLink` (the `MER-MOVE-…` id);
-- should reuse the proven seed machinery in `scripts/seed-apex-demo-move.ts`
-  (engagement + phase-pack + sponsor upserts), parameterised by the five entries
-  here, rather than a new untested loader.
+The apply path refuses to overwrite an existing clean graph ID if its tenant,
+phase, lifecycle, value, gate, evidence, attachment, deliverable, snapshot, or
+approval state differs from a fresh loader-owned candidate. It does not create
+evidence, approvals, phase snapshots, or deliverables. A successful run emits
+validation and quality-gate output, per-step progress, and a Blob proof bundle.
 
-### Suggested load contract
-
-1. Run the planner (`scripts/demo/load-clean-demo-moves.ts`, or `--json`) to produce the plan / load spec; it writes nothing.
-2. Archive/remove the test-named moves (`… E2E <n>`, "Synthetic … E2E …").
-3. Upsert the five moves by `initiativeLink`, seeding each at its `entryPhase`
-   with the charter content here for P1+ moves.
-4. Verify on the signed-in board: five moves, realistic names, honest early
-   phases, no placeholder charter text.
-
-Until that coordinated job runs, nothing changes on the live board.
+Verify the signed-in Moves board independently after the job. Database readback
+and a successful job are not proof of what the user sees; confirm the five
+display names, early phases, null/pending value, real charter text, and open
+evidence on the authenticated board.

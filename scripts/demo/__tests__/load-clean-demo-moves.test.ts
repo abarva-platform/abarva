@@ -14,6 +14,7 @@ describe("clean demo moves loader", () => {
       expect(p.value_verified_status).toBe("pending");
       // Shaping candidate — never 'approved'/funded.
       expect(p.lifecycle_state).toBe("shaping");
+      expect(p.origin_source).toBe("intelligence_candidate");
       // Gate/evidence honesty is owned by the evidence/phase workstream.
       expect(p.gates_passed).toEqual([]);
     }
@@ -46,6 +47,15 @@ describe("clean demo moves loader", () => {
       ]) {
         expect(typeof scaffold[key]).toBe("string");
       }
+    }
+  });
+
+  it("keeps sponsor contacts informational and all progress emails disabled", () => {
+    for (const move of CLEAN_DEMO_MOVES.filter((entry) => entry.charter)) {
+      expect(move.charter?.sponsorAndProgressPreference).toMatch(/not (?:an )?approvers?/i);
+      expect(move.charter?.sponsorAndProgressPreference).toMatch(/email preference is not configured/i);
+      expect(move.charter?.decisionRights).toMatch(/authorized workspace user records/i);
+      expect(move.charter?.sponsorAndProgressPreference).not.toMatch(/phase-gate decisions sit with the sponsor/i);
     }
   });
 

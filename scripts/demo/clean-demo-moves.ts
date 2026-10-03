@@ -54,6 +54,16 @@ export interface DemoMove {
   /** Client-facing display code (human reference, not a raw tenant slug). */
   displayCode: string;
   name: string;
+  industryCode: string;
+  functionCode: "FRONT_OFFICE" | "MIDDLE_OFFICE" | "BACK_OFFICE";
+  objectiveCode: "GROW" | "OPTIMISE" | "CONTROL";
+  topicCode: string;
+  programArchetype:
+    | "strategic_transformation"
+    | "workflow_automation"
+    | "platform_modernization"
+    | "ai_product_enablement"
+    | "operational_optimization";
   /** One-line decision framing for the move. */
   thesis: string;
   entryPhase: DemoEntryPhase;
@@ -99,6 +109,11 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     initiativeLink: "MER-MOVE-002",
     displayCode: "MER-2026-GOV-DATA",
     name: "Governed data foundation for AI / LLM automation",
+    industryCode: "HEALTHCARE_IDN",
+    functionCode: "MIDDLE_OFFICE",
+    objectiveCode: "CONTROL",
+    topicCode: "governed_data_foundation_ai",
+    programArchetype: "ai_product_enablement",
     thesis:
       "A governed semantic layer and data-quality controls so later AI use cases reuse the same trusted entities instead of rebuilding them.",
     entryPhase: 1,
@@ -115,7 +130,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     ],
     charter: {
       sponsorAndProgressPreference:
-        "Sponsored by the Chief Data & Analytics Officer, who owns scope, outcomes, and the phase-gate decisions. Progress is reviewed in the monthly Data & AI steering forum.",
+        "Listed sponsor contact: Chief Data & Analytics Officer. The sponsor is an informational contact, not an approver. An authorized workspace user records all Move approvals. Phase-progress email preference is not configured; this demo seed sends no email.",
       scopeBoundary:
         "In scope: a governed semantic layer over Epic Clarity and the claims marts on Databricks, plus data-quality and AI audit-trail controls. Out of scope: net-new clinical source systems and model development for specific use cases (those are separate moves that consume this foundation).",
       successCriteria:
@@ -123,7 +138,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
       stakeholderMap:
         "CDAO (owner), Enterprise Architecture, CISO and Privacy (controls), Application Owners for Clarity and the claims marts, and Procurement for the platform agreements.",
       decisionRights:
-        "The CDAO approves the semantic model and governance standard; the CISO and Privacy approve the control design; Enterprise Architecture approves the platform pattern.",
+        "The CDAO, CISO, Privacy, and Enterprise Architecture provide accountable subject-matter review. An authorized workspace user records the resulting scope, design, and phase approvals.",
       evidencePlan:
         "Close the four open items before Discover sign-off: stand up the governance operating model, certify the semantic layer for the first domains, produce AI audit-trail evidence, and load the data-quality rule set.",
     },
@@ -133,6 +148,11 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     initiativeLink: "MER-MOVE-003",
     displayCode: "MER-2026-CALLCTR",
     name: "Call center optimization",
+    industryCode: "HEALTHCARE_IDN",
+    functionCode: "FRONT_OFFICE",
+    objectiveCode: "OPTIMISE",
+    topicCode: "member_service_contact_center_optimization",
+    programArchetype: "operational_optimization",
     thesis:
       "Give member-service agents governed next-best-action and real-time claims status so calls resolve on first contact.",
     entryPhase: 2,
@@ -154,7 +174,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     ],
     charter: {
       sponsorAndProgressPreference:
-        "Sponsored by the Chief Experience Officer, accountable for member-service outcomes and the phase-gate decisions. Weekly progress to the Member Experience operations review.",
+        "Listed sponsor contact: Chief Experience Officer. The sponsor is an informational contact, not an approver. An authorized workspace user records all Move approvals. Phase-progress email preference is not configured; this demo seed sends no email.",
       scopeBoundary:
         "In scope: governed next-best-action content and real-time claims-status lookup inside the agent desktop for the member-services queue. Out of scope: self-service member channels and any change to the underlying claims platform.",
       successCriteria:
@@ -162,7 +182,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
       stakeholderMap:
         "Chief Experience Officer (owner), Contact Center operations, Health Plan Operations, Privacy (member data), Enterprise Architecture and Application Owners for the CRM and claims integration.",
       decisionRights:
-        "The Chief Experience Officer approves scope and the go/hold at each gate; Privacy approves member-data handling; Enterprise Architecture approves the integration pattern.",
+        "The Chief Experience Officer, Privacy, and Enterprise Architecture provide outcome, data-handling, and architecture review. An authorized workspace user records all scope and phase approvals.",
       evidencePlan:
         "Before Discover closes: load transcript governance, prove the real-time claims integration, certify the intent taxonomy, and prove member identity linkage. Capture the first-contact-resolution and handle-time baseline.",
     },
@@ -172,6 +192,11 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     initiativeLink: "MER-MOVE-006",
     displayCode: "MER-2026-PAYINT",
     name: "Payment integrity and leakage reduction",
+    industryCode: "HEALTHCARE_IDN",
+    functionCode: "BACK_OFFICE",
+    objectiveCode: "CONTROL",
+    topicCode: "payment_integrity_claims_anomaly_governance",
+    programArchetype: "workflow_automation",
     thesis:
       "Govern the rules and models behind claims-anomaly detection so recoveries are provable and defensible, not a black box.",
     entryPhase: 1,
@@ -193,7 +218,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     ],
     charter: {
       sponsorAndProgressPreference:
-        "Sponsored by the VP of Payment Integrity, with the CFO as executive escalation. The phase-gate decisions sit with the sponsor; progress is reviewed in the finance operations forum.",
+        "Listed sponsor contact: VP of Payment Integrity; CFO is an escalation contact. Sponsors are informational contacts, not approvers. An authorized workspace user records all Move approvals. Phase-progress email preference is not configured; this demo seed sends no email.",
       scopeBoundary:
         "In scope: governed rules and model lineage for claims-anomaly detection, provider entity resolution, and a tracked investigation-to-recovery workflow. Out of scope: contract renegotiation and provider-facing disputes.",
       successCriteria:
@@ -201,7 +226,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
       stakeholderMap:
         "VP Payment Integrity (owner), CFO (escalation), the SIU / investigations team, Provider Data Management, CISO and Privacy, and Application Owners for the SAS estate and claims platform.",
       decisionRights:
-        "The VP Payment Integrity approves the rule-governance standard and the gates; the CFO approves the value case; CISO and Privacy approve data handling.",
+        "Payment Integrity and Finance provide rule-governance and value-case review; CISO and Privacy provide data-handling review. An authorized workspace user records all resulting approvals.",
       evidencePlan:
         "Before Discover closes: govern rule and model lineage, prove provider entity resolution, load the investigation-workflow evidence, and stand up recovery-realization tracking.",
     },
@@ -211,6 +236,11 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     initiativeLink: "MER-MOVE-005",
     displayCode: "MER-2026-COST-TRANSP",
     name: "End-to-end cost transparency",
+    industryCode: "HEALTHCARE_IDN",
+    functionCode: "BACK_OFFICE",
+    objectiveCode: "OPTIMISE",
+    topicCode: "claims_gl_provider_cost_transparency",
+    programArchetype: "platform_modernization",
     thesis:
       "A certified margin and cost-of-care view that aligns claims, GL, and provider contracts so leaders see true cost, not a reconciliation guess.",
     entryPhase: 0,
@@ -236,6 +266,11 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     initiativeLink: "MER-MOVE-AI-ASSIST",
     displayCode: "MER-2026-AGENT-ASSIST",
     name: "Member Service Agent Assist Transformation",
+    industryCode: "HEALTHCARE_IDN",
+    functionCode: "FRONT_OFFICE",
+    objectiveCode: "CONTROL",
+    topicCode: "member_service_agent_assist",
+    programArchetype: "ai_product_enablement",
     thesis:
       "An AI assist layer across Genesys, Salesforce, and ServiceNow that drafts member responses and surfaces case context — reviewable, with PHI controls.",
     entryPhase: 2,
@@ -247,7 +282,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
     openEvidence: ["Approved business case, baseline, and PHI controls required"],
     charter: {
       sponsorAndProgressPreference:
-        "Sponsored by the Chief Experience Officer. Because this move handles member PHI, the phase-gate decisions include a privacy sign-off; progress is reviewed with the Member Experience and Privacy leads.",
+        "Listed sponsor contact: Chief Experience Officer. The sponsor is an informational contact, not an approver. Privacy is a required reviewer for PHI controls; an authorized workspace user records all Move approvals. Phase-progress email preference is not configured; this demo seed sends no email.",
       scopeBoundary:
         "In scope: an AI assist layer across Genesys, Salesforce, and ServiceNow that drafts member responses and surfaces case context for agents, with every suggestion reviewable before it is sent. Out of scope: autonomous member-facing responses and any PHI use without an approved control.",
       successCriteria:
@@ -255,7 +290,7 @@ export const CLEAN_DEMO_MOVES: readonly DemoMove[] = [
       stakeholderMap:
         "Chief Experience Officer (owner), Privacy and the Privacy Officer (PHI controls), Contact Center operations, and Application Owners for Genesys, Salesforce, and ServiceNow.",
       decisionRights:
-        "The Chief Experience Officer approves scope and the gates; the Privacy Officer holds a required sign-off on PHI handling before the move can advance.",
+        "The Chief Experience Officer and Privacy Officer provide outcome and PHI-control review. An authorized workspace user records scope, control, and phase approvals after required review is complete.",
       evidencePlan:
         "Before advancing: produce an approved business case, load the service baseline, and get PHI controls approved. Until those exist, the move stays in shaping — it is not funded.",
     },
