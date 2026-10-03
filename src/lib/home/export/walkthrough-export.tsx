@@ -15,7 +15,11 @@ import {
   type EstateRecordTypes,
 } from "@/components/home/v4/chapter-page-content";
 import type { Finding, TableSpec } from "@/components/home/v4/page-tables";
-import { enterpriseContextExportSection } from "./enterprise-context";
+import {
+  enterpriseContextExportAbsence,
+  enterpriseContextExportSection,
+  type EnterpriseContextAbsence,
+} from "./enterprise-context";
 import type { HomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
 import {
   homeNarrativeStatusLabel,
@@ -205,6 +209,17 @@ function architectureSummaryHtml(bundle: HomeReviewBundle): string {
   </section>`;
 }
 
+/**
+ * A chapter's source-linked enterprise context is absent, and the export says which absence it is.
+ * The banner wording is the token the behavior suite counts, so it is one string in one place.
+ */
+function absenceHtml(absence: EnterpriseContextAbsence): string {
+  return `<section class="enterprise-context-absent">
+        <h3>ENTERPRISE CONTEXT NOT SERVED</h3>
+        <p>${escapeHtml(absence.why)}</p>
+      </section>`;
+}
+
 function chapterHtml(
   chapter: ChapterView,
   index: number,
@@ -218,6 +233,13 @@ function chapterHtml(
   const contextSection = mixed
     ? enterpriseContextExportSection(chapter.chapterId, enterpriseContext)
     : null;
+  const contextAbsence = contextSection
+    ? null
+    : enterpriseContextExportAbsence({
+        chapterId: chapter.chapterId,
+        recordSource,
+        context: enterpriseContext,
+      });
   const currentContext = contextSection
     ? `<section class="enterprise-context">
         <h3>${escapeHtml(contextSection.title)}</h3>
@@ -225,7 +247,9 @@ function chapterHtml(
         ${contextSection.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
         ${contextSection.tables.map(tableHtml).join("")}
       </section>`
-    : "";
+    : contextAbsence
+      ? absenceHtml(contextAbsence)
+      : "";
   const currentDepth = `
     ${
       depth.findings.length
@@ -263,7 +287,7 @@ function chapterHtml(
           ${!contextSection && !depth.findings.length && !depth.tables.length ? "<p>No current chapter-specific tables or findings are available in this export.</p>" : ""}
         </div>${currentContext}${currentDepth}
         <section class="prior-interpretation"><h3>${escapeHtml(priorLabel)}</h3>${prior}</section>`
-        : `${prior}${currentDepth}`
+        : `${prior}${currentContext}${currentDepth}`
     }
   </article>`;
 }
@@ -512,6 +536,19 @@ function PdfChapter({
   const contextSection = mixed
     ? enterpriseContextExportSection(chapter.chapterId, enterpriseContext)
     : null;
+  const contextAbsence = contextSection
+    ? null
+    : enterpriseContextExportAbsence({
+        chapterId: chapter.chapterId,
+        recordSource,
+        context: enterpriseContext,
+      });
+  const absenceBlock = contextAbsence ? (
+    <View>
+      <Text style={pdfStyles.h3}>ENTERPRISE CONTEXT NOT SERVED</Text>
+      <Text style={pdfStyles.text}>{contextAbsence.why}</Text>
+    </View>
+  ) : null;
   const priorLabel = homePriorInterpretationLabel(recordSource, narrativeDate);
   const currentDepth = (
     <>
@@ -580,6 +617,7 @@ function PdfChapter({
               </Text>
             ) : null}
           </View>
+          {absenceBlock}
           {contextSection ? (
             <View>
               <Text style={pdfStyles.h3}>{contextSection.title}</Text>
@@ -600,6 +638,7 @@ function PdfChapter({
       ) : (
         <>
           {prior}
+          {absenceBlock}
           {currentDepth}
         </>
       )}

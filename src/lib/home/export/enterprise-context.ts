@@ -3,13 +3,127 @@ import type {
   EnterpriseContextFact,
   HomeEnterpriseContext,
 } from "@/lib/home/preview/ecl-enterprise-context";
-import type { ChapterId } from "@/lib/home/preview/types";
+import type {
+  ChapterId,
+  HomeRecordRenderSource,
+} from "@/lib/home/preview/types";
 import { formatValueMoney } from "@/lib/home/preview/value-proof-format";
 
 export interface EnterpriseContextExportSection {
   title: string;
   paragraphs: string[];
   tables: TableSpec[];
+}
+
+/**
+ * The chapters this module emits a source-linked enterprise-context section for. Seven chapters
+ * carry one; every other chapter never did, so an absent section there is not a gap and must not
+ * be declared as one.
+ *
+ * This list is the declaration side of the branch ladder below. The two are held together by
+ * `every chapter that carries a context section` in
+ * `src/__tests__/behaviors/home-walkthrough-export-enterprise-context.test.tsx`, which counts the
+ * declarations an all-chapters render produces against this list's length.
+ */
+export const ENTERPRISE_CONTEXT_CHAPTER_IDS = [
+  "executive_brief",
+  "our_business",
+  "strategy_value_creation",
+  "how_we_operate",
+  "technology_data",
+  "performance_value",
+  "what_needs_attention",
+] as const satisfies readonly ChapterId[];
+
+export type EnterpriseContextAbsenceReason =
+  | "reviewed_snapshot"
+  | "context_not_attached"
+  | "context_not_established"
+  | "dependency_proof_not_established";
+
+export interface EnterpriseContextAbsence {
+  reason: EnterpriseContextAbsenceReason;
+  why: string;
+}
+
+/**
+ * Why a chapter that normally carries a source-linked enterprise-context section is not carrying
+ * one in this export.
+ *
+ * The export used to render silence here, and silence is the one answer a reader cannot act on:
+ * six of the seven elements the section carries disappear together, so a document missing them
+ * looks the same whether the context was never attached to the served bundle, was attached as
+ * `null` because the served rows could not establish it, or was established and rendered for a
+ * different chapter. Those have different owners and different fixes, and the document is the only
+ * artifact the reader holds.
+ *
+ * Returns `null` when nothing is owed: the chapter never carries a section, a section is about to
+ * render, or the narrative is aligned with the served record (`coherence === "coherent"`), in which
+ * case the export deliberately renders the aligned narrative alone rather than repeating the
+ * source-linked tables beside it. That last case is a declared choice, not an oversight, and
+ * `treats an aligned narrative as a deliberate suppression` in the behavior suite pins it.
+ */
+export function enterpriseContextExportAbsence({
+  chapterId,
+  recordSource,
+  context,
+}: {
+  chapterId: ChapterId;
+  recordSource: HomeRecordRenderSource;
+  context: HomeEnterpriseContext | null | undefined;
+}): EnterpriseContextAbsence | null {
+  if (
+    !(ENTERPRISE_CONTEXT_CHAPTER_IDS as readonly string[]).includes(chapterId)
+  ) {
+    return null;
+  }
+
+  if (recordSource.kind !== "ecl_serving_projection") {
+    return {
+      reason: "reviewed_snapshot",
+      why:
+        "This export was built from the reviewed Home snapshot, which carries no source-linked " +
+        "enterprise context. Business scale, operating segments, declared priorities, function " +
+        "ownership and the attribution gaps are absent because no serving projection was read, " +
+        "not because the record does not declare them.",
+    };
+  }
+
+  if (recordSource.contextVersion?.coherence === "coherent") return null;
+
+  if (context === undefined) {
+    return {
+      reason: "context_not_attached",
+      why:
+        "A serving projection was read, but no enterprise context was attached to the bundle this " +
+        "export rendered. The reader that builds the bundle and the reader that builds the context " +
+        "disagree; this is a defect in the export's input, not an absence in the record.",
+    };
+  }
+
+  if (context === null) {
+    return {
+      reason: "context_not_established",
+      why:
+        "A serving projection was read and its rows could not establish a source-linked " +
+        "enterprise context. The builder requires exactly one cited enterprise-profile row, at " +
+        "least one cited business segment, at least one cited business function, and a declared " +
+        "business model on a synthetic-reference basis. Nothing here is a judgment about the " +
+        "enterprise.",
+    };
+  }
+
+  if (chapterId === "technology_data" && !context.dependencyProof) {
+    return {
+      reason: "dependency_proof_not_established",
+      why:
+        "An enterprise context was established, but no canonical ID-linked dependency path " +
+        "reached this export, so the critical dependency paths table is not rendered. Missing " +
+        "links are not inferred, and an empty table would read as an absence of exposure.",
+    };
+  }
+
+  return null;
 }
 
 function money(value: number): string {
