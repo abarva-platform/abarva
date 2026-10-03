@@ -14,6 +14,7 @@ The offline synthetic Moves smoke kit now matches the product's approval model: 
 
 ## Layer Impact
 
+- **Release lane: `public-demo`** — offline synthetic smoke material only.
 - **Layer 4 — Products:** test and demonstration fixtures only; no product runtime behavior changes.
 - **Governance:** the synthetic fixture's approval-authority statements and checks now match the approved workspace-user workflow.
 
