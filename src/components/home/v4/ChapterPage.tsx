@@ -991,14 +991,22 @@ function ChapterExecutiveReadout({
         {leadershipEvidenceNotice ? (
           <LeadershipEvidenceNotice text={leadershipEvidenceNotice} />
         ) : null}
-        {leadershipSignals.length > 0 ? (
-          chapter.chapterId === "leadership_perspective" ? (
-            <LeadershipVoiceFull signals={leadershipSignals} />
-          ) : (
-            <LeadershipVoiceStrip signals={leadershipSignals.slice(0, 4)} />
-          )
+        {/* On chapters that mention leadership in passing the strip stays inside the readout card: a
+            lead quote and two more is the right weight there. */}
+        {leadershipSignals.length > 0 &&
+        chapter.chapterId !== "leadership_perspective" ? (
+          <LeadershipVoiceStrip signals={leadershipSignals.slice(0, 4)} />
         ) : null}
       </div>
+      {/* The leadership chapter -- the one whose whole subject is what the interviewed leaders said --
+          earns a full-width editorial spread set BELOW the readout card, not boxed inside its narrow
+          column. It answers the chapter's own question: who was on the record, what the interviews
+          converged on, where a single voice stood apart, and where testimony and the system of record
+          disagree. */}
+      {leadershipSignals.length > 0 &&
+      chapter.chapterId === "leadership_perspective" ? (
+        <LeadershipVoiceFull signals={leadershipSignals} />
+      ) : null}
     </section>
   );
 }
@@ -1047,19 +1055,86 @@ function excerptOf(signal: Signal): { quote: string; theme: string | null } {
   return { quote: bare, theme };
 }
 
+interface ConsensusStat {
+  theme: string;
+  raised: number;
+  of: number;
+}
+
+/** Consensus and dissent arrive as `"<theme>" was raised by N of M interviewed leaders ...`. The
+ * theme and the count are the whole of what the sentence says; the rest repeats down the list. Pull
+ * the two out so the layout can rank and lead with them. Returns null on a sentence that does not
+ * carry a count, so a shape the packet changes later is dropped rather than rendered half-parsed. */
+function consensusStatOf(signal: Signal): ConsensusStat | null {
+  const statement = signal.statement ?? "";
+  const theme = /^"([^"]+)"/.exec(statement)?.[1];
+  const count = /raised by (\d+) of (\d+)/.exec(statement);
+  if (!theme || !count) return null;
+  return { theme, raised: Number(count[1]), of: Number(count[2]) };
+}
+
+/** A dissent sentence names its theme the same way but states no denominator ("raised by exactly
+ * one interviewed leader"), so only the theme is pulled. */
+function dissentThemeOf(signal: Signal): string | null {
+  return /^"([^"]+)"/.exec(signal.statement ?? "")?.[1] ?? null;
+}
+
+/** The contradiction count, as the `<n> of <m>` the sentence opens with. */
+function conflictStatOf(signal: Signal): { raised: number; of: number } | null {
+  const m = /^(\d+) of (\d+)/.exec(signal.statement ?? "");
+  return m ? { raised: Number(m[1]), of: Number(m[2]) } : null;
+}
+
+/** Short acronyms that stay upper-case when a machine token is rendered as words. */
+const THEME_ACRONYMS = new Set(["ai", "ml", "kpi", "roi", "ehr", "erp"]);
+
+/** A machine theme token off the interview packet ("value_realisation") rendered as words. An
+ * underscore identifier is machine vocabulary, the one thing a client surface must not show, and the
+ * leadership footer used to print it verbatim. */
+function humanizeTheme(raw: string): string {
+  const words = raw.split(/[_\s-]+/).filter(Boolean);
+  if (words.length === 0) return raw.trim();
+  return words
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      if (THEME_ACRONYMS.has(lower)) return lower.toUpperCase();
+      return index === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    })
+    .join(" ");
+}
+
 /**
- * Every excerpt on the chapter that exists to carry them, grouped by who spoke.
+ * The leadership chapter's full voice, as an editorial spread rather than a boxed list.
  *
- * The strip below shows a lead quote and two more, which is right on a chapter that mentions
- * leadership in passing. On this chapter it meant forty-four interviewed leaders were represented
- * by two quotes from one office.
+ * The strip (used where a chapter mentions leadership in passing) shows a lead quote and two more.
+ * On THIS chapter -- the one whose whole subject is what the interviewed leaders said -- that
+ * collapsed five offices and sixteen counted themes into two quotes from one office. The full view
+ * answers the chapter's own question in order of weight: what the interviews converged on, where a
+ * single voice stood apart, where testimony and the system of record disagree, and then every office
+ * on the record in its own words.
+ *
+ * Nothing here is authored. The quote, the office and the theme are parsed from the sentence the
+ * packet already built; the agreement, dissent and conflict counts are the ones the packet states; a
+ * machine theme token is rendered as words so no underscore identifier reaches the surface. The
+ * layout ranks and sizes this material -- it adds none of it. Red and amber stay reserved: a
+ * contradiction is a counted discrepancy, not a register severity, so it is shown in the counted
+ * (navy) treatment, never in red.
  */
 function LeadershipVoiceFull({ signals }: { signals: Signal[] }) {
   const testimony = signals.filter((signal) => signal.kind === "testimony");
-  const themes = signals.filter(
-    (signal) => signal.kind === "consensus" || signal.kind === "dissent",
-  );
+  const consensus = signals
+    .filter((signal) => signal.kind === "consensus")
+    .map(consensusStatOf)
+    .filter((stat): stat is ConsensusStat => stat !== null)
+    .sort((a, b) => b.raised / b.of - a.raised / a.of || b.raised - a.raised);
+  const dissent = signals
+    .filter((signal) => signal.kind === "dissent")
+    .map(dissentThemeOf)
+    .filter((theme): theme is string => Boolean(theme));
   const conflicts = signals.filter((signal) => signal.kind === "contradiction");
+  // The metric has always counted consensus and dissent together as "themes"; keep that total.
+  const themeCount = consensus.length + dissent.length;
+
   const byRole = new Map<string, Signal[]>();
   for (const signal of testimony) {
     const role = roleOf(signal);
@@ -1069,45 +1144,119 @@ function LeadershipVoiceFull({ signals }: { signals: Signal[] }) {
   const roles = [...byRole.entries()].sort(
     (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
   );
+
   return (
-    <div
-      data-leadership-full
-      style={{ display: "grid", gap: 22, marginTop: 20 }}
-    >
-      <div data-leadership-metrics style={voiceMetricGridStyle}>
+    <div data-leadership-full style={voiceFullStyle}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+        <span style={eyebrow(V4.navy)}>Leadership voice</span>
+        <span style={{ flex: 1, height: 1, background: V4.rule }} />
+      </div>
+
+      <div data-leadership-metrics style={voiceScaleGridStyle}>
         <VoiceMetric value={testimony.length} label="excerpts on the record" />
         <VoiceMetric value={roles.length} label="offices quoted" />
-        <VoiceMetric value={themes.length} label="themes counted" />
+        <VoiceMetric value={themeCount} label="themes counted" />
         <VoiceMetric value={conflicts.length} label="record conflicts" />
       </div>
-      {roles.map(([role, said]) => (
-        <div key={role} style={{ minWidth: 0 }}>
-          <span style={eyebrow(V4.amber)}>{role}</span>
-          <div style={{ display: "grid", gap: 10, marginTop: 9 }}>
-            {said.map((signal) => {
-              const { quote, theme } = excerptOf(signal);
-              return (
-                <blockquote key={signal.id} style={excerptStyle}>
-                  <p style={{ margin: 0 }}>&ldquo;{quote}&rdquo;</p>
-                  {theme ? (
-                    <footer style={excerptThemeStyle}>on {theme}</footer>
-                  ) : null}
-                </blockquote>
-              );
-            })}
+
+      {consensus.length > 0 ? (
+        <div style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.navy)}>Where the interviews converged</span>
+          <p style={voiceSectionNoteStyle}>
+            Each theme by how many of the interviewed leaders raised it, counted
+            by office across the full set &mdash; strongest agreement first.
+          </p>
+          <div style={consensusGridStyle}>
+            {consensus.map((stat) => (
+              <div key={stat.theme} style={consensusRowStyle}>
+                <span style={consensusThemeStyle}>
+                  {humanizeTheme(stat.theme)}
+                </span>
+                <span style={consensusCountStyle}>
+                  <strong style={consensusCountNumberStyle}>
+                    {stat.raised}
+                  </strong>
+                  <span style={consensusCountOfStyle}>of {stat.of}</span>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
-      {themes.length > 0 ? (
-        <div style={{ minWidth: 0 }}>
-          <span style={eyebrow(V4.slate)}>
-            Counted across every recorded response
-          </span>
-          <div style={voiceQuoteGridStyle}>
-            {themes.map((signal) => (
-              <p key={signal.id} style={voiceQuoteStyle}>
-                {stripDoubleQuotes(signal.statement)}
+      ) : null}
+
+      {dissent.length > 0 || conflicts.length > 0 ? (
+        <div style={counterpointRowStyle}>
+          {dissent.length > 0 ? (
+            <div style={counterpointCardStyle}>
+              <span style={eyebrow(V4.slate)}>Raised by a single leader</span>
+              <p style={voiceSectionNoteStyle}>
+                A minority view with no corroboration elsewhere in the interview
+                set.
               </p>
+              <div style={dissentTagWrapStyle}>
+                {dissent.map((theme) => (
+                  <span key={theme} style={dissentTagStyle}>
+                    {humanizeTheme(theme)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {conflicts.map((signal) => {
+            const stat = conflictStatOf(signal);
+            return (
+              <div key={signal.id} style={counterpointCardStyle}>
+                <span style={eyebrow(V4.navy)}>Testimony against the record</span>
+                {stat ? (
+                  <p style={conflictStatLineStyle}>
+                    <strong style={conflictStatNumberStyle}>
+                      {stat.raised.toLocaleString()}
+                    </strong>
+                    <span style={conflictStatOfStyle}>
+                      of {stat.of.toLocaleString()} responses
+                    </span>
+                  </p>
+                ) : null}
+                <p style={voiceSectionNoteStyle}>
+                  Leadership responses that contradict the system-of-record
+                  evidence on the same topic.
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {roles.length > 0 ? (
+        <div style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.navy)}>In their words</span>
+          <p style={voiceSectionNoteStyle}>
+            Every office on the record, not only the most-quoted.
+          </p>
+          <div style={voicesByOfficeStyle}>
+            {roles.map(([role, said], roleIndex) => (
+              <div key={role} style={{ minWidth: 0 }}>
+                <span style={roleHeaderStyle}>{role}</span>
+                <div style={officeQuotesStyle}>
+                  {said.map((signal, quoteIndex) => {
+                    const { quote, theme } = excerptOf(signal);
+                    const hero = roleIndex === 0 && quoteIndex === 0;
+                    return (
+                      <blockquote
+                        key={signal.id}
+                        style={hero ? heroQuoteStyle : excerptStyle}
+                      >
+                        <p style={{ margin: 0 }}>&ldquo;{quote}&rdquo;</p>
+                        {theme ? (
+                          <footer style={excerptThemeStyle}>
+                            on {humanizeTheme(theme)}
+                          </footer>
+                        ) : null}
+                      </blockquote>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -1355,6 +1504,174 @@ const excerptThemeStyle = {
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: V4.stone,
+} as const;
+
+/* The leadership chapter's full-width editorial voice spread. */
+
+const voiceFullStyle = {
+  marginTop: "clamp(30px,3.4vw,46px)",
+  borderTop: `1px solid ${V4.ruleStrong}`,
+  paddingTop: "clamp(24px,2.6vw,36px)",
+  display: "grid",
+  gap: "clamp(28px,3.2vw,44px)",
+} as const;
+
+const voiceScaleGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,160px),1fr))",
+  gap: 1,
+  border: `1px solid ${V4.rule}`,
+  background: V4.rule,
+} as const;
+
+const voiceSectionNoteStyle = {
+  margin: "8px 0 0",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.55,
+  color: V4.slate,
+  maxWidth: "64ch",
+} as const;
+
+const consensusGridStyle = {
+  marginTop: 16,
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,290px),1fr))",
+  gap: "0 clamp(28px,3vw,56px)",
+} as const;
+
+const consensusRowStyle = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,1fr) auto",
+  gap: 16,
+  alignItems: "baseline",
+  padding: "13px 0",
+  borderTop: `1px solid ${V4.ruleSoft}`,
+} as const;
+
+const consensusThemeStyle = {
+  fontFamily: SERIF,
+  fontSize: "clamp(16px,1.3vw,19px)",
+  fontWeight: 500,
+  letterSpacing: "-0.014em",
+  color: V4.ink,
+  textWrap: "pretty" as const,
+} as const;
+
+const consensusCountStyle = {
+  display: "inline-flex",
+  alignItems: "baseline",
+  gap: 5,
+  whiteSpace: "nowrap" as const,
+} as const;
+
+const consensusCountNumberStyle = {
+  fontFamily: SERIF,
+  fontSize: "clamp(18px,1.6vw,23px)",
+  fontWeight: 500,
+  color: V4.navy,
+  lineHeight: 1,
+  fontVariantNumeric: "tabular-nums",
+} as const;
+
+const consensusCountOfStyle = {
+  fontFamily: MONO,
+  fontSize: 11,
+  letterSpacing: "0.04em",
+  color: V4.stone,
+} as const;
+
+const counterpointRowStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))",
+  gap: "clamp(16px,2vw,24px)",
+} as const;
+
+const counterpointCardStyle = {
+  minWidth: 0,
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 10,
+  background: V4.surface,
+  padding: "18px 20px 20px",
+} as const;
+
+const dissentTagWrapStyle = {
+  display: "flex",
+  flexWrap: "wrap" as const,
+  gap: 8,
+  marginTop: 14,
+} as const;
+
+const dissentTagStyle = {
+  fontFamily: SANS,
+  fontSize: 13.5,
+  fontWeight: 500,
+  color: V4.inkSoft,
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 999,
+  padding: "5px 12px",
+} as const;
+
+const conflictStatLineStyle = {
+  margin: "12px 0 0",
+  display: "flex",
+  alignItems: "baseline",
+  gap: 7,
+  flexWrap: "wrap" as const,
+} as const;
+
+const conflictStatNumberStyle = {
+  fontFamily: SERIF,
+  fontSize: "clamp(27px,2.6vw,37px)",
+  fontWeight: 500,
+  letterSpacing: "-0.02em",
+  color: V4.navy,
+  lineHeight: 1,
+  fontVariantNumeric: "tabular-nums",
+} as const;
+
+const conflictStatOfStyle = {
+  fontFamily: SANS,
+  fontSize: 14,
+  color: V4.slate,
+} as const;
+
+const voicesByOfficeStyle = {
+  marginTop: 18,
+  display: "grid",
+  gap: "clamp(22px,2.6vw,34px)",
+} as const;
+
+const roleHeaderStyle = {
+  fontFamily: MONO,
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase" as const,
+  color: V4.navy,
+  display: "inline-block",
+  paddingBottom: 7,
+  borderBottom: `2px solid ${V4.navy}`,
+} as const;
+
+const officeQuotesStyle = {
+  marginTop: 14,
+  display: "grid",
+  gap: 14,
+} as const;
+
+const heroQuoteStyle = {
+  margin: 0,
+  padding: "2px 0 2px 20px",
+  borderLeft: `3px solid ${V4.navy}`,
+  fontFamily: SERIF,
+  fontSize: "clamp(20px,1.9vw,27px)",
+  fontWeight: 500,
+  lineHeight: 1.32,
+  letterSpacing: "-0.018em",
+  color: V4.ink,
+  maxWidth: "38ch",
+  textWrap: "pretty" as const,
 } as const;
 
 function VoiceMetric({ value, label }: { value: number; label: string }) {
