@@ -2038,11 +2038,12 @@ jobs:
           src/components/moves/living/__tests__
           --no-coverage --ci
 
-      - name: Run the T-799 docs page, Source request-first and Tower route-scope suites by named file
+      - name: Run the T-799 docs page, Source workspace and Tower route-scope suites by named file
         run: >-
           npx jest --runTestsByPath
           "src/app/(maestro)/docs/__tests__/product-docs-page.test.tsx"
           src/components/source/new-workspace/SourceNewRequestFirstPage.test.tsx
+          src/components/source/new-workspace/SourceNewNdaCapture.test.tsx
           "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts"
           --no-coverage --ci
 

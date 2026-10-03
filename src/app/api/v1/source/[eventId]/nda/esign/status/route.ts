@@ -3,6 +3,7 @@ import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { createSourceNdaEsignRuntime } from "@/lib/source/esign/runtime";
+import { readSyntheticNdaOperatorStatus } from "@/lib/source/esign/operator-status";
 
 type RouteContext = { params: Promise<{ eventId: string }> };
 
@@ -25,8 +26,20 @@ export async function GET(_request: Request, { params }: RouteContext): Promise<
   if (!policy?.canApproveSourceStages) {
     return Response.json({ error: "forbidden" }, { status: 403 });
   }
-  const runtime = createSourceNdaEsignRuntime(canonicalTenantKey(activeClient.key));
-  return Response.json({ available: runtime.provider !== null, fallback: runtime.fallback }, {
+  const clientKey = canonicalTenantKey(activeClient.key);
+  const runtime = createSourceNdaEsignRuntime(clientKey);
+  if (clientKey !== "meridian-health") {
+    return Response.json({ available: false, fallback: runtime.fallback }, {
+      headers: { "Cache-Control": "private, no-store" },
+    });
+  }
+  const suppliers = await readSyntheticNdaOperatorStatus({ clientKey, eventId }).catch(() => null);
+  if (suppliers === null) {
+    return Response.json({ error: "authority_unavailable" }, {
+      status: 503, headers: { "Cache-Control": "private, no-store" },
+    });
+  }
+  return Response.json({ available: runtime.provider !== null, fallback: runtime.fallback, suppliers }, {
     headers: { "Cache-Control": "private, no-store" },
   });
 }

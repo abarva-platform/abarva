@@ -1391,10 +1391,8 @@ function SourceNewStage05NdaReadiness({
       <p className="snw-eyebrow">Stage 05 · NDA readiness</p>
       <h3>Supplier NDA coverage</h3>
       <p>
-        This check summarizes recorded NDA evidence. When an accepted supplier,
-        an applicable published template and an uploaded signed file are present, a named
-        reviewer can record the execution details here. It does not contact
-        suppliers or approve legal terms.
+        This check summarizes recorded NDA evidence. A completed signing envelope does not
+        grant coverage; a named reviewer must record the executed document or Legal waiver.
       </p>
       <dl className="snw-facts">
         <div>
@@ -1434,6 +1432,7 @@ function SourceNewStage05NdaReadiness({
           <dd>{posture}</dd>
         </div>
       </dl>
+      <SourceNewNdaCapture eventId={eventId} clientKey={clientKey} files={files} coverage={coverage} />
       {coverage.suppliers.length > 0 ? (
         <div
           className="snw-nda-suppliers"
@@ -1480,7 +1479,6 @@ function SourceNewStage05NdaReadiness({
             : "No supplier has explicit candidate-panel acceptance for this event."}
         </p>
       )}
-      <SourceNewNdaCapture eventId={eventId} clientKey={clientKey} files={files} coverage={coverage} />
       <div className="snw-nda-next">
         <strong>{coverage.nextAction.label}</strong>
         <p>{coverage.nextAction.detail}</p>
