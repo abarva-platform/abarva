@@ -66,8 +66,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # C-639: named as a DIRECTORY, not as the one file it used to name, for
+      # the same reason the step below gives — a suite written here tomorrow
+      # should run the day it lands rather than waiting for someone to add a
+      # line. Both files in it are green and this widens the gate, never
+      # narrows it.
       - name: Run signed-in crawl proof contracts
-        run: npx jest src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts --no-coverage --ci
+        run: npx jest src/lib/crawl/__tests__ --no-coverage --ci
 
       # Named as a directory, without a trailing slash, for the two reasons in
       # the header. Naming the directory rather than the files is what makes a

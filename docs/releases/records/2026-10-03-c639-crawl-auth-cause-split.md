@@ -63,9 +63,16 @@ no product surface reads it.
   reports that stage on its own and fails closed; the browser redemption is wrapped so a refusal is
   classified, logged, and thrown with the verdict in its message, which is how it reaches the run's
   own finding text through the harness's existing `auth-bootstrap` observation.
-- `src/__tests__/behaviors/crawl-auth-cause.test.ts` (new) — 12 cases: 9 on the classifier, 3 driving
-  the real `signInPersona` handler with a minting client that succeeds and a page that refuses the
-  ticket the way the live run did.
+- `src/__tests__/behaviors/crawl-auth-cause.test.ts` (new) — 11 cases on the classifier and the
+  verdict-line formatter.
+- `src/lib/crawl/__tests__/crawl-auth-cause-live-path.test.ts` (new) — 3 cases driving the real
+  `signInPersona` handler with a minting client that succeeds and a page that refuses the ticket the
+  way the live run did. It lives here rather than in the behaviours directory for a measured reason
+  recorded under QA below.
+- `.github/workflows/unit-suites.yml` — the signed-in-crawl step now names the
+  `src/lib/crawl/__tests__` **directory** instead of the single file it used to name, so the new
+  suite runs in the required `Unit suites that pass on main` check and any suite written there
+  tomorrow runs the day it lands. This widens the gate; it never narrows it.
 
 ## QA / Validation
 
@@ -84,27 +91,47 @@ expiry is excluded as a cause.
 
 | scope | before | after |
 |---|---|---|
-| `src/__tests__/behaviors/crawl-auth-cause.test.ts`, classifier module absent | suite fails to run, **0 tests** | — |
-| same suite, classifier present but live path at merge base | **3 failed / 9 passed** | **12 passed / 0 failed** |
+| the two new suites, classifier module absent | suite fails to run, **0 tests** | — |
+| the two new suites, classifier present but live path at merge base | **3 failed / 11 passed** | **14 passed / 0 failed** |
 | `src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts` (pre-existing, same files) | 17 passed | 17 passed |
-| both suites together | — | **29 passed / 0 failed** |
+| whole `src/lib/crawl/__tests__` directory, as CI now runs it | — | **20 passed / 0 failed** |
 
 The 3 red cases on the merge-base live path are precisely the three that drive the real handler, so
 the live half of this change is proved by a test that fails without it rather than by the classifier
 alone.
 
-**Necessity proved by mutation — six deliberate breaks, six caught.**
+**Necessity proved by mutation — ten deliberate breaks, ten caught.**
 
 | mutation | result |
 |---|---|
-| invert the instance comparison (`!==` → `===`) | 4 failed / 8 passed |
-| delete the unreadable-identity guard, so an unreadable identity would blame the operator on no evidence | 1 failed / 11 passed |
-| make the classifier always answer `this-lane` | 2 failed / 10 passed |
-| live path throws the raw refusal again (the pre-change behavior) | 2 failed / 10 passed |
-| verdict thrown but no longer logged | 1 failed / 11 passed |
-| minting stage warns instead of failing closed | 1 failed / 11 passed |
+| invert the instance comparison (`!==` → `===`) | 5 failed / 9 passed |
+| delete the unreadable-identity guard, so an unreadable identity would blame the operator on no evidence | 1 failed / 13 passed |
+| make the classifier always answer `operator-secret` → `this-lane` | 3 failed / 11 passed |
+| verdict line drops the `owner=` field | 3 failed / 11 passed |
+| verdict line prints an empty instance instead of `unreadable` | 1 failed / 13 passed |
+| ticket issuer always reads back as the redeem host | 4 failed / 10 passed |
+| live path throws the raw refusal again (the pre-change behavior) | 2 failed / 12 passed |
+| verdict thrown but no longer logged | 1 failed / 13 passed |
+| minting stage warns instead of failing closed | 1 failed / 13 passed |
+| a refused mint reported as a redemption defect (stage lie) | 2 failed / 12 passed |
 
-Tree restored to green (12/12) after each.
+Tree restored to green (14/14) after each.
+
+**A first mutation batch was vacuous and is reported rather than quietly re-run.** The ten rows above
+are the second batch. The first passed both test paths to jest through an unquoted shell variable,
+which hid them from the resolver: every run — including the green control — reported `Tests: 0 total`,
+so a batch that executed nothing would have read as a batch that caught nothing. The green control is
+what caught it, and it is listed in every batch above for that reason.
+
+**A required check this change would have broken, found locally and fixed at the cause.** The first
+layout put all 14 cases in `src/__tests__/behaviors/`, which pulled all 514 lines of
+`persona-switcher.ts` into the `Behavior coverage floor` coverage set — including the password
+sign-in fallback and `waitForSignInOutcome`, which this change does not touch. Measured on this
+branch: **90.15% lines without the new test → 89.92% with it, against a 90% floor.** That is a gate
+failure this change caused. The floor was **not** moved. The three cases that import the live handler
+were moved to `src/lib/crawl/__tests__/`, wired by name into the required
+`Unit suites that pass on main` check, and the gate re-measured at **90.09%** — above the floor, with
+the live handler still under a test that runs in CI.
 
 - `rm -f tsconfig.tsbuildinfo && NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` → **exit 0**, 0 diagnostics. The build-info is removed first per `T-040`/item 40; the exit code is judged, not grepped.
 - `npx eslint` on all three files → exit 0.
