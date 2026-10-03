@@ -44,6 +44,7 @@ export interface MoveEvidenceNeedPacket {
   waiverOption: string | null;
   nextAction: string;
   status: MoveEvidenceNeedStatus;
+  evidenceIds?: string[];
   evidenceTitles: string[];
 }
 
@@ -647,6 +648,7 @@ export function buildMoveEvidenceNeedPackets(
         : "Optional input; waive only if the team accepts a lower-readiness artifact.",
       nextAction: guidance.nextAction,
       status,
+      evidenceIds: family.evidenceIds,
       evidenceTitles: family.evidenceTitles,
     };
   });

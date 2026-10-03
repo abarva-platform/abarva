@@ -36,6 +36,10 @@ import {
   buildMoveEvidenceNeedPackets,
   type MoveEvidenceNeedPacket,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import {
+  applyStageReadinessToEvidencePackets,
+  type StageReadinessGateProposal,
+} from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
@@ -140,6 +144,7 @@ interface StageReadinessProposalSetPreview {
       response?: string;
       answerState?: string;
       disposition?: string;
+      evidenceOrSource?: string;
     }>;
     message?: string;
   } | null;
@@ -191,6 +196,10 @@ function proposalSetPreviewFromJson(
             answerState:
               typeof proposal.answerState === "string"
                 ? proposal.answerState
+                : undefined,
+            evidenceOrSource:
+              typeof proposal.evidenceOrSource === "string"
+                ? proposal.evidenceOrSource
                 : undefined,
             disposition:
               typeof proposal.disposition === "string"
@@ -378,6 +387,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   let p1ToP2WorkbookReview: StageReadinessReviewGateStatus | null = null;
   let initialStageReadinessPreview: StageReadinessProposalSetPreview | null =
     null;
+  const readinessWorkbookPhase = Math.min(parsedPhase, currentPhase);
   try {
     const tctx = await requireTenancy();
     const approvalArtifacts = await listMoveArtifacts(tctx, moveId, {
@@ -386,13 +396,13 @@ export default async function StrategicMovePhaseWorkspacePage({
     });
     const currentReview = approvalArtifacts.find(
       (artifact) =>
-        artifact.phase === 1 &&
+        artifact.phase === readinessWorkbookPhase &&
         artifact.artifact_type ===
           STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
     );
     const currentProposalSet = approvalArtifacts.find(
       (artifact) =>
-        artifact.phase === 1 &&
+        artifact.phase === readinessWorkbookPhase &&
         artifact.artifact_type === STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE &&
         artifact.status === "review_required",
     );
@@ -506,8 +516,10 @@ export default async function StrategicMovePhaseWorkspacePage({
                     ),
                 },
               };
-              p1ToP2WorkbookReview =
-                p1ToP2ReviewStatusFromMetadata(reviewMetadata);
+              if (readinessWorkbookPhase === 1) {
+                p1ToP2WorkbookReview =
+                  p1ToP2ReviewStatusFromMetadata(reviewMetadata);
+              }
             }
           }
         }
@@ -553,6 +565,46 @@ export default async function StrategicMovePhaseWorkspacePage({
       currentPhase: parsedPhase,
       readiness: evidenceReadiness,
     });
+    const readinessProposals: StageReadinessGateProposal[] | null =
+      readinessWorkbookPhase === parsedPhase
+        ? (initialStageReadinessPreview?.proposalSet?.proposals ?? []).map(
+            (proposal): StageReadinessGateProposal => ({
+              questionId: proposal.questionId ?? "",
+              dimensionId: proposal.dimensionId ?? "",
+              requirement:
+                proposal.requirement === "recommended"
+                  ? ("recommended" as const)
+                  : ("required" as const),
+              answerState:
+                proposal.answerState === "answered" ||
+                proposal.answerState === "unknown" ||
+                proposal.answerState === "insufficient_evidence"
+                  ? proposal.answerState
+                  : ("blank" as const),
+              disposition:
+                proposal.disposition === "accepted" ||
+                proposal.disposition === "rejected" ||
+                proposal.disposition === "needs_validation"
+                  ? proposal.disposition
+                  : ("pending" as const),
+              evidenceOrSource: proposal.evidenceOrSource ?? "",
+            }),
+          )
+        : null;
+    evidenceNeedPackets = applyStageReadinessToEvidencePackets(
+      evidenceNeedPackets,
+      parsedPhase,
+      readinessProposals,
+      moveId,
+    );
+    if (parsedPhase === 1 && readinessWorkbookPhase === 1) {
+      evidenceNeedPackets = applyStageReadinessToEvidencePackets(
+        evidenceNeedPackets,
+        2,
+        readinessProposals,
+        moveId,
+      );
+    }
     evidenceReadinessAvailable = true;
     if (parsedPhase === 0) {
       const p0Evidence = await loadP0MinimumEvidenceStatus({

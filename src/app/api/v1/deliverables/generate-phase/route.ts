@@ -64,6 +64,11 @@ import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
+import {
+  formatAcceptedStageReadinessContextForPrompt,
+  loadAcceptedStageReadinessContext,
+} from "@/lib/programs/stage-readiness-workbooks/accepted-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -300,14 +305,37 @@ export async function POST(req: NextRequest) {
     let requiredEvidenceGaps: ReturnType<
       typeof currentPhaseRequiredEvidenceGaps
     >;
+    let acceptedStageReadinessPrompt = "";
     try {
       const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
-      const packets = buildMoveEvidenceNeedPackets({
+      let packets = buildMoveEvidenceNeedPackets({
         moveId,
         moveName,
         currentPhase: phase,
         readiness,
       });
+      if (phase >= 1 && phase <= 4) {
+        const transitionContext = await loadAcceptedStageReadinessContext(
+          ctx,
+          moveId,
+          phase + 1,
+        );
+        packets = applyStageReadinessToEvidencePackets(
+          packets,
+          phase,
+          transitionContext?.proposals ?? null,
+          moveId,
+        );
+      }
+      if (phase >= 2 && phase <= 5) {
+        const currentPhaseContext = await loadAcceptedStageReadinessContext(
+          ctx,
+          moveId,
+          phase,
+        );
+        acceptedStageReadinessPrompt =
+          formatAcceptedStageReadinessContextForPrompt(currentPhaseContext);
+      }
       requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(packets, phase);
     } catch (err) {
       console.error("[generate-phase] evidence_readiness_unavailable", {
@@ -586,6 +614,7 @@ export async function POST(req: NextRequest) {
         decisionContext: [
           `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
           phaseCaptureContext,
+          acceptedStageReadinessPrompt,
           solutionRoutePromptBlock,
           approvedApproachBlock,
         ]
