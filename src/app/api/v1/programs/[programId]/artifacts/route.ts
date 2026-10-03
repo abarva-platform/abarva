@@ -80,6 +80,11 @@ function objectValue(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function qualityScoreForDisplay(value: number | null): number | null {
+  if (value == null) return null;
+  return Math.round(value <= 1 ? value * 100 : value);
+}
+
 async function loadPendingEvidenceReviews(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
@@ -198,13 +203,13 @@ interface CabinetContextExtract {
   suggestedContextItems?: CabinetContextExtractItem[];
   excludedContextItems?: CabinetContextExtractItem[];
   gapItems?: CabinetContextExtractItem[];
-        freshness?: {
-          approvedEvidenceRevision?: string | null;
-          approvedEvidenceRevisionScope?: "phase" | null;
-          freshnessStatus?: "fresh" | "stale" | "rebuild_required";
-          currentApprovedEvidenceCount?: number;
-          createdAt?: string | null;
-        };
+  freshness?: {
+    approvedEvidenceRevision?: string | null;
+    approvedEvidenceRevisionScope?: "phase" | null;
+    freshnessStatus?: "fresh" | "stale" | "rebuild_required";
+    currentApprovedEvidenceCount?: number;
+    createdAt?: string | null;
+  };
 }
 
 function contextExtractFromMetadata(
@@ -544,20 +549,17 @@ export async function GET(
         const savedRevision = contextExtract.freshness.approvedEvidenceRevision;
         contextExtract.freshness.currentApprovedEvidenceCount =
           approvedSnapshot?.approvedEvidenceCount;
-        contextExtract.freshness.freshnessStatus =
-          !savedRevision
-            ? "rebuild_required"
-            : isApprovedMoveEvidenceBasisCurrent({
-                  snapshot: approvedSnapshot,
-                  phase:
-                    contextExtract.targetPhase ?? r.phase ?? 0,
-                  recordedRevision: savedRevision,
-                  scope:
-                    contextExtract.freshness.approvedEvidenceRevisionScope,
-                  generatedAt: contextExtract.freshness.createdAt,
-                })
-              ? "fresh"
-              : "stale";
+        contextExtract.freshness.freshnessStatus = !savedRevision
+          ? "rebuild_required"
+          : isApprovedMoveEvidenceBasisCurrent({
+                snapshot: approvedSnapshot,
+                phase: contextExtract.targetPhase ?? r.phase ?? 0,
+                recordedRevision: savedRevision,
+                scope: contextExtract.freshness.approvedEvidenceRevisionScope,
+                generatedAt: contextExtract.freshness.createdAt,
+              })
+            ? "fresh"
+            : "stale";
       }
       const artifactPhase =
         r.phase ?? phaseFromGeneratedArtifactMetadata(meta) ?? 0;
@@ -593,7 +595,7 @@ export async function GET(
         version: r.version,
         status: fixtureControl ? "quarantined" : r.status,
         lifecycleState: r.lifecycle_state,
-        qualityScore: r.quality_score,
+        qualityScore: qualityScoreForDisplay(r.quality_score),
         unsupportedClaims: r.unsupported_claims_count,
         generatedBy: r.generated_by,
         createdAt: r.created_at,
@@ -705,12 +707,7 @@ export async function GET(
               lifecycleState: rec.supersededBy ? "superseded" : "current",
               // Normalize quality to the 0–100 the Cabinet renders ("/100"):
               // the orchestrator stores 0–1, move_artifacts store 0–100.
-              qualityScore:
-                rec.qualityScore == null
-                  ? null
-                  : rec.qualityScore <= 1
-                    ? Math.round(rec.qualityScore * 100)
-                    : Math.round(rec.qualityScore),
+              qualityScore: qualityScoreForDisplay(rec.qualityScore),
               qualityStatus: meta?.qualityStatus ?? null,
               goldenBarStatus: meta?.goldenBarStatus ?? null,
               artifactStatus: meta?.artifactStatus ?? null,
