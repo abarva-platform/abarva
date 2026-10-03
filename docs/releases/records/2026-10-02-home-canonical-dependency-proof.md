@@ -23,23 +23,22 @@ Home can explain selected risk and change-program dependencies using canonical r
 
 - All clients: the additive Home reader and presentation code; no automatic data switch.
 - Specific clients: only a separately approved synthetic lab tenant with a matching source-set hash may be promoted by the private job.
-- Internal only: digest-pinned projection, check, promotion, and rollback operations.
+- Internal only: digest-pinned projection, check, promotion, and retirement operations.
 - Public/demo only: the synthetic reference record remains visibly not client-attested.
 - Feature flag: none; the active tenant-scoped projection declaration is the switch.
 
 ## Changes Included
 
 - Version-2 shadow Home projection includes a bounded set of canonical risk, program, application, vendor, contract, data-product, and platform edges, with endpoint and edge source links.
-- Promotion validates the exact projection version, manifest, source hash, row counts, source links, serving views, and Home context before switching the active declaration. Rollback validates the prior version-1 projection before restoring it.
+- Promotion validates the exact projection version, manifest, source hash, row counts, source links, serving views, and Home context before switching the active declaration. An active version-1 declaration is replaced only when its prior manifest and proof binding match the same assessment and source set.
 - Home renders the same selected paths in its Technology & Data context, advisor narrative and graph exhibit, record browser, and walkthrough export.
 - Pure builder, reader, advisor, UI, export, and projection-job tests cover the versioned contract. The Home selection tenant-fence workflow watches the new proof module.
 
 ## QA / Validation
 
-- Synthetic projection proof test: passed locally, including 3,643 object rows, 346 selected relationship rows, and canonical source references.
-- Focused Home advisor, dependency, UI, and export tests: 41 passed locally after rebasing, including an exact-edge drill click test.
-- Home ratchet: 911/939 passing; the same 12 baselined suites, with no new or worsened failure. Typecheck and touched-file lint passed locally after rebasing.
-- Local PostgreSQL projection integration: not run because no local admission-test database is configured. Release check: 11/11 gates passed. CI, private-job readback, and signed-in proof: pending at candidate creation; update evidence before merge or promotion.
+- Disposable PostgreSQL projection integration: 3,989 shadow rows, including 346 relationship rows with 1,038 edge-and-endpoint source links; passed locally after rebasing. The 20-step admission/retirement suite passed, including a guarded active version-1 to version-2 replacement and rejection of a swapped endpoint source.
+- Focused Home advisor, dependency, UI, and export tests: 41 passed locally. The projection proof contract test and typecheck passed locally.
+- Home ratchet: 941/969 assertions, with the same 12 baselined failing suites and no movement. Touched-file lint, typecheck, and release check (11/11) passed locally. CI, private-job readback, and signed-in proof remain pending before a live claim.
 
 ## Rollout Plan
 
@@ -61,7 +60,7 @@ Home can explain selected risk and change-program dependencies using canonical r
 
 ## Rollback Plan
 
-The private `rollback` mode verifies the exact prior version-1 manifest, 3,643 source-linked rows, active version-2 proof hash, and source-set hash before atomically restoring the version-1 declaration. It writes a rollback proof and deletes no canonical or projection rows. Code rollback requires a new PR and the repo-owned ACA main workflow. If version-2 promotion never occurs, no data rollback is needed.
+The separate private retirement job can retire the active version-2 declaration only when its tenant, assessment, and projection hash match the operator's approved target. Retirement writes proof and deletes no canonical or projection rows. It does not automatically restore version 1; any later restoration requires its own reviewed, proof-gated operation. Code rollback requires a new PR and the repo-owned ACA main workflow. If version-2 promotion never occurs, no data rollback is needed.
 
 ## Audit Evidence
 

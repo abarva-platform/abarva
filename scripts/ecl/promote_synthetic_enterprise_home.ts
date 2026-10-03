@@ -320,6 +320,7 @@ type ProjectionRead = {
     source_record_id: string;
     source_hash: string;
     ref_role: string;
+    sort_order: number;
   }[];
   sourceRecordIds: Set<string>;
 };
@@ -353,7 +354,7 @@ async function readProjection(
     [...scope, manifestId, version],
   );
   const links = await db.query<ProjectionRead["links"][number]>(
-    `select projection_entry_id::text, source_record_id::text, source_hash, ref_role
+    `select projection_entry_id::text, source_record_id::text, source_hash, ref_role, sort_order
      from ecl_projection.projection_entry_source_record_ref
      where tenant_key = $1 and assessment_id = $2`,
     scope,
@@ -401,6 +402,8 @@ function verifiedLinks(read: ProjectionRead): {
     refs.set(link.projection_entry_id, byHash);
     const key = `${link.projection_entry_id}|${link.source_hash}|${link.ref_role}`;
     counts.set(key, (counts.get(key) ?? 0) + 1);
+    const totalKey = `${link.projection_entry_id}|${link.source_hash}|*`;
+    counts.set(totalKey, (counts.get(totalKey) ?? 0) + 1);
   }
   return {
     refs,
@@ -434,10 +437,35 @@ function projectionDrift(
       `${outside} rows are not under the proved manifest and version`,
     );
   }
+  const byEntry = new Map<string, ProjectionRead["links"]>();
+  for (const link of read.links) {
+    const existing = byEntry.get(link.projection_entry_id) ?? [];
+    existing.push(link);
+    byEntry.set(link.projection_entry_id, existing);
+  }
+  const exactRefs = (row: LandscapeRow): boolean => {
+    const refs = row.source_refs_json;
+    const expectedCount = row.row_type === "relationship" ? 3 : 1;
+    if (!Array.isArray(refs) || refs.length !== expectedCount ||
+      !refs.every((ref) => ref && typeof ref === "object" &&
+        Object.keys(ref).length === 1 && typeof ref.source_record_id === "string")) {
+      return false;
+    }
+    const actual = (byEntry.get(row.projection_entry_id) ?? [])
+      .filter((link) => link.source_hash === row.source_hash)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    return actual.length === expectedCount && actual.every((link, index) =>
+      link.sort_order === index + 1 &&
+      link.ref_role === (index === 0 ? "primary_source" : "endpoint_source") &&
+      link.source_record_id === refs[index].source_record_id &&
+      read.sourceRecordIds.has(link.source_record_id));
+  };
   const unlinked = count(
     (row) => links.linkCount(row.projection_entry_id, row.source_hash, "primary_source") !== 1 ||
       links.linkCount(row.projection_entry_id, row.source_hash, "endpoint_source") !==
-        (row.row_type === "relationship" ? 2 : 0),
+        (row.row_type === "relationship" ? 2 : 0) ||
+      links.linkCount(row.projection_entry_id, row.source_hash, "*") !==
+        (row.row_type === "relationship" ? 3 : 1) || !exactRefs(row),
   );
   if (unlinked) {
     issues.push(

@@ -313,7 +313,7 @@ async function main(): Promise<void> {
             rebuild_command, source_hash, projection_hash, row_count, quality_state,
             admission_status, proof_uri)
          select '${spare}', tenant_key, assessment_id, snapshot_id,
-            projection_key, 2, rebuild_command, source_hash, projection_hash, row_count,
+            projection_key, 3, rebuild_command, source_hash, projection_hash, row_count,
             quality_state, admission_status, proof_uri
          from ${manifestTable} where ${scoped}`,
         scope,
@@ -379,8 +379,8 @@ async function main(): Promise<void> {
             readback_proof_uri: validation.readback_proof_uri,
           },
           {
-            projected_rows: 3643,
-            served_rows: 3643,
+            projected_rows: 3989,
+            served_rows: 3989,
             serving_views_read: 26,
             absent_serving_views: [],
             compared: true,
@@ -393,7 +393,7 @@ async function main(): Promise<void> {
             gate.home_enterprise_context as Record<string, unknown>,
             "businessModel",
           ),
-          { ...spine, excludedUncitedRows: 0 },
+          { ...spine, excludedUncitedRows: 0, dependencyLinks: 346 },
         );
         assert.deepEqual(gate.home_estate, {
           application_system: 344,
@@ -644,7 +644,7 @@ async function main(): Promise<void> {
             refused(
               "drift-row-missing",
               drift(
-                "3642 projected rows, the proof states 3643; 0 enterprise_profile rows, the proof states 1",
+                "3988 projected rows, the proof states 3989; 0 enterprise_profile rows, the proof states 1",
               ),
               {},
               true,
@@ -675,12 +675,12 @@ async function main(): Promise<void> {
           () => refused("drift-refused", drift("1 rows are refused"), {}, true),
         );
         await tampered(
-          [`update ${landscape} set projection_version = 2 where ${profile}`],
           [`update ${landscape} set projection_version = 1 where ${profile}`],
+          [`update ${landscape} set projection_version = 2 where ${profile}`],
           () =>
             refused(
               "drift-version",
-              drift("1 rows are not under the proved manifest and version"),
+              drift("3988 projected rows, the proof states 3989; 0 enterprise_profile rows, the proof states 1"),
               {},
               true,
             ),
@@ -705,7 +705,7 @@ async function main(): Promise<void> {
             ),
         );
         const unlinked = drift(
-          "1 rows do not have exactly one verified source link",
+          "1 rows do not have their required verified source links",
         );
         const links = "ecl_projection.projection_entry_source_record_ref";
         const profileEntry = `(select projection_entry_id from ${landscape} where ${profile})`;
@@ -764,6 +764,25 @@ async function main(): Promise<void> {
             `delete from ${links} where ${scoped} and ref_role = 'fixture_secondary'`,
           ],
           () => refused("drift-two-links", unlinked, {}, true),
+        );
+        const edgeEntry = `(select projection_entry_id from ${landscape}
+          where ${scoped} and row_type = 'relationship' order by row_key limit 1)`;
+        await tampered(
+          [
+            `create table ${backup} as select source_record_id from ${links}
+              where ${scoped} and projection_entry_id = ${edgeEntry} and sort_order = 2`,
+            `update ${links} set source_record_id = (
+              select id from ecl_source.source_record where ${scoped}
+                and id not in (select source_record_id from ${links} where projection_entry_id = ${edgeEntry})
+              order by id limit 1)
+              where ${scoped} and projection_entry_id = ${edgeEntry} and sort_order = 2`,
+          ],
+          [
+            `update ${links} set source_record_id = (select source_record_id from ${backup})
+              where ${scoped} and projection_entry_id = ${edgeEntry} and sort_order = 2`,
+            `drop table ${backup}`,
+          ],
+          () => refused("drift-edge-endpoint-source", unlinked, {}, true),
         );
       },
     );
@@ -840,7 +859,7 @@ async function main(): Promise<void> {
           () =>
             refused(
               "served-view-absent",
-              /^Home serving views do not serve the proved projection: 3607 of 3643 rows are served; no serving view for serving\.home_metrics_outcomes$/,
+              /^Home serving views do not serve the proved projection: 3953 of 3989 rows are served; no serving view for serving\.home_metrics_outcomes$/,
               {},
               true,
             ),
@@ -868,7 +887,7 @@ async function main(): Promise<void> {
           () =>
             refused(
               "served-twice",
-              /^Home serving views do not serve the proved projection: 3643 of 3643 rows are served$/,
+              /^Home serving views do not serve the proved projection: 3989 of 3989 rows are served$/,
               {},
               true,
             ),
@@ -908,8 +927,8 @@ async function main(): Promise<void> {
           {
             tenantKey: manifest.tenant_key,
             assessmentId: manifest.assessment_id,
-            rows: 3643,
-            cited: 3643,
+            rows: 3989,
+            cited: 3989,
             sourceFiles: manifest.files.length,
           },
         );
@@ -1879,6 +1898,59 @@ async function main(): Promise<void> {
         );
         assert.deepEqual(pending?.declaration_after, activeRow);
         assert.equal(pending?.status, "pending");
+      },
+    );
+
+    await step(
+      "an active version-one declaration is replaced only under its exact prior binding",
+      async () => {
+        const priorId = "00000000-0000-4000-8000-000000000011";
+        const priorHash = "1".repeat(64);
+        const priorProof = "https://fixturestorage.invalid/previous-projection.json";
+        await admin.query(
+          `insert into ${manifestTable}
+           (id, tenant_key, assessment_id, snapshot_id, projection_key, projection_version,
+            rebuild_command, source_hash, projection_hash, row_count, quality_state,
+            admission_status, proof_uri)
+           select $3, tenant_key, assessment_id, snapshot_id, projection_key, 1,
+             rebuild_command, source_hash, $4, 3643, quality_state,
+             admission_status, $5
+           from ${manifestTable} where ${scoped} and projection_version = 2`,
+          [...scope, priorId, priorHash, priorProof],
+        );
+        try {
+          await admin.query(
+            `update ${declarations} set projection_manifest_id = $3,
+               projection_hash = $4, projection_proof_uri = $5
+             where ${scoped} and state = 'active'`,
+            [...scope, priorId, priorHash, priorProof],
+          );
+          const old = await only();
+          const check = await admit({ run: "check-active-v1", manifests: loadApproved });
+          assert.equal(check.code, 0, check.failure);
+          assert.deepEqual(await only(), old);
+          await admin.query(
+            `update ${manifestTable} set row_count = 3642 where id = $1`,
+            [priorId],
+          );
+          await refused(
+            "replace-unproved-v1",
+            /^A different Home assessment is already active$/,
+            { mode: "promote" },
+            true,
+          );
+          await admin.query(
+            `update ${manifestTable} set row_count = 3643 where id = $1`,
+            [priorId],
+          );
+          const promoted = await admit({ run: "replace-active-v1", mode: "promote" });
+          assert.equal(promoted.code, 0, promoted.failure);
+          assert.equal(promoted.report?.outcome, "promoted");
+          assert.deepEqual(promoted.report?.declaration_before, old);
+          assert.equal((await only()).projection_manifest_id, manifestId);
+        } finally {
+          await admin.query(`delete from ${manifestTable} where id = $1`, [priorId]);
+        }
       },
     );
 

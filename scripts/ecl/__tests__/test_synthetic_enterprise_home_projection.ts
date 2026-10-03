@@ -45,14 +45,14 @@ import {
 
 /** The hash of the canonical input every projected row of the pinned source version is made from. */
 const PINNED_PROJECTION_HASH =
-  "b564fe263c0af7e124e20db98a2464883d41c0dac71646f989e837023c9c83be";
+  "87d7252e5672ae4a088a32b8b7ba46d89bcef728174b26dbd7281e41f44c9bf3";
 /**
  * The hash of what a projection of the pinned source version serves. It moves
  * whenever the row mapper changes any field of any row, which also changes
  * what Home shows for a projection that has already been proved.
  */
 const PINNED_PROJECTED_ROWS_HASH =
-  "65ffe53c6f2a289fa8e3a0d27e01e66d2326aafa59bc9efe2909170f8795aea8";
+  "42c05d773c4674e4d023579ea3b004f361fd7b0dad1923427a91148a010281da";
 
 const scoped = "tenant_key = $1 and assessment_id = $2";
 
@@ -371,7 +371,7 @@ async function main(): Promise<void> {
       scope,
     );
     assert.equal(committed.rows.length, 1);
-    assert.equal(committed.rows[0].row_count, 3643);
+    assert.equal(committed.rows[0].row_count, 3989);
     assert.equal(committed.rows[0].proof_uri, store.uriFor(firstProofPath));
     // What the job stamps is unchanged: the manifest a warning, each row passed.
     assert.equal(committed.rows[0].quality_state, "warning");
@@ -382,7 +382,7 @@ async function main(): Promise<void> {
       ["assessment_id", "assessment-fixture-other"],
       ["source_set_hash", "0".repeat(64)],
       ["projection_hash", "0".repeat(64)],
-      ["rows", 3642],
+      ["rows", 3988],
     ] as const) {
       await mkdir(path.dirname(store.fileFor(firstProofPath)), {
         recursive: true,
@@ -393,7 +393,7 @@ async function main(): Promise<void> {
           assessment_id: manifest.assessment_id,
           source_set_hash: manifest.source_set_hash,
           projection_hash: PINNED_PROJECTION_HASH,
-          rows: 3643,
+          rows: 3989,
           [field]: other,
         }),
       );
@@ -442,7 +442,7 @@ async function main(): Promise<void> {
     );
     assert.deepEqual(
       [after.rows[0].created_at.toISOString(), Number(after.rows[0].n)],
-      [committed.rows[0].created_at.toISOString(), 3643],
+      [committed.rows[0].created_at.toISOString(), 3989],
       "the committed projection is untouched",
     );
 
@@ -465,8 +465,11 @@ async function main(): Promise<void> {
     assert.equal(proof.projection_manifest_id, committed.rows[0].id);
     assert.equal(proof.serving_state, "shadow_not_promoted");
     assert.equal(proof.client_attestation_state, "not_client_attested");
-    assert.equal(proof.rows, 3643);
-    assert.equal(proof.source_linked_rows, 3643);
+    assert.equal(proof.projection_version, 2);
+    assert.equal(proof.canonical_relationships, 11727);
+    assert.equal(proof.dependency_relationship_rows, 346);
+    assert.equal(proof.rows, 3989);
+    assert.equal(proof.source_linked_rows, 3989);
     assert.deepEqual(proof.quality_gate, {
       manifest_quality_state: "warning",
       snapshot_quality_state: "warning",
@@ -549,6 +552,31 @@ async function main(): Promise<void> {
       "projection-fixture-2",
       "a proof is never overwritten",
     );
+    const priorManifestId = "00000000-0000-4000-8000-000000000012";
+    await admin.query(
+      `insert into ecl_projection.projection_manifest
+       (id, tenant_key, assessment_id, snapshot_id, projection_key, projection_version,
+        rebuild_command, source_hash, projection_hash, row_count, quality_state,
+        admission_status, proof_uri)
+       select $3, tenant_key, assessment_id, snapshot_id, projection_key, 1,
+         rebuild_command, source_hash, projection_hash, 3643, quality_state,
+         admission_status, proof_uri
+       from ecl_projection.projection_manifest
+       where ${scoped} and projection_version = 2`,
+      [...scope, priorManifestId],
+    );
+    try {
+      const coexisting = await project({
+        env: { ECL_SYNTHETIC_RUN_ID: "projection-fixture-v1-coexists" },
+      });
+      assert.equal(coexisting.code, 0, coexisting.failure);
+      assert.equal(coexisting.report?.outcome, "already_projected");
+    } finally {
+      await admin.query(
+        `delete from ecl_projection.projection_manifest where id = $1`,
+        [priorManifestId],
+      );
+    }
 
     // Any difference from the projection this run writes is still occupied.
     const occupied = async (
@@ -614,7 +642,7 @@ async function main(): Promise<void> {
     // The manifest: its identity, what it was made from and what it states.
     await changed(manifestTable, scoped, "id", spareId, true);
     await changed(manifestTable, scoped, "snapshot_id", spareId, true);
-    await changed(manifestTable, scoped, "projection_version", "2");
+    await changed(manifestTable, scoped, "projection_version", "1");
     await changed(manifestTable, scoped, "source_hash", "repeat('0', 64)");
     await changed(manifestTable, scoped, "projection_hash", "repeat('0', 64)");
     await changed(manifestTable, scoped, "row_count", "row_count - 1");
@@ -651,7 +679,7 @@ async function main(): Promise<void> {
     );
     await changed(landscape, oneRow, "quality_state", "'warning'");
     await changed(landscape, oneRow, "admission_status", "'admitted'");
-    await changed(landscape, oneRow, "projection_version", "2");
+    await changed(landscape, oneRow, "projection_version", "1");
     await changed(landscape, oneRow, "projection_manifest_id", spareId, true);
     // A row, an entry or a source link that is no longer there.
     const removed = (table: string, where: string, unchecked = false) =>
@@ -740,6 +768,7 @@ async function main(): Promise<void> {
     assert.equal(count("business_unit_profile", "business_function"), 14);
     assert.equal(count("business_unit_profile", "workforce_role"), 72);
     assert.equal(count("current_state_data_flow", "data_flow"), 1350);
+    assert.equal(count("relationships", "relationship"), 346);
     assert.deepEqual(
       proof.row_types,
       Object.fromEntries(
@@ -792,6 +821,19 @@ async function main(): Promise<void> {
       scope,
     );
     assert.equal(Number(links.rows[0].missing), 0);
+    const dependencyLinks = await admin.query<{ rows: string; refs: string; edges: string }>(`
+      select count(distinct h.id) as rows, count(r.source_record_id) as refs,
+        count(distinct e.relationship_id) as edges
+      from ecl_projection.home_enterprise_landscape h
+      join ecl_projection.projection_entry_source_record_ref r
+        on r.projection_entry_id = h.projection_entry_id
+      join ecl_projection.projection_entry_relationship_ref e
+        on e.projection_entry_id = h.projection_entry_id
+      where h.tenant_key = $1 and h.assessment_id = $2 and h.row_type = 'relationship'
+    `, scope);
+    assert.deepEqual(dependencyLinks.rows[0], {
+      rows: "346", refs: "1038", edges: "346",
+    });
 
     assertWorkflowTriggersCover([
       "datasets/tenant-inputs/tenant-input-registry.json",
