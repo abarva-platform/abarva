@@ -79,7 +79,7 @@ export async function publishSyntheticTemplate(
           artifact.artifact_type !== "nda_template" ||
           artifact.mime_type !== "application/pdf" ||
           artifact.blob_container !== "source-artifacts" ||
-          !artifact.blob_uri.startsWith(`${input.clientKey}/`) ||
+          !artifact.blob_uri.startsWith(`${input.clientKey}/${input.eventId}/${input.artifactId}/`) ||
           !artifact.uploader_user_id?.trim() ||
           !artifact.document_sha256 || !/^[a-f0-9]{64}$/.test(artifact.document_sha256)) {
         return { ok: false, code: "template_artifact_unavailable" };

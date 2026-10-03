@@ -18,7 +18,7 @@ const input = {
   acknowledged: true,
 };
 
-function fixture(options: { artifactEventId?: string; artifactHash?: string; artifactType?: string } = {}) {
+function fixture(options: { artifactEventId?: string; artifactHash?: string; artifactType?: string; blobUri?: string } = {}) {
   const statements: string[] = [];
   const inserted: unknown[][] = [];
   const run: SqlRunner = async <R>(sql: string, params: unknown[]): Promise<R[]> => {
@@ -27,7 +27,7 @@ function fixture(options: { artifactEventId?: string; artifactHash?: string; art
       if (options.artifactEventId && options.artifactEventId !== params[1]) return [];
       return [{
         id: artifactId,
-        blob_uri: "meridian-health/nda/synthetic.pdf",
+        blob_uri: options.blobUri ?? `meridian-health/${eventId}/${artifactId}/synthetic.pdf`,
         blob_container: "source-artifacts",
         document_sha256: options.artifactHash ?? hash,
         mime_type: "application/pdf",
@@ -52,7 +52,7 @@ it("publishes only a hash-verified private synthetic PDF under the named admin a
   expect(await publishSyntheticTemplate(input, { tx: f.tx, download: f.download, extractText: f.extractText })).toEqual({
     ok: true, id: "33333333-3333-4333-8333-333333333333",
   });
-  expect(f.download).toHaveBeenCalledWith("source-artifacts", "meridian-health/nda/synthetic.pdf");
+  expect(f.download).toHaveBeenCalledWith("source-artifacts", `meridian-health/${eventId}/${artifactId}/synthetic.pdf`);
   expect(f.statements.some((sql) => sql.includes("tenant_key = $1") && sql.includes("source_event_row_id = $2::uuid"))).toBe(true);
   expect(f.inserted).toHaveLength(1);
   expect(f.inserted[0]).toEqual(expect.arrayContaining([eventId, hash, "person-anand", "Anand"]));
@@ -78,6 +78,7 @@ it("refuses a file from another event or wrong artifact kind", async () => {
   for (const options of [
     { artifactEventId: "44444444-4444-4444-8444-444444444444" },
     { artifactType: "nda_executed" },
+    { blobUri: "meridian-health/other-event/synthetic.pdf" },
   ]) {
     const f = fixture(options);
     expect(await publishSyntheticTemplate(input, { tx: f.tx, download: f.download, extractText: f.extractText })).toEqual({

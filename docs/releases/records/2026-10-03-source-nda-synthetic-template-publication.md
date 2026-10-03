@@ -32,7 +32,7 @@ A named Source stage approver can publish a hash-verified, visibly synthetic NDA
 
 ## QA / Validation
 
-- PASS: red-first behavioral test showed an unmarked PDF could be published; the production verifier now rejects it.
+- PASS: red-first behavioral tests showed an unmarked PDF and a cross-event blob path could be published; the production verifier now rejects both.
 - PASS: focused unit and route tests cover tenant, event, actor, file type, byte hash, visible synthetic marker, and lack of downstream signed-NDA authority.
 - PASS: focused ESLint, TypeScript typecheck, and all 11 release gates.
 - PASS: the prerequisite schema was separately proved against disposable PostgreSQL 16, including event-scope rejection. This app PR does not apply it.
