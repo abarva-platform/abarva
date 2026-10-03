@@ -49,7 +49,7 @@ mutating operator data-build on the Meridian tenant, which:
 
 ### Suggested load contract
 
-1. Dry-run the loader (prints the intended upserts; no DB write).
+1. Run the planner (`scripts/demo/load-clean-demo-moves.ts`, or `--json`) to produce the plan / load spec; it writes nothing.
 2. Archive/remove the test-named moves (`… E2E <n>`, "Synthetic … E2E …").
 3. Upsert the five moves by `initiativeLink`, seeding each at its `entryPhase`
    with the charter content here for P1+ moves.
