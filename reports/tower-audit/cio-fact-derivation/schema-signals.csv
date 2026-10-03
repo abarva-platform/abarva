@@ -1,0 +1,12 @@
+table,schema_definition,insert_or_loader_signal
+cio_tower.source_registry,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:12,scripts/tower/load-cio-tower-standardized-v1.mjs:612
+cio_tower.entities,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:29,scripts/tower/load-cio-tower-standardized-v1.mjs:623
+cio_tower.facts,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:59,scripts/tower/load-cio-tower-standardized-v1.mjs:634
+cio_tower.relationships,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:124,scripts/tower/load-cio-tower-standardized-v1.mjs:649
+cio_tower.measures,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:154,scripts/tower/load-cio-tower-standardized-v1.mjs:661
+cio_tower.question_contracts,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:175,scripts/tower/load-cio-tower-standardized-v1.mjs:684
+cio_tower.measure_results,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:196,scripts/tower/load-cio-tower-standardized-v1.mjs:707
+cio_tower.prompt_packages,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:212,no direct insert signal in audited loaders
+cio_tower.answer_traces,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:226,no direct insert signal in audited loaders
+cio_tower.validation_runs,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:246,no direct insert signal in audited loaders
+cio_tower.validation_results,supabase/migrations/20260628202000_cio_tower_schema_v1.sql:256,no direct insert signal in audited loaders

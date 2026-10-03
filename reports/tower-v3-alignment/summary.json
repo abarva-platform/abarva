@@ -1,0 +1,68 @@
+{
+  "audit_id": "TOWER-V3-SOURCE-OF-TRUTH-ALIGNMENT-PR",
+  "generated_at": "2026-07-15T19:45:01.239Z",
+  "status": "Fail",
+  "selected_path": "Path A - Derived Tower Projection",
+  "selected_path_rationale": "Current Tower depends heavily on cio_tower, so the practical migration path is to keep cio_tower as a read-optimized projection while requiring every visible row to reconcile back to v3 governed context. Path B remains a later simplification option.",
+  "hard_rule": "There is only one enterprise context source standard. Tower may have a derived read model, but it cannot have a separate truth model.",
+  "current_findings": {
+    "registry_says_v3_only": true,
+    "v3_required_dimensions_present": true,
+    "existing_source_adapters": [
+      "SA01_ServiceNow_CMDB_Extract_Template.xlsx",
+      "SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx",
+      "SA03_Vendor_Contracts_Extract_Template.xlsx",
+      "SA04_Program_Portfolio_Extract_Template.xlsx",
+      "SA05_Cloud_Inventory_Extract_Template.xlsx",
+      "SA06_Incident_Problem_Change_Extract_Template.xlsx"
+    ],
+    "proposed_tower_adapters_present": false,
+    "tower_standardized_files": 250,
+    "active_tenant_input_files": 114,
+    "cio_schema_has_required_lineage_fields": false,
+    "tower_context_pack_has_value_records": false
+  },
+  "hard_failures": [
+    {
+      "rule": "Tower-visible rows lack v3/context-layer lineage",
+      "failed": true,
+      "evidence": "cio_tower schema does not contain the required lineage fields for every Tower-visible row."
+    },
+    {
+      "rule": "cio_tower rows are treated as source of truth without reconciliation",
+      "failed": true,
+      "evidence": "Tower UI consumes cio_tower directly through loadCioTowerCxoView while required v3 reconciliation fields are absent."
+    },
+    {
+      "rule": "tower-standardized-v1 remains an independent active source",
+      "failed": true,
+      "evidence": "tower-standardized-v1 exists and scripts/tower/load-cio-tower-standardized-v1.mjs reads it."
+    },
+    {
+      "rule": "realized value appears without TowerValueClaim support",
+      "failed": true,
+      "evidence": "Tower has realized_value_usd value-state code, but TowerContextPack does not define TowerValueClaim/TowerValueRecord support."
+    },
+    {
+      "rule": "old V6/V7 bridge rows are visible as product truth",
+      "failed": true,
+      "evidence": "Prior derivation audit found the V7 projection bridge exists; current audit does not prove it is hidden from product truth."
+    },
+    {
+      "rule": "Tower data bypasses Evidence Registry / Canonical Facts / Entity Profiles / Relationship Graph",
+      "failed": true,
+      "evidence": "Missing evidence_registry_id, canonical_fact_id, entity_profile_id, and relationship_edge_id on cio_tower serving rows."
+    }
+  ],
+  "output_files": [
+    "summary.md",
+    "summary.json",
+    "cio-tower-source-of-truth-classification.csv",
+    "tower-to-v3-lineage.csv",
+    "unreconciled-tower-rows.csv",
+    "required-v3-tower-extensions.md",
+    "tower-context-pack-design.md",
+    "tower-v3-alignment-proof.html"
+  ],
+  "source_hash": "7b801f425ddb7f90"
+}

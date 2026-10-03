@@ -1,0 +1,10 @@
+visual,posture,purpose,guardrail,implementation_status,pass_fail
+Value ladder,Recommended,Use for projected/tracked/verified value states,Only with value tier and evidence status,Not fully proven,Partial
+Metric readiness matrix,Recommended,Use for Agent Assist/Data Foundation readiness,Works with missing baselines and gates,Future,Partial
+Initiative-to-metric map,Recommended,Use to connect Moves/Source/Intelligence handoffs,Needs initiative_id and metric_id,Future,Partial
+Value waterfall,Restricted,"Use only with baseline, target, measured deltas",Do not use for unmeasured hypothesis,Guard required,Partial
+Trend line,Restricted,Use only with time-series evidence,No synthetic trend lines as actuals,Guard required,Partial
+Risk-to-value heatmap,Recommended,Good for CFO/CIO/CDAO views,Needs risk/control IDs,Future,Partial
+Owner/evidence/metric table,Recommended,Best current default for auditability,Can use structured tables now,Ready,Pass
+Source-to-Tower commercial value handoff,Recommended,Track savings hypothesis until measured,Needs source_handoff_id,Future,Partial
+Moves-to-Tower measurement plan,Recommended,P1/P5 should create measurement plan,Needs moves_handoff_id,Future,Partial
