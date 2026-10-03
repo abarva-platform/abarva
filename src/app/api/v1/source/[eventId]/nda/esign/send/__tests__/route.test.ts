@@ -31,12 +31,13 @@ import { POST } from "../route";
 const eventId = "11111111-1111-4111-8111-111111111111";
 const params = { params: Promise.resolve({ eventId }) };
 
-function request(acknowledged = true): Request {
+function request(acknowledged = true, deliveryMode?: string): Request {
   const body = new FormData();
   body.set("vendorId", "SYN-VENDOR-001");
   body.set("contactAuthorityId", "SYN-CONTACT-001");
   body.set("templateVersion", "synthetic-1.0");
   if (acknowledged) body.set("acknowledged", "on");
+  if (deliveryMode) body.set("deliveryMode", deliveryMode);
   body.set("clientKey", "forged-tenant");
   body.set("actorUserId", "forged-person");
   return new Request(`https://app.example.test/api/v1/source/${eventId}/nda/esign/send`, {
@@ -76,6 +77,14 @@ describe("synthetic NDA send route", () => {
 
   it("refuses an unconfirmed external action", async () => {
     expect((await POST(request(false), params)).status).toBe(409);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("requires an explicit valid delivery choice for embedded signing", async () => {
+    expect((await POST(request(true, "embedded"), params)).status).toBe(201);
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ deliveryMode: "embedded" }), expect.anything());
+    sendMock.mockClear();
+    expect((await POST(request(true, "unknown"), params)).status).toBe(400);
     expect(sendMock).not.toHaveBeenCalled();
   });
 
