@@ -11,6 +11,13 @@ export interface PhaseCaptureSection {
   description: string;
   required: boolean;
   /**
+   * A short worked example of a good answer, shown as the input placeholder so
+   * an empty field reads as empty-with-guidance ("e.g. …") instead of echoing
+   * the prompt back as ghost text. The `description` is the helper above the
+   * field; the `example` is what belongs INSIDE it.
+   */
+  example?: string;
+  /**
    * When `"facts"`, this section is captured as structured metric·value·source
    * rows (stored as JSON in the value) rather than free text — see
    * `diagnosis-facts.ts`. The workspace renders a facts table for it.
@@ -119,42 +126,54 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
     key: "sponsor_commitment",
     label: "Sponsor contact and progress updates",
     description:
-      "Listed sponsor contact, email address or resolvable workspace identity, and explicit phase-progress email preference. No sponsor approval or participation is requested.",
+      "The sponsor's name, role, and email. We only record them for progress updates — sponsor sign-off is not required to complete the charter.",
+    example:
+      "e.g. Priya Nair, Chief Data & Analytics Officer — priya.nair@company.example · wants a weekly progress email",
     required: true,
   },
   {
     key: "scope_boundary",
     label: "Scope boundary",
     description:
-      "Included and excluded process, user, function, system, or cohort boundaries.",
+      "The process, users, functions, systems, or cohorts this move will — and won't — touch.",
+    example:
+      "e.g. In: member-services voice & chat queues and the claims-status lookup. Out: self-service channels and changes to the claims platform.",
     required: true,
   },
   {
     key: "success_criteria",
     label: "Success criteria",
     description:
-      "Outcomes, KPIs, and directional targets that Discovery must validate.",
+      "The outcomes and directional targets Discovery will validate. Rough is fine at this stage.",
+    example:
+      "e.g. First-contact resolution up and average handle time down against a loaded baseline; CSAT held flat or better.",
     required: true,
   },
   {
     key: "stakeholder_map",
     label: "Stakeholder map",
     description:
-      "Business, IT, finance, risk, and operational stakeholders needed for Discovery.",
+      "The business, IT, finance, risk, and operational stakeholders Discovery will need.",
+    example:
+      "e.g. Member Experience (owner), Contact Center ops, Health Plan Operations, Privacy, Enterprise Architecture, CRM & claims app owners.",
     required: true,
   },
   {
     key: "decision_rights",
     label: "Decision rights",
     description:
-      "Who can approve scope, investment, design decisions, and phase advancement.",
+      "Who can approve scope, investment, design decisions, and advancing to the next phase.",
+    example:
+      "e.g. Chief Experience Officer approves scope and each gate; Privacy approves member-data handling; EA approves the integration pattern.",
     required: true,
   },
   {
     key: "evidence_plan",
     label: "Evidence plan",
     description:
-      "Evidence families, interviews, workshops, extracts, or templates needed next.",
+      "The evidence, interviews, workshops, or data extracts to gather next.",
+    example:
+      "e.g. Transcript governance, a real-time claims-integration test, the intent taxonomy, and the first-contact-resolution baseline.",
     required: true,
   },
   {

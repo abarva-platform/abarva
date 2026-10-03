@@ -3950,7 +3950,9 @@ function PhaseContractStepsCanvas({
                     event.target.value,
                   )
                 }
-                placeholder={selectedSection.description}
+                placeholder={
+                  selectedSection.example ?? "Write your answer here."
+                }
                 rows={selectedSection.structured === "facts" ? 4 : 6}
                 value={phaseCaptureValues[selectedSection.key] ?? ""}
               />
@@ -4309,6 +4311,9 @@ function FinderStepsColumns({
                     selectedSection.key,
                     event.target.value,
                   )
+                }
+                placeholder={
+                  selectedSection.example ?? "Write your answer here."
                 }
                 rows={selectedSection.structured === "facts" ? 3 : 6}
                 value={phaseCaptureValues[selectedSection.key] ?? ""}
@@ -7634,7 +7639,7 @@ function PhaseCaptureEditor({
                   onChange={(event) =>
                     onChange(section.key, event.target.value)
                   }
-                  placeholder={section.description}
+                  placeholder={section.example ?? "Write your answer here."}
                   rows={compact ? 2 : 3}
                   value={value}
                 />

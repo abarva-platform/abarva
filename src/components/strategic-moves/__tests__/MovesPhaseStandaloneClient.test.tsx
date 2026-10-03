@@ -1930,13 +1930,14 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Charter inputs" }),
     ).toBeInTheDocument();
-    expect(
-      (
-        screen.getByLabelText(
-          "Sponsor contact and progress updates",
-        ) as HTMLTextAreaElement
-      ).value,
-    ).toBe("");
+    const sponsorField = screen.getByLabelText(
+      "Sponsor contact and progress updates",
+    ) as HTMLTextAreaElement;
+    expect(sponsorField.value).toBe("");
+    // The empty box guides with a worked example, not the prompt echoed back as
+    // ghost text (which read as pre-filled).
+    expect(sponsorField.placeholder).toMatch(/^e\.g\./);
+    expect(sponsorField.placeholder).not.toMatch(/resolvable workspace identity/i);
     expect(
       (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
     ).toBe("");
