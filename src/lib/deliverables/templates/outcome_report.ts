@@ -52,7 +52,7 @@ export const outcomeReportTemplateStructure = {
       required: true,
       description: 'Capture the implementation choices that clearly drove success.',
       example_completed:
-        'What worked: bounded pilot scope, strong store-manager championing, exception telemetry from day one, and weekly sponsor review discipline.',
+        'What worked: bounded pilot scope, strong store-manager championing, exception telemetry from day one, and weekly workspace-team review discipline.',
     },
     {
       key: 'gaps_and_variance',
@@ -72,11 +72,11 @@ export const outcomeReportTemplateStructure = {
     },
     {
       key: 'verification_and_signoff',
-      title: 'Verification + Sign-Off',
+      title: 'Verification + Decision',
       required: true,
-      description: 'Describe how the result was verified and what sponsor or finance sign-off is still required.',
+      description: 'Describe how the result was verified, which finance and operations reviews are required, and which authorized workspace user records the product decision.',
       example_completed:
-        'Verification used four weeks of pilot telemetry and finance-reviewed labor assumptions; final scale decision requires CFO and Store Ops sponsor sign-off.',
+        'Verification used four weeks of pilot telemetry and finance-reviewed labor assumptions; finance and Store Ops provide review input, and an authorized workspace user records the final scale decision.',
     },
   ],
   format: 'markdown',

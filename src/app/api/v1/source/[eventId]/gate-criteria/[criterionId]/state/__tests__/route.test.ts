@@ -53,6 +53,12 @@ const writeAdapter = {
 const emitSourceApprovalNotificationBestEffort = jest.fn();
 const verifiedSponsorDelegationMock = jest.fn<Promise<boolean>, [{ eventId: string; tenantKey: string }]>(async () => false);
 let eventApprovalPolicyCode: "legacy_signed_scope_v1" | "self_v1" | null = null;
+let eventCreatorUserId = "clerk-user-1";
+let accessLevel: string | undefined;
+let persistedEvidenceRows: Record<string, unknown>[] = [];
+let artifactRows: Record<string, unknown>[] = [];
+let factRows: Record<string, unknown>[] = [];
+let factReadError: string | null = null;
 
 jest.mock("@/lib/source/sponsor-delegation-repository", () => ({
   hasVerifiedSponsorDelegation: (input: { eventId: string; tenantKey: string }) => verifiedSponsorDelegationMock(input),
@@ -76,6 +82,7 @@ jest.mock("@/lib/auth/current-user", () => ({
 jest.mock("@/lib/auth/source-access-policy", () => ({
   loadUserSourceAccessPolicy: jest.fn(async () => ({
     canApproveSourceStages: true,
+    accessLevel,
   })),
 }));
 
@@ -89,7 +96,7 @@ jest.mock("@/lib/source/queries", () => ({
 }));
 
 jest.mock("@/lib/source/canvas-substrate/event-intake-sync", () => ({
-  syncEventIntakeEvidence: jest.fn(async () => false),
+  repairLegacyClientStatedTriggerEvidence: jest.fn(async () => false),
 }));
 
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
@@ -106,6 +113,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 import { PATCH } from "../route";
+import { requiredEvidenceForStage } from "@/lib/source/canonical-specs";
 
 function fakeFluentClient() {
   return {
@@ -126,7 +134,7 @@ function fakeFluentClient() {
                 event_name: "SkyHarbor Air Managed Services",
                 event_code: "SKYH-MANAGED-SERVICES",
                 decision_owner: "Tomas Singh",
-                created_by_user_id: "clerk-user-1",
+                created_by_user_id: eventCreatorUserId,
                 approval_policy_code: eventApprovalPolicyCode,
               },
               error: null,
@@ -135,8 +143,8 @@ function fakeFluentClient() {
           if (table === "source_event_gate_criterion_states") {
             return {
               data:
-                filters.criterion_id === "GATE-SCOPE-02"
-                  ? criterionRow
+                filters.criterion_id === "GATE-SCOPE-02" || filters.criterion_id === "GATE-SCOPE-01"
+                  ? { ...criterionRow, criterion_id: filters.criterion_id }
                   : null,
               error: null,
             };
@@ -145,7 +153,13 @@ function fakeFluentClient() {
         },
       };
       chain.then = (resolve: (value: unknown) => unknown) =>
-        resolve({ data: [], error: null });
+        resolve(table === "source_event_artifact_states"
+          ? { data: artifactRows, error: null }
+          : table === "source_event_evidence_states"
+            ? { data: persistedEvidenceRows, error: null }
+            : table === "source_event_facts"
+              ? { data: factRows, error: factReadError ? { message: factReadError } : null }
+              : { data: [], error: null });
       return chain;
     },
   };
@@ -168,9 +182,129 @@ beforeEach(() => {
   jest.clearAllMocks();
   verifiedSponsorDelegationMock.mockResolvedValue(false);
   eventApprovalPolicyCode = null;
+  eventCreatorUserId = "clerk-user-1";
+  accessLevel = undefined;
+  persistedEvidenceRows = [];
+  artifactRows = [];
+  factRows = [];
+  factReadError = null;
 });
 
+function readyScopeFixture() {
+  eventApprovalPolicyCode = "self_v1";
+  artifactRows = [{
+    id: "artifact-state-1",
+    source_event_id: "evt-1",
+    tenant_key: "skyharbor-air",
+    artifact_code: "d04_app_inv",
+    stage_key: "scope",
+    status: "approved",
+    linked_artifact_id: "client-final-v2",
+  }];
+  persistedEvidenceRows = requiredEvidenceForStage("scope").map((requirement) => ({
+    id: `evidence-${requirement.requirementId}`,
+    source_event_id: "evt-1",
+    tenant_key: "skyharbor-air",
+    requirement_id: requirement.requirementId,
+    stage_key: "scope",
+    current_state: requirement.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY"
+      ? "Parsed"
+      : requirement.minimumState,
+    source_artifact_id: `artifact-${requirement.requirementId}`,
+  }));
+}
+
+function ticketFact(tier: "L2" | "L3", overrides: Record<string, unknown> = {}) {
+  return {
+    id: `ticket-${tier}`,
+    source_event_id: "evt-1",
+    client_key: "skyharbor-air",
+    fact_key: "ticket_count",
+    entity_kind: "tower",
+    entity_ref: "Service desk",
+    value_numeric: tier === "L2" ? 42 : 13,
+    value_text: null,
+    unit: "count",
+    source_method: "structured_map",
+    confidence: "high",
+    captured_at: "2026-09-30T00:00:00.000Z",
+    is_stale: false,
+    source_citation: {
+      doc: "ticket-history.csv",
+      locator: `row ${tier}, Ticket Count`,
+      source_sha256: "a".repeat(64),
+      support_tier: tier,
+      month: "2026-09",
+      time_window: "Business hours",
+      source_basis: "Synthetic smoke scenario",
+    },
+    ...overrides,
+  };
+}
+
 describe("PATCH Source gate criterion state", () => {
+  it("accepts complete cited L2/L3 facts when the upload row is still Parsed", async () => {
+    readyScopeFixture();
+    factRows = [ticketFact("L2"), ticketFact("L3")];
+    const response = await PATCH(
+      request({ state: "met", reason: "Event Owner reviewed the cited ticket cohorts and current Scope final." }),
+      { params: Promise.resolve({ eventId: "evt-1", criterionId: "GATE-SCOPE-01" }) },
+    );
+    expect(response.status).toBe(200);
+    expect(writeAdapter.updateGateCriterion).toHaveBeenCalledWith(
+      expect.objectContaining({ state: "met" }),
+    );
+  });
+
+  it.each([
+    ["single tier", [ticketFact("L2")]],
+    ["stale tier", [ticketFact("L2"), ticketFact("L3", { is_stale: true })]],
+    ["uncited tier", [ticketFact("L2"), ticketFact("L3", { source_citation: null })]],
+    ["cross-tenant tier", [ticketFact("L2"), ticketFact("L3", { client_key: "another-tenant" })]],
+    ["cross-tenant file", [ticketFact("L2", { client_key: "another-tenant" }), ticketFact("L3", { client_key: "another-tenant" })]],
+  ])("rejects %s rather than promoting Parsed to Available", async (_label, facts) => {
+    readyScopeFixture();
+    factRows = facts;
+    const response = await PATCH(
+      request({ state: "met", reason: "Event Owner reviewed the current Scope evidence and final." }),
+      { params: Promise.resolve({ eventId: "evt-1", criterionId: "GATE-SCOPE-01" }) },
+    );
+    expect(response.status).toBe(409);
+    expect((await response.json()).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready" }),
+    ]));
+    expect(writeAdapter.updateGateCriterion).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the fact read fails", async () => {
+    readyScopeFixture();
+    factReadError = "fact store unavailable";
+    const response = await PATCH(
+      request({ state: "met", reason: "Event Owner reviewed the current Scope evidence and final." }),
+      { params: Promise.resolve({ eventId: "evt-1", criterionId: "GATE-SCOPE-01" }) },
+    );
+    expect(response.status).toBe(500);
+    expect(writeAdapter.updateGateCriterion).not.toHaveBeenCalled();
+  });
+  it("reserves SELF criterion decisions for the event creator or client admin", async () => {
+    eventApprovalPolicyCode = "self_v1";
+    eventCreatorUserId = "another-user";
+    const denied = await PATCH(
+      request({ state: "waived", reason: "Reviewed evidence and accepted the exception." }),
+      ctx,
+    );
+    expect(denied.status).toBe(403);
+    expect((await denied.json()).error).toBe("event_owner_or_admin_required");
+    expect(writeAdapter.insertCriterionApproval).not.toHaveBeenCalled();
+    expect(writeAdapter.updateGateCriterion).not.toHaveBeenCalled();
+
+    accessLevel = "client_admin";
+    const admin = await PATCH(
+      request({ state: "waived", reason: "Reviewed evidence and accepted the exception." }),
+      ctx,
+    );
+    expect(admin.status).toBe(200);
+  });
   it("consults the exact event's delegated receipt before evaluating a sponsor criterion", async () => {
     const pending = await PATCH(request({ state: "met", reason: "Reviewed current Scope commitment." }), ctx);
     expect(pending.status).toBe(409);

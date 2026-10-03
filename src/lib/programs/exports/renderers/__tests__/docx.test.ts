@@ -111,7 +111,10 @@ function buildSpec(overrides?: {
     },
     architectureReviewAttestation: {
       attestedAt: '2026-04-22T15:00:00.000Z',
-      attestedBy: ['Priya Raman, Chief Architect', 'Marcus Kim, Data Architect'],
+      attestedBy: [
+        'Priya Raman, Chief Architect',
+        'Marcus Kim, Data Architect',
+      ],
       findings: [
         'Identity match-rate floor of 70% is achievable given Q1 data quality.',
         'Latency budget for next-best-action prompts is tight but feasible.',
@@ -156,10 +159,11 @@ function buildSpec(overrides?: {
       },
     ],
     signoff: {
-      sponsorName: 'James Wright',
-      sponsorSignatureLine: '_______________________ (signature)',
-      signedAt: '2026-04-29T12:00:00.000Z',
-      notes: 'Sign-off contingent on consent propagation open item closing by build start.',
+      approverName: 'Authorized workspace user',
+      approvalRecordLine: 'Approved in Moves after evidence review.',
+      approvedAt: '2026-04-29T12:00:00.000Z',
+      notes:
+        'Sign-off contingent on consent propagation open item closing by build start.',
     },
   };
 
@@ -232,15 +236,19 @@ describe('renderDeliverableAsDocx · program-charter', () => {
     const text = strippedText(xml);
     for (const heading of [
       'Value hypothesis',
-      'Sponsor commitment',
+      'Sponsor contact',
       'Recommended path',
       'Architecture review attestation',
       'Kill criterion',
       'Baseline KPIs',
-      'Sponsor sign-off',
+      'Approval record',
     ]) {
       expect(text).toContain(heading);
     }
+    expect(text).toContain(
+      'Product approvals are recorded by an authorized workspace user.',
+    );
+    expect(text).not.toContain('Sign off on phase gates P2 through P6');
   });
 
   it('renders the kill criterion measurable event verbatim', async () => {
@@ -608,7 +616,8 @@ function buildOutcomeReportSpec(): DeliverableSpec {
     },
     challengesAndMitigations: [
       {
-        challenge: 'Consent propagation lag between web and app exceeded 30 minutes during wave 1',
+        challenge:
+          'Consent propagation lag between web and app exceeded 30 minutes during wave 1',
         mitigation:
           'Engineering shipped event-driven consent fan-out before wave 2 launch; lag dropped to <90 seconds.',
       },
@@ -738,10 +747,7 @@ function buildMeetingNotesSpec(overrides?: {
       { name: 'Marcus Kim', role: 'Data Architect' },
       { name: 'Anand Sundaram', role: 'Program Lead' },
     ],
-    agenda:
-      overrides?.agenda !== undefined
-        ? overrides.agenda
-        : undefined,
+    agenda: overrides?.agenda !== undefined ? overrides.agenda : undefined,
     keyDiscussions: [
       {
         topic: 'Consent propagation latency',
@@ -1015,37 +1021,36 @@ function buildPilotResultReportSpec(overrides?: {
       sizeNotes:
         '10,000 customers across web, app, and 12 east-coast retail stores; excludes B2B wholesale and store associates.',
     },
-    successCriteria:
-      overrides?.successCriteria ?? [
-        {
-          criterion: 'Identity match-rate ≥ 70% within 90 days',
-          targetValue: '≥ 70%',
-          actualValue: '73%',
-          metStatus: 'met',
-          measurementMethod: 'Daily match-rate snapshot via CDP',
-        },
-        {
-          criterion: 'Conversion lift ≥ +5% vs baseline',
-          targetValue: '+5%',
-          actualValue: '+3.4%',
-          metStatus: 'partial',
-          measurementMethod: 'A/B holdout vs baseline cohort',
-        },
-        {
-          criterion: 'Consent propagation latency < 90s',
-          targetValue: '< 90s',
-          actualValue: '72s',
-          metStatus: 'met',
-          measurementMethod: 'p95 latency from event-driven fan-out',
-        },
-        {
-          criterion: 'Workflow exception volume < 5%',
-          targetValue: '< 5%',
-          actualValue: '8.2%',
-          metStatus: 'unmet',
-          measurementMethod: 'Pilot operations daily exception log',
-        },
-      ],
+    successCriteria: overrides?.successCriteria ?? [
+      {
+        criterion: 'Identity match-rate ≥ 70% within 90 days',
+        targetValue: '≥ 70%',
+        actualValue: '73%',
+        metStatus: 'met',
+        measurementMethod: 'Daily match-rate snapshot via CDP',
+      },
+      {
+        criterion: 'Conversion lift ≥ +5% vs baseline',
+        targetValue: '+5%',
+        actualValue: '+3.4%',
+        metStatus: 'partial',
+        measurementMethod: 'A/B holdout vs baseline cohort',
+      },
+      {
+        criterion: 'Consent propagation latency < 90s',
+        targetValue: '< 90s',
+        actualValue: '72s',
+        metStatus: 'met',
+        measurementMethod: 'p95 latency from event-driven fan-out',
+      },
+      {
+        criterion: 'Workflow exception volume < 5%',
+        targetValue: '< 5%',
+        actualValue: '8.2%',
+        metStatus: 'unmet',
+        measurementMethod: 'Pilot operations daily exception log',
+      },
+    ],
     observedOutcomes: [
       {
         cohortMetric: 'Conversion lift in pilot cohort',
@@ -1077,9 +1082,11 @@ function buildPilotResultReportSpec(overrides?: {
                 'Engineering shipped age-flag propagation; parent / kid identifiers split before next wave.',
             },
             {
-              description: 'POS terminals on legacy firmware lost session mid-checkout',
+              description:
+                'POS terminals on legacy firmware lost session mid-checkout',
               impact: 'medium',
-              mitigation: 'Operations queued firmware refresh as wave-2 prereq.',
+              mitigation:
+                'Operations queued firmware refresh as wave-2 prereq.',
             },
             {
               description: 'App users on iOS 16 saw stale consent UX once',
@@ -1088,7 +1095,8 @@ function buildPilotResultReportSpec(overrides?: {
             },
           ],
     scaleValidation: {
-      scaleTested: '10K → simulated 100K extrapolation across 4 east-coast geographies',
+      scaleTested:
+        '10K → simulated 100K extrapolation across 4 east-coast geographies',
       findings:
         'Latency budget holds at 100K simulated load with consent fan-out rate-limited at 200 events/sec; identity match-rate degrades by 1.2 points which is within tolerance.',
       blockers:
@@ -1139,9 +1147,7 @@ describe('renderDeliverableAsDocx · pilot-result-report', () => {
     expect(result.format).toBe('docx');
     expect(result.contentType).toBe(DOCX_CONTENT_TYPE);
     expect(result.sizeBytes).toBeGreaterThanOrEqual(5 * 1024);
-    expect(result.filename).toMatch(
-      /-pilot-result-report-\d{8}\.docx$/,
-    );
+    expect(result.filename).toMatch(/-pilot-result-report-\d{8}\.docx$/);
   });
 
   it('renders each section heading and the P4 banner', async () => {
@@ -1312,87 +1318,83 @@ function buildWorkshopFacilitatorGuideSpec(overrides?: {
         'Per-source extract delivered by Data Engineer',
       ],
     },
-    agenda:
-      overrides?.agenda ??
-      [
-        {
-          id: 'a-warmup',
-          durationMinutes: 15,
-          title: 'Warm-up + objective lock',
-          objective:
-            'Room agrees the Day 1 objective is the identity inventory, not the activation roadmap.',
-          instructions:
-            'Open with the 1-slide objective. Force a verbal confirm from each participant; if any participant ' +
-            'reframes the objective as activation, name it and re-anchor before continuing.',
-          output:
-            'Verbal alignment from all participants on the inventory objective.',
-        },
-        {
-          id: 'a-identity-inventory',
-          durationMinutes: 90,
-          title: 'Identity inventory build',
-          objective:
-            'Every system holding identity for the cohort is named with primary identifier and source-of-record claim.',
-          instructions:
-            'Working session against the inventory template. Each participant fills their domain column. ' +
-            'Facilitator runs a SoR-collision check after every 30 minutes — collisions are not bad news, ' +
-            'they are the seed of the fragmentation index.',
-          output: 'Populated identity inventory spreadsheet (cohort 1).',
-        },
-        {
-          id: 'a-overlap-pass',
-          durationMinutes: 45,
-          title: 'Pairwise overlap pass',
-          objective:
-            'Pairwise overlap matrix produced for the systems named in the inventory.',
-          instructions:
-            'Project the matrix template. For each pair of systems, the room states an overlap hypothesis; ' +
-            'Identity-Resolution SME challenges with whatever empirical sample is on hand.',
-          output: 'Pairwise overlap matrix v0.',
-        },
-        {
-          id: 'a-closeout',
-          durationMinutes: 30,
-          title: 'Closeout · stakeholder map seed',
-          objective:
-            'Stakeholder map v1 named, action items committed, escalations flagged.',
-          instructions:
-            'Run the closeout protocol verbatim — no "we will follow up". Capture decisions, action items, ' +
-            'and escalations live; the recap is sent during the meeting, not after.',
-          output: 'Stakeholder map v1 + closeout doc.',
-        },
-      ],
-    facilitationProbes:
-      overrides?.facilitationProbes ?? [
-        {
-          activityId: 'a-identity-inventory',
-          probe:
-            'Which system holds the identifier you actually trust at point-of-sale?',
-          purpose:
-            'Forces the room past the published SoR claim onto the field-truth identifier.',
-        },
-        {
-          activityId: 'a-identity-inventory',
-          probe:
-            'When this identifier disagrees across systems, who decides which one wins?',
-          purpose:
-            'Surfaces the absent decision-rights problem before it becomes a P3 design constraint.',
-        },
-        {
-          activityId: 'a-overlap-pass',
-          probe:
-            'What overlap rate would surprise you, and what would you do if you saw it?',
-          purpose:
-            'Names the falsifiers up front so the matrix is not retroactively rationalised.',
-        },
-        {
-          activityId: 'a-closeout',
-          probe:
-            'Which named owner here will not be at the next workshop, and who steps in?',
-          purpose:
-            'Catches stakeholder-map fragility before P2 inherits it.',
-        },
-      ],
+    agenda: overrides?.agenda ?? [
+      {
+        id: 'a-warmup',
+        durationMinutes: 15,
+        title: 'Warm-up + objective lock',
+        objective:
+          'Room agrees the Day 1 objective is the identity inventory, not the activation roadmap.',
+        instructions:
+          'Open with the 1-slide objective. Force a verbal confirm from each participant; if any participant ' +
+          'reframes the objective as activation, name it and re-anchor before continuing.',
+        output:
+          'Verbal alignment from all participants on the inventory objective.',
+      },
+      {
+        id: 'a-identity-inventory',
+        durationMinutes: 90,
+        title: 'Identity inventory build',
+        objective:
+          'Every system holding identity for the cohort is named with primary identifier and source-of-record claim.',
+        instructions:
+          'Working session against the inventory template. Each participant fills their domain column. ' +
+          'Facilitator runs a SoR-collision check after every 30 minutes — collisions are not bad news, ' +
+          'they are the seed of the fragmentation index.',
+        output: 'Populated identity inventory spreadsheet (cohort 1).',
+      },
+      {
+        id: 'a-overlap-pass',
+        durationMinutes: 45,
+        title: 'Pairwise overlap pass',
+        objective:
+          'Pairwise overlap matrix produced for the systems named in the inventory.',
+        instructions:
+          'Project the matrix template. For each pair of systems, the room states an overlap hypothesis; ' +
+          'Identity-Resolution SME challenges with whatever empirical sample is on hand.',
+        output: 'Pairwise overlap matrix v0.',
+      },
+      {
+        id: 'a-closeout',
+        durationMinutes: 30,
+        title: 'Closeout · stakeholder map seed',
+        objective:
+          'Stakeholder map v1 named, action items committed, escalations flagged.',
+        instructions:
+          'Run the closeout protocol verbatim — no "we will follow up". Capture decisions, action items, ' +
+          'and escalations live; the recap is sent during the meeting, not after.',
+        output: 'Stakeholder map v1 + closeout doc.',
+      },
+    ],
+    facilitationProbes: overrides?.facilitationProbes ?? [
+      {
+        activityId: 'a-identity-inventory',
+        probe:
+          'Which system holds the identifier you actually trust at point-of-sale?',
+        purpose:
+          'Forces the room past the published SoR claim onto the field-truth identifier.',
+      },
+      {
+        activityId: 'a-identity-inventory',
+        probe:
+          'When this identifier disagrees across systems, who decides which one wins?',
+        purpose:
+          'Surfaces the absent decision-rights problem before it becomes a P3 design constraint.',
+      },
+      {
+        activityId: 'a-overlap-pass',
+        probe:
+          'What overlap rate would surprise you, and what would you do if you saw it?',
+        purpose:
+          'Names the falsifiers up front so the matrix is not retroactively rationalised.',
+      },
+      {
+        activityId: 'a-closeout',
+        probe:
+          'Which named owner here will not be at the next workshop, and who steps in?',
+        purpose: 'Catches stakeholder-map fragility before P2 inherits it.',
+      },
+    ],
     antiPatterns: [
       {
         signal:
@@ -1434,10 +1436,11 @@ function buildWorkshopFacilitatorGuideSpec(overrides?: {
     subtitle: 'Apex Loyalty FY26 · Day 1',
     generatedAt: '2026-04-29T10:00:00.000Z',
     authors: ['Anand Sundaram'],
-    payload: payload satisfies WorkshopFacilitatorGuidePayload as unknown as Record<
-      string,
-      unknown
-    >,
+    payload:
+      payload satisfies WorkshopFacilitatorGuidePayload as unknown as Record<
+        string,
+        unknown
+      >,
   };
 }
 
@@ -1448,9 +1451,7 @@ describe('renderDeliverableAsDocx · workshop-facilitator-guide', () => {
     expect(result.format).toBe('docx');
     expect(result.contentType).toBe(DOCX_CONTENT_TYPE);
     expect(result.sizeBytes).toBeGreaterThanOrEqual(5 * 1024);
-    expect(result.filename).toMatch(
-      /-workshop-facilitator-guide-\d{8}\.docx$/,
-    );
+    expect(result.filename).toMatch(/-workshop-facilitator-guide-\d{8}\.docx$/);
   });
 
   it('renders each section heading and the workshop banner', async () => {
@@ -1512,9 +1513,13 @@ describe('renderDeliverableAsDocx · workshop-facilitator-guide', () => {
     const xml = await readDocumentXml(result.buffer);
     const text = strippedText(xml);
     // Group headings appear in agenda order.
-    const idxIdentityGroup = text.indexOf('Probes for · Identity inventory build');
+    const idxIdentityGroup = text.indexOf(
+      'Probes for · Identity inventory build',
+    );
     const idxOverlapGroup = text.indexOf('Probes for · Pairwise overlap pass');
-    const idxCloseoutGroup = text.indexOf('Probes for · Closeout · stakeholder map seed');
+    const idxCloseoutGroup = text.indexOf(
+      'Probes for · Closeout · stakeholder map seed',
+    );
     expect(idxIdentityGroup).toBeGreaterThan(-1);
     expect(idxOverlapGroup).toBeGreaterThan(idxIdentityGroup);
     expect(idxCloseoutGroup).toBeGreaterThan(idxOverlapGroup);
@@ -1526,8 +1531,8 @@ describe('renderDeliverableAsDocx · workshop-facilitator-guide', () => {
     expect(identityHeadingIdx).toBeGreaterThan(-1);
     const identityTail = xml.slice(identityHeadingIdx);
     const identityTableMatch = identityTail.match(/<w:tbl[\s\S]*?<\/w:tbl>/);
-    const identityRows =
-      (identityTableMatch?.[0]?.match(/<w:tr[\s>]/g) ?? []).length;
+    const identityRows = (identityTableMatch?.[0]?.match(/<w:tr[\s>]/g) ?? [])
+      .length;
     expect(identityRows).toBe(3);
   });
 

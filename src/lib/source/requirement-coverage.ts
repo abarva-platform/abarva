@@ -11,19 +11,7 @@ import {
 } from "./canonical-specs";
 import type { SourceStageKey } from "./types";
 import { sourceEvidenceAppliesToApprovalPolicy } from "./approval-policy";
-
-const EVIDENCE_READINESS_RANK: Record<
-  SourceEventEvidence["currentState"],
-  number
-> = {
-  "Not Requested": 0,
-  Loaded: 1,
-  Parsed: 2,
-  Available: 3,
-  "Usable Evidence": 4,
-  Stale: -1,
-  "Low Confidence": -1,
-};
+import { evidenceMeetsRequirement } from "./evidence-authority";
 
 const COVERED_ARTIFACT_STATUSES = new Set<SourceEventArtifactStatus>([
   "approved",
@@ -62,26 +50,14 @@ export function computeRequirementCoverage({
       .filter((artifact) => COVERED_ARTIFACT_STATUSES.has(artifact.status))
       .map((artifact) => artifact.artifactCode),
   );
-  const bestEvidenceRankByRequirement = new Map<string, number>();
-
-  for (const evidence of evidenceStates) {
-    const currentRank = EVIDENCE_READINESS_RANK[evidence.currentState] ?? -1;
-    const previousRank =
-      bestEvidenceRankByRequirement.get(evidence.requirementId) ?? -1;
-    if (currentRank > previousRank) {
-      bestEvidenceRankByRequirement.set(evidence.requirementId, currentRank);
-    }
-  }
 
   const coveredArtifacts = requiredArtifacts.filter((artifact) =>
     coveredArtifactCodes.has(artifact.code),
   ).length;
-  const coveredEvidence = requiredEvidence.filter((requirement) => {
-    const currentRank =
-      bestEvidenceRankByRequirement.get(requirement.requirementId) ?? -1;
-    const minimumRank = EVIDENCE_READINESS_RANK[requirement.minimumState];
-    return currentRank >= 0 && currentRank >= minimumRank;
-  }).length;
+  const coveredEvidence = requiredEvidence.filter((requirement) =>
+    evidenceStates.some((evidence) => evidence.requirementId === requirement.requirementId &&
+      evidenceMeetsRequirement(requirement, evidence)),
+  ).length;
 
   const met = coveredArtifacts + coveredEvidence;
   return {

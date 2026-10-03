@@ -1,0 +1,94 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: source-contract360-synthesis-context rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-28T07:43:33.000Z",
+  "base": "bb0f9ee16d70e84aa55e49eadff1c052b832cb17",
+  "directory": "src/lib/intelligence/ask/__tests__",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. It is suite 4 of the 11 in the claimable half; 7 remain.",
+    "The gated half of T-495 -- the rows carrying textIsTheSubject -- is NOT touched here.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw, which is left as the historical draw it is. Measured: with the workflow step added and this record absent, t770-scanner-wiring-refusal fails and names this suite."
+  ],
+  "method": [
+    "Re-verified on origin/main bb0f9ee16d by running the suite, not by reading it: 1 passed of 1. The case was GREEN, and green was never the criterion: it read ask/index.ts as text and compared the positions of two substrings.",
+    "The scanner case was DELETED rather than repaired. A tighter pattern would have been the same defect with a longer fuse.",
+    "Replacement cases drive the real askIntelligence with a Contract 360 surface context. Retrieval is mocked at the same module boundaries c412-ask-answer-mode-wiring.test.ts uses, and the audited Anthropic client is mocked, because both are I/O. The synthesizer, buildSourceContract360PromptBlock and the model-input cleaner run for real.",
+    "Expected text is produced by calling buildSourceContract360PromptBlock over the same surface context and passing each line through cleanIntelligenceModelInputText, so no literal in the suite can drift from the builder.",
+    "The first draft anchored its non-vacuity check on the contract id and failed: the model-input cleaner rewrites internal ids (CT-T495-0001 reaches the model as 'CT T495'). That is a separate control and not this suite's subject, so the anchor is the vendor name, which the cleaner leaves intact.",
+    "Five mutations against ask/index.ts, each verified by git diff --numstat to have changed the file before the suite ran, and each also run against the deleted scanner for comparison."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/lib/intelligence/ask/__tests__/source-contract360-synthesis-context.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": true,
+      "collected": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": false,
+      "drivesProductionEntryPoint": "askIntelligence",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/intelligence-library-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "The deleted case asserted that ask/index.ts contains buildSourceContract360PromptBlock and that, in a slice of its text, the token 'sourceContract360PromptBlock,' precedes 'opts.conversationContextBlock,'. Measured against three mutations that change what a model receives -- the injection made unconditional, the block built from null instead of the surface context, and the block filtered out of the join -- it stayed green on all three. Four behavioural cases replace it: the selected contract's block reaches the model's system input for both shapes readSelectedSourceContractContext accepts (the Contract 360 page and the Source workspace selection); it arrives ahead of the caller's conversation context; and with no contract selected no block is sent, which is the case that fails when the injection is made unconditional."
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "drop sourceContract360PromptBlock from the conversationContextBlock array",
+      "result": "3 of 4 failed",
+      "deletedScanner": "1 of 1 failed",
+      "catches": "the block reaching the model"
+    },
+    {
+      "mutation": "move sourceContract360PromptBlock after opts.conversationContextBlock",
+      "result": "1 of 4 failed",
+      "deletedScanner": "1 of 1 failed",
+      "catches": "the ordering ahead of caller context"
+    },
+    {
+      "mutation": "buildSourceContract360PromptBlock(...) || <the block header>, making injection unconditional",
+      "result": "1 of 4 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "the negative control"
+    },
+    {
+      "mutation": "buildSourceContract360PromptBlock(null, ...) instead of the surface context",
+      "result": "3 of 4 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "the block being built from the caller's surface context"
+    },
+    {
+      "mutation": ".filter(Boolean) -> .filter((b) => Boolean(b) && b !== sourceContract360PromptBlock)",
+      "result": "3 of 4 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "the block surviving the join into the prompt"
+    }
+  ],
+  "residualsNotClosedHere": [
+    "The directory src/lib/intelligence/ask/__tests__ still cannot be wired whole: measured on this base, 1 failed suite of 24, ask-guardrails.test.ts, left red on purpose behind an owner decision (T-497's gated half). The suite is named individually for that reason.",
+    "The committed test-ci-coverage-census.json on the base was already one file behind the tree (testFiles 2538 against 2539 measured); --check reports counts drift and exits 0 because counts are a report and not a gate. Refreshing it here absorbs that unrelated +1 alongside this change's own movement, and it is named so the diff is not read as this suite alone."
+  ]
+}

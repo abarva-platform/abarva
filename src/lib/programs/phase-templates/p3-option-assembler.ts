@@ -1,6 +1,8 @@
 import type { DeliverableContentSignal } from '@/lib/deliverables/deliverable-content-signals';
 import type { BuildingBlockKey } from './building-blocks';
 import type { P3DesignInputsPack } from './types';
+import type { UploadedSolutionOptionSet } from './uploaded-solution-options';
+import { getDeliverableSpec } from '@/lib/programs/deliverable-registry';
 
 export type P3OptionScoreDimension =
   | 'business_value'
@@ -38,17 +40,37 @@ export interface P3SolutionOption {
   recommendationLabel: string;
   evidenceBasis: string[];
   missingEvidence: string[];
+  /**
+   * Present when the option is the client's own, taken from approved Move
+   * evidence. Only these four fields were supplied; the template fields above
+   * (scores, building blocks, effort, split, controls) are left empty rather
+   * than filled with generated text, and the UI shows these instead.
+   */
+  clientSupplied?: {
+    benefit: string;
+    tradeoff: string;
+    condition: string;
+    scope: string;
+  };
 }
 
 export interface P3OptionSet {
   moveId: string;
-  source: 'p3_design_inputs_pack';
+  /**
+   * `move_uploaded_options`: the client's option set from approved Move
+   * evidence. `p3_design_inputs_pack`: the built-in template set, used only
+   * when the Move declares none.
+   */
+  source: 'p3_design_inputs_pack' | 'move_uploaded_options';
+  /** Evidence item the options came from, when `source` is the Move's own. */
+  sourceTitle?: string;
   useCasePattern: P3UseCasePattern;
   options: P3SolutionOption[];
   recommendedOptionId: string | null;
   recommendationConfidence: P3OptionConfidence;
   missingEvidence: string[];
   evidenceBasis: string[];
+  sourceEvidenceLabels?: string[];
   usedGlobalStaticFallback: false;
 }
 
@@ -72,7 +94,7 @@ export interface BuildP3DesignInputsPackInput {
   charter?: unknown;
   linkedEvidence?: Array<{ summary?: string | null; anchor?: string | null }>;
   gateCriteria?: Array<{ label: string; completed: boolean; severity?: string | null }>;
-  carriesForwardContent?: DeliverableContentSignal[];
+  priorPhaseContent?: DeliverableContentSignal[];
   evidenceNeedPackets?: P3OptionEvidenceNeed[];
   readiness?: P3OptionReadinessInput | null;
 }
@@ -87,6 +109,8 @@ export interface AssembleP3SolutionOptionsInput {
   designInputs: P3DesignInputsPack;
   readiness?: P3OptionReadinessInput | null;
   evidenceNeedPackets?: P3OptionEvidenceNeed[];
+  /** The option set declared in the Move's approved design-phase evidence. */
+  uploadedOptionSet?: UploadedSolutionOptionSet | null;
 }
 
 export type P3UseCasePattern =
@@ -135,7 +159,7 @@ const STATIC_LEGACY_LABELS = [
 
 export function buildP3DesignInputsPackFromSignals({
   archetype,
-  carriesForwardContent = [],
+  priorPhaseContent = [],
   charter,
   evidenceNeedPackets = [],
   gateCriteria = [],
@@ -145,7 +169,22 @@ export function buildP3DesignInputsPackFromSignals({
   readiness,
 }: BuildP3DesignInputsPackInput): P3DesignInputsPack {
   const scaffold = extractCharterScaffold(charter);
-  const snippets = groupSignals(carriesForwardContent);
+  const snippets = groupSignals(priorPhaseContent);
+  const priorPhaseGapLabels = priorPhaseContent
+    .filter((signal) =>
+      ['evidence_limits', 'readiness_gaps', 'open_inputs'].includes(signal.key),
+    )
+    .map((signal) =>
+      signal.sourceDeliverableTypeKey
+        ? `P2 ${p2SourceEvidenceTitle(signal.sourceDeliverableTypeKey)}: ${signal.heading}`
+        : `P2: ${signal.heading}`,
+    );
+  const priorPhaseEvidence = priorPhaseContent.map((signal) => {
+    const source = signal.sourceDeliverableTypeKey
+      ? `P2 ${signal.sourceDeliverableTypeKey}`
+      : 'P2 evidence';
+    return `${source} - ${signal.heading}: ${signal.snippet}`;
+  });
   const missingEvidence = evidenceNeedPackets
     .filter((packet) => !isEvidenceCovered(packet.status))
     .map((packet) => packet.evidenceSlot);
@@ -172,10 +211,12 @@ export function buildP3DesignInputsPackFromSignals({
     ]),
     painPointsAndRootCauses: compact([
       ...pickSignals(snippets, ['root_causes', 'risks', 'decisions']),
+      ...pickSignals(snippets, ['hypotheses']),
       problem,
     ]),
     currentSystems: compact([
       ...pickSignals(snippets, ['systems', 'architecture', 'technology']),
+      ...pickSignals(snippets, ['readiness_gaps']),
       scope,
     ]),
     currentDataPlatformState: compact([
@@ -184,6 +225,7 @@ export function buildP3DesignInputsPackFromSignals({
     ]),
     dataReadiness: compact([
       ...pickSignals(snippets, ['data_quality', 'metrics']),
+      ...pickSignals(snippets, ['evidence_limits', 'readiness_gaps']),
       readinessText,
       ...(readiness?.hardGaps ?? []).filter(hasDataWord),
       ...missingEvidence.filter(hasDataWord),
@@ -214,11 +256,13 @@ export function buildP3DesignInputsPackFromSignals({
     ),
     evidenceBackedConstraints: compact([
       ...linkedSummaries,
+      ...priorPhaseEvidence,
       ...openGateCriteria,
       ...missingEvidence.map((item) => `Missing evidence: ${item}`),
     ]),
     unresolvedQuestions: compact([
       ...missingEvidence,
+      ...priorPhaseGapLabels,
       ...(readiness?.hardGaps ?? []),
       ...(readiness?.softGaps ?? []),
     ]),
@@ -229,6 +273,7 @@ export function buildP3DesignInputsPackFromSignals({
     notReadyConditions: compact([
       ...(readiness?.hardGaps ?? []),
       ...missingEvidence,
+      ...priorPhaseGapLabels,
     ]),
     currentWorkflowWithPainPoints: compact([
       ...pickSignals(snippets, ['process', 'current_state', 'findings']),
@@ -264,6 +309,7 @@ export function assembleP3SolutionOptions({
   moveName,
   readiness,
   tenantName,
+  uploadedOptionSet,
   valueAtStake,
 }: AssembleP3SolutionOptionsInput): P3OptionSet {
   const text = normalizeText(
@@ -279,7 +325,7 @@ export function assembleP3SolutionOptions({
       readiness?.softGaps?.join(' '),
     ].join(' '),
   );
-  const useCasePattern = inferUseCasePattern(text);
+  const useCasePattern = inferUseCasePattern(text, archetype);
   const missingEvidence = unique([
     ...(designInputs.unresolvedQuestions ?? []),
     ...(designInputs.notReadyConditions ?? []),
@@ -297,6 +343,34 @@ export function assembleP3SolutionOptions({
     ...(designInputs.evidenceBackedConstraints ?? []),
     ...designInputs.currentWorkflowWithPainPoints,
   ]).slice(0, 8);
+  const sourceEvidenceLabels = unique(
+    (designInputs.evidenceBackedConstraints ?? []).flatMap((item) => {
+      const sourceMatch = item.match(/^P2 ([\w-]+) -/);
+      return sourceMatch ? [sourceMatch[1]] : [];
+    }),
+  );
+  // The client's own options take precedence over the template set. They are
+  // carried as written: not scored, not ranked, and not recommended by us —
+  // the template scoring knows nothing about these proposals, and a number
+  // beside a client option would read as an assessment nobody made.
+  if (uploadedOptionSet && uploadedOptionSet.options.length > 0) {
+    return {
+      moveId,
+      source: 'move_uploaded_options',
+      sourceTitle: uploadedOptionSet.sourceTitle,
+      useCasePattern,
+      options: uploadedOptionSet.options.map((option) =>
+        clientSuppliedOption(option, uploadedOptionSet.sourceTitle, missingEvidence),
+      ),
+      recommendedOptionId: null,
+      recommendationConfidence: 'low',
+      missingEvidence,
+      evidenceBasis,
+      sourceEvidenceLabels,
+      usedGlobalStaticFallback: false,
+    };
+  }
+
   const context = buildScoringContext(text, readiness, missingEvidence, evidenceBasis);
   const options = optionBlueprintsFor(useCasePattern).map((blueprint) =>
     finalizeOption(blueprint, context, missingEvidence, evidenceBasis),
@@ -326,7 +400,48 @@ export function assembleP3SolutionOptions({
       : 'low',
     missingEvidence,
     evidenceBasis,
+    sourceEvidenceLabels,
     usedGlobalStaticFallback: false,
+  };
+}
+
+function clientSuppliedOption(
+  option: UploadedSolutionOptionSet['options'][number],
+  sourceTitle: string,
+  missingEvidence: string[],
+): P3SolutionOption {
+  return {
+    id: option.id,
+    label: option.name,
+    summary: option.benefit,
+    businessImpact: option.benefit,
+    requiredBuildingBlocks: [],
+    dataPlatformImplications: '',
+    humanAiSplit: '',
+    controls: '',
+    timeToValue: '',
+    effort: '',
+    risks: option.tradeoff ? [option.tradeoff] : [],
+    dependencies: [],
+    reusePotential: '',
+    readinessConditions: option.condition ? [option.condition] : [],
+    notRecommendedYetReasons: [],
+    scores: Object.fromEntries(SCORE_DIMENSIONS.map((key) => [key, 0])) as Record<
+      P3OptionScoreDimension,
+      number
+    >,
+    totalScore: 0,
+    confidence: 'low',
+    recommended: false,
+    recommendationLabel: 'Client-supplied option',
+    evidenceBasis: [`${sourceTitle}: ${option.id} — ${option.name}`],
+    missingEvidence,
+    clientSupplied: {
+      benefit: option.benefit,
+      tradeoff: option.tradeoff,
+      condition: option.condition,
+      scope: option.scope,
+    },
   };
 }
 
@@ -371,13 +486,22 @@ function finalizeOption(
   ]).slice(0, 6);
 
   const totalScore = SCORE_DIMENSIONS.reduce((sum, key) => sum + scores[key], 0);
-  const confidence = context.evidenceSupported
-    ? optionMissingEvidence.length >= 4
-      ? 'medium'
-      : 'high'
-    : optionMissingEvidence.length >= 2
-      ? 'low'
-      : 'medium';
+  let confidence: P3OptionConfidence = 'high';
+  if (
+    !context.evidenceSupported ||
+    !context.hasMeasuredReadiness ||
+    !context.hasPriorPhaseEvidence ||
+    context.hasUnverifiedEvidence ||
+    (context.coverageScore ?? 0) < 50
+  ) {
+    confidence = 'low';
+  } else if (
+    context.hasReadinessGaps ||
+    optionMissingEvidence.length > 0 ||
+    (context.coverageScore ?? 0) < 85
+  ) {
+    confidence = 'medium';
+  }
 
   return {
     ...blueprint,
@@ -399,6 +523,11 @@ interface ScoringContext {
   changeWeak: boolean;
   fundingTight: boolean;
   evidenceSupported: boolean;
+  hasMeasuredReadiness: boolean;
+  hasPriorPhaseEvidence: boolean;
+  hasReadinessGaps: boolean;
+  hasUnverifiedEvidence: boolean;
+  coverageScore?: number;
 }
 
 function buildScoringContext(
@@ -408,6 +537,7 @@ function buildScoringContext(
   evidenceBasis: string[],
 ): ScoringContext {
   const missingText = normalizeText(missingEvidence.join(' '));
+  const evidenceText = normalizeText(`${text} ${evidenceBasis.join(' ')} ${missingText}`);
   return {
     hasNinetyDayExpectation:
       /\b(90|ninety|quarter|q[1-4]|fast|quick|near[- ]term|pilot|proof)\b/.test(text),
@@ -418,6 +548,16 @@ function buildScoringContext(
     changeWeak: /training|adoption|change|owner|sme|capacity|operating model|workforce/.test(missingText),
     fundingTight: /budget|funding|capacity|cost|run rate|rate card|finance/.test(missingText),
     evidenceSupported: evidenceBasis.length >= 3 || (readiness?.coverageScore ?? 0) >= 50,
+    hasMeasuredReadiness: readiness?.coverageScore != null,
+    hasPriorPhaseEvidence: evidenceBasis.some((item) => /^p2 [\w-]+ -/i.test(item)),
+    hasReadinessGaps:
+      (readiness?.hardGaps?.length ?? 0) > 0 ||
+      (readiness?.softGaps?.length ?? 0) > 0,
+    hasUnverifiedEvidence:
+      /\b(unvalidated|not validated|not established|not proven|unproven|unknown|pending|synthetic|unreconciled|conflict(?:ing)?|stale|not approved)\b/.test(
+        evidenceText,
+      ),
+    coverageScore: readiness?.coverageScore,
   };
 }
 
@@ -721,22 +861,72 @@ function adjust(scoresRecord: Record<P3OptionScoreDimension, number>, key: P3Opt
   scoresRecord[key] = Math.max(1, Math.min(10, scoresRecord[key] + amount));
 }
 
-function inferUseCasePattern(text: string): P3UseCasePattern {
-  if (/airline|airport|baggage|bag|disruption|irops|station|recovery|handler|sla/.test(text)) {
-    return 'operations_resilience';
+/**
+ * A Move whose archetype already says what kind of use case it is does not
+ * need its pattern guessed from prose.
+ */
+const ARCHETYPE_USE_CASE_PATTERNS: Record<string, P3UseCasePattern> = {
+  contact_center_agent_assist: 'member_service_agent_assist',
+};
+
+/**
+ * Vocabulary per pattern, most specific pattern first. Order only breaks a
+ * tie; the pattern with the most distinct terms present wins.
+ */
+const USE_CASE_PATTERN_TERMS: ReadonlyArray<{
+  pattern: P3UseCasePattern;
+  terms: readonly string[];
+}> = [
+  {
+    pattern: 'operations_resilience',
+    terms: ['airline', 'airport', 'baggage', 'bag', 'disruption', 'irops', 'station', 'recovery', 'handler', 'sla'],
+  },
+  {
+    pattern: 'member_service_agent_assist',
+    terms: [
+      'member', 'call center', 'contact center', 'agent assist', 'agent-assist', 'claims', 'benefits',
+      'eligibility', 'prior auth', 'authorization', 'crm', 'pharmacy', 'emr', 'ehr', 'phi',
+    ],
+  },
+  {
+    pattern: 'legal_contract_intake',
+    terms: ['legal', 'contract', 'clm', 'obligation', 'attorney', 'clause', 'privilege'],
+  },
+  {
+    pattern: 'finance_close_and_transparency',
+    terms: ['finance', 'close', 'gl', 'margin', 'cost', 'capitation', 'payment', 'reconciliation', 'reporting'],
+  },
+];
+
+const GENERAL_OPERATIONS_TERMS = [
+  'operations', 'workflow', 'resilience', 'recovery', 'service', 'irops', 'command', 'routing',
+];
+
+/** Whole-word (or whole-phrase) presence, allowing a plural. "sla" is not in "translate". */
+function hasTerm(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[\s-]+/g, '[\\s-]+');
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}s?(?:$|[^a-z0-9])`).test(text);
+}
+
+/**
+ * The first version tested each pattern's vocabulary as bare substrings and
+ * returned the first pattern with any hit. A single incidental word — "sla",
+ * "station", "bag" inside another word — therefore outranked a text full of
+ * another pattern's terms, and a member-service Move was given the
+ * operations option set.
+ */
+function inferUseCasePattern(text: string, archetype?: string | null): P3UseCasePattern {
+  const archetypeKey = (archetype ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  const declared = ARCHETYPE_USE_CASE_PATTERNS[archetypeKey];
+  if (declared) return declared;
+
+  let best: { pattern: P3UseCasePattern; hits: number } | null = null;
+  for (const { pattern, terms } of USE_CASE_PATTERN_TERMS) {
+    const hits = terms.filter((term) => hasTerm(text, term)).length;
+    if (hits > 0 && (!best || hits > best.hits)) best = { pattern, hits };
   }
-  if (/member|call center|contact center|agent assist|agent-assist|claims|benefits|eligibility|prior auth|authorization|crm|pharmacy|emr|ehr|phi/.test(text)) {
-    return 'member_service_agent_assist';
-  }
-  if (/legal|contract|clm|obligation|attorney|clause|privilege/.test(text)) {
-    return 'legal_contract_intake';
-  }
-  if (/finance|close|gl|margin|cost|capitation|payment|reconciliation|reporting/.test(text)) {
-    return 'finance_close_and_transparency';
-  }
-  if (/operations|workflow|resilience|recovery|service|irops|command|routing/.test(text)) {
-    return 'operations_resilience';
-  }
+  if (best) return best.pattern;
+  if (GENERAL_OPERATIONS_TERMS.some((term) => hasTerm(text, term))) return 'operations_resilience';
   return 'generic_bounded_solution';
 }
 
@@ -887,6 +1077,14 @@ function hasPrivacyWord(value: string): boolean {
 
 function hasChangeWord(value: string): boolean {
   return /change|training|adoption|owner|sme|capacity|operating model|workforce/i.test(value);
+}
+
+/**
+ * What a reader is shown for a P2 source: the document's title. The raw
+ * deliverable type key ("discovery_report") is an internal identifier.
+ */
+export function p2SourceEvidenceTitle(deliverableTypeKey: string): string {
+  return getDeliverableSpec(deliverableTypeKey)?.documentTitle ?? deliverableTypeKey.replace(/[_-]+/g, ' ');
 }
 
 export function containsLegacyStaticP3Labels(optionSet: P3OptionSet): boolean {

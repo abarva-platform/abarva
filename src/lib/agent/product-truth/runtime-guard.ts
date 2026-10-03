@@ -7,14 +7,15 @@ import type {
   ProductTruthViolation,
   SuggestedQuestionSafetyClass,
 } from "./types";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 const CANONICAL_MOVES_PHASES = [
-  "P0 Originate",
-  "P1 Charter",
-  "P2 Discover & Diagnose",
-  "P3 Design Future State",
-  "P4 Roadmap & Business Case",
-  "P5 Approval & Mobilization",
+  PHASE_LABELS[0],
+  PHASE_LABELS[1],
+  PHASE_LABELS[2],
+  PHASE_LABELS[3],
+  PHASE_LABELS[4],
+  PHASE_LABELS[5],
   "Tower Track Outcomes",
 ] as const;
 
@@ -75,8 +76,12 @@ const UNSAFE_CAPABILITY_REPAIR_PATTERNS: ReadonlyArray<
     "use Tower to track evidence for Finance and outcome-owner certification",
   ],
   [
+    /\b(?:accountable\s+)?sponsors?\s+(?:approve|approves|sign off on)\s+(?:Moves\s+)?(?:phase movement|phase gates?|deliverables?)\b/gi,
+    "Moves checks readiness; an authorized workspace user records the approval, while sponsors are progress contacts only",
+  ],
+  [
     /\bMoves (?:automatically )?approves?\b/gi,
-    "Moves structures readiness for sponsor approval; it does not approve by itself",
+    "Moves checks readiness; an authorized workspace user records the approval, while sponsors are progress contacts only",
   ],
   [
     /\bAbarVa (?:automatically )?approves?\b/gi,

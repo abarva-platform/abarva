@@ -9,6 +9,7 @@
 import type {
   DeliverableIntelligenceRequest,
   ExpectedExhibit,
+  GovernedEvidenceItem,
   QualityValidationResult,
   RenderableDeliverable,
   RenderableExhibit,
@@ -17,6 +18,15 @@ import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
+import { findExcludedNumericClaims } from "./excluded-numeric-claims";
+import { untracedFigures } from "./numeric-lineage-tokens";
+import {
+  classifySlideDensity,
+  deckContractExpectsDiagram,
+  deckContractIdForDeliverable,
+  isGenericSlideTitle,
+  MAX_SUPPORTING_POINTS,
+} from "@/lib/deliverables/shared/deck-story-contract";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
@@ -142,7 +152,10 @@ function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
 }
 
 /** Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
-function collectUnsupportedClaims(body: string): string[] {
+function collectUnsupportedClaims(
+  body: string,
+  evidence: readonly GovernedEvidenceItem[] = [],
+): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
   const sentences = body.split(/(?<=[.!?])\s+/);
   const factLike =
@@ -156,7 +169,14 @@ function collectUnsupportedClaims(body: string): string[] {
       !supported.test(s) &&
       !isSupportedExternalBenchmarkClaim(s)
     ) {
-      claims.push(excerptSentence(s));
+      // Name the figures that trace to nothing. The claim is blocked either
+      // way; this is what lets a reader find the figure inside a long table.
+      const untraced = untracedFigures(s, evidence).slice(0, 6);
+      claims.push(
+        untraced.length > 0
+          ? `${excerptSentence(s)} [figures with no match in evidence: ${untraced.join(", ")}]`
+          : excerptSentence(s),
+      );
     }
   }
   return claims;
@@ -226,6 +246,7 @@ export function validateDeliverableQuality(
     doc.generatedSections
       .map((s) => s.rawBodyMarkdown ?? s.bodyMarkdown)
       .join("\n\n"),
+    req.governedEvidenceBundle,
   );
   const unsupportedClaimCount = unsupportedClaimExamples.length;
 
@@ -247,6 +268,11 @@ export function validateDeliverableQuality(
       body,
     ) || clientCompleteCount > 0;
   const wholeDocumentText = [
+    doc.title,
+    doc.subtitle ?? "",
+    doc.generatedSections
+      .map((section) => section.rawBodyMarkdown ?? section.bodyMarkdown)
+      .join("\n\n"),
     body,
     doc.tables
       .map(
@@ -258,7 +284,35 @@ export function validateDeliverableQuality(
       .join("\n\n"),
     doc.recommendation,
     doc.nextActions.join("\n"),
+    (doc.deckSlides ?? [])
+      .flatMap((slide) => [
+        slide.title ?? "",
+        slide.governingMessage,
+        ...(slide.points ?? []),
+        slide.speakerNotes ?? "",
+      ])
+      .join("\n"),
+    doc.exhibits
+      .map(
+        (exhibit) =>
+          `${exhibit.title}\n${exhibit.description}\n${JSON.stringify(exhibit.data ?? {})}`,
+      )
+      .join("\n\n"),
+    doc.sourceRegister
+      .map(
+        (source) =>
+          `${source.label} ${source.evidenceFamily} ${source.asOf ?? ""}`,
+      )
+      .join("\n"),
+    doc.assumptions.map((assumption) => assumption.statement).join("\n"),
+    doc.clientCompleteChecklist
+      .map((item) => `${item.label} ${item.placeholderText}`)
+      .join("\n"),
   ].join("\n\n");
+  const excludedNumericClaimHits = findExcludedNumericClaims(
+    wholeDocumentText,
+    req.prohibitedNumericClaims ?? [],
+  );
   const missingRequiredEvidenceSignals = (req.requiredEvidenceSignals ?? [])
     .filter(
       (signal) =>
@@ -286,6 +340,13 @@ export function validateDeliverableQuality(
         .map((s) => `"${s}"`)
         .join("; ")}`,
     );
+  if (excludedNumericClaimHits.length > 0) {
+    blockers.push(
+      `explicitly excluded numeric claim(s) from governed evidence appear in the artifact: ${excludedNumericClaimHits
+        .map((claim) => `${claim.sourceLabel} [${claim.citationNumber}]`)
+        .join("; ")}`,
+    );
+  }
   if (sectionCount < qb.minSections)
     blockers.push(`only ${sectionCount} sections; minimum ${qb.minSections}`);
 
@@ -296,12 +357,79 @@ export function validateDeliverableQuality(
   // The ceiling is the half that matters. An artifact can satisfy every section
   // and citation rule and still fail in the room by being thirty slides long,
   // and that is a failure this pipeline has no other way to see.
-  if (doc.deckSlides && doc.deckSlides.length > 0) {
+  //
+  // Judge the deck only when a deck is actually produced — when PPTX is an
+  // output format. A document-primary deliverable (DOCX/XLSX) can carry
+  // latent deckSlides the synthesis volunteered that no renderer turns into a
+  // deck; judging those against the deck's slide band blocked a DOCX business
+  // case for having three slides, a band its writer was never given and its
+  // output never shows. This is the same PPTX condition under which the writer
+  // is told the band (deckLengthInstruction) and the slides are contracted
+  // (ensureContractedDeckSlides), so the three now agree.
+  if (
+    req.outputFormats.includes("pptx") &&
+    doc.deckSlides &&
+    doc.deckSlides.length > 0
+  ) {
     const verdict = judgeSlideCount(
       req.deliverableType as Parameters<typeof judgeSlideCount>[0],
       doc.deckSlides.length,
+      qb.slideFloor,
     );
     if (!verdict.ok) blockers.push(verdict.message);
+
+    // Deck story-contract quality — ADVISORY (non-blocking) on first wiring, so
+    // activating a previously-unenforced bar never inverts the gate on a deck
+    // that was acceptable before. Each warning names the exact slide(s) so the
+    // signal is actionable, and the generator is told the same contract via
+    // deckStoryContractInstruction — the writer sees every bar it is judged on.
+    const slides = doc.deckSlides;
+    const labelLed = slides.filter((s) =>
+      isGenericSlideTitle(s.governingMessage ?? ""),
+    );
+    if (labelLed.length > 0) {
+      const examples = labelLed
+        .slice(0, 3)
+        .map((s) => `"${(s.governingMessage ?? "").trim()}"`)
+        .join(", ");
+      warnings.push(
+        `Advisory: ${labelLed.length} of ${slides.length} slides lead with a label, not an argument — a slide title should state the conclusion (e.g. ${examples}).`,
+      );
+    }
+
+    const tooDense = slides.filter((s) => {
+      const visible = [s.governingMessage ?? "", ...(s.points ?? [])]
+        .join(" ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length;
+      return classifySlideDensity(visible) === "too_dense";
+    });
+    if (tooDense.length > 0) {
+      warnings.push(
+        `Advisory: ${tooDense.length} of ${slides.length} slides are too dense for a room — split or move the detail to speaker notes / the appendix.`,
+      );
+    }
+
+    const overPointed = slides.filter(
+      (s) => (s.points?.length ?? 0) > MAX_SUPPORTING_POINTS,
+    );
+    if (overPointed.length > 0) {
+      warnings.push(
+        `Advisory: ${overPointed.length} of ${slides.length} slides carry more than ${MAX_SUPPORTING_POINTS} supporting points — more than one idea; split the slide.`,
+      );
+    }
+
+    const contractId = deckContractIdForDeliverable(req.deliverableType);
+    if (
+      contractId &&
+      deckContractExpectsDiagram(contractId) &&
+      !slides.some((s) => (s.exhibitKey ?? "").trim().length > 0)
+    ) {
+      warnings.push(
+        `Advisory: this deck's story contract calls for at least one diagram, but no slide links an exhibit — an all-text deck of this type reads as a section list, not an argument.`,
+      );
+    }
   }
   if (bodyWordCount < qb.minBodyWords)
     blockers.push(

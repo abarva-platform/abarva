@@ -502,7 +502,7 @@ const cdpContent: Record<string, ModuleContent> = {
       {
         label: "Escalation trigger",
         value:
-          "Any source-system onboarding slip beyond five business days triggers sponsor review.",
+          "Any source-system onboarding slip beyond five business days triggers workspace-user review.",
       },
     ],
     stakeholders: cdpStakeholders,
@@ -821,7 +821,7 @@ const executeContent: Record<string, ModuleContent> = {
           "Attribution workbook before Verify pack assembly",
         ],
         thirty_day_target:
-          "Recover the one-week tuning slip while preserving CSAT and completing the evidence pack for sponsor review.",
+          "Recover the one-week tuning slip while preserving CSAT and completing the evidence pack for authorized workspace review.",
       },
     },
   },
@@ -918,10 +918,10 @@ const executeContent: Record<string, ModuleContent> = {
     structuredDocument: {
       operating_review_rhythm: {
         cadence:
-          "Weekly sponsor review, twice-weekly execution standup, daily integration huddle.",
+          "Weekly workspace-user progress review, twice-weekly execution standup, daily integration huddle.",
         decisions: [
           "Escalate blocker after 48h unresolved",
-          "Freeze rollout changes 24h before sponsor review",
+          "Freeze rollout changes 24h before the workspace-user progress review",
           "Attach new evidence before any benefits claim enters the report",
         ],
       },
@@ -1732,7 +1732,7 @@ const programs: ProgramFullState[] = [
       ],
       milestones: [
         "Problem Framing signed off.",
-        "Stakeholder map draft is ready for sponsor review.",
+        "Stakeholder map draft is ready for workspace review.",
       ],
       keyFindings: [
         "Retail success criteria are already 80% shaped.",
@@ -1757,7 +1757,7 @@ const programs: ProgramFullState[] = [
           {
             id: "turn-cdp-2",
             speaker: "nexus",
-            text: "Sponsor signoff and source-key alignment for Salesforce Commerce and store POS remain outstanding.",
+            text: "Authorized workspace approval and source-key alignment for Salesforce Commerce and store POS remain outstanding.",
           },
         ],
       },
@@ -1958,7 +1958,7 @@ const programs: ProgramFullState[] = [
     leadPerson: PEOPLE.alex,
     phaseStatus: "active",
     gateSummary:
-      "Custom Charter work is moving, but sponsor review is still required before baselines lock.",
+      "Custom Charter work is moving, but authorized workspace review is still required before baselines lock.",
     gateStatus: "pending",
     deliverables: [
       makeDeliverable(
@@ -1975,7 +1975,7 @@ const programs: ProgramFullState[] = [
       { label: "Custom modules", value: "4", tone: "teal" },
       { label: "Frontline scope", value: "40K", tone: "default" },
       { label: "Quality flags", value: "1", tone: "amber" },
-      { label: "Sponsor review", value: "Pending", tone: "red" },
+      { label: "Workspace review", value: "Pending", tone: "red" },
     ],
     sponsorDashboard: {
       openDecisions: [
@@ -2029,7 +2029,7 @@ const programs: ProgramFullState[] = [
           severity: "medium",
           title: "Custom-shape quality flag",
           detail:
-            "Business case voice needs sharper frontline economics language before sponsor review.",
+            "Business case voice needs sharper frontline economics language before workspace review.",
         },
       ],
       sources: [
@@ -2522,7 +2522,7 @@ const programs: ProgramFullState[] = [
           moduleKey: "benefits-realization",
           status: "ready",
           summary:
-            "Closed historical texture memo with all sponsor approvals attached.",
+            "Closed historical texture memo with all authorized workspace approvals attached.",
         },
       ],
       flags: [
@@ -2668,7 +2668,7 @@ function defaultInbox(role: ViewerRole): InboxItem[] {
       title:
         "Store Associate Productivity business case needs sharper language",
       detail:
-        "Custom-shape draft is structurally sound but not ready for sponsor review.",
+        "Custom-shape draft is structurally sound but not ready for workspace review.",
       dueLabel: "This afternoon",
       programId: "store-associate-productivity",
       programName: "Store Associate Productivity",

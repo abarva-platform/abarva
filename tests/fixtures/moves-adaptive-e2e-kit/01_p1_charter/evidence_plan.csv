@@ -1,0 +1,7 @@
+evidence_id,question,minimum_viable_evidence,source_owner_role,phase_needed,decision_supported,status
+SYN-KPI-01,What is current demand and performance?,12-month aggregate KPI series plus metric definitions,Contact Center Analytics Lead,P2,Baseline confidence and value boundary,planned
+SYN-WF-01,Where does agent effort arise?,Routine and exception walkthrough with timestamps,Operations Supervisor,P2,Process impact and scope,planned
+SYN-SYS-01,Can required context be retrieved safely?,System/interface inventory with owner freshness and access limits,Enterprise Data Lead,P2,Architecture option and estimate,planned
+SYN-KNOW-01,Is approved content usable?,Inventory with owner review date conflict and withdrawal path,Knowledge Operations Lead,P2,Knowledge readiness and risk,planned
+SYN-RED-01,What is prohibited?,Explicit red-line list with approver and evidence reference,Privacy and Compliance Lead,P2,Control boundary,planned
+SYN-COST-01,What will delivery require?,Work packages hours rate basis internal/vendor and assumptions,Technology Delivery Lead,P4,Estimate and funding decision,planned

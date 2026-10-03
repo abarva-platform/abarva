@@ -297,9 +297,11 @@ describe("buildModeGrounding — risk_exposure (Phase B)", () => {
       mode: "risk_exposure",
       event: EVENT,
       archetype: AMS_MANAGED_SERVICES,
-      factInputs: {}, // no facts → sample bars from every rule, including TRANSITION_RISK
+      factInputs: {}, // no facts → unsized rules, including TRANSITION_RISK
     });
     expect(result.block).toContain("no commercial-risk note is declared");
+    expect(result.block).toContain("unsized — source evidence required");
+    expect(result.block).not.toMatch(/\$\s*\d/);
   });
 });
 

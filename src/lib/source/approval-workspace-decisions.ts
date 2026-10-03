@@ -11,6 +11,7 @@ export type ApprovalDecisionBlockerCode =
   | "reviewer_role_missing"
   | "workflow_inputs_open"
   | "artifact_review_open"
+  | "gate_criteria_open"
   | "unauthorized_viewer"
   | "approval_reason_required";
 
@@ -59,6 +60,7 @@ export interface BuildApprovalWorkspaceDecisionsInput {
   approvalRecorded: boolean;
   workflowComplete: boolean;
   artifactsReady: boolean;
+  gateCriteriaReady?: boolean;
   gateActionArmed: boolean;
   approvalRationale?: string | null;
 }
@@ -140,6 +142,13 @@ function buildDecision(
       code: "artifact_review_open",
       detail:
         "Required or gate-defining artifacts still need review before approval.",
+    });
+  }
+
+  if (input.gateCriteriaReady === false) {
+    blockers.push({
+      code: "gate_criteria_open",
+      detail: "Review the required gate criteria before approving this stage.",
     });
   }
 

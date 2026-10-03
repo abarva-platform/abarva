@@ -25,7 +25,7 @@ import {
   validateDeliverableTenantInvariant,
 } from "@/lib/deliverables/orchestrator/tenant-invariant";
 import {
-  PHASE_CANONICAL_KEYS,
+  phaseCanonicalKeysForRoute,
   DELIVERABLE_REGISTRY,
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
@@ -45,10 +45,25 @@ import {
   type AdaptiveDepthDecision,
 } from "@/lib/deliverables/adaptive-depth";
 import { getModuleState } from "@/lib/programs/queries";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  formatSolutionRouteForP4Prompt,
+  formatSolutionRouteDepthForPrompt,
+  resolveConfirmedSolutionRoute,
+  type ConfirmedSolutionRoute,
+} from "@/lib/programs/solution-route-assessment";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
+import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -128,24 +143,36 @@ async function buildPhaseCaptureDecisionContext(args: {
   ctx: Awaited<ReturnType<typeof requireTenancy>>;
   moveId: string;
   phase: number;
+  confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+  modules?: Awaited<ReturnType<typeof getModuleState>>;
 }): Promise<string | null> {
-  const sections = getPhaseCaptureSections(args.phase);
+  const sections = getPhaseCaptureSections(
+    args.phase,
+    args.confirmedSolutionRoute,
+  );
   if (sections.length === 0) return null;
 
-  const modules = await getModuleState(args.ctx, args.moveId).catch(() => []);
+  const modules = args.modules ?? (await getModuleState(args.ctx, args.moveId));
   const lines: string[] = [];
   for (const section of sections) {
     const moduleKey = phaseCaptureModuleKey(args.phase, section.key);
-    const captureModule = modules.find((entry) => entry.moduleKey === moduleKey);
+    const captureModule = modules.find(
+      (entry) => entry.moduleKey === moduleKey,
+    );
     const state = (captureModule?.state ?? {}) as Record<string, unknown>;
     const value = typeof state.value === "string" ? state.value.trim() : "";
     if (!value) continue;
+    if (section.structured === "estimate-model") {
+      const formatted = formatEstimateModelForPrompt(value);
+      if (formatted) lines.push(formatted);
+      continue;
+    }
     lines.push(`- ${section.label}: ${value}`);
   }
   if (lines.length === 0) return null;
 
   return [
-    `APPROVED P${args.phase} PHASE CAPTURE (authoritative for this build)`,
+    "SAVED PHASE CAPTURE (authoritative input for this build)",
     `Use these captured values as the primary source for this phase artifact. Do not replace them with generic tenant context, and do not re-collect them in the artifact.`,
     ...lines,
   ].join("\n");
@@ -221,9 +248,102 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const captureModules = await getModuleState(ctx, moveId).catch(() => []);
+    const captureValue = (capturePhase: number, key: string) => {
+      const captureModule = captureModules.find(
+        (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
+      );
+      const value = captureModule?.state?.value;
+      return typeof value === "string" ? value : "";
+    };
+    if (
+      phase === 4 &&
+      !formatEstimateModelForPrompt(captureValue(4, "estimates_capacity"))
+    ) {
+      return Response.json(
+        {
+          error: "estimate_model_review_required",
+          detail:
+            "Complete the internal/vendor role-based estimate, review the low/base/high calculations, and record a human reviewer before building the roadmap package.",
+          nextAction:
+            "Return to Estimates & capacity, resolve open inputs, and confirm the estimate review.",
+        },
+        { status: 409 },
+      );
+    }
+    const confirmedSolutionRoute =
+      phase >= 3
+        ? resolveConfirmedSolutionRoute({
+            businessChangeAssessment: captureValue(
+              1,
+              "business_change_assessment",
+            ),
+            routeValidation: captureValue(2, "solution_route_validation"),
+            approvedEvidenceReferences: (
+              await listApprovedPhaseEvidence(ctx, moveId, 2)
+            ).map((item) => item.evidenceId),
+          })
+        : null;
+    if (phase === 3 && !confirmedSolutionRoute) {
+      return Response.json(
+        {
+          error: "solution_route_validation_required",
+          detail:
+            "Complete the P1 business-change assessment and validate the P2 solution route against approved evidence before building P3 outputs.",
+          nextAction:
+            "Return to P2, select an approved evidence item, and confirm or correct the recommended route.",
+        },
+        { status: 409 },
+      );
+    }
+
+    let requiredEvidenceGaps: ReturnType<
+      typeof currentPhaseRequiredEvidenceGaps
+    >;
+    try {
+      const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
+      const packets = buildMoveEvidenceNeedPackets({
+        moveId,
+        moveName,
+        currentPhase: phase,
+        readiness,
+      });
+      requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(packets, phase);
+    } catch (err) {
+      console.error("[generate-phase] evidence_readiness_unavailable", {
+        moveId,
+        phase,
+        message: errorMessage(err),
+      });
+      return Response.json(
+        {
+          error: "evidence_readiness_unavailable",
+          detail:
+            "Required evidence readiness could not be verified. No phase build was queued; retry after evidence readiness is available.",
+        },
+        { status: 503 },
+      );
+    }
+    if (requiredEvidenceGaps.length > 0) {
+      return Response.json(
+        {
+          error: "required_evidence_open",
+          detail: `${requiredEvidenceGaps.length} required evidence item${requiredEvidenceGaps.length === 1 ? " is" : "s are"} not yet approved, covered, or formally waived. No phase build was queued.`,
+          requiredEvidenceGaps: requiredEvidenceGaps.map((gap) => ({
+            evidenceSlot: gap.evidenceSlot,
+            status: gap.status,
+            nextAction: gap.nextAction,
+          })),
+          nextAction:
+            "Upload the minimum required source evidence, review the extracted facts, and approve or formally waive each required item before building.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Resolve the phase's canonical deliverables from the registry. These are the
     // documents an "Approve & Build" for this phase produces.
-    let specs = (PHASE_CANONICAL_KEYS[phase] ?? [])
+    let specs = phaseCanonicalKeysForRoute(phase, confirmedSolutionRoute)
       .map((key) =>
         DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
       )
@@ -331,6 +451,7 @@ export async function POST(req: NextRequest) {
           moveId,
           tenantKey: clientKey,
           evidenceFingerprint: "error",
+          approvedEvidenceRevision: null,
           attachedEvidenceCount: 0,
           acceptedEvidenceCount: 0,
           latestEvidenceUpdatedAt: null,
@@ -342,6 +463,32 @@ export async function POST(req: NextRequest) {
         generatedAt: new Date().toISOString(),
         message: errorMessage(err),
       };
+    }
+
+    const evidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: clientKey,
+      moveId,
+    });
+    const evidenceSnapshotHash = evidenceSnapshot?.revision;
+    const phaseEvidenceSnapshotHash = evidenceSnapshot
+      ? approvedMoveEvidenceRevisionForPhase(evidenceSnapshot, phase)
+      : null;
+    if (
+      !contextExtract ||
+      contextExtract.status === "error" ||
+      !evidenceSnapshotHash ||
+      !phaseEvidenceSnapshotHash ||
+      contextExtract.freshness.approvedEvidenceRevision !==
+        phaseEvidenceSnapshotHash
+    ) {
+      return Response.json(
+        {
+          error: "evidence_snapshot_unavailable",
+          detail:
+            "The current approved-evidence revision could not be captured. No phase build was queued; retry after evidence review state is available.",
+        },
+        { status: 503 },
+      );
     }
 
     const decisionLineage = approvedSolutionApproach
@@ -361,7 +508,15 @@ export async function POST(req: NextRequest) {
       ctx,
       moveId,
       phase,
+      confirmedSolutionRoute,
+      modules: captureModules,
     });
+    const solutionRoutePromptBlock =
+      phase === 3
+        ? formatSolutionRouteDepthForPrompt(confirmedSolutionRoute)
+        : phase === 4
+          ? formatSolutionRouteForP4Prompt(confirmedSolutionRoute)
+          : null;
 
     const adaptiveDepth: AdaptiveDepthDecision = resolveAdaptiveDepth({
       archetype: useCaseArchetype,
@@ -431,6 +586,7 @@ export async function POST(req: NextRequest) {
         decisionContext: [
           `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
           phaseCaptureContext,
+          solutionRoutePromptBlock,
           approvedApproachBlock,
         ]
           .filter(Boolean)
@@ -438,11 +594,14 @@ export async function POST(req: NextRequest) {
         clientDisplayName,
         initiativeDisplayName: moveName,
         sourceArtifactRef: moveId,
+        phase,
         adaptiveDepth,
         ...(approvedApproachBlock
           ? { approvedSolutionApproach: approvedApproachBlock }
           : {}),
         ...(decisionLineage ? { decisionLineage } : {}),
+        evidenceSnapshotHash,
+        phaseEvidenceSnapshotHash,
       };
     };
 
@@ -545,6 +704,7 @@ export async function POST(req: NextRequest) {
         contextExtract,
         adaptiveDepth,
         omittedDeliverables,
+        ...(confirmedSolutionRoute ? { confirmedSolutionRoute } : {}),
         queued,
         total: results.length,
         deliverables: results,

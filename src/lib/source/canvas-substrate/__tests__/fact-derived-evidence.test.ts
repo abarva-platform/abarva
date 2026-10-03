@@ -6,11 +6,38 @@ import {
 import type { SourceEventEvidence, SourceEventFactRow } from "../types";
 
 describe("fact-derived evidence", () => {
-  it("derives Available evidence from cited structured source_event_facts", () => {
+  it("does not mistake service economics for parsed ticket history", () => {
     const derived = deriveFactBackedEvidenceStates([
       fact({
         id: "fact-change-order",
         fact_key: "annual_change_order_spend",
+      }),
+    ]);
+
+    expect(derived).toEqual([]);
+  });
+
+  it("derives Available ticket history only from cited L2 and L3 cohorts", () => {
+    const derived = deriveFactBackedEvidenceStates([
+      fact({
+        id: "ticket-l2", fact_key: "ticket_count", entity_kind: "tower",
+        entity_ref: "Service desk", value_numeric: "42" as unknown as number, unit: "count",
+        source_citation: {
+          doc: "synthetic-ticket.csv", locator: "row 1, Ticket Count",
+          source_sha256: "a".repeat(64), support_tier: "L2",
+          month: "2026-08", time_window: "Business hours",
+          source_basis: "Synthetic smoke scenario",
+        },
+      }),
+      fact({
+        id: "ticket-l3", fact_key: "ticket_count", entity_kind: "tower",
+        entity_ref: "Service desk", value_numeric: 13, unit: "count",
+        source_citation: {
+          doc: "synthetic-ticket.csv", locator: "row 2, Ticket Count",
+          source_sha256: "a".repeat(64), support_tier: "L3",
+          month: "2026-08", time_window: "After hours",
+          source_basis: "Synthetic smoke scenario",
+        },
       }),
     ]);
 
@@ -20,21 +47,59 @@ describe("fact-derived evidence", () => {
       stage: "scope",
       currentState: "Available",
       sourceArtifactId: null,
-      sourceEventFactIds: ["fact-change-order"],
+      sourceEventFactIds: ["ticket-l2", "ticket-l3"],
     });
     expect(isFactBackedEvidence(derived[0])).toBe(true);
   });
 
-  it("does not derive gate evidence from stale, low-confidence, uncited, or analyst-entered facts", () => {
-    const derived = deriveFactBackedEvidenceStates([
-      fact({ id: "stale", is_stale: true }),
-      fact({ id: "low-confidence", confidence: "low" }),
-      fact({ id: "uncited", source_citation: null }),
-      fact({ id: "analyst", source_method: "analyst_entered" }),
-      fact({ id: "empty-value", value_numeric: null, value_text: null }),
-    ]);
+  it("keeps a single-tier ticket upload below Available", () => {
+    expect(deriveFactBackedEvidenceStates([
+      fact({
+        fact_key: "ticket_count", entity_kind: "tower", unit: "count",
+        source_citation: {
+          doc: "synthetic-ticket.csv", locator: "row 1, Ticket Count",
+          source_sha256: "a".repeat(64), support_tier: "L2",
+          month: "2026-08", time_window: "Business hours",
+        },
+      }),
+    ])).toEqual([]);
+  });
 
-    expect(derived).toEqual([]);
+  it("does not assemble L2 and L3 from different files into one gate receipt", () => {
+    const baseCitation = {
+      doc: "ticket-history.csv", locator: "row 1, Ticket Count",
+      month: "2026-08", time_window: "Business hours",
+      source_basis: "Synthetic smoke scenario",
+    };
+    expect(deriveFactBackedEvidenceStates([
+      fact({
+        id: "l2", fact_key: "ticket_count", entity_kind: "tower",
+        entity_ref: "Service desk", unit: "count", value_numeric: 42,
+        source_citation: { ...baseCitation, support_tier: "L2", source_sha256: "a".repeat(64) },
+      }),
+      fact({
+        id: "l3", fact_key: "ticket_count", entity_kind: "tower",
+        entity_ref: "Service desk", unit: "count", value_numeric: 13,
+        source_citation: { ...baseCitation, support_tier: "L3", source_sha256: "b".repeat(64) },
+      }),
+    ])).toEqual([]);
+  });
+
+  it("does not derive gate evidence from stale, low-confidence, uncited, or analyst-entered facts", () => {
+    const invalid = [
+      { id: "stale", is_stale: true },
+      { id: "low-confidence", confidence: "low" as const },
+      { id: "uncited", source_citation: null },
+      { id: "analyst", source_method: "analyst_entered" as const },
+      { id: "empty-value", value_numeric: null, value_text: null },
+      { id: "fraction", value_numeric: 1.5 },
+    ];
+    for (const overrides of invalid) {
+      expect(deriveFactBackedEvidenceStates([
+        ticketFact("L2", overrides),
+        ticketFact("L3", { id: "valid-l3" }),
+      ])).toEqual([]);
+    }
   });
 
   it("groups duplicate mapped facts without creating duplicate evidence rows", () => {
@@ -147,6 +212,27 @@ function fact(overrides: Partial<SourceEventFactRow> = {}): SourceEventFactRow {
     is_stale: false,
     ...overrides,
   };
+}
+
+function ticketFact(
+  tier: "L2" | "L3",
+  overrides: Partial<SourceEventFactRow> = {},
+): SourceEventFactRow {
+  return fact({
+    id: `ticket-${tier}`,
+    fact_key: "ticket_count",
+    entity_kind: "tower",
+    entity_ref: "Service desk",
+    value_numeric: 42,
+    unit: "count",
+    source_citation: {
+      doc: "synthetic-ticket.csv", locator: `row ${tier}, Ticket Count`,
+      source_sha256: "a".repeat(64), support_tier: tier,
+      month: "2026-08", time_window: "Business hours",
+      source_basis: "Synthetic smoke scenario",
+    },
+    ...overrides,
+  });
 }
 
 function evidence(

@@ -36,9 +36,12 @@ jest.mock("@/lib/programs/evidence-context", () => ({
 }));
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { createMovesGenerateArtifactDeps } from "../moves-generate-deps";
 
 const mockAzureQuery = azureRead.query as jest.Mock;
+const mockGetModuleState = getModuleState as jest.Mock;
+const mockGetProgramById = getProgramById as jest.Mock;
 
 describe("createMovesGenerateArtifactDeps", () => {
   beforeEach(() => {
@@ -59,6 +62,10 @@ describe("createMovesGenerateArtifactDeps", () => {
       ].join("\n"),
     );
     mockAzureQuery.mockReset();
+    mockGetModuleState.mockReset();
+    mockGetModuleState.mockResolvedValue([]);
+    mockGetProgramById.mockReset();
+    mockGetProgramById.mockResolvedValue({ gatesPassed: [] });
   });
 
   it("binds uploaded program evidence alongside broker context for artifact generation", async () => {
@@ -100,16 +107,31 @@ describe("createMovesGenerateArtifactDeps", () => {
     expect(currentState).toContain("7.4");
   });
 
-  it("loadPriorDigests prefers the client-approved version and dedupes to one row per deliverable type", async () => {
-    // The dedup itself happens in Postgres (DISTINCT ON); this test proves
-    // the query shape asks for that, and that whatever single row per type
-    // comes back is correctly mapped through structuredDigest.
+  it("loadPriorDigests includes only the exact signed-off version", async () => {
     mockAzureQuery.mockResolvedValueOnce([
       {
-        structured_data: { solutionContextDigest: { summary: "P2 approved digest" } },
+        structured_data: {
+          solutionContextDigest: { summary: "P2 approved digest" },
+        },
         version: 2,
         created_at: "2026-07-01T00:00:00Z",
         deliverable_type_key: "discovery_report",
+      },
+      {
+        structured_data: {
+          solutionContextDigest: { summary: "P3 same-phase digest" },
+        },
+        version: 1,
+        created_at: "2026-07-02T00:00:00Z",
+        deliverable_type_key: "solution_design",
+      },
+      {
+        structured_data: {
+          solutionContextDigest: { summary: "P4 future digest" },
+        },
+        version: 1,
+        created_at: "2026-07-03T00:00:00Z",
+        deliverable_type_key: "business_case",
       },
     ]);
 
@@ -119,20 +141,149 @@ describe("createMovesGenerateArtifactDeps", () => {
       userId: "user-1",
       role: "program_user",
     });
-    const digests = await deps.contextSources.loadPriorDigests("move-1");
+    const digests = await deps.contextSources.loadPriorDigests("move-1", 3);
 
     expect(mockAzureQuery).toHaveBeenCalledWith(
-      expect.stringContaining("DISTINCT ON (d.deliverable_type_key)"),
+      expect.stringContaining("d.signed_off_version IS NOT NULL"),
       ["move-1"],
       { missingTable: "empty" },
     );
     expect(mockAzureQuery).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "ORDER BY d.deliverable_type_key, (dv.version = d.signed_off_version) DESC, dv.version DESC",
-      ),
+      expect.stringContaining("d.status NOT IN ('superseded', 'rejected')"),
+      ["move-1"],
+      { missingTable: "empty" },
+    );
+    expect(mockAzureQuery).toHaveBeenCalledWith(
+      expect.stringContaining("dv.version = d.signed_off_version"),
       ["move-1"],
       { missingTable: "empty" },
     );
     expect(digests).toEqual([{ summary: "P2 approved digest" }]);
+  });
+
+  it("carries completed prior capture and the validated route only after its gate passed", async () => {
+    const assessment = {
+      expectedWorkflowChange: "none",
+      expectedRoleAccountabilityChange: "none",
+      adoptionOwner: "Business analytics lead",
+      adoptionResponsibility: "business",
+      evidenceReference: "evidence-p1-1",
+      validatedBy: "Business sponsor",
+    };
+    const routeValidation = {
+      businessChangeAssessmentSnapshot: assessment,
+      solutionOutput: "reports_dashboards",
+      workflowChange: "none",
+      roleAccountabilityChange: "none",
+      evidenceReference: "evidence-p2-1",
+      decision: "confirm",
+      selectedRoute: "technical_product",
+      correctionRationale: "",
+      validatedBy: "Business sponsor",
+    };
+    mockGetModuleState.mockResolvedValue([
+      {
+        phaseNumber: 1,
+        moduleKey: "phase_1_business_change_assessment",
+        moduleName: "Business change assessment",
+        status: "completed",
+        state: {
+          capture_section_key: "business_change_assessment",
+          label: "Business change assessment",
+          value: JSON.stringify(assessment),
+        },
+      },
+      {
+        phaseNumber: 2,
+        moduleKey: "phase_2_solution_route_validation",
+        moduleName: "Solution route validation",
+        status: "completed",
+        state: {
+          capture_section_key: "solution_route_validation",
+          label: "Solution route validation",
+          value: JSON.stringify(routeValidation),
+        },
+      },
+      {
+        phaseNumber: 3,
+        moduleKey: "phase_3_solution_approach",
+        moduleName: "Solution approach",
+        status: "in_progress",
+        state: {
+          capture_section_key: "solution_approach",
+          label: "Solution approach",
+          value: "Draft technical approach.",
+        },
+      },
+    ]);
+    mockGetProgramById.mockResolvedValue({ gatesPassed: [1, 2] });
+
+    const deps = createMovesGenerateArtifactDeps({
+      clientId: "client-1",
+      clientKey: "lakeshore",
+      userId: "user-1",
+      role: "program_user",
+    });
+    const capture = await deps.contextSources.loadPhaseCapture!("move-1", 3);
+
+    expect(capture?.currentState).toContain(
+      "P2 approved capture: Solution route validation",
+    );
+    expect(capture?.currentState).toContain("Confirmed route: technical_product");
+    expect(capture?.currentState).toContain("Approved evidence reference: evidence-p2-1");
+    expect(capture?.currentState).toContain("Draft technical approach.");
+    expect(capture?.humanApprovalNotes).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("P2 human-validated solution route"),
+        expect.stringContaining("reviewer Business sponsor"),
+      ]),
+    );
+
+    mockGetProgramById.mockResolvedValue({ gatesPassed: [1] });
+    const unapprovedCapture = await deps.contextSources.loadPhaseCapture!(
+      "move-1",
+      3,
+    );
+    expect(unapprovedCapture?.currentState).not.toContain(
+      "Confirmed route: technical_product",
+    );
+    expect(unapprovedCapture?.currentState).toContain("Draft technical approach.");
+  });
+
+  it("keeps the prior approved architecture authoritative when the current version is a draft", async () => {
+    mockAzureQuery.mockResolvedValueOnce([
+      {
+        id: "architecture-v1",
+        structured_data: {
+          solutionContextDigest: {
+            architecture: "Approved reference architecture",
+          },
+        },
+        content: null,
+        version: 1,
+        status: "draft",
+        signed_off_version: 1,
+        deliverable_type_key: "target_state_architecture",
+      },
+    ]);
+    const deps = createMovesGenerateArtifactDeps({
+      clientId: "client-1",
+      clientKey: "tenant-one",
+      userId: "user-1",
+      role: "program_user",
+    });
+
+    const prior = await deps.contextSources.loadPriorDeliverables!("move-1");
+
+    expect(prior[0]).toMatchObject({
+      acceptance: "accepted",
+      lineageRef: "architecture-v1",
+      digest: { architecture: "Approved reference architecture" },
+    });
+    expect(mockAzureQuery).toHaveBeenCalledWith(
+      expect.stringContaining("dv.version = d.signed_off_version"),
+      ["move-1", expect.any(Array)],
+      { missingTable: "empty" },
+    );
   });
 });

@@ -27,6 +27,14 @@ export const MACHINERY_TERMS: ReadonlyArray<string> = [
   "substrate",
   "entity graph",
   "enterprise_context",
+  // Builder vocabulary — how the artifact was generated is never the client's
+  // concern. These leaked onto a real export ("produced by the Moves Expert
+  // Kernel … from the bound Domain Function Pack"). The sanitizer rewrites them;
+  // listing them here lets the gate catch any that slip past on a path that
+  // scans but does not sanitize.
+  "expert kernel",
+  "domain function pack",
+  "function pack",
   "client to complete",
   "client-to-complete",
   "not authorized to build",

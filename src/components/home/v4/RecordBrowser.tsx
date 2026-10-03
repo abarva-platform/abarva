@@ -35,6 +35,44 @@ interface Dimension {
 }
 
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
+  business_segment: [
+    { key: "segmentName", label: "Segment", width: 260, priority: "core" },
+    {
+      key: "revenueSharePct",
+      label: "Revenue share %",
+      width: 145,
+      align: "right",
+    },
+    { key: "revenueUsd", label: "Revenue", width: 150, kind: "money" },
+    { key: "pnlOwnerRole", label: "P&L owner", width: 240 },
+    { key: "classificationBasis", label: "Basis", width: 230, kind: "muted" },
+  ],
+  business_function: [
+    { key: "functionName", label: "Function", width: 270, priority: "core" },
+    { key: "businessSegment", label: "Segment", width: 220 },
+    { key: "executiveOwner", label: "Executive owner", width: 220 },
+    { key: "criticality", label: "Criticality", width: 110, kind: "pill" },
+    { key: "fteCount", label: "FTE", width: 100, align: "right" },
+  ],
+  workforce_role: [
+    { key: "personaOrRole", label: "Role", width: 270, priority: "core" },
+    { key: "functionName", label: "Function", width: 230 },
+    { key: "roleCount", label: "Count", width: 100, align: "right" },
+    { key: "employmentType", label: "Employment", width: 150 },
+    { key: "vendorSupported", label: "Vendor supported", width: 150 },
+  ],
+  operational_process: [
+    { key: "processName", label: "Process", width: 290, priority: "core" },
+    { key: "businessFunction", label: "Function", width: 230 },
+    { key: "processOwner", label: "Owner", width: 220 },
+    { key: "systemsUsed", label: "Systems", width: 250 },
+    {
+      key: "controlPoints",
+      label: "Control points",
+      width: 240,
+      kind: "muted",
+    },
+  ],
   // Read as a sentence, left to right: this object, this verb, that object. The verb sits between
   // its endpoints rather than after them, because a grid that lists both names then the type makes
   // a reader hold two things in mind before learning what connects them.
@@ -499,9 +537,22 @@ function constantColumnsOf(recordType: TechRecordType): ConstantColumn[] {
   return recordType.constantColumns ?? constantColumnsForRecord(recordType);
 }
 
+/**
+ * An exact match on one field, named by what the reader calls it.
+ *
+ * A figure counted by joining on a declared identifier opens its rows by that identifier. The
+ * identifier is how the rows are found; the label is what the banner says.
+ */
+export interface RecordRowMatch {
+  field: string;
+  value: string;
+  label: string;
+}
+
 export function RecordBrowser({
   recordType,
   initialQuery,
+  initialMatch,
 }: {
   recordType: TechRecordType;
   /**
@@ -513,8 +564,13 @@ export function RecordBrowser({
    * filtered view without being told.
    */
   initialQuery?: string;
+  /** A match the browser opens already applied. Stated in the same banner, by its label. */
+  initialMatch?: RecordRowMatch;
 }) {
   const [query, setQuery] = useState(initialQuery ?? "");
+  const [match, setMatch] = useState<RecordRowMatch | null>(
+    initialMatch ?? null,
+  );
   const [sliceField, setSliceField] = useState<string | null>(null);
   const [sliceValue, setSliceValue] = useState("all");
   const [diceField, setDiceField] = useState("none");
@@ -560,6 +616,7 @@ export function RecordBrowser({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return indexedRows.filter(({ row }) => {
+      if (match && String(row[match.field] ?? "") !== match.value) return false;
       if (
         activeSlice &&
         sliceValue !== "all" &&
@@ -589,6 +646,7 @@ export function RecordBrowser({
     activeSlice,
     diceValue,
     indexedRows,
+    match,
     query,
     recordType.columns,
     sliceValue,
@@ -612,10 +670,12 @@ export function RecordBrowser({
   const activeFilterCount =
     Number(sliceValue !== "all") +
     Number(diceValue !== "all") +
-    Number(Boolean(query.trim()));
+    Number(Boolean(query.trim())) +
+    Number(Boolean(match));
 
   function clearFilters() {
     setQuery("");
+    setMatch(null);
     setSliceValue("all");
     setDiceValue("all");
   }
@@ -755,7 +815,7 @@ export function RecordBrowser({
         </div>
       </div>
 
-      {initialQuery && query === initialQuery ? (
+      {match || (initialQuery && query === initialQuery) ? (
         <div
           data-record-arrived-filtered
           style={{
@@ -773,11 +833,14 @@ export function RecordBrowser({
         >
           <span style={{ fontFamily: SANS, fontSize: 13.5, lineHeight: 1.45 }}>
             Showing the rows behind a figure you came from — filtered to{" "}
-            <strong style={{ fontWeight: 600 }}>{initialQuery}</strong>.
+            <strong style={{ fontWeight: 600 }}>
+              {match ? match.label : initialQuery}
+            </strong>
+            .
           </span>
           <button
             type="button"
-            onClick={() => setQuery("")}
+            onClick={() => (match ? setMatch(null) : setQuery(""))}
             style={{
               fontFamily: MONO,
               fontSize: 11,
@@ -855,8 +918,8 @@ export function RecordBrowser({
           }}
         >
           <span style={eyebrow(V4.amber)}>
-            {identityCollisions.toLocaleString()} of {rows.length.toLocaleString()}{" "}
-            records share an identifier
+            {identityCollisions.toLocaleString()} of{" "}
+            {rows.length.toLocaleString()} records share an identifier
           </span>
           <p
             style={{
@@ -965,6 +1028,7 @@ export function RecordBrowser({
               row={selected.row}
               ordinal={selected.index + 1}
               declaredColumns={recordType.columns}
+              sourceRefs={recordType.rowSourceRefs?.[selected.index]}
             />
           ) : null}
         </aside>
@@ -1033,6 +1097,22 @@ function buildMetrics(
           .filter((v) => v !== "(not specified)"),
       ).size
     : 0;
+
+  if (objectType === "risk_control") {
+    const highOrCritical = rows.filter((row) =>
+      ["high", "critical"].includes(String(row.severity ?? "").toLowerCase()),
+    ).length;
+    const controlState = (row: RecordRow) =>
+      String(row.controlStatus ?? "").toLowerCase().replaceAll(" ", "_");
+    const partial = rows.filter((row) => controlState(row) === "partially_effective").length;
+    const unknown = rows.filter((row) => controlState(row) === "unknown").length;
+    return [
+      { label: "risks", value: rows.length.toLocaleString() },
+      { label: "high or critical", value: highOrCritical.toLocaleString(), tone: highOrCritical ? V4.red : undefined },
+      { label: "partial control", value: partial.toLocaleString(), tone: partial ? V4.amber : undefined },
+      { label: "control state unknown", value: unknown.toLocaleString(), tone: unknown ? V4.amber : undefined },
+    ];
+  }
 
   if (objectType === "vendor_contract") {
     const autoRenew = rows.filter((row) => isTruthy(row.autoRenewFlag)).length;
@@ -1121,6 +1201,10 @@ function buildMetrics(
       { label: "annual cost", value: moneyShort(spend) },
       { label: "platform types", value: dimensions.toLocaleString() },
     ];
+  }
+
+  if (objectType !== "application_system") {
+    return [{ label: "records", value: rows.length.toLocaleString() }];
   }
 
   return [
@@ -1562,6 +1646,13 @@ const PROVENANCE_FIELDS = new Set([
   "orgUnitId",
   "useCaseId",
   "relationshipId",
+  // The identifiers one record names another by. They are how a figure finds its rows; the row
+  // already shows the name each one stands for.
+  "functionId",
+  "priorityId",
+  "sponsorFunctionId",
+  "segmentId",
+  "businessFunctionId",
 ]);
 
 /**
@@ -1598,6 +1689,50 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
       right: string;
     }>
   > = {
+    business_segment: [
+      {
+        key: "segment-owner",
+        title: "Segments and accountable owners",
+        caption: "The ownership declared for each business segment.",
+        left: "segmentName",
+        right: "pnlOwnerRole",
+      },
+    ],
+    business_function: [
+      {
+        key: "segment-criticality",
+        title: "Function criticality by segment",
+        caption:
+          "How declared function criticality is distributed across segments.",
+        left: "businessSegment",
+        right: "criticality",
+      },
+      {
+        key: "segment-owner",
+        title: "Function ownership by segment",
+        caption: "Which executive roles own the functions in each segment.",
+        left: "businessSegment",
+        right: "executiveOwner",
+      },
+    ],
+    workforce_role: [
+      {
+        key: "function-employment",
+        title: "Workforce mix by function",
+        caption: "Employment types declared for each function's roles.",
+        left: "functionName",
+        right: "employmentType",
+      },
+    ],
+    operational_process: [
+      {
+        key: "function-owner",
+        title: "Process ownership by function",
+        caption: "Who is recorded as owning work in each function.",
+        left: "businessFunction",
+        right: "processOwner",
+      },
+    ],
     // Each pairing is a question someone actually asks of this record type, not every column
     // against every other. A crossing nobody would ask for is noise with a title on it.
     relationship_edge: [
@@ -1658,7 +1793,7 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
         key: "severity-control",
         title: "Severity against control state",
         caption:
-          "Where the register records a serious risk and no operating control.",
+          "How recorded severity and control effectiveness intersect; unknown is not uncontrolled.",
         left: "severity",
         right: "controlStatus",
       },
@@ -1898,12 +2033,14 @@ function SelectedRecord({
   row,
   ordinal,
   declaredColumns,
+  sourceRefs,
 }: {
   recordType: TechObjectType;
   row: RecordRow;
   ordinal: number;
   /** The source's own column order, so the detail reads in the shape the file declared. */
   declaredColumns?: string[];
+  sourceRefs?: string[];
 }) {
   const fields = detailFieldsFor(recordType, row, declaredColumns);
   // Counted from the row, not from the declared column list. Those differ -- the row can carry keys
@@ -1931,6 +2068,51 @@ function SelectedRecord({
         {fields.length.toLocaleString()} of {carried.toLocaleString()} fields on
         this record; the rest record how the row was loaded
       </div>
+      {sourceRefs ? (
+        <div
+          data-record-source-link={sourceRefs.length ? "verified" : "missing"}
+          style={{
+            borderTop: `1px solid ${V4.rule}`,
+            padding: "12px 0",
+            fontFamily: SANS,
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: V4.inkSoft,
+          }}
+        >
+          <strong style={{ color: sourceRefs.length ? V4.green : V4.amber }}>
+            {sourceRefs.length
+              ? "Source record ID matched"
+              : "Source record link not established"}
+          </strong>
+          {sourceRefs.length ? (
+            <>
+              <div>
+                The row ID is linked; this does not establish source-file
+                acceptance or claim review.
+              </div>
+              <details>
+                <summary style={{ cursor: "pointer" }}>
+                  {sourceRefs.length.toLocaleString()} source record ID
+                  {sourceRefs.length === 1 ? "" : "s"}
+                </summary>
+                <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                  {sourceRefs.map((ref) => (
+                    <li
+                      key={ref}
+                      style={{ fontFamily: MONO, overflowWrap: "anywhere" }}
+                    >
+                      {ref}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </>
+          ) : (
+            <div>No governed source record was verified for this row.</div>
+          )}
+        </div>
+      ) : null}
       {/* Every field the row carries that is not bookkeeping. This used to stop at eighteen, and
           the curated list filled all eighteen -- so a dozen fields the record declares and varies
           were unreachable from anywhere, the cap silently deciding which. A record with more to say
@@ -1977,14 +2159,34 @@ function headlineFor(objectType: TechObjectType, count: number): string {
   return `${count.toLocaleString()} records.`;
 }
 
+const SELECTED_TITLE_FIELD: Record<TechObjectType, string> = {
+  business_segment: "segmentName",
+  business_function: "functionName",
+  workforce_role: "personaOrRole",
+  operational_process: "processName",
+  application_system: "systemName",
+  vendor_contract: "contractName",
+  infrastructure_platform: "platformName",
+  data_asset_or_integration: "dataAssetName",
+  metric_outcome: "metricName",
+  risk_control: "riskOrControlName",
+  program_initiative: "programName",
+  organization_ownership: "orgUnit",
+  ai_use_case: "useCaseName",
+  executive_interview: "question",
+  relationship_edge: "fromObjectName",
+};
+
 function titleForSelected(objectType: TechObjectType, row: RecordRow): string {
-  const fieldByType: Partial<Record<TechObjectType, string>> = {
-    application_system: "systemName",
-    vendor_contract: "contractName",
-    infrastructure_platform: "platformName",
-    data_asset_or_integration: "dataAssetName",
-  };
-  return humanise(row[fieldByType[objectType] ?? "name"]);
+  if (objectType === "relationship_edge") {
+    const from = humanise(row.fromObjectName);
+    const to = humanise(row.toObjectName);
+    if (from !== "—" && to !== "—") return `${from} to ${to}`;
+  }
+  const title = humanise(
+    row[SELECTED_TITLE_FIELD[objectType]] ?? row.name ?? row.originalRowId,
+  );
+  return title === "—" ? "Unnamed record" : title;
 }
 
 /**

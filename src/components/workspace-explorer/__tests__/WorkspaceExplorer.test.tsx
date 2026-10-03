@@ -4,6 +4,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { WorkspaceExplorer } from "../WorkspaceExplorer";
+import { evidenceForStage } from "@/lib/source/canonical-specs/evidence-requirements";
 import type {
   WorkspaceGenerateCandidate,
   WorkspaceItem,
@@ -171,7 +172,14 @@ describe("WorkspaceExplorer", () => {
     expect(screen.getByRole("columnheader", { name: "Owner" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Action" })).toBeTruthy();
     // the selected step still surfaces canonical, stage-specific requirements.
-    expect(screen.getByText("Incumbent contract")).toBeTruthy();
+    // The label is read from the canonical spec rather than re-typed: it was
+    // relabelled once already (EVID-SRC-STR-INCUMBENT), which stranded a
+    // literal copy here while the component rendered the new one correctly.
+    const incumbent = evidenceForStage("strategy").find(
+      (requirement) => requirement.requirementId === "EVID-SRC-STR-INCUMBENT",
+    );
+    expect(incumbent).toBeDefined();
+    expect(screen.getByText(incumbent!.label)).toBeTruthy();
     expect(screen.getByText("Sponsor commitment")).toBeTruthy();
 
     fireEvent.click(screen.getByTestId("workspace-step-scope"));

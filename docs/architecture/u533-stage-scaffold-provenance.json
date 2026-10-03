@@ -147,9 +147,9 @@
       },
       "gateTaskTitles": [
         "Confirm the applications in scope",
-        "Provide the volumetrics",
-        "Provide the application inventory",
-        "Provide vendor commercials & contract terms",
+        "Provide ticket volumes",
+        "Provide the application or service inventory",
+        "Review the prior commercial baseline",
         "Confirm what's out of scope",
         "Confirm retained vs. vendor",
         "Sponsor commitment"

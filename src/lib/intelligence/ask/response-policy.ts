@@ -1,5 +1,6 @@
 import type { AskSource } from "./types";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 const HOLLOW_OPENER_RE =
   /^\s*(?:good|great|excellent)\s+question(?:,\s*[A-Z][a-z]+)?\.?\s*(?:let me\s+(?:give|be|walk|explain)[^.]*\.\s*)?/i;
@@ -344,7 +345,7 @@ Product rule:
 Surface knowledge:
 - Intelligence: CXO strategy, trends, portfolio framing, industry context, investment thesis, executive answers.
 - Home: Enterprise context and evidence: known facts, systems, applications, owners, contracts, documents, integrations, data readiness, and evidence gaps.
-- Moves: Transformation execution from idea to business case, solution options, roadmap, execution readiness, and governed phase planning.
+- Moves: Governed work from idea through the approved roadmap and mobilization handoff. Project execution begins after approval and is tracked by Tower.
 - Source: Sourcing, vendors, contracts, renewals, pricing, commercial leverage, RFP, BAFO, negotiation, and spend optimization.
 - Tower: Value realization, adoption, KPI tracking, funding gates, executive reporting, outcome accountability, and realized benefits.
 
@@ -352,7 +353,7 @@ Required answer shape when this mode applies:
 Use the AbarVa Pyramid Brief by default:
 1. Answer: the direct executive judgment or recommendation.
 2. Proof: 2-3 compact evidence points, tradeoffs, or caveats grounded in tenant context when available.
-3. Move: the next executive action and the AbarVa path: Intelligence frames the bet, Home verifies current-state evidence, Moves turns it into governed execution, Source checks vendor/commercial levers when relevant, and Tower tracks value/adoption/risk evidence.
+3. Move: the next executive action and the AbarVa path: Intelligence frames the bet, Home verifies current-state evidence, Moves shapes the approved roadmap and mobilization handoff, Source checks vendor/commercial levers when relevant, and Tower tracks post-approval execution and value/adoption/risk evidence.
 
 Only expand beyond this compact shape when the user explicitly asks for a deep implementation plan, board memo, roadmap, table, chart, matrix, or detailed artifact. For default strategy questions, do not produce a long surface-by-surface section.
 
@@ -370,19 +371,14 @@ This mode is mandatory when the user asks how to execute a strategy, roadmap, AI
 Product rule:
 - Say clearly that this should be run as a Moves portfolio sprint, with Intelligence framing the bets, Moves structuring the phases, Source validating vendor/commercial levers, and Tower tracking realized value.
 - Keep the user's domain frame. If the user asks about supply chain AI bets, anchor the candidate Moves in supply chain: procurement intelligence, supplier risk/resilience, demand sensing, inventory optimization, logistics/freight optimization, working capital, contract/obligation intelligence, and supply-chain data foundation. Finance or treasury may be a dependency or value lens, but must not replace the supply-chain answer.
-- When the user asks what the plan looks like by phase, include a compact phase table with one literal row for each phase label: P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes.
+- When the user asks what the plan looks like by phase, include a compact phase table with one literal row for each phase label: ${PHASE_LABELS[0]}, ${PHASE_LABELS[1]}, ${PHASE_LABELS[2]}, ${PHASE_LABELS[3]}, ${PHASE_LABELS[4]}, ${PHASE_LABELS[5]}, and Tower Track Outcomes.
 
 Required answer structure:
 1. Direct executive read.
 2. Candidate Moves / bets.
 3. How AbarVa would run it across Intelligence, Moves, Source, and Tower.
 4. Moves phase plan:
-   - P0 Originate
-   - P1 Charter
-   - P2 Discover & Diagnose
-   - P3 Design Future State
-   - P4 Roadmap & Business Case
-   - P5 Approval & Mobilization
+${Array.from({ length: 6 }, (_, phase) => `   - ${PHASE_LABELS[phase]}`).join("\n")}
    - Tower Track Outcomes
 5. Templates / evidence needed by phase.
 6. Source implications when vendors, contracts, sourcing, software, BPO, systems integrators, or commercial levers are relevant.

@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Release Lane
 
@@ -177,17 +177,30 @@ unwind.
 of why — including the part this change caused and the claim it originally got backwards.**
 
 *What happened.* That job runs `src/__tests__/behaviors` under `--coverage --runInBand` with
-`timeout-minutes: 15`. On both runs of this branch the **gate step itself was cancelled** at 14m23s,
-having not finished. It is a required context, so this change cannot merge on it.
+`timeout-minutes: 15`. On the first two draws of this branch the **gate step itself was cancelled** at
+14m23s, having not finished; on the third it passed at 547s. It is a required context, so nothing was
+merged until it did: all 19 required contexts were then checked **per context** against
+`docs/ci/required-status-checks.json` rather than read off the aggregate.
 
 *It is not only this change.* Another pull request today — **doc-only** — was cancelled on three
 consecutive attempts of the same job. On those attempts the gate step *concluded success* at 812s and
 818s and the JOB was killed afterwards, during the cheap steps that follow. So the job total was
 already over the cap before this branch existed.
 
-*And it is partly this change, which the first version of this section denied.* The step fit in 818s
-on doc-only content and did not fit in 863s here, so this branch made the gate step roughly 50
-seconds slower. Two suites are added, one of which runs the coverage census.
+*How much of it is this change: less than this record first said, and the correction is a retraction
+rather than a refinement.* An earlier version of this section read "the step fit in 818s on doc-only
+content and did not fit in 863s here, so this branch made the gate step roughly 50 seconds slower".
+Three draws of the same job on near-identical content then gave 863s (not finished), 863s (not
+finished) and **547s (success)** — a 316-second spread. An inference drawn from two single draws on
+different content cannot survive that, and an 11-second saving cannot explain 863 → 547 either, so the
+50-second attribution is **withdrawn**. What is measured directly, and all that is claimed: two suites
+are added, one of which runs the census at 10.9s under coverage, plus the instrumented cost of 34 more
+test cases.
+
+*What survives unchanged is the finding underneath it.* The job sits close enough to its ceiling that
+it dies on some draws regardless of content, which is why a doc-only pull request lost three
+consecutive attempts to it. The two kills on this branch are evidence for that, not evidence about
+this change.
 
 *The correction.* This record originally claimed that cost had been cut by calling `buildCensus`
 **once in process** instead of spawning the census CLI twice — "the same resolver and roughly halves

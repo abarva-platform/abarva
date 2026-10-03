@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 
 // Judge the deck that was actually rendered.
 //
@@ -14,13 +14,13 @@ import 'server-only';
 //
 // The second governs.
 
-import type { InspectedDeck, InspectedSlide } from './deck-inspection';
+import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
 
 /**
  * Slide role. A cover or divider is legitimately thin and must SAY so — it is
  * never inferred from thinness, or every empty slide would excuse itself.
  */
-export type SlideRole = 'cover' | 'divider' | 'content' | 'appendix';
+export type SlideRole = "cover" | "divider" | "content" | "appendix";
 
 export interface DeckPolicy {
   minSlides?: number;
@@ -30,11 +30,17 @@ export interface DeckPolicy {
 }
 
 export type DeckFinding =
-  | { kind: 'off_canvas'; slide: number; shapes: number; worstOverflowIn: number; message: string }
-  | { kind: 'thin_slide'; slide: number; message: string }
-  | { kind: 'empty_table'; slide: number; message: string }
-  | { kind: 'slide_count'; message: string }
-  | { kind: 'canvas'; message: string };
+  | {
+      kind: "off_canvas";
+      slide: number;
+      shapes: number;
+      worstOverflowIn: number;
+      message: string;
+    }
+  | { kind: "thin_slide"; slide: number; message: string }
+  | { kind: "empty_table"; slide: number; message: string }
+  | { kind: "slide_count"; message: string }
+  | { kind: "canvas"; message: string };
 
 export interface DeckVerdict {
   ok: boolean;
@@ -44,7 +50,7 @@ export interface DeckVerdict {
   findings: DeckFinding[];
 }
 
-const MIN_CONTENT_CHARS = 140;
+const MIN_CONTENT_CHARS = 120;
 const MIN_SUPPORTING_RUNS = 2;
 /** Running header, slide number and title are chrome on every slide. */
 const CHROME_RUNS = 3;
@@ -52,8 +58,8 @@ const CHROME_RUNS = 3;
 function roleOf(policy: DeckPolicy, slide: InspectedSlide): SlideRole {
   const declared = policy.rolesByIndex?.[slide.index];
   if (declared) return declared;
-  if (slide.index === 1) return 'cover';
-  return 'content';
+  if (slide.index === 1) return "cover";
+  return "content";
 }
 
 /**
@@ -64,37 +70,52 @@ function roleOf(policy: DeckPolicy, slide: InspectedSlide): SlideRole {
  * What does not qualify is a title and a fragment.
  */
 function hasSubstance(slide: InspectedSlide): boolean {
-  if (slide.tableCount > 0 && slide.visibleChars > 40) return true;
+  const supportingText = slide.textRuns.slice(CHROME_RUNS).join(" ").trim();
+  const supportingChars = supportingText.length;
+  if (slide.tableCount > 0 && supportingChars > 40) return true;
   if (slide.pictureCount > 0) return true;
   if (slide.chartCount > 0) return true;
   const supporting = Math.max(0, slide.textRuns.length - CHROME_RUNS);
-  return supporting >= MIN_SUPPORTING_RUNS && slide.visibleChars >= MIN_CONTENT_CHARS;
+  return (
+    supporting >= MIN_SUPPORTING_RUNS && supportingChars >= MIN_CONTENT_CHARS
+  );
 }
 
-export function judgeRenderedDeck(deck: InspectedDeck, policy: DeckPolicy = {}): DeckVerdict {
+export function judgeRenderedDeck(
+  deck: InspectedDeck,
+  policy: DeckPolicy = {},
+): DeckVerdict {
   const findings: DeckFinding[] = [];
 
   if (deck.canvasWidthIn < 13 || deck.canvasHeightIn < 7) {
     findings.push({
-      kind: 'canvas',
+      kind: "canvas",
       message: `slide canvas is ${deck.canvasWidthIn.toFixed(2)}x${deck.canvasHeightIn.toFixed(2)}in; this renderer lays out for 13.33x7.50in, so content runs off the page.`,
     });
   }
 
   if (policy.minSlides !== undefined && deck.slideCount < policy.minSlides) {
-    findings.push({ kind: 'slide_count', message: `${deck.slideCount} rendered slides; minimum ${policy.minSlides}.` });
+    findings.push({
+      kind: "slide_count",
+      message: `${deck.slideCount} rendered slides; minimum ${policy.minSlides}.`,
+    });
   }
   if (policy.maxSlides !== undefined && deck.slideCount > policy.maxSlides) {
-    findings.push({ kind: 'slide_count', message: `${deck.slideCount} rendered slides against a ceiling of ${policy.maxSlides}.` });
+    findings.push({
+      kind: "slide_count",
+      message: `${deck.slideCount} rendered slides against a ceiling of ${policy.maxSlides}.`,
+    });
   }
 
   for (const slide of deck.slides) {
     if (slide.offCanvas.length > 0) {
       const worst = Math.max(
-        ...slide.offCanvas.map((o) => Math.max(o.overflowRightIn, o.overflowBottomIn)),
+        ...slide.offCanvas.map((o) =>
+          Math.max(o.overflowRightIn, o.overflowBottomIn),
+        ),
       );
       findings.push({
-        kind: 'off_canvas',
+        kind: "off_canvas",
         slide: slide.index,
         shapes: slide.offCanvas.length,
         worstOverflowIn: Number(worst.toFixed(2)),
@@ -102,20 +123,24 @@ export function judgeRenderedDeck(deck: InspectedDeck, policy: DeckPolicy = {}):
       });
     }
 
-    if (slide.tableCount > 0 && slide.visibleChars < 40) {
+    const supportingChars = slide.textRuns
+      .slice(CHROME_RUNS)
+      .join(" ")
+      .trim().length;
+    if (slide.tableCount > 0 && supportingChars < 40) {
       findings.push({
-        kind: 'empty_table',
+        kind: "empty_table",
         slide: slide.index,
         message: `slide ${slide.index}: a table was drawn with no meaningful content in it.`,
       });
     }
 
     const role = roleOf(policy, slide);
-    if (role === 'cover' || role === 'divider') continue;
+    if (role === "cover" || role === "divider") continue;
 
     if (!hasSubstance(slide)) {
       findings.push({
-        kind: 'thin_slide',
+        kind: "thin_slide",
         slide: slide.index,
         message: `slide ${slide.index}: a title and ${slide.visibleChars} characters, with no table, visual or supporting argument. A section heading on a slide is not a slide.`,
       });

@@ -45,9 +45,9 @@ describe("candidate supplier registry loader", () => {
     const plan = buildCandidateSupplierRegistryImportPlan({ args: args(), csvText });
     const expectedArchetypes = categoryRoutedArchetypeIds();
 
-    expect(plan.rowCount).toBe(25);
-    expect(plan.suppliers).toHaveLength(20);
-    expect(plan.validation.summary.eligibleCandidateRows).toBe(20);
+    expect(plan.rowCount).toBe(28);
+    expect(plan.suppliers).toHaveLength(23);
+    expect(plan.validation.summary.eligibleCandidateRows).toBe(23);
     expect(plan.validation.summary.negativeControlRows).toBe(5);
     expect(plan.validation.summary.coveredArchetypeCount).toBe(10);
     expect(plan.archetypes).toEqual(expectedArchetypes);
@@ -76,7 +76,7 @@ describe("candidate supplier registry loader", () => {
   it("fails before planning when the fixture no longer satisfies the governed package", () => {
     const lines = csvText.trimEnd().split(/\r?\n/u);
     const partialCsv = `${lines
-      .filter((line) => !line.startsWith("SYN-SUP-AMS-002,"))
+      .filter((line) => !/^SYN-SUP-AMS-00[2-5],/u.test(line))
       .join("\n")}\n`;
 
     expect(() =>
@@ -171,7 +171,7 @@ describe("candidate supplier registry loader", () => {
 
       expect(result.committed).toBe(false);
       expect(result.inserted).toBe(0);
-      expect(proof.supplierCount).toBe(20);
+      expect(proof.supplierCount).toBe(23);
       expect(proof.validation.status).toBe("pass");
     } finally {
       if (priorDatabaseUrl === undefined) delete process.env.DATABASE_URL;
@@ -260,8 +260,8 @@ describe("candidate supplier registry loader", () => {
       expect(JSON.parse(marker!.split("__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__")[1])).toMatchObject({
         event: "source_candidate_supplier_registry_import_proof_summary",
         mode: "dry_run",
-        rowCount: 25,
-        supplierCount: 20,
+        rowCount: 28,
+        supplierCount: 23,
         archetypeCount: 10,
         failClosedControlCount: 5,
         inputSha256: csvSha256,

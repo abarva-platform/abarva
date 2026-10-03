@@ -60,6 +60,15 @@ describe("move-phase-playbook — richer session/workshop content", () => {
       expect(spec).toBeTruthy();
       expect(spec.columns.length).toBeGreaterThanOrEqual(3);
     }
+    expect(WORKSHOP_TEMPLATES.approval_page).toMatchObject({
+      label: "Product Approval Record",
+      columns: [
+        "Decision",
+        "Authorized workspace approver",
+        "Date",
+        "Rationale",
+      ],
+    });
   });
 
   it("listPlaybookPhases still returns all 5 phases (no regression to the existing resolver)", () => {

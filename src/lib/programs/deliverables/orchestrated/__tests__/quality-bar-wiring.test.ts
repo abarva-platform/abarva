@@ -9,6 +9,8 @@
 
 import { buildMoveDeliverableRequest } from "../build-request";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
+import { getArtifactBrief } from "@/lib/deliverables/orchestrator/artifact-brief-registry";
+import { buildPassPrompt } from "@/lib/deliverables/orchestrator/prompt-builder";
 import type { MoveBusinessCaseInput } from "@/lib/programs/move-business-case";
 
 function move(): MoveBusinessCaseInput {
@@ -75,21 +77,44 @@ describe("the canonical quality contract reaches the runtime request", () => {
     expect(architecture.enforceMaxAsBlocker).toBe(false);
   });
 
-  it("matches the registry exactly, so the runtime cannot drift from the contract", () => {
-    for (const type of [
-      "business_case",
-      "charter",
-      "target_state_architecture",
-      "solution_design",
-      "roadmap",
-    ]) {
+  it("matches the registry exactly for non-depth-scaled types, so the runtime cannot drift from the contract", () => {
+    // These types carry a single calibrated floor; the runtime bar must equal
+    // the registry contract exactly (bar the deliberate source-register
+    // override). target_state_architecture is deliberately excluded here — its
+    // floor is depth-aware (asserted in the next test).
+    for (const type of ["business_case", "charter", "solution_design", "roadmap"]) {
       const expected = resolveQualityBar("moves", type);
       const actual = barFor(type);
-      // Everything except the deliberate source-register override.
       const actualRest = { ...actual, requiresSourceRegister: undefined };
       const expectedRest = { ...expected, requiresSourceRegister: undefined };
       expect(actualRest).toEqual(expectedRest);
     }
+  });
+
+  it("derives a depth-aware architecture floor from confirmed scope, without drifting from the rest of the contract", () => {
+    const registry = resolveQualityBar("moves", "target_state_architecture");
+    const actual = barFor("target_state_architecture");
+
+    // This fixture has only a handful of confirmed charter evidence items, so
+    // the floor scales DOWN from the full-scope calibration — a small Move is
+    // not forced to pad to the 9,000-word floor a transformation needs.
+    expect(registry.minBodyWords).toBe(9_000);
+    expect(actual.minBodyWords).toBeLessThan(registry.minBodyWords);
+    expect(actual.minBodyWords).toBeGreaterThanOrEqual(4_500); // never below half
+    expect(actual.slideFloor).toBeDefined();
+    expect(actual.slideFloor!).toBeLessThan(10);
+
+    // Everything OTHER than the depth-aware floor still matches the registry
+    // exactly — the ceiling, the warn-only rule, the spine requirements.
+    const stripped = (bar: typeof actual) => ({
+      ...bar,
+      minBodyWords: undefined,
+      slideFloor: undefined,
+      requiresSourceRegister: undefined,
+    });
+    expect(stripped(actual)).toEqual(stripped(registry as typeof actual));
+    expect(actual.enforceMaxAsBlocker).toBe(false);
+    expect(actual.targetBodyWordsMax).toBe(registry.targetBodyWordsMax);
   });
 
   it("keeps the source register mandatory for board-grade Move artifacts", () => {
@@ -98,5 +123,179 @@ describe("the canonical quality contract reaches the runtime request", () => {
     // register here is a real defect rather than an empty-bundle edge case.
     expect(barFor("business_case").requiresSourceRegister).toBe(true);
     expect(barFor("charter").requiresSourceRegister).toBe(true);
+  });
+
+  it("executes the design-guide registry guidance in its fixed-size generation prompt", () => {
+    const { request } = buildMoveDeliverableRequest(move(), {
+      deliverableType: "design_workshop_guide",
+      phaseOrStage: "P2_discover_and_diagnose",
+      artifactStandard: "moves.design_workshop_guide",
+      decisionContext: "Prepare focused, estimate-ready design sessions.",
+    });
+    const brief = getArtifactBrief(request);
+    const prompt = buildPassPrompt("full_draft", {
+      req: request,
+      brief,
+      evidence: request.governedEvidenceBundle,
+      approvedPlanJson: "{}",
+    }).user;
+    const synthesisPrompt = buildPassPrompt("synthesis", {
+      req: request,
+      brief,
+      evidence: request.governedEvidenceBundle,
+      sectionDrafts: [],
+    }).user;
+    const sectionPrompt = buildPassPrompt("section_draft", {
+      req: request,
+      brief,
+      evidence: request.governedEvidenceBundle,
+      section: {
+        key: "design_session_plan",
+        title: "Design Sessions & Decisions",
+        rationale:
+          "Define the minimum sessions required for estimate-ready scope.",
+        groundingMode: "mixed",
+        evidenceCitations: [],
+        assumptionsUsed: [],
+        placeholders: [],
+      },
+      outlineSummary: "1. Design Sessions & Decisions",
+    }).user;
+    const redTeamPrompt = buildPassPrompt("red_team", {
+      req: request,
+      brief,
+      evidence: request.governedEvidenceBundle,
+      draftMarkdown: "draft",
+    }).user;
+    const renderPrompt = buildPassPrompt("render_package", {
+      req: request,
+      brief,
+      evidence: request.governedEvidenceBundle,
+      revisedDraftMarkdown: "draft",
+    }).user;
+
+    expect(request.generationPromptGuidance).toEqual(
+      expect.stringContaining("not a second Discovery Report"),
+    );
+    expect(prompt).toContain(request.generationPromptGuidance ?? "");
+    expect(prompt).toContain("Use exactly the five required sections");
+    expect(prompt).toContain("at or below 3,000 words");
+    expect(prompt).toContain("estimate-ready scope");
+    expect(prompt).not.toContain("crisp sponsor decision memo");
+    expect(prompt).toContain(
+      "No cover memo, table of contents, generic risk register",
+    );
+    expect(prompt).toContain("EXPECTED TABLES: only the compact tables");
+    expect(prompt).toContain(
+      "EXPECTED EXHIBITS:\n  (none; use only the required guide sections)",
+    );
+    expect(prompt).not.toContain("risk/issues/dependencies table");
+    expect(prompt).not.toContain("clear recommendation with next steps");
+    expect(sectionPrompt).toContain(
+      "Hard cap for this section: 700 body words",
+    );
+    expect(sectionPrompt).toContain(
+      "Write client-ready facilitation-guide Markdown",
+    );
+    expect(redTeamPrompt).toContain("Do not request a generic risk register");
+    expect(redTeamPrompt).not.toContain("too short for a board-grade artifact");
+    expect(synthesisPrompt).toContain(
+      "Include only tables required by the brief",
+    );
+    expect(synthesisPrompt).toContain("not a decision ask");
+    expect(synthesisPrompt).toContain("do not create a project execution plan");
+    expect(synthesisPrompt).not.toContain(
+      '"tables" MUST include a risk/issues/dependencies table',
+    );
+    expect(renderPrompt).toContain("Preserve the five required sections");
+    expect(renderPrompt).not.toContain("preserve all content, citations");
+    expect(request.qualityBar.targetBodyWordsMax).toBe(3_000);
+    expect(request.qualityBar.enforceMaxAsBlocker).toBe(true);
+  });
+
+  it.each([
+    "discovery_report",
+    "root_cause_worksheet",
+    "design_workshop_guide",
+  ])(
+    "carries excluded-value suppression into every %s generation pass",
+    (deliverableType) => {
+      const { request } = buildMoveDeliverableRequest(move(), {
+        deliverableType,
+        phaseOrStage: "P2_discover_and_diagnose",
+        artifactStandard: `moves.${deliverableType}`,
+        decisionContext:
+          "Carry only supported P2 findings into the next decision.",
+      });
+      const brief = getArtifactBrief(request);
+      const shared = {
+        req: request,
+        brief,
+        evidence: request.governedEvidenceBundle,
+      };
+      const systemPrompts = [
+        buildPassPrompt("full_draft", {
+          ...shared,
+          approvedPlanJson: "{}",
+        }).system,
+        buildPassPrompt("red_team", {
+          ...shared,
+          draftMarkdown: "draft",
+        }).system,
+        buildPassPrompt("render_package", {
+          ...shared,
+          revisedDraftMarkdown: "draft",
+        }).system,
+      ];
+
+      for (const prompt of systemPrompts) {
+        expect(prompt).toMatch(
+          /excluded.*value hypothesis.*external benchmark/i,
+        );
+        expect(prompt).toMatch(
+          /do not repeat.*amount.*percentage.*range.*date/i,
+        );
+        expect(prompt).toMatch(/no finance-validated benefit is established/i);
+      }
+    },
+  );
+
+  it("derives a P2-only deterministic claim boundary from governed evidence", () => {
+    const input: MoveBusinessCaseInput = {
+      ...move(),
+      governed_evidence_items: [
+        {
+          id: "11111111-1111-4111-8111-111111111112",
+          title: "Finance value hypothesis",
+          summary:
+            "The $8.0M annual value is an unsupported hypothesis; Finance-validated value is $0.",
+          evidence_type: "finance_value_hypothesis",
+          confidence: "low",
+        },
+      ],
+    };
+    const p2 = buildMoveDeliverableRequest(input, {
+      deliverableType: "discovery_report",
+      phaseOrStage: "P2_discover_and_diagnose",
+      artifactStandard: "moves.discovery_report",
+      decisionContext: "Summarize the evidenced current state.",
+    }).request;
+    const p4 = buildMoveDeliverableRequest(input, {
+      deliverableType: "business_case",
+      phaseOrStage: "P4_business_case",
+      artifactStandard: "moves.business_case",
+      decisionContext: "Support investment approval.",
+    }).request;
+    const prompt = buildPassPrompt("full_draft", {
+      req: p2,
+      brief: getArtifactBrief(p2),
+      evidence: p2.governedEvidenceBundle,
+    }).user;
+
+    expect(p2.prohibitedNumericClaims).toHaveLength(1);
+    expect(p2.prohibitedNumericClaims?.[0]?.sourceValue).toBe("$8.0M");
+    expect(prompt).not.toContain("$8.0M");
+    expect(prompt).toContain("Finance-validated value is $0");
+    expect(p4.prohibitedNumericClaims).toEqual([]);
   });
 });

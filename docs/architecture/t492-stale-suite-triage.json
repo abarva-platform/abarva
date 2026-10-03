@@ -270,7 +270,12 @@
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-495",
       "wiredInThisItem": false,
-      "rationale": "RED, and stale rather than right. It asserts MaestroChrome.tsx contains the eight bytes \"'/home'\" in single quotes; the file carries \"/home\" in double quotes at line 12. A quote-style reformat broke it. The invariant it is reaching for -- NexusTopNav is mounted once, by the chrome, and not again by the nested Learn layout -- is observable by rendering the layout, so the repair is a render assertion and not a better regular expression."
+      "rationale": "RED, and stale rather than right. It asserts MaestroChrome.tsx contains the eight bytes \"'/home'\" in single quotes; the file carries \"/home\" in double quotes at line 12. A quote-style reformat broke it. The invariant it is reaching for -- NexusTopNav is mounted once, by the chrome, and not again by the nested Learn layout -- is observable by rendering the layout, so the repair is a render assertion and not a better regular expression.",
+      "movedTo": {
+        "path": "src/components/chrome/__tests__/MaestroChrome.learnShellChrome.test.tsx",
+        "byItem": "T-495",
+        "reason": "Rewritten from a source-text scanner into a rendering suite and moved beside the component it drives; the new contents contain JSX and require the .tsx extension. It is NOT placed in src/__tests__/behaviors, because that directory's coverage floor thresholds an aggregate across every file its suites touch and passes with under a point of headroom, so a suite importing a component tree fails it with every case green. The verdict, counts and execution numbers recorded above describe the file as drawn at the base commit and are unchanged. Record: docs/architecture/t495-learn-shell-chrome-triage.json."
+      }
     },
     {
       "path": "src/__tests__/hygiene/no-apex-literal-leak.test.ts",
@@ -335,7 +340,12 @@
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-495",
       "wiredInThisItem": false,
-      "rationale": "RED, and stale against a deliberate product decision. It asserts topbar-nav-items.ts contains label: \"Knowledge\" and key: \"programs\"; the live registry carries Home, Intelligence, Moves, Source Optimize, Source New and Tower. The nav taxonomy moved and the byte assertion did not. Eighteen of its nineteen cases still pass, which is the trap: a suite this brittle reads as healthy right up to the rename."
+      "rationale": "RED, and stale against a deliberate product decision. It asserts topbar-nav-items.ts contains label: \"Knowledge\" and key: \"programs\"; the live registry carries Home, Intelligence, Moves, Source Optimize, Source New and Tower. The nav taxonomy moved and the byte assertion did not. Eighteen of its nineteen cases still pass, which is the trap: a suite this brittle reads as healthy right up to the rename.",
+      "movedTo": {
+        "path": "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+        "byItem": "T-495",
+        "reason": "Rewritten from a source-text scanner into a rendering suite beside the shell components; the new contents contain JSX and require the .tsx extension, and its directory is already run by the AI surface control catalog workflow. Its Rule 5 nav cases are not re-asserted there: the same rules were already asserted by render in src/components/navigation/__tests__/NexusTopNav.test.tsx, which ran in no workflow and is wired in the same change. The verdict, counts and execution numbers recorded above describe the file as drawn at the base commit and are unchanged. Record: docs/architecture/t495-shell-v2-mode-layout-triage.json."
+      }
     },
     {
       "path": "src/__tests__/integration/agents/agent-hidden-drawer.test.ts",

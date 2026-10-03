@@ -62,7 +62,7 @@ import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { coerceUsdAmountOrZero } from "./usd-amount";
 import { autoDraftOnStageEntry } from "./stage-entry-autodraft";
 import { htmlToPlainText, isFullHtmlDocument } from "./html-to-plain-text";
-import { syncEventIntakeEvidence } from "./canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "./canvas-substrate/event-intake-sync";
 import type { SourceApprovalPolicyCode } from "./approval-policy";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
@@ -295,10 +295,9 @@ export async function createSourcingEvent(
   // script can recover any partial state.
   try {
     await scaffoldNewEventSubstrate(row.id, row.client_key);
-    await syncEventIntakeEvidence({
+    await repairLegacyClientStatedTriggerEvidence({
       sourceEventId: row.id,
       tenantKey: row.client_key,
-      triggerDescription: row.trigger_description,
     });
   } catch (scaffoldError) {
     // Keep this as console.warn (not error) per project log discipline.
@@ -757,6 +756,23 @@ async function getCanonicalAdminClientFallback(): Promise<{
   return { key, name: getClientOption(key).name };
 }
 
+export async function getCanonicalAdminSourceEventReadClient(
+  eventId: string,
+): Promise<{ eventId: string; key: ClientKey; name: string } | null> {
+  if (!isUuid(eventId)) return null;
+  const client = await getCanonicalAdminClientFallback();
+  if (!client) return null;
+  const persistedEvent = await getPersistedSourceEventRow(eventId, client.key);
+  if (
+    !persistedEvent ||
+    persistedEvent.id !== eventId ||
+    !sourceEventBelongsToClientAlias(persistedEvent.client_key, client.key)
+  ) {
+    return null;
+  }
+  return { eventId: persistedEvent.id, ...client };
+}
+
 function formatSourceEventType(eventType: string): string {
   return eventType
     .split(/[_-]+/)
@@ -777,10 +793,13 @@ function isSourceLifecycleStatus(
   return value in SOURCE_LIFECYCLE_STATUS_LABELS;
 }
 
-export async function getSourcingEvent(
+export async function getSourcingEventWithReadContext(
   eventId: string,
   requestedClientId?: string | null,
-): Promise<SourcingEventDetail | null> {
+): Promise<{
+  event: SourcingEventDetail;
+  readClient: { key: ClientKey; name: string };
+} | null> {
   const [activeClient, tenancy] = await Promise.all([
     getActiveClientRow(requestedClientId).catch(() => null),
     requireTenancy().catch(() => null),
@@ -794,6 +813,7 @@ export async function getSourcingEvent(
       activeClient.key,
     );
     if (persistedEvent) {
+      if (isUuid(eventId) && persistedEvent.id !== eventId) return null;
       if (
         tenancy &&
         !(await canReadSourceEvent(
@@ -813,7 +833,10 @@ export async function getSourcingEvent(
       ) {
         return null;
       }
-      return sourceEventRowToDetail(persistedEvent, activeClient.name);
+      return {
+        event: sourceEventRowToDetail(persistedEvent, activeClient.name),
+        readClient: { key: activeClient.key, name: activeClient.name },
+      };
     }
   } else {
     // Some demo/private-plane tenants do not yet have a matching `clients`
@@ -826,6 +849,7 @@ export async function getSourcingEvent(
         fallbackClient.key,
       );
       if (persistedEvent) {
+        if (isUuid(eventId) && persistedEvent.id !== eventId) return null;
         // defense-in-depth: access policy MUST scope this, but we re-verify here so a future policy bug doesn't leak data
         if (
           !sourceEventBelongsToClientAlias(
@@ -835,7 +859,10 @@ export async function getSourcingEvent(
         ) {
           return null;
         }
-        return sourceEventRowToDetail(persistedEvent, fallbackClient.name);
+        return {
+          event: sourceEventRowToDetail(persistedEvent, fallbackClient.name),
+          readClient: fallbackClient,
+        };
       }
     }
   }
@@ -856,12 +883,25 @@ export async function getSourcingEvent(
   if (override) {
     const normalizedOverride = normalizeSourceStageKey(override) ?? override;
     return {
-      ...normalizeSourcingEventDetailStages(event),
-      currentStageKey: normalizedOverride,
-      currentStageLabel: SOURCE_STAGE_LABELS[normalizedOverride],
+      event: {
+        ...normalizeSourcingEventDetailStages(event),
+        currentStageKey: normalizedOverride,
+        currentStageLabel: SOURCE_STAGE_LABELS[normalizedOverride],
+      },
+      readClient: { key: activeClient.key, name: activeClient.name },
     };
   }
-  return normalizeSourcingEventDetailStages(event);
+  return {
+    event: normalizeSourcingEventDetailStages(event),
+    readClient: { key: activeClient.key, name: activeClient.name },
+  };
+}
+
+export async function getSourcingEvent(
+  eventId: string,
+  requestedClientId?: string | null,
+): Promise<SourcingEventDetail | null> {
+  return (await getSourcingEventWithReadContext(eventId, requestedClientId))?.event ?? null;
 }
 
 function normalizeSourcingEventDetailStages(

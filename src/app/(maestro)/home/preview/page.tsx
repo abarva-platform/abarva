@@ -6,9 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { HomePreviewAppRoot } from "@/components/home/preview/HomePreviewAppRoot";
 import { cookies } from "next/headers";
-import {
-  isFoundationPreviewOperatorSession,
-} from "@/lib/auth/foundation-preview-session";
+import { isFoundationPreviewOperatorSession } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import {
   PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
@@ -19,7 +17,9 @@ import {
   isHomePreviewTenantKey,
   HOME_PREVIEW_TENANT_KEYS,
 } from "@/lib/home/preview/golden-snapshot";
-import { getHomeEclProjectionBundle } from "@/lib/home/preview/ecl-projection-bundle";
+import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
+import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
+import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import {
   isEclProductProvider,
@@ -71,24 +71,30 @@ async function hasHomeEclPrivateProofSession(
 export default async function HomePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tenant?: string; provider?: string; diagnostics?: string; debug?: string }>;
+  searchParams: Promise<{
+    tenant?: string;
+    provider?: string;
+    diagnostics?: string;
+    debug?: string;
+  }>;
 }) {
   await connection();
 
   const { tenant, provider, diagnostics, debug } = await searchParams;
-  const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
+  const tenantKey =
+    tenant && isHomePreviewTenantKey(tenant)
+      ? tenant
+      : HOME_PREVIEW_TENANT_KEYS[0];
   const productProvider = resolveEclProductProvider(provider);
   const isEclProvider = isEclProductProvider(productProvider);
   const showEclDiagnostics =
-    isEclDiagnosticsRequest(diagnostics) ||
-    isEclDiagnosticsRequest(debug);
+    isEclDiagnosticsRequest(diagnostics) || isEclDiagnosticsRequest(debug);
 
   const hasPlatformAdmin = await isPlatformAdminSession();
   const hasFoundationOperator = await isFoundationPreviewOperatorSession();
-  const hasPrivateProof =
-    isEclProvider
-      ? await hasHomeEclPrivateProofSession(tenantKey)
-      : false;
+  const hasPrivateProof = isEclProvider
+    ? await hasHomeEclPrivateProofSession(tenantKey)
+    : false;
   if (!hasPlatformAdmin && !hasFoundationOperator && !hasPrivateProof) {
     notFound();
   }
@@ -96,19 +102,37 @@ export default async function HomePreviewPage({
   // One tenant per render. Reviewers pick with ?tenant=<key>; the page never loads a second
   // tenant's bundle, so no other client's data reaches the response and the UI carries no
   // cross-client control. A client-facing surface must look tenant-isolated because it is.
-  const bundle = isEclProvider
-    ? await getHomeEclProjectionBundle(tenantKey)
-    : getHomeReviewBundle(tenantKey);
+  const serving = isEclProvider
+    ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
+    : null;
+  const bundle = serving?.bundle ?? getHomeReviewBundle(tenantKey);
   if (!bundle) {
     // Fail loudly and specifically rather than rendering a blank page -- a missing golden
     // snapshot file is a real setup defect, not something to paper over with an empty state.
-    throw new Error(`Home preview: missing golden snapshot for ${tenantKey}. Expected a file under src/lib/home/preview/golden-snapshots/.`);
+    throw new Error(
+      `Home preview: missing golden snapshot for ${tenantKey}. Expected a file under src/lib/home/preview/golden-snapshots/.`,
+    );
   }
+  const recordSource: HomeRecordRenderSource = serving?.recordSource ?? {
+    kind: "reviewed_snapshot",
+    canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+  };
 
   return (
-    <AppShell surface="home" topBarProps={{ context: "Home preview — candidate, not yet reviewed" }}>
-      {isEclProvider && showEclDiagnostics ? <EclDemoFindingsPanel product="home" /> : null}
-      <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
+    <AppShell
+      surface="home"
+      topBarProps={{ context: "Home preview — candidate, not yet reviewed" }}
+    >
+      {isEclProvider && showEclDiagnostics ? (
+        <EclDemoFindingsPanel product="home" />
+      ) : null}
+      <HomePreviewAppRoot
+        bundle={bundle}
+        recordSource={recordSource}
+        recordToken={homeRecordSourceToken(tenantKey, recordSource)}
+        tenantKey={tenantKey}
+        requestedProvider={provider}
+      />
     </AppShell>
   );
 }

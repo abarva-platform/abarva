@@ -9,7 +9,8 @@ import {
   isGeneratedExportArtifact,
   isContextExtractArtifact,
   supportsGeneratedClientApproval,
-  supportsSponsorReviewDecisionArtifact,
+  supportsReviewRegeneration,
+  supportsWorkspaceReviewDecisionArtifact,
 } from "../FileCabinetPanel";
 
 describe("FileCabinetPanel artifact labels", () => {
@@ -148,7 +149,7 @@ describe("FileCabinetPanel artifact labels", () => {
 
   it("does not load P2 sponsor review packets for direct generated artifacts", () => {
     expect(
-      supportsSponsorReviewDecisionArtifact(
+      supportsWorkspaceReviewDecisionArtifact(
         {
           artifactType: "charter",
           family: "generated_deliverable",
@@ -169,9 +170,32 @@ describe("FileCabinetPanel artifact labels", () => {
         lifecycleState: "current",
         outputRole: null,
         status: "board_ready",
+        evidenceSnapshotStatus: "current",
         downloadUrl: "/api/v1/artifacts/generated-charter-1",
       }),
     ).toBe(true);
+    expect(
+      supportsGeneratedClientApproval({
+        family: "generated_deliverable",
+        fileFormat: "docx",
+        lifecycleState: "current",
+        outputRole: null,
+        status: "board_ready",
+        evidenceSnapshotStatus: "stale",
+        downloadUrl: "/api/v1/artifacts/generated-charter-old-evidence",
+      }),
+    ).toBe(false);
+    expect(
+      supportsGeneratedClientApproval({
+        family: "generated_deliverable",
+        fileFormat: "docx",
+        lifecycleState: "current",
+        outputRole: null,
+        status: "board_ready",
+        evidenceSnapshotStatus: "unverified",
+        downloadUrl: "/api/v1/artifacts/generated-charter-unverified",
+      }),
+    ).toBe(false);
     expect(
       supportsGeneratedClientApproval({
         family: "generated_deliverable",
@@ -179,11 +203,12 @@ describe("FileCabinetPanel artifact labels", () => {
         lifecycleState: "current",
         outputRole: "html_visual_review_companion",
         status: "board_ready",
+        evidenceSnapshotStatus: "current",
         downloadUrl: "/api/v1/artifacts/generated-charter-preview",
       }),
     ).toBe(false);
     expect(
-      supportsSponsorReviewDecisionArtifact(
+      supportsWorkspaceReviewDecisionArtifact(
         {
           artifactType: "current_state_diagnostic",
           family: "approval_artifact",
@@ -193,6 +218,19 @@ describe("FileCabinetPanel artifact labels", () => {
         },
         "move-1",
       ),
+    ).toBe(true);
+  });
+
+  it("offers review regeneration only for durable Move artifacts", () => {
+    expect(
+      supportsReviewRegeneration({
+        downloadUrl: "/api/v1/artifacts/generated-charter-1",
+      }),
+    ).toBe(false);
+    expect(
+      supportsReviewRegeneration({
+        downloadUrl: "/api/v1/programs/move-1/artifacts/charter-v1/download",
+      }),
     ).toBe(true);
   });
 
@@ -269,6 +307,7 @@ describe("FileCabinetPanel artifact labels", () => {
           },
         ],
         gapItems: [],
+        freshness: { freshnessStatus: "fresh" as const },
       },
     };
 
@@ -326,6 +365,7 @@ describe("FileCabinetPanel artifact labels", () => {
             reason: "No attached evidence.",
           },
         ],
+        freshness: { freshnessStatus: "fresh" as const },
       },
     });
 

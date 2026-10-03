@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { POST } from "../route";
 import { answerHomeAvaQuestion } from "@/lib/home/preview/ava-answer";
 import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
+import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
 import type {
   HomeRecordRenderSource,
   HomeReviewBundle,
@@ -63,6 +64,7 @@ const mockedResolveBundle = jest.mocked(
   getHomeEclProjectionBundleOrReviewedSnapshotWithSource,
 );
 const mockedAnswerHomeAvaQuestion = jest.mocked(answerHomeAvaQuestion);
+const mockedGetHomeReviewBundle = jest.mocked(getHomeReviewBundle);
 
 function makeRequest(body: unknown): NextRequest {
   return {
@@ -122,11 +124,24 @@ function liveRecordSource(): HomeRecordRenderSource {
     kind: "ecl_serving_projection",
     canonicalSnapshotHash:
       "ecl:assessment-dense-source-room-20260823:serving.home_*:3317",
+    contextVersion: {
+      assessmentId: "assessment-dense-source-room-20260823",
+      projectionContentHash: "projection-content-a",
+      sourceSetHash: null,
+      sourceLineageHash: "lineage-a",
+      sourceCoverage: { totalRecordRows: 2, linkedRecordRows: 1, families: [] },
+      deterministicPacketHash: "packet-a",
+      narrativePacketHash: "narrative-old",
+      narrativeGeneratedAt: "2026-08-21T00:00:00.000Z",
+      dataAsOf: null,
+      coherence: "stored_narrative",
+    },
   };
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete process.env.ECL_PRODUCT_ALLOW_LEGACY_QUERY_OVERRIDE;
   mockedResolveBundle.mockResolvedValue({
     bundle: homeBundle(),
     recordSource: liveRecordSource(),
@@ -139,6 +154,7 @@ it("answers from the same served Home bundle source that renders the page", asyn
       tenantKey: "meridian-health",
       question: "Where are we commercially exposed?",
       activeChapterId: "technology_data",
+      expectedRecordSource: liveRecordSource(),
     }),
   );
 
@@ -193,6 +209,10 @@ it("keeps the reviewed fallback visible to the API caller", async () => {
     makeRequest({
       tenantKey: "meridian-health",
       question: "What is on screen?",
+      expectedRecordSource: {
+        kind: "reviewed_snapshot_fallback",
+        canonicalSnapshotHash: "reviewed:snapshot:hash",
+      },
     }),
   );
 
@@ -202,4 +222,103 @@ it("keeps the reviewed fallback visible to the API caller", async () => {
     kind: "reviewed_snapshot_fallback",
     canonicalSnapshotHash: "reviewed:snapshot:hash",
   });
+});
+
+it("uses the reviewed bundle when the page selected the legacy provider", async () => {
+  process.env.ECL_PRODUCT_ALLOW_LEGACY_QUERY_OVERRIDE = "true";
+  const reviewed = homeBundle();
+  reviewed.provenance.canonical_snapshot_hash = "reviewed:snapshot:hash";
+  mockedGetHomeReviewBundle.mockReturnValueOnce(reviewed);
+
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "What is on screen?",
+      requestedProvider: "legacy",
+      expectedRecordSource: {
+        kind: "reviewed_snapshot",
+        canonicalSnapshotHash: "reviewed:snapshot:hash",
+      },
+    }),
+  );
+
+  expect(response.status).toBe(200);
+  expect(mockedResolveBundle).not.toHaveBeenCalled();
+  expect(mockedAnswerHomeAvaQuestion).toHaveBeenCalledWith(
+    expect.objectContaining({ bundle: reviewed }),
+  );
+  expect((await response.json()).recordSource.kind).toBe("reviewed_snapshot");
+});
+
+it("refuses to answer if the projection content changed without a row-count change", async () => {
+  const expected = liveRecordSource();
+  expected.contextVersion = {
+    ...expected.contextVersion!,
+    projectionContentHash: "projection-content-before",
+  };
+
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+      expectedRecordSource: expected,
+    }),
+  );
+
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ error: "home_context_changed" });
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
+});
+
+it("refuses to answer if verified source links changed without a row-count change", async () => {
+  const expected = liveRecordSource();
+  expected.contextVersion = {
+    ...expected.contextVersion!,
+    sourceLineageHash: "lineage-before",
+  };
+
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+      expectedRecordSource: expected,
+    }),
+  );
+
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ error: "home_context_changed" });
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
+});
+
+it("refuses to answer when source-file review state changes under the same rows", async () => {
+  const expected = liveRecordSource();
+  expected.contextVersion = {
+    ...expected.contextVersion!,
+    sourceCatalogHash: "prior-source-review",
+  };
+
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+      expectedRecordSource: expected,
+    }),
+  );
+
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ error: "home_context_changed" });
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
+});
+
+it("requires the rendered record marker before answering", async () => {
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+    }),
+  );
+
+  expect(response.status).toBe(400);
+  expect(mockedResolveBundle).not.toHaveBeenCalled();
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
 });

@@ -388,8 +388,34 @@ function main(argv) {
     );
   }
 
+  /*
+   * C-564. A RELEASE is exempt from the file-overlap half.
+   *
+   * The file half asks whether any path this record names is already held by
+   * another live claim, and refuses when one is. For a CLAIM that is the whole
+   * point (T-707). For a RELEASE it is the wrong question: a release asserts
+   * the work is finished and the paths are free, so an overlap can only mean a
+   * successor has already taken them — the normal case, and the one the
+   * release unblocks. Reproduced on the live register while closing C-563: the
+   * item half answered `already-yours` and did not refuse, the file half
+   * refused, and nothing was appended. `--action abstain` is exempt one rung
+   * down for the same reason — the moment you most need to record the decision
+   * is the moment the gate refuses.
+   *
+   * The exemption is implemented by NOT ASKING the file half, rather than by
+   * ignoring its answer or by weakening `fileOverlap`: the question the gate is
+   * asked is the question whose answer is wanted, and one reader of one
+   * grammar. The `files:` list still reaches the appended line, which is the
+   * half the `--files`-less workaround silently lost.
+   *
+   * The ITEM half is untouched. A release of an item another identity holds is
+   * still refused, so this cannot be used to write a release over someone
+   * else's claim.
+   */
+  const askFileHalf = files !== undefined && action !== "release";
+
   const forwarded = allFlagValues("--gate-arg");
-  const unknown = [...forwarded, ...(files !== undefined ? ["--files"] : [])].filter(
+  const unknown = [...forwarded, ...(askFileHalf ? ["--files"] : [])].filter(
     (f) => f.startsWith("--") && !advertised.has(f),
   );
   if (unknown.length) {
@@ -405,7 +431,7 @@ function main(argv) {
   if (flag("--now")) gateArgs.push("--now", flag("--now"));
   if (flag("--window-hours")) gateArgs.push("--window-hours", flag("--window-hours"));
   if (has("--strict")) gateArgs.push("--strict");
-  if (files !== undefined) gateArgs.push("--files", files);
+  if (askFileHalf) gateArgs.push("--files", files);
   for (const extra of forwarded) gateArgs.push(extra);
 
   let status = 0;
@@ -429,14 +455,56 @@ function main(argv) {
     report = null;
   }
 
+  /**
+   * Render the gate's report for the run that has to act on it.
+   *
+   * T-707's acceptance was "refuse when any path appears in another live
+   * claim's `files:` list, NAMING THE PATH AND THE HOLDER". The refusing
+   * shipped; the naming did not, because this function read `report.contended`
+   * and the gate reports the overlap under `fileOverlap.conflicts`. Every
+   * field the acceptance asks for — path, holding line, stamp, agent — was
+   * computed and then discarded, so a file-overlap refusal printed the banner,
+   * the ITEM half's `verdict: take`, and an item-half reason about a live claim
+   * that does not exist. A refusal whose text reads as permission.
+   *
+   * Two consequences, and the second is the expensive one: a run cannot tell
+   * WHICH of the files it asked for is held, so it re-invokes the helper one
+   * path at a time to find out; and `verdict: take` under a REFUSED banner
+   * invites the reading that the control is broken. So the verdict line now
+   * says which half it belongs to, and the half that actually refused is named.
+   *
+   * It reads ONLY `fileOverlap.conflicts`, checked against the gate's history
+   * rather than assumed: no commit of `register-time-authority.mjs` has ever
+   * emitted a top-level `contended` key — the file-overlap half emitted
+   * `fileOverlap.conflicts` from its first commit (`5e8a42e284`). So the old
+   * read was wrong the day it was written, and keeping it "for compatibility"
+   * would ship an unreachable branch under a comment implying some gate
+   * produces that shape. What actually guards a future key rename is the case
+   * below driving the REAL gate, which fails if the shape moves.
+   */
   const describe = () => {
     if (!report) return stdout.trim() || stderr.trim() || "(the gate produced no report)";
-    const lines = [`verdict: ${report.verdict}`, `reason:  ${report.reason}`];
+    const overlap = report.fileOverlap ?? null;
+    const overlapRefuses = Boolean(overlap?.refuses);
+    const itemLabel = overlapRefuses ? "item verdict:" : "verdict:";
+    const lines = [`${itemLabel} ${report.verdict}`, `reason:  ${report.reason}`];
     if (report.holder) {
       lines.push(`holder:  line ${report.holder.lineNumber} ${report.holder.stamp} ${report.holder.agent}`);
     }
-    if (Array.isArray(report.contended) && report.contended.length) {
-      for (const c of report.contended) lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}`);
+
+    const conflicts = Array.isArray(overlap?.conflicts) ? overlap.conflicts : [];
+    if (conflicts.length) {
+      lines.push(
+        `REFUSED BY THE FILE HALF — ${conflicts.length} of ` +
+          `${overlap?.requested?.length ?? conflicts.length} requested path(s) ` +
+          `already held by another live claim:`,
+      );
+      for (const c of conflicts) {
+        const where = c.lineNumber === undefined ? "" : ` at line ${c.lineNumber}`;
+        const when = c.stamp === undefined ? "" : ` (${c.stamp})`;
+        lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}${where}${when}`);
+      }
+      lines.push("         Take a different item, or a file list that does not overlap.");
     }
     return lines.join("\n");
   };

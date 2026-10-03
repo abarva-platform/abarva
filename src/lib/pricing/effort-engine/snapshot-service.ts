@@ -81,10 +81,6 @@ import {
   createTxSession,
   type TxSessionRunner,
 } from "@/lib/data-plane/read-adapters/azureSession";
-import {
-  isGateApprovalStrictMode,
-  passesSeparationOfDuties,
-} from "@/lib/auth/gate-approval-strict-mode";
 import { computeContentHash } from "../versioning";
 import type {
   PricingEstimateInputRow,
@@ -174,34 +170,6 @@ export function toScopeFingerprintInput(
   };
 }
 
-// ---------------------------------------------------------------------------
-// Segregation of duties (brief §10)
-// ---------------------------------------------------------------------------
-
-/**
- * Thrown when the approving user is the same identity that last modified
- * (confirmed an input on, or — absent any confirmed input — created) the
- * estimate being approved. Named to match the existing repo convention:
- * `src/lib/programs/deliverable-role-approvals.ts`'s
- * `recordRoleApprovalDecision` throws the literal string
- * `"self_approval_violation"` when `deliverable.created_by === ctx.userId`.
- * This class carries the same `self_approval_violation` identifier so API
- * routes/tests can match on `err.message.startsWith("self_approval_violation")`
- * exactly like the deliverable-approvals call sites already do.
- */
-export class SelfApprovalViolationError extends Error {
-  constructor(
-    public readonly approvedBy: string,
-    public readonly preparedBy: string,
-  ) {
-    super(
-      `self_approval_violation: '${approvedBy}' cannot approve a pricing estimate snapshot whose inputs they themselves last confirmed ('${preparedBy}') — segregation of duties requires a different approver.`,
-    );
-    this.name = "SelfApprovalViolationError";
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Unresolved rate gaps (PR7 hardening — brief §12 "missing all fallbacks
 // blocks the estimate")
 // ---------------------------------------------------------------------------
@@ -233,22 +201,15 @@ export class UnresolvedRateGapError extends Error {
 }
 
 /**
- * Resolves "who prepared this estimate" for the segregation-of-duties check:
+ * Resolves "who prepared this estimate" for the approval audit record:
  * the `confirmed_by` of whichever input was confirmed most recently, or —
  * if no input has ever been confirmed (every settled input was instead
  * marked unknown-with-override, which carries no identity column in the
  * PR5 schema) — the estimate's own `created_by`. Returns null only when
  * neither signal exists (a hand-seeded row with no identity anywhere),
- * in which case the segregation-of-duties check is a deliberate no-op —
- * see `assertSegregationOfDuties`.
- *
- * ## Pattern followed, and why
- *
- * This module follows the shared `GATE_APPROVAL_STRICT_MODE` convention.
- * Pilot mode keeps the gate and rationale but allows a runner with approval
- * authority to approve their own pricing snapshot; strict mode enforces
- * separation of duties. Pilot self-approval is recorded on the immutable
- * snapshot rationale instead of being silent.
+ * in which case the audit record honestly leaves the preparer identity null.
+ * The authorized workspace user may also be the preparer; both identities
+ * and the approval rationale are recorded in the immutable snapshot.
  */
 export function resolvePreparedBy(
   estimate: Pick<PricingEstimateRow, "created_by">,
@@ -268,37 +229,17 @@ export function resolvePreparedBy(
   return latest?.confirmed_by ?? estimate.created_by ?? null;
 }
 
-/** Throws `SelfApprovalViolationError` when `approvedBy` is the same identity as `preparedBy`. A null `preparedBy` (no identity signal at all) is a deliberate no-op — there is nothing to compare against. */
-export function assertSegregationOfDuties(
-  approvedBy: string,
-  preparedBy: string | null,
-): void {
-  const preparedByForCheck = preparedBy?.trim() ? preparedBy : null;
-  if (
-    !passesSeparationOfDuties({
-      requestedByUserId: preparedByForCheck,
-      approverUserId: approvedBy,
-    })
-  ) {
-    throw new SelfApprovalViolationError(
-      approvedBy,
-      preparedByForCheck ?? "unknown",
-    );
-  }
-}
-
-function appendPilotSelfApprovalNote(args: {
+function appendSelfApprovalAuditNote(args: {
   rationale: string;
   approvedBy: string;
   preparedBy: string | null;
 }): string {
-  if (isGateApprovalStrictMode()) return args.rationale;
   if (!args.preparedBy || args.preparedBy !== args.approvedBy) {
     return args.rationale;
   }
   return [
     args.rationale,
-    "Pilot approval note: the approver is also the pricing estimate preparer; permitted because GATE_APPROVAL_STRICT_MODE is off.",
+    "Approval audit note: the authorized workspace user is also the pricing estimate preparer.",
   ].join("\n\n");
 }
 
@@ -420,7 +361,7 @@ export interface SnapshotCandidate {
   taxonomyVersion: number | null;
   /** Every input row for the estimate (settled or not) — `computeUpstreamScopeFingerprint` filters to settled ones internally, so callers never have to duplicate that filter. */
   inputs: readonly ScopeFingerprintInputRow[];
-  /** See `resolvePreparedBy` — the identity segregation-of-duties compares `approvedBy` against. */
+  /** Identity of the user who last prepared the estimate, retained for approval audit. */
   preparedBy: string | null;
   approvedBy: string;
   approvalRationale: string;
@@ -429,9 +370,7 @@ export interface SnapshotCandidate {
 /**
  * Writes ONE append-only, `status: 'approved'` row to
  * `pricing_estimate_snapshots`. Never UPDATEs a prior row — see file header
- * for why. Enforces segregation of duties (throws
- * `SelfApprovalViolationError`) and requires a non-empty
- * `approvalRationale` before writing anything.
+ * for why. Requires a non-empty `approvalRationale` before writing anything.
  */
 export async function createEstimateSnapshot(
   candidate: SnapshotCandidate,
@@ -445,8 +384,6 @@ export async function createEstimateSnapshot(
   if (candidate.totals.gapCount > 0) {
     throw new UnresolvedRateGapError(candidate.totals.gapCount);
   }
-  assertSegregationOfDuties(candidate.approvedBy, candidate.preparedBy);
-
   const fingerprint = computeUpstreamScopeFingerprint({
     archetypeCode: candidate.archetypeCode,
     modelVersion: candidate.modelVersion,
@@ -483,7 +420,7 @@ export async function createEstimateSnapshot(
     status: "approved",
     approved_by: candidate.approvedBy,
     approved_at: now,
-    approval_rationale: appendPilotSelfApprovalNote({
+    approval_rationale: appendSelfApprovalAuditNote({
       rationale: candidate.approvalRationale,
       approvedBy: candidate.approvedBy,
       preparedBy: candidate.preparedBy,

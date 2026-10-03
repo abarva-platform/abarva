@@ -3,11 +3,71 @@ import type { Page } from "@playwright/test";
 
 export const CLERK_TESTING_TOKEN_QUERY_PARAM = "__clerk_testing_token";
 
+export function clerkFrontendApiHostFromPublishableKey(
+  publishableKey: string | undefined,
+): string | null {
+  if (!publishableKey?.startsWith("pk_")) return null;
+
+  const encodedFrontendApi = publishableKey.split("_").slice(2).join("_");
+  if (!encodedFrontendApi) return null;
+
+  try {
+    const decodedFrontendApi = Buffer.from(encodedFrontendApi, "base64")
+      .toString("utf8")
+      .replace(/\$$/, "")
+      .toLowerCase();
+    const parsed = new URL(`https://${decodedFrontendApi}`);
+    if (
+      parsed.hostname !== decodedFrontendApi ||
+      parsed.pathname !== "/" ||
+      parsed.search ||
+      parsed.hash
+    ) {
+      return null;
+    }
+    return parsed.hostname;
+  } catch {
+    return null;
+  }
+}
+
+export function appendClerkTestingTokenToRequestUrl(
+  requestUrl: string,
+  baseUrl: string,
+  frontendApiHost: string,
+  token: string,
+): string | null {
+  let url: URL;
+  let appOrigin: string;
+  try {
+    url = new URL(requestUrl);
+    appOrigin = new URL(baseUrl).origin;
+  } catch {
+    return null;
+  }
+
+  const directFrontendApiRequest =
+    url.protocol === "https:" &&
+    url.hostname.toLowerCase() === frontendApiHost.toLowerCase() &&
+    /^\/v\d+\//.test(url.pathname);
+  const proxiedFrontendApiRequest =
+    url.origin === appOrigin &&
+    (url.protocol === "https:" ||
+      ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) &&
+    /^\/(?:__clerk|_clerk)\/v\d+\//.test(url.pathname);
+  if (!directFrontendApiRequest && !proxiedFrontendApiRequest) return null;
+
+  url.searchParams.set(CLERK_TESTING_TOKEN_QUERY_PARAM, token);
+  return url.toString();
+}
+
 export function shouldUseClerkTestingToken(): boolean {
   return process.env.CLERK_TESTING_TOKEN_DISABLED !== "true";
 }
 
-export async function createClerkTestingTokenForCrawl(): Promise<string | null> {
+export async function createClerkTestingTokenForCrawl(): Promise<
+  string | null
+> {
   if (!shouldUseClerkTestingToken()) return null;
 
   const secretKey =
@@ -27,66 +87,30 @@ export async function createClerkTestingTokenForCrawl(): Promise<string | null> 
 export async function installClerkTestingTokenInterceptor(
   page: Page,
   testingToken: string | null,
+  baseUrl: string,
 ): Promise<void> {
   if (!testingToken) return;
 
-  await page.addInitScript(
-    ({ param, token }) => {
-      const shouldTag = (input: string): boolean => {
-        try {
-          const url = new URL(input, window.location.href);
-          return (
-            url.hostname.endsWith(".clerk.accounts.dev") ||
-            url.hostname.endsWith(".clerk.com") ||
-            url.pathname.startsWith("/__clerk")
-          );
-        } catch {
-          return false;
-        }
-      };
-
-      const appendTestingToken = (input: string): string => {
-        if (!shouldTag(input)) return input;
-        const url = new URL(input, window.location.href);
-        if (!url.searchParams.has(param)) url.searchParams.set(param, token);
-        return url.toString();
-      };
-
-      const originalFetch = window.fetch.bind(window);
-      window.fetch = (input, init) => {
-        if (typeof input === "string") {
-          return originalFetch(appendTestingToken(input), init);
-        }
-        if (input instanceof Request) {
-          return originalFetch(
-            new Request(appendTestingToken(input.url), input),
-            init,
-          );
-        }
-        return originalFetch(input, init);
-      };
-
-      const OriginalXMLHttpRequest = window.XMLHttpRequest;
-      window.XMLHttpRequest = class ClerkTestingTokenXMLHttpRequest extends OriginalXMLHttpRequest {
-        open(
-          method: string,
-          url: string | URL,
-          async = true,
-          username?: string | null,
-          password?: string | null,
-        ) {
-          return super.open(
-            method,
-            appendTestingToken(String(url)),
-            async,
-            username ?? undefined,
-            password ?? undefined,
-          );
-        }
-      };
-    },
-    { param: CLERK_TESTING_TOKEN_QUERY_PARAM, token: testingToken },
+  const frontendApiHost = clerkFrontendApiHostFromPublishableKey(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   );
+  if (!frontendApiHost) {
+    throw new Error("crawl_clerk_frontend_api_host_missing_or_invalid");
+  }
+
+  await page.route("**/*", async (route) => {
+    const taggedUrl = appendClerkTestingTokenToRequestUrl(
+      route.request().url(),
+      baseUrl,
+      frontendApiHost,
+      testingToken,
+    );
+    if (taggedUrl) {
+      await route.continue({ url: taggedUrl });
+      return;
+    }
+    await route.continue();
+  });
 }
 
 async function withTimeout<T>(

@@ -63,7 +63,7 @@ function sourceRules(
   return specs.map((spec) => sourceRule(sourceClass, mappingProfile, spec));
 }
 
-export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
+const BASE_MAPPING_PROFILES: MappingProfile[] = [
   {
     mappingProfile: "applications-systems-estate/v1",
     version: "2026-07-13.data-pr32",
@@ -617,6 +617,103 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         validFrom: "2026-07-11",
       },
     ],
+  },
+  {
+    mappingProfile: "business-segments/v1",
+    version: "2026-09-30.business-segments-v1",
+    sourceClass: "business_segments",
+    rules: sourceRules("business_segments", "business-segments/v1", [
+      {
+        id: "segment-key",
+        field: "segment_key",
+        objectType: "business_segment",
+        attribute: "segmentKey",
+        transform: "normalize_code",
+        required: true,
+        confidence: 0.94,
+      },
+      {
+        id: "segment-name",
+        field: "segment_name",
+        objectType: "business_segment",
+        attribute: "segmentName",
+        required: true,
+        confidence: 0.92,
+      },
+      {
+        id: "tenant-key",
+        field: "tenant_key",
+        objectType: "business_segment",
+        attribute: "tenantKey",
+        transform: "normalize_code",
+        required: true,
+        confidence: 0.94,
+      },
+      {
+        id: "revenue-share",
+        field: "revenue_share_pct",
+        objectType: "business_segment",
+        attribute: "revenueSharePct",
+        transform: "parse_number",
+      },
+      {
+        id: "revenue",
+        field: "revenue_usd",
+        objectType: "business_segment",
+        attribute: "revenueUsd",
+        transform: "parse_currency",
+        targetDomain: "financial_value",
+      },
+      {
+        id: "pnl-owner",
+        field: "pnl_owner_role",
+        objectType: "business_segment",
+        attribute: "pnlOwnerRole",
+      },
+      {
+        id: "business-case-sponsor",
+        field: "business_case_sponsor_role",
+        objectType: "business_segment",
+        attribute: "businessCaseSponsorRole",
+      },
+      {
+        id: "governance-council",
+        field: "governance_council",
+        objectType: "business_segment",
+        attribute: "governanceCouncil",
+      },
+      {
+        id: "regulatory-regime",
+        field: "regulatory_regime",
+        objectType: "business_segment",
+        attribute: "regulatoryRegime",
+      },
+      {
+        id: "segment-notes",
+        field: "segment_notes",
+        objectType: "business_segment",
+        attribute: "segmentNotes",
+      },
+      {
+        id: "classification-basis",
+        field: "classification_basis",
+        objectType: "business_segment",
+        attribute: "classificationBasis",
+      },
+      {
+        id: "source-file",
+        field: "source_file",
+        objectType: "business_segment",
+        attribute: "sourceFile",
+      },
+      {
+        id: "confidence",
+        field: "confidence",
+        objectType: "business_segment",
+        attribute: "confidenceLabel",
+        transform: "normalize_code",
+      },
+    ]),
   },
   {
     mappingProfile: "organization-business-functions/v1",
@@ -2086,13 +2183,13 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
     version: "2026-08-14.v3-contract-pr1",
     sourceClass: "applications_systems",
     rules: sourceRules("applications_systems", "applications-systems-v3/v1", [
-        {
-          id: "system-name",
-          field: "system_name",
-          aliases: ["systems", "business_name", "capability"],
-          objectType: "application_system",
-          attribute: "systemName",
-          required: true,
+      {
+        id: "system-name",
+        field: "system_name",
+        aliases: ["systems", "business_name", "capability"],
+        objectType: "application_system",
+        attribute: "systemName",
+        required: true,
         confidence: 0.94,
       },
       {
@@ -2104,13 +2201,13 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         required: true,
         confidence: 0.96,
       },
-        {
-          id: "source-file",
-          field: "source_file",
-          aliases: ["evidence_location", "__source_path"],
-          objectType: "application_system",
-          attribute: "sourceFile",
-          required: true,
+      {
+        id: "source-file",
+        field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
+        objectType: "application_system",
+        attribute: "sourceFile",
+        required: true,
         confidence: 0.9,
       },
       {
@@ -2463,6 +2560,50 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       },
     ],
   },
+];
+
+function businessFunctionSegmentProfile(): MappingProfile {
+  const prior = BASE_MAPPING_PROFILES.find(
+    (profile) =>
+      profile.mappingProfile === "organization-business-functions/v1",
+  );
+  if (!prior) throw new Error("Business function v1 profile is missing.");
+  const mappingProfile = "organization-business-functions/v2";
+  return {
+    mappingProfile,
+    version: "2026-10-01.business-function-segment-v2",
+    sourceClass: "organization_functions",
+    rules: [
+      ...prior.rules.map((rule) => ({
+        ...rule,
+        mappingProfile,
+        mappingRuleId: rule.mappingRuleId.replace(
+          /^organization-business-functions\./,
+          "organization-business-functions-v2.",
+        ),
+        validFrom: "2026-10-01",
+      })),
+      {
+        mappingRuleId:
+          "organization-business-functions-v2.business-segment-key",
+        mappingProfile,
+        sourceClass: "organization_functions",
+        sourceField: "business_segment_key",
+        targetDomain: "enterprise_structure",
+        targetObjectType: "business_function",
+        targetAttribute: "businessSegmentKey",
+        transform: "normalize_code",
+        required: false,
+        confidenceDefault: 0.86,
+        validFrom: "2026-10-01",
+      },
+    ],
+  };
+}
+
+export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
+  ...BASE_MAPPING_PROFILES,
+  businessFunctionSegmentProfile(),
 ];
 
 export function getBuiltInMappingProfile(

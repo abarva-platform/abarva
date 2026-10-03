@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import sys
@@ -386,18 +387,40 @@ def main() -> int:
     dictionary = read_csv(dictionary_path) if dictionary_path.exists() else []
     if len(manifest) != EXPECTED_EXTRACTS:
         issues.append(f"extract count expected {EXPECTED_EXTRACTS}, got {len(manifest)}")
+    if summary.get("extract_count") != len(manifest):
+        issues.append("summary extract count does not match the source manifest")
     if int(summary.get("row_count", 0)) < EXPECTED_MIN_ROWS:
         issues.append(f"row count expected at least {EXPECTED_MIN_ROWS}, got {summary.get('row_count')}")
 
+    seen_families: set[str] = set()
+    seen_paths: set[str] = set()
+    manifest_row_total = 0
     for entry in manifest:
         row_count = int(entry["row_count"])
+        manifest_row_total += row_count
         family = entry["source_room_family"]
+        if family in seen_families:
+            issues.append(f"duplicate source family {family}")
+        seen_families.add(family)
         family_floor = MIN_ROWS_BY_FAMILY.get(family)
         if family_floor is None:
             issues.append(f"{family} is not in the approved density-floor map")
+            continue
         elif row_count < family_floor:
             issues.append(f"{family} has {row_count} rows, below floor {family_floor}")
-        file_path = out_dir / entry["file_path"]
+        relative_path = entry["file_path"]
+        if relative_path in seen_paths:
+            issues.append(f"duplicate source path {relative_path}")
+        seen_paths.add(relative_path)
+        file_path = (out_dir / relative_path).resolve()
+        family_root = (out_dir / "__synthetic_sources__" / family).resolve()
+        if not file_path.is_relative_to(family_root) or not file_path.is_file():
+            issues.append(f"{family} source path is missing or outside its declared family")
+            continue
+        declared_hash = entry.get("sha256", "")
+        actual_hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
+        if not re.fullmatch(r"[a-f0-9]{64}", declared_hash) or actual_hash != declared_hash:
+            issues.append(f"{family} source file sha256 does not match the manifest")
         rows = read_csv(file_path)
         if len(rows) != row_count:
             issues.append(f"{entry['source_room_family']} manifest row count {row_count} != file rows {len(rows)}")
@@ -430,6 +453,9 @@ def main() -> int:
                     if cost_like and distinct_ratio < 0.50:
                         issues.append(f"{entry['source_room_family']} cost-like numeric column {column} has low distinct ratio {distinct_ratio:.3f}")
 
+    if manifest_row_total != summary.get("row_count"):
+        issues.append("summary row count does not match the source manifest")
+
     by_family_fields: dict[str, list[dict[str, str]]] = {}
     for row in dictionary:
         by_family_fields.setdefault(row.get("source_room_family", ""), []).append(row)
@@ -439,6 +465,8 @@ def main() -> int:
         if row.get("client_fillability_state") not in {"fillable_by_named_export", "interview_derived"}:
             issues.append(f"field dictionary has unsupported fillability state for {row.get('source_room_family')}.{row.get('field_name')}")
     for family in MIN_ROWS_BY_FAMILY:
+        if family not in seen_families:
+            issues.append(f"source manifest missing family {family}")
         if family not in by_family_fields:
             issues.append(f"field dictionary missing family {family}")
 

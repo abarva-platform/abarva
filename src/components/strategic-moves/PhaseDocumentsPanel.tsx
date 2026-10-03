@@ -11,11 +11,15 @@
 
 import { getServerSupabase } from "@/lib/supabase-server";
 import { getActiveClientRow } from "@/lib/active-client";
-import { listSucceededRunsForMove } from "@/lib/deliverables/orchestrator/runs-repository";
+import {
+  listDeliverableRunHistoryForMove,
+  type DeliverableRunRecord,
+} from "@/lib/deliverables/orchestrator/runs-repository";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   DELIVERABLE_REGISTRY,
   PHASE_CANONICAL_KEYS,
@@ -31,7 +35,7 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
-import { RoleApprovalsPanel } from "./RoleApprovalsPanel";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 interface Props {
   moveId: string;
@@ -73,7 +77,7 @@ async function fetchDeliverablesByKey(
       `
       id, deliverable_type_key, title, status, current_version, updated_at,
       signed_off_version, approved_artifact_id,
-      deliverable_versions!inner(content, version)
+      deliverable_versions(content, version)
     `,
     )
     .eq("engagement_id", programId)
@@ -170,6 +174,7 @@ function FormatPills({ format }: { format: DeliverableFormat }) {
     HTML: { bg: "rgba(27,43,92,0.07)", fg: "#1B2B5C" },
     Word: { bg: "rgba(37,99,235,0.07)", fg: "#1D4ED8" },
     Excel: { bg: "rgba(22,163,74,0.07)", fg: "#15803D" },
+    PowerPoint: { bg: "rgba(194,65,12,0.07)", fg: "#C2410C" },
   };
   return (
     <>
@@ -311,7 +316,10 @@ function DocumentRow({
   moveId,
   phaseLabel,
   runArtifact,
+  runState,
+  previousRunArtifact,
   presentationMode = false,
+  canApproveGates = false,
 }: {
   spec: DeliverableSpec;
   dbRow: DbDeliverable | undefined;
@@ -320,14 +328,38 @@ function DocumentRow({
   /** A succeeded Approve & Build run for this slot (orchestrator output in
    *  generated_artifacts), used when deliverables_v2 has no content for it. */
   runArtifact?: { artifactId: string; updatedAt: string };
+  /** Most recent attempt, including failures that must not be hidden by old output. */
+  runState?: DeliverableRunRecord;
+  /** Last successful artifact, shown only as history when a newer run did not succeed. */
+  previousRunArtifact?: { artifactId: string; updatedAt: string };
   presentationMode?: boolean;
+  canApproveGates?: boolean;
 }) {
   const calmBrowse = presentationMode;
   const hasContent = Boolean(dbRow?.latest_content?.trim());
-  // Approve & Build / orchestrator output lands in generated_artifacts, not
-  // deliverables_v2 — so a built document would otherwise read "not generated"
-  // here. Fall back to the run's artifact (download via /api/v1/artifacts/{id}).
+  // Keep the run artifact as a read-only fallback when its canonical
+  // deliverable version is unavailable in this projection. A run artifact
+  // alone never authorizes sign-off; approval remains bound to dbRow.id.
   const builtViaRun = !hasContent && Boolean(runArtifact);
+  const runNeedsAttention = Boolean(
+    runState && (runState.status !== "succeeded" || !runArtifact),
+  );
+  const runStateLabel =
+    runState?.status === "queued"
+      ? "Latest build queued"
+      : runState?.status === "running"
+        ? "Latest build in progress"
+        : runState?.status === "blocked"
+          ? "Latest build held below quality gate"
+          : runState?.status === "failed"
+            ? "Latest build failed"
+            : runState?.status === "succeeded"
+              ? "Build succeeded, but its artifact is unavailable"
+              : null;
+  const runStateColor =
+    runState?.status === "queued" || runState?.status === "running"
+      ? "#1D4ED8"
+      : "#B4513C";
   const dot = dbRow ? statusDot(dbRow.status) : null;
   const isExcel = spec.formatRecommendation === "excel";
   const base = `/api/programs/${moveId}/deliverables/${dbRow?.id}/content-export`;
@@ -445,6 +477,21 @@ function DocumentRow({
             />
             <span style={{ fontSize: 10, color: "#6B7280" }}>Built</span>
           </>
+        ) : runNeedsAttention ? (
+          <>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: runStateColor,
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: 10, color: runStateColor }}>
+              {runStateLabel}
+            </span>
+          </>
         ) : (
           <span style={{ fontSize: 10, color: "#b4b4b8", fontStyle: "italic" }}>
             not generated
@@ -454,7 +501,12 @@ function DocumentRow({
           <span
             style={{
               fontSize: 9,
-              color: builtViaRun || hasContent ? "#3F7A5B" : "#9AA3B2",
+              color:
+                builtViaRun || hasContent
+                  ? "#3F7A5B"
+                  : runNeedsAttention
+                    ? runStateColor
+                    : "#9AA3B2",
               fontFamily: "JetBrains Mono, monospace",
               textTransform: "uppercase",
               marginLeft: 6,
@@ -462,7 +514,9 @@ function DocumentRow({
           >
             {builtViaRun || hasContent
               ? "Quality: available"
-              : "Quality: not run"}
+              : runNeedsAttention
+                ? `Quality: ${runState?.status ?? "unavailable"}`
+                : "Quality: not run"}
           </span>
         )}
       </div>
@@ -497,17 +551,20 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(dbRow.updated_at)}
             </span>
-            {!calmBrowse && (
+            {!calmBrowse && canApproveGates && (
               <DeliverableApprovalAction
                 moveId={moveId}
                 deliverableId={dbRow.id}
-                alreadyApproved={dbRow.signed_off_version === dbRow.current_version}
+                alreadyApproved={
+                  dbRow.signed_off_version === dbRow.current_version
+                }
               />
             )}
           </>
         ) : builtViaRun && runArtifact ? (
-          // Approve & Build output (generated_artifacts), downloaded via the
-          // governed artifacts route.
+          // The run artifact is only the preview/download source. If its
+          // deliverables_v2 row exists, sign-off still targets that row and the
+          // API applies the usual evidence/readiness checks.
           <>
             <a href={`${artBase}?format=html`} style={linkStyle("ghost")}>
               HTML preview
@@ -518,7 +575,42 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(runArtifact.updatedAt)}
             </span>
+            {dbRow && !calmBrowse && canApproveGates && (
+              <DeliverableApprovalAction
+                moveId={moveId}
+                deliverableId={dbRow.id}
+                alreadyApproved={
+                  dbRow.signed_off_version === dbRow.current_version
+                }
+              />
+            )}
           </>
+        ) : runNeedsAttention ? (
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ fontSize: 10.5, color: runStateColor }}>
+              {runStateLabel}
+              {runState?.error ? `: ${runState.error}` : ""}
+              {!runState?.error && runState?.blockers.length
+                ? `: ${runState.blockers.join("; ")}`
+                : ""}
+            </span>
+            {previousRunArtifact && (
+              <a
+                href={`/api/v1/artifacts/${previousRunArtifact.artifactId}?format=html`}
+                style={linkStyle("ghost")}
+                title="Prior successful output; it is not the result of the latest build attempt."
+              >
+                Previous build — not current
+              </a>
+            )}
+          </div>
         ) : (
           // Read-only browse. Generation is NOT a per-document action here — a
           // document is produced when its phase is built via Approve & Build in
@@ -531,16 +623,6 @@ function DocumentRow({
           </span>
         )}
       </div>
-
-      {/* Multi-role approval status — renders nothing for the deliverable
-          types that don't require any (the default; see REQUIRED_APPROVAL_ROLES
-          in deliverable-role-approvals.ts). flexBasis 100% pushes it onto its
-          own line under the title/actions row above. */}
-      {hasContent && dbRow ? (
-        <div style={{ flexBasis: "100%" }}>
-          <RoleApprovalsPanel moveId={moveId} deliverableId={dbRow.id} />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -605,14 +687,6 @@ function AttachmentRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const PHASE_LABELS: Record<number, string> = {
-  1: "P1 Charter",
-  2: "P2 Discover & Diagnose",
-  3: "P3 Design Future State",
-  4: "P4 Roadmap & Business Case",
-  5: "P5 Approval & Mobilization",
-};
-
 export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
@@ -622,6 +696,12 @@ export async function PhaseDocumentsPanel({
   boardArtifactCount = 0,
 }: Props) {
   const calmBrowse = Boolean(compact) || presentationMode;
+  const tenancy = await getStrategicMovesTenancy().catch(() => null);
+  const canApproveGates = tenancy
+    ? await loadUserProgramAccessPolicy(tenancy, { programId: moveId })
+        .then((policy) => policy.canApproveGates)
+        .catch(() => false)
+    : false;
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
@@ -629,42 +709,68 @@ export async function PhaseDocumentsPanel({
     fetchDeliverablesByKey(moveId),
     listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
   ]);
-  const evidenceNeedPackets = await getStrategicMovesTenancy()
-    .then(async (ctx) => {
-      if (!ctx) return [];
-      const { loadDiscoveryEvidenceReadiness } =
-        await import("@/lib/programs/discovery/evidence-readiness");
-      const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
-      return buildMoveEvidenceNeedPackets({
-        moveId,
-        moveName: moveName ?? "Strategic Move",
-        currentPhase,
-        readiness,
-      });
-    })
-    .catch(() => []);
+  const evidenceNeedPackets = tenancy
+    ? await (async () => {
+        try {
+          const { loadDiscoveryEvidenceReadiness } =
+            await import("@/lib/programs/discovery/evidence-readiness");
+          const readiness = await loadDiscoveryEvidenceReadiness(
+            tenancy,
+            moveId,
+          );
+          return buildMoveEvidenceNeedPackets({
+            moveId,
+            moveName: moveName ?? "Strategic Move",
+            currentPhase,
+            readiness,
+          });
+        } catch {
+          return [];
+        }
+      })()
+    : [];
 
-  // Approve & Build / orchestrator output lands in generated_artifacts (via a
-  // succeeded deliverable_run), NOT deliverables_v2 — so without this a built
-  // document reads "not generated" here. Map the latest succeeded run per registry
-  // key so a slot reads "Built" with a /api/v1/artifacts/{id} download. Additive:
-  // deliverables_v2 content still wins. Mirrors the Move Explorer.
+  // Keep latest attempts separate from the latest successful file. A failed
+  // rebuild must not make an earlier run look like the current output.
   const runByKey = new Map<string, { artifactId: string; updatedAt: string }>();
+  const runStateByKey = new Map<string, DeliverableRunRecord>();
+  const previousRunByKey = new Map<
+    string,
+    { artifactId: string; updatedAt: string }
+  >();
   const activeClient = await getActiveClientRow().catch(() => null);
   if (activeClient) {
-    const runs = await listSucceededRunsForMove(activeClient.id, moveId).catch(
-      () => [] as Awaited<ReturnType<typeof listSucceededRunsForMove>>,
+    const history = await listDeliverableRunHistoryForMove(
+      activeClient.id,
+      moveId,
+    ).catch(
+      () =>
+        new Map<
+          string,
+          {
+            latest: DeliverableRunRecord;
+            latestSucceeded: DeliverableRunRecord | null;
+          }
+        >(),
     );
     for (const spec of DELIVERABLE_REGISTRY) {
       const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
-      const run = runs.find(
-        (r) => r.deliverableType === orchType && r.artifactId,
-      );
-      if (run?.artifactId) {
+      const runHistory = history.get(orchType);
+      if (!runHistory) continue;
+      const latest = runHistory.latest;
+      if (latest.status === "succeeded" && latest.artifactId) {
         runByKey.set(spec.deliverableTypeKey, {
-          artifactId: run.artifactId,
-          updatedAt: run.updatedAt,
+          artifactId: latest.artifactId,
+          updatedAt: latest.updatedAt,
         });
+      } else {
+        runStateByKey.set(spec.deliverableTypeKey, latest);
+        if (runHistory.latestSucceeded?.artifactId) {
+          previousRunByKey.set(spec.deliverableTypeKey, {
+            artifactId: runHistory.latestSucceeded.artifactId,
+            updatedAt: runHistory.latestSucceeded.updatedAt,
+          });
+        }
       }
     }
   }
@@ -872,7 +978,7 @@ export async function PhaseDocumentsPanel({
                     fontWeight: isCurrent ? "normal" : "normal",
                   }}
                 >
-                  {PHASE_LABELS[phase]}
+                  {getPhaseLabel(phase)}
                 </span>
                 {isCurrent && (
                   <span
@@ -917,9 +1023,14 @@ export async function PhaseDocumentsPanel({
                   spec={spec}
                   dbRow={deliverablesByKey.get(spec.deliverableTypeKey)}
                   moveId={moveId}
-                  phaseLabel={PHASE_LABELS[phase] ?? `P${phase}`}
+                  phaseLabel={getPhaseLabel(phase)}
                   runArtifact={runByKey.get(spec.deliverableTypeKey)}
+                  runState={runStateByKey.get(spec.deliverableTypeKey)}
+                  previousRunArtifact={previousRunByKey.get(
+                    spec.deliverableTypeKey,
+                  )}
                   presentationMode={calmBrowse}
+                  canApproveGates={canApproveGates}
                 />
               ))}
 

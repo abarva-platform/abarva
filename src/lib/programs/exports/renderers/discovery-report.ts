@@ -314,7 +314,10 @@ function headerCell(text: string): TableCell {
   });
 }
 
-function dataCell(text: string, opts?: { bold?: boolean; color?: string }): TableCell {
+function dataCell(
+  text: string,
+  opts?: { bold?: boolean; color?: string },
+): TableCell {
   return new TableCell({
     width: { size: 1500, type: WidthType.DXA },
     children: [
@@ -335,7 +338,10 @@ function dataCell(text: string, opts?: { bold?: boolean; color?: string }): Tabl
 
 // ── Section builders ────────────────────────────────────────────────────
 
-function buildTitlePage(spec: DiscoveryReportSpec, generatedAt: Date): Paragraph[] {
+function buildTitlePage(
+  spec: DiscoveryReportSpec,
+  generatedAt: Date,
+): Paragraph[] {
   const out: Paragraph[] = [];
   out.push(titleHeading(spec.title));
   if (spec.subtitle !== undefined) {
@@ -354,7 +360,9 @@ function buildTitlePage(spec: DiscoveryReportSpec, generatedAt: Date): Paragraph
   return out;
 }
 
-function buildProblemStatementSection(payload: DiscoveryReportPayload): Paragraph[] {
+function buildProblemStatementSection(
+  payload: DiscoveryReportPayload,
+): Paragraph[] {
   const ps = payload.problemStatement;
   return [
     sectionHeading('Problem statement'),
@@ -362,7 +370,7 @@ function buildProblemStatementSection(payload: DiscoveryReportPayload): Paragrap
       `Discovery validates the following problem against current-state evidence. ${ps.affectedCohort} ` +
         `experiences the following severity: ${ps.observedSeverity}. The boundary of this Discovery ` +
         `is explicit — ${ps.scopeBoundary} is out of scope and will not be relitigated by P2 unless ` +
-        'sponsor signs a re-scope.',
+        'an authorized workspace user approves a re-scope; sponsors receive progress updates.',
     ),
     labeledLine('Affected cohort or use case', ps.affectedCohort),
     labeledLine('Observed severity', ps.observedSeverity),
@@ -388,9 +396,7 @@ function buildBaselineSection(
   });
   const dataRows = payload.baseline.map((b) => {
     const confidence =
-      b.confidence !== undefined
-        ? `${Math.round(b.confidence * 100)}%`
-        : '—';
+      b.confidence !== undefined ? `${Math.round(b.confidence * 100)}%` : '—';
     return new TableRow({
       children: [
         dataCell(b.metric),
@@ -433,7 +439,8 @@ function buildStakeholderMapSection(
     children: headers.map((h) => headerCell(h)),
   });
   const dataRows = payload.stakeholderMap.map((s) => {
-    const rights = s.decisionRights.length > 0 ? s.decisionRights.join('; ') : '—';
+    const rights =
+      s.decisionRights.length > 0 ? s.decisionRights.join('; ') : '—';
     const dissenter = s.isDissenter === true ? 'YES' : '—';
     const dissenterColor = s.isDissenter === true ? AMBER_HEX : undefined;
     return new TableRow({
@@ -442,7 +449,10 @@ function buildStakeholderMapSection(
         dataCell(s.name, { bold: s.isDissenter === true }),
         dataCell(s.orgUnit),
         dataCell(rights),
-        dataCell(dissenter, { bold: s.isDissenter === true, color: dissenterColor }),
+        dataCell(dissenter, {
+          bold: s.isDissenter === true,
+          color: dissenterColor,
+        }),
       ],
     });
   });
@@ -469,17 +479,15 @@ function buildRootCausesSection(payload: DiscoveryReportPayload): Paragraph[] {
     ),
   ];
   for (const rc of payload.rootCauses) {
-    out.push(
-      bodyParagraphRich([
-        { text: rc.cause, bold: true },
-      ]),
-    );
+    out.push(bodyParagraphRich([{ text: rc.cause, bold: true }]));
     out.push(bulletParagraph(`Evidence: ${rc.evidence}`));
   }
   return out;
 }
 
-function buildPatternEvidenceSection(payload: DiscoveryReportPayload): Paragraph[] {
+function buildPatternEvidenceSection(
+  payload: DiscoveryReportPayload,
+): Paragraph[] {
   const pe = payload.patternEvidence;
   const out: Paragraph[] = [
     sectionHeading('Pattern-specific evidence'),
@@ -495,7 +503,11 @@ function buildPatternEvidenceSection(payload: DiscoveryReportPayload): Paragraph
       out.push(bulletParagraph(item));
     }
   } else {
-    out.push(bodyParagraph('No archetype-specific evidence collected. Flag as a P1 gap.'));
+    out.push(
+      bodyParagraph(
+        'No archetype-specific evidence collected. Flag as a P1 gap.',
+      ),
+    );
   }
   return out;
 }
@@ -520,7 +532,9 @@ function buildContradictionsSection(
   return out;
 }
 
-function buildP2RecommendationSection(payload: DiscoveryReportPayload): Paragraph[] {
+function buildP2RecommendationSection(
+  payload: DiscoveryReportPayload,
+): Paragraph[] {
   const verb = payload.p2Recommendation;
   const decisionLine =
     verb === 'proceed'
@@ -537,8 +551,8 @@ function buildP2RecommendationSection(payload: DiscoveryReportPayload): Paragrap
     subsectionHeading('Rationale'),
     bodyParagraph(payload.p2RecommendationRationale),
     bodyParagraph(
-      '"Continue analysis" is not a recommendation. The decision above is binding for sponsor ' +
-        'review at the P1 → P2 gate; any subsequent change requires a logged sponsor decision.',
+      '"Continue analysis" is not a recommendation. The decision above is binding for authorized workspace-user ' +
+        'approval at the P1 → P2 gate; any subsequent change requires a logged decision in the program record.',
     ),
   ];
 }
@@ -550,7 +564,9 @@ function buildP2RecommendationSection(payload: DiscoveryReportPayload): Paragrap
  * no I/O. The DOCX renderer dispatcher serializes the returned document
  * to a buffer.
  */
-export function buildDiscoveryReportDocument(spec: DiscoveryReportSpec): Document {
+export function buildDiscoveryReportDocument(
+  spec: DiscoveryReportSpec,
+): Document {
   const generatedAt =
     spec.generatedAt !== undefined ? new Date(spec.generatedAt) : new Date();
 

@@ -8,12 +8,9 @@
 // `pricing_estimate_snapshots` row via
 // `effort-engine/snapshot-service.ts#createEstimateSnapshot`.
 //
-// Three explicit outcomes (brief's ask): success (201), not ready — the
-// SAME `estimate_not_ready` shape `/run` returns (409), and, when
-// GATE_APPROVAL_STRICT_MODE is enabled, a separation-of-duties violation
-// for same-preparer approval (409 `self_approval_violation`). In pilot mode
-// the same gate is retained but self-approval is stamped in the immutable
-// snapshot rationale.
+// The authenticated actor must have approval permission for this exact Move.
+// That authorized user may approve an estimate they prepared; both identities
+// and the rationale remain in the immutable snapshot for auditability.
 //
 // NOT wired anywhere near `board-grade-business-case/route.ts` — see
 // `snapshot-service.ts`'s file header and the PR6 release record for the
@@ -34,13 +31,13 @@ import {
   updateEstimateHeader,
 } from "@/lib/pricing/moves-workflow";
 import {
-  SelfApprovalViolationError,
   UnresolvedRateGapError,
   createEstimateSnapshot,
   resolvePreparedBy,
   toScopeFingerprintInput,
 } from "@/lib/pricing/effort-engine/snapshot-service";
 import { getCurrentTaxonomyVersion } from "@/lib/pricing/reference-repository";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   requireOwnedEstimate,
   requireOwnedMove,
@@ -69,6 +66,22 @@ export async function POST(
 
     const move = await requireOwnedMove(ctx, programId);
     if (!move) return Response.json({ error: "not_found" }, { status: 404 });
+
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !accessPolicy.canApproveGates ||
+      (accessPolicy.programIdsAllowed !== null &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail:
+            "An authorized workspace user with approval permission for this Move is required.",
+        },
+        { status: 403 },
+      );
+    }
 
     const owned = await requireOwnedEstimate(ctx, programId, estimateId);
     if (!owned.ok)
@@ -153,15 +166,6 @@ export async function POST(
         { status: 201 },
       );
     } catch (err) {
-      if (err instanceof SelfApprovalViolationError) {
-        return Response.json(
-          {
-            error: "self_approval_violation",
-            detail: err.message,
-          },
-          { status: 409 },
-        );
-      }
       if (err instanceof UnresolvedRateGapError) {
         return Response.json(
           {

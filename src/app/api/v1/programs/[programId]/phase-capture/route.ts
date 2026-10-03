@@ -43,6 +43,10 @@ import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import {
+  listApprovedPhaseEvidence,
+  type ApprovedPhaseEvidenceReference,
+} from "@/lib/programs/approved-phase-evidence";
+import {
   computeCaptureRevision,
   diffCaptureValues,
   findPlaceholderValues,
@@ -52,6 +56,10 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import {
+  resolveConfirmedSolutionRoute,
+  stampSolutionRouteReviewer,
+} from "@/lib/programs/solution-route-assessment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,20 +78,52 @@ function readModuleValue(
   return typeof value === "string" ? value : "";
 }
 
-async function loadCaptureValues(
+async function loadCaptureSnapshot(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
   phase: number,
-): Promise<Record<string, string>> {
+): Promise<{
+  values: Record<string, string>;
+  businessChangeAssessment: string;
+  routeValidation: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  confirmedSolutionRoute: ReturnType<typeof resolveConfirmedSolutionRoute>;
+}> {
   const modules = await getModuleState(ctx, programId);
-  const values: Record<string, string> = {};
-  for (const section of getPhaseCaptureSections(phase)) {
-    const capturedModule = modules.find(
-      (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+  const moduleValue = (capturePhase: number, key: string) => {
+    const row = modules.find(
+      (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
     );
-    values[section.key] = readModuleValue(capturedModule?.state);
+    return readModuleValue(row?.state);
+  };
+  const businessChangeAssessment = moduleValue(1, "business_change_assessment");
+  const routeValidation = moduleValue(2, "solution_route_validation");
+  const approvedEvidenceReferences = await listApprovedPhaseEvidence(
+    ctx,
+    programId,
+    2,
+  );
+  const confirmedSolutionRoute = resolveConfirmedSolutionRoute({
+    businessChangeAssessment,
+    routeValidation,
+    approvedEvidenceReferences: approvedEvidenceReferences.map(
+      (item) => item.evidenceId,
+    ),
+  });
+  const values: Record<string, string> = {};
+  for (const section of getPhaseCaptureSections(
+    phase,
+    confirmedSolutionRoute,
+  )) {
+    values[section.key] = moduleValue(phase, section.key);
   }
-  return values;
+  return {
+    values,
+    businessChangeAssessment,
+    routeValidation,
+    approvedEvidenceReferences,
+    confirmedSolutionRoute,
+  };
 }
 
 export async function GET(
@@ -104,8 +144,14 @@ export async function GET(
     const program = await getProgramById(ctx, programId);
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-    const values = await loadCaptureValues(ctx, programId, phase);
-    const evaluation = evaluatePhaseCapture(phase, values);
+    const snapshot = await loadCaptureSnapshot(ctx, programId, phase);
+    const evaluation = evaluatePhaseCapture(phase, snapshot.values, {
+      businessChangeAssessment: snapshot.businessChangeAssessment,
+      approvedEvidenceReferences: snapshot.approvedEvidenceReferences.map(
+        (item) => item.evidenceId,
+      ),
+      confirmedSolutionRoute: snapshot.confirmedSolutionRoute,
+    });
     return Response.json({
       ok: true,
       programId,
@@ -115,8 +161,12 @@ export async function GET(
       // The authoritative values, flat, plus the revision a client must echo
       // back on write. Surfaced so a page can render persisted state directly
       // instead of synthesizing it — the defect this route now guards against.
-      values,
-      revision: computeCaptureRevision(values),
+      values: snapshot.values,
+      revision: computeCaptureRevision(snapshot.values),
+      ...(snapshot.confirmedSolutionRoute
+        ? { confirmedSolutionRoute: snapshot.confirmedSolutionRoute }
+        : {}),
+      approvedEvidenceReferences: snapshot.approvedEvidenceReferences,
       savePath: `/api/v1/programs/${programId}/phase-capture`,
       approvalPath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
@@ -161,10 +211,27 @@ export async function POST(
       );
     }
 
-    const incoming = body.sections ?? body.items ?? {};
-    const currentValues = await loadCaptureValues(ctx, programId, phase).catch(
-      () => ({}),
-    );
+    const incoming: Record<string, unknown> = {
+      ...(body.sections ?? body.items ?? {}),
+    };
+    if (phase === 2 && "solution_route_validation" in incoming) {
+      incoming.solution_route_validation = stampSolutionRouteReviewer(
+        incoming.solution_route_validation,
+        ctx.email ?? ctx.userId,
+      );
+    }
+    const currentSnapshot = await loadCaptureSnapshot(
+      ctx,
+      programId,
+      phase,
+    ).catch(() => ({
+      values: {},
+      businessChangeAssessment: "",
+      routeValidation: "",
+      approvedEvidenceReferences: [],
+      confirmedSolutionRoute: null,
+    }));
+    const currentValues = currentSnapshot.values;
     const currentRevision = computeCaptureRevision(currentValues);
 
     // GUARD 1 — revision fence. A client that loaded revision R may only write
@@ -184,7 +251,14 @@ export async function POST(
           currentRevision,
           revision: currentRevision,
           values: currentValues,
-          capture: evaluatePhaseCapture(phase, currentValues),
+          capture: evaluatePhaseCapture(phase, currentValues, {
+            businessChangeAssessment: currentSnapshot.businessChangeAssessment,
+            approvedEvidenceReferences:
+              currentSnapshot.approvedEvidenceReferences.map(
+                (item) => item.evidenceId,
+              ),
+            confirmedSolutionRoute: currentSnapshot.confirmedSolutionRoute,
+          }),
           detail:
             "This page was loaded before the capture state changed. Reload the authoritative values and re-apply the edit.",
         },
@@ -217,7 +291,30 @@ export async function POST(
     const hasEdits = changedSections.length > 0;
 
     const mergedValues = { ...currentValues, ...incoming };
-    const evaluation = evaluatePhaseCapture(phase, mergedValues);
+    const updatedBusinessChangeAssessment =
+      phase === 1
+        ? (mergedValues.business_change_assessment ?? "")
+        : currentSnapshot.businessChangeAssessment;
+    const updatedRouteValidation =
+      phase === 2
+        ? (mergedValues.solution_route_validation ?? "")
+        : currentSnapshot.routeValidation;
+    const confirmedSolutionRoute = resolveConfirmedSolutionRoute({
+      businessChangeAssessment: updatedBusinessChangeAssessment,
+      routeValidation: updatedRouteValidation,
+      approvedEvidenceReferences:
+        currentSnapshot.approvedEvidenceReferences.map(
+          (item) => item.evidenceId,
+        ),
+    });
+    const evaluation = evaluatePhaseCapture(phase, mergedValues, {
+      businessChangeAssessment: currentSnapshot.businessChangeAssessment,
+      approvedEvidenceReferences:
+        currentSnapshot.approvedEvidenceReferences.map(
+          (item) => item.evidenceId,
+        ),
+      confirmedSolutionRoute,
+    });
     // The normalised values the write loop below actually persists. This is
     // what the response must report — see the comment on the return.
     const storedValues: Record<string, string> = Object.fromEntries(
@@ -418,6 +515,7 @@ export async function POST(
         .map((section) => section.key),
       allSaved: evaluation.complete,
       capture: evaluation,
+      confirmedSolutionRoute,
       generationEligibility: {
         captureComplete: evaluation.complete,
         gateApprovalRequired: true,

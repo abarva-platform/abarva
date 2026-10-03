@@ -1,4 +1,5 @@
-import { buildSourceGenerationContext } from "@/lib/source/agent-generation/context-binder";
+import { buildSourceGenerationContext, collectUpstreamBodies } from "@/lib/source/agent-generation/context-binder";
+import type { SourceGenerationContext } from "@/lib/source/agent-generation/types";
 import type { SourcingEventDetail } from "@/lib/source/types";
 
 jest.mock("@/lib/source/canvas-substrate/queries", () => ({
@@ -260,6 +261,81 @@ describe("buildSourceGenerationContext", () => {
     );
   });
 
+  it("carries the event policy and audited applicability into authoring context", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      approvalPolicyCode: "self_v1",
+    });
+    isUuid.mockReturnValue(true);
+    listEvidenceStatesForEvent.mockResolvedValue([{
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      stage: "strategy",
+      currentState: "Not Requested",
+      applicabilityStatus: "not_applicable",
+      applicabilityReason: "No incumbent for this synthetic event.",
+    }]);
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.event.approvalPolicyCode).toBe("self_v1");
+    expect(ctx?.evidence[0]).toMatchObject({
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      applicabilityStatus: "not_applicable",
+    });
+  });
+
+  it("excludes unreviewed optional bodies from the d02 authoring and review context", () => {
+    const draft = {
+      id: "draft-1",
+      sourceEventId: "event-1",
+      tenantKey: "apexretail",
+      artifactCode: "d01_strategy_memo",
+      stage: "strategy" as const,
+      family: "sourcing_strategy" as const,
+      tier: "stub" as const,
+      status: "needs_review" as const,
+      requirementLevel: "required" as const,
+      gateDefining: true,
+      linkedArtifactId: null,
+      notes: null,
+      body: "Unreviewed vendor-pricing assertion.",
+      bodyFormat: "markdown" as const,
+      bodyAuthoredBy: null,
+      bodyUpdatedAt: null,
+      bodyGenerationMetadata: null,
+      createdAt: "2026-06-12T00:00:00.000Z",
+      updatedAt: "2026-06-12T00:00:00.000Z",
+    };
+    const ctx: SourceGenerationContext = {
+      tenantKey: "apexretail",
+      tenantName: "Apex Retail",
+      event: {
+        id: "event-1",
+        code: "SRC-001",
+        name: "Synthetic sourcing event",
+        archetype: null,
+        rigor: null,
+        currentStageKey: "strategy",
+        statusLabel: "Active",
+        owner: null,
+        triggerDescription: null,
+        scopeDescription: null,
+        estimatedValueUsd: null,
+      },
+      artifactStates: [draft],
+      evidence: [],
+      gateCriteria: [],
+    };
+    expect(collectUpstreamBodies(ctx, ["d01_strategy_memo"], { approvedOnly: true })).toEqual({});
+    ctx.artifactStates[0].status = "approved";
+    expect(collectUpstreamBodies(ctx, ["d01_strategy_memo"], { approvedOnly: true })).toEqual({
+      d01_strategy_memo: "Unreviewed vendor-pricing assertion.",
+    });
+  });
+
   it("binds parsed uploaded evidence chunks and facts for generation prompts", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),
@@ -321,6 +397,73 @@ describe("buildSourceGenerationContext", () => {
     expect(ctx?.event.scopeDescription).toBe(
       "Eight-system analytics managed-services scope.",
     );
+  });
+
+  it("keeps a short single-chunk upload complete for generation", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const completeChunk = `${"Planning context. ".repeat(70)}Final approval boundary.`;
+    expect(completeChunk.length).toBeGreaterThan(900);
+    expect(completeChunk.length).toBeLessThan(1800);
+    mockUploadedEvidenceQueries({
+      artifacts: [{
+        id: "short-upload",
+        original_name: "synthetic-planning-trigger.txt",
+        artifact_family: "other",
+        source_format: "txt",
+        parse_status: "parsed",
+        evidence_state: "parsed",
+        stage_key: "strategy",
+        source_origin: "uploaded",
+        created_at: "2026-09-09T00:00:00.000Z",
+      }],
+      chunks: [{ artifact_id: "short-upload", chunk_text: completeChunk }],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([completeChunk]);
+  });
+
+  it("keeps ordinary multi-chunk excerpts within the existing prompt budget", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const firstChunk = "A".repeat(1200);
+    const secondChunk = "B".repeat(1200);
+    mockUploadedEvidenceQueries({
+      artifacts: [{
+        id: "long-upload",
+        original_name: "synthetic-long-evidence.txt",
+        artifact_family: "other",
+        source_format: "txt",
+        parse_status: "parsed",
+        evidence_state: "parsed",
+        stage_key: "strategy",
+        source_origin: "uploaded",
+        created_at: "2026-09-09T00:00:00.000Z",
+      }],
+      chunks: [
+        { artifact_id: "long-upload", chunk_text: firstChunk },
+        { artifact_id: "long-upload", chunk_text: secondChunk },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([
+      firstChunk.slice(0, 900),
+      secondChunk.slice(0, 900),
+    ]);
   });
 
   it("preserves the complete parsed bidder Q&A chunk set for parity-log generation", async () => {

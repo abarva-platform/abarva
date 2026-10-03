@@ -261,10 +261,10 @@ const DEFAULT_OUTPUT_DIR = "reports/moves-shadow-proof/skyharbor";
 const PHASES: Array<Pick<PhaseReadiness, "phase" | "name">> = [
   { phase: "P0", name: "Originate" },
   { phase: "P1", name: "Charter" },
-  { phase: "P2", name: "Understand Current State" },
-  { phase: "P3", name: "Choose the Approach" },
-  { phase: "P4", name: "Build the Plan" },
-  { phase: "P5", name: "Prepare to Execute" },
+  { phase: "P2", name: "Discover & Diagnose" },
+  { phase: "P3", name: "Design Future State" },
+  { phase: "P4", name: "Roadmap & Business Case" },
+  { phase: "P5", name: "Mobilize & Handoff" },
 ];
 
 export async function buildMovesShadowProof(

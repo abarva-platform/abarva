@@ -31,8 +31,6 @@ export const DOMAIN_LABELS: Record<string, string> = {
   ai_tool_usage_observation: "AI Tool Usage",
 };
 
-export const DOMAIN_ORDER = Object.keys(DOMAIN_LABELS);
-
 /** A domain this codebase doesn't know a label for yet -- title-cases the raw identifier rather
  * than showing it verbatim, so a newly-added domain never renders as a warty snake_case string
  * before someone gets around to adding it to DOMAIN_LABELS. */

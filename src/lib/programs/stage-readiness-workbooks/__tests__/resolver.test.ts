@@ -74,8 +74,8 @@ describe("buildStageReadinessWorkbookSpec", () => {
     expect(spec.artifactName).toBe(
       "Discovery Workbook — Member Service Agent Assist",
     );
-    expect(spec.startHere.alreadyPrefilled).toBe(1);
-    expect(spec.startHere.needsInput).toBe(2);
+    expect(spec.startHere.evidenceReferencesIncluded).toBe(1);
+    expect(spec.startHere.needsInput).toBe(13);
     expect(spec.dimensionPlan.dimensions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -86,7 +86,7 @@ describe("buildStageReadinessWorkbookSpec", () => {
         }),
         expect.objectContaining({
           dimensionId: "current_state_workflow_map",
-          status: "prefilled_confirmed",
+          status: "prefilled_needs_confirmation",
           evidenceSourceClass: "client_fact",
         }),
       ]),
@@ -106,10 +106,26 @@ describe("buildStageReadinessWorkbookSpec", () => {
         }),
       ]),
     );
+    const privacyQuestions = spec.tabs
+      .flatMap((tab) => tab.questions)
+      .filter(
+        (question) =>
+          question.dimensionId === "phi_privacy_security_controls",
+      );
+    expect(privacyQuestions).toHaveLength(5);
+    expect(privacyQuestions.map((question) => question.question)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("current-state reality"),
+        expect.stringContaining("volumes, frequency, cycle times"),
+        expect.stringContaining("systems, data fields, files"),
+        expect.stringContaining("fail, vary by segment"),
+        expect.stringContaining("Who can confirm"),
+      ]),
+    );
     expect(spec.metadata.workbookContentHash).toHaveLength(24);
   });
 
-  it("does not ask covered evidence families as blank questions", () => {
+  it("separates prefilled evidence from responses that still need review", () => {
     const packets = buildMoveEvidenceNeedPackets({
       moveId: "move-1",
       moveName: "Member Service Agent Assist",
@@ -126,16 +142,24 @@ describe("buildStageReadinessWorkbookSpec", () => {
       evidenceNeedPackets: packets,
       generatedAt: "2026-08-20T00:00:00.000Z",
     });
-    const workflowQuestion = spec.tabs
+    const workflowQuestions = spec.tabs
       .flatMap((tab) => tab.questions)
-      .find(
+      .filter(
         (question) => question.dimensionId === "current_state_workflow_map",
       );
+    const workflowQuestion = workflowQuestions[0];
 
+    expect(workflowQuestions).toHaveLength(3);
     expect(workflowQuestion).toMatchObject({
-      state: "prefilled_confirmed",
+      questionId: "q_current_state_workflow_map_confirm_currency",
+      state: "prefilled_needs_confirmation",
       prefilledResponse: "Available evidence: Approved workflow notes",
       evidenceRefs: ["ev_workflow"],
     });
+    expect(workflowQuestions[1]?.question).toContain("What changed since");
+    expect(workflowQuestions[2]?.question).toContain("What is not covered");
+    expect(workflowQuestions.slice(1).map((question) => question.state)).toEqual(
+      ["needs_answer", "needs_answer"],
+    );
   });
 });

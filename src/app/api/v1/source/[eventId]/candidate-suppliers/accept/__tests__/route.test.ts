@@ -35,7 +35,9 @@ const params = {
   params: Promise.resolve({ eventId: "11111111-1111-4111-8111-111111111111" }),
 };
 
-function request() {
+function request(
+  url = "https://app.example.test/api/v1/source/11111111-1111-4111-8111-111111111111/candidate-suppliers/accept",
+) {
   const body = new FormData();
   body.set("supplierId", "supplier-1");
   body.set("categoryId", "managed-services");
@@ -43,10 +45,7 @@ function request() {
   body.set("eventVersionId", "22222222-2222-4222-8222-222222222222");
   body.set("sourceReference", "EVID-SUPPLIER-1");
   body.set("rationale", "Meets the governed Stage 04 eligibility review.");
-  return new Request(
-    "https://app.example.test/api/v1/source/11111111-1111-4111-8111-111111111111/candidate-suppliers/accept",
-    { method: "POST", body },
-  );
+  return new Request(url, { method: "POST", body });
 }
 
 beforeEach(() => {
@@ -87,6 +86,21 @@ describe("candidate supplier acceptance route", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith(
       "/source/new/11111111-1111-4111-8111-111111111111",
     );
+  });
+
+  it("returns to the public origin when the proxy presents an internal request URL", async () => {
+    const response = await POST(
+      request(
+        "https://localhost:3000/api/v1/source/11111111-1111-4111-8111-111111111111/candidate-suppliers/accept",
+      ),
+      params,
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "/source/new/11111111-1111-4111-8111-111111111111",
+    );
+    expect(acceptMock).toHaveBeenCalledTimes(1);
   });
 
   it("blocks users without Source stage approval authority", async () => {

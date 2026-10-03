@@ -1,7 +1,10 @@
 export interface ResolveMovesAvaVisibleEvidenceCountInput {
   liveLinkedEvidenceCount: number | null | undefined;
   pageEvidenceCount: number | null | undefined;
-  surfaceContextEvidenceCount?: number | null | undefined;
+  contextExtractFreshness?: {
+    attachedEvidenceCount: number;
+    freshnessStatus: "fresh" | "stale" | "rebuild_required";
+  } | null;
 }
 
 function cleanCount(value: number | null | undefined): number {
@@ -13,11 +16,13 @@ function cleanCount(value: number | null | undefined): number {
 export function resolveMovesAvaVisibleEvidenceCount({
   liveLinkedEvidenceCount,
   pageEvidenceCount,
-  surfaceContextEvidenceCount,
+  contextExtractFreshness,
 }: ResolveMovesAvaVisibleEvidenceCountInput): number {
   return Math.max(
     cleanCount(liveLinkedEvidenceCount),
     cleanCount(pageEvidenceCount),
-    cleanCount(surfaceContextEvidenceCount),
+    contextExtractFreshness?.freshnessStatus === "fresh"
+      ? cleanCount(contextExtractFreshness.attachedEvidenceCount)
+      : 0,
   );
 }

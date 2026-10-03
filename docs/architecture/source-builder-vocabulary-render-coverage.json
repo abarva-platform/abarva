@@ -5,9 +5,9 @@
   "method": "Population: non-test .tsx under src/components/source, walked with the same walk/isExcluded the route-reachability audit uses. Reachability: docs/architecture/unreachable-components.json. Covered: the transitive IMPORT closure of each audited root, intersected with the route-reachable population.",
   "upperBoundCaveat": "coveredUpperBound is an UPPER bound on what the control proves: an import closure is a superset of a render closure, because importing a module is not rendering it and a branch the fixtures never take renders nothing. remainderPaths is therefore a sound LOWER bound on the gap — no audited root can reach any of them under any props.",
   "population": {
-    "sourceComponentFiles": 205,
+    "sourceComponentFiles": 207,
     "unreachable": 103,
-    "routeReachable": 102
+    "routeReachable": 104
   },
   "auditedRoots": [
     {
@@ -33,7 +33,7 @@
       "surfaceName": "source canvas · every workspace and disclosure",
       "path": "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx",
       "routeReachable": true,
-      "importClosureFiles": 435
+      "importClosureFiles": 439
     },
     {
       "surfaceName": "step insight panel · every insight kind",
@@ -43,14 +43,15 @@
     }
   ],
   "coverage": {
-    "coveredUpperBound": 43,
-    "population": 102,
-    "remainder": 59
+    "coveredUpperBound": 44,
+    "population": 104,
+    "remainder": 60
   },
   "coveredPaths": [
     "src/components/source/RenewalCockpitActionBar.tsx",
     "src/components/source/SourceAwardSowHandoffReadinessPanel.tsx",
     "src/components/source/SourceWorkflowFrame.tsx",
+    "src/components/source/approval/EventRetirementControl.tsx",
     "src/components/source/canvas/ArtifactBlockerList.tsx",
     "src/components/source/canvas/analytics/ArtifactAcceptancePanel.tsx",
     "src/components/source/canvas/analytics/CommercialActiveCanvasStrip.tsx",
@@ -148,6 +149,7 @@
     "src/components/source/learn/case-study/apex/ApexRetailCaseStudyIntro.tsx",
     "src/components/source/learn/case-study/apex/_apex-shell.tsx",
     "src/components/source/new-workspace/SourceNewFiles.tsx",
+    "src/components/source/new-workspace/SourceNewNdaCapture.tsx",
     "src/components/source/new-workspace/SourceNewRequestFirstPage.tsx",
     "src/components/source/new-workspace/SourceNewWorkspace.tsx",
     "src/components/source/onboarding/SourceOnboardingTour.tsx",

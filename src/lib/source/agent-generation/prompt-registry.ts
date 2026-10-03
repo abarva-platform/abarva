@@ -22,6 +22,9 @@ import {
 import { formatRequiredSectionsForPrompt } from "./section-conformance";
 import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/source-documentation-standards";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
+import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
+import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { buildD09VendorDraftContext } from "./d09-vendor-context";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -897,6 +900,7 @@ function formatGovernanceReviewFields(): string {
 // without this block the draft is blind to evidence it is graded on.
 function formatDraftEvidenceContext(
   ctx: SourceGenerationContext,
+  options?: { completeShortChunk?: boolean; ticketExcerptCoverage?: boolean },
 ): string | null {
   const guidebookBlock = formatStageGuidebookContext(ctx);
   const items = ctx.uploadedEvidence ?? [];
@@ -910,9 +914,23 @@ function formatDraftEvidenceContext(
             const facts = a.factSummaries?.length
               ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
               : "";
-            const excerpt = a.chunkExcerpts?.length
-              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
-              : "";
+            const excerptLimit =
+              options?.completeShortChunk === true &&
+              a.chunkExcerpts?.length === 1 &&
+              a.chunkExcerpts[0].length <= 1_800
+                ? 1_800
+                : 500;
+            const ticketExcerpts =
+              options?.ticketExcerptCoverage === true &&
+              a.stageKey === "scope" &&
+              a.sourceFormat.toLowerCase() === "csv"
+                ? a.chunkExcerpts.slice(0, 5).join("\n    Continuation: ")
+                : null;
+            const excerpt = ticketExcerpts
+              ? `\n    Excerpts may be incomplete; verify row coverage before totals: ${ticketExcerpts.slice(0, 3_000)}${ticketExcerpts.length > 3_000 ? " [TRUNCATED]" : ""}`
+              : a.chunkExcerpts?.length
+                ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, excerptLimit)}`
+                : "";
             return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
           }),
         ].join("\n");
@@ -920,6 +938,73 @@ function formatDraftEvidenceContext(
   return [guidebookBlock, structuredEvidenceBlock, evidenceBlock]
     .filter(Boolean)
     .join("\n\n") || null;
+}
+
+export function resolveStrategyEvidenceGateRole(args: {
+  requirementId: string;
+  approvalPolicyCode: string | null | undefined;
+  applicabilityStatus?: "applicable" | "not_applicable";
+}): {
+  level: "required" | "recommended" | "unknown";
+  policyApplies: boolean;
+  gateBlocking: boolean;
+} {
+  const level = evidenceById(args.requirementId)?.level ?? "unknown";
+  const policyApplies = sourceEvidenceAppliesToApprovalPolicy(
+    args.requirementId,
+    args.approvalPolicyCode,
+  );
+  return {
+    level,
+    policyApplies,
+    gateBlocking:
+      level === "required" &&
+      policyApplies &&
+      args.applicabilityStatus !== "not_applicable",
+  };
+}
+
+function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
+  const evidence = ctx.evidence
+    .filter((item) => item.stage === "strategy")
+    .map((item) => {
+      const role = resolveStrategyEvidenceGateRole({
+        requirementId: item.requirementId,
+        approvalPolicyCode: ctx.event.approvalPolicyCode,
+        applicabilityStatus: item.applicabilityStatus,
+      });
+      return [
+        `- ${item.requirementId}`,
+        `applicability=${item.applicabilityStatus ?? "applicable"}`,
+        `level=${role.level}`,
+        `policy_applies=${role.policyApplies}`,
+        `gate_blocking=${role.gateBlocking}`,
+        `state=${resolveGenerationEvidenceState(ctx, item)}`,
+        item.applicabilityStatus === "not_applicable" && item.applicabilityReason
+          ? `audited_reason=${item.applicabilityReason}`
+          : null,
+      ].filter(Boolean).join("; ");
+    });
+  const criteria = ctx.gateCriteria
+    .filter((item) => item.fromStage === "strategy")
+    .map((item) => `- ${item.criterionId}; state=${item.state}`);
+  return [
+    "— CURRENT STRATEGY GOVERNANCE STATE —",
+    `approval_policy=${ctx.event.approvalPolicyCode ?? "unknown"}`,
+    ctx.event.approvalPolicyCode === "self_v1"
+      ? "The Event Owner records the decision under SELF policy. Sponsor commitment is excluded from this event's gate: do not request it, waive it, or list it as an open gate action."
+      : "Do not assume Event Owner self-approval; follow the recorded policy and gate evidence.",
+    "An audited not-applicable decision is an absence decision, not a missing request or a supplied contract/spend fact.",
+    "Recommended evidence is optional and cannot become a gate prerequisite. Do not request or waive it as a condition of gate closure. Only applicable, policy-relevant required evidence can block the gate.",
+    "An available gate evidence file still needs explicit human review when the criterion is pending; availability alone is not a reviewed decision.",
+    "Do not say all open evidence gaps must close or be formally deferred before the gate; recommended evidence may remain open without blocking. Limit pass conditions to the applicable required evidence and actual gate criteria.",
+    "When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead. A pending or unread criterion does not authorize a claim that the gate is ready to advance.",
+    "Do not tell the decision owner to record approval or advance the event while any Strategy criterion is pending. A review may record approval only after each applicable criterion is actually met and recorded; until then, ask for the decision and name unresolved criteria without predicting the outcome.",
+    "Strategy evidence requirements:",
+    ...(evidence.length ? evidence : ["- no evidence states read back"]),
+    "Strategy gate criteria:",
+    ...(criteria.length ? criteria : ["- no gate criteria read back"]),
+  ].join("\n");
 }
 
 function formatStageGuidebookContext(
@@ -971,7 +1056,7 @@ You are drafting the Sourcing Strategy Memo. This is the foundational document f
 Required structural sections:
 ${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
-This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Cite evidence by its business filename only. Never invent or expose a bracketed hash, shortened identifier, artifact id, or chunk id as a citation. Any causal interpretation drawn from a trend or correlation must be labeled as a working hypothesis and registered with a validation owner, action, and downstream impact. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
+This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Cite evidence by its business filename only. Never invent or expose a bracketed hash, shortened identifier, artifact id, or chunk id as a citation. Any causal interpretation drawn from a trend or correlation must be labeled as a working hypothesis and registered with a validation owner, action, and downstream impact. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids). A pending gate is not an approval; do not call the event ready to advance until its criteria and required client-final artifacts are actually cleared. Make human review of available trigger evidence an explicit gate-session agenda action before any criterion outcome is recorded. Strategy approval advances only to Define/Scope, not directly to RFP or market release. Treat regulatory or legal obligations as questions for the accountable reviewer unless bound evidence establishes their application to this scope.`,
     buildUserMessage: (ctx) => {
       return [
         `Company: ${ctx.tenantName}`,
@@ -989,7 +1074,8 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         `Scope description from intake:`,
         ctx.event.scopeDescription || "(not provided)",
         "",
-        formatDraftEvidenceContext(ctx),
+        formatStrategyGovernanceContext(ctx),
+        formatDraftEvidenceContext(ctx, { completeShortChunk: true }),
         "",
         ctx.archetypeAdvisory
           ? `— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —\n\n${ctx.archetypeAdvisory}\n`
@@ -1010,7 +1096,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
-You are drafting the Value Target Brief (artifact d02_value_target). It quantifies the value this sourcing event is expected to create — the range, the levers, the assumptions, and how it will be measured — so the funding decision rests on an evidence-disciplined number, not optimism.
+You are drafting the Value Target Brief (artifact d02_value_target). It records the value hypothesis, the levers, the assumptions, and how value could be measured. Quantify a range only when bound evidence supports its low, base, and high amounts; an unsized hypothesis is a valid answer when the baseline is absent.
 
 Required structural sections:
 ## §1 · Value thesis
@@ -1020,12 +1106,16 @@ Required structural sections:
 ## §5 · Realization and measurement
 
 Requirements:
-- State the value target as a RANGE (low / base / high) with an explicit confidence band (low / medium / high) and the basis for each bound.
+- Show low / base / high amount cells and a confidence band only to the extent that bound evidence supports them. If no bound baseline supports low/base/high amounts, write not established in all three amount cells and name the specific evidence and owner needed to size them. Do not infer a confidence band for an unestablished range.
+- Do not create illustrative, proxy, or synthetic spend baselines or sensitivity amounts to fill the table. A scenario with an invented dollar starting point is still an unsupported financial claim even when labelled illustrative.
+- The intake candidate opportunity is a validation hypothesis, not the base case or a sizing input. Show it separately, with its intake source and unvalidated status; do not multiply it into sensitivity cases.
 - Treat the intake value estimate as a candidate opportunity / validation target. Do not relabel it as contract value, spend baseline, TCV, savings realized, or a finance-approved commitment.
 - Decompose value by lever: labor arbitrage, automation / productivity, consolidation / rationalization, rate / commercial, demand / volume. Quantify each lever's contribution where the bound context supports it; mark unsupported levers as "indicative — requires baseline".
 - Tie every number to a named bound source: incumbent baseline, ticket / volume evidence, or a client-supplied assumption already present in the event record. Never invent an assumption to complete the arithmetic. If the baseline is missing, leave the lever unquantified and identify the exact evidence needed.
 - Do not apply generic benchmark percentages or comparable-event savings rates unless a named bound source provides them. If evidence cannot support low/base/high amounts yet, preserve the intake target as a validation hypothesis and make the range "not established" pending the named inputs.
-- Name the realization owner and the first measurement window. Separate projected → committed → measured value.
+- Do not turn an audited absence decision into a missing request, assume a current incumbent arrangement, or describe an unreviewed upstream draft as approved evidence. Pending Strategy criteria are not a funding mandate.
+- Put planning-only and unvalidated status in the sizing table header or adjacent caption so the warning remains visible when the table is copied alone. Only applicable required evidence and actual Strategy criteria may appear as gate pass conditions; a recommended market scan may remain open without a waiver or formal deferral.
+- Name the realization owner only when bound evidence identifies one; otherwise name the accountable role needed to assign it. Leave the first measurement window client-to-set unless its dates and owner are present in bound evidence. Separate projected → committed → measured value.
 - 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
     buildUserMessage: (ctx, upstream) => {
       return [
@@ -1040,11 +1130,16 @@ Requirements:
         `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
         `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
         "",
-        upstream.d01_strategy_memo
-          ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — anchor the value thesis to it:\n${upstream.d01_strategy_memo}`
-          : `(Strategy memo d01 not yet authored — derive the thesis from the intake and flag the dependency as a gap.)`,
+        upstream.d01_strategy_memo &&
+        ctx.artifactStates.some(
+          (item) => item.artifactCode === "d01_strategy_memo" &&
+            (item.status === "approved" || item.status === "locked"),
+        )
+          ? `Reviewed Sourcing Strategy Memo (d01_strategy_memo) — use its supported claims only; reconcile with current evidence and gate state:\n${upstream.d01_strategy_memo}`
+          : "Strategy memo is not yet approved — derive the thesis from current intake and governed evidence; do not inherit claims from an unreviewed draft.",
         "",
-        formatDraftEvidenceContext(ctx),
+        formatStrategyGovernanceContext(ctx),
+        formatDraftEvidenceContext(ctx, { completeShortChunk: true }),
         "",
         `Draft the Value Target Brief per the system prompt requirements.`,
       ]
@@ -1477,19 +1572,20 @@ Writing and format requirements:
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 12,
+    version: 14,
     model: BOARD_GRADE_MODEL,
     maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
-    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+    systemPrompt: `You are a procurement writer drafting a vendor-facing RFP package, not an internal sourcing memo. The only case facts you may use are in the bounded vendor-draft context. Prior-stage artifacts, buyer evidence-room files, workflow approvals, release holds, owner names, private cost or value targets, and negotiation strategy are not approved for bidder disclosure merely because Source holds them. Never reproduce or infer them.
 
-You are drafting the RFP Package (artifact d09_rfp_pack) — the flagship vendor-facing solicitation document. Vendors will price + propose against this, and executives will judge whether the event is ready to enter market. It must read like a real procurement RFP for a large-enterprise sourcing event: formal, complete, unambiguous, quantified, evidence-aware, and structured so vendor responses are comparable downstream.
+If a release state is shown, it must say Draft — Not issued. Never label a draft an initial or structural issuance or claim that vendors have received it. Addenda and delivery remain future actions until separately authorized and evidenced.
 
-North-star workflow principle:
-Keep the sourcing-user workflow simple. The default generated RFP pack is one vendor-facing RFP document plus one vendor response workbook. Do not create a file-management burden in the document. Refer to workbook tabs, schedules, and exhibits inside the pack rather than asking the sourcing lead to manage many standalone files.
+The buyer name or industry is not evidence of patient-facing or clinical-support workloads, healthcare data environments, regulations, certifications, or supplier obligations. Use those details only when explicitly present in the bounded vendor-disclosable context; otherwise mark them Not issued. Do not list example obligations as if they apply.
 
-Required structural sections:
+Use formal, concise procurement language. Do not invent names, dates, volumes, baseline amounts, evaluation weights, service levels, issued exhibits, legal terms, or approvals. Mark any unavailable detail as "Not issued" in the relevant vendor-facing table. Do not create an internal source register, release-hold table, gap-closure register, approval checklist, or owner action list. This is an incomplete draft until the release boundary separately approves the full package.
+
+Required sections:
 ## §1 · Executive summary and decision context
 ## §2 · Enterprise current-state baseline
 ## §3 · Scope, service towers, and exclusions
@@ -1500,137 +1596,22 @@ Required structural sections:
 ## §8 · Vendor response instructions and mandatory submission tables
 ## §9 · Evaluation framework, weights, and disqualification rules
 ## §10 · Risk register, transition controls, and failure modes
-## §11 · Source register, assumptions, and client-to-complete gaps
+## §11 · Vendor exhibits and response assumptions
 
-Mandatory response-compliance language for §8:
+Preserve sections §7–§11 and Never stop after a partial table. Use compact tables for service scope, current-state baseline, service levels, transition, pricing, evaluation, and vendor-facing response requirements. Cite friendly exhibit labels only when an exhibit is explicitly identified as vendor-disclosable in the bounded context; otherwise say "Not issued". Evaluation Criterion ID and requirement IDs must be stable only when supplied; do not invent an approved scoring system.
+
+The default vendor response uses one Vendor Response Workbook with these tabs: Guide, Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist. Capture Comply | Partially Comply | Exception | Not Applicable dispositions. Do not assert that a workbook or template has been legally approved or released.
+
+Mandatory response language for §8:
 ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
-Mandatory response-control components to reference in §8:
-${formatVendorResponseControlSections()}
-
-Mandatory tables:
-- In-scope / out-of-scope service tower matrix.
-- Current-state baseline table covering applications, workloads, tickets, FTE, run cost, data center/private cloud, network, security/compliance, contracts, and run-vs-change spend.
-- SLA and operational obligations table.
-- Transition constraints and blackout calendar table.
-- Pricing and volume-basis instruction table.
-- Vendor response control table covering the single Vendor Response Workbook and its required tabs: Guide, Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist.
-- Requirement-to-response matrix defining stable requirement IDs, normalized response categories, required evidence, pricing/SLA linkages, and the evaluation criterion tied to each scored requirement.
-- Evaluation weights and evidence-required scoring table.
-- Risk, issue, dependency, and mitigation table.
-- Process timeline table using governed dates from evidence or explicit gate-relative anchors when dates are genuinely missing.
-- Source register separating locked uploaded evidence, upstream draft artifacts, working assumptions, and client-to-complete gaps.
-- Client-to-complete / vendor-to-confirm register with accountable role, target date or gate-relative trigger, why it matters, and downstream impact.
-
-Tone: formal procurement style, but executive-polished. Vendor-facing draft — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and compact enough to complete in one synchronous generation: target 3,500-5,500 words. Quote scope from d05 only where needed. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as an issue-to-release gap in §11, not as a vendor instruction.
-
-Vendor/internal separation:
-This artifact is vendor-facing. Do not expose model/provider names, prompt details, raw parser status, confidence scores, internal gate IDs, quality-review blockers, negotiation targets, benchmark deltas, or private legal fallback positions. Those belong in the internal review and negotiation workbook, not the RFP.
-
-Source discipline requirement: treat parsed uploaded evidence as governed draft evidence. Assign friendly exhibit labels such as Exhibit 01 — Run/Change Financial Baseline and cite those labels in the body. Do not expose artifact_id, chunk_id, raw table names, or other internal ids. If an evidence row is parsed_uncited, mark it as "Available parsed evidence — citation review pending" in the source register instead of ignoring it.
-
-Hard output budget and completion requirement: every required section and mandatory table must be present, even if concise. Never stop after a partial table or omit downstream sections. Preserve sections §7–§11; they are more important than long prose in §2–§6. If token budget feels tight, shorten narrative first; use exhibit references instead of restating full datasets; keep every table to 4–8 rows unless the row is mandatory. Do not end mid-sentence. The final line must be: "RFP package draft complete — pending client closure of registered gaps."
-
-Section budget:
-- §1: 250 words max plus a 5-row decision table.
-- §2: 300 words max plus one current-state baseline table, 6 rows max.
-- §3: 250 words max plus one tower matrix, 6 rows max.
-- §4: 250 words max plus one estate table, 6 rows max.
-- §5: 250 words max plus one obligations table, 6 rows max.
-- §6: 300 words max plus one transition/blackout table, 6 rows max.
-- §7: must include commercial terms and pricing instructions table.
-- §8: must include the response-compliance mandate above, vendor response/submission requirements table, and explicit completion instructions for every required tab in the single Vendor Response Workbook.
-- §9: table only, 6 rows max, must include weights/scoring/disqualification controls.
-- §10: table only, 8 rows max, must include accountable risk roles/mitigations from Exhibits 07, 13, and 14.
-- §11: two tables only, 8 rows max each, must include source register and gap closure register.
-
-Compact required appendix block:
-After §8, use compact tables instead of long prose for the remaining governance material:
-- §9 table: Evaluation area | Weight | Scoring basis | Disqualification / red flag | Evidence source.
-- §10 table: Risk ID | Failure mode | Evidence source | Accountable role | Mitigation | Blocking gate.
-- §11A table: Source | Status | Used in sections | Remaining action.
-- §11B table: Gap ID | Item | Accountable role | Target date / trigger | Blocking gate | Downstream impact.
-
-Required compact section skeleton:
-## §1 · Executive summary and decision context
-## §2 · Enterprise current-state baseline
-## §3 · Scope, service towers, and exclusions
-## §4 · Application, workload, infrastructure, network, and cloud estate
-## §5 · Service-level, operational, and security obligations
-## §6 · Transition approach, blackout constraints, and risk controls
-## §7 · Commercial model, run/change baseline, and pricing instructions
-## §8 · Vendor response instructions and mandatory submission tables
-## §9 · Evaluation framework, weights, and disqualification rules
-## §10 · Risk register, transition controls, and failure modes
-## §11 · Source register, assumptions, and client-to-complete gaps
-
-Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as an issue-to-release gap with accountable role/action. Include practical mitigations for risks; do not merely flag them. Do not use bracketed client fill-in markers. If exact names or dates are not loaded, provide the accountable role and a gate-relative target date or trigger in the §11 closure table with blocking gate and downstream impact.
-
-Analytics continuity requirement: assign each issued requirement a unique stable ID and one normalized category from service scope | service management | staffing and location | SLA and performance | transition | security and compliance | architecture and tooling | automation and productivity | commercial and pricing | governance | innovation and value. The Vendor Response Workbook must preserve that ID and category and capture a normalized disposition of Comply | Partially Comply | Exception | Not Applicable. Tie every scored requirement to an Evaluation Criterion ID and every commercial requirement to a pricing, SLA/KPI, claim, assumption, or exception reference as applicable. These identifiers must remain usable without reinterpretation in response completeness, evaluation scoring, pricing normalization, BAFO challenge, and executive decision artifacts.`,
-    buildUserMessage: (ctx, upstream) => {
-      const lines: string[] = [
-        `Company: ${ctx.tenantName}`,
-        `Event: ${ctx.event.name} (${ctx.event.code})`,
-        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
-        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
-        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+Do not use bracketed client fill-in markers. Absence of vendor-approved facts cannot be repaired with generic invented numbers or buyer-internal closure actions.`,
+    buildUserMessage: (ctx) =>
+      [
+        buildD09VendorDraftContext(ctx),
         "",
-        "— UPSTREAM CONTEXT —",
-        "",
-        "Approved Sourcing Strategy Memo (d01_strategy_memo):",
-        upstream.d01_strategy_memo ??
-          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
-        "",
-        "Approved Scope Memo (d05_scope_memo):",
-        upstream.d05_scope_memo ??
-          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
-        "",
-        "— GOVERNED EVIDENCE STATE SUMMARY (NORMALIZED FOR D09) —",
-        formatEvidenceStates(ctx),
-        "",
-        "— PARSED UPLOADED EVIDENCE EXCERPTS —",
-        formatUploadedEvidence(ctx),
-        "",
-      ].filter((line): line is string => line !== null);
-
-      if (upstream.d02_value_target) {
-        lines.push("Value Target Brief (d02_value_target):");
-        lines.push(upstream.d02_value_target);
-        lines.push("");
-      }
-      if (upstream.d04_app_inv) {
-        lines.push("Application Inventory (d04_app_inv) — drives §3:");
-        lines.push(upstream.d04_app_inv);
-        lines.push("");
-      }
-      if (upstream.d07_ticket_synth) {
-        lines.push(
-          "Ticket History Synthesis (d07_ticket_synth) — drives §4 SLA expectations:",
-        );
-        lines.push(upstream.d07_ticket_synth);
-        lines.push("");
-      }
-
-      lines.push(
-        "— D09 RFP EVIDENCE COVERAGE MAP —",
-        formatD09RfpEvidenceCoverage(ctx),
-        "",
-      );
-
-      if (ctx.archetypeAdvisory) {
-        lines.push(
-          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
-          "",
-          ctx.archetypeAdvisory,
-          "",
-        );
-      }
-
-      lines.push(
-        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the issue-to-release register with accountable role/action/why-it-matters instead of filling with generic text. Keep the vendor workflow simple: reference one Vendor Response Workbook with tabs, not many standalone response files. This is a governed vendor-facing draft, not an issued final; do not use bracketed client fill-in markers. If exact human names or calendar dates are missing, use accountable role names and gate-relative target triggers. Keep the draft section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with accountable role, target date or trigger, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
-      );
-      return lines.join("\n");
-    },
+        "Draft only from the bounded vendor-draft context. Keep unsupported fields marked Not issued.",
+      ].join("\n"),
   },
 
   d10_rfi_summary: {
@@ -2670,7 +2651,7 @@ Requirements:
 
   d07_ticket_synth: {
     artifactCode: "d07_ticket_synth",
-    version: 2,
+    version: 3,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -2719,7 +2700,9 @@ Requirements:
         lines.push("");
       }
 
-      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      const evidenceBlock = formatDraftEvidenceContext(ctx, {
+        ticketExcerptCoverage: true,
+      });
       if (evidenceBlock) {
         lines.push(evidenceBlock);
         lines.push("");
@@ -4577,6 +4560,9 @@ export function resolveGenerationEvidenceState(
   item: SourceGenerationContext["evidence"][number],
   includeD09Coverage = true,
 ): string {
+  if (item.applicabilityStatus === "not_applicable") {
+    return "Not applicable — audited owner decision";
+  }
   if (item.currentState !== "Not Requested") return item.currentState;
   if (
     item.requirementId === "EVID-SRC-STR-TRIGGER" &&

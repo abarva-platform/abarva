@@ -60,7 +60,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p4_roadmap_workstreams', 'p4_roadmap_dependencies', 'p4_roadmap_owners'],
     artifactConsumers: ['p4_roadmap', 'execution_roadmap'],
     whatFound: ['roadmap and planning evidence'],
-    whereUsed: ['P4 Roadmap & Business Case', 'P5 Approval & Mobilization'],
+    whereUsed: ['P4 Roadmap & Business Case', 'P5 Mobilize & Handoff'],
   },
   5: {
     evidenceType: 'adoption_change',
@@ -68,7 +68,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p5_raci_owner_model', 'p5_30_60_90_actions'],
     artifactConsumers: ['p5_handoff', 'handoff_package'],
     whatFound: ['execution readiness evidence'],
-    whereUsed: ['P5 Approval & Mobilization', 'Tower Track Outcomes'],
+    whereUsed: ['P5 Mobilize & Handoff', 'Tower Track Outcomes'],
   },
 };
 

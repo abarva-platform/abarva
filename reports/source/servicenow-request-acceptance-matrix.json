@@ -8,14 +8,14 @@
     },
     "candidateSuppliers": {
       "path": "datasets/source/candidate-supplier-registry-synthetic-v1/candidate_supplier_registry.csv",
-      "rows": 25
+      "rows": 28
     }
   },
   "summary": {
     "expectedArchetypes": 10,
     "coveredArchetypes": 10,
     "requestRows": 10,
-    "eligibleSupplierRows": 20,
+    "eligibleSupplierRows": 23,
     "negativeControlRows": 5,
     "decisionGradeRequestRows": 10
   },
@@ -64,11 +64,17 @@
       "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-AMS-001",
-        "SYN-SUP-AMS-002"
+        "SYN-SUP-AMS-002",
+        "SYN-SUP-AMS-003",
+        "SYN-SUP-AMS-005",
+        "SYN-SUP-AMS-004"
       ],
       "eligibleSupplierNames": [
         "Fictional Aster Ridge Managed Services LLC",
-        "Fictional Harborline Application Operations Inc."
+        "Fictional Harborline Application Operations Inc.",
+        "Fictional Linden Vale Endpoint Services LLC",
+        "Fictional Maple Junction Service Operations LLC",
+        "Fictional Westhaven Infrastructure Operations Inc."
       ],
       "existingContractVendorIds": [],
       "rejectedNegativeControlReasons": [

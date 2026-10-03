@@ -2,17 +2,14 @@ import 'server-only';
 
 // PRE-W4-PR-4 · Approval escalation audit writer
 //
-// Centralises the `admin_audit_log` write used by the notify-sponsor
-// and escalate-to-platform-admin server actions. The schema lives in
+// Centralises the `admin_audit_log` write used by the
+// escalate-to-platform-admin server action. The schema lives in
 // `20260426120500_admin_audit_log.sql` — category='approval' is one
 // of the canonical buckets allowed by the table's CHECK constraint.
 //
-// Wave 4 wiring · the two action strings written here
-//   • `approval_sponsor_notified` → Tier 1 `approval.escalated`
-//   • `approval_escalated`         → Tier 2 `approval.escalated`
-// are the source events for the `approval.escalated` notification
-// channel introduced in Wave 4 at severity = critical. The audit row
-// is the source of truth; the runtime mutation on
+// Wave 4 wiring · `approval_escalated` is the source event for the
+// `approval.escalated` notification channel at severity = critical.
+// The audit row is the source of truth; the runtime mutation on
 // `program_approval_requests` is the state-machine side effect.
 //
 // Failure handling · audit-write failures MUST NOT block the runtime
@@ -27,7 +24,6 @@ import { tenantAliasesFor } from '@/lib/tenant/aliases';
 import { isFixtureMode } from '@/lib/admin/data/admin-data-mode';
 
 export type ApprovalEscalationAuditAction =
-  | 'approval_sponsor_notified'
   | 'approval_escalated';
 
 export interface ApprovalEscalationAuditInput {

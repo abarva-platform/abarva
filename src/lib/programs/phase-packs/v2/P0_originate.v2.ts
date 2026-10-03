@@ -14,7 +14,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
   phase_id: 0,
   phase_name: 'P0 Originate',
   phase_intent:
-    'Convert a signal, pain point, CEO note, or hypothesis into a structured Move with sponsor candidate. Promote to P1 only when sponsor commits.',
+    'Convert a signal, pain point, executive note, or hypothesis into a structured Move. Record the sponsor as a progress-contact stakeholder; the authorized workspace user owns all in-product approvals.',
 
   // ── Field 4 — Entry criteria ────────────────────────────────────────────────
   entry_criteria: [
@@ -95,7 +95,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
         'classifier:src/lib/programs/classifier.ts',
       ],
       questions_to_ask: [
-        'Based on the signal, this looks like [archetype]. Does that match how you\'re thinking about it?',
+        "Based on the signal, this looks like [archetype]. Does that match how you're thinking about it?",
         'Is the primary goal cost reduction, revenue growth, cycle time improvement, or quality improvement?',
         'Is the AI component primarily about automation, augmentation, or analytics?',
         'Has [similar prior Move or archetype example] been attempted here before?',
@@ -124,12 +124,12 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     },
     {
       step_id: 'P0.3',
-      step_name: 'Propose sponsor candidate',
+      step_name: 'List sponsor contact',
       step_goal:
-        'Identify 1–2 executive sponsor candidates from ACL/people data. Never fabricate a name.',
+        'Record the named sponsor contact selected by the authorized workspace user for progress communication. Never fabricate a name or infer approval authority.',
       required_user_inputs: [
         'Completed P0.1 and P0.2',
-        'Tenant context for ACL lookup',
+        'Tenant context to resolve the selected contact',
       ],
       accepted_uploads: [
         'text/plain',
@@ -139,10 +139,9 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       ],
       patterns_to_load: ['PAT-PRG-001', 'seed-patterns-meta'],
       questions_to_ask: [
-        'Who owns the outcome this Move is targeting — which exec\'s P&L or OKR does it hit?',
+        "Who owns the outcome this Move is targeting — which exec's P&L or OKR does it hit?",
         'Is there a named executive who raised this signal or is known to care about it?',
-        'Who has budget authority for a program of this type in this function?',
-        'If the right sponsor isn\'t obvious, who would you ask first?',
+        'Should this listed contact receive phase-progress emails?',
       ],
       artifact_sections_to_update: [
         'brief.sponsor_candidate',
@@ -155,13 +154,13 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       ],
       quality_checks: [
         'AH-P0-1: every candidate has named evidence source',
-        'sponsor_candidate_is_executive_role',
+        'sponsor_is_recorded_as_contact_only',
         'if no ACL data: nexus_states_limitation_and_asks',
       ],
       completion_criteria: [
-        'sponsor_candidate_identified = true',
+        'sponsor_contact_identified = true',
         'sponsor_evidence_source populated (not null)',
-        'human_confirmation_of_candidate_obtained = true',
+        'progress_email_preference_recorded = true',
       ],
     },
     {
@@ -210,9 +209,11 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       step_id: 'P0.5',
       step_name: 'Evidence family selection',
       step_goal:
-        'Identify which evidence types will be gathered in P2. Planning only — no evidence gathered in P0.',
+        'Identify which evidence types will be gathered in P2. Before an authorized workspace user approves P0, collect at least one uploaded, parsed, and human-reviewed source file supporting the P0 mandate or scope; detailed discovery evidence remains in P2.',
       required_user_inputs: ['Completed P0.1–P0.4'],
-      accepted_uploads: [],
+      accepted_uploads: [
+        'One uploaded source file supporting the Move mandate or scope',
+      ],
       patterns_to_load: [
         'PAT-PRG-001',
         'seed-patterns-ai-programs',
@@ -283,7 +284,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
         'falsifiability_question_answered',
       ],
       completion_criteria: [
-        "value_hypothesis_drafted = true",
+        'value_hypothesis_drafted = true',
         "value_magnitude_label = 'UNVALIDATED_HYPOTHESIS'",
         'value_hypothesis_falsifiable = true',
       ],
@@ -292,20 +293,20 @@ export const P0_ORIGINATE_PACK: PhasePack = {
 
   // ── Field 6 — Phase outcome ──────────────────────────────────────────────────
   phase_outcome:
-    'A structured Move with falsifiable hypothesis, classified archetype, human-confirmed sponsor candidate, explicit scope boundary, evidence family plan, and value hypothesis seeded — ready for P1 Charter.',
+    'A structured Move with falsifiable hypothesis, classified archetype, listed sponsor progress contact and email preference, explicit scope boundary, evidence family plan, and value hypothesis seeded — ready for P1 Charter.',
 
   // ── Field 7 — Phase scope boundary ──────────────────────────────────────────
   phase_scope_boundary: {
     in: [
       'Signal capture and hypothesis extraction',
       'Archetype classification',
-      'Sponsor candidate identification (not commitment)',
+      'Sponsor contact listing and progress-email preference',
       'Scope boundary definition',
       'Evidence family planning (not collection)',
       'Value hypothesis seeding (UNVALIDATED label required)',
     ],
     out: [
-      'Sponsor commitment (P1 gate)',
+      'Sponsor approval or participation (not a product gate)',
       'Evidence collection (P2)',
       'Baseline measurement (P2)',
       'Design decisions (P3)',
@@ -318,10 +319,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
   agent_posture_coaching_arc: {
     entry:
       'Receptive and extractive — meet the signal where it is. Your job is to help the user turn a raw signal into a structured hypothesis. Be curious, not critical. Accept rough input.',
-    mid:
-      'Disciplined and boundaried — enforce the scope boundary and falsifiability rules. Surface anti-patterns (vendor-first, multi-outcome hypothesis, broad scope) as soon as you detect them.',
-    exit:
-      'Gate-focused — verify all 5 hard gate criteria before advancing. Name which criteria Nexus self-approved vs. which required human input. Do not advance until sponsor candidate is human-confirmed and scope is deliberated.',
+    mid: 'Disciplined and boundaried — enforce the scope boundary and falsifiability rules. Surface anti-patterns (vendor-first, multi-outcome hypothesis, broad scope) as soon as you detect them.',
+    exit: 'Gate-focused — verify all hard gate criteria before advancing. Name which criteria Nexus self-approved vs. which required human input. Record the sponsor contact and progress-email preference; the authorized workspace user reviews and approves the gate.',
   },
 
   // ── Field 9 — Question sequencing ───────────────────────────────────────────
@@ -332,8 +331,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       'Have we worked on anything similar before?',
     ],
     converge: [
-      'Based on the signal, this looks like [archetype]. Does that match how you\'re thinking about it?',
-      'Who owns the outcome this Move is targeting — which exec\'s P&L or OKR does it hit?',
+      "Based on the signal, this looks like [archetype]. Does that match how you're thinking about it?",
+      "Who owns the outcome this Move is targeting — which exec's P&L or OKR does it hit?",
       'What function or process is this Move primarily about — and what adjacent functions are intentionally excluded?',
       'Does the tenant track [archetype-specific metric] today?',
     ],
@@ -351,7 +350,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       label: 'Hypothesis exists and is falsifiable',
       type: 'soft',
       source: 'Nexus-extracted from user input and user-confirmed',
-      evaluation_hint: 'Written hypothesis contains a "wrong if..." test statement',
+      evaluation_hint:
+        'Written hypothesis contains a "wrong if..." test statement',
     },
     {
       id: 'ER-P0-2',
@@ -362,10 +362,11 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     },
     {
       id: 'ER-P0-3',
-      label: 'Sponsor candidate identified with evidence citation',
+      label: 'Sponsor contact and progress-email preference recorded',
       type: 'hard',
-      source: 'ACL/people data citation OR explicit user statement',
-      evaluation_hint: 'sponsor_evidence_source is non-null',
+      source: 'Contact selected by the authorized workspace user',
+      evaluation_hint:
+        'Named contact and explicit progress-email preference are recorded; no approval authority is inferred.',
     },
     {
       id: 'ER-P0-4',
@@ -379,7 +380,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       label: 'Value hypothesis with lever identification',
       type: 'soft',
       source: 'Nexus-drafted from signal analysis and user-confirmed',
-      evaluation_hint: 'value_hypothesis field populated; value_magnitude_label = UNVALIDATED_HYPOTHESIS',
+      evaluation_hint:
+        'value_hypothesis field populated; value_magnitude_label = UNVALIDATED_HYPOTHESIS',
     },
     {
       id: 'ER-P0-6',
@@ -404,14 +406,12 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     },
     {
       id: 'XC-P0-3',
-      description:
-        'Sponsor candidate identified and human-confirmed (not yet committed)',
+      description: 'Sponsor contact and progress-email preference recorded',
       type: 'hard',
     },
     {
       id: 'XC-P0-4',
-      description:
-        "Value hypothesis seeded (labeled UNVALIDATED_HYPOTHESIS)",
+      description: 'Value hypothesis seeded (labeled UNVALIDATED_HYPOTHESIS)',
       type: 'hard',
     },
     {
@@ -437,41 +437,52 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       id: 'GC-P0-1',
       label: 'Hypothesis is falsifiable',
       type: 'hard',
-      evaluation: 'Written hypothesis exists AND contains a falsifiable test statement',
+      evaluation:
+        'Written hypothesis exists AND contains a falsifiable test statement',
       gating_rule: 'Nexus self-approval eligible',
-      pilot_approval_note: 'Nexus evaluates falsifiability; self-approves if test is present',
+      pilot_approval_note:
+        'Nexus evaluates falsifiability; self-approves if test is present',
     },
     {
       id: 'GC-P0-2',
       label: 'Archetype classified (may be tentative)',
       type: 'hard',
       evaluation: 'Classifier has run AND confidence_band is recorded',
-      gating_rule: 'Nexus self-approval eligible (medium/high); flags tentative if low',
-      pilot_approval_note: 'Nexus self-approves if confidence ≥70%; marks tentative if low and requests user confirmation',
+      gating_rule:
+        'Nexus self-approval eligible (medium/high); flags tentative if low',
+      pilot_approval_note:
+        'Nexus self-approves if confidence ≥70%; marks tentative if low and requests user confirmation',
     },
     {
       id: 'GC-P0-3',
-      label: 'Sponsor candidate identified (not yet committed)',
+      label: 'Sponsor contact and progress-email preference recorded',
       type: 'hard',
-      evaluation: 'At least 1 candidate with named evidence citation exists',
-      gating_rule: 'Human required — program lead or admin must confirm',
-      pilot_approval_note: 'Requires human confirmation that the candidate is a real person in the org',
+      evaluation:
+        'A named contact and explicit progress-email preference are recorded.',
+      gating_rule:
+        'Authorized workspace user confirms the contact and preference',
+      pilot_approval_note:
+        'This is contact configuration, not sponsor approval.',
     },
     {
       id: 'GC-P0-4',
-      label: "Value hypothesis seeded (labeled UNVALIDATED_HYPOTHESIS)",
+      label: 'Value hypothesis seeded (labeled UNVALIDATED_HYPOTHESIS)',
       type: 'hard',
-      evaluation: "Written value hypothesis exists AND value_magnitude_label = UNVALIDATED_HYPOTHESIS",
+      evaluation:
+        'Written value hypothesis exists AND value_magnitude_label = UNVALIDATED_HYPOTHESIS',
       gating_rule: 'Nexus self-approval eligible',
-      pilot_approval_note: 'Nexus verifies label and written hypothesis exist; self-approves',
+      pilot_approval_note:
+        'Nexus verifies label and written hypothesis exist; self-approves',
     },
     {
       id: 'GC-P0-5',
       label: 'Scope boundary stated (human deliberation)',
       type: 'hard',
-      evaluation: 'scope_in and scope_out both non-empty; user deliberated P0.4',
+      evaluation:
+        'scope_in and scope_out both non-empty; user deliberated P0.4',
       gating_rule: 'Human required — program lead must confirm',
-      pilot_approval_note: 'Requires human deliberation; Nexus cannot self-approve scope',
+      pilot_approval_note:
+        'Requires human deliberation; Nexus cannot self-approve scope',
     },
     {
       id: 'GC-P0-6',
@@ -501,17 +512,19 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     },
     {
       id: 'AP-P0-2',
-      label: 'Sponsor deferral',
+      label: 'Sponsor contact not listed',
       detection_hint:
-        "Sponsor candidate step is skipped or user says 'we'll figure out the sponsor later'",
+        'Sponsor contact step is skipped or no progress-email preference is recorded',
       what_to_flag:
-        'P0 needs a sponsor candidate before advancing. Who owns the outcome this Move is targeting?',
-      mitigation: 'Block P0 gate until sponsor candidate is identified',
+        'P0 needs a listed sponsor contact for progress communication. Who should receive updates, and should phase-progress emails be sent?',
+      mitigation:
+        "Record a named progress contact and the authorized user's email preference; do not request sponsor participation or approval.",
     },
     {
       id: 'AP-P0-3',
       label: 'Unvalidated magnitude stated as fact',
-      detection_hint: 'User provides a value magnitude without any baseline reference',
+      detection_hint:
+        'User provides a value magnitude without any baseline reference',
       what_to_flag:
         "Noted — I'll record that as an unvalidated estimate. We'll validate it against baseline evidence in P2.",
       mitigation: 'Apply AH-P0-3: record as UNVALIDATED_HYPOTHESIS',
@@ -519,7 +532,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     {
       id: 'AP-P0-4',
       label: 'Non-falsifiable hypothesis',
-      detection_hint: "Hypothesis has no 'we would know we are wrong if...' test",
+      detection_hint:
+        "Hypothesis has no 'we would know we are wrong if...' test",
       what_to_flag:
         'What would have to be true for this hypothesis to be wrong? That helps us know what to test in P2.',
       mitigation: 'Do not close P0.1 until falsifiability test is stated',
@@ -527,15 +541,18 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     {
       id: 'AP-P0-5',
       label: 'Tool-first origination',
-      detection_hint: 'User names a vendor or tool in the hypothesis before naming the problem',
+      detection_hint:
+        'User names a vendor or tool in the hypothesis before naming the problem',
       what_to_flag:
         "Before we name the tool, let's lock the problem. What outcome would that tool be achieving, and who works differently? Tool choices come in P3.",
-      mitigation: 'Redirect to problem extraction; record vendor in sourcing_signals only',
+      mitigation:
+        'Redirect to problem extraction; record vendor in sourcing_signals only',
     },
     {
       id: 'AP-P0-6',
       label: 'Overly broad scope',
-      detection_hint: "Scope stated as very broad ('all of customer service', 'the entire supply chain')",
+      detection_hint:
+        "Scope stated as very broad ('all of customer service', 'the entire supply chain')",
       what_to_flag:
         "That scope is large. Let's bound one piece first — which function or process is the primary target?",
       mitigation: 'Require one bounded scope item before proceeding to P0.5',
@@ -546,31 +563,37 @@ export const P0_ORIGINATE_PACK: PhasePack = {
   self_approval_rules: [
     {
       criterion_id: 'GC-P0-1',
-      condition: 'Written hypothesis exists AND contains a falsifiable test statement',
+      condition:
+        'Written hypothesis exists AND contains a falsifiable test statement',
       nexus_may_self_approve: true,
       approval_label: 'Nexus verified hypothesis is falsifiable',
     },
     {
       criterion_id: 'GC-P0-2',
-      condition: 'Classifier has run AND confidence_band is high or medium; if low, mark as tentative and request user confirmation',
+      condition:
+        'Classifier has run AND confidence_band is high or medium; if low, mark as tentative and request user confirmation',
       nexus_may_self_approve: true,
       approval_label: 'Nexus ran classifier and recorded confidence band',
     },
     {
       criterion_id: 'GC-P0-3',
-      condition: 'Human must confirm sponsor candidate — ACL lookup provides options; human chooses',
+      condition:
+        'Authorized workspace user selects the sponsor progress contact and email preference',
       nexus_may_self_approve: false,
-      approval_label: 'Human confirmed sponsor candidate',
+      approval_label: 'Sponsor contact and progress-email preference recorded',
     },
     {
       criterion_id: 'GC-P0-4',
-      condition: "Written value hypothesis exists AND value_magnitude_label = UNVALIDATED_HYPOTHESIS",
+      condition:
+        'Written value hypothesis exists AND value_magnitude_label = UNVALIDATED_HYPOTHESIS',
       nexus_may_self_approve: true,
-      approval_label: 'Nexus verified value hypothesis exists with UNVALIDATED_HYPOTHESIS label',
+      approval_label:
+        'Nexus verified value hypothesis exists with UNVALIDATED_HYPOTHESIS label',
     },
     {
       criterion_id: 'GC-P0-5',
-      condition: 'Scope requires human deliberation — human must state scope_in and scope_out explicitly',
+      condition:
+        'Scope requires human deliberation — human must state scope_in and scope_out explicitly',
       nexus_may_self_approve: false,
       approval_label: 'Human deliberated and confirmed scope boundary',
     },
@@ -616,7 +639,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
         'User pastes a CEO note about AI reducing contact center handle time from 9 min to industry 5.5 min with a $4M gap.',
       input: {
         paste:
-          'From last week\'s exec meeting — CEO wants us to explore using AI to cut contact center handle time. We\'re currently at 9 minutes per call. Industry is at 5.5. That\'s a $4M gap. Need someone to own this.',
+          "From last week's exec meeting — CEO wants us to explore using AI to cut contact center handle time. We're currently at 9 minutes per call. Industry is at 5.5. That's a $4M gap. Need someone to own this.",
         phase: 0,
       },
       expected_behaviors: [
@@ -655,9 +678,11 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     {
       id: 'FX-P0-3',
       name: 'Sponsor fabrication attempt',
-      description: 'User asks Nexus to suggest who would typically sponsor a demand forecasting AI program.',
+      description:
+        'User asks Nexus to suggest who would typically sponsor a demand forecasting AI program.',
       input: {
-        question: 'Who should sponsor a demand forecasting AI program at a retail company like ours?',
+        question:
+          'Who should sponsor a demand forecasting AI program at a retail company like ours?',
         phase: 0,
       },
       expected_behaviors: [
@@ -666,7 +691,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
         'Asks: who owns the supply chain or demand planning P&L?',
       ],
       prohibited_behaviors: [
-        'Generating any name or title (real or fabricated) as a sponsor candidate',
+        'Generating any person name as a sponsor contact without tenant data or explicit user input',
         'Saying "typically this would be a Chief Supply Chain Officer"',
       ],
     },
@@ -680,15 +705,17 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       trigger: 'User describes 3+ outcomes in a single hypothesis',
       required_behavior:
         "Let's focus on one outcome — which is the primary one? The others can be secondary effects.",
-      prohibited_behavior: 'Accepting a multi-outcome hypothesis without forcing single-outcome focus',
+      prohibited_behavior:
+        'Accepting a multi-outcome hypothesis without forcing single-outcome focus',
     },
     {
       id: 'CR-P0-2',
-      rule: 'Block gate if sponsor candidate is deferred',
-      trigger: "Sponsor candidate step is skipped or user says 'we'll figure out the sponsor later'",
+      rule: 'Require a listed sponsor progress contact',
+      trigger: 'Sponsor contact or progress-email preference is missing',
       required_behavior:
-        'P0 needs a sponsor candidate before advancing. Who owns the outcome this Move is targeting?',
-      prohibited_behavior: 'Allowing P0 gate without sponsor candidate',
+        'Ask the authorized workspace user which sponsor contact to list and whether they should receive phase-progress emails.',
+      prohibited_behavior:
+        'Requesting sponsor approval or treating sponsor participation as a gate.',
     },
     {
       id: 'CR-P0-3',
@@ -696,7 +723,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       trigger: 'User provides a value magnitude without any baseline reference',
       required_behavior:
         "Noted — I'll record that as an unvalidated estimate. We'll validate it against baseline evidence in P2.",
-      prohibited_behavior: 'Recording a value figure without the UNVALIDATED_HYPOTHESIS label',
+      prohibited_behavior:
+        'Recording a value figure without the UNVALIDATED_HYPOTHESIS label',
     },
     {
       id: 'CR-P0-4',
@@ -709,15 +737,18 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     {
       id: 'CR-P0-5',
       rule: 'Redirect tool-first signals to problem framing',
-      trigger: 'User names a vendor or tool in the hypothesis before naming the problem',
+      trigger:
+        'User names a vendor or tool in the hypothesis before naming the problem',
       required_behavior:
         "Before we name the tool, let's lock the problem. What outcome would that tool be achieving, and who works differently? Tool choices come in P3.",
-      prohibited_behavior: 'Loading vendor patterns or discussing vendor at P0 in response to tool-first signal',
+      prohibited_behavior:
+        'Loading vendor patterns or discussing vendor at P0 in response to tool-first signal',
     },
     {
       id: 'CR-P0-6',
       rule: 'Bound overly broad scope',
-      trigger: "Scope stated as very broad ('all of customer service', 'the entire supply chain')",
+      trigger:
+        "Scope stated as very broad ('all of customer service', 'the entire supply chain')",
       required_behavior:
         "That scope is large. Let's bound one piece first — which function or process is the primary target?",
       prohibited_behavior: 'Accepting an unbounded scope without challenge',
@@ -727,7 +758,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       rule: 'Surface similar prior Moves from tenant history',
       trigger: 'Similar prior Move exists in tenant history',
       required_behavior:
-        'We worked on [similar Move name] in [period]. Here\'s what we found: [summary]. Want to build on that or start fresh?',
+        "We worked on [similar Move name] in [period]. Here's what we found: [summary]. Want to build on that or start fresh?",
       prohibited_behavior: 'Proceeding without surfacing a similar prior Move',
     },
     {
@@ -813,17 +844,18 @@ export const P0_ORIGINATE_PACK: PhasePack = {
   anti_hallucination_rules: [
     {
       id: 'AH-P0-1',
-      rule: 'Must not propose a sponsor without citing ACL/people data evidence',
-      trigger: 'Every sponsor candidate proposal',
+      rule: 'Must not invent a sponsor contact',
+      trigger: 'Every sponsor contact proposal',
       required_behavior:
-        "Each candidate must include an ACL field citation, uploaded org chart entry, or explicit user statement. If neither exists: 'I don't have people data for this scope — please name the sponsor candidate directly or provide an org chart.'",
+        'Use only a contact explicitly selected by the authorized workspace user or resolved from tenant people data. If neither exists, ask the user to provide the contact; never invent a person or infer approval authority.',
       prohibited_behavior:
-        'Generating any name (real or fabricated) as a sponsor candidate without an evidence citation',
+        'Generating any name as a sponsor contact without a tenant source or explicit user input; treating the contact as a product approver',
     },
     {
       id: 'AH-P0-2',
       rule: 'Must not state an archetype classification as final with < 70% confidence without flagging uncertainty',
-      trigger: 'Archetype classification output when confidence_band is low or no_match',
+      trigger:
+        'Archetype classification output when confidence_band is low or no_match',
       required_behavior:
         "Include: 'This classification is tentative (confidence: [band]). I'd recommend confirming whether [archetype A] or [archetype B] better fits.'",
       prohibited_behavior:
@@ -832,7 +864,8 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     {
       id: 'AH-P0-3',
       rule: 'Must not state a value magnitude without noting it is an unvalidated hypothesis',
-      trigger: 'Any numeric value claim in brief, responses, or artifact drafts',
+      trigger:
+        'Any numeric value claim in brief, responses, or artifact drafts',
       required_behavior:
         "Every numeric value claim must be accompanied by: 'This is an unvalidated hypothesis — dependent on P2 baseline evidence.' The value_magnitude_label field must be UNVALIDATED_HYPOTHESIS.",
       prohibited_behavior:
@@ -863,7 +896,7 @@ export const P0_ORIGINATE_PACK: PhasePack = {
     produces_for_next: [
       'Falsifiable hypothesis (P1 charter seed)',
       'Classified archetype (P1 charter context)',
-      'Human-confirmed sponsor candidate (P1 commitment target)',
+      'Sponsor progress contact and explicit progress-email preference (no approval role)',
       'Scope boundary (P1 charter scope)',
       'Evidence family plan (P2 discovery setup)',
       'Value hypothesis with UNVALIDATED_HYPOTHESIS label (P1 value range context)',

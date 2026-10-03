@@ -20,8 +20,13 @@ import type {
   MissingEvidenceItem,
   SourceRegisterEntry,
 } from "@/lib/deliverables/orchestrator/types";
+import { extractExcludedNumericClaims } from "@/lib/deliverables/orchestrator/excluded-numeric-claims";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
+import { depthAwareFloors } from "@/lib/deliverables/shared/depth-aware-floor";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
+import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
 
 /** Board-grade defaults shared by orchestrated Move deliverables. */
 const FORMATTING_PROFILE: FormattingProfile = {
@@ -44,7 +49,7 @@ const CHARTER_EVIDENCE_FIELDS: ReadonlyArray<{
 }> = [
   {
     keys: ["sponsor_commitment", "sponsor"],
-    label: "Sponsor commitment",
+    label: "Sponsor contact and progress-email preference",
     evidenceFamily: "charter_sponsor",
   },
   {
@@ -322,15 +327,40 @@ export function buildMoveDeliverableRequest(
   const initiativeDisplayName = asString(input.name) ?? "Strategic Move";
   const clientDisplayName =
     asString(input.tenant_name) ?? asString(input.tenant_key) ?? "Client";
+  const prohibitedNumericClaims =
+    options.deliverableType === "discovery_report" ||
+    options.deliverableType === "root_cause_worksheet" ||
+    options.deliverableType === "design_workshop_guide"
+      ? extractExcludedNumericClaims(governedEvidenceBundle)
+      : [];
+
+  const baseMovesQualityBar = resolveQualityBar(
+    "moves",
+    options.deliverableType,
+  );
+  const movesSlideBandKey = deliverableKeyForOrchestratorType(
+    options.deliverableType,
+  );
+  const movesFloors = depthAwareFloors({
+    deliverableType: options.deliverableType,
+    baseMinWords: baseMovesQualityBar.minBodyWords,
+    baseSlideMin: movesSlideBandKey
+      ? SLIDE_BANDS[movesSlideBandKey]?.min
+      : undefined,
+    confirmedEvidenceCount: governedEvidenceBundle.length,
+  });
 
   const request: DeliverableIntelligenceRequest = {
     module: "moves",
     useCaseArchetype,
     phaseOrStage: options.phaseOrStage,
     deliverableType: options.deliverableType,
+    generationPromptGuidance: getDeliverableSpec(options.deliverableType)
+      ?.generationPromptHint,
     audience: options.audience ?? ["board", "cfo", "cio", "steering_committee"],
     decisionContext: options.decisionContext,
     governedEvidenceBundle,
+    prohibitedNumericClaims,
     sourceRegister,
     requiredEvidenceSignals: isProgramCharterDeliverable(
       options.deliverableType,
@@ -353,7 +383,15 @@ export function buildMoveDeliverableRequest(
     // having at least one governed evidence item upstream, so a missing register
     // here is a real defect, not an empty-bundle edge case.
     qualityBar: {
-      ...resolveQualityBar("moves", options.deliverableType),
+      ...baseMovesQualityBar,
+      // Depth-aware floor keyed to confirmed-evidence volume — this path does
+      // not resolve adaptiveDepth, so the count of governed evidence items the
+      // deliverable is built from is the honest scope signal. No-op for every
+      // type not in the depth-scaled set. See shared/depth-aware-floor.ts.
+      minBodyWords: movesFloors.minBodyWords,
+      ...(movesFloors.slideMin !== undefined
+        ? { slideFloor: movesFloors.slideMin }
+        : {}),
       requiresSourceRegister: true,
     },
     clientDisplayName,

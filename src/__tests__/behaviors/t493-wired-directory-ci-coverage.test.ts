@@ -88,6 +88,20 @@ const WIRED: ReadonlyArray<{ directory: string; minimumSuites: number }> = [
  */
 const HELD_DIRECTORY = "src/lib/intelligence/synthesis/__tests__";
 
+/**
+ * Item 26, 2026-10-01. The one row the hold still rests on (owner T-495), and
+ * the four green suites run by named file beside it. Each of the four has a
+ * product importer: the ask synthesizer, the agent chat route, the Programs
+ * aVa quality gate and the pilot dashboard aggregates.
+ */
+const HELD_SCANNER = `${HELD_DIRECTORY}/violationsMigration.test.ts`;
+const NAMED_FILE_WIRED: ReadonlyArray<string> = [
+  `${HELD_DIRECTORY}/healthcareAnswerContract.test.ts`,
+  `${HELD_DIRECTORY}/outputValidator.test.ts`,
+  `${HELD_DIRECTORY}/violationsRecorder.test.ts`,
+  `${HELD_DIRECTORY}/violationsSupabaseBackend.test.ts`,
+];
+
 type CensusDirectoryRow = {
   directory: string;
   testFiles: number;
@@ -174,6 +188,7 @@ const record = JSON.parse(
 ) as {
   wiring: { directories: string[]; workflow: string; suitesWired: number };
   heldDirectories: Record<string, string>;
+  namedFileWiring?: { workflow: string; paths: string[]; leftDark: string[] };
   suites: { path: string; directory: string; wiredInThisItem: boolean }[];
 };
 
@@ -340,34 +355,87 @@ describe("the nine T-493 directories a workflow actually reaches", () => {
     }
   });
 
-  it("keeps the tenth drawn directory dark, and keeps saying why in the record", () => {
+  it("keeps the tenth drawn directory's scanner dark, and keeps saying why in the record", () => {
     /*
-     * The held directory is the half of this change that did NOT happen, and it
-     * is asserted rather than left to prose. It must still be reported dark by
-     * the census, still be in the dark baseline, and still carry a written
-     * reason in the record. A change that wires it has to delete this case on
-     * purpose, which is the point: the three green suites inside it are not
-     * finished work, they are blocked work.
+     * The held directory is the half of T-493 that did NOT happen, and it is
+     * asserted rather than left to prose. Until 2026-10-01 this case asserted
+     * all five files dark. Item 26 then ran the four green suites whose
+     * subjects product code imports by NAMED FILE (the T-780 precedent), so
+     * what stays dark is exactly the one row the hold rests on: the T-495
+     * source-text scanner over a committed migration, which T-550's rule
+     * refuses to wire whether it passes or not. The directory itself is still
+     * never named whole — that would wire the scanner — and the record still
+     * carries the written reason.
      */
     expect(Object.keys(record.heldDirectories)).toEqual([HELD_DIRECTORY]);
     expect(record.heldDirectories[HELD_DIRECTORY].length).toBeGreaterThan(200);
     expect(record.wiring.directories).not.toContain(HELD_DIRECTORY);
 
-    const declared = JSON.parse(
-      readFileSync(path.join(repoRoot, DARK_BASELINE), "utf8"),
-    ) as string[];
-    expect(declared).toContain(HELD_DIRECTORY);
-    expect(
-      census.uncoveredDirectories.some(
-        (row) => row.directory === HELD_DIRECTORY,
-      ),
-    ).toBe(true);
-    // Every one of its five drawn files is still unrun, which is what "dark"
-    // means measured rather than asserted.
     const heldPaths = record.suites
       .filter((s) => s.directory === HELD_DIRECTORY)
       .map((s) => s.path);
     expect(heldPaths).toHaveLength(5);
-    expect(heldPaths.filter((p) => unrunPaths.has(p))).toEqual(heldPaths);
+    expect(heldPaths).toContain(HELD_SCANNER);
+    expect([...NAMED_FILE_WIRED, HELD_SCANNER].sort()).toEqual([...heldPaths].sort());
+
+    // Measured, not asserted: the census's own unrun list for this directory
+    // is the scanner and nothing else.
+    const unrunHere = unrunByDirectory.find(
+      (row) => row.directory === HELD_DIRECTORY,
+    );
+    expect(unrunHere?.unrunTestPaths ?? []).toEqual([HELD_SCANNER]);
+    expect(
+      census.partiallyCoveredDirectories.find(
+        (row) => row.directory === HELD_DIRECTORY,
+      ),
+    ).toMatchObject({ testFiles: 5, coveredTestFiles: 4 });
+
+    // PARTIAL now, so it leaves the fully-dark baseline; a line claiming it
+    // was fully dark would be false in the direction that hides work.
+    const declared = JSON.parse(
+      readFileSync(path.join(repoRoot, DARK_BASELINE), "utf8"),
+    ) as string[];
+    expect(declared).not.toContain(HELD_DIRECTORY);
+  });
+
+  it("runs the four green synthesis suites by named file, and never names the held directory whole", () => {
+    expect(record.namedFileWiring?.paths ?? []).toEqual(NAMED_FILE_WIRED);
+    expect(record.namedFileWiring?.workflow).toBe(WIRING_WORKFLOW);
+    expect(record.namedFileWiring?.leftDark).toEqual([HELD_SCANNER]);
+
+    const commands = expandedWorkflowCommands().filter((command) =>
+      /\b(?:npx\s+)?(?:jest|vitest|playwright)\b/.test(command),
+    );
+    const escaped = (text: string) =>
+      text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const bare = (text: string) =>
+      new RegExp(`(?:^|[\\s"'\`=])${escaped(text)}(?=$|[\\s"'\`])`);
+
+    // No command anywhere names the directory as a bare argument: jest would
+    // take it as a pattern and select the scanner with its siblings.
+    expect(commands.filter((command) => bare(HELD_DIRECTORY).test(command))).toEqual([]);
+    // And none names the scanner by path.
+    expect(commands.filter((command) => command.includes(HELD_SCANNER))).toEqual([]);
+
+    // Each wired file is named literally, in a --runTestsByPath command in the
+    // wiring workflow, so a bracket or dot in a path is never read as a regex.
+    const workflow = readFileSync(path.join(repoRoot, WIRING_WORKFLOW), "utf8");
+    for (const testPath of NAMED_FILE_WIRED) {
+      expect({ testPath, inWiringWorkflow: bare(testPath).test(workflow) }).toEqual({
+        testPath,
+        inWiringWorkflow: true,
+      });
+      const carrying = commands.filter(
+        (command) => /--runTestsByPath\b/.test(command) && bare(testPath).test(command),
+      );
+      expect({ testPath, namedByPath: carrying.length > 0 }).toEqual({
+        testPath,
+        namedByPath: true,
+      });
+      expect({ testPath, unrun: unrunPaths.has(testPath) }).toEqual({
+        testPath,
+        unrun: false,
+      });
+    }
   });
 });

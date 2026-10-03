@@ -36,7 +36,7 @@ import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 
 const EXPECTED_STAGE_MARKER: Partial<Record<SourceStageKey, string>> = {
   strategy: "Confirm strategy & sponsor",
-  scope: "Provide the volumetrics",
+  scope: "Provide ticket volumes",
   rfp: "Confirm RFP clause coverage",
   responses: "Confirm vendor response coverage",
   evaluation: "Confirm vendor bids for should-cost",
@@ -68,7 +68,7 @@ function makeEvent(): SourcingEventSummary {
     owner: "K. Oshima",
     agingDays: 4,
     blocker: null,
-    nextAction: "Provide the volumetrics",
+    nextAction: "Provide ticket volumes",
     isAtRisk: false,
     valueAtStakeUsd: 1_000_000,
     projectedValueUsd: 200_000,
@@ -107,7 +107,7 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
           screen.getByText("No required steps are defined for this stage yet."),
         ).toBeInTheDocument();
         expect(
-          screen.queryByText("Provide the volumetrics"),
+          screen.queryByText("Provide ticket volumes"),
         ).not.toBeInTheDocument();
         return;
       }
@@ -120,7 +120,7 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
 
       if (stageKey !== "scope") {
         expect(
-          screen.queryByText("Provide the volumetrics"),
+          screen.queryByText("Provide ticket volumes"),
         ).not.toBeInTheDocument();
         expect(
           screen.queryByText("Sponsor commitment"),
@@ -178,7 +178,7 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Provide the volumetrics/ }),
+      screen.getByRole("button", { name: /Provide ticket volumes/ }),
     );
 
     expect(
@@ -189,16 +189,16 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
     ).toHaveTextContent(/What to load/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
-    ).toHaveTextContent(/Volumetrics file/i);
+    ).toHaveTextContent(/Ticket-history file/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
-    ).toHaveTextContent(/ITSM \/ finance baseline/i);
+    ).toHaveTextContent(/ITSM ticket export/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
     ).toHaveTextContent(/CSV or XLSX/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
-    ).toHaveTextContent(/Tickets, SLA misses, change orders, run volumes/i);
+    ).toHaveTextContent(/Ticket counts and SLA breach counts/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
     ).toHaveTextContent(/Action needed/i);

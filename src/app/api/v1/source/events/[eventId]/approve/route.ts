@@ -1,17 +1,14 @@
 // POST /api/v1/source/events/[eventId]/approve
 //
-// Client-scoped Source approval endpoint. EVERY stage gate is a real approval
-// that advances the event to the next stage in the event's resolved journey.
-// The event-creation approval IS the strategy gate (attests the reviewer read the
-// auto-generated strategy memo, the value target, and the archetype + rigor call)
-// and advances strategy → scope; approving on any later stage advances to that
-// stage's successor. Confirmations are validated
-// against the CURRENT stage's gate keys, not a hardcoded strategy set.
+// Client-scoped Source approval endpoint. Standard initial Request acceptance
+// activates the Strategy workspace without approving its unfinished artifacts.
+// Stage-gate approvals then advance the event through its resolved journey.
+// Tenant-opted Strategy-at-P0 retains its combined Request/Strategy decision.
 //
 // Actions:
 //   approve   → lifecycle_state 'active' while work remains, or 'completed'
 //               on the resolved journey's terminal stage; requires the current
-//               stage's confirmations and otherwise advances to the next stage.
+//               decision's confirmations and advances only at a stage gate.
 //   send_back → stays 'waiting_on_client'; the reviewer's comment is recorded
 //               so the creator can revise.
 //   reject    → lifecycle_state 'archived'.
@@ -20,7 +17,9 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { after } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getActiveClientRow } from "@/lib/active-client";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import {
   isGateApprovalStrictMode,
@@ -34,7 +33,7 @@ import {
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
-import { normalizeSourceStageKey } from "@/lib/source/constants";
+import { normalizeSourceStageKey, SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
 import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
@@ -50,7 +49,14 @@ import {
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
+import { evaluateRequestVersionApproval } from "@/lib/source/new-workspace/source-version-authority";
 import { resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
+import {
+  formatSourceSponsorContext,
+  parseSourceSponsorContext,
+  type SourceSponsorContext,
+} from "@/lib/source/sponsor-context";
+import { sendSourceStageDecisionUpdates } from "@/lib/source/notifications/stage-decision-update";
 
 // Every lifecycle decision gets its own action type, so the activity table can
 // be read without inferring the decision from the reason text.
@@ -72,6 +78,7 @@ interface ApproveBody {
   confirmations?: SourceStageConfirmations;
   selfApproveIfAuthorized?: boolean;
   requestAuthorityVersionId?: string;
+  sponsorContext?: unknown;
 }
 
 /**
@@ -83,6 +90,8 @@ function composeApprovalNotes(
   action: ApproveBody["action"],
   currentStageKey: string | null,
   isSelfApproval = false,
+  sponsorContext: SourceSponsorContext | null = null,
+  isRequestAcceptance = false,
 ): string | null {
   const trimmed = comment?.trim();
   // The approval screen tells a self-approving creator that this decision is
@@ -91,8 +100,16 @@ function composeApprovalNotes(
     ? "Self-approval notice: the approver is the recorded event creator."
     : null;
   const withNotice = (value: string | null) =>
-    [selfApprovalNotice, value].filter(Boolean).join("\n\n") || null;
+    [selfApprovalNotice, value, sponsorContext ? formatSourceSponsorContext(sponsorContext) : null]
+      .filter(Boolean).join("\n\n") || null;
   if (action === "approve") {
+    if (isRequestAcceptance) {
+      return withNotice(
+        trimmed
+          ? `Approved the current Request intake facts.\n${trimmed}`
+          : "Approved the current Request intake facts.",
+      );
+    }
     // Strategy approval is the P0 memo/value/archetype attestation; every other
     // stage attests that stage's gate boxes.
     const attest =
@@ -191,11 +208,18 @@ export async function POST(
   } catch {
     return Response.json({ error: "invalid_approval_policy" }, { status: 409 });
   }
+  if (approvalPolicy.selfApprovalAllowed &&
+    accessPolicy.accessLevel !== "client_admin" &&
+    event.created_by_user_id !== tenancy.userId) {
+    return Response.json({
+      error: "event_owner_or_admin_required",
+      detail: "The event creator or client admin must record this stage decision.",
+    }, { status: 403 });
+  }
 
-  // Resolve the decision (validates action + confirmations, decides the
-  // lifecycle transition and whether to advance the stage). Confirmations are
-  // validated against the CURRENT stage's gate keys — not a hardcoded strategy
-  // set — so an approve on any stage requires exactly that stage's boxes.
+  // Request acceptance confirms the intake facts; stage promotion confirms the
+  // current stage's separate gate. The standard Request decision never skips a
+  // Strategy requirement because it does not attempt Strategy promotion.
   const currentStageKey = event.current_stage_key as string | null;
   const currentStage = normalizeSourceStageKey(currentStageKey);
   const normalizedClientKey = activeClient.key.trim().toLowerCase();
@@ -216,17 +240,68 @@ export async function POST(
   const effectiveCurrentStage = currentStage
     ? coerceStageToSourceJourney(journey, currentStage, currentStage)
     : null;
+  const fromState = event.lifecycle_state as string;
+  const couldAcceptRequest =
+    body.action === "approve" &&
+    fromState === "waiting_on_client" &&
+    (effectiveCurrentStage ?? currentStageKey) === "strategy";
+  const requestAuthority = couldAcceptRequest
+    ? await readSourceAuthorityVersionState(eventId, normalizedClientKey, "request")
+    : null;
+  if (requestAuthority &&
+    (requestAuthority.kind !== "available" || !requestAuthority.currentVersion)) {
+    return Response.json({
+      error: "request_authority_unavailable",
+      detail: "The current governed Request version is unavailable. Reload or repair the intake before approval.",
+    }, { status: 409 });
+  }
+  const requestApproval = requestAuthority?.kind === "available" && requestAuthority.currentVersion
+    ? evaluateRequestVersionApproval({
+        currentVersionId: requestAuthority.currentVersion.id,
+        approvals: requestAuthority.approvals,
+      })
+    : null;
+  if (requestApproval?.status === "changes_requested") {
+    return Response.json({
+      error: "request_revision_required",
+      detail: "Changes were requested for the current Request version. Revise it before approval.",
+    }, { status: 409 });
+  }
+  const acceptsInitialRequest = couldAcceptRequest && requestApproval?.status === "pending";
+  const requestOnlyAcceptance =
+    acceptsInitialRequest &&
+    !isFeatureEnabled(
+      { clientKey: activeClient.key, clientId: activeClient.id ?? null },
+      "source_strategy_at_p0",
+    );
+  const ownerScopeApproval = body.action === "approve" &&
+    effectiveCurrentStage === "scope" && approvalPolicy.selfApprovalAllowed;
+  if (body.sponsorContext !== undefined && !ownerScopeApproval) {
+    return Response.json({ error: "sponsor_context_policy_mismatch" }, { status: 409 });
+  }
+  const sponsorContext = ownerScopeApproval
+    ? parseSourceSponsorContext(body.sponsorContext)
+    : null;
+  if (ownerScopeApproval && !sponsorContext) {
+    return Response.json({
+      error: "sponsor_context_required",
+      detail: "Name the sponsor, title, role and notification email, then explicitly acknowledge that you are the approving actor.",
+    }, { status: 422 });
+  }
   const nextStage = nextSourceStageForJourney(effectiveCurrentStage, journey);
   const decision = evaluateSourceApprovalDecision(
     body.action,
     body.confirmations,
     {
       currentStageKey: effectiveCurrentStage ?? currentStageKey,
-      requiredConfirmationKeys: confirmationKeysForStage(
-        effectiveCurrentStage ?? currentStageKey,
-      ),
-      nextStageKey: nextStage,
-      isTerminalStage: effectiveCurrentStage !== null && nextStage === null,
+      requiredConfirmationKeys: requestOnlyAcceptance
+        ? ["requestFactsReviewed"]
+        : confirmationKeysForStage(effectiveCurrentStage ?? currentStageKey),
+      nextStageKey: requestOnlyAcceptance ? null : nextStage,
+      isTerminalStage:
+        !requestOnlyAcceptance &&
+        effectiveCurrentStage !== null &&
+        nextStage === null,
     },
   );
   if (!decision.ok) {
@@ -248,11 +323,12 @@ export async function POST(
   // so the server derives it from the stored creator. The client flag stays
   // honoured for callers that send it, but omitting it no longer hides a
   // self-approval from the strict-mode gate or from the approval record.
-  const isSelfApproval = Boolean(
+  const isEventCreator = Boolean(
     event.created_by_user_id && event.created_by_user_id === tenancy.userId,
   );
+  const isSelfApproval = body.action === "approve" && isEventCreator;
   const selfApprovalClaimed = body.selfApproveIfAuthorized === true;
-  if ((selfApprovalClaimed || isSelfApproval) && strictMode) {
+  if (body.action !== "reject" && (selfApprovalClaimed || isEventCreator) && strictMode) {
     if (!isStrictModeApprovalRole(tenancy.role)) {
       return Response.json(
         {
@@ -331,12 +407,7 @@ export async function POST(
     }
   }
 
-  const fromState = event.lifecycle_state as string;
   const toState = decision.toState!;
-  const acceptsInitialRequest =
-    body.action === "approve" &&
-    fromState === "waiting_on_client" &&
-    (effectiveCurrentStage ?? currentStageKey) === "strategy";
   let authorityApproval:
     | {
         authorityKind: "request";
@@ -348,13 +419,8 @@ export async function POST(
       }
     | undefined;
   if (acceptsInitialRequest) {
-    const requestAuthority = await readSourceAuthorityVersionState(
-      eventId,
-      normalizedClientKey,
-      "request",
-    );
     if (
-      requestAuthority.kind !== "available" ||
+      requestAuthority?.kind !== "available" ||
       !requestAuthority.currentVersion
     ) {
       return Response.json(
@@ -407,8 +473,12 @@ export async function POST(
       body.action,
       effectiveCurrentStage ?? currentStageKey,
       isSelfApproval,
+      sponsorContext,
+      requestOnlyAcceptance,
     ),
-    stageKey: effectiveCurrentStage ?? currentStageKey,
+    stageKey: requestOnlyAcceptance
+      ? null
+      : effectiveCurrentStage ?? currentStageKey,
     authorityApproval,
   });
 
@@ -434,7 +504,9 @@ export async function POST(
     actorDisplayName: null,
     actorRole: tenancy.role ?? null,
     actionType: ACTIVITY_ACTION_TYPE[body.action],
-    actionLabel: ACTIVITY_ACTION_LABEL[body.action],
+    actionLabel: requestOnlyAcceptance
+      ? "Approved the Request intake"
+      : ACTIVITY_ACTION_LABEL[body.action],
     stageKey: effectiveCurrentStage ?? currentStageKey,
     reason: body.notes?.trim() || null,
     metadata: {
@@ -442,6 +514,8 @@ export async function POST(
       toState,
       approvalAction: decision.approvalAction,
       selfApproval: isSelfApproval,
+      ...(requestOnlyAcceptance ? { authorityKind: "request" } : {}),
+      ...(sponsorContext ? { sponsorContext } : {}),
       intendedAdvanceStageTo: decision.advanceStageTo ?? null,
     },
     occurredAtIso: new Date().toISOString(),
@@ -454,10 +528,8 @@ export async function POST(
   }
 
   if (body.action === "approve" && effectiveCurrentStage) {
-    // Gate approval materializes the approved stage's required, gate-defining
-    // artifacts as AI-prepared drafts. Stage entry can still draft the next
-    // stage through the stage API, but approval output belongs to the stage the
-    // human just attested.
+    // Request acceptance starts Strategy drafting; later gate decisions can
+    // draft the stage the user just approved. Neither draft is accepted evidence.
     after(async () => {
       try {
         await autoDraftOnStageEntry(
@@ -484,9 +556,8 @@ export async function POST(
     });
   }
 
-  // Advance the event to the next stage on approval (strategy→scope, scope→rfp,
-  // …; no-op on the final `value` stage). A failed stage write fails closed so
-  // the page never implies a gate advanced when the database says otherwise.
+  // Only stage-gate approval advances to a successor. A failed stage write
+  // fails closed so the page never implies a gate advanced when it did not.
   let stageAdvancedTo: string | null = null;
   if (decision.advanceStageTo) {
     const stageWrite = await selectSourceWriteAdapter(
@@ -518,6 +589,28 @@ export async function POST(
     } else {
       stageAdvancedTo = decision.advanceStageTo;
     }
+  }
+
+  if (body.action === "approve" && effectiveCurrentStage) {
+    const actor = await getCurrentUser().catch(() => null);
+    after(async () => {
+      try {
+        await sendSourceStageDecisionUpdates({
+          eventId,
+          clientKey: activeClient.key,
+          eventName: event.event_name?.trim() || `Sourcing event ${eventId}`,
+          stageKey: effectiveCurrentStage,
+          stageLabel: requestOnlyAcceptance
+            ? "Request intake"
+            : SOURCE_STAGE_LABELS[effectiveCurrentStage],
+          actorUserId: tenancy.userId,
+          actorName: actor?.name?.trim() || "An authorized Source approver",
+          ...(sponsorContext ? { sponsorEmail: sponsorContext.email } : {}),
+        });
+      } catch (error) {
+        console.error("[source stage decision update] notification failed", error);
+      }
+    });
   }
 
   return Response.json({

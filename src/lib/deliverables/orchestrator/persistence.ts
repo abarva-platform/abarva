@@ -21,10 +21,7 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import {
-  renderDeliverableDocx,
-  renderDeliverableHtml,
-} from "./renderers";
+import { renderDeliverableDocx, renderDeliverableHtml } from "./renderers";
 import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
@@ -38,6 +35,7 @@ import {
   buildContractInput,
   deliverableKeyForRegistryKey,
   deliverableKeyForOrchestratorType,
+  renderedContractExhibitsFromDocument,
 } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import {
@@ -86,6 +84,10 @@ export interface PersistDeliverableOptions {
   outputFormat?: GeneratedArtifactFormat; // default 'docx'
   /** governed evidence ledger ids used (for the artifact's audit trail). */
   evidenceLedgerIds?: string[];
+  /** Approved Move evidence revision captured for this generated artifact. */
+  evidenceSnapshotHash?: string;
+  /** Phase-scoped approved evidence used directly by this generated artifact. */
+  phaseEvidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
   userId?: string;
@@ -268,8 +270,44 @@ function buildGenerationMetrics(
   };
 }
 
+/**
+ * The reason an artifact is held, with what each blocking finding found.
+ *
+ * The reason used to be the state and the finding names only — "blocked_
+ * missing_exhibits: exhibit_enforcement" — which says an exhibit is missing
+ * and not which. The finding already carries that; it is now included.
+ */
+export function quarantineReasonWithDetail(
+  state: string,
+  blockingFindings: ReadonlyArray<{
+    dimension?: string;
+    detail?: ReadonlyArray<string>;
+  }>,
+): string {
+  const parts = blockingFindings.map((finding) => {
+    const name = finding.dimension ?? "unnamed";
+    const detail = (finding.detail ?? []).slice(0, 8).join(", ");
+    return detail ? `${name} (${detail})` : name;
+  });
+  return `${state}: ${parts.join(", ")}`;
+}
+
 function renderedVisualsPresent(html: string): boolean {
   return /<(?:svg|img|table)\b/i.test(html);
+}
+
+function nativePptxDeckSatisfiesVisualContract(
+  doc: RenderableDeliverable,
+  deliverableKey: DeliverableKey,
+  outputFormat: GeneratedArtifactFormat,
+): boolean {
+  if (outputFormat !== "pptx" || !doc.deckSlides?.length) return false;
+  const profile = DELIVERABLE_PROFILES[deliverableKey];
+  if (profile.renderer !== "pptx_storyline") return false;
+  const rendered = new Set(
+    renderedContractExhibitsFromDocument(doc, deliverableKey),
+  );
+  return profile.requiredExhibits.every((id) => rendered.has(id));
 }
 
 function escapeRegExp(value: string): string {
@@ -329,6 +367,18 @@ async function renderOfficeCompanion(
         `generated_pptx_failed_physical_integrity: ${rendered.integrityFailures
           .slice(0, 3)
           .join("; ")}`,
+      );
+    }
+    if (!rendered.verdict.ok) {
+      const qualityFailures = rendered.verdict.findings
+        .filter(
+          (finding) =>
+            finding.kind !== "off_canvas" && finding.kind !== "canvas",
+        )
+        .slice(0, 3)
+        .map((finding) => finding.message);
+      throw new Error(
+        `generated_pptx_failed_content_quality: ${qualityFailures.join("; ")}`,
       );
     }
     return {
@@ -469,6 +519,11 @@ export async function persistDeliverable(
     const renderedDeckExhibits = opts.structuredModels?.storylineDeck
       ? deckExhibitsRenderedAsVisual(html, opts.structuredModels.storylineDeck)
       : [];
+    const nativePptxDeckVisualsPresent = nativePptxDeckSatisfiesVisualContract(
+      doc,
+      contractDeliverableKey,
+      outputFormat,
+    );
     additionalExhibits.push(...renderedDeckExhibits);
 
     const contractInput = buildContractInput({
@@ -489,9 +544,10 @@ export async function persistDeliverable(
       ...contractInput,
       exhibitsRenderedAsVisual:
         architectureSignals.exhibitsRenderedAsVisual ??
-        (opts.structuredModels?.storylineDeck
-          ? renderedDeckExhibits.length > 0
-          : renderedVisualsPresent(html)),
+        (nativePptxDeckVisualsPresent ||
+          (opts.structuredModels?.storylineDeck
+            ? renderedDeckExhibits.length > 0
+            : renderedVisualsPresent(html))),
       ...architectureSignals,
       deliverableKey: contractDeliverableKey,
     });
@@ -540,7 +596,10 @@ export async function persistDeliverable(
       );
       if (opts.enforceQualityContract || profile.visualRendererRequired) {
         qualityQuarantined = true;
-        qualityQuarantineReason = `${assessment.state}: ${reasons}`;
+        qualityQuarantineReason = quarantineReasonWithDetail(
+          assessment.state,
+          blockingFindings,
+        );
       }
     }
   }
@@ -620,6 +679,15 @@ export async function persistDeliverable(
     ...(opts.generationLineage
       ? { generationLineage: opts.generationLineage }
       : {}),
+    ...(opts.evidenceSnapshotHash
+      ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+      : {}),
+    ...(opts.phaseEvidenceSnapshotHash
+      ? {
+          phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
+          evidenceSnapshotScope: "phase",
+        }
+      : {}),
     ...(opts.structuredModels?.architectureModel
       ? { architectureModel: opts.structuredModels.architectureModel }
       : {}),
@@ -637,8 +705,7 @@ export async function persistDeliverable(
       renderableDocWithType,
       outputFormat,
     );
-    const materialize =
-      deps.materializeDeliverableDraft ?? completeDeliverable;
+    const materialize = deps.materializeDeliverableDraft ?? completeDeliverable;
     const materialized = await materialize(
       {
         clientId: opts.clientId,
@@ -660,6 +727,15 @@ export async function persistDeliverable(
           requiresOfficeCompanionScan: Boolean(officeCompanion),
           ...(opts.generationLineage
             ? { generationLineage: opts.generationLineage }
+            : {}),
+          ...(opts.evidenceSnapshotHash
+            ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+            : {}),
+          ...(opts.phaseEvidenceSnapshotHash
+            ? {
+                phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
+                evidenceSnapshotScope: "phase",
+              }
             : {}),
         },
       },
@@ -702,6 +778,16 @@ export async function persistDeliverable(
             versionId: materialized.versionId,
             generatedArtifactId: record.id,
             outputFormat,
+            ...(opts.evidenceSnapshotHash
+              ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+              : {}),
+            ...(opts.phaseEvidenceSnapshotHash
+              ? {
+                  phaseEvidenceSnapshotHash:
+                    opts.phaseEvidenceSnapshotHash,
+                  evidenceSnapshotScope: "phase",
+                }
+              : {}),
             outputRole: `${officeCompanion.fileFormat}_editable_phase_record`,
           },
         },

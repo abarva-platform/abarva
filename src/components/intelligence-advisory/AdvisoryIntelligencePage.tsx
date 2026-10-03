@@ -20,6 +20,13 @@ type AssistantMessage = {
   role: "assistant";
   question: string;
   answer: string;
+  /**
+   * Every `delta` received so far, unstripped. The visible `answer` is derived
+   * from it on each chunk. Stripping the visible text and appending the next
+   * chunk to that loses a payload opener the strip already removed, and trims
+   * the whitespace a chunk ended on (item U-549).
+   */
+  rawAnswer?: string;
   agentAnswer?: AvaAnswerPacket | null;
   status: "thinking" | "streaming" | "done" | "error";
   sources: AskSource[];
@@ -153,6 +160,7 @@ export function AdvisoryIntelligencePage({
       role: "assistant",
       question: trimmed,
       answer: "",
+      rawAnswer: "",
       status: "thinking",
       streamStatus: "Gathering client context...",
       sources: [],
@@ -240,15 +248,15 @@ export function AdvisoryIntelligencePage({
         if (m.id !== assistantId || m.role !== "assistant") return m;
         if (event.type === "delta") {
           const delta = eventText(event);
-          return delta
-            ? {
-                ...m,
-                answer: stripGovernedArtifactPayloadsFromText(
-                  `${m.answer}${delta}`,
-                ),
-                streamStatus: undefined,
-              }
-            : { ...m, streamStatus: "Writing the executive read..." };
+          if (!delta)
+            return { ...m, streamStatus: "Writing the executive read..." };
+          const rawAnswer = `${m.rawAnswer ?? ""}${delta}`;
+          return {
+            ...m,
+            rawAnswer,
+            answer: stripGovernedArtifactPayloadsFromText(rawAnswer),
+            streamStatus: undefined,
+          };
         }
         if (event.type === "context-summary") {
           return {

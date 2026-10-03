@@ -85,7 +85,7 @@ describe('GET /api/v1/deliverables/runs/[runId]', () => {
     expect(json.blobUrl).toBeNull();
     expect(json.blockers).toContain('no source register');
     expect(json.packageReadiness).toMatchObject({
-      label: 'Cannot assemble executive package',
+      label: 'Build blocked',
       evidenceCoveragePct: 0,
       confidenceTier: 'bronze',
       confidenceLabel: 'Internal working draft',
@@ -94,7 +94,7 @@ describe('GET /api/v1/deliverables/runs/[runId]', () => {
         'Upload and approve the phase workshop outputs, source files, and decision evidence, then re-run Approve & Build.',
     });
     expect((json.packageReadiness as { missing: string[] }).missing).toContain(
-      'Source-backed evidence attached to this Move',
+      'Source register for this Move',
     );
   });
 });

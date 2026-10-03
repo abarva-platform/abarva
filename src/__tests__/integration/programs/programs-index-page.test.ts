@@ -58,7 +58,7 @@ describe("Programs index linked-state and filters", () => {
     expect(view.name).toBe("Agentic Care Data Accelerator");
     expect(view.currentPhase).toBe(3);
     expect(view.gateStatus).toBe("pending");
-    expect(view.workbench.title).toBe("P3 Design · Simulation Evidence Review");
+    expect(view.workbench.title).toBe("P3 Design Future State · Simulation Evidence Review");
     expect(
       view.phasePanel.gateCriteria?.some((criterion) =>
         criterion.criterion.includes("Live corpus IDs captured"),

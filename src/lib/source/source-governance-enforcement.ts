@@ -6,6 +6,7 @@ import type {
   SourceEventGateCriterion,
 } from "./canvas-substrate";
 import { isFactBackedEvidence } from "./canvas-substrate/fact-derived-evidence";
+import { evidenceHasMinimumState, evidenceMeetsRequirement, hasAuditedAbsence, requiresRecordedSource, hasRecordedSource } from "./evidence-authority";
 import type { SourceStageKey } from "./types";
 import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy, sourceEvidenceAppliesToApprovalPolicy, type SourceApprovalPolicyCode } from "./approval-policy";
 
@@ -30,16 +31,6 @@ const SIGNER_PROOF_REQUIRED_CRITERIA = new Set([
   "GATE-SCOPE-02",
   "GATE-SCOPE-04",
 ]);
-
-const EVIDENCE_RANK: Record<SourceEventEvidence["currentState"], number> = {
-  "Not Requested": 0,
-  Loaded: 1,
-  Parsed: 2,
-  Available: 3,
-  "Usable Evidence": 4,
-  Stale: -1,
-  "Low Confidence": -1,
-};
 
 export function normalizeApprovalReason(reason: unknown): string {
   return typeof reason === "string" ? reason.trim() : "";
@@ -136,12 +127,12 @@ export function evaluateCriterionMetReadiness(input: {
     const state = input.evidence.find(
       (row) => row.requirementId === requirement.requirementId,
     );
-    const rankOk =
-      !!state &&
-      EVIDENCE_RANK[state.currentState] >=
-        EVIDENCE_RANK[requirement.minimumState];
+    const rankOk = evidenceMeetsRequirement(requirement, state);
+    const unbackedRecord = requiresRecordedSource(requirement) &&
+      evidenceHasMinimumState(requirement, state) && !hasRecordedSource(state);
     const isClientStatedPlaceholder =
       !!state &&
+      !hasAuditedAbsence(requirement, state) &&
       state.sourceArtifactId === null &&
       !isFactBackedEvidence(state) &&
       state.currentState !== "Usable Evidence";
@@ -149,14 +140,22 @@ export function evaluateCriterionMetReadiness(input: {
       !rankOk ||
       (isHardCriterion && isClientStatedPlaceholder && !hasExplicitHumanReview)
     ) {
-      blockers.push({
-        code: !rankOk
-          ? "required_evidence_not_ready"
-          : "required_evidence_unverified",
-        detail: !rankOk
-          ? `${requirement.label} must be at least ${requirement.minimumState}; current state is ${state?.currentState ?? "missing"}.`
-          : `${requirement.label} is a client-stated answer, not verified evidence. A hard gate requires uploaded/processed evidence or an explicit human review before it can clear.`,
-      });
+      if (unbackedRecord) {
+        blockers.push({
+          code: "required_evidence_unverified",
+          detail: `${requirement.label} needs a linked source artifact or cited event fact; a client-stated answer cannot prove the underlying record.`,
+        });
+      } else if (!rankOk) {
+        blockers.push({
+          code: "required_evidence_not_ready",
+          detail: `${requirement.label} must be at least ${requirement.minimumState}; current state is ${state?.currentState ?? "missing"}.`,
+        });
+      } else {
+        blockers.push({
+          code: "required_evidence_unverified",
+          detail: `${requirement.label} is a client-stated answer, not verified evidence. A hard gate requires uploaded/processed evidence or an explicit human review before it can clear.`,
+        });
+      }
     }
   }
 

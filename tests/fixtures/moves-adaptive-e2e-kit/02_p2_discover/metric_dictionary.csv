@@ -1,0 +1,6 @@
+metric,definition,population,period,unit,source_owner_role,caveat
+average_handle_excluding_hold,Talk time plus after-call work; hold excluded,Answered live-agent contacts,Monthly,seconds,Contact Center Analytics Lead,Not comparable to combined handle-time tiles
+average_handle_including_hold,Talk time plus hold plus after-call work,Answered live-agent contacts,Monthly,seconds,Contact Center Analytics Lead,Planning value approximately 703 seconds uses a different calculation and period
+offered_calls,Inbound calls offered to live-agent queue,All offered queue contacts,Monthly,count,Contact Center Analytics Lead,Excludes bot-only sessions and abandoned IVR events
+first_contact_resolution,Share resolved without repeat contact under current scorecard definition,Eligible answered contacts,Monthly,percent,Contact Center Analytics Lead,Definition and exclusions need Finance/Operations confirmation
+repeat_contact_7d,Share with another contact within 7 days,Matched contacts under synthetic analytics rule,Monthly,percent,Contact Center Analytics Lead,Identity matching policy not validated for a real tenant

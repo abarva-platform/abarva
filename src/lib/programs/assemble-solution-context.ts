@@ -30,7 +30,10 @@ export interface SolutionContextSources {
     phase?: number,
   ) => Promise<string>;
   /** Full structured digests from prior approved deliverables (NOT 1800-char clips). */
-  loadPriorDigests: (moveId: string) => Promise<PhaseDigest[]>;
+  loadPriorDigests: (
+    moveId: string,
+    targetPhase: number,
+  ) => Promise<PhaseDigest[]>;
   /**
    * Prior deliverables WITH acceptance status + Move/tenant scope + lineage, so
    * the assembler can resolve authoritative architecture readiness by precedence
@@ -99,7 +102,10 @@ export async function assembleMoveSolutionContext(
   }
 
   // 1) fold prior approved phase digests (full, structured) — cumulative memory.
-  for (const digest of await sources.loadPriorDigests(args.moveId)) {
+  for (const digest of await sources.loadPriorDigests(
+    args.moveId,
+    args.targetPhase,
+  )) {
     ctx = applyPhaseDigest(ctx, digest);
   }
 
@@ -109,7 +115,11 @@ export async function assembleMoveSolutionContext(
   // stops falsely reporting "architecture not captured or approved" after it was
   // signed off. Non-authoritative material (candidate/draft/rejected/superseded/
   // cross-Move/cross-tenant) is excluded by the resolver and never binds here.
-  if (sources.loadPriorDeliverables && !ctx.architecture?.trim()) {
+  if (
+    sources.loadPriorDeliverables &&
+    args.targetPhase > 3 &&
+    !ctx.architecture?.trim()
+  ) {
     const priors = await sources
       .loadPriorDeliverables(args.moveId)
       .catch(() => [] as PriorDeliverable[]);

@@ -1284,11 +1284,58 @@ const PATH_TAIL_ATTRIBUTION_REACH_TOKENS = 8;
  * recorded, so it is gone rather than left carrying a claim no test can check.
  * The anchor is what does this work, and the suite pins the anchor.
  */
+/**
+ * A collective anaphor — the word that says an attribution governs the WHOLE
+ * list rather than only the member it sits behind.
+ *
+ * This is the entire licence for the skip below (item C-560), so it is written
+ * as vocabulary rather than as a wildcard. Without one of these words the
+ * attribution's subject is the coordinated member alone and the path in front
+ * of it goes on holding, which is the hold-preserving reading: a wrong free
+ * costs another lane its work silently, a wrong hold costs one refusal that
+ * names itself.
+ */
+const PATH_TAIL_LIST_ANAPHOR = "(?:both|all|each|either|neither|these|those|them)";
+
+/**
+ * A list member named in WORDS instead of as a path, and the anaphor behind it.
+ *
+ * `PATH_LIST_JOINER` only ever joins a path to a path, so a list whose members
+ * are one file and one artifact named in prose — `` `<path>` and the coverage
+ * census, both held by <holder> `` — leaves the described member sitting
+ * between the path and its attribution. Both attribution patterns are anchored
+ * at the head of the tail, so they cannot see past it and the holder falls
+ * outside the reach as well; the path holds, and the sentence that REPORTED
+ * somebody else's hold has created one of its own.
+ *
+ * That is a ratchet, which is why it is repaired rather than recorded: a run
+ * documenting why it passed an item over freezes the file it names, outliving
+ * the claim it was describing, so the more carefully runs record refusals the
+ * less of the tree stays claimable. Measured on the live register at
+ * 2026-09-27T20:41Z, one such sentence was the only hold on
+ * `.github/workflows/unit-suites.yml` and it refused a correct claim.
+ *
+ * TWO BOUNDS KEEP THE SKIP HONEST, and both are testable. The member may be at
+ * most `PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS` words, and no word of it may
+ * contain `.`, `;` or `/` — so the skip cannot cross a sentence boundary and
+ * cannot step over a path, which is the joiner's job and not this one's.
+ */
+const PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS = 4;
+
+const PATH_TAIL_COORDINATED_MEMBER = new RegExp(
+  `^(?:(?:and|or|plus)\\s+)?(?:[^.;/\\s]+\\s+){0,${PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS}}` +
+    `${PATH_TAIL_LIST_ANAPHOR}[,\\s]+`,
+  "i",
+);
+
 function pathAttributionTail(after) {
   const cleaned = String(after)
     .replace(/^[`'")\]*,\s]+/, "")
     .replace(/`[^`]*`/g, "ref");
-  return cleaned.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
+  // The skip runs BEFORE the reach is counted, so the eight-token budget is
+  // spent on the attribution itself rather than on the list it governs.
+  const governed = cleaned.replace(PATH_TAIL_COORDINATED_MEMBER, "");
+  return governed.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
 }
 
 /** Whether an attribution behind the list hands the whole list to somebody else. */
@@ -2065,23 +2112,36 @@ export function branchGoneFromOrigin(branch, { repoDir, lsRemote } = {}) {
   return out.trim() === "";
 }
 
-export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours, landedBranches }) {
-  const landed = new Set(
-    Array.from(landedBranches ?? [])
-      .map((b) => String(b).trim())
-      .filter(Boolean),
-  );
-  const requested = [];
-  const unparsed = [];
-  for (const raw of files ?? []) {
-    const normalised = normalisePath(raw);
-    if (normalised) requested.push(normalised);
-    else if (String(raw).trim()) unparsed.push(String(raw).trim());
-  }
-
+/**
+ * Every repo path a LIVE claim holds right now, with its holder and the
+ * instant that hold expires (item C-566).
+ *
+ * This exists because the gate could answer the question and nothing else
+ * could ask it. `resolveFileOverlap` below has read this correctly since
+ * T-706, but only ever for a file list an agent had already chosen — so the
+ * refusal arrived AFTER the agent had picked its row and re-verified it on
+ * `main`, which is the expensive half. Two consecutive scheduled runs paid
+ * that on 2026-09-27. Publishing the holds lets a reader intersect for
+ * itself, before it spends anything.
+ *
+ * It is factored OUT of `resolveFileOverlap` rather than reimplemented beside
+ * it. A second reader of one grammar is the defect T-717 and T-747 both cost,
+ * and the release, abstention, window and ownership rules below are exactly
+ * the ones a published hold has to agree with — if they ever disagreed, the
+ * queue would advertise a hold the gate does not enforce, or stay silent
+ * about one it does.
+ *
+ * `identity` is optional and OMITTING IT IS THE NORMAL CASE for a reader with
+ * no run of its own, such as the queue generator: with no identity every live
+ * hold is reported, including one the asking run placed itself. A caller that
+ * passes an identity gets its own holds dropped, which is what the overlap
+ * gate wants and what a published table must not do.
+ *
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{ nowMs:number, windowHours?:number, identity?:string|null }} opts
+ */
+export function heldPaths(lines, { nowMs, windowHours, identity = null }) {
   const windowMs = (windowHours ?? CLAIM_WINDOW_HOURS) * 3600 * 1000;
-  const conflicts = [];
-  const notes = [];
 
   const inWindow = lines.filter(
     (line) =>
@@ -2106,56 +2166,88 @@ export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours,
     if (prior === undefined || line.stampMs > prior) releasedAt.set(line.agent, line.stampMs);
   }
 
+  const out = [];
   for (const line of inWindow) {
     // An abstention holds nothing. It names files to say who else is on them.
     if (announcesRelease(line.text) || announcesAbstention(line.text)) continue;
     const released = releasedAt.get(line.agent);
     if (released !== undefined && released >= line.stampMs) continue;
-    const ownership = resolveClaimOwnership(line.agent, identity);
+    const ownership = identity === null ? "unowned" : resolveClaimOwnership(line.agent, identity);
     // Only this exact run may hold its own files. A SIBLING contends: that is
     // the distinction base-name keying loses, one level down from T-706.
     if (ownership === "own") continue;
 
-    /*
-     * Item C-559. A claim whose branch has landed holds nothing, and until
-     * this existed nothing but its own author or the 3-hour TTL could say so.
-     *
-     * Measured on 2026-09-27: `T-493` merged at 14:32:03Z as `efb5587e60` and
-     * its branch was gone from `origin` within the minute; at 14:34Z this
-     * function still reported its two files contended, which is every
-     * claimable lane-T row of that day's queue refused over work already on
-     * `main`. `resolveItemClaim` refuses a release written by anyone but the
-     * holder — correctly, item T-713 — so there was no exit at all.
-     *
-     * EVERY branch the line names must have landed, not any. A record naming
-     * two branches with one still live has live work, and freeing it on the
-     * strength of the other is the direction that loses an edit.
-     *
-     * It becomes a NOTE rather than vanishing. A hold this dropped is the one
-     * a reviewer most needs to see, and a gate that silently stops refusing is
-     * indistinguishable from a gate that found nothing — the substitution
-     * item T-707's NOT CHECKED line was written against.
-     */
-    const lineBranches = landed.size ? branchesInClaim(line.text) : [];
-    const claimHasLanded =
-      landed.size > 0 && lineBranches.length > 0 && lineBranches.every((b) => landed.has(b));
-
-    const held = new Map(claimedPaths(line.text).map((p) => [p.path, p]));
-    for (const want of requested) {
-      const match = held.get(want.path);
-      if (!match) continue;
-      const entry = {
-        path: want.path,
-        lineNumber: line.lineNumber,
-        stamp: line.stamp,
+    // The branches this claim names, carried on every hold so resolveFileOverlap
+    // can tell when a claim whose branch(es) have landed holds nothing (item C-559).
+    const branches = branchesInClaim(line.text);
+    for (const { path: held, kind } of claimedPaths(line.text)) {
+      out.push({
+        path: held,
+        kind,
+        branches,
         agent: line.agent,
         ownership,
+        lineNumber: line.lineNumber,
+        stamp: line.stamp,
+        stampMs: line.stampMs,
+        expiresAtMs: line.stampMs + windowMs,
         excerpt: line.text.slice(0, 200),
-      };
-      // A directory or glob is a SCOPE, not a lock — in either position.
-      if (want.kind === "scope" || match.kind === "scope") notes.push(entry);
-      else if (claimHasLanded) notes.push({ ...entry, landedBranches: lineBranches });
-      else conflicts.push(entry);
+      });
+    }
+  }
+
+  return out;
+}
+
+export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours, landedBranches }) {
+  const landed = new Set(
+    Array.from(landedBranches ?? [])
+      .map((b) => String(b).trim())
+      .filter(Boolean),
+  );
+  const requested = [];
+  const unparsed = [];
+  for (const raw of files ?? []) {
+    const normalised = normalisePath(raw);
+    if (normalised) requested.push(normalised);
+    else if (String(raw).trim()) unparsed.push(String(raw).trim());
+  }
+
+  const conflicts = [];
+  const notes = [];
+
+  // One reader (item C-566). The window, the release rule, the abstention
+  // rule, the ownership rule and `claimedPaths` all live in `heldPaths`, so
+  // the queue's published table and this refusal cannot drift apart.
+  //
+  // Every hold is walked, not one per path: two runs holding the same file is
+  // two conflicts, and collapsing them would report one of the two holders.
+  const wanted = new Map(requested.map((want) => [want.path, want]));
+  for (const hold of heldPaths(lines, { nowMs, windowHours, identity })) {
+    const want = wanted.get(hold.path);
+    if (!want) continue;
+    const entry = {
+      path: want.path,
+      lineNumber: hold.lineNumber,
+      stamp: hold.stamp,
+      agent: hold.agent,
+      ownership: hold.ownership,
+      excerpt: hold.excerpt,
+    };
+    // A directory or glob is a SCOPE, not a lock — in either position.
+    if (want.kind === "scope" || hold.kind === "scope") {
+      notes.push(entry);
+    } else if (
+      landed.size > 0 &&
+      Array.isArray(hold.branches) &&
+      hold.branches.length > 0 &&
+      hold.branches.every((b) => landed.has(b))
+    ) {
+      // Item C-559: a claim whose branch(es) have all landed holds nothing; it is
+      // a NOTE (freed), never a lock, so another run may take its files.
+      notes.push({ ...entry, landedBranches: hold.branches });
+    } else {
+      conflicts.push(entry);
     }
   }
 

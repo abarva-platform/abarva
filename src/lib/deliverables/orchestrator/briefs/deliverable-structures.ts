@@ -86,7 +86,7 @@ const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
   purpose:
-    "Authorize a strategic move with a clear mandate, sponsor commitment, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
+    "Authorize a strategic move with a clear mandate, accountable owner, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
   decisionToSupport:
     "Approve chartering of the move (a funded discovery & design gate, NOT a build authorization).",
   sections: [
@@ -101,7 +101,7 @@ const MOVES_CHARTER: DeliverableStructure = {
     s(
       "opportunity_context",
       "Opportunity, Context & Intended Outcomes",
-      "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected business value direction, and the outcomes Discovery is intended to evaluate. Only approved P0 capture, sponsor input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
+      "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected business value direction, and the outcomes Discovery is intended to evaluate. Only approved P0 capture, workspace-team input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
       [],
       `Keep this section under ${charterSectionMaxWords("opportunity_context")} words. This is hypothesis framing, not P2 findings.`,
@@ -158,6 +158,95 @@ const MOVES_CHARTER: DeliverableStructure = {
   ],
   fixedStructure: true,
   forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],
+};
+
+const MOVES_DISCOVERY_PLAN: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "discovery_plan",
+  purpose:
+    "Prepare the client and delivery team to conduct P2 discovery, interviews, and evidence validation against the approved Charter.",
+  decisionToSupport:
+    "Authorize and prepare the discovery workplan; do not report findings that have not yet been gathered.",
+  sections: [
+    s(
+      "charter_recap",
+      "Charter Recap & Decision Boundaries",
+      "Summarize only the approved mandate, scope, success measures, decisions, assumptions, and open questions that P2 must validate. Keep hypotheses explicitly labeled.",
+      "mixed",
+      [],
+      "Keep under 350 words. Do not restate the full Charter or turn hypotheses into findings.",
+    ),
+    s(
+      "discovery_workplan",
+      "Discovery Workplan",
+      "Sequence the P2 workshops and interviews with objectives, participants by role, facilitator, duration, and expected outputs. Distinguish confirmed participants from roles still to be assigned.",
+      "mixed",
+      [],
+      "Use one compact session table. Include a practical 45-minute stakeholder interview agenda with time-boxed segments.",
+    ),
+    s(
+      "evidence_requests",
+      "Evidence Requests & Validation Plan",
+      "List the files, extracts, system records, and metric definitions to request, why each matters, likely owner, date range, validation method, and sensitivity/access conditions.",
+      "mixed",
+      ["current state process", "kpi baseline", "it systems landscape"],
+      "Use one compact evidence-request table. Mark owner or period as Client Decision Required when it is not established.",
+    ),
+    s(
+      "interview_guide",
+      "Workshop & Interview Guide",
+      "Provide open, neutral questions for operations, technology, data, security/privacy, finance, and sponsor stakeholders. Capture answers as observations with source and confidence, not as established facts.",
+      "mixed",
+      ["stakeholder input", "current state process"],
+      "Group questions by role and purpose. Include prompts to test conflicting metrics, stale sources, red lines, and unsupported value hypotheses without assuming their resolution.",
+    ),
+    s(
+      "p2_readiness",
+      "P2 Readiness & Open Inputs",
+      "State the minimum evidence and human decisions required to close discovery, including unresolved transcript governance, API validation, platform readiness, metric ownership, and finance validation when not yet evidenced.",
+      "mixed",
+      ["governance", "data quality", "cost baseline"],
+      "Use a concise checklist. Do not imply the evidence has been collected or approved; identify the owner and acceptance test for each open item.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "charter_recap",
+    "discovery_workplan",
+    "evidence_requests",
+    "interview_guide",
+    "p2_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "current-state findings",
+    "root-cause conclusion",
+    "target architecture",
+    "solution design",
+    "investment estimate",
+    "implementation roadmap",
+  ],
+  prohibitedContent: [
+    "This is a P1 preparation guide, not the P2 discovery report. Do not invent workshop outcomes, interview quotes, measured baselines, validated value, or resolved governance decisions.",
+    "Do not include P2 findings, P3 architecture or solution design, P4 pricing or business case, or P5 execution commitments. The guide must request and test evidence, not claim it has been collected.",
+    "Keep the complete guide within the 3,000-word artifact ceiling. Prefer compact session and evidence-request tables to repeated explanatory prose.",
+  ],
+  expectedExhibits: [
+    {
+      key: "open_inputs_required",
+      title: "Open Inputs Required",
+      kind: "matrix",
+      purpose:
+        "Make uncollected evidence, owners, validation tests, and gate implications explicit before the discovery work begins.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "input",
+        "owner",
+        "validation",
+        "status",
+        "gate implication",
+      ],
+    },
+  ],
 };
 
 const MOVES_BUSINESS_CASE: DeliverableStructure = {
@@ -362,6 +451,84 @@ const MOVES_DISCOVERY: DeliverableStructure = {
   prohibitedContent: [
     "Do not split maturity, benchmark, and gap findings into separate essays; use one integrated diagnostic section.",
     "Do not split readiness and implications into separate essays; readiness only matters through the implication it creates for the next phase.",
+  ],
+};
+
+const MOVES_DESIGN_WORKSHOP_GUIDE: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "design_workshop_guide",
+  purpose:
+    "Prepare a focused set of future-state decision sessions using accepted discovery evidence, without turning the guide into a completed solution, operating model, or process redesign.",
+  decisionToSupport:
+    "Run the design work needed to produce an estimate-ready scope, surface material trade-offs, and identify what remains for roadmap execution.",
+  sections: [
+    s(
+      "discovery_carry_forward",
+      "Discovery Carry-Forward & Decision Boundary",
+      "Summarize only accepted findings, confirmed constraints, unresolved evidence gaps, and the selected solution route needed to prepare design. Preserve confidence and source status; do not restate the Discovery Report or reopen decisions without new evidence.",
+      "mixed",
+      ["source_register", "evidence_gaps", "solution_route"],
+      "Keep under 350 words. Use a compact fact / status / design implication table. State explicitly that this guide prepares design and is not the completed target state.",
+    ),
+    s(
+      "design_session_plan",
+      "Design Sessions & Decisions",
+      "Define the smallest set of workshops needed to reach estimate-ready scope: session objective, decision question, participants by role, evidence to review, output, and accountable decision owner. Tailor technical depth to the use case and approved route.",
+      "mixed",
+      ["stakeholder_input", "solution_route", "technology_landscape"],
+      "Keep under 700 words. Use one compact session table. Separate what must be decided now to estimate from detailed design and implementation work that belongs in roadmap execution.",
+    ),
+    s(
+      "evidence_carry_forward",
+      "Evidence & Assumptions to Carry into Design",
+      "Identify the specific accepted evidence, source files, assumptions, and open inputs each design decision depends on. Show evidence status and a named owner role for validation; never elevate unvalidated material to fact.",
+      "mixed",
+      [
+        "source_register",
+        "evidence_gaps",
+        "baseline_metrics",
+        "technology_landscape",
+      ],
+      "Keep under 500 words. Use one concise evidence / decision / status / owner table; point back to citations rather than repeating source narratives.",
+    ),
+    s(
+      "facilitation_tradeoffs",
+      "Facilitation & Trade-Off Questions",
+      "Provide neutral prompts to test only the decisions that change scope, estimate, risk, or accountability. Capture selected option, alternatives, rationale, owner, evidence, and follow-up; preserve business ownership of training and adoption when no material operating-model shift is established.",
+      "expert_template",
+      [],
+      "Keep under 850 words. Organize a short question set by business/process, technology/data/security, and delivery ownership. Do not prescribe a complete future-state process, role catalogue, training plan, or low-level build specification.",
+    ),
+    s(
+      "design_gate_readiness",
+      "Design Exit & Roadmap Handoff Readiness",
+      "Set the minimum evidence and human decisions required for an estimate-ready design package, distinguishing design outputs from the detailed work, validation, and change execution that will be scheduled in the approved roadmap.",
+      "mixed",
+      ["evidence_gaps", "decision_log", "estimate_inputs"],
+      "Keep under 400 words. Use a compact readiness checklist with acceptance test, owner role, and status. Do not imply execution approval or that open items are complete.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "discovery_carry_forward",
+    "design_session_plan",
+    "evidence_carry_forward",
+    "facilitation_tradeoffs",
+    "design_gate_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "completed solution design",
+    "full future-state process",
+    "complete operating model",
+    "detailed implementation plan",
+    "execution backlog",
+    "detailed training curriculum",
+    "final ROI",
+  ],
+  prohibitedContent: [
+    "This is a workshop and decision guide, not a second Discovery Report and not a completed future-state solution. Carry forward findings with their actual evidence status; do not repeat discovery analysis.",
+    "Design only to the level needed to compare the route, clarify estimate scope, expose material trade-offs, and identify assumptions. Defer detailed process, operating-model, build, testing, and adoption work to the approved roadmap unless evidence shows it is necessary to estimate.",
+    "Do not invent client facts, quantified benefits, cost, effort, rates, timing, or vendor/internal sourcing decisions. Preserve explicit assumptions and open inputs for human review.",
   ],
 };
 
@@ -1602,9 +1769,11 @@ const SOURCE_EXEC_REC: DeliverableStructure = {
 
 export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_CHARTER,
+  MOVES_DISCOVERY_PLAN,
   MOVES_BUSINESS_CASE,
   MOVES_ROADMAP,
   MOVES_DISCOVERY,
+  MOVES_DESIGN_WORKSHOP_GUIDE,
   MOVES_ROOT_CAUSE_WORKSHEET,
   MOVES_TARGET_ARCHITECTURE,
   MOVES_SOLUTION_DESIGN,

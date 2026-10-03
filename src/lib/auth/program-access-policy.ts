@@ -52,6 +52,7 @@ interface ClientMembershipRow {
 
 interface ParticipantRow {
   engagement_id: string;
+  role?: string | null;
   approval_authority?: string | null;
   program_access_level?: string | null;
   can_view_financial?: boolean | null;
@@ -59,6 +60,13 @@ interface ParticipantRow {
   can_generate_deliverables?: boolean | null;
   can_publish_deliverables?: boolean | null;
   can_approve_phase_gates?: boolean | null;
+}
+
+function isSponsorContact(row: ParticipantRow): boolean {
+  return (
+    /^(co[- ]?)?sponsor$/i.test(row.role?.trim() ?? "") ||
+    row.approval_authority === "sponsor"
+  );
 }
 
 function isUuidLike(value: string): boolean {
@@ -244,7 +252,7 @@ async function loadProgramParticipants(
   const { data } = await sb
     .from("engagement_participants")
     .select(
-      "engagement_id, approval_authority, program_access_level, can_view_financial, can_upload, can_generate_deliverables, can_publish_deliverables, can_approve_phase_gates, engagement:engagements!inner(client_id, archived_at, deleted_at)",
+      "engagement_id, role, approval_authority, program_access_level, can_view_financial, can_upload, can_generate_deliverables, can_publish_deliverables, can_approve_phase_gates, engagement:engagements!inner(client_id, archived_at, deleted_at)",
     )
     .eq("user_id", personId)
     .eq("engagement.client_id", ctx.clientId)
@@ -286,9 +294,9 @@ function inferAccessLevel(
   if (participants.length > 0) {
     return participants.some(
       (p) =>
-        p.program_access_level === "program_member" ||
-        p.approval_authority === "sponsor" ||
-        p.approval_authority === "approver",
+        !isSponsorContact(p) &&
+        (p.program_access_level === "program_member" ||
+          p.approval_authority === "approver"),
     )
       ? "program_member"
       : "program_viewer";
@@ -352,12 +360,16 @@ export async function loadUserProgramAccessPolicy(
       ])
     : [null, [] as ParticipantRow[]];
 
-  const accessLevel = inferAccessLevel(ctx, membership, participants);
+  // A sponsor participant row exists for contact lookup and notifications only.
+  // It must not grant product access by itself, including on legacy rows whose
+  // capability columns were never populated.
+  const accessParticipants = participants.filter((p) => !isSponsorContact(p));
+  const accessLevel = inferAccessLevel(ctx, membership, accessParticipants);
   const admin = isClientAdminPolicy(accessLevel);
   const none = accessLevel === "no_program_access";
   const scopedParticipants = opts.programId
-    ? participants.filter((p) => p.engagement_id === opts.programId)
-    : participants;
+    ? accessParticipants.filter((p) => p.engagement_id === opts.programId)
+    : accessParticipants;
   const participantFinancial = scopedParticipants.some(
     (p) => p.can_view_financial === true,
   );
@@ -371,8 +383,8 @@ export async function loadUserProgramAccessPolicy(
     ? []
     : admin
       ? null
-      : participants.length > 0
-        ? Array.from(new Set(participants.map((p) => p.engagement_id)))
+      : accessParticipants.length > 0
+        ? Array.from(new Set(accessParticipants.map((p) => p.engagement_id)))
         : explicitProgramScopedMembership
           ? []
           : null;
@@ -390,19 +402,23 @@ export async function loadUserProgramAccessPolicy(
       (Boolean(membership?.can_approve_gates) ||
         scopedParticipants.some(
           (p) =>
-            p.can_approve_phase_gates === true ||
-            p.approval_authority === "sponsor" ||
-            p.approval_authority === "approver",
+            !isSponsorContact(p) &&
+            (p.can_approve_phase_gates === true ||
+              p.approval_authority === "approver"),
         ) ||
         admin),
     canUploadArtifacts:
       !none &&
       (scopedParticipants.length === 0 ||
-        scopedParticipants.some((p) => p.can_upload !== false)),
+        scopedParticipants.some(
+          (p) => !isSponsorContact(p) && p.can_upload !== false,
+        )),
     canGenerateDeliverables:
       !none &&
       (scopedParticipants.length === 0 ||
-        scopedParticipants.some((p) => p.can_generate_deliverables !== false)),
+        scopedParticipants.some(
+          (p) => !isSponsorContact(p) && p.can_generate_deliverables !== false,
+        )),
     canPublishDeliverables:
       !none &&
       (scopedParticipants.some((p) => p.can_publish_deliverables === true) ||

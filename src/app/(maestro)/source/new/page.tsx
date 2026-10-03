@@ -107,6 +107,7 @@ async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
       id: event.id,
       code: event.code,
       name: event.name,
+      currentStageKey: event.currentStageKey,
       currentStageLabel: event.currentStageLabel,
       lifecycleLabel: event.statusLabel,
       lifecycle: event.status,

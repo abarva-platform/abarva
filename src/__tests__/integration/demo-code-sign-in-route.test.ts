@@ -1,9 +1,11 @@
 const getUserList = jest.fn();
+const createUser = jest.fn();
+const updateUser = jest.fn();
 const createSignInToken = jest.fn();
 
 jest.mock('@clerk/backend', () => ({
   createClerkClient: () => ({
-    users: { getUserList },
+    users: { getUserList, createUser, updateUser },
     signInTokens: { createSignInToken },
   }),
 }));
@@ -24,8 +26,10 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     process.env.CLERK_SECRET_KEY = 'sk_test_demo';
 
     getUserList.mockResolvedValue({
-      data: [{ id: 'user_demo_1' }],
+      data: [{ id: 'user_demo_1', publicMetadata: {} }],
     });
+    createUser.mockResolvedValue({ id: 'user_created_1' });
+    updateUser.mockResolvedValue({ id: 'user_demo_1' });
     createSignInToken.mockResolvedValue({
       token: 'ticket_demo_1',
     });
@@ -114,6 +118,10 @@ describe('POST /api/auth/demo-code-sign-in', () => {
       emailAddress: ['anand.sundaram+apex@thesundaram.com'],
       limit: 1,
     });
+    expect(updateUser).toHaveBeenCalledWith(
+      'user_demo_1',
+      expect.objectContaining({ publicMetadata: expect.objectContaining({ clientId: 'apexretail' }) }),
+    );
     expect(createSignInToken).toHaveBeenCalledWith({
       userId: 'user_demo_1',
       expiresInSeconds: 300,
@@ -136,6 +144,33 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     });
   });
 
+  it('creates the approved Clerk user before issuing a private demo ticket', async () => {
+    getUserList.mockResolvedValueOnce({ data: [] });
+
+    const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
+    const res = await POST(makeRequest({
+      email: 'anand.sundaram+meridian@thesundaram.com',
+      password: 'Demo2026!',
+      code: '424242',
+    }));
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
+    expect(createUser).toHaveBeenCalledWith(expect.objectContaining({
+      emailAddress: ['anand.sundaram+meridian@thesundaram.com'],
+      skipPasswordRequirement: true,
+      publicMetadata: expect.objectContaining({
+        role: 'client',
+        clientId: 'meridian',
+        defaultClientId: 'meridian',
+      }),
+    }));
+    expect(createSignInToken).toHaveBeenCalledWith({
+      userId: 'user_created_1',
+      expiresInSeconds: 300,
+    });
+  });
+
   it('returns a sign-in ticket for an Anand single-tenant operator alias', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
@@ -152,3 +187,5 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     });
   });
 });
+
+export {};

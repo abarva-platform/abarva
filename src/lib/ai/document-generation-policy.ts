@@ -34,6 +34,7 @@ export type DocumentGenerationPass =
   | "board_grade_rewrite"
   | "render_package"
   | "section_draft"
+  | "section_repair"
   | "synthesis";
 
 export interface ResolvedDocPolicy {
@@ -158,6 +159,7 @@ const PASS_ENV_KEY: Readonly<Record<DocumentGenerationPass, string>> = {
   board_grade_rewrite: "BOARD_GRADE_REWRITE",
   render_package: "RENDER_PACKAGE",
   section_draft: "SECTION_DRAFT",
+  section_repair: "SECTION_REPAIR",
   synthesis: "SYNTHESIS",
 };
 
@@ -173,6 +175,7 @@ const PASS_TOKEN_DEFAULTS: Readonly<
     board_grade_rewrite: 16000,
     render_package: 16000,
     section_draft: 12000,
+    section_repair: 12000,
     synthesis: 6000,
   },
   // Real paid engagement profile. Total high-stakes ceiling: 132k output.
@@ -184,6 +187,7 @@ const PASS_TOKEN_DEFAULTS: Readonly<
     board_grade_rewrite: 32000,
     render_package: 32000,
     section_draft: 16000,
+    section_repair: 16000,
     synthesis: 8000,
   },
   // Final board/executive pack profile. Total high-stakes ceiling: 456k output.
@@ -195,6 +199,7 @@ const PASS_TOKEN_DEFAULTS: Readonly<
     board_grade_rewrite: 128000,
     render_package: 128000,
     section_draft: 24000,
+    section_repair: 24000,
     synthesis: 12000,
   },
 };
@@ -218,7 +223,7 @@ export function resolveDocGenQualityProfile(): DocGenQualityProfile {
 // tokens for section_draft/synthesis) specifically to force conciseness via
 // token starvation, then briefly fell through to the generic per-profile
 // defaults (12,000/6,000 — unbounded relative to a 1,300-word artifact).
-// Reconciled 2026-07-25: charter's section_draft/synthesis passes use the one
+// Reconciled 2026-07-25: charter's section_draft/section_repair/synthesis passes use the one
 // canonical ceiling (CHARTER_CONTRACT.maxOutputTokens, shared with the
 // golden-bar pipeline's single-shot maxTokens) — generous enough for
 // structured content/tables above the word ceiling, without being unbounded.
@@ -232,7 +237,12 @@ function charterPassFallback(
   if (deliverableKey !== "charter" && deliverableKey !== "program_charter") {
     return null;
   }
-  if (input.pass !== "section_draft" && input.pass !== "synthesis") return null;
+  if (
+    input.pass !== "section_draft" &&
+    input.pass !== "section_repair" &&
+    input.pass !== "synthesis"
+  )
+    return null;
   return CHARTER_CONTRACT.maxOutputTokens;
 }
 

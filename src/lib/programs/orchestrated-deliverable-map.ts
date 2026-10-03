@@ -13,12 +13,13 @@
 // the artifact gets the consultant-grade section flow rather than the generic one.
 //
 // Structure keys present for module 'moves' (deliverable-structures.ts):
-//   charter · business_case · roadmap · discovery_report · target_state_architecture ·
+//   charter · discovery_plan · business_case · roadmap · discovery_report · target_state_architecture ·
 //   operating_model · estimate_model · value_model · mobilization_plan ·
 //   handoff_pack · executive_playback
 //
-// Anything not in this table falls through to the registry key itself (still a
-// valid orchestrator run via the generic brief). Tiers for every value below are
+// Later-phase workshop guides keep their own keys so they cannot inherit the P1
+// discovery guide's scope. Anything not in this table falls through to the
+// registry key itself (still a valid orchestrator run via the generic brief). Tiers for every value below are
 // covered by DELIVERABLE_TIER in document-generation-policy.ts (board_grade /
 // large_package), and normalizeDeliverableKey keeps lookups robust.
 
@@ -44,7 +45,7 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   // concise root-cause readout.
   discovery_report: "discovery_report",
   root_cause_worksheet: "root_cause_worksheet",
-  design_workshop_guide: "discovery_plan",
+  design_workshop_guide: "design_workshop_guide",
   // P3 — architecture keeps the premium architecture path; Solution Design keeps
   // its own profile so its five workflow/control exhibits are generated and
   // evaluated in the same key space. Org design → operating_model; sourcing uses
@@ -53,7 +54,7 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   solution_design: "solution_design",
   operating_model_design: "operating_model",
   sourcing_strategy: "sourcing_strategy",
-  planning_workshop_guide: "discovery_plan",
+  planning_workshop_guide: "planning_workshop_guide",
   // P4 — roadmap structure; investment case; financial model → estimate_model;
   //      tower metrics plan → value_model (measurement/realization flow)
   execution_roadmap: "roadmap",
@@ -61,11 +62,11 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   financial_model: "estimate_model",
   tower_metrics_plan: "value_model",
   readiness_and_change_plan: "readiness_and_change_plan",
-  mobilization_workshop_guide: "discovery_plan",
+  mobilization_workshop_guide: "mobilization_workshop_guide",
   // P5 — handoff → handoff_pack; value contract has its own quality profile.
   handoff_package: "handoff_pack",
   value_measurement_contract: "value_measurement_contract",
-  execution_kickoff_guide: "discovery_plan",
+  execution_kickoff_guide: "execution_kickoff_guide",
 };
 
 /**
@@ -78,10 +79,26 @@ export function orchestratorDeliverableType(registryKey: string): string {
   return REGISTRY_TO_ORCHESTRATOR[normalized] ?? normalized;
 }
 
+/** Resolve the unique canonical Moves phase for a registry or orchestrator key. */
+export function phaseForOrchestratorDeliverableType(
+  deliverableType: string,
+): number | null {
+  const normalized = normalizeDeliverableKey(deliverableType);
+  const phases = new Set(
+    DELIVERABLE_REGISTRY.filter(
+      (spec) =>
+        orchestratorDeliverableType(spec.deliverableTypeKey) === normalized,
+    ).map((spec) => spec.phase),
+  );
+  return phases.size === 1 ? [...phases][0] : null;
+}
+
 /** Prescribed render/download format the orchestrator should persist a deliverable in. */
 export type PrescribedDeliverableFormat = "docx" | "pptx" | "xlsx";
 
 const PPTX_FINAL_DELIVERABLES = new Set([
+  "discovery_report",
+  "root_cause_worksheet",
   "solution_approach_options",
   "target_architecture",
   "target_state_architecture",
@@ -92,6 +109,7 @@ const PPTX_FINAL_DELIVERABLES = new Set([
 function registryFormatToFile(
   format: DeliverableFormat,
 ): PrescribedDeliverableFormat {
+  if (format === "pptx") return "pptx";
   // 'excel' → the document IS the workbook; everything else's primary file is Word/DOCX
   // ('html-word' and 'html-word-excel' both keep HTML for preview but download as DOCX).
   return format === "excel" ? "xlsx" : "docx";

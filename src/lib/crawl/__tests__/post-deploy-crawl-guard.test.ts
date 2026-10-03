@@ -1,5 +1,6 @@
 import {
   comparePage,
+  hasBlockingCrawlProofFinding,
   isAuthAutomationBlockMessage,
   type CrawlPageObservation,
 } from "../baseline-compare";
@@ -7,6 +8,12 @@ import {
   resolveCrawlPersonas,
   resolveCrawlSurfaces,
 } from "../persona-switcher";
+import {
+  appendClerkTestingTokenToRequestUrl,
+  clerkFrontendApiHostFromPublishableKey,
+  installClerkTestingTokenInterceptor,
+} from "../clerk-testing-token";
+import type { Page } from "@playwright/test";
 
 function observation(
   overrides: Partial<CrawlPageObservation> = {},
@@ -37,6 +44,121 @@ function observation(
 }
 
 describe("post-deploy crawl guard", () => {
+  it("derives the exact custom Clerk FAPI host from the publishable key", () => {
+    const publishableKey = `pk_live_${Buffer.from("clerk.abarva.ai$").toString("base64")}`;
+
+    expect(clerkFrontendApiHostFromPublishableKey(publishableKey)).toBe(
+      "clerk.abarva.ai",
+    );
+    expect(
+      clerkFrontendApiHostFromPublishableKey("pk_live_invalid"),
+    ).toBeNull();
+  });
+
+  it("adds the testing token only to Clerk Frontend API requests, including a custom domain", () => {
+    const baseUrl = "https://app.abarva.ai";
+    const host = "clerk.abarva.ai";
+    const tokenized = appendClerkTestingTokenToRequestUrl(
+      "https://clerk.abarva.ai/v1/client/sign_ins?foo=bar",
+      baseUrl,
+      host,
+      "test-token",
+    );
+
+    expect(new URL(tokenized!).searchParams.get("foo")).toBe("bar");
+    expect(new URL(tokenized!).searchParams.get("__clerk_testing_token")).toBe(
+      "test-token",
+    );
+    expect(
+      appendClerkTestingTokenToRequestUrl(
+        "https://clerk.abarva.ai/npm/@clerk/clerk-js@6/dist/clerk.browser.js",
+        baseUrl,
+        host,
+        "test-token",
+      ),
+    ).toBeNull();
+    expect(
+      appendClerkTestingTokenToRequestUrl(
+        "http://clerk.abarva.ai/v1/client/sign_ins",
+        baseUrl,
+        host,
+        "test-token",
+      ),
+    ).toBeNull();
+    expect(
+      appendClerkTestingTokenToRequestUrl(
+        "https://untrusted.example/__clerk/v1/client",
+        baseUrl,
+        host,
+        "test-token",
+      ),
+    ).toBeNull();
+    expect(
+      appendClerkTestingTokenToRequestUrl(
+        "https://app.abarva.ai/__clerk/v1/client",
+        baseUrl,
+        host,
+        "test-token",
+      ),
+    ).toContain("__clerk_testing_token=test-token");
+    expect(
+      appendClerkTestingTokenToRequestUrl(
+        "http://app.abarva.ai/__clerk/v1/client",
+        "http://app.abarva.ai",
+        host,
+        "test-token",
+      ),
+    ).toBeNull();
+  });
+
+  it("wires the testing token through Playwright routing before navigation", async () => {
+    const originalKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = `pk_live_${Buffer.from(
+      "clerk.abarva.ai$",
+    ).toString("base64")}`;
+    type TestRoute = {
+      request: () => { url: () => string };
+      continue: (options?: { url: string }) => Promise<void>;
+    };
+    let requestHandler: ((route: TestRoute) => Promise<void>) | undefined;
+    const page = {
+      route: jest.fn(
+        async (
+          _pattern: string,
+          handler: (route: TestRoute) => Promise<void>,
+        ) => {
+          requestHandler = handler;
+        },
+      ),
+    } as unknown as Page;
+
+    try {
+      await installClerkTestingTokenInterceptor(
+        page,
+        "test-token",
+        "https://app.abarva.ai",
+      );
+      expect(page.route).toHaveBeenCalledWith("**/*", expect.any(Function));
+
+      const continueRoute = jest.fn().mockResolvedValue(undefined);
+      await requestHandler?.({
+        request: () => ({
+          url: () => "https://clerk.abarva.ai/v1/client/sign_ins",
+        }),
+        continue: continueRoute,
+      });
+      expect(continueRoute).toHaveBeenCalledWith({
+        url: "https://clerk.abarva.ai/v1/client/sign_ins?__clerk_testing_token=test-token",
+      });
+    } finally {
+      if (originalKey === undefined) {
+        delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+      } else {
+        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalKey;
+      }
+    }
+  });
+
   it("keeps the standard production crawl on the active automation tenant roster only", () => {
     const personaKeys = resolveCrawlPersonas().map((persona) => persona.key);
 
@@ -219,6 +341,60 @@ describe("post-deploy crawl guard", () => {
         dimension: "auth-bootstrap",
       }),
     ]);
+  });
+
+  it("fails the crawl when auth bootstrap is blocked even if the severity tally is 0 P0", () => {
+    const authFinding = comparePage(
+      observation({
+        surfaceId: "auth-bootstrap",
+        path: "/sign-in",
+        visibleText:
+          "Auth bootstrap failed for SkyHarbor Global: This ticket is invalid.",
+      }),
+    )[0];
+    const comparison = {
+      p0: 0,
+      findings: [authFinding],
+    };
+
+    expect(authFinding?.severity).toBe("P1");
+    expect(hasBlockingCrawlProofFinding(comparison)).toBe(true);
+  });
+
+  it("fails the crawl when the candidate-preview auth bootstrap is blocked", () => {
+    expect(
+      hasBlockingCrawlProofFinding({
+        p0: 0,
+        findings: [
+          {
+            severity: "P1",
+            tenantKey: "skyharbor",
+            personaKey: "agent-skyharbor",
+            surfaceId: "admin-candidate-preview",
+            dimension: "candidate-preview-auth-bootstrap",
+            message: "Authentication did not reach the route.",
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it("does not turn an unrelated P1 product observation into a harness failure", () => {
+    expect(
+      hasBlockingCrawlProofFinding({
+        p0: 0,
+        findings: [
+          {
+            severity: "P1",
+            tenantKey: "skyharbor",
+            personaKey: "agent-skyharbor",
+            surfaceId: "intelligence-ask",
+            dimension: "hard-question-citation-depth",
+            message: "The answer lacks citation depth.",
+          },
+        ],
+      }),
+    ).toBe(false);
   });
 
   it("detects Clerk automation blocks separately from product failures", () => {

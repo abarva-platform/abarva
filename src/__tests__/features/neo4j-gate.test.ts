@@ -2,7 +2,9 @@
 // Verifies that with the flag OFF (the default) graph entry points
 // return their fallback shape without ever loading `neo4j-driver` or
 // invoking the driver. With the flag ON (forced via the test-only
-// override) the driver is invoked.
+// override) they still return the fallback: the graph data plane is Azure
+// Postgres and `src/lib/graph/driver.ts` loads no external driver by design,
+// so turning the flag on must not reopen one (T-795).
 
 import { setNeo4jEnabledOverride, isNeo4jEnabled } from '@/lib/graph/neo4j-gate';
 import {
@@ -37,27 +39,23 @@ describe('graph_neo4j_enabled gate', () => {
     expect(work).not.toHaveBeenCalled();
   });
 
-  it('withGraphSession executes the work fn when the flag is on', async () => {
+  it('flag ON still yields no external driver and never calls the work fn', async () => {
+    // This case used to assert that the flag-on path opened a Neo4j driver and
+    // threw on a missing NEO4J_URI. The driver module was replaced by an Azure
+    // Postgres compatibility boundary that always returns the fallback, so the
+    // old assertion was red for a reason the product intends. What the gate must
+    // still guarantee is that the flag cannot resurrect an external driver.
     setNeo4jEnabledOverride(true);
-    // Mock the driver factory so we don't open a real Neo4j connection.
-    const fakeSession = {
-      run: jest.fn().mockResolvedValue({ records: [] }),
-      close: jest.fn().mockResolvedValue(undefined),
-    };
-    // Force the internal singleton via a fake driver mock through dynamic
-    // import — we cannot easily monkey-patch `getGraphDriverIfEnabled`
-    // here without jest.mock at module-load time. Instead, assert the
-    // boundary: getGraphDriverIfEnabled either returns a driver or
-    // raises because env vars are missing. The fact that we cleared the
-    // env vars in CI means we expect the "missing env" path to throw,
-    // which still proves the gate is open. We catch and assert the
-    // identifying error.
-    delete process.env.NEO4J_URI;
-    delete process.env.NEO4J_USERNAME;
-    delete process.env.NEO4J_PASSWORD;
-    await expect(getGraphDriverIfEnabled()).rejects.toThrow(
-      /NEO4J_URI/,
-    );
-    expect(fakeSession.run).not.toHaveBeenCalled(); // sanity — never reached
+    expect(isNeo4jEnabled()).toBe(true);
+    process.env.NEO4J_URI = 'neo4j://gate-test.invalid:7687';
+    try {
+      await expect(getGraphDriverIfEnabled()).resolves.toBeNull();
+      const work = jest.fn(async () => 'should-not-run' as const);
+      const result = await withGraphSession('graph-gate-test', work, 'fallback-shape');
+      expect(result).toBe('fallback-shape');
+      expect(work).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.NEO4J_URI;
+    }
   });
 });

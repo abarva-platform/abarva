@@ -154,6 +154,26 @@ jobs:
         if: env.SELFTEST_MODE == 'apply'
         run: npm run db:azure:verify | tee audit-artifacts/db-migration-ci-selftest/readback.log
 
+      - name: Assert deliverable approval-lineage schema
+        if: env.SELFTEST_MODE == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          result="$(psql "$DATABASE_URL" -Atqc "
+            SELECT count(*) = 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'deliverables_v2'
+              AND column_name = 'structured_data'
+              AND data_type = 'jsonb'
+              AND is_nullable = 'YES'
+          ")"
+          if [[ "$result" != "t" ]]; then
+            echo "Expected public.deliverables_v2.structured_data to exist as nullable JSONB." >&2
+            exit 1
+          fi
+          echo "Confirmed public.deliverables_v2.structured_data is nullable JSONB."
+
       - name: Migration ledger
         if: env.SELFTEST_MODE == 'apply'
         run: npm run db:migrate:ledger | tee audit-artifacts/db-migration-ci-selftest/ledger.log

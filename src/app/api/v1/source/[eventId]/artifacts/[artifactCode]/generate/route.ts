@@ -46,6 +46,7 @@ import {
 } from "@/lib/source/contracts/upstream-satisfaction";
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
+import { markD09VendorDisclosureReview } from "@/lib/source/agent-generation/vendor-pack-disclosure";
 import { completeD11ResponseControlSections } from "@/lib/source/agent-generation/d11-completion";
 import { generateD09ViaMapReduce } from "@/lib/source/agent-generation/d09-map-reduce";
 import {
@@ -106,6 +107,13 @@ import {
 } from "@/lib/source/artifact-governance";
 import { evaluateGenerationEligibility } from "@/lib/source/contracts/generation-eligibility";
 import { resolveSourceArtifactGenerationInput } from "@/lib/source/agent-generation/review-existing-body";
+import { findCurrentAcceptedClientFinal } from "@/lib/source/contracts/current-client-final";
+import { readVerifiedClientFinalText } from "@/lib/source/contracts/verified-client-final-text";
+import {
+  readAcceptedCandidatesForEvent,
+  type AcceptedEventCandidate,
+} from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
+import { buildCandidatePanelShortlistDraft } from "@/lib/source/agent-generation/candidate-panel-shortlist";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -324,6 +332,7 @@ export async function generateSourceArtifactDraft(
   const requestBody = (await _req.json().catch(() => null)) as {
     reviewExistingBody?: unknown;
   } | null;
+  const requestedReview = requestBody?.reviewExistingBody === true;
 
   // Resolve template up front so unknown artifact codes 404 fast.
   const template = getPromptTemplate(artifactCode);
@@ -428,6 +437,59 @@ export async function generateSourceArtifactDraft(
     );
   }
 
+  let currentClientFinal;
+  try {
+    currentClientFinal = await findCurrentAcceptedClientFinal(
+      ctx.event.id,
+      ctx.tenantKey,
+      artifactCode,
+    );
+  } catch (error) {
+    return Response.json(
+      {
+        error: "client_final_lookup_failed",
+        detail: error instanceof Error ? error.message : "Client Final authority could not be verified.",
+      },
+      { status: 500 },
+    );
+  }
+  if (currentClientFinal && !requestedReview) {
+    return Response.json(
+      {
+        error: "client_final_current",
+        detail: `An accepted Client Final is current for ${artifactCode}. Restore its link if needed; create a reviewed revision through the Client Final workflow instead of regenerating a draft.`,
+      },
+      { status: 409 },
+    );
+  }
+
+  let shortlistCandidates: AcceptedEventCandidate[] | null = null;
+  if (artifactCode === "d12_vendor_shortlist") {
+    const candidates = await readAcceptedCandidatesForEvent({
+      clientKey: ctx.tenantKey,
+      eventId: ctx.event.id,
+    }).catch(() => null);
+    if (!candidates?.registryAvailable) {
+      return Response.json(
+        {
+          error: "candidate_authority_unavailable",
+          detail: "The accepted candidate panel could not be verified for this event.",
+        },
+        { status: 503 },
+      );
+    }
+    if (candidates.acceptedCandidates.length === 0) {
+      return Response.json(
+        {
+          error: "candidate_panel_required",
+          detail: "Accept at least one governed supplier onto this event's candidate panel before drafting a shortlist.",
+        },
+        { status: 409 },
+      );
+    }
+    shortlistCandidates = candidates.acceptedCandidates;
+  }
+
   // Contract-driven eligibility (PR 4B/4C, ADR-0015): stage eligibility (PR
   // 4B) plus the upstream-required gate — PR 4C replaces the original "does
   // a non-empty body exist" check (findMissingUpstreamCodes) with the real
@@ -449,7 +511,7 @@ export async function generateSourceArtifactDraft(
   const stageBlocker = eligibility.blockers.find(
     (b) => b.code === "stage_not_eligible",
   );
-  if (stageBlocker) {
+  if (stageBlocker && !currentClientFinal) {
     return Response.json(
       {
         error: stageBlocker.code,
@@ -517,11 +579,94 @@ export async function generateSourceArtifactDraft(
     );
   }
 
+  if (currentClientFinal) {
+    if (
+      artifactRow.status !== "approved" ||
+      artifactRow.linked_artifact_id !== currentClientFinal.id
+    ) {
+      return Response.json(
+        { error: "client_final_link_restore_required", detail: "Restore the current accepted Client Final before reviewing it." },
+        { status: 409 },
+      );
+    }
+    let verifiedText: string;
+    try {
+      verifiedText = (await readVerifiedClientFinalText(
+        currentClientFinal, clientKeyToInventorySubstrateKey(ctx.tenantKey), ctx.event.id,
+      )).text;
+    } catch {
+      return Response.json({ error: "client_final_verification_failed" }, { status: 409 });
+    }
+    if (artifactRow.body !== verifiedText) {
+      return Response.json(
+        { error: "client_final_body_restore_required", detail: "Restore the stored Client Final body before reviewing it." },
+        { status: 409 },
+      );
+    }
+    if (!requiresSourceConsultingGradeGate(artifactCode)) {
+      return Response.json({ error: "quality_gate_not_required" }, { status: 409 });
+    }
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return Response.json({ error: "quality_gate_requires_anthropic" }, { status: 503 });
+    }
+    const upstreamBound = collectUpstreamBodies(ctx, [
+      ...template.upstreamRequired, ...template.upstreamOptional,
+    ], { approvedOnly: artifactCode === "d02_value_target" });
+    const reviewed = await runConsultingGradeQualityGate({
+      artifactCode,
+      artifactName: specByCode(artifactCode)?.name ?? artifactCode,
+      body: verifiedText,
+      ctx,
+      upstreamBound,
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      artifactId: artifactRow.id,
+      model: template.model,
+      maxTokens: template.maxTokens,
+      requestStartedAtMs: Date.now(),
+      reviewOnly: true,
+    });
+    if (!reviewed.ok && !reviewed.qualityGate) {
+      return Response.json(
+        { error: reviewed.error, detail: reviewed.detail },
+        { status: reviewed.status },
+      );
+    }
+    const nowIso = new Date().toISOString();
+    const sourceWrite = selectSourceWriteAdapter(undefined, ctx.tenantKey);
+    const receipt = reviewed.qualityGate;
+    const write = await sourceWrite.updateArtifactBody({
+      artifactRowId: artifactRow.id,
+      columns: {
+        body_generation_metadata: {
+          ...(artifactRow.body_generation_metadata ?? {}),
+          qualityGate: receipt,
+          reviewedClientFinal: {
+            artifactId: currentClientFinal.id,
+            blobSha256: currentClientFinal.blobSha256,
+            reviewedAt: nowIso,
+            reviewedBy: currentUser?.clerkUserId ?? tenancy.userId,
+          },
+        },
+        updated_at: nowIso,
+      },
+    });
+    if (!write.ok || !write.data) {
+      return Response.json({ error: "quality_review_receipt_failed" }, { status: 500 });
+    }
+    return Response.json({
+      ok: true,
+      qualityGateFailed: !reviewed.ok,
+      detail: reviewed.ok ? null : reviewed.detail,
+      artifact: artifactStateRowToView(write.data as unknown as SourceEventArtifactStateRow),
+    });
+  }
+
   // Collect upstream bodies + build the user message.
   const upstreamBound = collectUpstreamBodies(ctx, [
     ...template.upstreamRequired,
     ...template.upstreamOptional,
-  ]);
+  ], { approvedOnly: artifactCode === "d02_value_target" });
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
   const requiresQualityGate = requiresSourceConsultingGradeGate(artifactCode);
   if (requiresQualityGate && !process.env.ANTHROPIC_API_KEY) {
@@ -563,6 +708,10 @@ export async function generateSourceArtifactDraft(
       }
     } else if (!tenancy) {
       return tenancyErrorResponse(tenancyError);
+    } else if (artifactCode === "d12_vendor_shortlist") {
+      body = buildCandidatePanelShortlistDraft(shortlistCandidates ?? []);
+      model = "source-candidate-panel-deterministic-v1";
+      stopReason = "source_bound_candidate_draft";
     } else if (!process.env.ANTHROPIC_API_KEY) {
       model = "source-deterministic-fallback";
       stopReason = "missing_anthropic_api_key";
@@ -724,6 +873,15 @@ export async function generateSourceArtifactDraft(
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
   body = normalizeRequiredSectionHeadings(artifactCode, body);
+  const disclosureReview = markD09VendorDisclosureReview({
+    artifactCode,
+    body,
+    qualityGate,
+  });
+  if (disclosureReview.failureDetail) {
+    qualityGate = disclosureReview.qualityGate;
+    qualityGateFailedDetail = disclosureReview.failureDetail;
+  }
   const sectionVerification = verifyArtifactSections(
     artifactCode,
     body,
@@ -1150,6 +1308,7 @@ async function runConsultingGradeQualityGate(args: {
   model: string;
   maxTokens: number;
   requestStartedAtMs: number;
+  reviewOnly?: boolean;
 }): Promise<QualityGateResult> {
   const sourceContext = buildSourceQualitySourceContext({
     ctx: args.ctx,
@@ -1174,6 +1333,7 @@ async function runConsultingGradeQualityGate(args: {
       artifactCode: args.artifactCode,
       body: args.body,
       sourceContext,
+      ctx: args.ctx,
     }),
   );
   reviews.push(firstReview);
@@ -1185,6 +1345,21 @@ async function runConsultingGradeQualityGate(args: {
         reviews,
         rewriteAttempted: false,
       }),
+    };
+  }
+
+  if (args.reviewOnly) {
+    const qualityGate = buildSourceQualityGateMetadata({
+      reviews,
+      rewriteAttempted: false,
+    });
+    return {
+      ok: false,
+      error: "quality_gate_failed",
+      detail: qualityGate.finalSummary,
+      status: 422,
+      body: args.body,
+      qualityGate,
     };
   }
 
@@ -1304,6 +1479,7 @@ async function runConsultingGradeQualityGate(args: {
       artifactCode: args.artifactCode,
       body: rewrittenBody,
       sourceContext,
+      ctx: args.ctx,
     }),
   );
   reviews.push(secondReview);

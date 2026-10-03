@@ -1,0 +1,172 @@
+name: ECL physical admission
+
+on:
+  pull_request:
+    branches:
+      - main
+    # Every file the generator, the adapter, the loader and these tests read.
+    # A change to the source definition, the relationship map or the dataset
+    # registry changes what would be loaded, so it has to run this proof too.
+    #
+    # The Home job tests check this list themselves: each fails when a module
+    # it loaded, or a file it names as read at run time, is not covered here,
+    # and when a path named here no longer exists. The admission gate runs the
+    # Home reader's own builder, so the reader's directory is covered whole and
+    # the modules it loads from elsewhere are named one by one.
+    paths:
+      - ".github/workflows/ecl-physical-admission.yml"
+      - "config/ecl/synthetic-enterprise-v1-relationship-map.json"
+      - "datasets/synthetic/**"
+      - "datasets/tenant-inputs/tenant-input-registry.json"
+      - "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql"
+      - "docs/governance/dataset-manifests/**"
+      - "scripts/ecl/generate_synthetic_enterprise_v1.py"
+      - "scripts/ecl/normalize_synthetic_enterprise_v1.py"
+      - "scripts/ecl/validate_synthetic_enterprise_v1.py"
+      - "scripts/ecl/__tests__/readback-synthetic-enterprise-v2.test.ts"
+      - "scripts/ecl/__tests__/synthetic_enterprise_gate_fixtures.ts"
+      - "scripts/ecl/__tests__/test_synthetic_ecl_physical_admission.py"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_home_gates.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_published_pins.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_source_identity.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_v2_readback.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_home_promotion.ts"
+      - "scripts/ecl/__tests__/test_synthetic_source_versions.py"
+      - "scripts/ecl/project_synthetic_enterprise_home.ts"
+      - "scripts/ecl/promote_synthetic_enterprise_home.ts"
+      - "scripts/ecl/readback_synthetic_enterprise_v2.ts"
+      - "scripts/ecl/retire_synthetic_enterprise_home.ts"
+      - "scripts/ecl/synthetic_enterprise_home_rows.ts"
+      - "scripts/ecl/synthetic_source_versions.py"
+      - "scripts/ecl/synthetic_source_versions.ts"
+      - "scripts/ecl/load_synthetic_enterprise_v1.ts"
+      - "scripts/exec/cli-entry.mjs"
+      - "src/config/tenants/CANONICAL_TENANTS.ts"
+      - "src/lib/governance/context-corpus-policy.ts"
+      - "src/lib/governance/dataset-manifest.ts"
+      - "supabase/migrations/20260831031000_ecl_substrate_baseline.sql"
+      - "supabase/migrations/20261001183000_ecl_enterprise_context_admission.sql"
+      - "supabase/migrations/20261002013000_home_active_assessment.sql"
+      - "supabase/migrations/20260901090000_home_serving_views_intake_families.sql"
+      - "supabase/migrations/20260902090000_home_serving_view_executive_interviews.sql"
+      - "supabase/migrations/20260902100000_home_serving_view_relationships.sql"
+      - "scripts/data-build/segment-spine.ts"
+      - "scripts/ecl/__tests__/synthetic-enterprise-home-rows.test.ts"
+      - "scripts/ecl/__tests__/test_home_active_assessment_migration.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_home_admission.ts"
+      - "scripts/ecl/synthetic_enterprise_home_job.ts"
+      - "src/lib/auth/agent-client-logins.ts"
+      - "src/lib/client-config.ts"
+      - "src/lib/data-plane/azureRead.ts"
+      - "src/lib/data-plane/read-adapters/azureSession.ts"
+      - "src/lib/data-plane/tenantConnectionResolver.ts"
+      - "src/lib/ecl/denseAssessment.ts"
+      - "src/lib/home/preview/**"
+      - "src/lib/observability/structured-logger.ts"
+      - "src/lib/tenant/aliases.ts"
+      - "src/lib/tenant/declared-synthetic-tenant.ts"
+      - "tsconfig.json"
+  workflow_dispatch:
+
+jobs:
+  physical-admission:
+    name: Synthetic ECL physical admission
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ecl_admission_test
+          POSTGRES_USER: ecl_test
+          POSTGRES_PASSWORD: ecl_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ecl_test -d ecl_admission_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check Postgres client
+        run: command -v psql
+      - name: Prove additive ECL admission on disposable Postgres
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: python3 scripts/ecl/__tests__/test_synthetic_ecl_physical_admission.py
+      - name: Refuse a source version, dataset or definition the registry does not declare
+        run: python3 -m unittest discover -s scripts/ecl/__tests__ -p 'test_synthetic_source_versions.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      # A change to either definition runs this: the published bytes and the ids
+      # of loaded rows may not move.
+      - name: Pin each published source version's bytes and row ids
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_published_pins.ts
+      - name: Resolve identity, basis and application depth from declared fields
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_source_identity.ts
+      - name: Compare readback rows and refuse an unbound readback run
+        run: node --import tsx --test scripts/ecl/__tests__/readback-synthetic-enterprise-v2.test.ts
+      - name: Refuse a load the dataset registry has not approved
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts
+      - name: Refuse a projection or a Home promotion the dataset registry has not approved
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_home_gates.ts
+      - name: Map canonical rows to Home rows without filling in what the source does not hold
+        run: node --import tsx --test scripts/ecl/__tests__/synthetic-enterprise-home-rows.test.ts
+      - name: Load and read back synthetic source and canonical rows
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts
+      - name: Load and read back versioned logical applications
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts
+      - name: Read the versioned load back and refuse changed rows, payloads and blobs
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+          ECL_READBACK_TEST_PHASE: before_projection
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v2_readback.ts
+      - name: Apply additive Home serving readers in the disposable database
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: |
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260901090000_home_serving_views_intake_families.sql
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260902090000_home_serving_view_executive_interviews.sql
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260902100000_home_serving_view_relationships.sql
+      - name: Project canonical enterprise rows to shadow Home serving views
+        env:
+          NODE_OPTIONS: --conditions=react-server
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_projection.ts
+      - name: Read the versioned load back again once a Home projection exists
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+          ECL_READBACK_TEST_PHASE: after_projection
+        run: node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v2_readback.ts
+      - name: Rehearse inert Home selection migration
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: |
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261002013000_home_active_assessment.sql
+          psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261002013000_home_active_assessment.sql
+          test "$(psql "$ECL_ADMISSION_TEST_DATABASE_URL" -X -At -c 'select count(*) from ecl_projection.home_active_assessment')" = 0
+      - name: Hold the Home declarations table to what its migration promises
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_home_active_assessment_migration.ts
+      # Runs the admission and retirement jobs themselves, with the Home
+      # reader's own builder as the gate, against the projection written above.
+      - name: Check, promote, retire and re-promote the projected assessment
+        env:
+          NODE_OPTIONS: --conditions=react-server
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_admission.ts
+      - name: Prove generated Home admission spine
+        run: npm run test:ecl:synthetic-enterprise-v2:promote-home

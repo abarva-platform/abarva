@@ -3,9 +3,15 @@
 import type { PromotionEvaluation } from "./promotion-evaluator";
 import { CANONICAL_TENANTS } from "@/config/tenants/CANONICAL_TENANTS";
 
-// Derive the SkyHarbor canonical key from the canonical source (never hand-typed).
-const SKY_KEY =
-  CANONICAL_TENANTS.find((t) => /sky\s?harbor/i.test(t.name))?.key ?? "";
+// Resolve the airline demo tenant by its declared key, never by display name:
+// display names are relabelled, and a name match that misses yields "" and
+// silently counts zero rows into the tenant section. A key the registry no
+// longer declares fails loudly instead.
+const AIRLINE_DEMO_TENANT_KEY = "skyharbor-air";
+const SKY_KEY = CANONICAL_TENANTS.find((t) => t.key === AIRLINE_DEMO_TENANT_KEY)?.key;
+if (!SKY_KEY) {
+  throw new Error(`promotion-preview: tenant key "${AIRLINE_DEMO_TENANT_KEY}" is not declared in CANONICAL_TENANTS`);
+}
 
 export interface PreviewData {
   total: number;

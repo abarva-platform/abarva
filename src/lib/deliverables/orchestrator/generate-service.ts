@@ -15,7 +15,10 @@ import {
 import { generateDeliverable as defaultGenerate } from "./model-caller";
 import { persistDeliverable as defaultPersist } from "./persistence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { generateArchitectureModel } from "@/lib/visual-system/architecture-generation";
+import {
+  generateArchitectureModel,
+  ArchitectureRefusalError,
+} from "@/lib/visual-system/architecture-generation";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
 import { governedArchitectureToolCall } from "@/lib/deliverables/quality/architecture-egress-adapter";
@@ -55,6 +58,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
   userId: string;
   /** the move / source-event id this deliverable is generated for. */
   sourceArtifactRef: string;
+  /** Moves phase boundary used to keep later evidence out of this prompt. */
+  phase?: number;
   /** Canonical deliverables_v2 registry key, when different from the orchestrator type. */
   deliverableTypeKey?: string;
   /** semantic query used to retrieve governed evidence. */
@@ -69,6 +74,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
     contextSnapshotHash: string;
     architectureModelVersion: string;
   };
+  evidenceSnapshotHash?: string;
+  phaseEvidenceSnapshotHash?: string;
   outputFormats?: OutputFormat[];
   adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
@@ -229,6 +236,7 @@ export async function runDeliverableForTenant(
       tenantClientKey: input.tenantClientKey,
       clientId: input.clientId,
       sourceArtifactRef: input.sourceArtifactRef,
+      ...(input.phase !== undefined ? { phase: input.phase } : {}),
       query: evidenceQueries[0],
       queries: evidenceQueries,
       audienceIsVendorFacing,
@@ -373,6 +381,21 @@ export async function runDeliverableForTenant(
         .join("\n\n")
         .slice(0, 48000);
     } catch (err) {
+      if (err instanceof ArchitectureRefusalError) {
+        // A policy refusal blocks — it is never silently re-routed to another
+        // model. Surface the category/explanation so a human can narrow or
+        // rephrase the input and re-request, or confirm it is out of bounds.
+        return {
+          ok: false,
+          qualityPass: false,
+          blockers: [
+            `Target Architecture generation was refused by the model under a usage policy (${err.category ?? "category not named"}). This deliverable is blocked and is never routed to a different model; a reviewer should narrow or rephrase the architecture input and re-request, or confirm the content is genuinely out of bounds.`,
+          ],
+          blockedReason: `architecture_generation_refused: ${err.message}`,
+          retrievedEvidence: retrievedCount,
+          contextCoverage: coverage,
+        };
+      }
       return {
         ok: false,
         qualityPass: false,
@@ -499,13 +522,52 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
+    ...(input.phaseEvidenceSnapshotHash
+      ? { phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash }
+      : {}),
     ...(renderAsDeck ? { renderAsDeck: true } : {}),
     ...(input.tenantClientKey ? { tenantKey: input.tenantClientKey } : {}),
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
     ...(input.decisionLineage
-      ? { generationLineage: input.decisionLineage }
+      ? {
+          generationLineage: {
+            ...input.decisionLineage,
+            ...(input.evidenceSnapshotHash
+              ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
+              : {}),
+            ...(input.phaseEvidenceSnapshotHash
+              ? {
+                  phaseEvidenceSnapshotHash:
+                    input.phaseEvidenceSnapshotHash,
+                  evidenceSnapshotScope: "phase",
+                }
+              : {}),
+          },
+        }
+      : input.evidenceSnapshotHash
+        ? {
+            generationLineage: {
+              evidenceSnapshotHash: input.evidenceSnapshotHash,
+              ...(input.phaseEvidenceSnapshotHash
+                ? {
+                    phaseEvidenceSnapshotHash:
+                      input.phaseEvidenceSnapshotHash,
+                    evidenceSnapshotScope: "phase",
+                  }
+                : {}),
+            },
+          }
+        : {}),
+    ...(input.evidenceSnapshotHash
+      ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
+      : {}),
+    ...(input.phaseEvidenceSnapshotHash
+      ? {
+          phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash,
+          evidenceSnapshotScope: "phase",
+        }
       : {}),
     enforceQualityContract,
     governanceOk: true, // the multi-pass generation already cleared audited egress

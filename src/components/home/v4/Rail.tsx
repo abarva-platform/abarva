@@ -1,9 +1,13 @@
 import type { CSSProperties } from "react";
 
-import type {
-  HomeRecordRenderSource,
-  HomeRecordSourceKind,
-} from "@/lib/home/preview/types";
+import {
+  homeNarrativeStatusLabel,
+  homeRecordSourceLabel,
+  homeSourceCoverageGapLabel,
+  homeSourceCoverageLabel,
+  homeSourceFileReviewLabel,
+} from "@/lib/home/preview/record-source";
+import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -111,14 +115,9 @@ const sectionLinkStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const RECORD_SOURCE_LABELS: Record<HomeRecordSourceKind, string> = {
-  ecl_serving_projection: "Live governed record",
-  reviewed_snapshot: "Reviewed stored record",
-  reviewed_snapshot_fallback: "Reviewed stored record fallback",
-};
-
 export function Rail({
   clientLabel,
+  declaredSyntheticDemo,
   groups,
   activeId,
   onSelect,
@@ -127,6 +126,12 @@ export function Rail({
   exportHrefBase,
 }: {
   clientLabel: string;
+  /**
+   * Whether this tenant is declared synthetic demonstration data. The statements that say so are
+   * shown for a tenant that is declared so and for no other: they are facts about one tenant, not
+   * furniture of the rail.
+   */
+  declaredSyntheticDemo: boolean;
   groups: RailGroup[];
   activeId: string;
   onSelect: (id: string) => void;
@@ -134,6 +139,9 @@ export function Rail({
   recordSource: HomeRecordRenderSource;
   exportHrefBase?: string;
 }) {
+  const sourceCoverageLabel = homeSourceCoverageLabel(recordSource);
+  const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
+  const sourceFileReviewLabel = homeSourceFileReviewLabel(recordSource);
   return (
     <nav
       style={{
@@ -150,33 +158,43 @@ export function Rail({
         scrollbarGutter: "stable",
       }}
     >
-      <div>
-        <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
+      <div
+        data-home-tenant-declaration={
+          declaredSyntheticDemo ? "synthetic-demo" : "none"
+        }
+      >
+        {declaredSyntheticDemo ? (
+          <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
+        ) : null}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto minmax(0,1fr)",
+            gridTemplateColumns: declaredSyntheticDemo
+              ? "auto minmax(0,1fr)"
+              : "minmax(0,1fr)",
             alignItems: "baseline",
             gap: 8,
             marginTop: 7,
           }}
         >
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: V4.paper,
-              background: V4.navy,
-              borderRadius: 3,
-              padding: "4px 7px 3px",
-              flexShrink: 0,
-            }}
-          >
-            DEMO
-          </span>
+          {declaredSyntheticDemo ? (
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: V4.paper,
+                background: V4.navy,
+                borderRadius: 3,
+                padding: "4px 7px 3px",
+                flexShrink: 0,
+              }}
+            >
+              DEMO
+            </span>
+          ) : null}
           <span
             style={{
               fontFamily: SERIF,
@@ -224,17 +242,19 @@ export function Rail({
             Candidate · unreviewed
           </span>
         </div>
-        <p
-          style={{
-            margin: "11px 0 0",
-            fontFamily: SANS,
-            fontSize: 12,
-            lineHeight: 1.5,
-            color: V4.slate,
-          }}
-        >
-          Synthetic portfolio. Not a customer, not a case study.
-        </p>
+        {declaredSyntheticDemo ? (
+          <p
+            style={{
+              margin: "11px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: V4.slate,
+            }}
+          >
+            Synthetic portfolio. Not a customer, not a case study.
+          </p>
+        ) : null}
       </div>
 
       {groups.map((group, gi) => (
@@ -373,7 +393,13 @@ export function Rail({
         <p
           data-home-record-source={recordSource.kind}
           data-home-canonical-snapshot-hash={recordSource.canonicalSnapshotHash}
-          title={`canonical_snapshot_hash: ${recordSource.canonicalSnapshotHash}`}
+          data-home-projection-content-hash={
+            recordSource.contextVersion?.projectionContentHash
+          }
+          data-home-source-catalog-hash={
+            recordSource.contextVersion?.sourceCatalogHash
+          }
+          data-home-narrative-coherence={recordSource.contextVersion?.coherence}
           style={{
             margin: 0,
             fontFamily: MONO,
@@ -382,12 +408,63 @@ export function Rail({
             color: V4.slate,
           }}
         >
-          <span>{RECORD_SOURCE_LABELS[recordSource.kind]}</span>
+          <span>{homeRecordSourceLabel(recordSource)}</span>
         </p>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontFamily: SANS,
+            fontSize: 12,
+            lineHeight: 1.4,
+            color: V4.slate,
+          }}
+        >
+          {homeNarrativeStatusLabel(recordSource)}
+        </p>
+        {sourceCoverageLabel ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            {sourceCoverageLabel}
+          </p>
+        ) : null}
+        {sourceFileReviewLabel ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            {sourceFileReviewLabel}
+          </p>
+        ) : null}
+        {sourceCoverageGap ? (
+          <details
+            style={{
+              marginTop: 6,
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            <summary>Source coverage gaps</summary>
+            <p style={{ margin: "5px 0 0" }}>{sourceCoverageGap}</p>
+          </details>
+        ) : null}
       </div>
 
       <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Compiled</div>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Context</div>
         <p
           style={{
             margin: 0,

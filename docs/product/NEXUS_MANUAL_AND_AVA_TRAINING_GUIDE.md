@@ -328,10 +328,10 @@ Generated from `src/lib/features/registry.ts`. aVa must use this language for av
 | --- | --- | --- | --- | --- |
 | moves_governed_roadmap_downloads | tenant | 1 enrolled |  | 2026-07-25: The P4 execution roadmap emits a governed structured-output block (validated + prosestructure consistency-checked), which is turned into ONE RoadmapPresentationContract and persisted with an immutable synchronization record (content hash, contract/schema/renderer versions, lineage, run id, supersession). Editable PPTX, editable DOCX and an HTML preview are then served from the SAME persisted contract via the governed download route - never regenerated independently - with tenant-scoped, non-enumerating refusals and restricted contract/provenance access. When off, roadmap generation and existing downloads behave byte-for-byte as before. Tenant opt-in; default off; an enrolled tenant first. Env: ABARVA_FEATURE_MOVES_GOVERNED_ROADMAP_DOWNLOADS_TENANTS. |
 | tower_cxo_claude_story_blocks | tenant | 1 enrolled |  | Tower CXO story blocks: uses audited Claude to synthesize the executive story and visual-spec contract from the deterministic TowerContextPack. AbarVa still owns facts, values, claim gates, and rendering; Claude only writes validated CIO/CFO business wording and exhibit intent. Tenant opt-in; an enrolled tenant first. Env allowlist: ABARVA_FEATURE_TOWER_CXO_CLAUDE_STORY_BLOCKS_TENANTS. |
-| moves_ava_chat_hardening | tenant | 2 enrolled |  | 2026-09-05: Nexus/aVa chat inside Moves phase workspaces is grounded by a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) instead of a blank prompt, and every answer is post-hoc scanned for banned language (Claude-deflection, internal-ID leaks, workflow-bypass claims). Phase-grounded and workflow-safe by design: Moves aVa never approves or advances a gate, never claims a promotion happened, and stays narrower than Intelligence. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS. |
+| moves_ava_chat_hardening | tenant | 2 enrolled |  | 2026-09-05: Nexus/aVa chat inside Moves phase workspaces can use a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) to ground model answers and suppress generic tenant context. Status, blocker, readiness, and phase-input draft modes have deterministic response paths; explicit evidence-summary questions use only phase-scoped approved evidence and return a cited, deterministic summary even when hardening is otherwise off. Other free-form responses remain model-generated from prompt guidance and are not post-hoc quality-gated. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS. |
 | moves_pattern_assembly | tenant | 2 enrolled |  | Moves phase workspace: AbarVa assembles candidate solution options/tradeoffs/risks via Claude (audited egress) from a governed packet, then validates each item (evidence_backed / needs_confirmation / not_allowed). Claude never invents baselines, value, evidence, readiness, or approvals - the validator labels any unbacked number needs_confirmation and any overreach not_allowed; on error it falls back to the deterministic feed-forward. Requires moves_phase_workspace_v2 + ANTHROPIC_API_KEY. Tenant opt-in; default off. an enrolled tenant proved first (2026-07-08); an enrolled tenant added 2026-07-08 for cross-tenant proof (not overfit to an enrolled tenant's Legal Contract Intake use case). Env: ABARVA_FEATURE_MOVES_PATTERN_ASSEMBLY_TENANTS. |
 | moves_finder_shell_v1 | platform |  |  | 2026-07-20: Finder-style visual rebuild of the Moves phase-workspace rail (MovePhaseExplorer) - grouped icon rail (Phases group, then Workspace group), collapse/expand to an icon-only rail, a soft-blue selection tint on the active row, connector-line tree styling, an amber 'AI-draft not yet final' dot on phase rows with a pending authoritative draft, and an amber blocked-reason subtitle under a blocked phase row. Purely presentational chrome - binds only to the same phase-tally/gate props the current rail already receives; no new data fetching, no schema or API changes. When off, the rail renders byte-for-byte identical to the existing MovePhaseExplorer. Cross-tenant proof: an enrolled tenant, an enrolled tenant, an enrolled tenant, an enrolled tenant all live-verified 2026-07-21 (rail, two-column Steps, collapse toggle, Origination visual pass) with zero regressions. Promoted to default-on for all tenants 2026-07-21 (owner: 'I need to see the new shell') - legacy MovePhaseExplorerLegacy/flag-off branches kept as the rollback path for a ~1-week soak before removal. Env: ABARVA_FEATURE_MOVES_FINDER_SHELL_V1_TENANTS (now an exclude-list if ever needed). |
-| moves_approvals_overview_v1 | platform |  |  | 2026-07-21: cross-phase Approvals overview inside the Moves phase workspace (MovesPhaseStandaloneClient) - a read-only list, one row per phase, built entirely from the existing getMovePhaseTallies() output (met/total gate criteria, done/current/upcoming state) already threaded through the component as the phaseTallies prop. Approver column is a static 'Sponsor' label (the current constant GATE_RULES approverRole in governance.ts) - no per-role rows, no requires_revalidation state, no new fetch or API route. 'Review & approve' reuses the existing per-phase navigation (the rail's phase Link hrefs, or the local substep jump for the phase already open). Gates the rail's 'Approvals' link: when off, that link behaves byte-for-byte as before (jumps straight to the current phase's approve substep); when on, it opens this overview instead. Closes out MOVES-UI-001 Phase 5 (MOVES-UI-002). Cross-tenant proof: an enrolled tenant, an enrolled tenant, an enrolled tenant, an enrolled tenant all live-verified 2026-07-21. Promoted to default-on for all tenants 2026-07-21, same rationale as moves_finder_shell_v1. Env: ABARVA_FEATURE_MOVES_APPROVALS_OVERVIEW_V1_TENANTS (now an exclude-list if ever needed). |
+| moves_approvals_overview_v1 | platform |  |  | 2026-07-21: cross-phase Approvals overview inside the Moves phase workspace (MovesPhaseStandaloneClient) - a read-only list, one row per phase, built from the existing phase-tally output. Approval authority is the authenticated workspace user with gate-approval permission; listed sponsor contacts have no approval authority and may receive informational progress emails. No per-role approval rows or new API route. 'Review & approve' reuses existing per-phase navigation. The existing feature flag controls the overview presentation only. |
 | tower_command_center_v2 | platform |  |  | 2026-07-23: the rebuilt Tower Command Center - a density and interaction rebuild of the six Tower tabs (Command Center, Value Proof, Decision Lanes, AI Portfolio, Evidence, Recommended Actions) against the approved design at docs/design/tower/command-center-2026-07-23/tower-command-center-design.html. /tower is now the Command Center for the product; the previous Tower surface is no longer a runtime fallback, and /tower/legacy redirects to /tower. /tower/command remains a permanent alias that redirects to /tower. Every string and number is read from the governed cio_tower.mart_* read models via loadTowerMartCommandView(); the design file's banking mock dataset ships only as a typed test fixture. Five presentation fields the mart does not persist yet (usage-supported, claimable, blocked, evidence maturity, proof level) are derived in src/lib/tower/command-center/derive.ts and unit-tested - Tower read models own every value; Claude calculates nothing here. Command Center aVa is mounted through the governed Tower chat path and was demo-tenant live-proven on 2026-07-23. Dense AI portfolio handling: bubble matrices show only the top 10 initiatives for the current filter while preserving the full filtered list and total counts; candidate pipeline also caps at top 10. ROLLBACK: revert the Tower Command Center release via PR/ACA deploy; do not expose the retired Tower page as a flag-off product fallback. |
 | moves_phase_workspace_v2 | platform |  |  | Adds the phase-workspace guidance panel to every Moves phase page: for the current phase, a catalog-driven 'How to complete this phase' + 'Sessions and templates for this phase' pair (from the governed phase-template catalog, keyed on the phase). Purely additive and presentational. Move-scoped data only; no fabricated numbers. Promoted to platform default after an enrolled tenant and an enrolled tenant proof (2026-07-10); use excludeTenants only for emergency rollback. |
 | intelligence_companion_canvas | tenant |  |  | [Superseded by the v2 reconcile - kept OFF] Earlier answer-only-streaming + v3 SentinelChat companion-canvas experiment. It stripped the right-canvas tabs, which conflicts with the live IntelligenceV2Surface (which parses the canvas out of those tabs). The shipped reconcile instead enriches v2's existing canvas via the tabbed-response DATA RICHNESS mandate. Leave OFF (includeTenants empty) until true-streaming is re-scoped to keep the tabs. Env: ABARVA_FEATURE_INTELLIGENCE_COMPANION_CANVAS_ENABLED_TENANTS. |
@@ -376,7 +376,7 @@ Generated from `src/lib/agent/product-truth/capability-registry.ts`. Shipped doe
 | --- | --- | --- | --- | --- |
 | evidence-aware AI strategy synthesis | intelligence | shipped |  | Intelligence can synthesize loaded enterprise context, industry patterns, evidence gaps, and CXO next moves. It must caveat unsupported facts. |
 | loaded enterprise-context browser | home | shipped |  | Home shows loaded enterprise context, source boundaries, and gaps; it is not an authority to invent missing current-state facts. |
-| P0-P5 plus Tower Track Outcomes governance model | moves | shipped |  | Moves structures work through P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes. |
+| P0-P5 plus Tower Track Outcomes governance model | moves | shipped |  | Moves structures work through P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Mobilize & Handoff, and Tower Track Outcomes. |
 | Source evidence-bound sourcing workflow | source | shipped |  | Source supports vendor, RFP, contract, renewal, and commercial evidence workflows when the relevant source material is loaded. It does not autonomously negotiate or provide legal approval. |
 | Tower outcome and value tracking | tower | shipped |  | Tower tracks loaded value, adoption, funding, and outcome evidence for accountable owner review. It does not independently certify savings. |
 | aVa packet export to HTML and PDF | platform | shipped |  | aVa exports the same answer packet shown in chat to HTML or PDF. Export must not call the model again. |
@@ -392,7 +392,7 @@ Generated from `src/lib/agent/product-truth/capability-registry.ts`. Shipped doe
 | a consulting-firm replacement | platform | not_built |  | AbarVa augments expertise with platform infrastructure; senior human judgment still anchors material decisions. Never claim AbarVa replaces consultants or a consulting engagement outright. |
 | autonomous legal or procurement negotiator | source | not_built |  | Source prepares evidence and decision artifacts for Legal, Procurement, Finance, Risk, and business owners. It must not be described as autonomously negotiating or approving legal/commercial positions. |
 | automatic savings certification | tower | not_built |  | Tower can track and present value evidence, but Finance or the accountable outcome owner certifies savings. |
-| automatic phase approval authority | moves | not_built |  | Moves structures evidence gates and decisions; accountable sponsors approve phase movement. |
+| automatic phase approval authority | moves | not_built |  | Moves evaluates evidence gates; an authenticated workspace user with approval permission records phase decisions. Sponsors are contacts and may receive informational progress updates, but they do not approve in Moves. |
 
 ## Generated aVa Module Expert Spine
 
@@ -464,16 +464,16 @@ Moves turns a signal into a governed Strategic Move through P0-P5 and then hands
 
 | Phase | Intent | Steps | Hard gates | Evidence requirements |
 | --- | --- | --- | --- | --- |
-| P0 Originate | Convert a signal, pain point, CEO note, or hypothesis into a structured Move with sponsor candidate. Promote to P1 only when sponsor commits. | 6 | 5 | 6 |
-| P1 Charter | Engage the P0 sponsor candidate on scope and governance. Produce a charter that reflects their input. P1 = sponsor named + engaged + charter signed. Financial commitment (cost, solution, timeline approval) is a P4 gate - do NOT treat charter sign-off as investment approval. | 5 | 5 | 3 |
+| P0 Originate | Convert a signal, pain point, executive note, or hypothesis into a structured Move. Record the sponsor as a progress-contact stakeholder; the authorized workspace user owns all in-product approvals. | 6 | 5 | 6 |
+| P1 Charter | Develop an evidence-grounded charter from the Move team's inputs. Record the sponsor as a stakeholder contact and progress-email recipient; sponsor engagement or approval is not a product prerequisite. The authorized workspace user reviews and approves the charter. | 5 | 5 | 3 |
 | P2 Discover & Diagnose | Lock the current-state baseline with auditable evidence. P2 is the last gate before design investment. If the evidence does not support the hypothesis, recommend discontinuation here. This is the system working correctly. | 5 | 4 | 3 |
-| P3 Design Future State | Convert the P2 diagnosis into a signed decision: architecture, operating model, and target capability. P3 answers one question - "What should the solution look like?" - before funding decisions are made in P4. P3 scope is NOT a comprehensive architecture document. P3 produces enough design clarity to make a funding decision. | 5 | 5 | 3 |
-| P4 Roadmap & Business Case | Convert the P3-signed design into an executable plan with economics. P4 answers five questions: How do we sequence the work? How much does it cost? What value does it deliver and when? How do we govern and resource it? How do we prepare the organization for change and measure success after handoff? P4 is the last phase before execution and the correct phase to define Tower metrics - once P5 begins, measurement accountability must already be established. | 5 | 4 | 3 |
-| P5 Approval & Mobilization | Convert the P4 business case and roadmap into execution-ready state: mobilize the delivery team, secure all approvals, and produce a handoff package that the Tower-side delivery team can accept and execute without returning to the program team for clarification. P5 ends when Tower acceptance is confirmed. | 4 | 4 | 3 |
+| P3 Design Future State | Convert the approved P2 recommendation into an estimate-ready solution approach. The evidence-validated P2 route controls depth: technical-only work gets the target architecture and sizing inputs it needs; limited workflow change gets only the affected deltas; material business change gets the necessary process and accountability design. P3 is not a full implementation specification or a months-long operating-model redesign. P4 builds the transparent estimate and roadmap; P5 prepares handoff, while execution happens outside Moves. | 5 | 5 | 3 |
+| P4 Roadmap & Business Case | Convert the P3-signed design into an estimate-ready roadmap and business case. P4 answers five questions: How could work be sequenced after approval? What effort and cost range does it require? What value could it deliver and when? How should it be governed and resourced? How will success be measured after handoff? P4 plans and estimates; it does not execute. Define Tower metrics here so they are ready for mobilization and external execution after required approvals. | 5 | 4 | 3 |
+| P5 Mobilize & Handoff | Prepare the approved P4 roadmap and business case for external delivery: confirm mobilization readiness, close required approvals, and produce a handoff package that the receiving delivery team and Tower can accept without returning to Moves for clarification. P5 organizes the handoff; project execution happens outside Moves after the required approvals. P5 ends when Tower acceptance is confirmed. | 4 | 4 | 3 |
 
 ### P0 Originate
 
-Convert a signal, pain point, CEO note, or hypothesis into a structured Move with sponsor candidate. Promote to P1 only when sponsor commits.
+Convert a signal, pain point, executive note, or hypothesis into a structured Move. Record the sponsor as a progress-contact stakeholder; the authorized workspace user owns all in-product approvals.
 
 **Workflow steps**
 
@@ -481,9 +481,9 @@ Convert a signal, pain point, CEO note, or hypothesis into a structured Move wit
 | --- | --- | --- |
 | P0.1 | Capture signal | Receive raw input. Extract falsifiable hypothesis, trigger, and pain point. |
 | P0.2 | Classify archetype | Determine which AbarVa archetype best fits. Present with confidence rationale. If ambiguous, present top 2. |
-| P0.3 | Propose sponsor candidate | Identify 1-2 executive sponsor candidates from ACL/people data. Never fabricate a name. |
+| P0.3 | List sponsor contact | Record the named sponsor contact selected by the authorized workspace user for progress communication. Never fabricate a name or infer approval authority. |
 | P0.4 | Scope boundary | Define what is IN and OUT of scope. Requires human deliberation - not self-approvable. |
-| P0.5 | Evidence family selection | Identify which evidence types will be gathered in P2. Planning only - no evidence gathered in P0. |
+| P0.5 | Evidence family selection | Identify which evidence types will be gathered in P2. Before an authorized workspace user approves P0, collect at least one uploaded, parsed, and human-reviewed source file supporting the P0 mandate or scope; detailed discovery evidence remains in P2. |
 | P0.6 | Value hypothesis seed | Draft preliminary value hypothesis with lever identification and magnitude (labeled UNVALIDATED_HYPOTHESIS). |
 
 **Evidence requirements**
@@ -492,7 +492,7 @@ Convert a signal, pain point, CEO note, or hypothesis into a structured Move wit
 | --- | --- | --- | --- |
 | Hypothesis exists and is falsifiable | soft | Nexus-extracted from user input and user-confirmed | Written hypothesis contains a "wrong if..." test statement |
 | Archetype classification recorded | soft | Classifier output with confidence band | classifier_confidence_band field is populated |
-| Sponsor candidate identified with evidence citation | hard | ACL/people data citation OR explicit user statement | sponsor_evidence_source is non-null |
+| Sponsor contact and progress-email preference recorded | hard | Contact selected by the authorized workspace user | Named contact and explicit progress-email preference are recorded; no approval authority is inferred. |
 | Scope boundary confirmed by human deliberation | hard | Explicit user input during P0.4 | scope_in and scope_out both non-empty; user confirmed |
 | Value hypothesis with lever identification | soft | Nexus-drafted from signal analysis and user-confirmed | value_hypothesis field populated; value_magnitude_label = UNVALIDATED_HYPOTHESIS |
 | Evidence families identified (3) | soft | Nexus-proposed and user-confirmed | evidence_families list has 3 items |
@@ -503,7 +503,7 @@ Convert a signal, pain point, CEO note, or hypothesis into a structured Move wit
 | --- | --- | --- |
 | Hypothesis is falsifiable | hard | Written hypothesis exists AND contains a falsifiable test statement |
 | Archetype classified (may be tentative) | hard | Classifier has run AND confidence_band is recorded |
-| Sponsor candidate identified (not yet committed) | hard | At least 1 candidate with named evidence citation exists |
+| Sponsor contact and progress-email preference recorded | hard | A named contact and explicit progress-email preference are recorded. |
 | Value hypothesis seeded (labeled UNVALIDATED_HYPOTHESIS) | hard | Written value hypothesis exists AND value_magnitude_label = UNVALIDATED_HYPOTHESIS |
 | Scope boundary stated (human deliberation) | hard | scope_in and scope_out both non-empty; user deliberated P0.4 |
 | Archetype confidence band recorded | soft | Classifier has run AND confidence_band field is populated |
@@ -511,19 +511,19 @@ Convert a signal, pain point, CEO note, or hypothesis into a structured Move wit
 
 **Anti-hallucination rules**
 
-- AH-P0-1: Must not propose a sponsor without citing ACL/people data evidence Required behavior: Each candidate must include an ACL field citation, uploaded org chart entry, or explicit user statement. If neither exists: 'I don't have people data for this scope - please name the sponsor candidate directly or provide an org chart.'
+- AH-P0-1: Must not invent a sponsor contact Required behavior: Use only a contact explicitly selected by the authorized workspace user or resolved from tenant people data. If neither exists, ask the user to provide the contact; never invent a person or infer approval authority.
 - AH-P0-2: Must not state an archetype classification as final with < 70% confidence without flagging uncertainty Required behavior: Include: 'This classification is tentative (confidence: [band]). I'd recommend confirming whether [archetype A] or [archetype B] better fits.'
 - AH-P0-3: Must not state a value magnitude without noting it is an unvalidated hypothesis Required behavior: Every numeric value claim must be accompanied by: 'This is an unvalidated hypothesis - dependent on P2 baseline evidence.' The value_magnitude_label field must be UNVALIDATED_HYPOTHESIS.
 - AH-P0-4: Must not reference competitor benchmarks as fact without citing source Required behavior: Benchmark claims must cite a specific seed-patterns-industry.ts entry (e.g., 'per industry pattern PAT-IND-003') or an uploaded document. Not from general knowledge.
 ### P1 Charter
 
-Engage the P0 sponsor candidate on scope and governance. Produce a charter that reflects their input. P1 = sponsor named + engaged + charter signed. Financial commitment (cost, solution, timeline approval) is a P4 gate - do NOT treat charter sign-off as investment approval.
+Develop an evidence-grounded charter from the Move team's inputs. Record the sponsor as a stakeholder contact and progress-email recipient; sponsor engagement or approval is not a product prerequisite. The authorized workspace user reviews and approves the charter.
 
 **Workflow steps**
 
 | Step | Name | Goal |
 | --- | --- | --- |
-| P1.1 | Sponsor engagement | Confirm the P0 sponsor candidate is aware of the initiative, aligned on scope, and willing to participate in charter development. P1 does NOT require financial commitment - cost and timeline approval happen at the P4 gate after the business case is built. |
+| P1.1 | Sponsor contact | Record the sponsor contact and whether they should receive progress emails. Do not require sponsor participation, review, commitment, or approval to complete the charter. |
 | P1.2 | Stakeholder mapping | Map decision rights, contributors, reviewers. Identify who can block the Move. Flag FM-2 if committee has no individual outcome owner. |
 | P1.3 | Success metrics and value range | Lock the primary success metric and produce a preliminary value range with stated assumptions. Range must not be a point estimate. |
 | P1.4 | Charter document draft | Produce the charter artifact: all 11 sections present. Problem statement, sponsor, stakeholders, scope, metrics, value hypothesis, governance. |
@@ -533,7 +533,7 @@ Engage the P0 sponsor candidate on scope and governance. Produce a charter that 
 
 | Evidence | Type | Source | Evaluation |
 | --- | --- | --- | --- |
-| Sponsor commitment evidence | hard | Uploaded document or explicit user confirmation in current session | 'They will commit when we have a charter' does NOT satisfy this. Needs: signed charter, email confirmation, or recorded session capture. |
+| Sponsor contact and progress-email preference | hard | Explicit user-provided contact and notification preference | A named contact and explicit progress-email preference are recorded. Do not request or require sponsor participation, commitment, review, or approval. |
 | Value range with PRELIMINARY_ESTIMATE label | hard | Session capture of value discussion | Range (low-high) + stated assumptions + PRELIMINARY_ESTIMATE label. A point estimate alone does not pass. |
 | Stakeholder map with decision rights assigned | hard | Session capture or uploaded RACI | A stakeholder list without decision rights is not a complete stakeholder map (AH-P1-4). |
 
@@ -541,7 +541,7 @@ Engage the P0 sponsor candidate on scope and governance. Produce a charter that 
 
 | Criterion | Type | Evaluation |
 | --- | --- | --- |
-| Sponsor engaged - named functional owner, briefed and participating in charter | hard | User has confirmed sponsor is aware of the initiative and is the named functional owner. Charter reflects their input or review. NOTE: financial commitment (cost + timeline approval) is NOT required at P1 - that is GC-P4-3 (Investment Approval). Do not conflate. |
+| Sponsor contact listed for progress communication | hard | A sponsor contact and progress-email preference are recorded. Sponsor participation, review, or approval is not required and does not grant product approval authority. |
 | Primary success metric defined and measurable | hard | A named, measurable metric with a unit and measurement direction exists. |
 | Value range locked (rough range with stated assumptions) | hard | A range (not point estimate) with stated assumptions and PRELIMINARY_ESTIMATE label exists. |
 | Scope boundary confirmed (in/out documented) | hard | scope_in and scope_out both non-empty (from P0.4 or confirmed in P1). |
@@ -551,7 +551,7 @@ Engage the P0 sponsor candidate on scope and governance. Produce a charter that 
 
 **Anti-hallucination rules**
 
-- AH-P1-1: Must not conflate sponsor engagement (P1) with investment approval (P4) Required behavior: P1 requires sponsor ENGAGEMENT - they are briefed, named as functional owner, and participating in charter. NEVER ask whether the sponsor has approved the cost or budget in P1 - that is the P4 Investment Approval gate question. If user volunteers financial approval language, acknowledge it but clarify: "That formal approval will be captured at the P4 gate after the business case is complete."
+- AH-P1-1: Sponsor is a progress contact, never a product approver Required behavior: Sponsors may be listed as contacts and receive informational progress emails when explicitly selected. All product approvals are recorded by the authenticated, authorized workspace user.
 - AH-P1-2: Must not state a value range that implies precision - P1 ranges must be stated as ranges with assumptions, never point estimates Required behavior: Value range must be: (a) a range (low-high), not a point estimate; (b) accompanied by stated assumptions; (c) labeled PRELIMINARY_ESTIMATE.
 - AH-P1-3: Must not list a stakeholder by name unless from ACL/people data or explicit user input Required behavior: Each named stakeholder must have: (a) an ACL/people data citation, OR (b) an explicit user statement. If neither: "I do not have people data for this scope. Please name the stakeholders directly."
 - AH-P1-4: Must not mark 'stakeholder map complete' if decision rights are not assigned Required behavior: The stakeholder_map_complete criterion requires: (a) named stakeholders AND (b) decision rights assigned per row.
@@ -584,7 +584,7 @@ Lock the current-state baseline with auditable evidence. P2 is the last gate bef
 | Baseline data collected with source citations | hard | FIN-BASE-P2 artifact exists with data values and source citations. No estimated baselines. |
 | Root cause analysis complete | hard | RCA-P2 artifact exists with at least 2 ranked root causes, each with evidence citation. |
 | Gate recommendation explicit | hard | Gate verdict is CONTINUE_TO_P3 or DISCONTINUE - no hedging. |
-| Sponsor confirmed gate recommendation | hard | Sponsor has reviewed and confirmed the gate recommendation. |
+| Authorized user recorded gate decision | hard | The authorized workspace user has reviewed and recorded the gate recommendation. |
 | Value range updated from baseline evidence | soft | Value range has been refined based on baseline data (or explicitly confirmed unchanged with rationale). |
 
 **Anti-hallucination rules**
@@ -595,7 +595,7 @@ Lock the current-state baseline with auditable evidence. P2 is the last gate bef
 - AH-P2-4: Must surface contradicting evidence directly, not soften it Required behavior: State the contradiction directly: "This data challenges the hypothesis that [Y] because [X]."
 ### P3 Design Future State
 
-Convert the P2 diagnosis into a signed decision: architecture, operating model, and target capability. P3 answers one question - "What should the solution look like?" - before funding decisions are made in P4. P3 scope is NOT a comprehensive architecture document. P3 produces enough design clarity to make a funding decision.
+Convert the approved P2 recommendation into an estimate-ready solution approach. The evidence-validated P2 route controls depth: technical-only work gets the target architecture and sizing inputs it needs; limited workflow change gets only the affected deltas; material business change gets the necessary process and accountability design. P3 is not a full implementation specification or a months-long operating-model redesign. P4 builds the transparent estimate and roadmap; P5 prepares handoff, while execution happens outside Moves.
 
 **Workflow steps**
 
@@ -603,9 +603,9 @@ Convert the P2 diagnosis into a signed decision: architecture, operating model, 
 | --- | --- | --- |
 | P3.1 | Root cause to design requirements traceability | Trace each root cause from RCA-P2 to a design requirement so every design decision is grounded in the diagnosis, not in preference. |
 | P3.2 | Architecture and capability options | Develop 2-3 architecture options that address the design requirements. Present trade-offs. Recommend one option with rationale. |
-| P3.3 | Operating model design | Design the target operating model: how the capability will be owned, operated, and measured after deployment. |
-| P3.4 | Sourcing strategy decision | Decide the sourcing approach: build, buy, configure, or partner. If external SI or vendor involvement is required, flag for /source event at P4 gate. |
-| P3.5 | P3 gate readiness | Self-evaluate all P3P4 gate criteria. Produce gate readiness summary and design sign-off. |
+| P3.3 | Operating and adoption ownership | Follow the validated P2 route. For technical-only or limited-change work, record the accountable owner, adoption responsibility, operational boundary, and estimate-relevant assumptions; design a broader operating model only when material role/accountability change is evidenced. |
+| P3.4 | Delivery approach and estimate basis | Record the internal, vendor, or hybrid delivery assumption needed for P4 sizing. Identify product-development skills and responsible use of Claude Code/Codex or similar accelerators where relevant; do not select a vendor or run procurement here. |
+| P3.5 | P3 gate readiness | Self-evaluate all P3P4 gate criteria. Produce gate readiness summary and design approval record. |
 
 **Evidence requirements**
 
@@ -613,7 +613,7 @@ Convert the P2 diagnosis into a signed decision: architecture, operating model, 
 | --- | --- | --- | --- |
 | Root cause to design requirement traceability matrix | hard | Session capture + RCA-P2 cross-reference | Every root cause in RCA-P2 has at least one design requirement. |
 | Architecture recommendation with options and trade-offs | hard | Session capture or uploaded design document | At least 2 options presented, recommended option with rationale. |
-| Sponsor design approval | hard | Upload or session capture of sponsor review | Named individual has approved the design recommendation. |
+| Authorized workspace-user design approval | hard | Moves approval record | The authorized workspace user has approved the design recommendation. |
 
 **Gate criteria**
 
@@ -621,28 +621,28 @@ Convert the P2 diagnosis into a signed decision: architecture, operating model, 
 | --- | --- | --- |
 | Traceability matrix complete | hard | Every root cause from RCA-P2 has at least one design requirement. No orphaned design requirements. |
 | Architecture recommendation with options and rationale | hard | At least 2 architecture options with trade-offs; recommended option with explicit rationale tied to design requirements. |
-| Operating model designed | hard | Operating model has a named owner or owning team and is linked to success metrics from P1. |
-| Sourcing strategy decided | hard | Sourcing approach (build/buy/configure/partner) is stated. If sourcing event needed, flag exists. |
-| Sponsor approved design | hard | Sponsor has reviewed and approved the design recommendation. |
+| Route-appropriate operating and adoption ownership | hard | Record the named owner and responsibility for adoption/operation. Require broader process or operating-model design only when the approved P2 route and evidence show material change; for technical-only work, explicitly retain adoption with the named business owner. |
+| Delivery approach and estimate assumptions recorded | hard | State internal/vendor/hybrid assumptions, required skills, and sizing inputs for P4. Do not select vendors or claim procurement is complete; Source owns any sourcing event. |
+| Authorized workspace user approved design | hard | The authorized workspace user has reviewed and approved the design recommendation. |
 
 **Anti-hallucination rules**
 
 - AH-P3-1: Must not state a design requirement without linking it to a root cause from RCA-P2 Required behavior: Every design requirement must cite the root cause it addresses: "Design requirement [X] addresses root cause [Y] from RCA-P2."
 - AH-P3-2: Must not recommend an architecture without presenting alternatives and trade-offs Required behavior: Present at least 2 options with explicit trade-offs before stating the recommendation.
-- AH-P3-3: Must not defer the sourcing decision to P4 Required behavior: The sourcing approach must be decided at P3. If the answer is "TBD", ask: "What information is missing that prevents a sourcing decision now?"
+- AH-P3-3: Must not present vendor selection as a P3 decision Required behavior: Record the estimate-relevant internal/vendor/hybrid assumption, rate and role inputs, confidence, and decisions left for Source or P4.
 ### P4 Roadmap & Business Case
 
-Convert the P3-signed design into an executable plan with economics. P4 answers five questions: How do we sequence the work? How much does it cost? What value does it deliver and when? How do we govern and resource it? How do we prepare the organization for change and measure success after handoff? P4 is the last phase before execution and the correct phase to define Tower metrics - once P5 begins, measurement accountability must already be established.
+Convert the P3-signed design into an estimate-ready roadmap and business case. P4 answers five questions: How could work be sequenced after approval? What effort and cost range does it require? What value could it deliver and when? How should it be governed and resourced? How will success be measured after handoff? P4 plans and estimates; it does not execute. Define Tower metrics here so they are ready for mobilization and external execution after required approvals.
 
 **Workflow steps**
 
 | Step | Name | Goal |
 | --- | --- | --- |
 | P4.1 | Workstream and milestone planning | Decompose the design into workstreams and critical milestones. Sequence workstreams by dependency. Identify the critical path. |
-| P4.2 | Resource and cost plan | Estimate the total cost and resource requirements: internal headcount, external SI/vendor, license costs, and infrastructure. |
+| P4.2 | Resource and cost plan | Build transparent low/base/high effort and cost scenarios by work package and role. Separate internal capacity/rates from vendor rates, show effort rate arithmetic, and expose evidence, assumptions, confidence, and human-adjustable inputs. |
 | P4.3 | Business case and value model | Build the business case: NPV, payback period, and value realization timeline. Value claims must trace to the baseline from FIN-BASE-P2. |
-| P4.4 | Tower metric plan | Define the Tower metrics: how value realization will be tracked in /tower after handoff. Every value lever must have at least one Tower metric. This is a P4-critical step - do not defer to P5. |
-| P4.5 | P4 gate readiness and funding authorization | Self-evaluate P4P5 gate criteria. Produce funding authorization package for sponsor sign-off. |
+| P4.4 | Tower metric plan | Define the Tower metrics: how value realization will be tracked after handoff. Every value lever must have at least one Tower metric. This is a P4-critical step - do not defer beyond mobilization. |
+| P4.5 | P4 gate readiness and funding authorization | Self-evaluate P4P5 gate criteria. Produce the roadmap and business-case decision package for authorized workspace-user approval. |
 
 **Evidence requirements**
 
@@ -650,7 +650,7 @@ Convert the P3-signed design into an executable plan with economics. P4 answers 
 | --- | --- | --- | --- |
 | Business case with value claims traced to FIN-BASE-P2 | hard | P4.3 business case artifact | Every value claim cites a specific baseline value from FIN-BASE-P2. |
 | Tower metric plan (per value lever, named owners) | hard | P4.4 Tower metric plan artifact | All value levers have at least one Tower metric with a named owner. |
-| Sponsor funding authorization | hard | Upload or session capture | Named sponsor has approved funding for P5 execution. |
+| Funding decision and authority evidence | hard | Approved evidence package and authorized-user decision record | The roadmap records the funding decision and cites the evidence or assumptions establishing authority before external execution. A sponsor signature or sponsor action is not required. |
 
 **Gate criteria**
 
@@ -659,7 +659,7 @@ Convert the P3-signed design into an executable plan with economics. P4 answers 
 | Workstream plan with milestones and critical path | hard | At least 3 workstreams, critical milestones defined, critical path identified. |
 | Business case complete with baseline-traced value claims | hard | Every value claim traces to FIN-BASE-P2. NPV and payback period calculated. Sensitivity analysis included. |
 | Tower metric plan complete | hard | All value levers have at least one Tower metric with a named owner. This criterion cannot be deferred to P5. |
-| Sponsor approved funding for P5 | hard | Named sponsor has reviewed and approved the business case and authorized P5 funding. |
+| Authorized-user decision recorded for P5 mobilization | hard | An authorized workspace user has recorded the funding decision in Moves, with supporting authority evidence or an explicit unresolved assumption before P5 mobilization. |
 | Change management plan drafted | soft | A change management plan exists with stakeholder communication and training approach. |
 
 **Anti-hallucination rules**
@@ -668,9 +668,9 @@ Convert the P3-signed design into an executable plan with economics. P4 answers 
 - AH-P4-2: Must not state cost estimates as precise figures without stating their basis Required behavior: State the basis: "This estimate assumes [SI rate / license price / internal allocation]. The range is [low-high] depending on [variable]."
 - AH-P4-3: Must not accept benchmarks as the basis for value claims when FIN-BASE-P2 data is available Required behavior: "Every value claim must trace to FIN-BASE-P2. Benchmarks are context - they cannot substitute for our baseline."
 - AH-P4-4: Must not define Tower metrics without a baseline from FIN-BASE-P2 Required behavior: Each Tower metric must have a baseline value from FIN-BASE-P2 and a target based on the value model.
-### P5 Approval & Mobilization
+### P5 Mobilize & Handoff
 
-Convert the P4 business case and roadmap into execution-ready state: mobilize the delivery team, secure all approvals, and produce a handoff package that the Tower-side delivery team can accept and execute without returning to the program team for clarification. P5 ends when Tower acceptance is confirmed.
+Prepare the approved P4 roadmap and business case for external delivery: confirm mobilization readiness, close required approvals, and produce a handoff package that the receiving delivery team and Tower can accept without returning to Moves for clarification. P5 organizes the handoff; project execution happens outside Moves after the required approvals. P5 ends when Tower acceptance is confirmed.
 
 **Workflow steps**
 

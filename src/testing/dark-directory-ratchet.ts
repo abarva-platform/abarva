@@ -23,6 +23,19 @@
 export const DARK_DIRECTORY_BASELINE_PATH =
   "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json";
 
+/**
+ * The second ratchet built on this module, added by C-414.
+ *
+ * `programs-unit-directory-ci-coverage.test.ts` held the same equality as a
+ * COUNT long after its sibling had been converted, for the reason its own
+ * header gives: the conversion was a separate change with a separate id. It
+ * keeps a separate list because the two gates are scoped to different roots
+ * and a single file would make each one's failure ambiguous about which
+ * ratchet moved.
+ */
+export const DARK_PROGRAMS_BASELINE_PATH =
+  "src/__tests__/behaviors/programs-unit-directory-ci-coverage.baseline.json";
+
 export const NO_DRIFT_MESSAGE =
   "no drift: the dark test directory set matches the committed baseline exactly";
 
@@ -93,12 +106,21 @@ function section(
  * empty one. That is deliberate: in the cancelling case the net count does
  * not move, and a reader has to be able to see two events rather than infer a
  * silence.
+ *
+ * `baselinePath` names the file the reader must edit. It defaults to the
+ * product ratchet's baseline so the original caller is unchanged, and C-414
+ * passes the programs one: a message that names the wrong file is worse than
+ * one that names none, because the cheap correct action becomes a wrong edit
+ * to a gate the change never touched.
  */
-export function formatDarkDirectoryDrift(drift: DarkDirectoryDrift): string {
+export function formatDarkDirectoryDrift(
+  drift: DarkDirectoryDrift,
+  baselinePath: string = DARK_DIRECTORY_BASELINE_PATH,
+): string {
   if (drift.inAgreement) return NO_DRIFT_MESSAGE;
 
   return [
-    `Dark test directory set has drifted from ${DARK_DIRECTORY_BASELINE_PATH}.`,
+    `Dark test directory set has drifted from ${baselinePath}.`,
     "",
     section(
       "ENTERED the dark set",

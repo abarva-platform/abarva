@@ -3934,5 +3934,126 @@ function unplacedSplit(dir) {
   }
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* C-566. The queue publishes the repo paths live claims HOLD.               */
+/*                                                                          */
+/* The defect: the queue decided claimability from item-level claims alone   */
+/* and never read the file half the sanctioned claim path enforces, so it    */
+/* offered rows `append-claim.mjs` then refused. The refusal is cheap; its   */
+/* TIMING is not, because it lands after the agent has picked the row and    */
+/* re-verified it on `main`.                                                 */
+/*                                                                          */
+/* Every assertion below is on the rendered queue, and the fixtures are      */
+/* written in the register's real grammar — including the two shapes that    */
+/* the gate's own `claimedPaths` does NOT read as a hold. A queue that       */
+/* scraped `files:` with a second reader passes (a) and fails (c), which is  */
+/* the whole point of asserting all three.                                   */
+/* ------------------------------------------------------------------------ */
+{
+  const heldSection = (text) => {
+    const start = text.indexOf("## Paths held by a live claim");
+    if (start < 0) return "";
+    const next = text.indexOf("\n## ", start + 1);
+    return next < 0 ? text.slice(start) : text.slice(start, next);
+  };
+  const liveStamp = (minutesAgo) =>
+    new Date(Date.now() - minutesAgo * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  /* --- (a) A register that holds a path: the queue names the path, the
+   * holder, and the instant the hold expires.                               */
+  {
+    const dir = freshFixture();
+    const stamp = liveStamp(10);
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${stamp} | codex#c566-a | item T-901 claimed on branch \`exec/t-901\` — taking it. ` +
+        `files: .github/workflows/unit-suites.yml\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = heldSection(rendered);
+    check(
+      "C-566 (a) a held path is named in the queue with its holder and its expiry",
+      q.status === 0 &&
+        section.includes(".github/workflows/unit-suites.yml") &&
+        section.includes("codex#c566-a") &&
+        /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z/.test(section),
+      `exit=${q.status}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) A register that holds nothing: the section is PRESENT and empty.
+   * "No holds" and "not measured" must not render identically.              */
+  {
+    const dir = freshFixture();
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = heldSection(rendered);
+    check(
+      "C-566 (b) with nothing held the section is present and empty, not absent",
+      q.status === 0 && section.length > 0 && /\b0 path/.test(section),
+      `exit=${q.status}\nsectionFound=${section.length > 0}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) The queue's answer is the GATE's answer. Three lines the gate
+   * reads as holding nothing must contribute no path: a release, an
+   * abstention, and a path attributed to somebody else. A local `files:`
+   * scrape would list all three.                                            */
+  {
+    const dir = freshFixture();
+    const held = liveStamp(30);
+    const releasedAt = liveStamp(5);
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${held} | codex#c566-rel | item T-902 claimed on branch \`exec/t-902\` — taking it. ` +
+        `files: scripts/exec/released-one.mjs\n` +
+        `${releasedAt} | codex#c566-rel | RELEASED item T-902 — merged, all files free.\n` +
+        `${liveStamp(20)} | codex#c566-abs | item T-903 NOT TAKEN — abstained. ` +
+        `files: scripts/exec/abstained-one.mjs\n` +
+        `${liveStamp(15)} | codex#c566-att | item T-904 claimed on branch \`exec/t-904\` — ` +
+        `noting that \`scripts/exec/attributed-one.mjs\` is held by codex#someone-else, so I took another row. ` +
+        `files: scripts/exec/mine-only.mjs\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = heldSection(rendered);
+    check(
+      "C-566 (c) a released, an abstained and an attributed-away path are not published as held",
+      q.status === 0 &&
+        section.includes("scripts/exec/mine-only.mjs") &&
+        !section.includes("scripts/exec/released-one.mjs") &&
+        !section.includes("scripts/exec/abstained-one.mjs") &&
+        !section.includes("scripts/exec/attributed-one.mjs"),
+      `exit=${q.status}\nsection=${section.slice(0, 1400)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) The caution beside the claimable count is a CAUTION: the row
+   * whose lane has a held wiring file is still offered in its lane table.   */
+  {
+    const dir = freshFixture();
+    addBacklogItem(dir, "T-905");
+    mapFixtureId(dir, "T-905");
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${liveStamp(10)} | codex#c566-d | item T-906 claimed on branch \`exec/t-906\` — taking it. ` +
+        `files: .github/workflows/unit-suites.yml\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-566 (d) the held-file caution does not filter the row out of its lane table",
+      q.status === 0 && rendered.includes("| T-905 |") && /unworkable this hour/.test(rendered),
+      `exit=${q.status}\nhasRow=${rendered.includes("| T-905 |")}\ncaution=${/unworkable this hour/.test(rendered)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);

@@ -18,6 +18,7 @@ import {
   PhaseApproveAndBuild,
   type BuildSettledResult,
 } from "../PhaseApproveAndBuild";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 async function clickApproveAndBuild(name: RegExp) {
   await act(async () => {
@@ -47,6 +48,20 @@ function mockFetchSequence(opts: {
   runId: string;
   intermediateStatus: "queued" | "running";
   finalStatus: "succeeded" | "failed" | "blocked";
+  blockers?: string[];
+  packageReadiness?: {
+    label: string;
+    headline: string;
+    evidenceCoveragePct: number;
+    executiveReadinessPct: number;
+    minimumEvidenceItems: number;
+    retrievedEvidence: number;
+    confidenceTier: "bronze" | "silver" | "gold" | "board";
+    confidenceLabel: string;
+    canShareExternally: boolean;
+    missing: string[];
+    recommendedNextStep: string;
+  };
 }) {
   let runCallCount = 0;
   global.fetch = (async (input: RequestInfo | URL) => {
@@ -82,7 +97,12 @@ function mockFetchSequence(opts: {
         blobUrl: status === "succeeded" ? "/api/v1/artifacts/art_1" : null,
         progressPct: status === "succeeded" ? 100 : 40,
         progressLabel: null,
-        blockers: status === "blocked" ? ["evidence_below_gate"] : [],
+        blockers:
+          status === "blocked"
+            ? (opts.blockers ?? ["evidence_below_gate"])
+            : [],
+        packageReadiness:
+          status === "blocked" ? (opts.packageReadiness ?? null) : null,
       });
     }
     throw new Error(`Unexpected fetch: ${url}`);
@@ -90,6 +110,72 @@ function mockFetchSequence(opts: {
 }
 
 describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
+  it("keeps the header progression action hidden while current-phase required evidence is open", async () => {
+    render(
+      <>
+        <div id="phase-progress-test-action" />
+        <PhaseApproveAndBuild
+          moveId="move-1"
+          phaseNum={1}
+          phaseLabel="P1 Charter"
+          archetype="ai_enabled_sdlc"
+          moveName="Example Move"
+          clientDisplayName="Client"
+          blockOnEvidenceGaps
+          actionPortalTargetId="phase-progress-test-action"
+          evidenceNeedPackets={[
+            {
+              phase: 1,
+              priority: "required",
+              status: "missing",
+            } as MoveEvidenceNeedPacket,
+          ]}
+        />
+      </>,
+    );
+
+    expect(
+      await screen.findByText("1 required evidence item open"),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        document.getElementById("phase-progress-test-action")!,
+      ).queryByRole("button", { name: /Approve & Build/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("puts a green progression action in the header when current-phase evidence is covered", async () => {
+    render(
+      <>
+        <div id="phase-progress-test-action" />
+        <PhaseApproveAndBuild
+          moveId="move-1"
+          phaseNum={1}
+          phaseLabel="P1 Charter"
+          archetype="ai_enabled_sdlc"
+          moveName="Example Move"
+          clientDisplayName="Client"
+          blockOnEvidenceGaps
+          actionPortalTargetId="phase-progress-test-action"
+          evidenceNeedPackets={[
+            {
+              phase: 1,
+              priority: "required",
+              status: "covered",
+            } as MoveEvidenceNeedPacket,
+          ]}
+        />
+      </>,
+    );
+
+    const header = document.getElementById("phase-progress-test-action")!;
+    const button = await within(header).findByRole("button", {
+      name: /Approve & Build P1 Charter/i,
+    });
+    expect(button).toHaveStyle({ background: "rgb(20, 124, 91)" });
+    expect(button).not.toBeDisabled();
+  });
+
   it("seeds built rows from persisted Move artifacts on a fresh page load", () => {
     global.fetch = jest.fn() as unknown as typeof fetch;
 
@@ -219,7 +305,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     expect(result.failedKeys).toEqual(["charter"]);
   });
 
-  it("labels a below-gate deliverable as needing evidence instead of implying the step failed", async () => {
+  it("labels a blocked deliverable and surfaces its raw blocker without a readiness summary", async () => {
     mockFetchSequence({
       runId: "run_blocked",
       intermediateStatus: "running",
@@ -244,14 +330,67 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     await clickApproveAndBuild(/Approve & Build P1 Charter/i);
 
     await waitFor(
-      () => expect(screen.getByText("Needs evidence")).toBeInTheDocument(),
+      () => expect(screen.getByText("Build blocked")).toBeInTheDocument(),
       {
         timeout: 8000,
       },
     );
+    expect(screen.getByText("evidence_below_gate")).toBeInTheDocument();
     expect(screen.queryByText("Not gate-ready")).not.toBeInTheDocument();
     expect(onBuildSettled).toHaveBeenCalledTimes(1);
     expect(onBuildSettled.mock.calls[0][0].failedKeys).toEqual(["charter"]);
+  });
+
+  it("does not describe an overlong draft with full evidence retrieval as an evidence gap", async () => {
+    const blocker =
+      "document too long for this artifact: 7595 words; target ceiling 3000 (advisory band up to 3600) - sections drifted off the decision this artifact exists to support";
+    mockFetchSequence({
+      runId: "run_overlong",
+      intermediateStatus: "running",
+      finalStatus: "blocked",
+      blockers: [blocker],
+      packageReadiness: {
+        label: "Build blocked",
+        headline:
+          "The run is blocked. Evidence coverage and build-quality blockers are shown separately.",
+        evidenceCoveragePct: 100,
+        executiveReadinessPct: 75,
+        minimumEvidenceItems: 5,
+        retrievedEvidence: 18,
+        confidenceTier: "gold",
+        confidenceLabel: "Executive ready",
+        canShareExternally: false,
+        missing: [],
+        recommendedNextStep:
+          "Shorten the draft to the artifact's target word ceiling, then rebuild. This length blocker does not indicate that more evidence is needed.",
+      },
+    });
+
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Contact Center AI"
+        clientDisplayName="Client"
+      />,
+    );
+
+    await clickApproveAndBuild(/Approve & Build P1 Charter/i);
+
+    await waitFor(
+      () => expect(screen.getByText("Build blocked")).toBeInTheDocument(),
+      { timeout: 8000 },
+    );
+    await act(async () => {
+      screen.getByText("Why this output is blocked").click();
+    });
+    expect(screen.getByText(blocker)).toBeInTheDocument();
+    expect(screen.getByText(/Evidence retrieved: 18\/5/)).toBeInTheDocument();
+    expect(screen.getByText(/Shorten the draft/)).toBeInTheDocument();
+    expect(screen.queryByText(/Evidence gaps:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Upload and approve/)).not.toBeInTheDocument();
   });
 
   it("reports an enqueue-time error deliverable in failedKeys with no runId and no poll", async () => {
@@ -313,7 +452,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
         return fakeResponse(
           {
             phase: 3,
-            phaseLabel: "P3 Choose the Approach",
+            phaseLabel: "P3 Design Future State",
             queued: 3,
             total: 3,
             adaptiveDepth: {
@@ -381,14 +520,14 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       <PhaseApproveAndBuild
         moveId="move-1"
         phaseNum={3}
-        phaseLabel="P3 Choose the Approach"
+        phaseLabel="P3 Design Future State"
         archetype="straightforward_dashboard"
         moveName="Executive KPI Dashboard"
         clientDisplayName="Client"
       />,
     );
 
-    await clickApproveAndBuild(/Approve & Build P3 Choose the Approach/i);
+    await clickApproveAndBuild(/Approve & Build P3 Design Future State/i);
 
     await waitFor(() =>
       expect(

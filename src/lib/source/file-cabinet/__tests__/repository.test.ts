@@ -206,6 +206,26 @@ describe("listSourceArtifacts", () => {
     expect(cap.filters).toContainEqual(["source_event_id", "=", "evt-1"]);
     expect(cap.filters).toContainEqual(["tenant_key", "=", "tenant-1"]);
   });
+  it("preserves a Date-shaped accepted-final timestamp from Postgres", async () => {
+    const acceptedAt = "2026-09-29T14:55:28.000Z";
+    const acceptedFinal = {
+      ...row,
+      artifact_group: "approval",
+      artifact_type: "d01_strategy_memo",
+      status: "client_final",
+      is_client_final: true,
+      is_current_authoritative: true,
+      client_final_accepted_by: "owner-1",
+      client_final_accepted_at: new Date(acceptedAt),
+    };
+    const { db } = fakeDb([acceptedFinal]);
+    const [mapped] = await listSourceArtifacts("evt-1", { tenantKey: row.tenant_key }, {}, db);
+    expect(mapped.clientFinalAcceptedAt).toBe(acceptedAt);
+
+    const { db: invalidDb } = fakeDb([{ ...acceptedFinal, client_final_accepted_at: new Date(NaN) }]);
+    const [invalid] = await listSourceArtifacts("evt-1", { tenantKey: row.tenant_key }, {}, invalidDb);
+    expect(invalid.clientFinalAcceptedAt).toBeNull();
+  });
   it("includes history when requested (no lifecycle filter)", async () => {
     const { db, cap } = fakeDb([row]);
     await listSourceArtifacts("evt-1", "c1", { includeHistory: true }, db);

@@ -88,6 +88,13 @@ jest.mock("@/lib/auth/source-access-policy", () => ({
     loadUserSourceAccessPolicy(...args),
 }));
 
+const hasCurrentStrategyOwnerConfirmation = jest.fn();
+jest.mock("@/lib/source/strategy-confirmation", () => ({
+  ...jest.requireActual("@/lib/source/strategy-confirmation"),
+  hasCurrentStrategyOwnerConfirmation: (...args: unknown[]) =>
+    hasCurrentStrategyOwnerConfirmation(...args),
+}));
+
 let persistedEventRow: Record<string, unknown> | null = null;
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureReadFluentClient: () => ({
@@ -140,6 +147,7 @@ const EVENT_ROW = {
   trigger_description: "Incumbent term expires and scope has drifted.",
   scope_description: "Scope boundary: Tier 1 and Tier 2 network operations.",
   decision_owner: "VP Network Operations",
+  approval_policy_code: "self_v1",
   created_by_user_id: "user-7",
   created_at: "2026-02-03T10:00:00.000Z",
   updated_at: "2026-02-04T10:00:00.000Z",
@@ -169,6 +177,7 @@ function valueTargetRenderings(): string[] {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  hasCurrentStrategyOwnerConfirmation.mockResolvedValue(false);
   persistedEventRow = { ...EVENT_ROW };
   getActiveClientRow.mockResolvedValue(CLIENT);
   requireTenancy.mockResolvedValue({
@@ -314,6 +323,25 @@ describe("U-517 · the event detail route resolves the flag it passes", () => {
     return thesis!.value;
   }
 
+  it("passes only a current persisted owner confirmation to the rendered task", async () => {
+    const { buildStrategyStageForRoute } = await import(
+      "@/app/(maestro)/source/events/[eventId]/page"
+    );
+    hasCurrentStrategyOwnerConfirmation.mockResolvedValue(true);
+    const confirmed = await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", JOURNEY);
+    expect(confirmed?.tasks[0]).toMatchObject({
+      id: "strategy.confirm",
+      evidenceComplete: true,
+      confirmationVersion: expect.any(String),
+    });
+    hasCurrentStrategyOwnerConfirmation.mockResolvedValue(false);
+    const unconfirmed = await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", JOURNEY);
+    expect(unconfirmed?.tasks[0].evidenceComplete).not.toBe(true);
+    expect(hasCurrentStrategyOwnerConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({ id: EVENT_ROW.id, client_key: CLIENT.key, approval_policy_code: "self_v1" }),
+    );
+  });
+
   it("restricts the value thesis for a denied viewer", async () => {
     loadUserSourceAccessPolicy.mockResolvedValue({
       canApproveSourceStages: true,
@@ -336,5 +364,44 @@ describe("U-517 · the event detail route resolves the flag it passes", () => {
     loadUserSourceAccessPolicy.mockRejectedValue(new Error("policy read failed"));
 
     expect(await strategyValueThesis()).toBe("Restricted");
+  });
+});
+
+describe("Strategy approval action after Request acceptance", () => {
+  const journey = getSourceJourneyForEvent({ sourcingMotion: "competitive_rfp" });
+
+  it("arms the current active Strategy gate for an authorized owner", async () => {
+    persistedEventRow = {
+      ...EVENT_ROW,
+      current_stage_key: "strategy",
+      lifecycle_state: "active",
+    };
+    loadUserSourceAccessPolicy.mockResolvedValue({
+      canApproveSourceStages: true,
+      canViewFinancialData: false,
+    });
+    const { buildStrategyStageForRoute } = await import(
+      "@/app/(maestro)/source/events/[eventId]/page"
+    );
+
+    const view = await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", journey);
+    expect(view?.gate.action).toMatchObject({
+      eventId: EVENT_ROW.id,
+      redirectStageKey: "scope",
+    });
+  });
+
+  it("does not arm a past, archived, or unauthorized Strategy gate", async () => {
+    const { buildStrategyStageForRoute } = await import(
+      "@/app/(maestro)/source/events/[eventId]/page"
+    );
+    loadUserSourceAccessPolicy.mockResolvedValue({ canApproveSourceStages: true });
+    persistedEventRow = { ...EVENT_ROW, lifecycle_state: "active" };
+    expect((await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "scope", journey))?.gate.action).toBeUndefined();
+    persistedEventRow = { ...EVENT_ROW, lifecycle_state: "archived" };
+    expect((await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", journey))?.gate.action).toBeUndefined();
+    persistedEventRow = { ...EVENT_ROW, lifecycle_state: "active" };
+    loadUserSourceAccessPolicy.mockResolvedValue({ canApproveSourceStages: false });
+    expect((await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", journey))?.gate.action).toBeUndefined();
   });
 });

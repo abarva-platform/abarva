@@ -15,10 +15,7 @@ import {
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
-import {
-  buildContextCoverage,
-  type ContextCoverage,
-} from "./context-coverage";
+import { buildContextCoverage, type ContextCoverage } from "./context-coverage";
 
 export type DeliverableRunStatus =
   | "queued"
@@ -53,6 +50,12 @@ export interface OrchestratorDeliverableRunJobPayload {
     contextSnapshotHash: string;
     architectureModelVersion: string;
   };
+  /** Opaque approved-evidence revision captured when this run was queued. */
+  evidenceSnapshotHash?: string;
+  /** Phase-scoped approved-evidence basis captured when this run was queued. */
+  phaseEvidenceSnapshotHash?: string;
+  /** Moves phase boundary used by the worker's governed evidence assembler. */
+  phase?: number;
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
@@ -71,6 +74,8 @@ export interface MovesPremiumArtifactRunJobPayload {
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
+  evidenceSnapshotHash?: string;
+  phaseEvidenceSnapshotHash?: string;
   phase: number;
   artifact: DeliverableKey;
   generationMode: GenerationMode;
@@ -586,4 +591,53 @@ export async function listSucceededRunsForMove(
       latestByType.set(r.deliverableType, r);
   }
   return [...latestByType.values()];
+}
+
+export interface DeliverableRunHistoryForMove {
+  latest: DeliverableRunRecord;
+  latestSucceeded: DeliverableRunRecord | null;
+}
+
+/**
+ * Latest-created run state per deliverable type for a Move, plus the latest
+ * successful artifact when the current attempt did not produce one. Keeping
+ * these separate prevents an old success from masking a newer failed/blocked
+ * attempt on read-only browse surfaces.
+ */
+export async function listDeliverableRunHistoryForMove(
+  clientId: string,
+  moveId: string,
+  db: DbClient = getAzureWriteFluentClient(),
+  limit = 300,
+): Promise<Map<string, DeliverableRunHistoryForMove>> {
+  const { data, error } = await db
+    .from('deliverable_runs')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`deliverable_runs move history failed: ${error.message}`);
+
+  const rows = ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+  const history = new Map<string, DeliverableRunHistoryForMove>();
+  for (const run of rows) {
+    if (run.jobPayload?.sourceArtifactRef !== moveId) continue;
+    const current = history.get(run.deliverableType);
+    if (!current) {
+      history.set(run.deliverableType, {
+        latest: run,
+        latestSucceeded:
+          run.status === 'succeeded' && run.artifactId ? run : null,
+      });
+      continue;
+    }
+    if (
+      !current.latestSucceeded &&
+      run.status === 'succeeded' &&
+      run.artifactId
+    ) {
+      current.latestSucceeded = run;
+    }
+  }
+  return history;
 }

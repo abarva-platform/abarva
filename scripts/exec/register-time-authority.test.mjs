@@ -3965,6 +3965,188 @@ const T747_LIVE_LINE_SHA256 =
   );
 }
 
+// ---------------------------------------------------------------------------
+// Item C-560 — an attribution whose subject is a COORDINATED NON-PATH member
+// of the same list was invisible, so a sentence REPORTING somebody else's hold
+// created a fresh one.
+//
+// T-747 gave the path half a right-governing attribution veto, and both of its
+// patterns are anchored at the head of the tail. That anchor is load-bearing
+// and stays. But the register routinely writes a list whose members are one
+// path and one artifact named in words — `` `<path>` and the coverage census,
+// both held by <holder> `` — and `PATH_LIST_JOINER` only ever joins a path to
+// a path, so the described member is left sitting between the path and its
+// attribution. The anchored patterns cannot see past it, the holder falls
+// outside the eight-token reach as well, and the path holds.
+//
+// The consequence is a ratchet, which is why this is a defect and not a
+// cosmetic miss: a run that documents WHY it passed an item over — naming the
+// file and the run that held it — creates a hold of its own on that file,
+// outliving the original claim's release. The more carefully runs record their
+// refusals, the more of the tree becomes unclaimable, and nothing declared it.
+//
+// THE REAL LINE IS THE KNOWN POSITIVE (item T-718). The fragment below is a
+// byte copy from the live register at 2026-09-27T20:43Z, line 3260, whose
+// whole-line sha256 is recorded beside it. It is the line that refused this
+// item's own run a claim on `T-495` at 2026-09-27T20:41:02Z: its declared
+// `files:` list is `scripts/exec/build-source-board.mjs` and that file's test,
+// and the workflow it froze appears only in the narrative before the marker.
+// ---------------------------------------------------------------------------
+
+/** Byte copy from live EXECUTION_CLAIMS.md line 3260 (stamp 2026-09-27T19:47:24Z). */
+const C560_LIVE_FRAGMENT =
+  "Passed over T-772/T-774/T-495 (my measured first choice was T-772): all three must wire a " +
+  "directory, so all three need .github/workflows/unit-suites.yml and the coverage census, " +
+  "both held by a live T-771 claim at 19:29:45Z with PR 8577 open.";
+/** sha256 of the WHOLE register line that fragment was cut from. */
+const C560_LIVE_LINE_SHA256 =
+  "e08218ac42e3f95374b541b27dc9e7012fbf106f3f30600092b02829ae324523";
+
+{
+  const reported = claimedPaths(C560_LIVE_FRAGMENT).map((p) => p.path);
+  check(
+    "THE REAL LINE — a coordinated described member does not hide the attribution behind it",
+    !reported.includes(".github/workflows/unit-suites.yml"),
+    `paths=${JSON.stringify(reported)}`,
+  );
+
+  // End to end through the gate, on the shape that actually refused: the same
+  // narrative plus the line's own declared list. Asserting `claimedPaths`
+  // alone would leave the two halves free to disagree.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code#20260927T193346Z | item C-563 claimed — " +
+      C560_LIVE_FRAGMENT +
+      " files: scripts/exec/build-source-board.mjs,scripts/exec/build-source-board.test.mjs",
+  ]);
+  const freed = preclaimFiles(
+    file,
+    "T-495",
+    "source-backlog-executor#20260927T2032Z",
+    ".github/workflows/unit-suites.yml",
+  );
+  check(
+    "the gate no longer refuses the workflow that line only REPORTED as held",
+    freed.status === 0 && freed.report.fileOverlap?.refuses === false,
+    `status=${freed.status} overlap=${JSON.stringify(freed.report.fileOverlap)}`,
+  );
+  // The repair reversed would be a line that frees everything, so the same
+  // line's own declared list must still refuse a third party.
+  const own = preclaimFiles(
+    file,
+    "T-495",
+    "source-backlog-executor#20260927T2032Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "the same line's DECLARED list still holds against another run",
+    own.status === 1,
+    `status=${own.status} overlap=${JSON.stringify(own.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE COLLECTIVE ANAPHOR IS THE WHOLE LICENCE, and these cases are what stop
+  // the widening from becoming "any coordinator frees the path in front of it".
+  //
+  // `both`/`all`/`each`/`either`/`neither`/`these`/`those`/`them` say the
+  // attribution governs every member of the list, the path included. Without
+  // one, the attribution's subject is the described member alone and the path
+  // in front of it goes on holding — the hold-preserving reading, chosen
+  // because a wrong free costs a lane its work silently while a wrong hold
+  // costs one refusal that names itself.
+  const noAnaphor = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and the coverage census, held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "a coordinated member with NO collective anaphor does not free the path in front of it",
+    noAnaphor.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(noAnaphor)}`,
+  );
+  const withAnaphor = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and the coverage census, both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "the same sentence WITH the anaphor frees it — the pair differs in one word",
+    !withAnaphor.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(withAnaphor)}`,
+  );
+
+  // THE HOLDER MUST STILL BE A THIRD PARTY. `both held by me` is the form a
+  // run uses to declare an extra hold of its own, and the pronoun-cue case
+  // above (item T-7xx family) exists because that must keep holding.
+  const firstPerson = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and the coverage census, both held by me",
+  ).map((p) => p.path);
+  check(
+    "a coordinated attribution naming NO third party keeps the path",
+    firstPerson.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(firstPerson)}`,
+  );
+
+  // A SENTENCE BOUNDARY still ends the reach. Without this the coordinator
+  // skip would reach into the next clause and free a path the line holds.
+  const acrossSentence = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs and the census. Both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "the coordinator skip does not cross a full stop",
+    acrossSentence.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(acrossSentence)}`,
+  );
+  const acrossSemicolon = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs and the census; both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "the coordinator skip does not cross a semicolon either",
+    acrossSemicolon.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(acrossSemicolon)}`,
+  );
+
+  // A SECOND PATH is a list member the existing joiner already reads, so the
+  // skip must not be what handles it. This pair is the negative control on the
+  // skip itself: delete the joiner and this case, not the skip, is what fails.
+  const twoPaths = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and docs/architecture/probe-b.json, both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "a two-PATH list is still freed by the joiner the skip does not touch",
+    twoPaths.length === 0,
+    `paths=${JSON.stringify(twoPaths)}`,
+  );
+}
+
+{
+  // THE FRAGMENT IS FAITHFUL, proven against the live file when it is there.
+  // Absent — which is every CI runner — this reports and asserts nothing, so a
+  // missing corpus cannot manufacture a pass.
+  const live = path.join(os.homedir(), "Downloads", "EXECUTION_CLAIMS.md");
+  if (fs.existsSync(live)) {
+    const lines = fs.readFileSync(live, "utf8").split("\n");
+    const hit = lines.find((l) => l.includes(C560_LIVE_FRAGMENT));
+    check(
+      "the C-560 fragment is byte-present in the live register",
+      hit !== undefined,
+      "the fragment was cut from register line 3260; the register is append-only, " +
+        "so its absence means the line was rewritten, not that the defect is fixed",
+    );
+    if (hit !== undefined) {
+      const sha = crypto.createHash("sha256").update(hit).digest("hex");
+      check(
+        "the C-560 register line the fragment was cut from is unchanged (sha256)",
+        sha === C560_LIVE_LINE_SHA256,
+        `sha256=${sha} expected=${C560_LIVE_LINE_SHA256}`,
+      );
+    }
+  } else {
+    console.log(
+      "  ....  NOT RUN  C-560 live-register faithfulness — no ~/Downloads/EXECUTION_CLAIMS.md " +
+        "on this runner; the behavioural cases above do not depend on it",
+    );
+  }
+}
+
+
 {
   // THE TWO HALVES' CUE SURFACE, recomputed rather than narrated (T-717's ask).
   // Every row's `covered` flag is re-derived by running that row's own probe

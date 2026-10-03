@@ -3,26 +3,23 @@
 // Phase semantics (from src/lib/programs/programs-fixture.ts PHASE_LABEL_MAP
 // and src/lib/intelligence/program-lifecycle-patterns.ts P3-Design stage):
 //
-//   P3 Design turns the P2 recommendation into a buildable, measurable
-//   pilot. It does not re-litigate the target-state path unless new evidence
-//   invalidates P2. It extends the architecture sketch into detailed design,
-//   names the pilot cohort, locks success criteria, and records the phase-3
-//   findings and CXO interview needed for the P3->P4 gate.
+//   P3 uses the human-validated P2 route to produce only the design detail
+//   needed for a transparent P4 estimate. Technical-only work does not trigger
+//   full process or operating-model redesign. P3 does not execute a pilot.
 //
 // Inputs inherited from P2 are binding:
 //   - recommended target-state path
 //   - architecture sketch and architecture reviewer
 //   - baseline KPI/source/method
-//   - sponsor commitment and succession owner
+//   - business continuity owner and sponsor progress-contact preference
 //   - scope boundary
 //   - kill criterion
 //   - named dissenter
 //
-// Exit output is the Execution Roadmap gate package: detailed design signed off, pilot
-// cohort named, success criteria locked, phase-3 findings written, and CXO
-// interview complete. A beautiful design without cohort and criteria is a
-// diagram. A named pilot without signed design is an experiment looking for
-// permission.
+// Exit output is an estimate-ready approach: approved evidence traceability,
+// route-appropriate architecture/process detail, adoption and operating
+// ownership, delivery assumptions, and material open questions. P4 estimates
+// the roadmap; execution follows approval and P5 handoff outside Moves.
 //
 // Gate checks (mirrors GATE_RULES P3->P4 in src/lib/programs/governance.ts):
 //   - phase_3_findings_written - soft
@@ -38,14 +35,7 @@ export const P3_DESIGN: PhasePack = {
   phase: 3,
   label: 'P3 Design',
   outcome:
-    'An Execution Roadmap gate package that converts the P2 recommendation into a buildable ' +
-    'pilot: detailed solution and integration design signed off by the right ' +
-    'architecture and operating owners; pilot cohort named with inclusion and ' +
-    'exclusion logic; success criteria locked against the P2 baseline KPI and ' +
-    'measurement source; phase-3 findings written; CXO interview completed; and ' +
-    'scope, kill criterion, sponsor commitment, and named dissenter carried ' +
-    'forward without being blurred. P3 is done when P4 can plan execution without ' +
-    'asking what we are building, who we are piloting with, or what counts as a win.',
+    'An estimate-ready approach derived from approved P2 evidence and the human-validated solution route. Include enough target architecture, data/integration design, traceability, ownership, and delivery assumptions to size work and compare internal, vendor, or hybrid approaches. Add process and operating-model detail only when validated evidence shows material change; otherwise state the adoption owner and business responsibility. P3 does not produce a full implementation specification or execute a pilot. P4 builds the reviewed roadmap and estimate; P5 hands it to external delivery.',
 
   definitionOfDone: [
     {
@@ -55,57 +45,62 @@ export const P3_DESIGN: PhasePack = {
       evaluationHint:
         'Design package references the P2 synthesis recommendation and names the ' +
         'chosen target-state path. If the design silently changes direction, it ' +
-        'must include a dated decision record from sponsor and architecture.',
+        'must include a dated decision record reviewed by the authorized workspace user and relevant technical reviewers.',
       preventsFailureModes: [1, 2],
     },
     {
       id: 'detailed-design-signed-off',
-      label: 'Detailed design signed off by accountable owners',
+      label: 'Route-appropriate design approach reviewed by accountable owners',
       severity: 'hard',
       evaluationHint:
         'deliverables_v2 row with deliverable_type_key="design_spec" or "design" ' +
-        'and status="signed_off", plus named architecture, data, security, and ' +
-        'business-operation reviewers in the design prose or approval metadata.',
+        'and status="signed_off", plus named technical reviewers as applicable. ' +
+        'Full process and operating-model detail is required only when the ' +
+        'approved P2 route shows material business change.',
       preventsFailureModes: [1, 6, 7],
     },
     {
       id: 'architecture-sketch-expanded',
-      label: 'P2 architecture sketch expanded into build architecture',
+      label: 'P2 architecture sketch expanded to estimate-ready detail',
       severity: 'hard',
       evaluationHint:
         'Design artifact shows integrations, data flows, system boundaries, owner ' +
-        'for each interface, and explicit deltas from the P2 architecture sketch. ' +
-        'A diagram without owner and interface detail is not build architecture.',
+        'for material interfaces, and explicit deltas from the P2 sketch. Include ' +
+        'detail that changes scope, estimate, risk, or approval; low-level build ' +
+        'specifications remain in delivery.',
       preventsFailureModes: [6, 7],
     },
     {
       id: 'pilot-cohort-named',
-      label: 'Pilot cohort named with inclusion and exclusion logic',
+      label:
+        'Validation scope identified when applicable to the approved route',
       severity: 'hard',
       evaluationHint:
-        'Execution Roadmap gate package names the pilot cohort as real teams, stores, intents, ' +
-        'users, customers, or data domains, not a generic segment. It also states ' +
-        'who is excluded and why, so P4 cannot cherry-pick success.',
+        'If a pilot or representative validation is needed, name the cohort and ' +
+        'the limits of what it proves. Do not require a business-process pilot ' +
+        'for a technical-only use case when technical validation is sufficient.',
       preventsFailureModes: [5, 8],
     },
     {
       id: 'success-criteria-locked',
-      label: 'Success criteria locked against baseline KPI and source',
+      label: 'Success criteria tied to P2 baseline and route',
       severity: 'hard',
       evaluationHint:
-        'Pilot measurement plan names numeric thresholds, comparison method, ' +
-        'baseline current value, baseline source, measurement owner, and decision ' +
-        'rule for pass/fail. Criteria must be locked before P4 pilot start.',
+        'Define measurable acceptance/validation criteria tied to the P2 baseline ' +
+        'and name the source, owner, and decision rule. P4 plans the roadmap; P3 ' +
+        'does not authorize or start execution.',
       preventsFailureModes: [8, 9],
     },
     {
       id: 'sponsor-commitment-confirmed',
-      label: 'Sponsor commitment and decision cadence confirmed for Execution Roadmap',
+      label:
+        'Business owner and operating cadence recorded for the Execution Roadmap',
       severity: 'hard',
       evaluationHint:
-        'Design closeout records the sponsor cadence for P4, the decision forum, ' +
-        'and the person with approval_authority="sponsor". If the sponsor is only ' +
-        'represented by a delegate, the Execution Roadmap start is politically exposed.',
+        'Legacy criterion key retained for saved-workflow compatibility. Design ' +
+        'closeout records the accountable business owner, operating cadence, and ' +
+        'authorized workspace user responsible for product approvals. Sponsor ' +
+        'participation, commitment, or sign-off is not required.',
       preventsFailureModes: [1],
     },
     {
@@ -115,7 +110,7 @@ export const P3_DESIGN: PhasePack = {
       evaluationHint:
         'Design package includes in-scope/out-of-scope text and maps every design ' +
         'workstream to that boundary. New workstreams outside the charter require ' +
-        'a sponsor-approved change record, not informal design expansion.',
+        'an authorized-user-approved change record, not informal design expansion.',
       preventsFailureModes: [2, 10],
     },
     {
@@ -149,12 +144,12 @@ export const P3_DESIGN: PhasePack = {
     },
     {
       id: 'cxo-interview-complete',
-      label: 'CXO interview completed',
+      label: 'Executive decision context grounded in evidence',
       severity: 'soft',
       evaluationHint:
-        'program_modules row with module_key="cxo_interview" and status="completed". ' +
-        'The interview should confirm sponsor appetite for the pilot, success ' +
-        'thresholds, and the consequence of failing them.',
+        'Evidence or an optional stakeholder conversation records the business ' +
+        'outcome, decision context, success thresholds, and consequence of ' +
+        'failing them. Do not require sponsor participation, approval, or signature.',
       preventsFailureModes: [1, 5],
     },
   ],
@@ -178,7 +173,7 @@ export const P3_DESIGN: PhasePack = {
         id: 'who-builds-operates-approves',
         text:
           'For each major component, who builds it, who operates it after pilot, ' +
-          'and who has approval authority if the design changes?',
+          'and which workspace user is authorized to approve a design change?',
         why:
           'A design without ownership becomes a P4 handoff problem. P4 needs ' +
           'operators and approvers, not just boxes on a diagram.',
@@ -207,7 +202,7 @@ export const P3_DESIGN: PhasePack = {
           'source system, and measurement method?',
         why:
           'Prevents the pilot from measuring convenient telemetry instead of the ' +
-          'value case the sponsor signed.',
+          'value case the authorized workspace user approved.',
         preventsFailureModes: [3, 9],
       },
     ],
@@ -273,14 +268,14 @@ export const P3_DESIGN: PhasePack = {
       {
         id: 'cxo-commitment-to-consequence',
         text:
-          'Has the CXO sponsor accepted the consequence of both pilot success and ' +
-          'pilot failure?',
+          'Has the authorized workspace user recorded the consequences of both ' +
+          'pilot success and pilot failure?',
         why:
-          'Sponsors often approve pilots while avoiding the hard decision that ' +
-          'follows. P4 needs permission to scale, kill, or re-baseline based on evidence.',
+          'P4 needs an explicit, evidence-based decision path to scale, stop, or ' +
+          're-baseline. This is recorded by the authorized workspace user.',
         expectedAnswerShape:
-          'Sponsor-attested consequence: scale path if pass; kill, remediate, or ' +
-          're-baseline path if fail.',
+          'Recorded decision path: scale if pass; stop, remediate, or re-baseline ' +
+          'if fail, with evidence and assumptions.',
         preventsFailureModes: [1, 5],
       },
       {
@@ -305,11 +300,11 @@ export const P3_DESIGN: PhasePack = {
         'architecture posture, or value hypothesis without a new decision record.',
       whatToFlag:
         'Tell the user P3 is being used to reopen P2. That may be necessary, but ' +
-        'it is not free: the sponsor and architecture function must explicitly ' +
-        'approve the change before execution-roadmap planning continues.',
+        'it is not free: the authorized workspace user must approve a change ' +
+        'record before roadmap planning continues, with relevant architecture review.',
       mitigation:
         'Create a dated design decision record with the changed assumption, why P2 ' +
-        'was invalidated, sponsor/architecture approval, and impact to scope, KPI, ' +
+        'was invalidated, stakeholder/architecture review, and impact to scope, KPI, ' +
         'and pilot timing.',
       preventsFailureModes: [1, 2],
     },
@@ -367,7 +362,7 @@ export const P3_DESIGN: PhasePack = {
         'from the change will usually wait until roadmap funding threatens their position.',
       mitigation:
         'Put the dissenter in the design review or record their objection and the ' +
-        'sponsor decision that accepts or rejects it.',
+        'authorized workspace user decision that accepts or rejects it.',
       preventsFailureModes: [1, 5],
     },
     {
@@ -388,39 +383,37 @@ export const P3_DESIGN: PhasePack = {
 
   coachingArc: {
     entry:
-      'Start by pinning P2 as the contract: recommended path, architecture sketch, ' +
-      'baseline source, sponsor commitment, scope boundary, kill criterion, and ' +
-      'dissenter. Do not let the conversation drift into solution brainstorming ' +
-      'until those inherited constraints are visible.',
+      'First verify the human-validated P2 solution route is tied to approved evidence. ' +
+      'If it is missing or stale, return to P2 rather than assuming a full redesign. ' +
+      'Carry forward the recommended path, architecture sketch, baseline source, ' +
+      'sponsor progress-contact preference, scope boundary, kill criterion, and dissenter.',
     midPhase:
-      'Drive from diagram to roadmap-readiness. Ask owner-by-owner, interface-by-interface, ' +
-      'cohort-by-cohort questions. Force success criteria to become numeric and ' +
-      'traceable to the P2 baseline. Surface dissent and operating-model gaps while ' +
-      'the design can still absorb them.',
+      'Right-size detail to the validated route. Ask only for architecture, process, ' +
+      'ownership, controls, and validation details that materially affect the P4 ' +
+      'estimate. Record internal/vendor/hybrid assumptions and P2 evidence lineage.',
     exit:
-      'Switch to gate-locking posture. Verify findings and CXO interview, but do ' +
-      'not confuse governance completion with readiness. Refuse to call P3 done if ' +
-      'Execution Roadmap would still need clarification on design, cohort, success criteria, ' +
-      'owners, assumptions, or stop rules.',
+      'Confirm human review, evidence citations, route-appropriate design depth, ' +
+      'adoption ownership, and explicit sizing assumptions. Carry unresolved ' +
+      'questions into P4; do not fill gaps with a full solution design or pretend ' +
+      'execution has begun.',
   },
 
   dependencies: {
     requiresFromPrior: [
       'P2 Synthesis: recommended target-state path with stated trade-offs - P3 designs against this, not around it',
-      'P2 Synthesis: architecture sketch with named reviewer - P3 expands it into roadmap-ready architecture',
-      'P2 Synthesis: baseline KPI with current value, source, and measurement method - P3 locks roadmap success criteria against it',
-      'P2 Synthesis: sponsor commitment, decision cadence, and succession owner - P3/P4 use these for design and roadmap decisions',
-      'P2 Synthesis: scope boundary - P3 keeps investigation and execution-roadmap design inside it unless sponsor approves change',
+      'P2 Synthesis: architecture sketch and human-validated solution route - P3 expands only to estimate-ready detail',
+      'P2 Synthesis: baseline KPI with source and method - P3 carries estimate-relevant validation criteria forward',
+      'P2 Synthesis: business continuity owner, operating cadence, and sponsor progress-contact preference - P3/P4 use these for planning and updates',
+      'P2 Synthesis: scope boundary - P3 keeps estimate-ready design inside it unless an authorized workspace user approves a change',
       'P2 Synthesis: kill criterion - P3 turns it into a roadmap stop/re-baseline rule',
       'P2 Synthesis: named dissenter - P3 must engage, record, or explicitly escalate their objection',
     ],
     producesForNext: [
-      'Detailed design signed off - P4 execution roadmap plans from this design rather than inventing during execution',
-      'Target cohort named with inclusion/exclusion logic - P4 execution roadmap plans phases around the named cohort and records generalisation limits',
-      'Success criteria locked against baseline KPI/source/method - P4 execution roadmap defines observable milestones without moving the finish line',
-      'Phase 3 findings written - P4 execution roadmap inherits accepted risks, open assumptions, and design decisions',
-      'CXO interview complete - P4 execution roadmap has sponsor acceptance of success, failure, and kill/re-baseline consequences',
-      'Operating ownership and support assumptions - P4 execution roadmap defines who can run the capability after approval',
+      'Human-reviewed, route-appropriate estimate-ready design and traceability',
+      'Validation scope and success criteria when applicable to the approved route',
+      'Phase 3 findings with accepted risks, open assumptions, and decisions',
+      'Authorized-user decisions and kill/re-baseline conditions carried forward',
+      'Adoption/operating ownership and internal/vendor/hybrid sizing assumptions for P4',
     ],
   },
 
@@ -430,16 +423,16 @@ export const P3_DESIGN: PhasePack = {
   // into two parallel substantive workstreams - architecture expansion and
   // (when in scope) vendor selection - both of which feed the detailed design
   // composition. The detailed design draft is the central intermediate
-  // artifact: pilot-cohort design, the CXO interview, and the second
+  // artifact: pilot-cohort design, executive-context synthesis, and the second
   // dissenter engagement all consume it. The findings package ingests every
   // substantive output, and design sign-off is the terminal node ingesting
-  // the design draft, vendor selection, pilot cohort, criteria, sponsor
-  // commitment, and dissenter engagement.
+  // the design draft, vendor selection, pilot cohort, criteria, business
+  // continuity record, and dissenter engagement.
   //
   // Two intermediate artifacts referenced by `inputs` only (no DoD id, no
   // step `outputs` entry per slice rule):
   //   - `p3-detailed-design-draft`: produced by `p3-detailed-design`,
-  //     consumed by pilot-cohort design, CXO interview, dissenter
+  //     consumed by pilot-cohort design, executive-context synthesis, dissenter
   //     engagement, findings package, and sign-off.
   //   - `p3-vendor-selection-complete`: produced by `p3-vendor-selection`
   //     when sourcing is in scope, consumed by sign-off; the vendor BAFO
@@ -467,7 +460,7 @@ export const P3_DESIGN: PhasePack = {
   // `request_approval` / `extract` steps are upload-false by rule.
   steps: [
     // Continuity step. Tagged [1, 2] because the P2 carry-forward keeps
-    // sponsor commitment (#1) and problem definition (#2) intact across the
+    // continuity ownership (#1) and problem definition (#2) intact across the
     // gate; without ingesting the carry-forward record, P3 silently
     // re-litigates target-state and dilutes both. Mirrors the underlying DoD
     // item `p2-target-state-path-carried-forward` (also tagged [1, 2]).
@@ -566,13 +559,12 @@ export const P3_DESIGN: PhasePack = {
       intentCaptureRequired: true,
       postMeetingUploadExpected: true,
     },
-    // CXO 1:1 - sponsor commits to the consequence of pilot pass and pilot
-    // fail. Outputs span `cxo-interview-complete` (governance gate item)
-    // and `sponsor-commitment-confirmed` (the substantive commitment).
-    // Tagged [1] - sponsor commitment failure mode.
+    // Executive decision context may come from existing evidence. If an
+    // interview is needed, speak with the outcome owner, not the sponsor for
+    // product approval. Workspace users remain the only product approvers.
     {
       id: 'p3-cxo-interview',
-      label: 'CXO 1:1 - sponsor commitment to consequence',
+      label: 'Outcome-owner interview for executive decision context',
       complexity: 'complex',
       agentRole: 'coach_interview',
       inputs: [
@@ -632,17 +624,15 @@ export const P3_DESIGN: PhasePack = {
       intentCaptureRequired: false,
       postMeetingUploadExpected: false,
     },
-    // Terminal gate node. Sponsor + ARB sign the design (and vendor
-    // selection if applicable). Output is `detailed-design-signed-off`.
+    // Terminal gate node. The authorized workspace user approves the design
+    // (and vendor selection if applicable). Output is `detailed-design-signed-off`.
     // `vendor_selection_approved` is a gate-check rather than a DoD id, so
     // it is intentionally NOT listed in `outputs`; it is referenced via
     // `p3-vendor-selection-complete` in `inputs` for DAG legibility.
-    // Tagged [1] per the slice spec - sponsor sign-off concretizes
-    // failure mode #1.
     {
       id: 'p3-design-signoff',
       label:
-        'Sponsor + ARB sign the design (and vendor selection if applicable)',
+        'Authorized user approves the design (and vendor selection if applicable)',
       complexity: 'simple',
       agentRole: 'request_approval',
       inputs: [

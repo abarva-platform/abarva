@@ -30,6 +30,7 @@ function makeCtx(surface = '/programs/test-program') {
     accessPolicy: {
       accessLevel: 'program_user',
       programIdsAllowed: null,
+      canApproveGates: true,
       canPublishDeliverables: true,
       canViewFinancialData: false,
     },
@@ -62,8 +63,11 @@ describe('complete_deliverable tool', () => {
   // test in this directory supplied an `accessPolicy` at all, so the branch was
   // unreachable from the suite and deleting the whole gate left it green. The
   // batch sibling `complete_deliverables` already had the equivalent case.
-  it('refuses to sign off a deliverable when the session lacks publish rights', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+  it('refuses a publish-enabled session that lacks gate-approval permission', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
 
     const result = await completeDeliverableTool.handler(
       {
@@ -77,19 +81,24 @@ describe('complete_deliverable tool', () => {
         accessPolicy: {
           accessLevel: 'program_user',
           programIdsAllowed: null,
-          canPublishDeliverables: false,
+          canApproveGates: false,
+          canPublishDeliverables: true,
           canViewFinancialData: false,
         },
       },
     );
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe('forbidden:can_publish_deliverables_required');
+    if (!result.success)
+      expect(result.error).toBe('forbidden:can_approve_gates_required');
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
-  it('refuses to sign off when no publish policy was resolved', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+  it('refuses to sign off when no approval policy was resolved', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
 
     const result = await completeDeliverableTool.handler(
       {
@@ -103,17 +112,20 @@ describe('complete_deliverable tool', () => {
 
     expect(result).toMatchObject({
       success: false,
-      error: 'forbidden:can_publish_deliverables_required',
+      error: 'forbidden:can_approve_gates_required',
     });
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
   // The refusal is scoped to sign-off, not to the write. A session without
-  // publish rights may still save a draft — the recovery text the tool returns
+  // approval rights may still save a draft — the recovery text the tool returns
   // offers exactly that, so a fix that refused every write would make the
   // tool's own advice impossible to follow.
-  it('still saves a draft for a session without publish rights', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+  it('still saves a draft for a session without approval rights', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-draft',
       versionId: 'version-draft',
@@ -133,6 +145,7 @@ describe('complete_deliverable tool', () => {
         accessPolicy: {
           accessLevel: 'program_user',
           programIdsAllowed: null,
+          canApproveGates: false,
           canPublishDeliverables: false,
           canViewFinancialData: false,
         },
@@ -149,8 +162,11 @@ describe('complete_deliverable tool', () => {
 
   // Passes on unfixed code by design: it is the guardrail an over-broad
   // repair of the case above would break.
-  it('signs off for a session that does hold publish rights', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+  it('signs off for an authorized workspace user without publish rights', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-signed',
       versionId: 'version-signed',
@@ -169,7 +185,8 @@ describe('complete_deliverable tool', () => {
         accessPolicy: {
           accessLevel: 'client_admin',
           programIdsAllowed: null,
-          canPublishDeliverables: true,
+          canApproveGates: true,
+          canPublishDeliverables: false,
           canViewFinancialData: false,
         },
       },
@@ -194,13 +211,17 @@ describe('complete_deliverable tool', () => {
     );
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe('unsupported_deliverable_type');
+    if (!result.success)
+      expect(result.error).toBe('unsupported_deliverable_type');
     expect(requireTenancyMock).not.toHaveBeenCalled();
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
   it('persists and signs off an accepted deliverable by default', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-1',
       versionId: 'version-1',
@@ -239,7 +260,10 @@ describe('complete_deliverable tool', () => {
   });
 
   it('can save a draft without sign-off when explicitly requested', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-2',
       versionId: 'version-2',
@@ -265,7 +289,10 @@ describe('complete_deliverable tool', () => {
   });
 
   it('persists compact outline content for large deliverables', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-outline',
       versionId: 'version-outline',
@@ -302,7 +329,10 @@ describe('complete_deliverable tool', () => {
   });
 
   it('allows P1 discovery artifacts that Nexus asks to save during live crawl', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-3',
       versionId: 'version-3',
@@ -332,7 +362,10 @@ describe('complete_deliverable tool', () => {
   });
 
   it('allows the canonical P0 origination brief without using discovery_report', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-p0',
       versionId: 'version-p0',
@@ -363,7 +396,10 @@ describe('complete_deliverable tool', () => {
   });
 
   it('allows P2 synthesis artifacts without overloading design keys', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-p2',
       versionId: 'version-p2',
@@ -400,12 +436,17 @@ describe('complete_deliverable tool', () => {
       3,
       expect.anything(),
       'program-1',
-      expect.objectContaining({ deliverableTypeKey: 'workshop_facilitator_guide' }),
+      expect.objectContaining({
+        deliverableTypeKey: 'workshop_facilitator_guide',
+      }),
     );
   });
 
   it('allows P3 requirements traceability as a separate gate artifact', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-4',
       versionId: 'version-4',
@@ -435,7 +476,10 @@ describe('complete_deliverable tool', () => {
   });
 
   it('allows P5 gate artifacts required for approval and mobilization', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValue({
       deliverableId: 'deliv-5',
       versionId: 'version-5',

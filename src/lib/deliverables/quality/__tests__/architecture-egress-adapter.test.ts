@@ -55,6 +55,50 @@ describe("governedArchitectureToolCall", () => {
       modelId: "claude-opus-4-7",
       stopReason: "end_turn",
       outputTokens: 12_345,
+      stopDetails: null,
+    });
+  });
+
+  it("returns the provider's refusal category and explanation with the partial input", async () => {
+    // A refusal mid-stream returns a normal response: the stop reason, the
+    // policy details, and whatever tool input had been streamed before it.
+    finalMessage.mockResolvedValue({
+      model: "claude-opus-4-7",
+      stop_reason: "refusal",
+      stop_details: {
+        type: "refusal",
+        category: "cyber",
+        explanation: "Flagged by policy.",
+      },
+      usage: { output_tokens: 3_832 },
+      content: [
+        {
+          type: "tool_use",
+          id: "tool-1",
+          name: "emit_deliverable_plan",
+          input: { storyline: "Partial." },
+        },
+      ],
+    });
+
+    const result = await governedArchitectureToolCall({
+      model: "claude-opus-4-7",
+      maxTokens: 12_000,
+      system: "system",
+      userMessage: "user",
+      tool: {
+        name: "emit_deliverable_plan",
+        description: "emit",
+        input_schema: { type: "object" },
+      },
+    });
+
+    expect(result).toEqual({
+      toolInput: { storyline: "Partial." },
+      modelId: "claude-opus-4-7",
+      stopReason: "refusal",
+      outputTokens: 3_832,
+      stopDetails: { category: "cyber", explanation: "Flagged by policy." },
     });
   });
 

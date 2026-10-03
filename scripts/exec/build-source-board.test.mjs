@@ -2598,5 +2598,454 @@ function partialGateOf(dir, id) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * A DECLARATION IS NOT DISCARDED FOR BEING LONG — item C-568.
+ *
+ * `PARTIAL_GATE_DECLARATION` capped each half at 300 characters. That cap was
+ * a MATCH PRECONDITION, so a half one character over it did not truncate — the
+ * whole declaration failed to match, `declaredGateScope` returned null, and the
+ * row lost its gate in silence. The same bound already existed a second time,
+ * as `tidy`'s 240-character slice, where it is a display truncation and
+ * harmless. One bound, written twice, once fatally.
+ *
+ * MEASURED over the live operator root at 2026-09-28T03:44Z rather than read
+ * off the pattern: 3 backlog item rows declare the canonical form and only
+ * ONE parsed. `T-497` overran on its claimable half alone (gated 124, claimable
+ * 354) and kept a whole-item `Decision needed`, hiding a half its own row calls
+ * delivered. `C-416` overran on both (gated 404, claimable 1534) and, having no
+ * derived owner gate to keep, was offered as the SINGLE claimable lane-T row
+ * with no gate annotation anywhere in the queue — while its own gated half
+ * reads "do not edit `ProgramPressureCards.tsx` and do not flip
+ * `routeReachable`".
+ *
+ * So the cap failed in both directions at once: it hid claimable work behind a
+ * gate, and it offered gated work as free. The lengths below are the live
+ * ones, not round numbers, because a bound is only proven by the corpus that
+ * crosses it (the `T-495` note on sweeping a bound over the real corpus).       */
+
+/** Filler that crosses the old cap without containing a cell boundary. */
+const longHalf = (lead, chars) => {
+  const body = "and the reason it runs long is that the row states the remedy rather than naming it, ";
+  return `${lead} ${body.repeat(Math.ceil(chars / body.length))}`.slice(0, chars).trim();
+};
+
+/* --- (h) RED FIRST. A gated half over the old 300-char cap still parses. -- *
+ * `C-416`'s own gated half is 404 characters. Before the fix this declaration
+ * did not match at all.                                                      */
+{
+  const dir = freshFixture();
+  const gated = longHalf("which of the two remedies the catalog names is taken", 404);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: ${gated} Claimable half: state the terminal Value contract in code and test it.`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (h) a gated half longer than 300 characters still scopes the gate",
+    blockerOf(dir, "U-406") === null
+      && scope?.say === "Signed-in acceptance owed"
+      && /which of the two remedies the catalog names is taken/.test(scope?.gated ?? "")
+      && /terminal Value contract/.test(scope?.open ?? ""),
+    `gatedChars=${gated.length} blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (i) RED FIRST. A claimable half over the cap still parses. ---------- *
+ * `T-497`'s failing half. This is the direction that HID work: the gate stayed
+ * over the whole item and the declared-claimable half reached no lane table.  */
+{
+  const dir = freshFixture();
+  const open = longHalf("rewrite the other 11, whose subject is behaviour", 354);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: ${open}`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (i) a claimable half longer than 300 characters still scopes the gate",
+    blockerOf(dir, "U-406") === null
+      && /signed-in Value readback/.test(scope?.gated ?? "")
+      && /rewrite the other 11/.test(scope?.open ?? ""),
+    `openChars=${open.length} blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (j) THE HALVES ARE STILL TRUNCATED FOR DISPLAY, and that is the bound
+ * that was always meant to be here. Parsing must not be decided by length;
+ * rendering a 1,534-character cell into a queue table still must not happen.
+ * If this case ever fails because the slice was removed along with the cap,
+ * the queue grows an unreadable row rather than losing a gate — a different
+ * defect, and the reason both bounds are asserted separately.               */
+{
+  const dir = freshFixture();
+  const open = longHalf("establish by execution what the live surface renders", 1534);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: ${open}`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (j) a parsed half is truncated for display, not rejected for length",
+    scope !== null && (scope.open ?? "").length <= 240 && (scope.open ?? "").length > 0,
+    `openChars=${open.length} storedChars=${(scope?.open ?? "").length} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (k) THE TERMINATOR STILL ENDS A HALF. With the length cap gone, the
+ * trailing `(?:\||\n|$)` alternation is the ONLY bound on the claimable half,
+ * so that is the one to assert: a half must not run past its cell and absorb
+ * the lane column.
+ *
+ * This case guards a DIRECTION; it does not prove the character class.
+ * Measured: narrowing the class to `[^\n|]` and then widening it back leaves
+ * this case green either way, because the alternation already stops a half at
+ * the first surviving pipe. The narrowed class was reverted for that reason
+ * rather than shipped as a guard nothing can fail.                           */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: state the terminal Value contract in code`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (k) a half stops at the table-cell boundary and does not absorb the lane column",
+    scope !== null
+      && !/\bT\b\s*$/.test(scope.open ?? "")
+      && !(scope.open ?? "").includes(U406_ACCEPTANCE)
+      && /terminal Value contract in code/.test(scope.open ?? ""),
+    `partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * A GATE STATED THE WAY AN ACCEPTANCE STATES IT — item C-563.
+ *
+ * `BLOCKER_RULES` has been widened four times by measurement (T-596, T-703,
+ * T-705, T-761) and every one of those repairs was the same shape: a row
+ * declared an owner gate in a form the rule did not recognise, derived
+ * `blocker: null`, and the queue offered owner work to the next agent as free
+ * work. This is that shape twice more, and it was found the way the others
+ * were — by executing the generator over the live documents, not by reading
+ * the pattern.
+ *
+ * MEASURED on the live operator root frozen at 2026-09-27T19:50Z, backlog
+ * sha256 `4a12db96…`, from a scratch copy so nothing wrote to the register:
+ * the queue offered **7 claimable rows and 3 of them name work an agent is
+ * forbidden to do**. `C-562` opens its acceptance "Owner decision, not agent
+ * work — do not edit the required gate from a feature branch"; `U-525` and
+ * `U-527` both direct a signed-in run, which the queue's own *Blocked on
+ * Anand* section says an agent must not attempt. All three derived
+ * `blocker: null`.
+ *
+ * The two holes, each with its own live row:
+ *
+ *   THE DECISION RULE REQUIRES AN ARTICLE. T-761 bounded a two-word slot
+ *   between `A`/`An` and `decision`, which is what catches "A product
+ *   decision" and "A disambiguation decision". `C-562` writes the role
+ *   without an article — "Owner decision" — so nothing anchors. The article
+ *   is deliberately NOT made optional here: `(?:An?\s+)?` would admit "The
+ *   decision was taken in #8123", which the rule's own comment names as a
+ *   form that must stay out. What is added instead is the categorical phrase
+ *   the sentence also carries, `not agent work`, which cannot be written
+ *   descriptively — a row that says it is not agent work is not describing
+ *   anything, it is declaring who may act.
+ *
+ *   THE SIGNED-IN RULE RECOGNISES ONLY STATUS PHRASING. Its third branch
+ *   wants a status word (`pending`, `owed`, `not proven`) within 80
+ *   characters of `signed-in`, which is how a RELEASE LINE reports a proof
+ *   gap. An ACCEPTANCE is written in the imperative — "Run a signed-in phase
+ *   build", "Generate one deliverable …, signed in, and record" — and says
+ *   the same thing with no status word anywhere. That is precisely the hole
+ *   T-596 repaired in the decision rule for the same reason, stated in this
+ *   file's own comment: "An acceptance is written in the imperative, so the
+ *   decision gate in one usually is too."
+ *
+ * Both terms are anchored and bounded the way every term above them is, and
+ * the bound is what the guardrail cases below exist to hold. Measured over the
+ * live corpus, the pair moves **4 items and no others** — `C-562`, `U-525` and
+ * `U-527` from `null` into the never-claim bucket, and `U-401` from the
+ * general `Blocked (see source)` to the specific `Signed-in acceptance owed`,
+ * which its own acceptance names ("this item carries them to `signed-in
+ * acceptance`"). **Nothing leaves a gate**: blocked-on-Anand goes 377 → 380,
+ * claimable 7 → 4, and no item at a rung above 0 moves at all.
+ * ------------------------------------------------------------------------ */
+
+console.log("\nbuild-source-board — an owner gate stated as an acceptance states it (C-563)\n");
+
+/* --- (a) THE LIVE ROW, verbatim. `C-562`'s acceptance opens with the phrase
+ * and the queue offered it as claimable anyway.                             */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-960",
+    "**A required gate is a coin flip on wall clock.**",
+    "Owner decision, not agent work — do not edit the required gate from a feature branch. Recommendation: raise the timeout and move the heavy step.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (a) a role-stated decision declaring itself not agent work is an owner gate",
+    blockerOf(dir, "T-960") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-960"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) THE IMPERATIVE SIGNED-IN FORM, from `U-525`. No status word appears
+ * anywhere in the row, so the rule's third branch cannot reach it.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-961",
+    "**A merged change declares a signed-in proof and nobody has run it.**",
+    "Run a signed-in phase build for one authorized tenant and record what the surface renders, each document opened rather than listed.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (b) an acceptance directing a signed-in run is an owner gate",
+    blockerOf(dir, "T-961") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-961"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) THE UNHYPHENATED VARIANT, from `U-527`, where the phrase sits 60
+ * characters into the sentence as an aside. Every branch above this one
+ * spells the token `signed-in`; the register and the acceptances both write
+ * `signed in` too, and a rule that reads only one spelling reads half the
+ * corpus.                                                                    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-962",
+    "**A second merged change declares the same proof.**",
+    "Generate one deliverable per phase for one authorized tenant, signed in, and record the slide count off the rendered deck.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (c) the unhyphenated `signed in` spelling is read as the same gate",
+    blockerOf(dir, "T-962") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-962"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) THE SPAN IS ONE SENTENCE. This case PASSES on unfixed code by
+ * design and is the one an over-broad fix breaks: written `[\s\S]{0,120}`
+ * instead of `[^.\n]{0,120}` the imperative reaches across the full stop into
+ * a descriptive mention 78 characters away and gates ordinary work.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-963",
+    "**The reader drops the second alias of each pair.**",
+    "Run the reader over the fixture and report the row count. The census names a signed-in surface among its rows.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (d) an imperative does not reach a later sentence's mention of a signed-in surface",
+    blockerOf(dir, "T-963") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-963"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (e) THE IMPERATIVE MUST ANCHOR. Also green on unfixed code: drop the
+ * anchor and every mid-sentence "we should run a signed-in check later"
+ * becomes a gate, which is the un-narrowing the signed-in detector already
+ * had to be rescued from once.                                              */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-964",
+    "**The panel renders the trail.**",
+    "The record says we should run a signed-in check later; this item ships the reader and nothing else.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (e) an unanchored mid-sentence imperative is not read as a gate",
+    blockerOf(dir, "T-964") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-964"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (f) THE VETO STILL APPLIES TO THE NEW BRANCH. `firstUnvetoedMatch`
+ * gives it this for free, and that is exactly why it is asserted: a term
+ * added somewhere the veto does not reach would read a row saying the proof
+ * is NOT owed as a row owing one.                                           */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-965",
+    "**The exporter emits the canonical token.**",
+    "Run the exporter over the fixture and diff the output; a signed-in proof is not owed here, because nothing user-visible changes.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (f) a sentence stating the signed-in proof is not owed keeps its veto",
+    blockerOf(dir, "T-965") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-965"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (g) THE PHRASE IS THE WHOLE PHRASE. Green on unfixed code: written
+ * `\bnot\s+\w+\s+work\b` the term matches any negated kind of work, and a
+ * row saying it IS agent work acquires an owner gate — a false gate, which is
+ * the direction that hides live work.                                        */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-966",
+    "**The map entry is owed.**",
+    "This is agent work, not owner work: add the id to the repo-owned structure map and open the pull request.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (g) a row declaring itself agent work does not acquire an owner gate",
+    blockerOf(dir, "T-966") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-966"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (h) NEITHER TERM DEMOTES A GATE. The signed-in rule sits above the
+ * blocked rule, so a row carrying both now reads the more specific label —
+ * `U-401` is the live instance, and its own acceptance says it "carries them
+ * to `signed-in acceptance`". What must never happen is the label going to
+ * `null`, so that is what this asserts rather than which of the two wins.    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-967",
+    "**Two deployed changes are live and unproven.**",
+    "Generate at least one real deliverable end to end, signed in, and judge the rendered slides; the remaining wiring is blocked on the unapplied migration.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (h) a row stating two gates keeps one, and never falls to no gate",
+    blockerOf(dir, "T-967") !== null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-967"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * ITEM C-417 — A DEFINITION IS NOT A STATUS.
+ *
+ * `C-549` shipped a residual bucket so a per-unit item at rung 1-6 stops being
+ * invisible. 10 of the 13 rows it surfaced carry a derived owner gate, and the
+ * queue's instruction for those is *surface it, do not claim it* — so for
+ * those the bucket reports the work and still does not offer it. One of the 10
+ * is a successor id filed for exactly that purpose, and its gate is derived
+ * from a sentence that says the opposite.
+ *
+ * Measured at `2026-09-28T05:0xZ` by running this generator over a frozen copy
+ * of the operator root and reading `blocker` per item out of
+ * `source-board-summary.json` — 668 items before and after, not by reading the
+ * pattern. `\bnot\s+signed-in\b` matched inside *"A completed job is not
+ * signed-in acceptance; model readback, stale behavior and opposite-tenant
+ * refusal are three separate captures"*. That clause DEFINES a boundary — it
+ * distinguishes a finished job from an owner proof — and reports no debt.
+ * Nothing could veto it, by construction, because the negation IS the match.
+ *
+ * The fix requires a RUNG-BEARING PARTICIPLE after the token. A status verdict
+ * says the proof has not happened ("DEPLOYED, NOT SIGNED-IN PROVEN", "NOT
+ * signed-in accepted"); a definition predicates a NOUN, and `acceptance` is
+ * deliberately absent from the participle list because it is the noun the
+ * definition uses.
+ *
+ * On the live corpus this moves EXACTLY ONE item and extras are zero in both
+ * directions. The regression block that follows carries the two live rows that
+ * must KEEP the gate, and both pass on unfixed code by design — which is what
+ * makes a widening visible if one is ever attempted here.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-990",
+    "**The successor id carries an untouched 13-model row set.** Boundary, and it is the whole reason this is agent-workable: authoring only. A completed job is not signed-in acceptance; model readback, stale behavior and opposite-tenant refusal are three separate captures.",
+    "Author the 13 rows and their fixtures.",
+  );
+  buildBoard(dir);
+  check(
+    "C-417 (a) a clause DEFINING that a completed job is not signed-in acceptance is not an owner gate",
+    blockerOf(dir, "T-990") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-990"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * THE REGRESSION SET FOR C-417. Both are live rows and both must KEEP the
+ * gate. They pass on unfixed code by design: a change that took them with it
+ * would offer owner work as free work, which is the cost `C-563`, `T-596`,
+ * `T-703`, `T-705` and `T-761` each paid once.
+ *
+ * The two are written here split from the ids the item names as its known
+ * negatives, so this file does not acquire the gate it describes. The first is
+ * a status verdict ending in `PROVEN`, the second one ending in `accepted` —
+ * the two participles that separate a verdict from the definition above.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-993",
+    "**The Stage 07 scorecard authority has never been written or read back by a signed-in user.** The addendum table records it as DEPLOYED, NOT SIGNED-IN PROVEN because the accepted workspaces are at Scope and completed Value.",
+    "Write one scorecard and read it back.",
+  );
+  addBacklogItem(
+    dir,
+    "T-994",
+    "**The board verdict heading attribution shipped.** DEPLOYED with digest proof; CODE LIVE VIA DESCENDANT, IMAGE SUPERSEDED; NOT signed-in accepted.",
+    "Do not promote past deployed until the image matches.",
+  );
+  buildBoard(dir);
+  check(
+    "C-417 (b) \"NOT SIGNED-IN PROVEN\" is a status verdict and keeps its gate",
+    blockerOf(dir, "T-993") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-993"))}`,
+  );
+  check(
+    "C-417 (c) \"NOT signed-in accepted\" is a status verdict and keeps its gate",
+    blockerOf(dir, "T-994") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-994"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

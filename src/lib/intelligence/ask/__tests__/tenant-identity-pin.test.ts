@@ -14,6 +14,7 @@
  */
 
 import { describe, expect, it } from '@jest/globals';
+import { DEMO_SAFE_CLIENT_NAMES } from '@/lib/client-config';
 import {
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
@@ -22,45 +23,69 @@ import {
 
 describe('buildTenantIdentityPin', () => {
   describe('with each known tenant', () => {
+    // Item T-497. Until 2026-09-27 each fixture below pinned a long-form display
+    // name as a literal -- the `retiredName` values now carried as data. Each of
+    // those is a name the demo-safe naming policy retired in `1886b8d241`
+    // (#4276, 2026-07-01) and now rewrites away: `DEMO_SAFE_TEXT_REPLACEMENTS` in
+    // `@/lib/client-config` maps every one of them to its demo-safe replacement.
+    // So the code was not merely ahead of the expectation: satisfying the old
+    // expectation would have meant the pin emitting a retired name, and the
+    // assertion would have been pinning the violation rather than the control.
+    //
+    // The expected name is therefore read from `DEMO_SAFE_CLIENT_NAMES`, the
+    // governance authority the registry itself is built from, rather than retyped
+    // here -- so a future rename cannot leave this suite behind again. The
+    // assertion stays load-bearing: it fails if the pin stops naming the session's
+    // own tenant, which is the STRESS-P0-001 defect. `retiredName` keeps the
+    // negative half explicit, so the pin cannot regress to the old literal either.
     const fixtures = [
       {
         key: 'apexretail',
-        expectedNameSubstring: 'Apex Retail Group',
+        retiredName: 'Apex Retail Group',
         expectedVertical: 'Retail',
         offLimitsExamples: ['healthcare', 'Epic', 'HIPAA', 'Meridian'],
         notInOffLimits: ['multi-banner', 'merchandising', 'assortment'],
       },
       {
         key: 'meridian',
-        expectedNameSubstring: 'Meridian Health System',
+        retiredName: 'Meridian Health System',
         expectedVertical: 'Healthcare',
         offLimitsExamples: ['retail', 'multi-banner', 'NCR POS', 'Apex'],
         notInOffLimits: ['Epic', 'HIPAA', 'clinical'],
       },
       {
         key: 'arcturus',
-        expectedNameSubstring: 'First Capital Financial',
+        retiredName: 'First Capital Financial',
         expectedVertical: 'Financial Services',
         offLimitsExamples: ['retail', 'healthcare', 'Apex', 'Meridian', 'HIPAA'],
         notInOffLimits: ['FedNow', 'BSA', 'core banking'],
       },
       {
         key: 'skyharbor',
-        expectedNameSubstring: 'SkyHarbor Air',
+        retiredName: 'SkyHarbor Air',
         expectedVertical: 'Global Airline',
         offLimitsExamples: ['retail', 'healthcare', 'Apex', 'Meridian', 'First Capital'],
         notInOffLimits: ['airline'],
       },
-    ];
+    ] as const;
 
     for (const fx of fixtures) {
-      it(`names the active tenant "${fx.expectedNameSubstring}" and lists vertical "${fx.expectedVertical}"`, () => {
+      const expectedName = DEMO_SAFE_CLIENT_NAMES[fx.key];
+
+      it(`names the active tenant "${expectedName}" and lists vertical "${fx.expectedVertical}"`, () => {
         const pin = buildTenantIdentityPin(fx.key);
         expect(pin).toContain('TENANT IDENTITY');
         expect(pin).toContain('authoritative');
-        expect(pin).toContain(fx.expectedNameSubstring);
+        expect(pin).toContain(`is "${expectedName}"`);
         expect(pin).toContain(`vertical: ${fx.expectedVertical}`);
         expect(pin).toContain(`client_id: ${fx.key}`);
+      });
+
+      it(`does not name the retired display name "${fx.retiredName}" as ${fx.key}'s active tenant`, () => {
+        const pin = buildTenantIdentityPin(fx.key);
+        expect(pin).not.toMatch(
+          new RegExp(`active\\s+tenant[^\\n]*is\\s+["']?${fx.retiredName}["']?`, 'i'),
+        );
       });
 
       it(`marks other-vertical terminology as off-limits for ${fx.key}`, () => {
@@ -108,18 +133,21 @@ describe('buildTenantIdentityPin', () => {
   });
 
   describe('STRESS-P0-001 regression — the exact failing case', () => {
+    // Item T-497: the positive half of each case named a retired display name, so
+    // both were red and only their negative half — the cross-tenant fence itself —
+    // was actually being asserted. The names now come from the registry authority.
     it('for Meridian session, the pin DOES NOT contain "Apex Retail" as an active-tenant assertion', () => {
       const pin = buildTenantIdentityPin('meridian');
       // The pin lists "Apex Retail" as an OFF-LIMITS tenant name (good), but
       // must never frame it as the active tenant.
       expect(pin).not.toMatch(/active\s+tenant.*is\s+["']?Apex Retail["']?/i);
-      expect(pin).toMatch(/active\s+tenant.*is\s+["']?Meridian Health System["']?/i);
+      expect(pin).toContain(`is "${DEMO_SAFE_CLIENT_NAMES.meridian}"`);
     });
 
     it('for Apex session, the pin DOES NOT contain "Meridian Health" as an active-tenant assertion', () => {
       const pin = buildTenantIdentityPin('apexretail');
       expect(pin).not.toMatch(/active\s+tenant.*is\s+["']?Meridian/i);
-      expect(pin).toMatch(/active\s+tenant.*is\s+["']?Apex Retail Group["']?/i);
+      expect(pin).toContain(`is "${DEMO_SAFE_CLIENT_NAMES.apexretail}"`);
     });
   });
 });

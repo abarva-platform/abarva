@@ -127,6 +127,11 @@ import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidenc
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import {
+  formatSolutionRouteDepthForPrompt,
+  resolveConfirmedSolutionRoute,
+} from "@/lib/programs/solution-route-assessment";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -145,6 +150,7 @@ import {
   shouldBuildMovesAvaPacketForMode,
 } from "@/lib/programs/ava-chat";
 import { resolveMovesAvaVisibleEvidenceCount } from "@/lib/programs/ava-chat/evidence-count";
+import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness";
 import {
   buildDeterministicMovesAvaStatusAnswer,
   buildDeterministicPhaseInputDraftAnswer,
@@ -184,9 +190,7 @@ import {
   isGroundedAnswerMode,
   shouldSuppressGenericContextBundleForSourceMode,
 } from "@/lib/source/ava/answer-mode";
-import {
-  buildSourcePortfolioFallbackAnswer,
-} from "@/lib/source/ava/portfolio-fallback-answer";
+import { buildSourcePortfolioFallbackAnswer } from "@/lib/source/ava/portfolio-fallback-answer";
 import { buildAuthorizedSourceContract360PromptBlock } from "@/lib/source/ava/server-contract-answer-context";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { resolveContractQuestionId } from "@/lib/source/ava/contract-question-identity";
@@ -818,6 +822,39 @@ export async function POST(request: Request) {
           }
         }
 
+        if (promptPhase === 3 && surface.startsWith("/strategic-moves/")) {
+          const modules = await getModuleState(tenancy, programId).catch(
+            () => [],
+          );
+          const moduleValue = (phase: number, key: string) => {
+            const row = modules.find(
+              (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, key),
+            );
+            return readPhaseCaptureModuleValue(row?.state);
+          };
+          const approvedPhaseTwoEvidence = await listApprovedPhaseEvidence(
+            tenancy,
+            programId,
+            2,
+          );
+          const confirmedRoute = resolveConfirmedSolutionRoute({
+            businessChangeAssessment: moduleValue(
+              1,
+              "business_change_assessment",
+            ),
+            routeValidation: moduleValue(2, "solution_route_validation"),
+            approvedEvidenceReferences: approvedPhaseTwoEvidence.map(
+              (item) => item.evidenceId,
+            ),
+          });
+          phasePackBlock = [
+            phasePackBlock,
+            formatSolutionRouteDepthForPrompt(confirmedRoute),
+          ]
+            .filter(Boolean)
+            .join("\n\n");
+        }
+
         const movesAvaChatHardeningEnabled = isFeatureEnabled(
           {
             clientKey: activeClientKey ?? null,
@@ -861,19 +898,16 @@ export async function POST(request: Request) {
             ).length;
             const hardGateTotal = blockingGateScope.length;
             const hardGateOpen = hardGateTotal - hardGateMet;
-            const surfaceContextEvidenceCount =
-              typeof surfaceContext.moveContextExtractEvidenceCount ===
-                "number" &&
-              Number.isFinite(surfaceContext.moveContextExtractEvidenceCount)
-                ? surfaceContext.moveContextExtractEvidenceCount
-                : typeof surfaceContext.moveEvidenceCount === "number" &&
-                    Number.isFinite(surfaceContext.moveEvidenceCount)
-                  ? surfaceContext.moveEvidenceCount
-                  : null;
+            const contextExtractFreshness =
+              await loadCurrentMoveContextExtractFreshness({
+                tenantKey: tenancy.clientKey ?? tenancy.clientId,
+                moveId: programId,
+                phase: promptPhase,
+              }).catch(() => null);
             const visibleEvidenceCount = resolveMovesAvaVisibleEvidenceCount({
               liveLinkedEvidenceCount: liveMove?.linkedEvidence.length,
               pageEvidenceCount: evidence.length,
-              surfaceContextEvidenceCount,
+              contextExtractFreshness,
             });
             const terminalHandoffComplete =
               promptPhase === 5 && Boolean(liveMove?.terminalComplete);
@@ -888,6 +922,28 @@ export async function POST(request: Request) {
                     programId,
                   ),
                 });
+            const mode = movesAvaMode ?? "phase_guidance";
+            let approvedEvidenceUnavailable = false;
+            let approvedEvidenceItems: Awaited<
+              ReturnType<typeof listProgramEvidenceForPrompt>
+            > = [];
+            let approvedEvidenceTotal = 0;
+            if (
+              mode === "evidence_summary" ||
+              (mode === "phase_input_draft" && promptPhase > 1)
+            ) {
+              try {
+                const loadedEvidenceItems = await listProgramEvidenceForPrompt(
+                  tenancy,
+                  programId,
+                  promptPhase,
+                );
+                approvedEvidenceTotal = loadedEvidenceItems.length;
+                approvedEvidenceItems = loadedEvidenceItems.slice(0, 8);
+              } catch {
+                approvedEvidenceUnavailable = true;
+              }
+            }
             const packet = buildMovesAvaChatPacket(
               {
                 tenant: tenantName,
@@ -913,6 +969,17 @@ export async function POST(request: Request) {
                 evidenceNeedPackets: evidenceNeedPackets.map(
                   formatMoveEvidenceNeedForAva,
                 ),
+                approvedEvidence: approvedEvidenceItems.map((item) => ({
+                  title: item.title,
+                  summary: item.summary,
+                  statements: item.structuredSignals.slice(0, 8),
+                  observations: item.observations.slice(0, 3),
+                  assumptions: item.assumptions.slice(0, 3),
+                  openQuestions: item.openQuestions.slice(0, 3),
+                  citations: item.citations.slice(0, 3),
+                })),
+                approvedEvidenceTotal,
+                approvedEvidenceUnavailable,
                 gateCriteria: liveGateCriteria.map((criterion) => ({
                   label: criterion.label,
                   met: criterion.completed,
@@ -922,7 +989,6 @@ export async function POST(request: Request) {
               },
               message,
             );
-            const mode = movesAvaMode ?? "phase_guidance";
             movesAvaHardeningBlock = movesAvaChatHardeningEnabled
               ? formatMovesAvaChatPacketForPrompt(packet, mode)
               : "";
@@ -935,6 +1001,8 @@ export async function POST(request: Request) {
                 phase: promptPhase,
                 currentValues: valuesByPhase[promptPhase] ?? {},
                 upstreamValuesByPhase: valuesByPhase,
+                approvedEvidenceCount: approvedEvidenceTotal,
+                approvedEvidenceUnavailable,
               });
               movesAvaPhaseInputDraftAnswer =
                 buildDeterministicPhaseInputDraftAnswer({
@@ -945,17 +1013,41 @@ export async function POST(request: Request) {
                     phase: promptPhase,
                     currentValues: valuesByPhase[promptPhase] ?? {},
                     upstreamValuesByPhase: valuesByPhase,
+                    approvedEvidenceCount: approvedEvidenceTotal,
+                    approvedEvidenceUnavailable,
                   }),
                 });
             }
-            movesAvaDeterministicAnswer = movesAvaChatHardeningEnabled
-              ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
-              : null;
+            movesAvaDeterministicAnswer =
+              mode === "evidence_summary"
+                ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+                : movesAvaChatHardeningEnabled
+                  ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+                  : null;
           } catch {
-            // Never block the chat turn on the hardening layer — fall back
-            // to the existing phase-pack-only prompt.
+            // Evidence-summary questions are fail-closed even if another
+            // packet dependency fails; never fall back to free-form claims.
             movesAvaHardeningBlock = "";
-            movesAvaDeterministicAnswer = null;
+            if (movesAvaMode === "evidence_summary") {
+              const unavailableEvidencePacket = buildMovesAvaChatPacket(
+                {
+                  tenant: tenantName,
+                  moveId: programId,
+                  moveTitle: engagement.name,
+                  currentPhase: promptPhase,
+                  currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
+                  approvedEvidenceUnavailable: true,
+                },
+                message,
+              );
+              movesAvaDeterministicAnswer =
+                buildDeterministicMovesAvaStatusAnswer(
+                  unavailableEvidencePacket,
+                  movesAvaMode,
+                );
+            } else {
+              movesAvaDeterministicAnswer = null;
+            }
             movesAvaPhaseInputDraftAnswer = null;
           }
         }
@@ -1968,9 +2060,12 @@ export async function POST(request: Request) {
     hasSourceContractGrounding
       ? ""
       : contextBundlePromptBlock;
-  const authorizedSourceTenantKey = activeClientKey ?? tenancy?.clientKey ?? null;
+  const authorizedSourceTenantKey =
+    activeClientKey ?? tenancy?.clientKey ?? null;
   const sourceContract360PromptBlock =
-    isSourceSurface(surface) && contractIdFromContext && authorizedSourceTenantKey
+    isSourceSurface(surface) &&
+    contractIdFromContext &&
+    authorizedSourceTenantKey
       ? await buildAuthorizedSourceContract360PromptBlock({
           query: message,
           requestContext: {
@@ -2370,14 +2465,14 @@ export async function POST(request: Request) {
           "- When there are multiple valid paths, show 2-3 short options and include 'type your own'. Do not stack sponsor, lead, scope, baseline, and timeline questions in one turn.",
           "- If the user misspells a role or name, correct lightly and continue. Do not make the typo the center of the reply.",
           "- Do not mention UUIDs, database IDs, person IDs, or internal lookup mechanics in user-facing prose. Say 'I'll confirm Sarah Chen and Rick Stewart in Meridian's people records' rather than 'I'll get their UUIDs'.",
-          "- ORIGINATION PEOPLE RULES: a program submission needs at least one sponsor resolved in the active tenant's people records. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
-          "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
+          "- ORIGINATION PEOPLE RULES: a program submission needs a sponsor contact resolved in the active tenant's people records, plus an explicit choice about informational phase-progress emails. Sponsor status grants no approval rights. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor contact or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
+          "- PHASE APPROVALS: only the authenticated workspace user with 'Can approve gates: yes' may record a product approval. When that user explicitly approves, use the in-product gate approval action; advance_phase evaluates and advances gates but never records approval. Never ask a sponsor to approve, sign, review, or confirm a product gate; sponsors are listed contacts and receive only explicitly enabled informational progress emails.",
           "- LIFECYCLE LABEL DISCIPLINE: use AbarVa phase language in user-facing prose: P0 Originate, P1 Frame, P2 Decode, P3 Compose, P4 Commit, P5 Mobilize. Never call P4 'Build', P5 'Activate', or P6 'Operate'. If you need to mention external execution, say execution happens outside AbarVa and P4 Commit builds the executable roadmap and value contract.",
           "- DELIVERABLE PERSISTENCE DISCIPLINE: for phase deliverables, do not generate a huge hidden complete_deliverable payload. Save bounded executive-grade content: either a concise markdown artifact under 6,000 characters or the tool's content_outline array with the key sections, decisions, gate proofs, risks, and follow-ups. Then summarize what was saved in chat. Never spend a turn silently composing a full consulting deck inside tool JSON.",
           "- DELIVERABLE FAILURE HONESTY: if complete_deliverable or complete_deliverables fails, do not say 'nothing is lost' unless a durable draft row was actually persisted. Say the draft remains visible in this conversation but is not saved yet, name the platform error if available, and offer one retry after the platform fix.",
           "- P0 DELIVERABLE KEY DISCIPLINE: when saving the accepted P0 seed, use deliverable_type_key='origination_brief'. Do not save a P0 seed, program brief, or origination package as discovery_report; discovery_report is reserved for P1 after current-state evidence is gathered.",
           "- BASELINE FIDELITY DISCIPLINE: when generating or saving deliverables, preserve exact non-financial baseline values, units, sources, grain, methods, owners, and dates from uploaded evidence or signed prior deliverables. Do not replace them with benchmark, peer, demo, or model-inferred numbers. If evidence conflicts, name the conflict and use the latest uploaded/signed evidence as controlling. If the value is missing, write 'missing' and ask for evidence; never invent operational metrics.",
-          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Mobilize packages: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and tower_handoff_plan.",
+          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Mobilize packages: business_case, funding_approval, sponsor_alignment (contact and progress-email preference only), readiness_and_change_plan, and tower_handoff_plan.",
           "- P6 COMPLETION DISCIPLINE: if the user asks to complete P6 setup, close Tower Handoff, or finish the program after the Tower execution tracking contract is signed, call complete_program. Do not treat 'already at P6' as complete; completion is a lifecycle_state write.",
           "- P4 MILESTONE PERSISTENCE: when drafting an execution roadmap with critical milestones, save the roadmap deliverable and then call create_milestones so P4→P5 gate checks can read structured milestone rows. Do not rely on milestone prose inside the roadmap alone.",
           "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
@@ -2415,16 +2510,16 @@ export async function POST(request: Request) {
       ? [
           "- CONVERSATION ONLY: No tools are available on this surface. Do not attempt to call any tool, register any person, look up any record, or execute any system action. Everything happens through conversation text alone. Never say 'I wasn't able to execute' or 'I don't have a tool confirmation' — there are no tools to confirm.",
           "- P0 ORIGINATE STYLE: guide the user through 10 scaffold steps in order. Ask at most ONE question per reply. Never suggest a name, sponsor, or executive unless it comes from an org chart the user uploaded or an explicit user statement naming the person.",
-          "- AH-ORIG-1 (SPONSOR): NEVER propose any sponsor candidate name unless the user has explicitly named the person in this conversation, or they appear in a document the user pasted or uploaded. If no name is provided, ask: 'Can you name the exec who owns this function?' Do not attempt to look up people via any system or tool.",
+          "- AH-ORIG-1 (SPONSOR CONTACT): NEVER propose a sponsor contact name unless the user has explicitly named the person in this conversation, or they appear in a document the user pasted or uploaded. If no name is provided, ask who should be listed as the progress contact. Do not attempt to look up people via any system or tool.",
           "- AH-ORIG-2 (ARCHETYPE): when classifier confidence is low or no_match, NEVER state an archetype as definitive. Always flag uncertainty explicitly: 'This classification is tentative — [reason]. Let me ask a clarifying question before I lock in the archetype.'",
           "- AH-ORIG-3 (VALUE): NEVER state any dollar figure, percentage, or quantified outcome as validated at P0. Always label numeric claims 'UNVALIDATED_HYPOTHESIS' and add a caveat: 'We'll validate this against your baseline in P2.'",
           "- AH-ORIG-4 (BENCHMARKS): NEVER state a benchmark figure as fact without citing a specific AbarVa pattern library entry (e.g., 'per industry pattern PAT-IND-003'). Say 'Per [specific pattern citation], the range for [metric] is approximately [range].'",
           "- AH-ORIG-5 (SPONSOR SECTION): NEVER populate the sponsor section of the brief without citing the source of the name in the same message. Source must be the user's own words or a document they shared.",
           "- AH-ORIG-6 (STEP COMPLETION): NEVER mark a scaffold step complete without user confirmation. Extract content and show it; wait for explicit confirmation ('Yes, that's right') or implicit acceptance before proceeding.",
           "- AH-ORIG-7 (NO P2 FABRICATION): P0/P1 exist to CAPTURE what the user knows today, not to invent what P2 discovery will find. If the user hasn't stated a fact for a section (scope, outcomes, discovery questions, constraints), do not write plausible-sounding content for it — ask, or leave it for the scaffold to mark as not yet captured. Every field must trace to something the user actually said or a document they shared.",
-          "- P0 SCAFFOLD STEPS: there are 10 steps — (1) Business problem/opportunity + why now, (2) Archetype classification, (3) Sponsor candidate + decision authority, (4) In scope, (5) Out of scope, (6) Value hypothesis (pain + value direction + causal mechanism), (7) Intended outcomes + P2 success criteria, (8) Discovery questions + hypotheses to test, (9) Evidence family selection, (10) Foundation readiness (F1–F4 checks) + known constraints/dependencies. Complete them in order.",
-          "- FOUNDATION READINESS: F1 = data readiness, F2 = operating model clarity, F3 = sponsor commitment, F4 = change capacity. Ask the user to confirm each check directly; never infer status from indirect signals.",
-          '- BRIEF-PROGRESS FIELD IDs: when emitting `brief-progress` artifacts on this surface, use EXACTLY these 10 ids in this order: "problem-statement" (step 1), "archetype" (step 2), "sponsor-candidate" (step 3), "scope-in" (step 4), "scope-out" (step 5), "value-hypothesis" (step 6), "outcomes-success" (step 7), "discovery-questions" (step 8), "evidence-family" (step 9), "foundation-readiness" (step 10). These are the only valid ids — do not use target-outcome, timeline, named-systems, named-vendors, lead, scope-boundary, or any other id. The right pane ONLY updates when the id exactly matches the scaffold definition.',
+          "- P0 SCAFFOLD STEPS: there are 10 steps — (1) Business problem/opportunity + why now, (2) Archetype classification, (3) Sponsor contact + progress-email preference and separate workspace approval capability, (4) In scope, (5) Out of scope, (6) Value hypothesis (pain + value direction + causal mechanism), (7) Intended outcomes + P2 success criteria, (8) Discovery questions + hypotheses to test, (9) Evidence family selection, (10) Foundation readiness (F1–F4 checks) + known constraints/dependencies. Complete them in order.",
+          "- FOUNDATION READINESS: F1 = data readiness, F2 = operating-model context, F3 = accountable business owner identified, F4 = change capacity. Ask the authorized workspace user to confirm each check directly; never infer status from indirect signals. Sponsor commitment or approval is not a prerequisite.",
+          '- BRIEF-PROGRESS FIELD IDs: when emitting `brief-progress` artifacts on this surface, use EXACTLY these 10 ids in this order: "problem-statement" (step 1), "archetype" (step 2), "sponsor-candidate" (step 3; contact only), "scope-in" (step 4), "scope-out" (step 5), "value-hypothesis" (step 6), "outcomes-success" (step 7), "discovery-questions" (step 8), "evidence-family" (step 9), "foundation-readiness" (step 10). These are the only valid ids — do not use target-outcome, timeline, named-systems, named-vendors, lead, scope-boundary, or any other id. The right pane ONLY updates when the id exactly matches the scaffold definition.',
         ]
       : []),
     ...(isSourceSurface(surface)

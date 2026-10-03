@@ -1,0 +1,5 @@
+question,synthetic_hypothesis,validation_needed,owner_role,evidence_reference,status
+workflow_change,limited,"Walk current and proposed agent journey; quantify changed steps and exceptions",Contact Center Operations Lead,SYN-SESSION-OPS-01 31:00-36:00,proposed_not_confirmed
+role_accountability_change,none,"Confirm agent and supervisor decision rights; no role elimination assumption",Workforce Operations Lead,SYN-SESSION-OPS-01 31:00-36:00,proposed_not_confirmed
+adoption_responsibility,business,"Business owns agent training and adoption; delivery team enables product and measurement",Member Services Sponsor,SYN-P1-DECISIONS,proposed_not_confirmed
+solution_output,workflow_automation,"Confirm whether read-only assist changes task sequence or only presents information",Product Owner,SYN-SESSION-OPS-01 18:00-25:00,proposed_not_confirmed

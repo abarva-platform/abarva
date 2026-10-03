@@ -105,7 +105,7 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
             severity: "hard",
           },
           {
-            label: "Charter signed off by sponsor",
+            label: "Charter approved by an authorized Move user",
             met: false,
             severity: "hard",
           },
@@ -170,8 +170,132 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(prompt).toContain("Phase-input drafting mode");
     expect(prompt).toContain("[[artifact:capture-field]]");
     expect(prompt).toContain("citations");
-    expect(prompt).toContain("Do not render uncited field drafts");
+    expect(prompt).toContain("prior-phase captures are context only");
+    expect(prompt).toContain(
+      "field-level support is unclear, emit no artifact",
+    );
     expect(prompt).toContain("the user must insert the draft and save");
+  });
+
+  it("grounds phase-input drafting in the current phase evidence and preserves its limits", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 2,
+        currentPhaseClientLabel: "P2 Discover & Diagnose",
+        approvedEvidence: [
+          {
+            title: "synthetic-contact-center-workshop.md",
+            summary:
+              "Current-state workshop notes; metrics remain unvalidated.",
+            statements: ["Repeat contacts are a reported pain point."],
+            observations: [
+              "Supervisors described inconsistent disposition coding.",
+            ],
+            assumptions: ["A unified taxonomy may reduce rework."],
+            openQuestions: ["Which denominator is used for repeat contacts?"],
+            citations: [
+              {
+                quote: "disposition coding varies by team",
+                locator: "Workshop, section 2",
+              },
+            ],
+          },
+        ],
+        approvedEvidenceTotal: 1,
+      },
+      "Draft P2 inputs from approved evidence",
+    );
+    const prompt = formatMovesAvaChatPacketForPrompt(
+      packet,
+      "phase_input_draft",
+    );
+
+    expect(prompt).toContain("[E1] synthetic-contact-center-workshop.md");
+    expect(prompt).toContain("Approval confirms the extraction was reviewed");
+    expect(prompt).toContain("Repeat contacts are a reported pain point.");
+    expect(prompt).toContain("(Workshop, section 2)");
+    expect(prompt).toContain("P2-P5, prior-phase captures are context only");
+  });
+
+  it("builds an evidence packet for an evidence-summary question even when hardening is off", () => {
+    const mode = classifyMovesAvaQuestion("What does the evidence prove?").mode;
+    expect(mode).toBe("evidence_summary");
+    expect(
+      shouldBuildMovesAvaPacketForMode({ hardeningEnabled: false, mode }),
+    ).toBe(true);
+
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        approvedEvidence: [
+          {
+            title: "reviewed_metrics.csv",
+            summary: "Synthetic candidate series; denominator not validated.",
+            statements: ["FCR candidate: 68.2%"],
+            observations: ["Team described duplicate contacts as common."],
+            assumptions: ["Annualized extrapolation is unvalidated."],
+            openQuestions: ["Which denominator governs FCR?"],
+            citations: [
+              { quote: "Synthetic candidate", locator: "README, p. 1" },
+            ],
+          },
+        ],
+        approvedEvidenceTotal: 9,
+      },
+      "What does the evidence prove?",
+    );
+    const answer = buildDeterministicMovesAvaStatusAnswer(packet, mode);
+    expect(answer).toContain("[E1] reviewed_metrics.csv");
+    expect(answer).toContain(
+      "Review approval confirms the extraction was accepted",
+    );
+    expect(answer).toContain("Stakeholder observations (not verified facts)");
+    expect(answer).toContain("Assumptions (not verified)");
+    expect(answer).toContain("Which denominator governs FCR?");
+    expect(answer).toContain("8 additional approved evidence items omitted");
+    for (const unsupportedClaim of [
+      "named approver",
+      "365K",
+      "438K",
+      "612-671 seconds",
+      "73-76%",
+      "638-second",
+      "703-second",
+      "seven of nine",
+    ]) {
+      expect(answer).not.toContain(unsupportedClaim);
+    }
+  });
+
+  it("fails closed when no approved evidence exists or its read is unavailable", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        approvedEvidence: [],
+      },
+      "What does the evidence prove?",
+    );
+    const emptyAnswer = buildDeterministicMovesAvaStatusAnswer(
+      packet,
+      "evidence_summary",
+    );
+    expect(emptyAnswer).toContain("None for this phase");
+    expect(emptyAnswer).toContain(
+      "No operational claim should be treated as established",
+    );
+
+    const unavailablePacket = buildMovesAvaChatPacket(
+      { ...BASE_INPUT, approvedEvidenceUnavailable: true },
+      "What does the evidence prove?",
+    );
+    const unavailableAnswer = buildDeterministicMovesAvaStatusAnswer(
+      unavailablePacket,
+      "evidence_summary",
+    );
+    expect(unavailableAnswer).toContain(
+      "no factual conclusion is safe to state",
+    );
   });
 
   it("builds deterministic capture-field artifacts for cited phase-input proposals", () => {
@@ -209,6 +333,29 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(answer).toContain(
       '"citations":["P0 · Affected function / process"]',
     );
+  });
+
+  it("returns an explicit no-draft explanation instead of copying prior-phase text", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 2,
+        currentPhaseClientLabel: "P2 Discover & Diagnose",
+      },
+      "Draft P2 inputs from approved evidence only",
+    );
+    const answer = buildDeterministicPhaseInputDraftAnswer({
+      packet,
+      phase: 2,
+      proposals: [],
+      refusal:
+        "8 approved P2 evidence items are available, but no field-level evidence mapping connects them to these capture inputs. Prior-phase captures are context, not evidence for P2, so aVa did not copy them into the fields. Nothing was saved.",
+    });
+
+    expect(answer).toContain("8 approved P2 evidence items are available");
+    expect(answer).toContain("no field-level evidence mapping");
+    expect(answer).not.toContain("[[artifact:capture-field]]");
+    expect(answer).not.toContain("P1 approved phase inputs");
   });
 
   it("builds a deterministic live-status answer without substituting old phase-pack gate counts", () => {

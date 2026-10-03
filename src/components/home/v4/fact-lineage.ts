@@ -12,7 +12,7 @@
  *   VALUE      the number
  *   GRAIN      what one row means -- the single most common reason two honest counts differ
  *   FILTER     the rule applied, stated so a reader can reproduce it
- *   AGREEMENT  single source, corroborated, or in conflict -- and when in conflict, WHY
+ *   AGREEMENT  unverified, single source, corroborated, or in conflict -- and WHY
  *
  * The grain field exists because "how we group" decides the answer before any arithmetic happens.
  * One row per application and one row per deployed instance are both correct counts of different
@@ -20,7 +20,7 @@
  * surface states something false out of two true facts.
  */
 
-export type Agreement = "single_source" | "corroborated" | "conflict";
+export type Agreement = "unverified" | "single_source" | "corroborated" | "conflict";
 
 export interface LineageSource {
   /** The intake file, named as the reader would find it. */
@@ -53,6 +53,8 @@ export interface FactLineage {
   openRows?: { objectType: string; filter: string };
   /** What one row means. Never omitted -- a count without a grain is not a fact. */
   grain: string;
+  /** Deterministic selection rule when source-file mapping is not established. */
+  rule?: string;
   sources: LineageSource[];
   agreement: Agreement;
   disagreements?: DisagreeingFigure[];
@@ -71,6 +73,13 @@ export function quotability(lineage: FactLineage): {
   qualifier: string | null;
   tone: Agreement;
 } {
+  if (lineage.agreement === "unverified") {
+    return {
+      quotable: false,
+      qualifier: "Source-file identity and supporting rows have not been verified for this finding.",
+      tone: "unverified",
+    };
+  }
   if (lineage.agreement === "conflict") {
     const unreconciled = (lineage.disagreements ?? []).filter(
       (d) => !d.reconciled,
@@ -111,10 +120,10 @@ export function traceLine(lineage: FactLineage): string {
       s.rows > 0 ? `${s.file} (${s.rows.toLocaleString()} rows)` : s.file,
     )
     .join(" + ");
-  const filter = lineage.sources.find((s) => s.filter)?.filter;
+  const filter = lineage.rule ?? lineage.sources.find((s) => s.filter)?.filter;
   return [
     files,
-    filter ? `filtered to ${filter}` : null,
+    filter ? `${lineage.agreement === "unverified" ? "rule" : "filtered to"} ${filter}` : null,
     `one row = ${lineage.grain}`,
   ]
     .filter(Boolean)

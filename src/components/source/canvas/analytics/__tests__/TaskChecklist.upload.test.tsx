@@ -68,6 +68,28 @@ function selectFile(file: File) {
 }
 
 describe("TaskChecklist provide-task upload", () => {
+  it("binds an operational Scope inventory upload to its evidence requirement without financial fact ingest", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, artifact: {
+        id: "source-artifact-1", originalName: "service_catalog_scope.csv",
+        sourceFormat: "csv", sizeBytes: 150, parseStatus: "parsed",
+      } }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[{
+      ...PROVIDE_TASK, id: "scope.app-inventory", title: "Provide the application or service inventory",
+    }]} eventId="evt-1" stageKey="scope" />);
+    selectFile(new File(["Service ID,Service Name"], "service_catalog_scope.csv", { type: "text/csv" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(form.get("evidenceRequirementId")).toBe("EVID-SRC-SCOPE-APP-INV");
+    expect(form.get("stageKey")).toBe("scope");
+    expect(routerRefresh).toHaveBeenCalled();
+    await screen.findByText("service_catalog_scope.csv");
+    expect(screen.getByTestId("task-evidence-request")).toHaveTextContent("Action needed");
+  });
+
   it("offers an explicit sponsor review request only on the bound Scope sponsor step", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
@@ -358,7 +380,8 @@ describe("TaskChecklist provide-task upload", () => {
   it("renders a real template download link for template-bound uploads", () => {
     const boundTask: StageTaskView = {
       ...PROVIDE_TASK,
-      factTemplateCode: "VOLUMETRICS_V1",
+      id: "scope.volumetrics",
+      factTemplateCode: "TICKET_HISTORY_V1",
     };
     render(
       <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
@@ -428,7 +451,7 @@ describe("TaskChecklist provide-task upload", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const ingestBody = fetchMock.mock.calls[1][1]?.body as FormData;
-    expect(ingestBody.get("templateCode")).toBe("VOLUMETRICS_V1");
+    expect(ingestBody.get("templateCode")).toBe("TICKET_HISTORY_V1");
     expect(ingestBody.get("artifactId")).toBe("artifact-1");
   });
 

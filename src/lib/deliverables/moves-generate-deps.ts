@@ -1,5 +1,5 @@
 import "server-only";
-import { deliverableModel } from './model-policy';
+import { deliverableModel } from "./model-policy";
 
 import { streamAgentTurn } from "@/lib/agent/stream";
 import {
@@ -28,6 +28,11 @@ import {
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
 import { hasPriorPhaseDraftApproval } from "@/lib/programs/deliverables/artifact-review-decisions";
+import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
+import {
+  parseBusinessChangeAssessment,
+  parseSolutionRouteValidation,
+} from "@/lib/programs/solution-route-assessment";
 import {
   formatAcceptedStageReadinessContextForPrompt,
   loadAcceptedStageReadinessContext,
@@ -141,6 +146,13 @@ function gatesPassedContains(gatesPassed: unknown[], phase: number): boolean {
   });
 }
 
+function canonicalPhaseForDeliverable(typeKey: string): number | null {
+  for (const [phase, keys] of Object.entries(PHASE_CANONICAL_KEYS)) {
+    if (keys.includes(typeKey)) return Number(phase);
+  }
+  return null;
+}
+
 function stripHtmlFences(value: string): string {
   return value
     .trim()
@@ -164,12 +176,10 @@ function acceptanceFromStatus(
   const s = (status ?? "").toLowerCase();
   if (s === "superseded") return "superseded";
   if (s === "rejected") return "rejected";
-  // Accepted only when the deliverable is signed off AND this is the signed-off
-  // version — a later unreviewed regeneration is never authoritative.
-  if (
-    (s === "signed_off" || s === "approved" || s === "board_ready") &&
-    (signedOffVersion == null || version === signedOffVersion)
-  ) {
+  // The pointer remains authoritative when a newer current version is draft
+  // or in review. Status describes the latest version; signed_off_version
+  // identifies the exact human-approved version.
+  if (signedOffVersion != null && version === signedOffVersion) {
     return "accepted";
   }
   if (s === "draft" || s === "in_review" || s === "review_required")
@@ -231,31 +241,34 @@ export function createMovesGenerateArtifactDeps(
           .filter(Boolean)
           .join("\n\n");
       },
-      async loadPriorDigests(moveId) {
-        // One row per deliverable type — the client-approved version
-        // (signed_off_version) when one exists, otherwise the newest draft.
-        // Previously this pulled every version of every deliverable with no
-        // dedup at all, so an approved version had no more weight in the
-        // generation context than any later unreviewed regeneration.
+      async loadPriorDigests(moveId, targetPhase) {
+        // Only exact human-approved versions from strictly earlier phases are
+        // authoritative context. Current/future phase outputs and drafts cannot
+        // silently become inputs to this generation pass.
         const rows = await azureRead.query<{
           structured_data: unknown;
           version: number;
           created_at: string;
           deliverable_type_key: string;
         }>(
-          "SELECT structured_data, version, created_at, deliverable_type_key FROM (" +
-            "SELECT DISTINCT ON (d.deliverable_type_key) " +
-            "dv.structured_data, dv.version, d.created_at, d.deliverable_type_key " +
+          "SELECT dv.structured_data, dv.version, d.created_at, d.deliverable_type_key " +
             "FROM deliverable_versions dv " +
             "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
             "WHERE d.engagement_id = $1 " +
-            "ORDER BY d.deliverable_type_key, (dv.version = d.signed_off_version) DESC, dv.version DESC" +
-            ") latest_per_type " +
-            "ORDER BY created_at ASC, version ASC",
+            "AND d.status NOT IN ('superseded', 'rejected') " +
+            "AND d.signed_off_version IS NOT NULL " +
+            "AND dv.version = d.signed_off_version " +
+            "ORDER BY d.created_at ASC, d.deliverable_type_key ASC",
           [moveId],
           { missingTable: "empty" },
         );
         return rows
+          .filter((row) => {
+            const phase = canonicalPhaseForDeliverable(
+              row.deliverable_type_key,
+            );
+            return phase !== null && phase < targetPhase;
+          })
           .map((row) => structuredDigest(row.structured_data))
           .filter((digest): digest is PhaseDigest => digest !== null);
       },
@@ -283,7 +296,10 @@ export function createMovesGenerateArtifactDeps(
             "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
             "WHERE d.engagement_id = $1 " +
             "AND d.deliverable_type_key = ANY($2) " +
-            "ORDER BY d.deliverable_type_key, (dv.version = d.signed_off_version) DESC, dv.version DESC" +
+            "AND d.status NOT IN ('superseded', 'rejected') " +
+            "AND d.signed_off_version IS NOT NULL " +
+            "AND dv.version = d.signed_off_version " +
+            "ORDER BY d.deliverable_type_key ASC" +
             ") d " +
             "ORDER BY deliverable_type_key ASC",
           [moveId, [...P3_ARCHITECTURE_TYPE_KEYS]],
@@ -328,13 +344,32 @@ export function createMovesGenerateArtifactDeps(
         return loadEvidencePacketsForMove(ctx, moveId, phase);
       },
       async loadPhaseCapture(moveId, phase) {
-        // The operator's saved phase capture: one program_modules row per
-        // section, state_jsonb = { capture_section_key, label, value, … }.
-        const modules = await getModuleState(ctx, moveId).catch(() => []);
-        const byKey = new Map<string, string>();
+        // Current capture can shape this phase's draft. Earlier capture is
+        // inherited only after its modules are complete and its gate passed.
+        const [modules, program] = await Promise.all([
+          getModuleState(ctx, moveId).catch(() => []),
+          getProgramById(ctx, moveId).catch(() => null),
+        ]);
+        const gatesPassed = Array.isArray(program?.gatesPassed)
+          ? program.gatesPassed
+          : [];
+        const currentByKey = new Map<string, string>();
+        const priorByKey = new Map<string, string>();
         const parts: string[] = [];
-        for (const mod of modules) {
-          if (mod.phaseNumber !== phase) continue;
+        const priorParts: string[] = [];
+        const approvalNotes: string[] = [];
+        const eligibleModules = modules
+          .filter((mod) => {
+            if (mod.phaseNumber === phase) return true;
+            return (
+              typeof mod.phaseNumber === "number" &&
+              mod.phaseNumber < phase &&
+              mod.status === "completed" &&
+              gatesPassedContains(gatesPassed, mod.phaseNumber)
+            );
+          })
+          .sort((a, b) => a.phaseNumber - b.phaseNumber);
+        for (const mod of eligibleModules) {
           const st = (mod.state ?? {}) as Record<string, unknown>;
           const value = typeof st.value === "string" ? st.value.trim() : "";
           if (!value) continue;
@@ -342,36 +377,83 @@ export function createMovesGenerateArtifactDeps(
             typeof st.capture_section_key === "string"
               ? st.capture_section_key
               : mod.moduleKey;
-          byKey.set(key, value);
+          const isCurrentPhase = mod.phaseNumber === phase;
+          (isCurrentPhase ? currentByKey : priorByKey).set(key, value);
           const heading =
             (typeof st.label === "string" && st.label) || mod.moduleName || key;
-          // Structured facts (baseline) are stored as JSON — render them as
-          // readable "metric: value (source: …)" lines, not raw JSON, so the
-          // model sees clean provenance-tagged facts.
-          const rendered =
+          let rendered =
             key === "baseline_metrics" && isStructuredFactsValue(value)
               ? factsToPromptText(parseDiagnosisFacts(value))
               : value;
-          parts.push(`## ${heading}\n${rendered}`);
+          if (key === "business_change_assessment") {
+            const assessment = parseBusinessChangeAssessment(value);
+            if (assessment) {
+              rendered = [
+                `Expected workflow change: ${assessment.expectedWorkflowChange}`,
+                `Expected role/accountability change: ${assessment.expectedRoleAccountabilityChange}`,
+                `Adoption owner: ${assessment.adoptionOwner}`,
+                `Adoption responsibility: ${assessment.adoptionResponsibility}`,
+                `Evidence reference: ${assessment.evidenceReference}`,
+                `Validated by: ${assessment.validatedBy}`,
+              ].join("\n");
+            }
+          }
+          if (key === "solution_route_validation") {
+            const validation = parseSolutionRouteValidation(value);
+            if (validation) {
+              rendered = [
+                `Confirmed route: ${validation.selectedRoute}`,
+                `System recommendation: ${validation.decision === "confirm" ? validation.selectedRoute : "corrected by reviewer"}`,
+                `Output: ${validation.solutionOutput}`,
+                `Workflow impact: ${validation.workflowChange}`,
+                `Role/accountability impact: ${validation.roleAccountabilityChange}`,
+                `Approved evidence reference: ${validation.evidenceReference}`,
+                `Validated by: ${validation.validatedBy}`,
+                validation.correctionRationale
+                  ? `Correction rationale: ${validation.correctionRationale}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join("\n");
+              approvalNotes.push(
+                `P${mod.phaseNumber} human-validated solution route: ${validation.selectedRoute}; evidence ${validation.evidenceReference}; reviewer ${validation.validatedBy}${validation.correctionRationale ? `; rationale: ${validation.correctionRationale}` : ""}.`,
+              );
+            }
+          }
+          const renderedSection = `## ${heading}\n${rendered}`;
+          if (isCurrentPhase) parts.push(renderedSection);
+          else
+            priorParts.push(
+              `## P${mod.phaseNumber} approved capture: ${heading}\n${rendered}`,
+            );
         }
-        if (parts.length === 0) return null;
-        const digest: PhaseDigest = { currentState: parts.join("\n\n") };
-        // Structured P2 fields the diagnostic prompt + metric inference expect.
-        const baseline = byKey.get("baseline_metrics");
+        if (parts.length === 0 && priorParts.length === 0) return null;
+        const digest: PhaseDigest = {
+          currentState: [...priorParts, ...parts].join("\n\n"),
+          ...(approvalNotes.length
+            ? { humanApprovalNotes: approvalNotes }
+            : {}),
+        };
+        const baseline =
+          currentByKey.get("baseline_metrics") ??
+          priorByKey.get("baseline_metrics");
         if (baseline) {
           const metrics = factsToBaselineMetrics(parseDiagnosisFacts(baseline));
           digest.baselineMetrics = Object.keys(metrics).length
             ? metrics
             : { [`Operator-attested baseline (P${phase} capture)`]: baseline };
         }
-        const gaps = byKey.get("gaps_root_causes");
+        const gaps =
+          currentByKey.get("gaps_root_causes") ??
+          priorByKey.get("gaps_root_causes");
         if (gaps) {
           digest.gaps = [gaps];
           digest.rootCauses = [gaps];
         }
-        const recommendation = byKey.get("recommendation");
+        const recommendation = currentByKey.get("recommendation");
         if (recommendation) {
           digest.humanApprovalNotes = [
+            ...(digest.humanApprovalNotes ?? []),
             `Operator recommendation (P${phase} capture): ${recommendation}`,
           ];
         }

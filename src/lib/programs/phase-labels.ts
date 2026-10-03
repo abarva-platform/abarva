@@ -41,6 +41,18 @@ export function getPhaseLabel(phase: number | null | undefined): string {
   return PHASE_LABELS[phase] ?? `P${phase}`;
 }
 
+export function getPhaseName(phase: number | null | undefined): string {
+  return getPhaseLabel(phase).replace(/^P\d+\s+/, "");
+}
+
+export function getMovesStageLabel(stage: number | null | undefined): string {
+  return stage === 6 ? "Tower Track Outcomes" : getPhaseLabel(stage);
+}
+
+export function getMovesStageName(stage: number | null | undefined): string {
+  return stage === 6 ? "Tower Track Outcomes" : getPhaseName(stage);
+}
+
 export function getPhaseLabelShort(phase: number | null | undefined): string {
   if (phase === null || phase === undefined) return 'Originate';
   return PHASE_LABELS_SHORT[phase] ?? `P${phase}`;

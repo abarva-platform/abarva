@@ -359,6 +359,24 @@ const FACT_ENRICHMENT: Record<string, FactEnrichment> = {
  * it is never free text.
  */
 const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
+  ticket_count: {
+    key: 'ticket_count',
+    label: 'Ticket count by service tower, tier and time window',
+    unit: 'count',
+    source: 'enterprise_inventory',
+    entityKind: 'tower',
+    description:
+      'Observed tickets in the cited ITSM extract row. Tier, month and time window are retained in the row citation; this is not a value or savings actual.',
+  },
+  sla_breach_count: {
+    key: 'sla_breach_count',
+    label: 'SLA breach count by service tower, tier and time window',
+    unit: 'count',
+    source: 'enterprise_inventory',
+    entityKind: 'tower',
+    description:
+      'Observed SLA breaches for the cited ticket cohort, never greater than its ticket count. This is not a fee credit or financial actual.',
+  },
   // ── Shape 1 · per-lever status ─────────────────────────────────────────────
   // RFP clause coverage: is this lever's clause required in the RFP draft?
   // 0/1 carried on the `ratio` unit (a `flag` unit would churn the type surface,
