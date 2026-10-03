@@ -32,8 +32,10 @@ function signerEmail(testInbox: string, envelopeInput: CreateEsignEnvelopeInput,
 
 function validateSigner(signer: EsignSigner) {
   if (!signer.recipientId.trim() || !signer.name.trim() || !signer.email.trim() ||
-      !signer.signatureAnchor.trim() || signer.delivery !== "embedded" ||
-      !signer.clientUserId?.trim()) {
+      !signer.signatureAnchor.trim() ||
+      (signer.delivery === "embedded" && !signer.clientUserId?.trim()) ||
+      (signer.delivery === "email" && signer.clientUserId !== null) ||
+      !["embedded", "email"].includes(signer.delivery)) {
     throw new Error("invalid_signer");
   }
 }
@@ -41,6 +43,9 @@ function validateSigner(signer: EsignSigner) {
 function validateEnvelope(config: Config, input: CreateEsignEnvelopeInput) {
   if (config.environment !== "demo" || input.tenantKey !== SYNTHETIC_TENANT) {
     throw new Error("tenant_environment_mismatch");
+  }
+  if (!/^[^@\s]+@abarva\.ai$/i.test(config.testInbox)) {
+    throw new Error("invalid_test_inbox");
   }
   if (!input.eventId.trim() || !input.vendorId.trim() || !input.templateVersion.trim() ||
       input.documentPdf.length < 5 ||
@@ -125,7 +130,7 @@ export function createDocuSignProvider(config: Config, dependencies: Dependencie
         recipientId: signer.recipientId,
         name: signer.name,
         email: signerEmail(config.testInbox, input, signer),
-        clientUserId: signer.clientUserId,
+        ...(signer.delivery === "embedded" ? { clientUserId: signer.clientUserId } : {}),
         routingOrder: String(index + 1),
         tabs: {
           signHereTabs: [{ anchorString: signer.signatureAnchor, anchorUnits: "pixels", anchorXOffset: "0", anchorYOffset: "0" }],
@@ -153,6 +158,7 @@ export function createDocuSignProvider(config: Config, dependencies: Dependencie
 
     async getSigningLink({ envelopeId, eventId, vendorId, signer, returnUrl }) {
       validateSigner(signer);
+      if (signer.delivery !== "embedded") throw new Error("email_signer_no_embedded_link");
       if (!eventId.trim() || !vendorId.trim()) throw new Error("invalid_envelope_identity");
       let callback: URL;
       try { callback = new URL(returnUrl); } catch { throw new Error("invalid_return_url"); }

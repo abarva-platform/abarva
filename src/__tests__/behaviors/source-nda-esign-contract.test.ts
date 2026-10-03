@@ -9,7 +9,7 @@ const demoConfig = {
   SOURCE_NDA_ESIGN_ACCOUNT_ID: "account-1",
   SOURCE_NDA_ESIGN_USER_ID: "user-1",
   SOURCE_NDA_ESIGN_KEY_ID: "https://kv-abarva-lab-001.vault.azure.net/keys/source-nda-docusign-lab-jwt/version-1",
-  SOURCE_NDA_ESIGN_TEST_INBOX: "tester@example.test",
+  SOURCE_NDA_ESIGN_TEST_INBOX: "tester@abarva.ai",
 };
 
 describe("Source NDA e-signature configuration", () => {
@@ -49,6 +49,10 @@ describe("Source NDA e-signature configuration", () => {
     })).toEqual({ state: "blocked", reason: "invalid_configuration", fallback: "upload" });
     expect(resolveSourceNdaEsignConfig("meridian-health", {
       ...demoConfig,
+      SOURCE_NDA_ESIGN_TEST_INBOX: "supplier@outside.example",
+    })).toEqual({ state: "blocked", reason: "invalid_configuration", fallback: "upload" });
+    expect(resolveSourceNdaEsignConfig("meridian-health", {
+      ...demoConfig,
       SOURCE_NDA_ESIGN_PROVIDER: "unknown",
     })).toEqual({ state: "blocked", reason: "invalid_configuration", fallback: "upload" });
     expect(resolveSourceNdaEsignConfig("meridian-health", {
@@ -66,7 +70,7 @@ describe("Source NDA e-signature configuration", () => {
       integrationKey: "integration-1",
       userId: "user-1",
       keyId: demoConfig.SOURCE_NDA_ESIGN_KEY_ID,
-      testInbox: "tester@example.test",
+      testInbox: "tester@abarva.ai",
     });
   });
 });

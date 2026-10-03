@@ -15,7 +15,7 @@ const values = {
   SOURCE_NDA_ESIGN_ACCOUNT_ID: 'account-id',
   SOURCE_NDA_ESIGN_USER_ID: 'user-id',
   SOURCE_NDA_ESIGN_KEY_ID: 'https://kv-abarva-lab-001.vault.azure.net/keys/source-nda-docusign-lab-jwt/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  SOURCE_NDA_ESIGN_TEST_INBOX: 'synthetic@example.test',
+  SOURCE_NDA_ESIGN_TEST_INBOX: 'synthetic@abarva.ai',
 };
 
 function build(env: Record<string, string>) {
@@ -32,6 +32,7 @@ describe('Source NDA ACA configuration', () => {
     expect(disabled.status).toBe(0);
     expect(disabled.stdout.trim()).toBe('SOURCE_NDA_ESIGN_PROVIDER=disabled');
     expect(build({ ...values, SOURCE_NDA_ESIGN_TEST_INBOX: '' }).status).not.toBe(0);
+    expect(build({ ...values, SOURCE_NDA_ESIGN_TEST_INBOX: 'supplier@outside.example' }).status).not.toBe(0);
     expect(build({ ...values, SOURCE_NDA_ESIGN_ENVIRONMENT: 'production' }).status).not.toBe(0);
     expect(build({ ...values, SOURCE_NDA_ESIGN_KEY_ID: 'https://example.test/key' }).status).not.toBe(0);
   });
