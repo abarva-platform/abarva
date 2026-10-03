@@ -45,6 +45,20 @@ export interface CrawlAuthMintOutcome {
   /** The ticket as returned by `signInTokens.createSignInToken`. */
   ticket?: string;
   expiresInSeconds?: number;
+  /**
+   * C-640 · `SignInToken.url`, served by the MINTING instance, and the only
+   * remaining no-secret source of the mint-side identity now that the ticket
+   * is known to carry no decodable `iss` live.
+   *
+   * It is an ACCOUNT-PORTAL url (`accounts.<domain>`), not a Frontend API one,
+   * and it carries the ticket in a `__clerk_ticket` query parameter. Only its
+   * host is ever read or logged.
+   */
+  url?: string;
+  /** `SignInToken.status` — logged verbatim, for the operator, not compared. */
+  status?: string;
+  /** `SignInToken.id` — logged so an operator can find it in the dashboard. */
+  tokenId?: string;
 }
 
 export interface CrawlAuthRedeemOutcome {
@@ -96,10 +110,136 @@ export function clerkTicketIssuerHost(
   }
 }
 
+/** Which kind of Clerk instance a host belongs to. */
+export type ClerkInstanceKind = "production" | "development";
+
+/**
+ * The identity that every host of ONE Clerk instance shares. Two hosts compare
+ * equal exactly when they belong to the same instance.
+ */
+export interface ClerkInstanceIdentity {
+  kind: ClerkInstanceKind;
+  id: string;
+}
+
+/** Clerk serves one development instance from these two suffixes. */
+const DEV_FRONTEND_API_SUFFIX = ".clerk.accounts.dev";
+const DEV_PORTAL_SUFFIX = ".accounts.dev";
+
+/**
+ * C-640 · the instance a Clerk host belongs to, or `null` when the rule cannot
+ * say.
+ *
+ * A Clerk instance presents TWO hosts, and the two halves of this diagnostic
+ * read different ones: the publishable key names the Frontend API host
+ * (`clerk.<domain>`), while `SignInToken.url` is the account-portal host
+ * (`accounts.<domain>`). Comparing those strings directly reports a mismatch
+ * on a perfectly matched pair, which would send an operator to rotate a
+ * correct secret — the precise failure C-639's `undetermined` branch exists to
+ * prevent. So both are reduced to the domain they share.
+ *
+ * `null` is a real answer here and is NOT widened away. Returning `accounts.dev`
+ * for a bare suffix would make two unrelated development instances compare
+ * equal, and a verdict built on that is worse than no verdict.
+ */
+export function clerkInstanceIdentityFromHost(
+  host: string | undefined | null,
+): ClerkInstanceIdentity | null {
+  const normalized = host?.trim().toLowerCase().replace(/\.$/, "");
+  if (!normalized || normalized.includes("/") || normalized.includes(" ")) {
+    return null;
+  }
+
+  // The longer suffix is tested first on purpose: stripping `.accounts.dev`
+  // from `<slug>.clerk.accounts.dev` would leave `<slug>.clerk`, which is not
+  // the slug and would not match the portal host of the same instance.
+  for (const suffix of [DEV_FRONTEND_API_SUFFIX, DEV_PORTAL_SUFFIX]) {
+    if (!normalized.endsWith(suffix)) continue;
+    const slug = normalized.slice(0, -suffix.length);
+    // The slug is a single label. Anything else is a shape this rule has not
+    // been shown, so it gets no identity rather than a guessed one.
+    if (!slug || slug.includes(".")) return null;
+    // `clerk.accounts.dev` is the bare Frontend API suffix, not an instance
+    // whose slug happens to be `clerk` — and an instance really slugged
+    // `clerk` would be indistinguishable from it here. Ambiguous, so no
+    // identity: the comparison reports `unsound` and no owner is named.
+    if (slug === "clerk") return null;
+    return { kind: "development", id: `${slug}${DEV_PORTAL_SUFFIX}` };
+  }
+
+  if (normalized.endsWith(".dev") && normalized.split(".").length <= 2) {
+    return null;
+  }
+
+  const labels = normalized.split(".");
+  if (labels.length < 2 || labels.some((label) => label === "")) return null;
+
+  // A production instance is `clerk.<domain>` and `accounts.<domain>`, so one
+  // leading Clerk label is dropped — but only while what remains is still a
+  // domain, so `clerk.ai` keeps its own identity instead of becoming `ai`.
+  const [first, ...rest] = labels;
+  if ((first === "clerk" || first === "accounts") && rest.length >= 2) {
+    return { kind: "production", id: rest.join(".") };
+  }
+  return { kind: "production", id: normalized };
+}
+
+/**
+ * `unsound` when either side has no derivable identity — the comparison was
+ * not performed and no owner may be named from it.
+ */
+export type ClerkInstanceComparison = "same" | "different" | "unsound";
+
+export function compareClerkInstances(
+  mint: ClerkInstanceIdentity | null,
+  redeem: ClerkInstanceIdentity | null,
+): ClerkInstanceComparison {
+  if (!mint || !redeem) return "unsound";
+  // A development host against a production vanity host is decisive, and the
+  // id comparison alone already decides it — so there is deliberately NO
+  // `kind` comparison here. Every host ending `.accounts.dev` is routed to the
+  // development branch above or gets no identity at all, so a production id
+  // can never end in `.accounts.dev` and the two kinds cannot collide on an
+  // id. A `kind` check would be a branch no input reaches, which is the
+  // unfailable-guard shape this module exists against; it survived its own
+  // mutation when it was here, which is how that was found. The invariant that
+  // makes it unnecessary is pinned by a test rather than left as an argument.
+  return mint.id === redeem.id ? "same" : "different";
+}
+
+/**
+ * The host of the mint response's `url`. The url itself is never returned and
+ * never logged: it carries the live ticket in `__clerk_ticket`, and a CI log
+ * is readable by anyone with repository read.
+ */
+export function clerkMintUrlHost(
+  url: string | undefined | null,
+): string | null {
+  const value = url?.trim();
+  if (!value) return null;
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    return host || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The minting instance's host. The ticket's own `iss` is preferred when it is
+ * readable; the mint response's url host is the fallback, because live the
+ * ticket is not a decodable JWT at all (run `37155858207`).
+ */
+export function clerkMintInstanceHost(
+  mint: CrawlAuthMintOutcome,
+): string | null {
+  return clerkTicketIssuerHost(mint.ticket) ?? clerkMintUrlHost(mint.url);
+}
+
 export function classifyCrawlAuthFailure(
   observation: CrawlAuthObservation,
 ): CrawlAuthVerdict {
-  const mintInstance = clerkTicketIssuerHost(observation.mint.ticket);
+  const mintInstance = clerkMintInstanceHost(observation.mint);
   const redeemInstance = clerkFrontendApiHostFromPublishableKey(
     observation.publishableKey,
   );
@@ -170,7 +310,32 @@ export function classifyCrawlAuthFailure(
     };
   }
 
-  if (mintInstance !== redeemInstance) {
+  const comparison = compareClerkInstances(
+    clerkInstanceIdentityFromHost(mintInstance),
+    clerkInstanceIdentityFromHost(redeemInstance),
+  );
+
+  if (comparison === "unsound") {
+    const unplaceable = [
+      clerkInstanceIdentityFromHost(mintInstance) ? null : mintInstance,
+      clerkInstanceIdentityFromHost(redeemInstance) ? null : redeemInstance,
+    ]
+      .filter(Boolean)
+      .join(" and ");
+    return {
+      cause: "undetermined",
+      stage: "redeem",
+      owner: "undetermined",
+      mintInstance,
+      redeemInstance,
+      statement:
+        `Redemption was refused and both hosts read — mint ${mintInstance}, redeem ${redeemInstance} — ` +
+        `but no Clerk instance can be derived from ${unplaceable}, so the two are not comparable; ` +
+        "no owner is named, because a host difference that is not an instance difference would send an operator to rotate a correct secret.",
+    };
+  }
+
+  if (comparison === "different") {
     return {
       cause: "instance_mismatch",
       stage: "redeem",

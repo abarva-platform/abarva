@@ -27,6 +27,9 @@ import {
   classifyCrawlAuthFailure,
   clerkTicketIssuerHost,
   formatCrawlAuthVerdictLine,
+  clerkInstanceIdentityFromHost,
+  clerkMintUrlHost,
+  compareClerkInstances,
   type CrawlAuthObservation,
 } from "@/lib/crawl/clerk-auth-cause";
 
@@ -233,5 +236,230 @@ describe("C-639 · crawl auth failure cause", () => {
     expect(line).toContain("redeem_instance=unreadable");
     expect(line).not.toContain("redeem_instance=:");
     expect(line).not.toContain("redeem_instance= ");
+  });
+});
+
+/**
+ * C-640 · the mint-side identity, read from the mint response rather than the
+ * ticket, and compared so that two hosts of ONE instance are not a mismatch.
+ *
+ * Established by execution, not by reading: `Post-deploy crawl` run
+ * `37155858207` on `9b8c8b67a3` printed `mint_instance=unreadable` for both
+ * personas while `redeem_instance=clerk.abarva.ai` read fine, so C-639's
+ * assumption that a Clerk sign-in ticket is a readable JWT is wrong live. The
+ * remaining no-secret source is the mint response's own `url`, which Clerk
+ * serves from the MINTING instance.
+ *
+ * The hazard this block exists against is a FALSE mismatch. The account-portal
+ * host (`accounts.<domain>`) and the Frontend API host (`clerk.<domain>`) are
+ * two hosts of the SAME Clerk instance, and `SignInToken.url` is the portal
+ * one while the publishable key names the Frontend API one. A bare host
+ * comparison would therefore report `instance_mismatch` on a perfectly
+ * matched pair and send an operator to rotate a correct secret — the exact
+ * failure the `undetermined` branch was built to prevent. So the comparison is
+ * on the instance identity the two hosts share, and anything the rule cannot
+ * derive stays `undetermined` rather than becoming a verdict.
+ */
+describe("C-640 · mint-side instance identity from the mint response", () => {
+  it("gives the portal host and the Frontend API host of one instance the SAME identity", () => {
+    const fapi = clerkInstanceIdentityFromHost("clerk.abarva.ai");
+    const portal = clerkInstanceIdentityFromHost("accounts.abarva.ai");
+
+    expect(fapi).toEqual({ kind: "production", id: "abarva.ai" });
+    expect(portal).toEqual({ kind: "production", id: "abarva.ai" });
+    expect(compareClerkInstances(fapi, portal)).toBe("same");
+  });
+
+  it("does the same for a development instance's two hosts", () => {
+    // Clerk presents one dev instance as `<slug>.clerk.accounts.dev` (Frontend
+    // API) and `<slug>.accounts.dev` (portal). The longer suffix has to be
+    // tested first, or the slug reads as `sample-app-42.clerk`.
+    const fapi = clerkInstanceIdentityFromHost(
+      "sample-app-42.clerk.accounts.dev",
+    );
+    const portal = clerkInstanceIdentityFromHost("sample-app-42.accounts.dev");
+
+    expect(fapi).toEqual({
+      kind: "development",
+      id: "sample-app-42.accounts.dev",
+    });
+    expect(portal).toEqual(fapi);
+    expect(compareClerkInstances(fapi, portal)).toBe("same");
+  });
+
+  it("separates two different development instances rather than collapsing them onto `accounts.dev`", () => {
+    expect(
+      compareClerkInstances(
+        clerkInstanceIdentityFromHost("sample-app-42.clerk.accounts.dev"),
+        clerkInstanceIdentityFromHost("other-app-7.clerk.accounts.dev"),
+      ),
+    ).toBe("different");
+  });
+
+  it("treats a development host against a production vanity host as a decisive mismatch", () => {
+    expect(
+      compareClerkInstances(
+        clerkInstanceIdentityFromHost("sample-app-42.clerk.accounts.dev"),
+        clerkInstanceIdentityFromHost("clerk.abarva.ai"),
+      ),
+    ).toBe("different");
+  });
+
+  it("derives no identity — and so reports `unsound` — for a host the rule cannot place", () => {
+    // A bare suffix carries no instance. Returning `accounts.dev` here is the
+    // widening the item forbids: it would make two unrelated dev instances
+    // compare equal.
+    expect(clerkInstanceIdentityFromHost("accounts.dev")).toBeNull();
+    expect(clerkInstanceIdentityFromHost("clerk.accounts.dev")).toBeNull();
+    expect(clerkInstanceIdentityFromHost("localhost")).toBeNull();
+    expect(clerkInstanceIdentityFromHost("")).toBeNull();
+    expect(clerkInstanceIdentityFromHost(undefined)).toBeNull();
+    expect(
+      compareClerkInstances(
+        clerkInstanceIdentityFromHost("accounts.dev"),
+        clerkInstanceIdentityFromHost("clerk.abarva.ai"),
+      ),
+    ).toBe("unsound");
+  });
+
+  it("reads the host out of the mint response url and never the ticket in its query", () => {
+    const url =
+      "https://accounts.abarva.ai/sign-in?__clerk_ticket=eyJsecret.payload.sig&redirect_url=%2F";
+
+    expect(clerkMintUrlHost(url)).toBe("accounts.abarva.ai");
+    expect(clerkMintUrlHost(url)).not.toContain("__clerk_ticket");
+    expect(clerkMintUrlHost(undefined)).toBeNull();
+    expect(clerkMintUrlHost("not-a-url")).toBeNull();
+  });
+
+  it("names THIS LANE, not the operator, when the ticket is unreadable but the mint url is the same instance", () => {
+    // The live shape: `mint_instance=unreadable` from the ticket, and a mint
+    // url on the portal host of the very instance the browser loads. A bare
+    // host comparison reports `instance_mismatch` here. It is not one.
+    const verdict = classifyCrawlAuthFailure(
+      observation({
+        mint: {
+          ok: true,
+          ticket: "not-a-readable-jwt",
+          url: "https://accounts.abarva.ai/sign-in?__clerk_ticket=abc.def.ghi",
+          status: "pending",
+          expiresInSeconds: 300,
+        },
+      }),
+    );
+
+    expect(verdict.cause).toBe("redemption_defect");
+    expect(verdict.owner).toBe("this-lane");
+    expect(verdict.mintInstance).toBe("accounts.abarva.ai");
+    expect(verdict.redeemInstance).toBe("clerk.abarva.ai");
+  });
+
+  it("names the OPERATOR when the unreadable ticket's mint url is a different instance", () => {
+    const verdict = classifyCrawlAuthFailure(
+      observation({
+        mint: {
+          ok: true,
+          ticket: "not-a-readable-jwt",
+          url: "https://sample-app-42.accounts.dev/sign-in?__clerk_ticket=abc",
+          status: "pending",
+          expiresInSeconds: 300,
+        },
+      }),
+    );
+
+    expect(verdict.cause).toBe("instance_mismatch");
+    expect(verdict.owner).toBe("operator-secret");
+    expect(verdict.mintInstance).toBe("sample-app-42.accounts.dev");
+  });
+
+  it("stays UNDETERMINED when the ticket is unreadable and the mint response carries no url", () => {
+    const verdict = classifyCrawlAuthFailure(
+      observation({
+        mint: { ok: true, ticket: "not-a-readable-jwt", expiresInSeconds: 300 },
+      }),
+    );
+
+    expect(verdict.cause).toBe("undetermined");
+    expect(verdict.owner).toBe("undetermined");
+    expect(verdict.mintInstance).toBeNull();
+  });
+
+  it("stays UNDETERMINED when both hosts read but the comparison is not sound", () => {
+    // The host is readable and is NOT the redeem host, so a bare comparison
+    // would call this `instance_mismatch`. No instance can be derived from it,
+    // so no owner may be named.
+    const verdict = classifyCrawlAuthFailure(
+      observation({
+        mint: {
+          ok: true,
+          ticket: "not-a-readable-jwt",
+          url: "https://accounts.dev/sign-in?__clerk_ticket=abc",
+          expiresInSeconds: 300,
+        },
+      }),
+    );
+
+    expect(verdict.cause).toBe("undetermined");
+    expect(verdict.owner).toBe("undetermined");
+    expect(verdict.mintInstance).toBe("accounts.dev");
+    expect(verdict.redeemInstance).toBe("clerk.abarva.ai");
+    // and it must say WHICH half it could not settle, not just that it failed.
+    expect(verdict.statement).toContain("accounts.dev");
+  });
+
+  it("prefers the ticket's own issuer when it IS readable, and falls back to the url only when it is not", () => {
+    const verdict = classifyCrawlAuthFailure(
+      observation({
+        mint: {
+          ok: true,
+          ticket: ticketIssuedBy("https://sample-app-42.clerk.accounts.dev"),
+          url: "https://accounts.abarva.ai/sign-in?__clerk_ticket=abc",
+          expiresInSeconds: 300,
+        },
+      }),
+    );
+
+    expect(verdict.mintInstance).toBe("sample-app-42.clerk.accounts.dev");
+    expect(verdict.cause).toBe("instance_mismatch");
+  });
+});
+
+/**
+ * C-640 · the invariant that lets `compareClerkInstances` carry no `kind`
+ * comparison.
+ *
+ * A `kind` check was written first and SURVIVED its own mutation: removing it
+ * changed no outcome, because the fixture pair it was meant to decide
+ * (`sample-app-42.clerk.accounts.dev` against `clerk.abarva.ai`) already has
+ * different ids. Rather than keep a branch no input reaches — the unfailable
+ * guard this module exists against — the branch was removed and the reason it
+ * is safe to remove is asserted here: a development host never acquires a
+ * production identity, so the two kinds can never collide on one id.
+ */
+describe("C-640 · a `.accounts.dev` host never yields a production identity", () => {
+  it.each([
+    "sample-app-42.clerk.accounts.dev",
+    "sample-app-42.accounts.dev",
+    "accounts.dev",
+    "clerk.accounts.dev",
+    "a.b.accounts.dev",
+    "accounts.dev.accounts.dev",
+  ])("%s is development or nothing, never production", (host) => {
+    const identity = clerkInstanceIdentityFromHost(host);
+    expect(identity?.kind ?? "development").toBe("development");
+    expect(identity?.id ?? "").not.toBe("abarva.ai");
+  });
+
+  it("and no production identity ends in the development suffix", () => {
+    for (const host of [
+      "clerk.abarva.ai",
+      "accounts.abarva.ai",
+      "abarva.ai",
+      "clerk.ai",
+    ]) {
+      const identity = clerkInstanceIdentityFromHost(host);
+      expect(identity?.kind).toBe("production");
+      expect(identity?.id.endsWith(".accounts.dev")).toBe(false);
+    }
   });
 });
