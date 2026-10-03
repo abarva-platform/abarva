@@ -55,6 +55,8 @@ clients.
 
 - Focused Jest suites: 5 suites / 139 tests pass, covering workbook context,
   evidence packets, gate approval, phase generation, and the Moves phase UI.
+- Deliverable queue worker regression suite: 14 tests pass with the approved
+  phase-evidence snapshot declared in premium-run fixtures.
 - `npm run typecheck`: clean.
 - Scoped ESLint: clean.
 - `git diff --check`: clean.
