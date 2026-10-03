@@ -1,7 +1,7 @@
 {
   "dataset_id": "nexus_moves_adaptive_e2e_synthetic_20260927",
-  "package_version": "1.0.0",
-  "generated_on": "2026-09-27",
+  "package_version": "1.0.1",
+  "generated_on": "2026-10-03",
   "data_class": "synthetic_demo_evidence",
   "synthetic": true,
   "contains_phi": false,

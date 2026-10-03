@@ -205,6 +205,23 @@ export function validatePackage(
     }
   }
 
+  const decisionRecord = fs.readFileSync(
+    path.join(root, "01_p1_charter/charter_decisions.md"),
+    "utf8",
+  );
+  if (!/authorized workspace user records Move decisions and phase approvals/i.test(decisionRecord)) {
+    errors.push("P1 decision rights must assign in-product approvals to an authorized workspace user.");
+  }
+  if (!/listed sponsor is an informational contact/i.test(decisionRecord) || /sponsor\s+(?:approves|approval)/i.test(decisionRecord)) {
+    errors.push("P1 decision rights must keep sponsors informational, not in-product approvers.");
+  }
+  const p5Raci = readCsv(path.join(root, "05_p5_mobilize/raci.csv"), errors);
+  for (const row of p5Raci) {
+    if (/sponsor.*(?:approve|approval|signed)|(?:approve|approval|signed).*sponsor/i.test(row.approval_evidence ?? "")) {
+      errors.push(`P5 approval evidence must not assign an in-product approval to a sponsor: ${row.work}`);
+    }
+  }
+
   if (governanceManifest) {
     if (governanceManifest.client_key !== null || governanceManifest.tenant_scope !== "move_registry") {
       errors.push("Move-scoped fixture manifest must not pin a tenant identity.");
