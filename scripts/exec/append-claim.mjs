@@ -226,9 +226,44 @@ export function buildClaimLine({ stamp, identity, item, message, branch, files, 
   return line;
 }
 
+/*
+ * T-801. The write/no-write verdict, as the last line of stdout, on every path.
+ *
+ * It was announced before this by `Appended to <file>:` followed by the claim
+ * line, and on the UNDETERMINED path that announcement arrived after two lines
+ * of advisory prose. An invocation piped through `head -3` showed the advisory
+ * and hid the announcement, the run read its own write as a refusal, and item
+ * U-553 ended with two release lines eleven seconds apart. Three register
+ * controls were run against the duplicate and none of them detects it.
+ *
+ * Two properties, and the second is the one that was missing:
+ *
+ *   - LAST. Every path ends here, after any advisory and after the claim line
+ *     itself, so a `tail -1` read reaches it no matter how much preceded it.
+ *   - STDOUT, including on a refusal whose prose goes to stderr. The incident
+ *     was a pipe, and a pipe does not carry stderr: a verdict only on stderr
+ *     is invisible to exactly the read that got this wrong.
+ *
+ * `--dry-run` is a no-write that exits 0, and before this it printed the claim
+ * line last — byte-for-byte the shape a successful append printed. That is the
+ * same inversion in the opposite direction, so it says NOT WRITTEN rather than
+ * sharing the refusal's wording or the write's.
+ *
+ * The fix is not "tell agents not to truncate". The control carries the signal.
+ */
+const VERDICT_WROTE = (file) => `VERDICT: WROTE ${file}`;
+const VERDICT_REFUSED = "VERDICT: REFUSED, nothing appended";
+const VERDICT_DRY_RUN = "VERDICT: NOT WRITTEN, nothing appended (--dry-run)";
+
+/** Print the final verdict and leave. The only way out of `main`. */
+function finish(code, verdict) {
+  console.log(verdict);
+  process.exit(code);
+}
+
 function fail(code, message) {
   console.error(message);
-  process.exit(code);
+  finish(code, VERDICT_REFUSED);
 }
 
 function main(argv) {
@@ -528,12 +563,12 @@ function main(argv) {
   } else if (status === EXIT_REFUSED) {
     console.error(`Pre-claim REFUSED — item ${item} as ${identity}. Nothing was appended.`);
     console.error(describe());
-    process.exit(EXIT_REFUSED);
+    finish(EXIT_REFUSED, VERDICT_REFUSED);
   } else
   if (status === EXIT_USAGE) {
     console.error(`The pre-claim gate rejected the request as unusable. Nothing was appended.`);
     console.error(describe());
-    process.exit(EXIT_USAGE);
+    finish(EXIT_USAGE, VERDICT_REFUSED);
   }
   if (status !== EXIT_OK && !abstainPastRefusal) {
     // An exit this caller does not understand is not a pass. Failing open here
@@ -616,7 +651,7 @@ function main(argv) {
 
   if (has("--dry-run")) {
     console.log(`--dry-run; this record was NOT appended:\n${line}`);
-    process.exit(EXIT_OK);
+    finish(EXIT_OK, VERDICT_DRY_RUN);
   }
 
   // Append only. The register is audit history: nothing above this line is
@@ -624,7 +659,7 @@ function main(argv) {
   const current = fs.readFileSync(file, "utf8");
   fs.appendFileSync(file, `${current.endsWith("\n") ? "" : "\n"}\n${line}\n`);
   console.log(`Appended to ${file}:\n${line}`);
-  process.exit(EXIT_OK);
+  finish(EXIT_OK, VERDICT_WROTE(file));
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
