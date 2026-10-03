@@ -1577,6 +1577,20 @@ function preclaimFiles(file, item, identity, files, extra = []) {
     `status=${r.status} stdout=${r.stdout}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
+
+  // Item T-498. The CONTENDED detail was rendered by this text mode and by
+  // nothing that asserted it: blinding the conflict loop left this whole suite
+  // green and only `append-claim.test.mjs` went red. A refusal's text is the
+  // whole of what an operator sees, so it is asserted here, on the gate that
+  // prints it, and not only through the one caller that happens to share the
+  // formatter.
+  check(
+    "the refusal also names the contended path, and the line, stamp and agent holding it",
+    r.status === 1 &&
+      /CONTENDED scripts\/exec\/build-source-board\.mjs/.test(r.stdout) &&
+      /held by line \d+ 2026-09-22T18:20:29Z codex-other#20260922T1830Z \(other\)/.test(r.stdout),
+    `status=${r.status} stdout=${r.stdout}`,
+  );
 }
 
 
@@ -1975,6 +1989,147 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   check(
     "THE MOVEMENT — a helper-written release frees the files it held, same register, same request",
     r.status === 0 && r.report.fileOverlap?.conflicts?.length === 0,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item T-498 — the release grammar was narrower than the register's own prose.
+//
+// The symptom was a refusal: on 2026-09-27 the pre-claim file gate refused
+// every claim naming `docs/architecture/test-ci-coverage-census.json`, and the
+// lines it cited were `C-555` — merged, deployed, its merge SHA an ancestor of
+// `main`, and one of the two saying `released` in as many words.
+//
+// The filing's diagnosis was that the file half does not reuse the register's
+// release detection. IT DOES, and has since T-707: `resolveFileOverlap` skips
+// `announcesRelease` and `announcesAbstention` at the head of its loop, and
+// T-712 taught `messageField` to read past the helper's generated
+// `item <id> claimed on branch \`x\` —` prefix. Both halves worked. The gap was
+// the grammar they agree on:
+//
+//   `/^(?:\*\*)?(?:RELEASED|RELEASING)\b/`        — case SENSITIVE
+//   `/^(?:\*\*)?releas(?:ed|ing)\s+items?\b/i`    — needs the literal `item`
+//
+// `released — C-555 MERGED. PR #8550 ...` is lowercase AND is not followed by
+// the word `item`, so it fell between the two branches and was read as a live
+// hold. A finished item then held its files against every sibling for three
+// hours, and the more precisely an agent named what it touched, the longer it
+// blocked everyone else.
+//
+// The repair makes the first branch case-insensitive, which subsumes the second
+// entirely — so the second is deleted rather than left as a redundant guard no
+// mutation can reach. The head-of-message anchor T-707 chose on purpose is
+// untouched, and the negative controls below are what says so.
+//
+// CALIBRATED IN BOTH DIRECTIONS over the real 1,987-line register before the
+// change was written: exactly ONE line changes verdict, 297 release lines to
+// 298, and that one line is the known positive below. No line that holds work
+// is freed.
+// ---------------------------------------------------------------------------
+{
+  // The known positive, verbatim from the register at line 3152 apart from the
+  // truncated tail. Not a fixture built to match the fix: the bytes that
+  // produced the refusal.
+  const C555_RELEASE =
+    "2026-09-27T06:42:12Z | claude-code#20260927T054817Z | " +
+    "item C-555 claimed on branch `claude/c555-ranking-admission` — released — C-555 MERGED. " +
+    "PR #8550 squash `fb52509568f58b3a5961e2f3777affc288715222`, GitHub `mergedAt` " +
+    "**2026-09-27T06:40:57Z** (GitHubs own mergedAt, not estimated). " +
+    "files: scripts/quality/test-ci-coverage-census.mjs," +
+    "src/__tests__/behaviors/test-ci-coverage-census.test.ts," +
+    "docs/architecture/test-ci-coverage-census.json";
+  check(
+    "THE KNOWN POSITIVE — a lowercase `released` at the head of the message reads as a release",
+    announcesRelease(C555_RELEASE) === true,
+    C555_RELEASE,
+  );
+  check(
+    "`releasing` reads the same, in either case",
+    announcesRelease("2026-09-27T06:42:12Z | a#b | item C-555 claimed — releasing it, merged") === true &&
+      announcesRelease("2026-09-27T06:42:12Z | a#b | RELEASING item C-555 — merged") === true,
+  );
+
+  // NECESSITY of dropping the `\s+items?` requirement, stated as its own case:
+  // the em-dash form is what the register actually writes, and the uppercase
+  // branch alone would still have missed it while looking fixed.
+  // NECESSITY of dropping `\s+items?`, observable only in the lowercase case:
+  // the uppercase branch never required the word, so an uppercase fixture here
+  // would pass before the change and prove nothing.
+  check(
+    "a lowercase release that names no `item` after the verb is still a release",
+    announcesRelease("2026-09-27T06:42:12Z | a#b | released — C-555 merged, all files free") === true,
+  );
+
+  // NEGATIVE CONTROLS. The head-of-message anchor is the whole defence, and
+  // widening the verb's case must not reach past it. Each of these is a line
+  // that HOLDS work and must keep holding it.
+  check(
+    "NEGATIVE CONTROL — a claim that merely promises a release record still HOLDS, lowercase included",
+    announcesRelease(
+      "2026-09-27T06:42:12Z | a#b | item C-900 claimed on branch `x` — taking it; " +
+        "one public-safe release record per PR, released to CI when green",
+    ) === false,
+  );
+  check(
+    "NEGATIVE CONTROL — `release` is not `released`; a claim opening on the noun still HOLDS",
+    announcesRelease(
+      "2026-09-27T06:42:12Z | a#b | item C-901 claimed — release-check passes locally, taking it",
+    ) === false,
+  );
+  check(
+    "NEGATIVE CONTROL — the verb mid-sentence is not an announcement, in either case",
+    announcesRelease(
+      "2026-09-27T06:42:12Z | a#b | item C-902 claimed — taking it now that C-555 was released",
+    ) === false,
+  );
+
+  // END TO END, through the file gate, on the real pair. This is the movement
+  // the item is about: same register, same request, refusal to no refusal.
+  // The STAMPS move into this harness's pinned window; the MESSAGE bytes are
+  // the register's. `preclaim` passes `--now PRECLAIM_NOW` (2026-09-22) ahead
+  // of anything in `extra`, and the gate's `flag()` reads the FIRST occurrence,
+  // so a later `--now` is silently ignored — a 2026-09-27 stamp would then sit
+  // in the future of `now`, be dropped by the window filter, and report zero
+  // conflicts whatever the grammar said. That is exactly how this case passed
+  // before the fix on its first draft.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | claude-code#20260927T054817Z | item C-555 claimed on branch " +
+      "`claude/c555-ranking-admission` — taking C-555 | " +
+      "files: docs/architecture/test-ci-coverage-census.json",
+    C555_RELEASE.replace("2026-09-27T06:42:12Z", "2026-09-22T18:10:00Z"),
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-498",
+    "source-backlog-executor#20260927T0955Z",
+    "docs/architecture/test-ci-coverage-census.json",
+  );
+  check(
+    "THE MOVEMENT — a merged item's own release stops holding its files against the next run",
+    r.status === 0 && r.report.fileOverlap?.conflicts?.length === 0,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE GUARD AGAINST THE FIX GOING TOO FAR, kept beside the movement above
+  // because the two are one decision. A run that releases an item and then
+  // genuinely TAKES IT BACK holds it — `RE-CLAIM` above proves that for the
+  // uppercase form, and the widened verb must not open a lowercase hole in it.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | a#run-1 | item C-903 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:05:00Z | a#run-1 | item C-903 claimed — released — merged | files: scripts/exec/a.mjs",
+    "2026-09-22T18:10:00Z | a#run-1 | item C-903 claimed — reopened, the merge was reverted | " +
+      "files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaimFiles(file, "T-498", "b#run-2", "scripts/exec/a.mjs");
+  check(
+    "NEGATIVE CONTROL — a lowercase release does not free the claim its own agent wrote AFTERWARDS",
+    r.status !== 0 && r.report.fileOverlap?.conflicts?.length === 1 &&
+      r.report.fileOverlap.conflicts[0].stamp === "2026-09-22T18:10:00Z",
     `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
