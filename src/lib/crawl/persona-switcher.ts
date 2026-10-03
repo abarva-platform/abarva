@@ -9,6 +9,7 @@ import {
 import {
   classifyCrawlAuthFailure,
   formatCrawlAuthVerdictLine,
+  clerkMintUrlHost,
   type CrawlAuthMintOutcome,
 } from "@/lib/crawl/clerk-auth-cause";
 
@@ -400,7 +401,23 @@ async function mintClerkTicket(
     );
     mint.ok = true;
     mint.ticket = token.token;
+    // C-640: the rest of the real `SignInToken`. `url` is served by the
+    // MINTING instance and is the mint-side identity now that the ticket is
+    // known to carry no decodable `iss` live (run `37155858207`).
+    mint.url = token.url;
+    mint.status = token.status;
+    mint.tokenId = token.id;
     console.log(`crawl_auth_mint_ok:${persona.key}`);
+    // Logged verbatim and ahead of any verdict, because one run of this may
+    // settle the question outright. The HOST only: `url` carries the live
+    // ticket in `__clerk_ticket`, and a CI log is readable by anyone with
+    // repository read, so printing the url itself would publish a credential.
+    console.log(
+      `crawl_auth_mint_identity:${persona.key}` +
+        `:status=${token.status || "unreadable"}` +
+        `:token_id=${token.id || "unreadable"}` +
+        `:url_host=${clerkMintUrlHost(token.url) ?? "unreadable"}`,
+    );
     return { mint, ticketToken: token.token, mintedAt: Date.now() };
   } catch (error) {
     mint.error = error instanceof Error ? error.message : String(error);
