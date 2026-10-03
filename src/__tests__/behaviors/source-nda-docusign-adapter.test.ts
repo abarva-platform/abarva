@@ -24,10 +24,10 @@ const config = {
   integrationKey: "integration-1",
   userId: "user-1",
   keyId: "https://kv-abarva-lab-001.vault.azure.net/keys/source-nda-docusign-lab-jwt/version-1",
-  testInbox: "tester@example.test",
+  testInbox: "tester@abarva.ai",
 };
 
-function fixture() {
+function fixture(configOverride: Partial<typeof config> = {}) {
   const calls: Array<{ url: string; body?: string; headers: Headers }> = [];
   const fetcher = jest.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, body: String(init?.body ?? ""), headers: new Headers(init?.headers) });
@@ -40,7 +40,7 @@ function fixture() {
     return new Response("not found", { status: 404 });
   });
   const signDigest = jest.fn(async () => new Uint8Array([1, 2, 3]));
-  const provider = createDocuSignProvider(config, {
+  const provider = createDocuSignProvider({ ...config, ...configOverride }, {
     fetcher,
     signDigest,
     loadWebhookSecret: async () => "test-hmac-secret",
@@ -57,7 +57,7 @@ describe("DocuSign demo NDA adapter", () => {
     const envelope = JSON.parse(calls.find((call) => call.url.endsWith("/envelopes"))!.body!);
     expect(envelope.documents[0].documentBase64).toBe(Buffer.from(documentPdf).toString("base64"));
     expect(envelope.recipients.signers).toHaveLength(2);
-    expect(envelope.recipients.signers.every((signer: { email: string }) => signer.email.endsWith("@example.test"))).toBe(true);
+    expect(envelope.recipients.signers.every((signer: { email: string }) => signer.email.endsWith("@abarva.ai"))).toBe(true);
     expect(JSON.stringify(envelope)).not.toContain("outside.example");
     expect(envelope.recipients.signers[0].tabs.signHereTabs[0].anchorString).toBe("/supplier-signature/");
     expect(envelope.customFields.textCustomFields).toEqual(expect.arrayContaining([
@@ -81,6 +81,36 @@ describe("DocuSign demo NDA adapter", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("routes email signers only to internal test-inbox aliases without embedded identities", async () => {
+    const { provider, calls } = fixture();
+    const emailSigners: EsignSigner[] = signers.map((signer) => ({
+      ...signer, delivery: "email", clientUserId: null,
+    }));
+    await expect(provider.createEnvelope({ ...input, signers: emailSigners }))
+      .resolves.toEqual({ envelopeId: "envelope-1", status: "sent" });
+    const body = calls.find((call) => call.url.endsWith("/envelopes"))!.body!;
+    const recipients = JSON.parse(body).recipients.signers;
+    expect(recipients).toHaveLength(2);
+    expect(recipients.every((signer: { email: string }) => /^tester\+nda-[a-f0-9]{12}@abarva\.ai$/.test(signer.email))).toBe(true);
+    expect(recipients.every((signer: { clientUserId?: string }) => signer.clientUserId === undefined)).toBe(true);
+    expect(body).not.toContain("outside.example");
+  });
+
+  it("refuses external test-inbox configuration before any provider call", async () => {
+    const { provider, calls } = fixture({ testInbox: "supplier@outside.example" });
+    await expect(provider.createEnvelope(input)).rejects.toThrow("invalid_test_inbox");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("rejects mixed email and embedded identities for one signer", async () => {
+    const { provider, calls } = fixture();
+    await expect(provider.createEnvelope({
+      ...input,
+      signers: [{ ...signers[0], delivery: "email" }, signers[1]],
+    })).rejects.toThrow("invalid_signer");
+    expect(calls).toHaveLength(0);
+  });
+
   it("requests embedded signing only for the named signer", async () => {
     const { provider, calls } = fixture();
     await provider.createEnvelope(input);
@@ -91,8 +121,18 @@ describe("DocuSign demo NDA adapter", () => {
     expect(recipient.email).toBe(envelope.recipients.signers[0].email);
     expect(recipient.recipientId).toBe("supplier-1");
     expect(recipient.clientUserId).toBe("supplier-test-1");
-    expect(recipient.email).toMatch(/@example\.test$/);
+    expect(recipient.email).toMatch(/@abarva\.ai$/);
     expect(recipient.email).not.toContain("outside.example");
+  });
+
+  it("does not issue an embedded signing link for an email recipient", async () => {
+    const { provider, calls } = fixture();
+    await expect(provider.getSigningLink({
+      envelopeId: "envelope-1", eventId: input.eventId, vendorId: input.vendorId,
+      signer: { ...signers[0], delivery: "email", clientUserId: null },
+      returnUrl: "https://app.abarva.ai/source/return",
+    })).rejects.toThrow("email_signer_no_embedded_link");
+    expect(calls).toHaveLength(0);
   });
 
   it("authenticates raw webhook bytes before accepting an event", async () => {

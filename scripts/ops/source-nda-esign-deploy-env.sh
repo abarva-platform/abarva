@@ -24,8 +24,8 @@ build_source_nda_esign_env_args() {
     echo "Source NDA signing key must be a versioned lab-vault key URL." >&2
     return 1
   fi
-  if [[ ! "$SOURCE_NDA_ESIGN_TEST_INBOX" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]]; then
-    echo "Source NDA test inbox must be one valid email address." >&2
+  if [[ ! "$SOURCE_NDA_ESIGN_TEST_INBOX" =~ ^[^@[:space:]]+@abarva\.ai$ ]]; then
+    echo "Source NDA demo test inbox must be an internal address." >&2
     return 1
   fi
 

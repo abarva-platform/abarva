@@ -65,7 +65,7 @@ export function resolveSourceNdaEsignConfig(
       !keyUrl.pathname.startsWith(LAB_KEY_PATH) ||
       keyUrl.pathname.length <= LAB_KEY_PATH.length ||
       keyUrl.username || keyUrl.password || keyUrl.search || keyUrl.hash ||
-      !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(testInbox)) {
+      !/^[^@\s]+@abarva\.ai$/i.test(testInbox)) {
     return { state: "blocked", reason: "invalid_configuration", fallback: "upload" };
   }
   return {
