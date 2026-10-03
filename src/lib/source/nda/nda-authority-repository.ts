@@ -93,9 +93,10 @@ export async function readNdaAuthorityForEvent(
         `SELECT template_version
          FROM source_nda_template_versions
          WHERE client_key = $1
+           AND (source_event_id IS NULL OR source_event_id = $2::uuid)
            AND publication_state = 'published'
          ORDER BY published_at DESC, template_version ASC`,
-        [input.clientKey],
+        [input.clientKey, input.eventId],
       );
       const executedNdaRows = await run<ExecutedNdaRow>(
         `SELECT authority.nda_id, authority.client_key,
@@ -141,8 +142,8 @@ export async function readNdaAuthorityForEvent(
 
       return {
         // A successful empty read is materially different from a relation that
-        // does not exist or cannot be read. Legal has published nothing; the
-        // registry is still modelled and available.
+        // does not exist or cannot be read. No applicable version is published;
+        // the registry is still modelled and available.
         registryAvailable: true,
         publishedTemplateVersions: templateRows.map(
           (row) => row.template_version,

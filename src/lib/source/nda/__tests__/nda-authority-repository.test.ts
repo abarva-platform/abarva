@@ -110,8 +110,9 @@ describe("readNdaAuthorityForEvent", () => {
       "SELECT set_config('app.tenant_key', $1, false)",
       ["example-tenant"],
     ]);
-    expect(run.mock.calls[1][1]).toEqual(["example-tenant"]);
+    expect(run.mock.calls[1][1]).toEqual(["example-tenant", "11111111-1111-4111-8111-111111111111"]);
     expect(run.mock.calls[1][0]).toContain("client_key = $1");
+    expect(run.mock.calls[1][0]).toContain("source_event_id IS NULL OR source_event_id = $2::uuid");
     expect(run.mock.calls[2][1]).toEqual([
       "example-tenant",
       "11111111-1111-4111-8111-111111111111",

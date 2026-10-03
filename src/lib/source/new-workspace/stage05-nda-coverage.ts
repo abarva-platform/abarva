@@ -206,7 +206,7 @@ export function buildSourceNewStage05NdaCoverage(
       ? {
           label: "Resolve NDA coverage",
           detail:
-            "File an executed NDA on a Legal-published template or record a named, expiring Legal waiver for every uncovered supplier.",
+            "File an executed NDA on an applicable published template or record a named, expiring Legal waiver for every uncovered supplier.",
         }
       : {
           label: "Open market package gate",

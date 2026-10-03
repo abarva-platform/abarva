@@ -74,6 +74,7 @@ describe("recordExecutedNda", () => {
       id: "44444444-4444-4444-8444-444444444444",
     });
     expect(statements.some((sql) => sql.includes("INSERT INTO source_executed_nda_authority"))).toBe(true);
+    expect(statements.some((sql) => sql.includes("source_event_id IS NULL OR source_event_id = $5::uuid"))).toBe(true);
     expect(insertParams[0][11]).toBe("uploader-1");
   });
 

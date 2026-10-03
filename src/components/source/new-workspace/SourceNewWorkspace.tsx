@@ -613,6 +613,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
+                      clientKey={event.clientKey}
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
                       eventId={event.id}
@@ -650,6 +651,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
+                      clientKey={event.clientKey}
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
                       eventId={event.id}
@@ -688,6 +690,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
+                      clientKey={event.clientKey}
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
                       eventId={event.id}
@@ -738,6 +741,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
+                      clientKey={event.clientKey}
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
                       eventId={event.id}
@@ -1364,11 +1368,13 @@ function SourceNewStage04VendorPanelView({
 }
 
 function SourceNewStage05NdaReadiness({
+  clientKey,
   coverage,
   eventHref,
   eventId,
   files,
 }: {
+  clientKey: string;
   coverage: SourceNewStage05NdaCoverage;
   eventHref: string;
   eventId: string;
@@ -1386,7 +1392,7 @@ function SourceNewStage05NdaReadiness({
       <h3>Supplier NDA coverage</h3>
       <p>
         This check summarizes recorded NDA evidence. When an accepted supplier,
-        Legal-published template and uploaded signed file are present, a named
+        an applicable published template and an uploaded signed file are present, a named
         reviewer can record the execution details here. It does not contact
         suppliers or approve legal terms.
       </p>
@@ -1474,7 +1480,7 @@ function SourceNewStage05NdaReadiness({
             : "No supplier has explicit candidate-panel acceptance for this event."}
         </p>
       )}
-      <SourceNewNdaCapture eventId={eventId} files={files} coverage={coverage} />
+      <SourceNewNdaCapture eventId={eventId} clientKey={clientKey} files={files} coverage={coverage} />
       <div className="snw-nda-next">
         <strong>{coverage.nextAction.label}</strong>
         <p>{coverage.nextAction.detail}</p>
