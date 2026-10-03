@@ -17,6 +17,7 @@ import { notFound, redirect } from 'next/navigation';
 import { requireProductModule } from '@/lib/auth/server-module-access';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getStrategicMoveById } from '@/lib/programs/queries';
+import { resolveEffectiveMovePhase } from '@/lib/programs/effective-move-phase';
 import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
 import {
   buildCrossModuleTrace,
@@ -69,6 +70,7 @@ export default async function StrategicMoveTracePage({ params }: Props) {
 
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
+  const { effectivePhase } = await resolveEffectiveMovePhase(ctx, move);
 
   // ID-join the cross-module evidence trail. Source-event and
   // outcome-ledger reads are scoped to the active tenant and degrade
@@ -120,6 +122,7 @@ export default async function StrategicMoveTracePage({ params }: Props) {
 
   const trace = buildCrossModuleTrace({
     move,
+    effectivePhase,
     sourceEvents,
     outcomeEntries,
     controlMatrix,

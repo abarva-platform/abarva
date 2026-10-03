@@ -312,7 +312,11 @@ async function signInPersonaWithClerkTicket(
     `crawl_clerk_ticket_create_timeout:${persona.key}`,
   );
   const testingToken = await createClerkTestingTokenForCrawl();
-  await installClerkTestingTokenInterceptor(page, testingToken);
+  await installClerkTestingTokenInterceptor(
+    page,
+    testingToken,
+    options.baseUrl,
+  );
   if (testingToken) {
     console.log(`crawl_clerk_testing_token_installed:${persona.key}`);
   }

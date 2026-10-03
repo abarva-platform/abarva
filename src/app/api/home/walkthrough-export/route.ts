@@ -27,6 +27,7 @@ import {
   renderHomeWalkthroughHtml,
 } from "@/lib/home/export/walkthrough-export";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
+import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -121,6 +122,13 @@ export async function GET(req: NextRequest) {
     kind: "reviewed_snapshot",
     canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
   };
+  const expectedContext = url.searchParams.get("context");
+  if (
+    expectedContext &&
+    expectedContext !== homeRecordSourceToken(tenantKey, recordSource)
+  ) {
+    return Response.json({ error: "home_context_changed" }, { status: 409 });
+  }
   const tenantLabel =
     canonicalClientDisplayName({ key: tenantKey }) ??
     activeTenant?.displayName ??

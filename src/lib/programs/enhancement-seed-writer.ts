@@ -122,10 +122,20 @@ const FUNCTION_CODE_BY_ARCHETYPE: Record<SpecArchetypeCode, string> = {
 const LEGACY_CLIENT_ALIASES_BY_TENANT: Record<string, string[]> = {
   apexretail: ['Apex Retail', 'Apex Retail Group'],
   meridian: ['Meridian Health', 'Meridian Health System'],
-  arcturus: ['First Capital', 'First Capital Financial', 'Arcturus Financial', 'Arcturus Financial Group'],
+  arcturus: [
+    'First Capital',
+    'First Capital Financial',
+    'Arcturus Financial',
+    'Arcturus Financial Group',
+  ],
 };
 
-export function clientAliasesForPortfolio(portfolio: Pick<TenantPortfolioSeed, 'tenantKey' | 'displayName' | 'displayAliases'>): string[] {
+export function clientAliasesForPortfolio(
+  portfolio: Pick<
+    TenantPortfolioSeed,
+    'tenantKey' | 'displayName' | 'displayAliases'
+  >,
+): string[] {
   return uniqueStrings([
     portfolio.displayName,
     ...(portfolio.displayAliases ?? []),
@@ -133,30 +143,47 @@ export function clientAliasesForPortfolio(portfolio: Pick<TenantPortfolioSeed, '
   ]);
 }
 
-export function buildSeedClientPayload(portfolio: Pick<TenantPortfolioSeed, 'tenantKey' | 'displayName' | 'industryKey'>): SeedClientPayload {
+export function buildSeedClientPayload(
+  portfolio: Pick<
+    TenantPortfolioSeed,
+    'tenantKey' | 'displayName' | 'industryKey'
+  >,
+): SeedClientPayload {
   return {
     name: portfolio.displayName,
     legal_name: `${portfolio.displayName} Composite Seed`,
-    industry_code: INDUSTRY_CODE_BY_TENANT[portfolio.tenantKey] ?? portfolio.industryKey.toUpperCase(),
+    industry_code:
+      INDUSTRY_CODE_BY_TENANT[portfolio.tenantKey] ??
+      portfolio.industryKey.toUpperCase(),
   };
 }
 
-export function filterProgramsSeedPlan(plan: AllProgramsSeedPlan, filters: SeedWriteFilters = {}): FilteredProgramsSeedPlan {
+export function filterProgramsSeedPlan(
+  plan: AllProgramsSeedPlan,
+  filters: SeedWriteFilters = {},
+): FilteredProgramsSeedPlan {
   const tenantKeys = new Set(filters.tenantKeys ?? []);
   const programCodes = new Set(filters.programCodes ?? []);
   const includeStubs = filters.includeStubs ?? true;
 
   const tenants = plan.tenants
-    .filter((tenant) => tenantKeys.size === 0 || tenantKeys.has(tenant.tenantKey))
+    .filter(
+      (tenant) => tenantKeys.size === 0 || tenantKeys.has(tenant.tenantKey),
+    )
     .map((tenant) => ({
       ...tenant,
       programs: tenant.programs
-        .filter((program) => programCodes.size === 0 || programCodes.has(program.code))
+        .filter(
+          (program) =>
+            programCodes.size === 0 || programCodes.has(program.code),
+        )
         .map((program) => ({
           ...program,
           deliverables: includeStubs
             ? program.deliverables
-            : program.deliverables.filter((deliverable) => deliverable.renderTier !== 'stub'),
+            : program.deliverables.filter(
+                (deliverable) => deliverable.renderTier !== 'stub',
+              ),
         })),
     }))
     .filter((tenant) => tenant.programs.length > 0);
@@ -176,38 +203,85 @@ export function filterProgramsSeedPlan(plan: AllProgramsSeedPlan, filters: SeedW
       programs: programs.length,
       deliverables: deliverables.length,
       deliverableVersions: deliverables.length,
-      richDeliverables: deliverables.filter((deliverable) => deliverable.renderTier === 'rich').length,
-      outlineDeliverables: deliverables.filter((deliverable) => deliverable.renderTier === 'outline').length,
-      stubDeliverables: deliverables.filter((deliverable) => deliverable.renderTier === 'stub').length,
+      richDeliverables: deliverables.filter(
+        (deliverable) => deliverable.renderTier === 'rich',
+      ).length,
+      outlineDeliverables: deliverables.filter(
+        (deliverable) => deliverable.renderTier === 'outline',
+      ).length,
+      stubDeliverables: deliverables.filter(
+        (deliverable) => deliverable.renderTier === 'stub',
+      ).length,
     },
   };
 }
 
-export function buildDeliverableTypePayload(seed: DeliverableTypeSeedSpec): SeedDeliverableTypePayload {
+export function buildDeliverableTypePayload(
+  seed: DeliverableTypeSeedSpec,
+): SeedDeliverableTypePayload {
   return {
     type_key: seed.typeKey,
     title: seed.title,
     description: `${seed.code} · ${seed.title}. Seeded from the programs seed and deliverable generation enhancement spec.`,
     applicable_phases: seed.applicableAppPhases,
-    applicable_topics: seed.applicableArchetypeCodes.map((code) => PROGRAMS_ENHANCEMENT_MATRIX.archetypes.find((entry) => entry.code === code)?.key ?? code),
+    applicable_topics: seed.applicableArchetypeCodes.map(
+      (code) =>
+        PROGRAMS_ENHANCEMENT_MATRIX.archetypes.find(
+          (entry) => entry.code === code,
+        )?.key ?? code,
+    ),
     template_structure: {
       seedSpecVersion: PROGRAMS_ENHANCEMENT_MATRIX.version,
       deliverableCode: seed.code,
       slug: seed.slug,
-      sections: ['Executive readout', 'Evidence basis', 'Recommended action', 'Open decisions', 'Quality checks'],
+      sections: [
+        'Executive readout',
+        'Evidence basis',
+        'Recommended action',
+        'Open decisions',
+        'Quality checks',
+      ],
       fidelityTiers: ['rich', 'outline', 'stub'],
     },
     required_data_inputs: {
       tenant: ['client profile', 'industry context'],
-      program: ['program archetype', 'current phase', 'pattern slug', 'role in demo'],
-      evidence: ['intake turns', 'control tower metrics', 'topic/pattern references'],
+      program: [
+        'program archetype',
+        'current phase',
+        'pattern slug',
+        'role in demo',
+      ],
+      evidence: [
+        'intake turns',
+        'control tower metrics',
+        'topic/pattern references',
+      ],
     },
     quality_rubric: {
       dimensions: [
-        { name: 'tenant_specificity', weight: 30, criteria: 'Uses tenant, vertical, and program-specific language instead of generic consulting copy.' },
-        { name: 'phase_fit', weight: 25, criteria: 'Matches the current phase and does not expose future-phase work as if complete.' },
-        { name: 'evidence_traceability', weight: 25, criteria: 'Names the evidence required for the artifact and marks unresolved gaps.' },
-        { name: 'decision_utility', weight: 20, criteria: 'Makes the next sponsor or maestro action clear.' },
+        {
+          name: 'tenant_specificity',
+          weight: 30,
+          criteria:
+            'Uses tenant, vertical, and program-specific language instead of generic consulting copy.',
+        },
+        {
+          name: 'phase_fit',
+          weight: 25,
+          criteria:
+            'Matches the current phase and does not expose future-phase work as if complete.',
+        },
+        {
+          name: 'evidence_traceability',
+          weight: 25,
+          criteria:
+            'Names the evidence required for the artifact and marks unresolved gaps.',
+        },
+        {
+          name: 'decision_utility',
+          weight: 20,
+          criteria: 'Makes the next sponsor or maestro action clear.',
+        },
       ],
     },
     generation_prompt_template: [
@@ -221,19 +295,28 @@ export function buildDeliverableTypePayload(seed: DeliverableTypeSeedSpec): Seed
   };
 }
 
-export function buildProgramPayload(portfolio: TenantSeedPlan, program: ProgramSeedPlan, clientId: string, nowIso: string): SeedProgramPayload {
+export function buildProgramPayload(
+  portfolio: TenantSeedPlan,
+  program: ProgramSeedPlan,
+  clientId: string,
+  nowIso: string,
+): SeedProgramPayload {
   return {
     graph_node_id: program.graphNodeId,
     client_id: clientId,
     name: program.name,
-    industry_code: INDUSTRY_CODE_BY_TENANT[program.tenantKey] ?? program.tenantKey.toUpperCase(),
+    industry_code:
+      INDUSTRY_CODE_BY_TENANT[program.tenantKey] ??
+      program.tenantKey.toUpperCase(),
     function_code: FUNCTION_CODE_BY_ARCHETYPE[program.archetypeCode],
     objective_code: 'OPTIMISE',
     topic_code: program.patternSlug,
     current_phase: program.currentAppPhase,
     status: program.status,
     program_archetype: program.appArchetype,
-    origin_source: program.patternSlug ? 'intelligence_promoted' : 'user_initiated',
+    origin_source: program.patternSlug
+      ? 'intelligence_promoted'
+      : 'user_initiated',
     maestro_oversight_level: 'partial',
     founder_approval_required: program.currentPhaseSpec >= 4,
     data_residency_region: 'us',
@@ -255,9 +338,15 @@ export function buildProgramPayload(portfolio: TenantSeedPlan, program: ProgramS
       seedSpecVersion: PROGRAMS_ENHANCEMENT_MATRIX.version,
       deliverableCounts: {
         total: program.deliverables.length,
-        rich: program.deliverables.filter((deliverable) => deliverable.renderTier === 'rich').length,
-        outline: program.deliverables.filter((deliverable) => deliverable.renderTier === 'outline').length,
-        stub: program.deliverables.filter((deliverable) => deliverable.renderTier === 'stub').length,
+        rich: program.deliverables.filter(
+          (deliverable) => deliverable.renderTier === 'rich',
+        ).length,
+        outline: program.deliverables.filter(
+          (deliverable) => deliverable.renderTier === 'outline',
+        ).length,
+        stub: program.deliverables.filter(
+          (deliverable) => deliverable.renderTier === 'stub',
+        ).length,
       },
     },
     actual_metrics: {},
@@ -267,7 +356,11 @@ export function buildProgramPayload(portfolio: TenantSeedPlan, program: ProgramS
   };
 }
 
-export function buildDeliverablePayload(deliverable: DeliverableSeedPlan, engagementId: string, nowIso: string): SeedDeliverablePayload {
+export function buildDeliverablePayload(
+  deliverable: DeliverableSeedPlan,
+  engagementId: string,
+  nowIso: string,
+): SeedDeliverablePayload {
   return {
     engagement_id: engagementId,
     deliverable_type_key: deliverable.deliverableTypeKey,
@@ -286,8 +379,18 @@ export function buildDeliverableVersionPayload(
   deliverableId: string,
 ): SeedDeliverableVersionPayload {
   const content = buildDeliverableContent(portfolio, program, deliverable);
-  const unresolvedGaps = deliverable.renderTier === 'rich' ? 1 : deliverable.renderTier === 'outline' ? 3 : 5;
-  const totalScore = deliverable.renderTier === 'rich' ? 84 : deliverable.renderTier === 'outline' ? 62 : 25;
+  const unresolvedGaps =
+    deliverable.renderTier === 'rich'
+      ? 1
+      : deliverable.renderTier === 'outline'
+        ? 3
+        : 5;
+  const totalScore =
+    deliverable.renderTier === 'rich'
+      ? 84
+      : deliverable.renderTier === 'outline'
+        ? 62
+        : 25;
 
   return {
     deliverable_id: deliverableId,
@@ -301,7 +404,12 @@ export function buildDeliverableVersionPayload(
       programName: program.name,
       routePath: deliverable.routePath,
       lifecycleState: deliverable.lifecycleState,
-      evidenceState: deliverable.renderTier === 'rich' ? 'seeded_detail' : deliverable.renderTier === 'outline' ? 'seeded_outline' : 'scheduled_stub',
+      evidenceState:
+        deliverable.renderTier === 'rich'
+          ? 'seeded_detail'
+          : deliverable.renderTier === 'outline'
+            ? 'seeded_outline'
+            : 'scheduled_stub',
     },
     quality_score: {
       total_score: totalScore,
@@ -320,21 +428,40 @@ export function buildDeliverableVersionPayload(
               'Promote with real tenant evidence and sponsor-approved sources.',
             ]
           : [],
-      resolved: deliverable.renderTier === 'rich' ? ['Seed artifact has enough structure for demo walkthrough.'] : [],
+      resolved:
+        deliverable.renderTier === 'rich'
+          ? ['Seed artifact has enough structure for demo walkthrough.']
+          : [],
       unresolvedGaps,
-      action: unresolvedGaps > 1 ? 'Promote with real evidence before client sign-off.' : 'Review once with sponsor before sign-off.',
+      action:
+        unresolvedGaps > 1
+          ? 'Promote with real evidence before authorized-user approval.'
+          : 'Review stakeholder comments before authorized-user approval.',
     },
     generated_from_context_hash: `${PROGRAMS_ENHANCEMENT_MATRIX.version}:${program.code}:${deliverable.deliverableCode}:${deliverable.phaseSpec}`,
   };
 }
 
-export function titleForDeliverableInstance(deliverable: Pick<DeliverableSeedPlan, 'deliverableCode' | 'title' | 'phaseSpec'>): string {
+export function titleForDeliverableInstance(
+  deliverable: Pick<
+    DeliverableSeedPlan,
+    'deliverableCode' | 'title' | 'phaseSpec'
+  >,
+): string {
   return `${deliverable.deliverableCode} · ${deliverable.title} · Phase ${deliverable.phaseSpec}`;
 }
 
-function buildDeliverableContent(portfolio: TenantSeedPlan, program: ProgramSeedPlan, deliverable: DeliverableSeedPlan): string {
-  const phase = PROGRAMS_ENHANCEMENT_MATRIX.phaseModel.specPhases.find((entry) => entry.phase === deliverable.phaseSpec);
-  const archetype = PROGRAMS_ENHANCEMENT_MATRIX.archetypes.find((entry) => entry.code === program.archetypeCode);
+function buildDeliverableContent(
+  portfolio: TenantSeedPlan,
+  program: ProgramSeedPlan,
+  deliverable: DeliverableSeedPlan,
+): string {
+  const phase = PROGRAMS_ENHANCEMENT_MATRIX.phaseModel.specPhases.find(
+    (entry) => entry.phase === deliverable.phaseSpec,
+  );
+  const archetype = PROGRAMS_ENHANCEMENT_MATRIX.archetypes.find(
+    (entry) => entry.code === program.archetypeCode,
+  );
 
   if (deliverable.renderTier === 'stub') {
     return [
@@ -377,7 +504,7 @@ function buildDeliverableContent(portfolio: TenantSeedPlan, program: ProgramSeed
     '',
     '## Recommended action',
     deliverable.renderTier === 'rich'
-      ? 'Use this artifact in the walkthrough, then replace seeded assumptions with tenant evidence before sponsor sign-off.'
+      ? 'Use this artifact in the walkthrough, then replace seeded assumptions with tenant evidence before authorized-user approval.'
       : 'Keep this as an outline until the relevant phase produces enough program-specific evidence.',
     '',
     '## Open decisions',
@@ -392,8 +519,13 @@ function buildDeliverableContent(portfolio: TenantSeedPlan, program: ProgramSeed
   ].join('\n');
 }
 
-function buildGatesPassed(program: ProgramSeedPlan, nowIso: string): Array<Record<string, unknown>> {
-  const approvedSpecPhases = ([1, 2, 3, 4, 5] as SpecPhaseNumber[]).filter((phase) => phase < program.currentPhaseSpec);
+function buildGatesPassed(
+  program: ProgramSeedPlan,
+  nowIso: string,
+): Array<Record<string, unknown>> {
+  const approvedSpecPhases = ([1, 2, 3, 4, 5] as SpecPhaseNumber[]).filter(
+    (phase) => phase < program.currentPhaseSpec,
+  );
   return approvedSpecPhases.map((phase) => ({
     phase: phase - 1,
     specPhase: phase,
@@ -404,5 +536,7 @@ function buildGatesPassed(program: ProgramSeedPlan, nowIso: string): Array<Recor
 }
 
 function uniqueStrings(values: string[]): string[] {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean)),
+  );
 }

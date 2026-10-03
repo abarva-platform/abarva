@@ -20,6 +20,7 @@ import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
  * arithmetic happens.
  */
 const TONE: Record<string, { color: string; word: string }> = {
+  unverified: { color: V4.amber, word: "source mapping pending" },
   single_source: { color: V4.amber, word: "one source" },
   corroborated: { color: V4.green, word: "corroborated" },
   conflict: { color: V4.red, word: "counts differ" },
@@ -169,7 +170,7 @@ export function LineageMark({
           {/* Grain leads. It is the single most common reason two honest counts differ. */}
           <Section label="What one row means">{lineage.grain}</Section>
 
-          <Section label="Source and rule">
+          <Section label={lineage.agreement === "unverified" ? "Rule; source mapping pending" : "Source and rule"}>
             <span style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.6 }}>
               {traceLine(lineage)}
             </span>
@@ -251,7 +252,7 @@ export function LineageMark({
                 fontFamily: SANS,
                 fontSize: 12,
                 lineHeight: 1.5,
-                color: standing.quotable ? V4.inkSoft : V4.red,
+                color: standing.tone === "conflict" && !standing.quotable ? V4.red : V4.inkSoft,
               }}
             >
               {tone.word} — {standing.qualifier}

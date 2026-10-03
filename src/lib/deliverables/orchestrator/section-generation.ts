@@ -22,10 +22,13 @@ import type {
   SourceRegisterEntry,
 } from "./types";
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
-import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
+import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import { factTokens } from "./numeric-lineage-tokens";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -50,8 +53,6 @@ export async function mapWithConcurrency<T, R>(
 // Mirror of quality-validator.ts countUnsupportedClaims — keep in lockstep.
 const FACT_LIKE =
   /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
-const FACT_TOKEN_RE =
-  /(\$\s?\d[\d,]*(?:\.\d+)?[kmb]?|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:\.\d+)?%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/gi;
 const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
 const DECISIVE_RECOMMENDATION =
@@ -70,15 +71,6 @@ export function extractUnsupportedFigureClaims(markdown: string): string[] {
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
-}
-
-function normalizeFactToken(value: string): string {
-  return value.toLowerCase().replace(/[\s,$]/g, "");
-}
-
-function factTokens(value: string): string[] {
-  const matches = value.match(FACT_TOKEN_RE) ?? [];
-  return Array.from(new Set(matches.map(normalizeFactToken)));
 }
 
 function sentenceEvidenceCitations(
@@ -180,8 +172,29 @@ export interface ConsolidatedOpenInput {
   detail: string;
 }
 
-function normalizeOpenInputDetail(detail: string): string {
-  const normalized = detail
+/**
+ * A structured field from the model, as text.
+ *
+ * The synthesis pass returns JSON, and a field typed as text here can arrive
+ * as a number, a boolean, null, or a nested value — a table cell holding 64
+ * rather than "64". Every repair below calls string methods on these fields,
+ * so one numeric cell failed the whole build with a TypeError.
+ */
+export function structuredText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeOpenInputDetail(detail: unknown): string {
+  const normalized = structuredText(detail)
     .replace(
       /\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi,
       (_match, inner: string) =>
@@ -203,16 +216,20 @@ function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
   return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
 }
 
-function repairStructuredClientFactText(value: string): string {
+function repairStructuredClientFactText(value: unknown): string {
   return repairUncitedFigures(normalizeOpenInputDetail(value));
 }
 
 function repairStructuredTable(table: RenderableTable): RenderableTable {
+  const columns: unknown[] = Array.isArray(table.columns) ? table.columns : [];
+  const rows: unknown[] = Array.isArray(table.rows) ? table.rows : [];
   return {
     ...table,
-    columns: table.columns.map((column) => normalizeOpenInputDetail(column)),
-    rows: table.rows.map((row) =>
-      row.map((cell) => repairStructuredClientFactText(cell)),
+    columns: columns.map((column) => normalizeOpenInputDetail(column)),
+    rows: rows.map((row) =>
+      (Array.isArray(row) ? row : [row]).map((cell) =>
+        repairStructuredClientFactText(cell),
+      ),
     ),
   };
 }
@@ -243,7 +260,9 @@ function repairStructuredDeckSlides(
         ? { title: repairStructuredClientFactText(slide.title) }
         : {}),
       governingMessage: repairStructuredClientFactText(slide.governingMessage),
-      points: (slide.points ?? []).map(repairStructuredClientFactText),
+      points: (Array.isArray(slide.points) ? slide.points : []).map(
+        repairStructuredClientFactText,
+      ),
       ...(slide.speakerNotes
         ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
         : {}),
@@ -253,6 +272,132 @@ function repairStructuredDeckSlides(
     }))
     .filter((slide) => slide.governingMessage.trim().length > 0);
   return repaired.length > 0 ? repaired : undefined;
+}
+
+const P2_DISCOVERY_DECK_SLIDES = deckContract(
+  "REF_DECK_P2_DISCOVERY_READOUT",
+).slides;
+
+const ROOT_CAUSE_SLIDE_KEYS = new Set([
+  "executive_answer",
+  "what_is_not_working",
+  "root_causes",
+  "metrics_evidence",
+  "implications",
+  "proceed_hold_stop",
+]);
+
+function contractedP2SlidesFor(deliverableType: string) {
+  if (deliverableType === "discovery_report") return P2_DISCOVERY_DECK_SLIDES;
+  if (deliverableType === "root_cause_worksheet") {
+    return P2_DISCOVERY_DECK_SLIDES.filter((slide) =>
+      ROOT_CAUSE_SLIDE_KEYS.has(slide.id),
+    );
+  }
+  return [];
+}
+
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[[^\]]+\]\([^)]*\)/g, " ")
+    .replace(/[#*_`>|-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function firstSentence(text: string): string {
+  const clean = stripMarkdown(text);
+  const sentence = clean.match(/.+?[.!?](?:\s|$)/)?.[0]?.trim() ?? clean;
+  return sentence.split(/\s+/).slice(0, 26).join(" ");
+}
+
+function sectionForSlide(
+  slideId: string,
+  sections: readonly RenderableSection[],
+): RenderableSection | undefined {
+  const lookup = sections.map((section) => ({
+    section,
+    haystack: `${section.key} ${section.title}`.toLowerCase(),
+  }));
+  const needlesBySlide: Record<string, string[]> = {
+    executive_answer: ["exec", "summary", "answer", "recommendation"],
+    what_we_assessed: ["approach", "evidence", "scope"],
+    current_state: ["current", "baseline", "workflow", "process"],
+    what_is_working: ["working", "strength", "preserve", "readiness"],
+    what_is_not_working: ["gap", "pain", "not_working", "maturity"],
+    root_causes: ["root", "cause", "maturity", "gap"],
+    metrics_evidence: ["metric", "baseline", "evidence", "confidence"],
+    implications: ["implication", "p3", "design", "readiness"],
+    readiness: ["readiness", "data", "control", "governance"],
+    proceed_hold_stop: ["recommendation", "verdict", "continue", "decision"],
+  };
+  for (const needle of needlesBySlide[slideId] ?? []) {
+    const hit = lookup.find((candidate) => candidate.haystack.includes(needle));
+    if (hit) return hit.section;
+  }
+  return sections[0];
+}
+
+function ensureContractedDeckSlides(args: {
+  req: DeliverableIntelligenceRequest;
+  sections: readonly RenderableSection[];
+  repairedSlides: RenderableDeliverable["deckSlides"] | undefined;
+  recommendation: string;
+  nextActions: readonly string[];
+}): RenderableDeliverable["deckSlides"] | undefined {
+  if (!args.req.outputFormats.includes("pptx")) return args.repairedSlides;
+  const contractSlides = contractedP2SlidesFor(args.req.deliverableType);
+  if (contractSlides.length === 0) return args.repairedSlides;
+
+  const key = args.req.deliverableType as DeliverableKey;
+  const band = SLIDE_BANDS[key];
+  if (!band) return args.repairedSlides;
+
+  const current = args.repairedSlides ?? [];
+  if (current.length >= band.min && current.length <= band.max) return current;
+
+  const currentByKey = new Map(
+    current
+      .filter((slide) => slide.key)
+      .map((slide) => [slide.key as string, slide]),
+  );
+  const normalized = contractSlides.map((contractSlide) => {
+    const existing = currentByKey.get(contractSlide.id);
+    if (existing) return existing;
+    const source = sectionForSlide(contractSlide.id, args.sections);
+    const sourceSentence = source ? firstSentence(source.bodyMarkdown) : "";
+    const governingMessage =
+      sourceSentence ||
+      (contractSlide.id === "proceed_hold_stop"
+        ? firstSentence(args.recommendation)
+        : `${contractSlide.label}: ${contractSlide.purpose}`);
+    const actionLine =
+      contractSlide.id === "proceed_hold_stop" && args.nextActions.length > 0
+        ? `Next action: ${args.nextActions[0]}`
+        : contractSlide.requiredElements[0];
+    const citationsUsed = source?.citationsUsed?.filter((n) =>
+      Number.isFinite(n),
+    );
+    return {
+      key: contractSlide.id,
+      title: contractSlide.label,
+      governingMessage,
+      points: [contractSlide.purpose, actionLine].filter(Boolean).slice(0, 3),
+      speakerNotes: [
+        source ? `Grounded in section "${source.title}".` : null,
+        citationsUsed && citationsUsed.length > 0
+          ? `Citations used: ${citationsUsed.join(", ")}.`
+          : "No additional facts introduced by the deterministic deck normalizer.",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      ...(citationsUsed && citationsUsed.length > 0 ? { citationsUsed } : {}),
+    };
+  });
+
+  return normalized.slice(0, band.max);
 }
 
 /**
@@ -539,18 +684,34 @@ function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
   }
 }
 
-function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
-  if (!exhibitHasStructuredData(exhibit)) return false;
+/**
+ * Why an authored exhibit is not kept, or null when it is.
+ *
+ * The rules are the same as before; they are named so a dropped exhibit can
+ * be reported. An exhibit that failed one of them used to vanish without a
+ * trace, and the artifact was then blocked for "missing exhibits" with no
+ * way to tell a missing exhibit from a rejected one.
+ */
+export function exhibitRejectionReason(
+  exhibit: RenderableExhibit,
+): string | null {
+  if (!exhibitHasStructuredData(exhibit)) {
+    return "data is missing, is not a supported payload kind, or is below that kind's minimum content";
+  }
   const description = exhibit.description?.trim() ?? "";
   if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
-    return false;
+    return "key, title or description is empty";
   }
-  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) return false;
+  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) {
+    return "description is a generic placeholder";
+  }
   const clauses = description
     .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
     .map((p) => p.trim())
     .filter(Boolean);
-  return clauses.length >= 3;
+  return clauses.length >= 3
+    ? null
+    : "description has fewer than three distinct statements";
 }
 
 function renderableExhibitsFromSynthesis(
@@ -559,7 +720,13 @@ function renderableExhibitsFromSynthesis(
   const byKey = new Map<string, RenderableExhibit>();
   for (const exhibit of synth.exhibits ?? []) {
     const repaired = repairStructuredExhibit(exhibit);
-    if (!exhibitHasDiagramReadyContent(repaired)) continue;
+    const rejection = exhibitRejectionReason(repaired);
+    if (rejection) {
+      console.warn(
+        `[section-generation] authored exhibit not kept: key=${JSON.stringify(repaired.key ?? null)} reason=${rejection}`,
+      );
+      continue;
+    }
     byKey.set(repaired.key, repaired);
   }
   return [...byKey.values()];
@@ -614,10 +781,10 @@ function fallbackRecommendation(
   }
 
   if (req.module === "moves" && req.deliverableType === "charter") {
-    return `We recommend the sponsor review this concise Charter and approve Discovery only with the stated scope, decision rights, authorization conditions, assumptions, and caveats carried forward; detailed workshop instructions belong in the separate Discovery Workshop Guide.`;
+    return `We recommend the authorized workspace user review and approve Discovery only with the stated scope, decision rights, authorization conditions, assumptions, and caveats carried forward. The listed sponsor contact receives progress updates only when selected; detailed workshop instructions belong in the separate Discovery Workshop Guide.`;
   }
 
-  return `We recommend sponsor review of this artifact before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly.`;
+  return `We recommend review by the authorized workspace user before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly. Sponsors receive progress updates only when selected and do not approve product gates.`;
 }
 
 function fallbackRiskTable(
@@ -643,7 +810,7 @@ function fallbackRiskTable(
       "Open decision",
       clientCompleteReasonLabel(c.reason),
       c.owner,
-      "Confirm during sponsor review before phase advancement.",
+      "Confirm with the authorized workspace user before phase advancement.",
     ]);
   }
 
@@ -713,64 +880,6 @@ function fallbackRiskTable(
     rows: rows.slice(0, 5),
     targetFormat: "docx",
   };
-}
-
-function ensureMovesCharterMinimumProse(
-  req: DeliverableIntelligenceRequest,
-  sections: readonly RenderableSection[],
-): RenderableSection[] {
-  if (req.module !== "moves" || req.deliverableType !== "charter") {
-    return [...sections];
-  }
-  const countWords = (candidate: readonly RenderableSection[]) =>
-    countBodyWords(candidate, {
-      excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
-    });
-  if (countWords(sections) >= req.qualityBar.minBodyWords) {
-    return [...sections];
-  }
-  if (sections.some((s) => s.key === "authorization_conditions")) {
-    return [...sections];
-  }
-
-  const paragraphs = [
-    "Discovery authorization should preserve the sponsor's known scope, decision rights, success measures, and evidence boundaries without turning unanswered questions into findings. The charter should therefore state what is approved now, what remains conditional, and which sponsor or operating owner must resolve each condition.",
-    "The next phase should use a separate Discovery Workshop Guide / Evidence Request Pack for session agendas, interview prompts, data extracts, templates, and working instructions. That separate guide can be operational and detailed; the charter should remain a CXO-facing authorization record.",
-    "Any unresolved dependency should stay visible until an accountable owner closes it. If a fact is not approved, the charter should carry it as an open input or assumption to validate rather than converting it into a commitment.",
-    "The sponsor review should test whether scope, decision rights, evidence handling, and value discipline are strong enough to proceed. This keeps the next phase bounded and auditable without converting charter approval into delivery authorization.",
-    "The charter should leave the team with a practical operating test: a reviewer can trace every material claim to accepted evidence, every caveat to a decision boundary, and every open input to an owner. Anything else remains outside the decision until Discovery closes the gap.",
-    "At the next gate, the team should be able to show what changed, what was approved, what stayed open, and what the evidence can responsibly support. That is the charter's real job: creating the conditions for a better decision later.",
-    "The charter should also make the stopping conditions visible. If the sponsor cannot confirm the operating owner, if evidence access is blocked, if the value baseline cannot be finance-reviewed, or if risk and compliance boundaries are not accepted, the Move should pause or narrow before the team advances to design.",
-    "Known facts should be carried forward exactly once. Scope, success measures, stakeholder roles, decision rights, exclusions, and caveats belong in this authorization record; the separate guide can translate them into meetings, file requests, and working-session outputs without changing the underlying decision.",
-    "This separation matters for executive trust. A sponsor should be able to read the charter as the approved mandate, then hand the workshop guide to the working team as the operating playbook for the next phase. If those two purposes are combined, the executive record becomes cluttered and the working guide becomes too shallow to run.",
-    "When evidence is incomplete, the charter should say so plainly. A missing baseline, unapproved source, unconfirmed owner, or unresolved risk is not a reason to invent detail; it is a condition for Discovery to close. That makes the document useful even before every input is known.",
-    "The final authorization should therefore read as a compact decision: proceed, proceed with conditions, or hold. It should tell leadership what is known, what is not yet known, who owns the next decision, and which boundaries cannot be crossed without returning to the sponsor.",
-    "If the next phase later discovers that the charter boundary was wrong, the remedy is not quiet expansion inside the workstream. The sponsor should amend the charter or approve a narrower path so the record stays aligned with what the team is actually authorized to do.",
-  ];
-  const body: string[] = [];
-  for (const paragraph of paragraphs) {
-    body.push(paragraph);
-    const candidate: RenderableSection = {
-      key: "authorization_conditions",
-      title: "Authorization Conditions & Open Inputs",
-      groundingMode: "expert_template",
-      citationsUsed: [],
-      bodyMarkdown: body.join("\n\n"),
-    };
-    if (countWords([...sections, candidate]) >= req.qualityBar.minBodyWords) {
-      return [...sections, candidate];
-    }
-  }
-  return [
-    ...sections,
-    {
-      key: "authorization_conditions",
-      title: "Authorization Conditions & Open Inputs",
-      groundingMode: "expert_template",
-      citationsUsed: [],
-      bodyMarkdown: body.join("\n\n"),
-    },
-  ];
 }
 
 /**
@@ -843,17 +952,21 @@ export function assembleDeliverable(
     recommendation,
     nextActions,
   );
-  const generatedSections = ensureMovesCharterMinimumProse(
+  const generatedSections = sectionsWithSignals;
+  const deckSlides = ensureContractedDeckSlides({
     req,
-    sectionsWithSignals,
-  );
+    sections: generatedSections,
+    repairedSlides: repairStructuredDeckSlides(synth.deckSlides),
+    recommendation,
+    nextActions,
+  });
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
     generatedSections,
-    deckSlides: repairStructuredDeckSlides(synth.deckSlides),
+    deckSlides,
     tables,
     exhibits: renderableExhibitsFromSynthesis(synth),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),

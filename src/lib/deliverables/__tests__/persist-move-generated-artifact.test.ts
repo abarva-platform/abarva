@@ -58,6 +58,8 @@ describe("persistMoveGeneratedArtifact", () => {
       phase: 2,
       artifact: "discovery_report",
       title: "Current Work Diagnostic",
+      evidenceSnapshotHash: "approved-revision-1",
+      phaseEvidenceSnapshotHash: "approved-revision-1",
       result: {
         status: "generated",
         html: "<html><body><svg></svg><table></table><p>Diagnostic.</p></body></html>",
@@ -111,6 +113,15 @@ describe("persistMoveGeneratedArtifact", () => {
       editableArtifactId: "docx-artifact-1",
       editableArtifactBlobStored: true,
     });
+    expect(mockDraftModuleDeliverable).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        structuredData: expect.objectContaining({
+          source: "moves_program_generate",
+          evidenceSnapshotHash: "approved-revision-1",
+        }),
+      }),
+    );
     expect(mockSaveMoveArtifact).toHaveBeenCalledTimes(2);
     expect(mockSaveMoveArtifact).toHaveBeenNthCalledWith(
       1,
@@ -124,6 +135,7 @@ describe("persistMoveGeneratedArtifact", () => {
         unsupportedClaimsCount: 1,
         metadata: expect.objectContaining({
           outputRole: "html_visual_review_companion",
+          evidenceSnapshotHash: "approved-revision-1",
           editableWordEquivalentRequired: true,
         }),
       }),
@@ -137,6 +149,7 @@ describe("persistMoveGeneratedArtifact", () => {
         body: expect.any(Buffer),
         metadata: expect.objectContaining({
           outputRole: "docx_editable_phase_record",
+          evidenceSnapshotHash: "approved-revision-1",
           pairedVisualCompanionArtifactId: "html-artifact-1",
           primaryEditableRecordLabel:
             "Current State Process and Diagnostic Word Document",

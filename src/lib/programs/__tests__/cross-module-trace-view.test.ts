@@ -13,6 +13,7 @@
 import {
   buildCrossModuleTrace,
   TRACE_MODULES,
+  type CrossModuleTraceInput,
   type TraceSourceEvent,
 } from "../cross-module-trace-view";
 import type { StrategicMove } from "../types.ui";
@@ -92,9 +93,56 @@ function makeLedgerRow(
   };
 }
 
+function buildTrace(
+  input: Omit<CrossModuleTraceInput, "effectivePhase"> & {
+    effectivePhase?: number;
+  },
+) {
+  return buildCrossModuleTrace({
+    ...input,
+    effectivePhase: input.effectivePhase ?? input.move.currentPhase,
+  });
+}
+
 describe("buildCrossModuleTrace", () => {
+  it("projects a stored future phase to the effective gate phase in the trace", () => {
+    const move = makeMove({
+      currentPhase: 3,
+      phaseLabel: "P3 Design",
+      status: {
+        key: "awaiting_decision",
+        text: "Awaiting decision",
+        description: "",
+      },
+    });
+    const trace = buildTrace({
+      move,
+      effectivePhase: 1,
+      sourceEvents: [],
+      outcomeEntries: [],
+    });
+
+    expect(move.currentPhase).toBe(3);
+    expect(trace.steps.find((step) => step.module === "move")?.detail).toContain(
+      "P1 Charter · Gate review required.",
+    );
+  });
+
+  it("preserves the Move unchanged when its stored phase is already effective", () => {
+    const move = makeMove();
+    const trace = buildTrace({
+      move,
+      sourceEvents: [],
+      outcomeEntries: [],
+    });
+
+    expect(trace.steps.find((step) => step.module === "move")?.detail).toContain(
+      "P3 Design · On track.",
+    );
+  });
+
   it("emits one step per surface in loop order", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [],
       outcomeEntries: [],
@@ -103,7 +151,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("always renders the Move step as the linked anchor", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [],
       outcomeEntries: [],
@@ -115,7 +163,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("marks all cross-module hand-offs unwired when no links exist", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [],
       outcomeEntries: [],
@@ -139,7 +187,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("links the Source step on linkedProgramId === move.id", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [makeSourceEvent({ linkedProgramId: "move-1" })],
       outcomeEntries: [],
@@ -151,7 +199,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("does not link a Source event for a different Move", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [makeSourceEvent({ linkedProgramId: "other-move" })],
       outcomeEntries: [],
@@ -162,7 +210,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("links the Tower step on a move-subject ledger entry", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [],
       outcomeEntries: [
@@ -183,7 +231,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("ignores ledger entries for other subjects", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [],
       outcomeEntries: [
@@ -196,7 +244,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("links the Intelligence step from bet-anchored evidence", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove({
         linkedEvidence: [
           {
@@ -217,7 +265,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("reports coherent when every cross-module hand-off is wired", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove({
         linkedEvidence: [
           { id: "ev-9", anchor: "Bet brief", summary: "pattern", url: "/x" },
@@ -232,7 +280,7 @@ describe("buildCrossModuleTrace", () => {
   });
 
   it("reports partial when only some hand-offs are wired", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove(),
       sourceEvents: [makeSourceEvent({ linkedProgramId: "move-1" })],
       outcomeEntries: [],
@@ -248,7 +296,7 @@ describe("buildCrossModuleTrace — SR 11-7 regulatory deliverable (GAP-3)", () 
   );
 
   it("surfaces the SR 11-7 control deliverable on the Move step for a regulated tenant", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove({
         tenant: { id: "t1", name: "First Capital", industryCode: "FINSERV" },
       }),
@@ -271,7 +319,7 @@ describe("buildCrossModuleTrace — SR 11-7 regulatory deliverable (GAP-3)", () 
   });
 
   it("does not surface the deliverable for a non-regulated tenant even when a matrix is supplied", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove({
         tenant: { id: "t1", name: "Apex Retail", industryCode: "RETAIL" },
       }),
@@ -285,7 +333,7 @@ describe("buildCrossModuleTrace — SR 11-7 regulatory deliverable (GAP-3)", () 
   });
 
   it("does not surface the deliverable for a regulated tenant when no matrix is supplied", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove({
         tenant: { id: "t1", name: "First Capital", industryCode: "FINSERV" },
       }),
@@ -297,7 +345,7 @@ describe("buildCrossModuleTrace — SR 11-7 regulatory deliverable (GAP-3)", () 
   });
 
   it("leaves every non-Move step with a null regulatory deliverable", () => {
-    const trace = buildCrossModuleTrace({
+    const trace = buildTrace({
       move: makeMove({
         tenant: { id: "t1", name: "First Capital", industryCode: "FINSERV" },
       }),

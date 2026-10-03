@@ -51,7 +51,12 @@ describe('template → fact map — catalog binding integrity', () => {
 
   it('no duplicate header within a single template', () => {
     for (const tpl of listTemplateFactMaps()) {
-      const headers = tpl.columns.map((c) => c.header);
+      const headers = [
+        ...(tpl.entityRefColumn ? [tpl.entityRefColumn] : tpl.entityRefColumns ?? []),
+        ...(tpl.contextColumns ?? []),
+        ...(tpl.optionalContextColumns ?? []),
+        ...tpl.columns.map((c) => c.header),
+      ];
       expect(new Set(headers).size).toBe(headers.length);
     }
   });
@@ -61,6 +66,10 @@ describe('template → fact map — worked examples present', () => {
   it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, committed-value, bafo-concessions, response-coverage, and vendor-bids templates', () => {
     expect(templateFactMapByCode('APP_INVENTORY_V1')).toBeDefined();
     expect(templateFactMapByCode('VOLUMETRICS_V1')).toBeDefined();
+    expect(templateFactMapByCode('TICKET_HISTORY_V1')).toMatchObject({
+      rowEntity: 'tower',
+      contextColumns: ['Support Tier', 'Month', 'Time Window', 'Source Basis'],
+    });
     expect(templateFactMapByCode('CONTRACT_TERMS_V1')).toBeDefined();
     expect(templateFactMapByCode('RFP_CLAUSES_V1')).toBeDefined();
     expect(templateFactMapByCode('COMMITTED_VALUE_V1')).toBeDefined();

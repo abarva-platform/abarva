@@ -68,45 +68,37 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     },
     {
       id: 'scope.volumetrics',
-      title: 'Provide the volumetrics',
-      subtitle: 'Service-tower economics',
+      title: 'Provide ticket volumes',
+      subtitle: 'L2/L3 history by month and time window',
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload service-tower volumetrics: change-order spend, avoidable share, projected volume decline, automatable effort pool, and chronic SLA miss rate.',
-      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'ITSM / finance baseline' },
-      cta: 'Confirm volumetrics',
-      // A CSV/XLSX dropped here is parsed into typed volumetrics facts, flipping
-      // the ✦ Intelligence step insight from MODEL to LIVE.
-      factTemplateCode: 'VOLUMETRICS_V1',
+        'Upload ITSM ticket counts and SLA breaches by service tower, L2/L3 support tier, month, and time window. Include the source basis; financial projections belong to a separate baseline.',
+      provenance: { owner: 'ITSM owner', source: 'ITSM ticket export' },
+      cta: 'Confirm ticket history',
+      factTemplateCode: 'TICKET_HISTORY_V1',
     },
     {
       id: 'scope.app-inventory',
-      title: 'Provide the application inventory',
-      subtitle: 'Run cost + retained-FTE cost per app',
+      title: 'Provide the application or service inventory',
+      subtitle: 'Operational scope and accountable source',
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload your application & system inventory (CSV or XLSX). We read per-app annual run cost, loaded FTE cost, and the variable-cost share — the facts the volume-band pricing and retained-cost levers need.',
-      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'CMDB / finance export' },
+        'Upload a service or application inventory with stable IDs, scope boundaries, criticality, lifecycle, owner, source basis and as-of date. Review the parsed file in Files before it becomes usable Scope evidence. Cost fields are separate and may remain unknown.',
+      provenance: { owner: 'IT operations owner', source: 'CMDB or service catalog' },
       cta: 'Confirm inventory',
-      // Parsed into APP_INVENTORY_V1 facts (annual_run_cost, loaded_fte_cost,
-      // variable_cost_share_pct) — flips the pricing / retained-cost levers LIVE.
-      factTemplateCode: 'APP_INVENTORY_V1',
     },
     {
-      id: 'scope.vendor-commercials',
-      title: 'Provide vendor commercials & contract terms',
-      subtitle: 'Transition, SLA credits, credits, term',
+      id: 'scope.prior-baseline',
+      title: 'Review the prior commercial baseline',
+      subtitle: 'Prior contract or accountable absence',
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload the vendor commercials sheet (CSV or XLSX): transition fee, overrun probability & cost multiple, SLA credit cap and at-risk fee pool, committed productivity credit, retained-FTE delta, and contract term. This lands the vendor-side facts the SLA, productivity-credit, and transition-risk levers need.',
-      provenance: { owner: 'Procurement lead', source: 'Vendor proposal / commercials sheet' },
-      cta: 'Confirm commercials',
-      // Parsed into CONTRACT_TERMS_V1 facts — flips the SLA, productivity-credit,
-      // transition-risk, and retained-cost levers LIVE.
-      factTemplateCode: 'CONTRACT_TERMS_V1',
+        'Review a recorded prior contract and run-cost baseline if one exists. For a net-new service without either record, declare the absence with an accountable reason. Supplier proposal terms belong to the later response stage; do not enter planning values as actuals.',
+      provenance: { owner: 'Procurement and finance owners', source: 'Prior contract or finance baseline' },
+      cta: 'Review baseline',
     },
     {
       id: 'scope.exclusions',

@@ -48,7 +48,7 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
     {
       role: 'Supply Chain VP',
       rationale:
-        'Sponsor authority — signs off on the granularity-vs-cohort tradeoff and owns the inventory / stockout / fill-rate value mechanism the forecast is supposed to move.',
+        'Business sponsor is the stakeholder for the granularity-vs-cohort tradeoff and owns the inventory / stockout / fill-rate value mechanism the forecast is supposed to move; the authorized workspace user records product approval.',
       neededAt: 'kickoff',
       escalationHint:
         'If the Supply Chain VP cannot attend the Day 1 granularity workshop, defer Day 1 rather than running it without sponsor authority — granularity locked without sponsor reopens at P2.',
@@ -156,11 +156,7 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
       description:
         'Three-hour decision workshop where the Demand Planner, Supply Chain VP, and Forecast Modeling SME weigh SKU-store-week vs. category-region-month vs. brand-quarter against data availability and value mechanism, and lock a single granularity with rationale. Output is the granularity decision the rest of P1 will baseline against.',
       durationHours: 3,
-      attendees: [
-        'Demand Planner',
-        'Supply Chain VP',
-        'Forecast Modeling SME',
-      ],
+      attendees: ['Demand Planner', 'Supply Chain VP', 'Forecast Modeling SME'],
       usesTemplates: [
         'forecast-granularity-decision-template',
         'demand-stakeholder-interview-script',
@@ -172,14 +168,8 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
       description:
         'Four-hour working session where the Demand Planner, Forecast Modeling SME, and Data Engineer pull 12 months of forecast-vs-actual at the locked granularity and analyze the *distribution* of error and the bias structure (over/under by season, promo, lifecycle). Output is a defensible baseline — not an aggregate MAPE — that P2 can charter against.',
       durationHours: 4,
-      attendees: [
-        'Demand Planner',
-        'Forecast Modeling SME',
-        'Data Engineer',
-      ],
-      usesTemplates: [
-        'forecast-accuracy-baseline-spreadsheet',
-      ],
+      attendees: ['Demand Planner', 'Forecast Modeling SME', 'Data Engineer'],
+      usesTemplates: ['forecast-accuracy-baseline-spreadsheet'],
     },
     {
       id: 'sop-consumption-and-stakeholder-validation',
@@ -187,11 +177,7 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
       description:
         'Two-hour synthesis-prep session where the S&OP Lead, Demand Planner, and Supply Chain VP confirm the cadence inventory, attest decision adherence, and validate the stakeholder map. Closes with a draft P2 readiness recommendation (proceed / re-scope / reclassify / stop).',
       durationHours: 2,
-      attendees: [
-        'S&OP Lead',
-        'Demand Planner',
-        'Supply Chain VP',
-      ],
+      attendees: ['S&OP Lead', 'Demand Planner', 'Supply Chain VP'],
       usesTemplates: [
         'sop-cadence-inventory-script',
         'forecast-discovery-report-template',
@@ -202,7 +188,8 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
   dataAssets: [
     {
       id: 'historical-forecast-vs-actual',
-      label: 'Historical forecast-vs-actual at proposed granularity (last 12 months)',
+      label:
+        'Historical forecast-vs-actual at proposed granularity (last 12 months)',
       rationale:
         'The core baseline input — without 12 months at the locked grain, the bias-distribution analysis collapses into an aggregate MAPE that hides exactly the structural pattern P2 must charter against.',
       format: 'spreadsheet',
@@ -210,7 +197,8 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'forecast-bias-structure',
-      label: 'Forecast accuracy bias structure (over/under by season, promo, lifecycle)',
+      label:
+        'Forecast accuracy bias structure (over/under by season, promo, lifecycle)',
       rationale:
         'Distinguishes random noise from structural error; the bias map is what makes the baseline decision-grade and is the input P2 needs to choose between hierarchical-statistical, ML, or vendor SaaS approaches.',
       format: 'spreadsheet',
@@ -226,7 +214,8 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'sop-decision-adherence-sample',
-      label: 'Decision-adherence sample — last 12 weeks of S&OP decisions vs. forecast recommendations',
+      label:
+        'Decision-adherence sample — last 12 weeks of S&OP decisions vs. forecast recommendations',
       rationale:
         'Tests whether the current forecast is actually consumed; low adherence is a finding that reframes the program from "improve accuracy" to "earn S&OP trust," and the absence of this artifact is itself a contradiction to log.',
       format: 'spreadsheet',
@@ -234,7 +223,8 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'inventory-and-stockout-baseline',
-      label: 'Inventory turn / stockout / fill-rate baseline at proposed granularity',
+      label:
+        'Inventory turn / stockout / fill-rate baseline at proposed granularity',
       rationale:
         'Anchors the value mechanism — accuracy improvement only matters insofar as it moves inventory turn, stockout cost, or fill rate; the Finance Partner attests this so the OKR baseline is decision-grade for P5.',
       format: 'spreadsheet',
@@ -245,37 +235,43 @@ export const DEMAND_FORECASTING_PRIMER: ArchetypePrimer = {
   prepChecklist: [
     {
       id: 'confirm-day-1-granularity-attendees',
-      label: 'Confirm Demand Planner + Supply Chain VP commit to the Day 1 granularity workshop',
+      label:
+        'Confirm Demand Planner + Supply Chain VP commit to the Day 1 granularity workshop',
       rationale:
         'Day 1 is the gating workshop — without operator + sponsor in the room the granularity decision either does not happen or gets reopened at P2. Calendar lead-time on a Supply Chain VP is the single largest risk to the P1 schedule.',
     },
     {
       id: 'request-historical-forecast-pull',
-      label: 'Request historical demand and forecast-error pull from Data Engineer five business days before Day 1',
+      label:
+        'Request historical demand and forecast-error pull from Data Engineer five business days before Day 1',
       rationale:
         'Forecast-trace extracts from planning systems (SAP IBP, o9, Blue Yonder, custom) have real lead time and often require a vendor ticket; requesting at P1 kickoff (not Day 2) is the difference between a measured baseline and a hand-waved one.',
     },
     {
       id: 'identify-sop-lead-and-confirm-attestation',
-      label: 'Identify the S&OP Lead and confirm willingness to attest cadence + decision adherence',
+      label:
+        'Identify the S&OP Lead and confirm willingness to attest cadence + decision adherence',
       rationale:
         'Without an S&OP consumption commitment in P1, the program kills at the P2 kill-criterion ("S&OP refuses to consume"). If no S&OP Lead exists, that gap is itself the contradiction to log — but P1 cannot start blind to it.',
     },
     {
       id: 'author-falsifiable-granularity-hypothesis',
-      label: 'Author the falsifiable hypothesis: which granularity will produce the largest accuracy-improvement opportunity, and what evidence would change the answer?',
+      label:
+        'Author the falsifiable hypothesis: which granularity will produce the largest accuracy-improvement opportunity, and what evidence would change the answer?',
       rationale:
-        'Anti-confirmation discipline. Without a stated hypothesis and falsifiers entering Day 1, the granularity workshop becomes a confirmation of the planner\'s priors rather than a discovery — and the bias-distribution analysis on Day 2 inherits that confirmation bias.',
+        "Anti-confirmation discipline. Without a stated hypothesis and falsifiers entering Day 1, the granularity workshop becomes a confirmation of the planner's priors rather than a discovery — and the bias-distribution analysis on Day 2 inherits that confirmation bias.",
     },
     {
       id: 'circulate-p0-hypothesis-and-falsifiers',
-      label: 'Circulate the P0 value hypothesis (accuracy → inventory / stockout) and its falsifiers to all Day 1 attendees',
+      label:
+        'Circulate the P0 value hypothesis (accuracy → inventory / stockout) and its falsifiers to all Day 1 attendees',
       rationale:
         'Workshops that begin without the value hypothesis on the table devolve into model-architecture debates; the falsifiers are what keep the granularity decision tied to the value mechanism rather than to modeling-team preference.',
     },
     {
       id: 'identify-sop-dissenter',
-      label: 'Identify at least one S&OP-side dissenter or skeptical operator to interview on Day 3',
+      label:
+        'Identify at least one S&OP-side dissenter or skeptical operator to interview on Day 3',
       rationale:
         'Stakeholder maps without an S&OP-side dissenter become department-RACIs; consumption-side skepticism is the leading indicator of P5 adoption failure and the P1 anti-pattern detector will flag the absence at the gate.',
     },

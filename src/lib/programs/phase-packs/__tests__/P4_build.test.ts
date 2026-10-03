@@ -1,13 +1,13 @@
 import type { PhasePack } from '../types';
 import { P4_BUILD } from '../P4_build';
 
-describe('P4 Execution Roadmap · PhasePack contract', () => {
+describe('P4 Roadmap & Business Case · PhasePack contract', () => {
   it('conforms to PhasePack and uses corrected strategy-tool label', () => {
     const pack: PhasePack = P4_BUILD;
     expect(pack.phase).toBe(4);
     expect(pack.label).toBe('P4 Roadmap & Business Case');
     expect(pack.outcome).toContain('external delivery');
-    expect(pack.outcome).toContain('P4 is not where Nexus executes the build');
+    expect(pack.outcome).toContain('P4 plans and estimates; it does not execute the project');
   });
 
   it('requires roadmap, milestones, success criteria, estimates, and Tower monitoring', () => {

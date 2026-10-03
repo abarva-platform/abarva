@@ -337,10 +337,47 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // and still bound by `surfaceId`. 22/14/1 to 21/14/2. Nothing left or
     // entered `deferredWithJoin`, which is the check that the correction was
     // bookkeeping on one row and not a re-join of anything.
+    //
+    // C-574 catalogued the Tower aVa dock with all five controls uncovered.
+    // Its two chat-opener rows (citation, confidence) resolved to it, so each
+    // swapped its `uncatalogued` join for the surfaceId and stayed deferred —
+    // 21/14/2 to 21/12/4. `coveredWithSurfaceId` is unmoved: cataloguing an
+    // uncovered control earns no credit.
+    //
+    // C-549 retracted a claim rather than joining it: the Tower synthesis
+    // route's legal row said "Yes" to citations on the strength of a telemetry
+    // count, and executing the route showed the response carries none. The
+    // legal cell now reads "Partial", the gate no longer derives a claim from
+    // it, and its `uncatalogued` coverage row left with it — 21/12/4 to
+    // 21/11/4. Nothing else moved, which is the check that one row was
+    // removed and none re-joined.
+    //
+    // C-549 retracted a second claim the same way: the Agent readiness
+    // drill-down's legal row said "Yes" to a confidence disclosure on the
+    // strength of a source caption and a generated date. Rendering the
+    // component showed no confidence value or assumption, its own confidence
+    // factor reading deferred, and nothing mounting it. The cell now reads
+    // "Partial" and its `uncatalogued` coverage row left with it — 21/11/4 to
+    // 21/10/4.
+    //
+    // C-549 then joined a claim that measured true: the Steward setup
+    // guidance row's seeded/live disclosure renders beside the reconnect
+    // guidance on a mounted route. The reconnect page was catalogued with that
+    // one control, and its `uncatalogued` row became covered — 21/10/4 to
+    // 22/9/4. `deferredWithSurfaceId` is unmoved because the legal row claims
+    // no other kind on that surface.
+    //
+    // C-549 retracted a third claim: the Source commercial summary surface's
+    // legal row said "Yes" to a confidence disclosure on the strength of its
+    // no-live-benchmark limitation copy. Rendering the component showed no
+    // confidence value beside any verdict, a seeded benchmark figure beside
+    // the copy that says there are no benchmarks, and nothing mounting it.
+    // The cell now reads "Partial" and its `uncatalogued` coverage row left
+    // with it — 22/9/4 to 22/8/4.
     expect(tally).toEqual({
-      coveredWithSurfaceId: 21,
-      deferredWithJoin: 14,
-      deferredWithSurfaceId: 2,
+      coveredWithSurfaceId: 22,
+      deferredWithJoin: 8,
+      deferredWithSurfaceId: 4,
       unbound: 0,
     });
   });
@@ -567,14 +604,15 @@ describe("a covered credit is a claim about proof", () => {
 
   it("counts a covered set that is not vacuously clean", () => {
     // Without this, deleting every covered row would satisfy the case above.
-    // 22 rows carried the credit when C-409 was filed and 21 do now, the one
-    // removal being the row it corrected.
-    expect(coveredRows).toHaveLength(21);
+    // 22 rows carried the credit when C-409 was filed and 21 after, the one
+    // removal being the row it corrected. C-549 added one back: the Steward
+    // setup guidance row, joined to a control whose suite names its cases.
+    expect(coveredRows).toHaveLength(22);
     const proven = coveredRows.filter((entry) => {
       const test = joinedControl(entry, live)?.behavioralTest;
       return Boolean(test?.path) && (test?.provenCases ?? []).length > 0;
     });
-    expect(proven).toHaveLength(21);
+    expect(proven).toHaveLength(22);
   });
 
   it("goes red when a covered credit names a control declaring no behavioral test", () => {
@@ -606,7 +644,12 @@ describe("a covered credit is a claim about proof", () => {
     expect(finding).toContain("a covered credit needs a proven control");
     expect(finding).toContain(UNPROVEN_SURFACE_ID);
     expect(finding).toContain("confidence");
-    expect(finding).toContain("no suite mounts the component");
+    // The whole live reason, read from the control rather than pinned as a
+    // phrase: C-416 rewrote that reason to cite a measurement, and a pinned
+    // phrase from the old prose went red for a sentence change, not a gate one.
+    const reason = control?.behavioralTest?.reason ?? "";
+    expect(reason.length).toBeGreaterThan(40);
+    expect(finding).toContain(`The control's own reason: ${reason}`);
     // Exactly one row moves. The gate reports every problem it finds, so a
     // check that is too broad shows up here as extra findings.
     expect(output.split("\n").filter((line) => line.startsWith("- "))).toHaveLength(1);

@@ -59,25 +59,25 @@ describe('P2 Synthesis · 9-step decomposition (D.2.4)', () => {
     }
   });
 
-  it('exactly 4 complex steps, all with intentCaptureRequired=true', () => {
+  it('exactly 3 complex steps, all with intentCaptureRequired=true', () => {
     const steps = P2_SYNTHESIS.steps ?? [];
     const complex = steps.filter((s) => s.complexity === 'complex');
-    expect(complex).toHaveLength(4);
+    expect(complex).toHaveLength(3);
     for (const s of complex) {
       expect(s.intentCaptureRequired).toBe(true);
     }
   });
 
-  it('exactly 5 simple steps, all with intentCaptureRequired=false', () => {
+  it('exactly 6 simple steps, all with intentCaptureRequired=false', () => {
     const steps = P2_SYNTHESIS.steps ?? [];
     const simple = steps.filter((s) => s.complexity === 'simple');
-    expect(simple).toHaveLength(5);
+    expect(simple).toHaveLength(6);
     for (const s of simple) {
       expect(s.intentCaptureRequired).toBe(false);
     }
   });
 
-  it('the 4 workshop / interview / review steps have postMeetingUploadExpected=true', () => {
+  it('the 3 evidence-generation steps require a post-session upload', () => {
     const steps = P2_SYNTHESIS.steps ?? [];
     const uploadSteps = steps
       .filter((s) => s.postMeetingUploadExpected)
@@ -87,7 +87,6 @@ describe('P2 Synthesis · 9-step decomposition (D.2.4)', () => {
       [
         'p2-tradeoff-workshop',
         'p2-architecture-review',
-        'p2-sponsor-defense',
         'p2-dissenter-engaged',
       ].sort(),
     );
@@ -130,6 +129,9 @@ describe('P2 Synthesis · 9-step decomposition (D.2.4)', () => {
     expect(signoff!.inputs).toContain('architecture-review-attested');
     expect(signoff!.inputs).toContain('kill-criterion-locked');
     expect(signoff!.inputs).toContain('succession-owner-named');
+    expect(signoff!.label).toBe(
+      'Authorized workspace user approves the charter',
+    );
   });
 
   it('p2-options-author and p2-architecture-review are DAG roots (empty inputs)', () => {

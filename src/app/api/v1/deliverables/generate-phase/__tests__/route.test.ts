@@ -27,7 +27,10 @@ const createMoveContextExtract = jest.fn(
       suggestedContextItems: [],
       excludedContextItems: [],
       gapItems: [],
-      freshness: { evidenceFingerprint: "ctx-hash-1" },
+      freshness: {
+        evidenceFingerprint: "ctx-hash-1",
+        approvedEvidenceRevision: "approved-revision-1",
+      },
     };
   },
 );
@@ -59,6 +62,158 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
   },
 }));
 const getModuleState: jest.Mock = jest.fn(async () => []);
+let evidencePacketsForTest: MoveEvidenceNeedPacket[] = [];
+const buildMoveEvidenceNeedPackets = jest.fn(
+  (input: { moveId?: string; currentPhase?: number }) => {
+    if (evidencePacketsForTest.length > 0) return evidencePacketsForTest;
+    const phase = Math.max(2, input.currentPhase ?? 2);
+    return [
+      {
+        moveId: input.moveId ?? "move-1",
+        phase,
+        artifactType: "discovery_report",
+        evidenceSlot: "Contact center KPI baseline",
+        familyId: "contact_center_kpis",
+        priority: "required",
+        ownerSource: "Operations and Finance",
+        acceptedFormats: ["CSV"],
+        exampleTemplate: "KPI baseline",
+        exampleContent: [],
+        whyItMatters: "Evidence-backed baseline",
+        blockedArtifacts: [
+          {
+            artifactType: "discovery_report",
+            title: "Discovery Report",
+            phase: phase + 1,
+            reason: "Required evidence",
+          },
+        ],
+        canDraftBoundary: {
+          canDraft: true,
+          canDraftLabel: "Can draft",
+          cannotDraftLabel: "Cannot draft",
+        },
+        preliminaryGenerationCaveat: null,
+        waiverOption: null,
+        nextAction: "Review the approved KPI file.",
+        status: "covered",
+        evidenceIds: ["ev-kpi"],
+        evidenceTitles: ["contact-center-kpis.csv"],
+      } as MoveEvidenceNeedPacket,
+    ];
+  },
+);
+const loadDiscoveryEvidenceReadiness = jest.fn(async () => ({}));
+const loadAcceptedStageReadinessContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
+  void args;
+  return {
+    moveId: "move-1",
+    sourcePhase: 1,
+    targetPhase: 2,
+    reviewArtifactId: "review-1",
+    reviewArtifactVersion: 1,
+    proposals: [
+      {
+        proposalId: "proposal-kpi",
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required" as const,
+        answerState: "answered" as const,
+        disposition: "accepted" as const,
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+    ],
+    acceptedResponses: [],
+    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+  };
+});
+const formatAcceptedStageReadinessContextForPrompt = jest.fn(
+  (...args: unknown[]) => {
+    void args;
+    return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
+  },
+);
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
+const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
+  {
+    evidenceId: "evidence-approved-1",
+    title: "Approved evidence",
+    familyKey: "workshop_notes",
+  },
+]);
+
+function confirmedRouteModules(
+  route: "technical_product" | "process_change",
+  processImpact: "limited" | "material" = "material",
+) {
+  const businessChangeAssessment = {
+    expectedWorkflowChange: "none",
+    expectedRoleAccountabilityChange: "none",
+    adoptionOwner: "Business product owner",
+    adoptionResponsibility: "business",
+    evidenceReference: "interview-notes",
+    validatedBy: "Sponsor",
+  };
+  const technical = route === "technical_product";
+  return [
+    {
+      moduleKey: "phase_1_business_change_assessment",
+      state: { value: JSON.stringify(businessChangeAssessment) },
+    },
+    {
+      moduleKey: "phase_2_solution_route_validation",
+      state: {
+        value: JSON.stringify({
+          businessChangeAssessmentSnapshot: businessChangeAssessment,
+          solutionOutput: technical
+            ? "reports_dashboards"
+            : "workflow_automation",
+          workflowChange: technical ? "none" : processImpact,
+          roleAccountabilityChange: "none",
+          evidenceReference: "evidence-approved-1",
+          decision: "confirm",
+          selectedRoute: route,
+          correctionRationale: "",
+          validatedBy: "Sponsor",
+        }),
+      },
+    },
+    {
+      moduleKey: "phase_4_estimates_capacity",
+      state: { value: JSON.stringify(reviewedEstimateModel()) },
+    },
+  ];
+}
+
+function reviewedEstimateModel() {
+  const shared = {
+    pairId: "pair-1",
+    workPackage: "Read-only reporting foundation",
+    role: "Data engineer",
+    lowHours: 10,
+    baseHours: 20,
+    highHours: 30,
+    rateSource: "Synthetic planning assumption",
+    inputBasis: "assumption",
+    evidenceReference: "",
+    assumption: "Scope is a bounded first release",
+    confidence: "low",
+    aiEligiblePct: 10,
+    aiToolAssumption:
+      "Claude Code assists scaffolding; engineer reviews and tests",
+    humanReviewHours: 2,
+  };
+  return {
+    currency: "USD",
+    reviewer: "Finance reviewer",
+    reviewConfirmed: true,
+    sourceNotes: "",
+    rows: [
+      { ...shared, deliveryModel: "internal", ratePerHour: 100 },
+      { ...shared, deliveryModel: "vendor", ratePerHour: 150 },
+    ],
+  };
+}
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -105,6 +260,11 @@ jest.mock("@/lib/programs/move-context-extract", () => ({
   createMoveContextExtract: (input: Record<string, unknown>) =>
     createMoveContextExtract(input),
 }));
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadApprovedMoveEvidenceSnapshot(...args),
+}));
 jest.mock("@/lib/programs/approved-solution-approach", () => ({
   loadApprovedSolutionApproach: () => loadApprovedSolutionApproach(),
   formatApprovedSolutionApproach: (approved: { chosenOption: string }) =>
@@ -114,8 +274,29 @@ jest.mock("@/lib/programs/approved-solution-approach", () => ({
 jest.mock("@/lib/programs/queries", () => ({
   getModuleState: (...args: unknown[]) => getModuleState(...args),
 }));
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  listApprovedPhaseEvidence: (...args: unknown[]) =>
+    listApprovedPhaseEvidence(...args),
+}));
+jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
+  loadDiscoveryEvidenceReadiness: () => loadDiscoveryEvidenceReadiness(),
+}));
+jest.mock(
+  "@/lib/programs/evidence-readiness/move-evidence-need-packet",
+  () => ({
+    buildMoveEvidenceNeedPackets: (input: unknown) =>
+      buildMoveEvidenceNeedPackets(input as { moveId?: string; currentPhase?: number }),
+  }),
+);
+jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
+  loadAcceptedStageReadinessContext: (...args: unknown[]) =>
+    loadAcceptedStageReadinessContext(...args),
+  formatAcceptedStageReadinessContextForPrompt: (...args: unknown[]) =>
+    formatAcceptedStageReadinessContextForPrompt(...args),
+}));
 
 import { POST } from "../route";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 function req(body: unknown, headers: Record<string, string> = {}) {
   return {
@@ -141,7 +322,63 @@ beforeEach(() => {
   createMoveContextExtract.mockClear();
   loadApprovedSolutionApproach.mockClear();
   getModuleState.mockClear();
-  getModuleState.mockResolvedValue([]);
+  getModuleState.mockResolvedValue(confirmedRouteModules("process_change"));
+  listApprovedPhaseEvidence.mockClear();
+  evidencePacketsForTest = [];
+  buildMoveEvidenceNeedPackets.mockClear();
+  loadDiscoveryEvidenceReadiness.mockClear();
+  loadAcceptedStageReadinessContext.mockClear();
+  loadAcceptedStageReadinessContext.mockResolvedValue({
+    moveId: "move-1",
+    sourcePhase: 1,
+    targetPhase: 2,
+    reviewArtifactId: "review-1",
+    reviewArtifactVersion: 1,
+    proposals: [
+      {
+        proposalId: "proposal-kpi",
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+    ],
+    acceptedResponses: [],
+    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+  });
+  formatAcceptedStageReadinessContextForPrompt.mockClear();
+  mockLoadApprovedMoveEvidenceSnapshot.mockReset();
+  mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    tenantKey: "skyharbor-air",
+    moveId: "m-1",
+    revision: "approved-revision-1",
+    approvedEvidenceCount: 1,
+    rows: [],
+    latestEvidenceActivityAt: null,
+    revisionByPhase: {
+      1: "approved-revision-1",
+      2: "approved-revision-1",
+      3: "approved-revision-1",
+      4: "approved-revision-1",
+      5: "approved-revision-1",
+    },
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
+  });
+  listApprovedPhaseEvidence.mockResolvedValue([
+    {
+      evidenceId: "evidence-approved-1",
+      title: "Approved evidence",
+      familyKey: "workshop_notes",
+    },
+  ]);
   loadApprovedSolutionApproach.mockResolvedValue({
     decisionId: "decision-1",
     decisionVersion: "1",
@@ -187,6 +424,91 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect((await POST(req({ moveId: "m1", phase: 1 }))).status).toBe(400);
   });
 
+  it("rejects direct build requests while required evidence is open", async () => {
+    evidencePacketsForTest = [
+      {
+        phase: 1,
+        priority: "required",
+        status: "missing",
+        evidenceSlot: "Sponsor-backed charter evidence",
+        nextAction: "Upload and approve the source evidence.",
+      } as MoveEvidenceNeedPacket,
+    ];
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({
+      error: "required_evidence_open",
+      requiredEvidenceGaps: [
+        { evidenceSlot: "Sponsor-backed charter evidence", status: "missing" },
+      ],
+    });
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
+    expect(sequentialCalls).toHaveLength(0);
+  });
+
+  it("blocks a phase build when the accepted workbook still marks required evidence unknown", async () => {
+    loadAcceptedStageReadinessContext.mockResolvedValueOnce({
+      moveId: "m-p2",
+      sourcePhase: 2,
+      targetPhase: 3,
+      reviewArtifactId: "review-p2",
+      reviewArtifactVersion: 1,
+      proposals: [
+        {
+          proposalId: "proposal-kpi",
+          questionId: "q_kpi_baseline",
+          dimensionId: "contact_center_kpis",
+          requirement: "required",
+          answerState: "unknown",
+          disposition: "accepted",
+          evidenceOrSource: "Existing evidence: ev-kpi",
+        },
+      ],
+      acceptedResponses: [],
+      readiness: { ready: 0, partial: 0, insufficientEvidence: 0, unknown: 1 },
+    });
+
+    const res = await POST(
+      req({ moveId: "m-p2", phase: 2, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({
+      error: "required_evidence_open",
+      requiredEvidenceGaps: [
+        expect.objectContaining({
+          evidenceSlot: "Contact center KPI baseline",
+          status: "partial",
+          nextAction: expect.stringMatching(/replace unknown/i),
+        }),
+      ],
+    });
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
+  });
+
+  it("fails closed when evidence readiness cannot be verified", async () => {
+    loadDiscoveryEvidenceReadiness.mockRejectedValueOnce(
+      new Error("readiness store unavailable"),
+    );
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({
+      error: "evidence_readiness_unavailable",
+    });
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
+  });
+
   it("queues P1 Charter and Discovery Workshop Guide with authoritative phase capture", async () => {
     getModuleState.mockResolvedValueOnce([
       {
@@ -217,7 +539,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         useCaseArchetype: "ai_member_service",
         moveName: "Member Service Agent Assist",
         clientDisplayName: "Client",
-      }),
+  }),
     );
 
     expect(res.status).toBe(202);
@@ -241,10 +563,10 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       const decisionContext = (call.jobPayload as { decisionContext: string })
         .decisionContext;
       expect(decisionContext).toContain(
-        "APPROVED P1 PHASE CAPTURE (authoritative for this build)",
+        "SAVED PHASE CAPTURE (authoritative input for this build)",
       );
       expect(decisionContext).toContain(
-        "Sponsor commitment: VP Member Services sponsors the Move",
+        "Sponsor contact and progress updates: VP Member Services sponsors the Move",
       );
       expect(decisionContext).toContain(
         "Scope boundary: Include member-service contacts",
@@ -318,7 +640,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       "operating_model",
       "requirements_traceability",
       "sourcing_strategy",
-      "discovery_plan",
+      "planning_workshop_guide",
     ]);
     for (const c of createCalls) {
       expect(c.clientId).toBe("client-uuid");
@@ -339,9 +661,109 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
             decisionHash: "decision-hash-1",
             contextSnapshotHash: "ctx-hash-1",
           }),
+          evidenceSnapshotHash: "approved-revision-1",
+          phase: 3,
         }),
       );
     }
+  });
+
+  it("builds only estimation-stage outputs for an evidence-validated technical route", async () => {
+    getModuleState.mockResolvedValue(
+      confirmedRouteModules("technical_product"),
+    );
+    const res = await POST(
+      req({
+        moveId: "m-technical",
+        phase: 3,
+        useCaseArchetype: "straightforward_dashboard",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    const json = (await res.json()) as {
+      confirmedSolutionRoute: { route: string; evidenceReference: string };
+      deliverables: Array<{ deliverableTypeKey: string }>;
+    };
+    expect(json.confirmedSolutionRoute).toEqual(
+      expect.objectContaining({
+        route: "technical_product",
+        evidenceReference: "evidence-approved-1",
+      }),
+    );
+    expect(json.deliverables.map((item) => item.deliverableTypeKey)).toEqual([
+      "target_state_architecture",
+      "requirements_traceability",
+    ]);
+    expect(createCalls.map((call) => call.deliverableType)).toEqual([
+      "target_state_architecture",
+      "requirements_traceability",
+    ]);
+    for (const call of createCalls) {
+      const payload = call.jobPayload as { decisionContext: string };
+      expect(payload.decisionContext).toContain(
+        "VALIDATED SOLUTION ROUTE: Technical product / data solution.",
+      );
+      expect(payload.decisionContext).toContain(
+        "Do not request an end-to-end process redesign or a full target operating model.",
+      );
+      expect(payload.decisionContext).toContain("Adoption owner:");
+      expect(payload.decisionContext).toContain("Claude Code/Codex");
+    }
+  });
+
+  it("builds bounded process-delta outputs for a validated limited workflow change", async () => {
+    getModuleState.mockResolvedValueOnce(
+      confirmedRouteModules("process_change", "limited"),
+    );
+    const res = await POST(
+      req({
+        moveId: "m-limited-process",
+        phase: 3,
+        useCaseArchetype: "workflow_automation",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    const json = (await res.json()) as {
+      deliverables: Array<{ deliverableTypeKey: string }>;
+    };
+    expect(json.deliverables.map((item) => item.deliverableTypeKey)).toEqual([
+      "target_state_architecture",
+      "process_change_estimate_brief",
+      "requirements_traceability",
+    ]);
+    expect(createCalls.map((call) => call.deliverableType)).toEqual([
+      "target_state_architecture",
+      "process_change_estimate_brief",
+      "requirements_traceability",
+    ]);
+  });
+
+  it("carries the evidence-validated route and transparent estimate method into P4 jobs", async () => {
+    getModuleState.mockResolvedValue(
+      confirmedRouteModules("technical_product"),
+    );
+    const res = await POST(
+      req({
+        moveId: "m-p4-technical",
+        phase: 4,
+        useCaseArchetype: "ams",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).toContain("ACCEPTED STAGE READINESS RESPONSE");
+    expect(decisionContext).toContain(
+      "APPROVED SCOPE BASIS: Technical product / data solution.",
+    );
+    expect(decisionContext).toContain("Do not add end-to-end process redesign");
+    expect(decisionContext).toContain("effort × rate arithmetic");
+    expect(decisionContext).toContain("Claude Code/Codex");
+    expect(decisionContext).toContain("named human reviewer");
   });
 
   it("separates legitimate P3 reruns with an explicit generation attempt id", async () => {
@@ -396,7 +818,24 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createCalls).toHaveLength(0);
   });
 
+  it("fails closed before P3 enqueue when the validated route lacks approved evidence", async () => {
+    listApprovedPhaseEvidence.mockResolvedValueOnce([]);
+    const res = await POST(
+      req({ moveId: "m-unverified-route", phase: 3, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual(
+      expect.objectContaining({ error: "solution_route_validation_required" }),
+    );
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
+  });
+
   it("does not enqueue not-applicable or merged P3 artifacts for a straightforward dashboard use case", async () => {
+    getModuleState.mockResolvedValueOnce(
+      confirmedRouteModules("technical_product"),
+    );
     loadApprovedSolutionApproach.mockResolvedValueOnce({
       decisionId: "decision-dashboard",
       decisionVersion: "1",
@@ -440,45 +879,20 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(res.status).toBe(202);
     const json = (await res.json()) as {
       adaptiveDepth: { complexityTier: string };
-      omittedDeliverables: Array<{
-        deliverableTypeKey: string;
-        applicability: string;
-        mergeInto?: string;
-      }>;
       deliverables: Array<{ deliverableTypeKey: string }>;
     };
     expect(json.adaptiveDepth.complexityTier).toBe("straightforward");
     expect(json.deliverables.map((d) => d.deliverableTypeKey)).toEqual([
       "target_state_architecture",
-      "solution_design",
       "requirements_traceability",
-      "planning_workshop_guide",
     ]);
-    expect(json.omittedDeliverables).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          deliverableTypeKey: "operating_model_design",
-          applicability: "merge_into_parent",
-          mergeInto: "solution_design",
-        }),
-        expect.objectContaining({
-          deliverableTypeKey: "sourcing_strategy",
-          applicability: "not_applicable",
-        }),
-      ]),
-    );
     expect(
       createCalls.map(
         (c) =>
           (c.jobPayload as { adaptiveDepth: { complexityTier: string } })
             .adaptiveDepth.complexityTier,
       ),
-    ).toEqual([
-      "straightforward",
-      "straightforward",
-      "straightforward",
-      "straightforward",
-    ]);
+    ).toEqual(["straightforward", "straightforward"]);
   });
 
   it("queues P2 root-cause with its own type and canonical registry key", async () => {
@@ -588,6 +1002,45 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         /(?<![A-Za-z0-9-])P\d(?![A-Za-z0-9])/,
       );
     }
+  });
+
+  it("blocks the roadmap build until a human-reviewed deterministic estimate model is saved", async () => {
+    getModuleState.mockResolvedValueOnce(
+      confirmedRouteModules("process_change").filter(
+        (module) => module.moduleKey !== "phase_4_estimates_capacity",
+      ),
+    );
+    const res = await POST(
+      req({ moveId: "m-estimate-open", phase: 4, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual(
+      expect.objectContaining({ error: "estimate_model_review_required" }),
+    );
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
+  });
+
+  it("passes calculated internal/vendor ranges and their reviewed basis to the roadmap build", async () => {
+    const res = await POST(
+      req({ moveId: "m-estimate-ready", phase: 4, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(202);
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).toContain("DETERMINISTIC ROADMAP ESTIMATE MODEL");
+    expect(decisionContext).toContain(
+      "Read-only reporting foundation / Data engineer / internal",
+    );
+    expect(decisionContext).toContain(
+      "Read-only reporting foundation / Data engineer / vendor",
+    );
+    expect(decisionContext).toContain("$1,100/$2,000/$2,900");
+    expect(decisionContext).toContain("$1,650/$3,000/$4,350");
+    expect(decisionContext).toContain("Reviewed by: Finance reviewer");
   });
 
   it("reports a per-deliverable error without aborting the batch, staying 202 if any queued", async () => {

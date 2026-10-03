@@ -10,6 +10,7 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from "../canvas-substrate";
+import { evidenceForStage } from "../canonical-specs/evidence-requirements";
 
 const REVIEW_REASON =
   "Sponsor reviewed the evidence bundle and approves this gate.";
@@ -87,7 +88,21 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
-  it("allows a named human review to clear ready client-stated evidence", () => {
+  it("does not demand a sponsor commitment from SELF Strategy while keeping other evidence mandatory", () => {
+    const base = {
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady().filter((row) => row.requirementId !== "EVID-SRC-STR-SPONSOR-COMMIT"),
+      reason: "Event Owner reviewed the strategy and evidence.",
+    };
+    expect(evaluateCriterionMetReadiness({ ...base, approvalPolicyCode: "self_v1" }).ok).toBe(true);
+    expect(evaluateCriterionMetReadiness(base).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready", detail: expect.stringContaining("Sponsor commitment") }),
+    ]));
+    expect(evaluateCriterionMetReadiness({ ...base, evidence: base.evidence.filter((row) => row.requirementId !== "EVID-SRC-STR-TRIGGER"), approvalPolicyCode: "self_v1" }).ok).toBe(false);
+  });
+
+  it("keeps the file-backed Strategy trigger blocked when only client-stated narrative exists", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
       artifacts: [
@@ -106,7 +121,12 @@ describe("Source governance enforcement", () => {
       reason: REVIEW_REASON,
     });
 
-    expect(verdict.ok).toBe(true);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "required_evidence_unverified" }),
+      ]),
+    );
   });
 
   it("keeps client-stated evidence blocked during automatic assessment", () => {
@@ -160,7 +180,39 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
-  it("allows a hard gate when client-stated evidence has explicit usable-evidence review", () => {
+  it("rejects an unbacked incumbent contract even after explicit human review", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady({ incumbent: { sourceArtifactId: null, sourceEventFactIds: [] } }),
+      reason: REVIEW_REASON,
+      approvalPolicyCode: "self_v1",
+    });
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_unverified", detail: expect.stringContaining("Incumbent contract package") }),
+    ]));
+  });
+
+  it("accepts an audited no-incumbent decision during computed Strategy readiness", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady({ incumbent: {
+        currentState: "Not Requested", sourceArtifactId: null,
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "This net-new service has no incumbent agreement or renewal history.",
+        applicabilityActorUserId: "event-owner",
+        applicabilityDecidedAt: "2026-09-28T00:00:00Z",
+      } }),
+      reason: "system-auto-assessment",
+      skipApprovalReasonCheck: true,
+      approvalPolicyCode: "self_v1",
+    });
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("does not treat a client-stated incumbent as an executed agreement even at Usable Evidence", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
       artifacts: [
@@ -179,7 +231,10 @@ describe("Source governance enforcement", () => {
       reason: REVIEW_REASON,
     });
 
-    expect(verdict.ok).toBe(true);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_unverified" }),
+    ]));
   });
 
   it("does not apply the client-stated provenance hold to soft criteria", () => {
@@ -202,7 +257,7 @@ describe("Source governance enforcement", () => {
           requirementId: "EVID-SRC-EVAL-RATER-SCORES",
           stage: "evaluation",
           currentState: "Available",
-          sourceArtifactId: null,
+          sourceArtifactId: "artifact-rater-scores",
         }),
         evidence({
           requirementId: "EVID-SRC-EVAL-WEIGHT-RATIONALE",
@@ -220,7 +275,7 @@ describe("Source governance enforcement", () => {
           requirementId: "EVID-SRC-EVAL-TCO-NORMALIZATION",
           stage: "evaluation",
           currentState: "Available",
-          sourceArtifactId: null,
+          sourceArtifactId: "artifact-tco-model",
         }),
       ],
       reason: REVIEW_REASON,
@@ -279,6 +334,69 @@ describe("Source governance enforcement", () => {
         expect.arrayContaining([
           expect.objectContaining({ code: "signer_proof_not_verified" }),
         ]),
+      );
+    },
+  );
+
+  it("accepts an audited prior-baseline absence without waiving other Scope evidence", () => {
+    const required = evidenceForStage("scope")
+      .filter((row) => row.level === "required")
+      .map((row) => evidence({
+        requirementId: row.requirementId,
+        stage: "scope",
+        currentState: "Usable Evidence",
+        sourceArtifactId: `artifact-${row.requirementId}`,
+      }));
+    const priorBaseline = required.find((row) => row.requirementId === "EVID-SRC-SCOPE-FY-CONTRACT")!;
+    const audited = required.map((row) => row === priorBaseline ? {
+      ...row,
+      currentState: "Not Requested" as const,
+      sourceArtifactId: null,
+      applicabilityStatus: "not_applicable" as const,
+      applicabilityReason: "No prior agreement or verified run-cost baseline exists for this new service.",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-29T00:00:00Z",
+    } : row);
+    const input = {
+      criterion: criterion({ criterionId: "GATE-SCOPE-03", fromStage: "scope", toStage: "rfp" }),
+      artifacts: [artifact({ artifactCode: "d06_excl_log", stage: "scope", status: "approved", linkedArtifactId: "reviewed-exclusions" })],
+      evidence: audited,
+      reason: "The Event Owner reviewed the Scope boundary and its evidence limitations.",
+      approvalPolicyCode: "self_v1" as const,
+    };
+
+    expect(evaluateCriterionMetReadiness(input).ok).toBe(true);
+    expect(evaluateCriterionMetReadiness({
+      ...input,
+      evidence: audited.filter((row) => row.requirementId !== "EVID-SRC-SCOPE-WORKFORCE"),
+    }).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready", detail: expect.stringContaining("Workforce") }),
+    ]));
+  });
+
+  it.each(["GATE-SCOPE-02", "GATE-SCOPE-04"])(
+    "uses Event Owner authority for %s only under explicit SELF policy",
+    (criterionId) => {
+      const input = {
+        criterion: criterion({ criterionId, fromStage: "scope", toStage: "rfp", state: "met" }),
+        artifacts: [artifact({
+          artifactCode: "d05_scope_memo",
+          stage: "scope",
+          status: "approved",
+          linkedArtifactId: "scope-memo",
+        })],
+        evidence: [],
+        reason: REVIEW_REASON,
+        approvalPolicyCode: "self_v1" as const,
+      };
+      expect(evaluateCriterionMetReadiness(input).blockers).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "signer_proof_not_verified" })]),
+      );
+      expect(evaluateCriterionMetReadiness({
+        ...input,
+        artifacts: [],
+      }).blockers).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "linked_artifact_not_committed" })]),
       );
     },
   );

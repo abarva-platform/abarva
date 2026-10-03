@@ -1,0 +1,7 @@
+step,actor,system_or_surface,minimum_future_state,control_or_exception,delivery_boundary,evidence_reference
+1,Agent,Contact-center desktop,Open authorized interaction and see context panel,Use existing identity and role; no record mutation,Solution concept only,SYN-WF-01;SYN-SYS-01
+2,Assist service,Read-only context layer,Retrieve only authorized claim/eligibility/authorization facts,Enforce source ACL and tenant fence; show timestamps,Design for estimation not API implementation,SYN-SYS-01;SYN-RED-01
+3,Assist service,Approved knowledge search,Retrieve current approved content with source label and review date,If stale/conflicting abstain and route to human owner,No full knowledge operations redesign,SYN-KNOW-01;SYN-CONFLICT-02
+4,Agent,Context panel,Review concise answer draft and source references,Agent remains accountable for interpretation,Synthetic acceptance test required,SYN-RED-02;SYN-RED-06
+5,Agent,Existing CRM workflow,Copy/edit and deliberately confirm summary if useful,No automatic writeback; retain audit of human action,Future integration gated by approval,SYN-RED-03
+6,Supervisor,Existing quality process,Review sample of interactions and exceptions,Escalate unsafe or unsupported answer; maintain human route,Sampling design remains roadmap item,SYN-SESSION-OPS-01

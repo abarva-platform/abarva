@@ -1,0 +1,127 @@
+{
+  "item": "T-778",
+  "title": "Replace the one byte case holding src/components/intelligence-advisory/__tests__ dark with rendered stream cases, then wire the directory",
+  "recordedAt": "2026-09-30T07:20:50Z",
+  "base": "c35a38a56517b48ea974939ffc15573d8c0c77fe",
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair",
+    "already_verdicted_elsewhere"
+  ],
+  "scope": {
+    "drawnFrom": "The directory T-776 held (heldDirectories.src/components/intelligence-advisory/__tests__, successorFiledAs T-778). Judged whole: every test file in it is a row here.",
+    "drawSize": 4,
+    "everyFileWasExecuted": "Each file run on its own with npx jest --runTestsByPath after the rewrite; the directory ran 0 failing / 19 passing of 19 on the base and 0 failing / 20 passing of 20 after (one byte case deleted, two rendered cases added).",
+    "greenOnRun": 4,
+    "redOnRun": 0
+  },
+  "wiring": {
+    "workflow": ".github/workflows/unit-suites.yml",
+    "directories": [
+      "src/components/intelligence-advisory/__tests__"
+    ],
+    "suitesWired": 4,
+    "casesWired": 20,
+    "namedAsADirectory": "Named as a DIRECTORY without a trailing slash, and the line leaves src/__tests__/behaviors/product-directory-ci-coverage.baseline.json in the same change.",
+    "provenBy": "src/__tests__/behaviors/t778-intelligence-advisory-wiring.test.ts, answering through the census resolver (collectReachableCommands + reachableEntrySelects), never by grepping the workflow."
+  },
+  "heldDirectories": {},
+  "mutations": {
+    "M1_finalizer_call_removed_from_stream_path": "caught by the rendered case 'clears the in-progress stream status once a fence-only answer completes'",
+    "M1c_same_removal_with_the_old_substring_left_in_a_comment": "the base suite passes 4 of 4; the rewritten suite fails 1 of 5",
+    "M2_delta_handler_strip_removed": "caught by the rendered mid-stream assertion (both rendered cases fail)",
+    "M3_strip_removed_from_finalizeAssistantMessage_only": "caught by the unit case only. On the mounted page it is an equivalent mutant: the delta handler already re-strips the whole accumulation on every chunk, so the finalizer's strip finds nothing left to remove over every chunking tried (whole fence, split tag, split JSON, unterminated last line, fence only).",
+    "M4_both_strips_removed": "caught by the unit case and both rendered cases",
+    "M5_finalizer_keeps_streamStatus": "caught by the rendered fence-only completion case"
+  },
+  "defectFoundNotFixed": {
+    "filedAs": "U-549",
+    "summary": "When a chunk boundary falls inside the follow-up JSON, the delta handler strips the unclosed opener and the tail of the payload (for example `change this view?\"] ```) stays in the visible answer. The finalizer does not catch it because the opener is already gone. Reproduced on the mounted page on base; not fixed here because this item changes no product file."
+  },
+  "claimedWriteFiles": [
+    "src/components/intelligence-advisory/__tests__/finalize-assistant-message.test.ts",
+    ".github/workflows/unit-suites.yml",
+    "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
+    "docs/architecture/t778-intelligence-advisory-triage.json",
+    "src/__tests__/behaviors/t778-intelligence-advisory-wiring.test.ts",
+    "docs/architecture/test-ci-coverage-census.json",
+    "docs/releases/records/2026-09-30-t778-intelligence-advisory-rendered-finalize.md"
+  ],
+  "suites": [
+    {
+      "path": "src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx",
+      "directory": "src/components/intelligence-advisory/__tests__",
+      "draw": "T-778 rewrite of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 2,
+      "passedTests": 2,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-778",
+      "wiredInThisItem": true,
+      "rationale": "Green 2 of 2, behavioural, reads no repository file. Wired with its directory now that the sibling's byte case is gone."
+    },
+    {
+      "path": "src/components/intelligence-advisory/__tests__/finalize-assistant-message.test.ts",
+      "directory": "src/components/intelligence-advisory/__tests__",
+      "draw": "T-778 rewrite of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "passedTests": 5,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-778",
+      "wiredInThisItem": true,
+      "rationale": "Rewritten. The case that read AdvisoryIntelligencePage.tsx for the substring '? finalizeAssistantMessage(m)' is deleted, not sharpened, along with the file read. Two rendered cases replace it: the page is mounted, a starter prompt is clicked, and a controlled /api/intelligence/ask stream is released chunk by chunk with no agent-answer packet. One asserts the follow-up fence never shows, read once while the stream is still open and once after it closes; the other asserts a fence-only answer does not leave the last progress status standing as the finished answer. The three unit cases are unchanged. Five mutations run; all five caught, and M3 is caught only by the unit case because it is equivalent on the mounted page (see mutations).",
+      "supersedes": "docs/architecture/t776-stale-suite-triage.json row for this path (sourceTextScanner true, verdict rewrite_as_behavior)"
+    },
+    {
+      "path": "src/components/intelligence-advisory/__tests__/intelligence-starter-prompts.test.ts",
+      "directory": "src/components/intelligence-advisory/__tests__",
+      "draw": "T-778 rewrite of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "passedTests": 4,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-778",
+      "wiredInThisItem": true,
+      "rationale": "Green 4 of 4, behavioural, reads no repository file. Wired with its directory now that the sibling's byte case is gone."
+    },
+    {
+      "path": "src/components/intelligence-advisory/__tests__/resolveAssistantAnswerText.test.ts",
+      "directory": "src/components/intelligence-advisory/__tests__",
+      "draw": "T-778 rewrite of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 9,
+      "passedTests": 9,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-778",
+      "wiredInThisItem": true,
+      "rationale": "Green 9 of 9, behavioural, reads no repository file. Wired with its directory now that the sibling's byte case is gone."
+    }
+  ]
+}

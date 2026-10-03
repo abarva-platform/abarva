@@ -1,16 +1,17 @@
 import type { PhasePack } from '../types';
 import { P5_ACTIVATE } from '../P5_activate';
 
-describe('P5 Approval & Mobilization · PhasePack contract', () => {
-  it('conforms to PhasePack and uses corrected approval package label', () => {
+describe('P5 Mobilize & Handoff · PhasePack contract', () => {
+  it('conforms to PhasePack and defines P5 as handoff, not execution', () => {
     const pack: PhasePack = P5_ACTIVATE;
     expect(pack.phase).toBe(5);
     expect(pack.label).toBe('P5 Mobilize & Handoff');
-    expect(pack.outcome).toContain('funding-and-authority package');
-    expect(pack.outcome).toContain('Control Tower can begin monitoring setup');
+    expect(pack.outcome).toContain('approved P4 roadmap');
+    expect(pack.outcome).toContain('project delivery occurs in their execution environment');
+    expect(pack.outcome).not.toContain('execution should start outside AbarVa');
   });
 
-  it('requires business case, sponsor alignment, readiness, and Tower handoff plan', () => {
+  it('requires approved P4 carry-forward, named owners, and Tower handoff acceptance', () => {
     const dodIds = P5_ACTIVATE.definitionOfDone.map((d) => d.id);
     expect(dodIds).toEqual(expect.arrayContaining([
       'business-case-approved',
@@ -18,6 +19,11 @@ describe('P5 Approval & Mobilization · PhasePack contract', () => {
       'readiness-and-change-plan-signed-off',
       'tower-handoff-plan-accepted',
     ]));
+    expect(P5_ACTIVATE.definitionOfDone[0]?.evaluationHint).toContain(
+      'P5 does not recompute or silently alter them',
+    );
+    expect(P5_ACTIVATE.steps?.find((step) => step.id === 'p5-p6-readiness')?.label)
+      .toContain('Tower measurement handoff');
   });
 
   it('declares 8 approval and mobilization steps', () => {

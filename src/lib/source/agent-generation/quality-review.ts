@@ -10,9 +10,10 @@ import {
   type ConsultingGradeReview,
 } from "@/lib/deliverables/quality/consulting-grade-rubric";
 import {
-  formatD09RfpEvidenceCoverage,
   resolveGenerationEvidenceState,
+  resolveStrategyEvidenceGateRole,
 } from "./prompt-registry";
+import { buildD09VendorDraftContext } from "./d09-vendor-context";
 import type { SourceGenerationContext } from "./types";
 import { getSourceArtifactProfile } from "@/lib/source/documentation-standards/source-artifact-profiles";
 
@@ -59,7 +60,96 @@ export interface DeterministicSourceClaimViolation {
 const DETERMINISTIC_CLAIM_GATE_CODES = new Set([
   "d01_strategy_memo",
   "d02_value_target",
+  "d09_rfp_pack",
 ]);
+
+const D09_SERVICE_TARGET =
+  /\b(?:availability|uptime|(?:p[1-4]|critical|standard)\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b[^\n]{0,100}\b\d+(?:\.\d+)?\s*(?:%|percent\b|business\s+days?\b|minutes?\b|hours?\b|days?\b)/i;
+const D09_REGULATED_OBLIGATION =
+  /\b(?:HIPAA|HITECH|PHI|protected\s+health\s+information|HITRUST|healthcare[-\s]regulated|45\s+CFR|NIST\s+(?:CSF|SP)|SOC\s*2(?:\s*Type\s*II)?|ISO\s*27001)\b/gi;
+const D09_SECTOR_CLAIMS = [
+  /\bpatient[-\s]facing\b/i,
+  /\bclinical[-\s]support\b/i,
+  /\bclinical\s+(?:systems?|workloads?|operations?|workflows?|care)\b/i,
+  /\bhealthcare\s+data\s+environments?\b/i,
+];
+const D09_MATERIAL_VALUES = /\$\s*\d[\d,]*(?:\.\d+)?|\b\d+(?:\.\d+)?\s*%/gi;
+const D09_TARGET_VALUE = /\b\d+(?:\.\d+)?\s*(?:%|business\s+days?|minutes?|hours?|days?)/i;
+const D09_TARGET_METRIC =
+  /\b(?:availability|uptime|p[1-4]\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b/i;
+
+function isExplicitlyUnissuedTerm(line: string, index: number, term: string): boolean {
+  const prefix = line.slice(0, index);
+  const remainder = line.slice(index + term.length);
+  const separator = remainder.search(/[:|;]/);
+  if (separator < 0 || separator > 55) return false;
+  if (/\b(?:must|shall|will|supports?|covers?|applies|comply)\b/i.test(prefix + remainder.slice(0, separator))) {
+    return false;
+  }
+  return /^not issued\b/i.test(remainder.slice(separator + 1).trimStart());
+}
+
+function findUnboundD09Obligations(
+  body: string,
+  sourceContext: string,
+): DeterministicSourceClaimViolation[] {
+  const sourceLines = sourceContext.split("\n")
+    .map((line) => line.replace(/[-‐‑–—]/g, " ").replace(/\s+/g, " ").toLowerCase())
+    .filter((line) => !/\b(?:pending|not issued|not applicable|unapproved|not approved|no approval|out of scope|excluded|not in scope)\b/.test(line));
+  return body.split("\n").flatMap((rawLine) => {
+    const line = rawLine.replace(/\s+/g, " ").trim();
+    if (!line || sourceLines.some((sourceLine) => sourceLine.includes(line.toLowerCase()))) return [];
+    const violations: DeterministicSourceClaimViolation[] = [];
+    const target = line.match(D09_TARGET_VALUE)?.[0].toLowerCase();
+    const metric = line.match(D09_TARGET_METRIC)?.[0].toLowerCase();
+    const supportedTarget = Boolean(target && metric && sourceLines.some(
+      (sourceLine) => sourceLine.includes(target) && sourceLine.includes(metric),
+    ));
+    const materialValues = line.match(D09_MATERIAL_VALUES) ?? [];
+    const onlyResponseCompletion =
+      /\b100\s*%\s+of\s+(?:mandatory\s+)?(?:response\s+)?(?:fields?|items?|requirements?)\b/i.test(line) &&
+      materialValues.every((value) => /^100\s*%$/i.test(value));
+    if (D09_SERVICE_TARGET.test(line) && !supportedTarget) {
+      violations.push({
+        claim: line.slice(0, 220),
+        reason: "Specific service target is absent from the bounded vendor-facing evidence.",
+      });
+    } else if (!D09_SERVICE_TARGET.test(line) &&
+      materialValues.length > 0 &&
+      !onlyResponseCompletion
+    ) {
+      violations.push({
+        claim: line.slice(0, 220),
+        reason: "Quantified commercial or performance claim is absent from the bounded vendor-facing evidence.",
+      });
+    }
+    for (const match of line.matchAll(D09_REGULATED_OBLIGATION)) {
+      const term = match[0];
+      const normalizedTerm = term.replace(/\s+/g, "").toLowerCase();
+      if (!isExplicitlyUnissuedTerm(line, match.index, term) &&
+        !sourceLines.some((sourceLine) => sourceLine.replace(/\s+/g, "").includes(normalizedTerm))) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: `Regulated-data or compliance obligation (${term}) is absent from the bounded vendor-facing evidence.`,
+        });
+      }
+    }
+    for (const pattern of D09_SECTOR_CLAIMS) {
+      const match = line.match(pattern);
+      const term = match?.[0];
+      if (term && match && !isExplicitlyUnissuedTerm(line, match.index ?? 0, term) &&
+        !sourceLines.some((sourceLine) =>
+        sourceLine.includes(term.replace(/[-‐‑–—]/g, " ").toLowerCase())
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: `Sector or clinical workload claim (${term}) is absent from the bounded vendor-facing evidence.`,
+        });
+      }
+    }
+    return violations;
+  });
+}
 
 /**
  * Deterministic backstop for the artifacts that establish the event's
@@ -71,8 +161,12 @@ export function findDeterministicSourceClaimViolations(args: {
   artifactCode: string;
   body: string;
   sourceContext: string;
+  ctx?: SourceGenerationContext;
 }): DeterministicSourceClaimViolation[] {
   if (!DETERMINISTIC_CLAIM_GATE_CODES.has(args.artifactCode)) return [];
+  if (args.artifactCode === "d09_rfp_pack") {
+    return findUnboundD09Obligations(args.body, args.sourceContext);
+  }
 
   const supportedNumbers = extractMaterialNumbers(args.sourceContext);
   const violations: DeterministicSourceClaimViolation[] = [];
@@ -102,7 +196,8 @@ export function findDeterministicSourceClaimViolations(args: {
   }
 
   const generalizationPatterns = [
-    /\b(?:typically|frequently|almost always|industry benchmark|market benchmark|best practice)\b/i,
+    /\b(?:typically|frequently|almost always|industry benchmark|best practice)\b/i,
+    /\bmarket benchmarks?\s+(?:show|indicate|suggest|confirm|prove|demonstrate)\b/i,
     /\bmarket\s+(?:is|remains|appears)\s+(?:active|receptive|competitive|favorable)\b/i,
     /\b(?:providers?|vendors?)\s+(?:are|remain)\s+competing\s+aggressively\b/i,
     /\bperiod of vendor capacity constraint\b/i,
@@ -111,15 +206,35 @@ export function findDeterministicSourceClaimViolations(args: {
     /\bcompared\s+with\s+[^.!?]*\b(?:typical|equivalent)\b/i,
     /\bpricing\s+can\s+diverge\s+from\s+market\b/i,
   ];
+  const sourceBoundGeneralizationPatterns = [
+    /\bamong the (?:highest|lowest)[-\w]*(?:\s+[\w-]+){0,8}\s+(?:services?|categories?|segments?)\b/i,
+    /\bamong the most commonly (?:assessed|sourced|outsourced|used)\b/i,
+    /\broutinely (?:generate|generates|deliver|delivers|produce|produces|achieve|achieves)\b/i,
+  ].filter((pattern) => !pattern.test(args.sourceContext));
   for (const sentence of args.body.split(/(?<=[.!?])\s+|\n+/)) {
     const text = sentence.replace(/\s+/g, " ").trim();
     if (!text) continue;
+    if (
+      /\b(?:vendors?|providers?)\b[^.!?]{0,100}\b(?:price aggressively|recover margin)\b/i.test(text) &&
+      !/\b(?:vendors?|providers?)\b[^.!?]{0,100}\b(?:price aggressively|recover margin)\b/i.test(args.sourceContext)
+    ) {
+      violations.push({
+        claim: text.slice(0, 220),
+        reason: "Unverified vendor-pricing mechanism requires named bound evidence.",
+      });
+    }
     if (isEvidenceAbsenceStatement(text)) continue;
     if (generalizationPatterns.some((pattern) => pattern.test(text))) {
       violations.push({
         claim: text.slice(0, 220),
         reason:
           "External benchmark or current-market assertion is not established by the bound event evidence.",
+      });
+    }
+    if (sourceBoundGeneralizationPatterns.some((pattern) => pattern.test(text))) {
+      violations.push({
+        claim: text.slice(0, 220),
+        reason: "Category ranking or routine outcome claim is absent from the bound event evidence.",
       });
     }
   }
@@ -130,6 +245,86 @@ export function findDeterministicSourceClaimViolations(args: {
       reason:
         "Client-facing narrative exposes an internal artifact identifier instead of a friendly evidence citation.",
     });
+  }
+
+  if (args.ctx) {
+    const lines = args.body.split(/\n+/).map((line) => line.trim());
+    const blockingClaim = /\b(?:required|must|prerequisite|blocks?|cannot\s+(?:close|advance)|request-or-waive)\b/i;
+    const explicitNonblocking = /\b(?:not required|does not require|does not block|not a prerequisite)\b/i;
+    for (const item of args.ctx.evidence.filter((evidence) => evidence.stage === "strategy")) {
+      const role = resolveStrategyEvidenceGateRole({
+        requirementId: item.requirementId,
+        approvalPolicyCode: args.ctx.event.approvalPolicyCode,
+        applicabilityStatus: item.applicabilityStatus,
+      });
+      if (role.level !== "recommended") continue;
+      for (const line of lines.filter((text) =>
+        text.includes(item.requirementId) && blockingClaim.test(text) && !explicitNonblocking.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Recommended evidence cannot become a Strategy gate prerequisite.",
+        });
+      }
+    }
+    for (const item of args.ctx.evidence.filter(
+      (evidence) => evidence.stage === "strategy" && evidence.applicabilityStatus === "not_applicable",
+    )) {
+      for (const line of lines.filter((text) =>
+        text.includes(item.requirementId) && /\bnot requested\b/i.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Requirement contradicts an audited not-applicable decision.",
+        });
+      }
+    }
+    if (args.ctx.event.approvalPolicyCode === "self_v1") {
+      for (const line of lines.filter((text) =>
+        /EVID-SRC-STR-SPONSOR-COMMIT|executive sponsor commitment/i.test(text) &&
+        blockingClaim.test(text) &&
+        !explicitNonblocking.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Separate sponsor commitment is not required by this event's SELF policy.",
+        });
+      }
+    }
+    if (args.ctx.event.currentStageKey === "strategy") {
+      const clauses = lines.flatMap((line) => line.split(/(?<=[.!?])\s+|[;|]/));
+      const directRfpTransition = /\badvance(?:s|ment)?(?:\s+(?:the|this)\s+event)?\s+(?:directly\s+)?(?:into|to)\s+(?:the\s+)?(?:RFP|market package)\b/i;
+      for (const clause of clauses) {
+        const match = directRfpTransition.exec(clause);
+        if (!match) continue;
+        const beforeClaim = clause.slice(Math.max(0, match.index - 60), match.index);
+        if (/\b(?:do(?:es)? not|cannot|must not|should not|will not|never|not yet)\b(?:\s+\w+){0,3}\s*$/i.test(beforeClaim)) continue;
+        violations.push({
+          claim: clause.trim().slice(0, 220),
+          reason: "Strategy approval advances only to Define/Scope; it does not authorize a direct RFP or market-package transition.",
+        });
+      }
+    }
+    const strategyCriteria = args.ctx.gateCriteria.filter(
+      (criterion) => criterion.fromStage === "strategy",
+    );
+    const strategyGatePending = args.ctx.event.currentStageKey === "strategy" &&
+      (strategyCriteria.length === 0 || strategyCriteria.some(
+        (criterion) => criterion.state !== "met" && criterion.state !== "waived",
+      ));
+    if (strategyGatePending) {
+      const clauses = lines.flatMap((line) => line.split(/(?<=[.!?])\s+|[;|]/));
+      for (const clause of clauses.filter((text) =>
+        /\b(?:event is ready to advance|approve at the strategy gate|approve to advance|approval to advance|record approval|grant approval|advance (?:this|the) event|there are no blocking gaps|(?:pending|all (?:three|3) pending) (?:gate )?criteria (?:are ready to be|can be) closed)\b/i.test(text) &&
+        !/\b(?:not ready|do not (?:recommend )?approve|do not recommend approval|cannot approve|approval to advance is not recommended|(?:do not|don't|cannot|must not|should not|not yet)\b.{0,60}\b(?:record approval|grant approval|advance (?:this|the) event))\b/i.test(text) &&
+        !/\b(?:if|once|after|only after)\b[^.;|]{0,90}\b(?:all|each|every)\b[^.;|]{0,40}\bcriteri(?:on|a)\b[^.;|]{0,40}\b(?:met|closed|approved)\b/i.test(text),
+      )) {
+        violations.push({
+          claim: clause.trim().slice(0, 220),
+          reason: "Advancement claim contradicts a pending Strategy gate.",
+        });
+      }
+    }
   }
 
   return uniqueViolations(violations).slice(0, 12);
@@ -150,6 +345,7 @@ function extractTemporalClaims(text: string): Array<{
     /\b20\d{2}-(?:0[1-9]|1[0-2])\b/g,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(?:-|–|to)\s*(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s*-\s*|\s+)(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
+    /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:(?:post[- ]go[- ]live|after\s+go[- ]live)\s+)?quarters?\b/gi,
   ];
   for (const pattern of patterns) {
     for (const match of text.matchAll(pattern)) {
@@ -219,14 +415,16 @@ function normalizeTemporalClaim(raw: string): string {
   }
   const duration = normalized
     .replace(/(?<=\w)-(?=\w)/g, " ")
+    .replace(/\b(?:post go live|after go live)\s+/g, "")
     .match(
-      /^(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(business\s+)?(day|days|week|weeks|month|months|year|years)$/,
+      /^(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(business\s+)?(day|days|week|weeks|month|months|quarter|quarters|year|years)$/,
     );
   if (duration) {
     const amount = durationWordToNumber(duration[1]);
     const unit = duration[3].replace(/s$/, "");
     if (amount !== null) {
       if (unit === "year") return `duration-month:${amount * 12}`;
+      if (unit === "quarter") return `duration-month:${amount * 3}`;
       if (unit === "month") return `duration-month:${amount}`;
       return `duration-${duration[2] ? "business-" : ""}${unit}:${amount}`;
     }
@@ -385,15 +583,27 @@ export function buildSourceQualitySourceContext(args: {
 }): string {
   const { ctx, upstreamBound, artifactCode } = args;
   const isRfpPackage = artifactCode === "d09_rfp_pack";
+  if (isRfpPackage) return buildD09VendorDraftContext(ctx);
   const upstreamLines = Object.entries(upstreamBound).map(([code, body]) => {
     const excerpt = body.replace(/\s+/g, " ").trim().slice(0, 900);
     return `- ${code}: ${excerpt}${body.length > 900 ? "..." : ""}`;
   });
   const evidenceLines = ctx.evidence.map((item) => {
     const state = resolveGenerationEvidenceState(ctx, item, isRfpPackage);
+    const role = item.stage === "strategy"
+      ? resolveStrategyEvidenceGateRole({
+          requirementId: item.requirementId,
+          approvalPolicyCode: ctx.event.approvalPolicyCode,
+          applicabilityStatus: item.applicabilityStatus,
+        })
+      : null;
     return [
       `- ${item.requirementId}`,
       `state=${state}`,
+      `applicability=${item.applicabilityStatus ?? "applicable"}`,
+      role ? `level=${role.level}` : null,
+      role ? `policy_applies=${role.policyApplies}` : null,
+      role ? `gate_blocking=${role.gateBlocking}` : null,
       item.sourceArtifactId ? "source=linked evidence record" : null,
       item.notes ? `notes=${item.notes}` : null,
     ]
@@ -436,6 +646,7 @@ export function buildSourceQualitySourceContext(args: {
   return [
     `Tenant: ${ctx.tenantName} (${ctx.tenantKey})`,
     `Event: ${ctx.event.name} (${ctx.event.code})`,
+    `Approval policy: ${ctx.event.approvalPolicyCode ?? "unknown"}`,
     ctx.event.owner ? `Owner: ${ctx.event.owner}` : "Owner: not recorded",
     ctx.event.estimatedValueUsd
       ? `Estimated value: $${ctx.event.estimatedValueUsd.toLocaleString()}`
@@ -456,13 +667,6 @@ export function buildSourceQualitySourceContext(args: {
     uploadedEvidenceLines.length
       ? uploadedEvidenceLines.join("\n")
       : "- none",
-    ...(isRfpPackage
-      ? [
-          "",
-          "D09 RFP evidence coverage semantics:",
-          formatD09RfpEvidenceCoverage(ctx),
-        ]
-      : []),
     "",
     "Gate criteria states:",
     gateLines.length ? gateLines.join("\n") : "- none",
@@ -475,7 +679,36 @@ export function buildSourceConsultingGradeReviewPrompt(args: {
   bodyMarkdown: string;
   sourceContext: string;
 }): string {
-  return buildConsultingGradeReviewPrompt(args);
+  return withSourceReviewEvidenceLimits(buildConsultingGradeReviewPrompt(args));
+}
+
+const SOURCE_REVIEW_EVIDENCE_LIMITS = [
+  "Source review evidence limits override generic commercial-specificity guidance:",
+  "Do not request or add illustrative, proxy, or sector-typical financial amounts unless the bound source context supplies both the values and their evidence.",
+  "Commercial specificity can be shown through named levers, an unquantified range, and the evidence needed to size it when no baseline is available.",
+  "Do not turn recommended evidence into a gate requirement or invent a collection date; name the accountable owner and leave the date client-to-set.",
+  "Ignore review fixes that conflict with these evidence limits; keep the gap explicit instead of manufacturing a number, date, or authority.",
+].join("\n");
+
+function withSourceReviewEvidenceLimits(prompt: string): string {
+  return `${SOURCE_REVIEW_EVIDENCE_LIMITS}\n\n${prompt}`;
+}
+
+function boundedSourceReviewFix(fix: string, sourceContext: string): string {
+  const supportedNumbers = extractMaterialNumbers(sourceContext);
+  const unboundNumber = extractMaterialNumberClaims(fix).some(
+    (claim) => !supportedNumbers.some((value) => materiallyEqual(value, claim.value)),
+  );
+  const proxyAmount = /\b(?:illustrative|proxy|sector-typical)\b.{0,100}\b(?:financial|dollar|spend|range|rate|contribution|percent)\b/i.test(fix);
+  if (unboundNumber || proxyAmount) {
+    return "Keep the financial scale unquantified until bound evidence supplies its values.";
+  }
+
+  const supportedTiming = new Set(extractTemporalClaims(sourceContext).map((claim) => claim.key));
+  if (extractTemporalClaims(fix).some((claim) => !supportedTiming.has(claim.key))) {
+    return "Leave timing client-to-set until a bound source supplies the date or duration.";
+  }
+  return fix;
 }
 
 export function buildSourceConsultingGradeCompactRetryPrompt(args: {
@@ -485,7 +718,7 @@ export function buildSourceConsultingGradeCompactRetryPrompt(args: {
   sourceContext: string;
   previousError: string;
 }): string {
-  return buildConsultingGradeCompactRetryPrompt(args);
+  return withSourceReviewEvidenceLimits(buildConsultingGradeCompactRetryPrompt(args));
 }
 
 export function buildSourceConsultingGradeRewritePrompt(args: {
@@ -495,7 +728,20 @@ export function buildSourceConsultingGradeRewritePrompt(args: {
   sourceContext: string;
   review: ConsultingGradeReview;
 }): string {
-  return buildConsultingGradeRewritePrompt(args);
+  const review = {
+    ...args.review,
+    dimensionScores: args.review.dimensionScores.map((dimension) => ({
+      ...dimension,
+      requiredFixes: dimension.requiredFixes.map((fix) =>
+        boundedSourceReviewFix(fix, args.sourceContext)),
+    })),
+    rewriteGuidance: args.review.rewriteGuidance.map((fix) =>
+      boundedSourceReviewFix(fix, args.sourceContext)),
+  };
+  return withSourceReviewEvidenceLimits(buildConsultingGradeRewritePrompt({
+    ...args,
+    review,
+  }));
 }
 
 export function parseSourceConsultingGradeReview(args: {

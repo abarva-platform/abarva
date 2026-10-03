@@ -62,6 +62,11 @@ export function sourceForIds(
   signalPacket: EnterpriseSignalPacket,
 ): ClaimSource {
   const resolved = resolveEvidence(evidenceIds, signalPacket);
+  const missingSourceCount = resolved.filter(
+    (item) =>
+      item.unresolved ||
+      (item.id.startsWith("ctx_ecl_") && !item.evidenceRefs?.length),
+  ).length;
   const labels: string[] = [];
   for (const item of resolved) {
     for (const domain of item.domains) {
@@ -78,11 +83,8 @@ export function sourceForIds(
         : labels.length <= 2
           ? labels.join(" · ")
           : `${labels[0]} · ${labels[1]} + ${labels.length - 2} more`,
-    ids: evidenceReferenceSummary(
-      evidenceIds.length,
-      resolved.filter((item) => item.unresolved).length,
-    ),
-    hasUnresolved: resolved.some((r) => r.unresolved),
+    ids: evidenceReferenceSummary(evidenceIds.length, missingSourceCount),
+    hasUnresolved: missingSourceCount > 0,
   };
 }
 

@@ -14,6 +14,8 @@ import {
 } from "../renderers";
 import { scanForInternalLeaks } from "../source-register";
 import { goodDocument } from "../__fixtures__/ams-rfp";
+import { extractOfficeText } from "../../shared/office-text-extract";
+import { scanClientReadiness } from "../../shared/client-readiness-scan";
 
 describe("DOCX renderer", () => {
   it("produces a valid .docx buffer with the title in metadata", async () => {
@@ -59,6 +61,94 @@ describe("DOCX renderer", () => {
     expect(documentXml).toContain("Tower Metrics Plan");
     expect(documentXml).not.toContain("generated_artifact:");
     expect(documentXml).not.toContain("tower_metrics_plan");
+  });
+
+  it("keeps table rows together, anchors table headings, and weights narrative columns", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [];
+    doc.sourceRegister = Array.from({ length: 12 }, (_, index) => ({
+      citationNumber: index + 1,
+      label: `Approved source record ${index + 1} with a long descriptive title`,
+      evidenceFamily: "business_interview",
+      confidence: "high",
+    }));
+    doc.tables = [
+      {
+        key: "risk_register",
+        title: "Risk Register",
+        columns: [
+          "#",
+          "Type",
+          "Description",
+          "Evidence Position",
+          "Owner",
+          "Mitigation / Resolution Path",
+        ],
+        rows: [
+          [
+            "1",
+            "Issue",
+            "Sponsor authority and scope acceptance remain unconfirmed.",
+            "[6][22]",
+            "Client input required: sponsor",
+            "Confirm the accountable decision owner before the discovery work begins.",
+          ],
+        ],
+        targetFormat: "docx",
+      },
+    ];
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const tableXml = (
+      documentXml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/g) ?? []
+    ).find((table) => table.includes("MITIGATION / RESOLUTION PATH"));
+
+    expect(tableXml).toBeDefined();
+    const rows = tableXml?.match(/<w:tr(?:\s[^>]*)?>[\s\S]*?<\/w:tr>/g) ?? [];
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.includes("<w:cantSplit/>"))).toBe(true);
+    expect(rows[0]).toContain("<w:tblHeader/>");
+    expect(rows[1]).toContain('<w:sz w:val="18"/>');
+
+    const headerWidths = [
+      ...(rows[0]?.matchAll(/<w:tcW[^>]*w:w="(\d+)%?"[^>]*\/>/g) ?? []),
+    ].map((match) => Number(match[1]));
+    expect(headerWidths).toHaveLength(6);
+    expect(headerWidths[0]).toBeLessThan(headerWidths[2]);
+    expect(headerWidths[1]).toBeGreaterThanOrEqual(13);
+    expect(headerWidths[3]).toBeGreaterThanOrEqual(11);
+    expect(headerWidths[2]).toBeGreaterThan(headerWidths[4]);
+
+    const gridWidths = [
+      ...(tableXml?.matchAll(/<w:gridCol w:w="(\d+)"\/>/g) ?? []),
+    ].map((match) => Number(match[1]));
+    expect(gridWidths).toHaveLength(6);
+    expect(gridWidths[0]).toBeLessThan(gridWidths[2]);
+    expect(gridWidths[2]).toBeGreaterThan(gridWidths[4]);
+    expect(gridWidths.reduce((sum, width) => sum + width, 0)).toBe(10000);
+
+    const heading = documentXml.match(
+      /<w:p>[\s\S]*?<w:t[^>]*>Risk Register<\/w:t>[\s\S]*?<\/w:p>/,
+    )?.[0];
+    expect(heading).toContain("<w:keepNext/>");
+
+    const sourceTable = (
+      documentXml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/g) ?? []
+    ).find((table) => table.includes("Approved source record"));
+    expect(sourceTable).toBeDefined();
+    const sourceRows =
+      sourceTable?.match(/<w:tr(?:\s[^>]*)?>[\s\S]*?<\/w:tr>/g) ?? [];
+    expect(sourceRows).toHaveLength(13);
+    expect(sourceRows.every((row) => row.includes("<w:cantSplit/>"))).toBe(
+      true,
+    );
+    const sourceHeading = documentXml.match(
+      /<w:p>[\s\S]*?<w:t[^>]*>Source Register<\/w:t>[\s\S]*?<\/w:p>/,
+    )?.[0];
+    expect(sourceHeading).toContain("<w:keepNext/>");
+    expect(sourceHeading).toContain("<w:pageBreakBefore/>");
   });
 });
 
@@ -123,6 +213,55 @@ describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", ()
     ];
     const html = renderDeliverableHtml(doc);
     expect(html).toMatch(/A Different Sub-heading/);
+  });
+
+  it("suppresses a numbered copy of the section title", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: "opportunity_context",
+        title: "Opportunity, Context & Intended Outcomes",
+        bodyMarkdown:
+          "## 2. Opportunity, Context & Intended Outcomes\n\nThe evidence-bounded charter summary.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const occurrences =
+      documentXml.match(/Opportunity, Context &amp; Intended Outcomes/g) ?? [];
+
+    expect(occurrences).toHaveLength(1);
+    expect(documentXml).toContain("The evidence-bounded charter summary.");
+  });
+
+  it("flows a charter through tables and the recommendation without stranded page breaks", async () => {
+    const doc = goodDocument();
+    doc.deliverableType = "charter";
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const explicitPageBreaks =
+      documentXml.match(/<w:pageBreakBefore\s*\/>/g) ?? [];
+
+    expect(documentXml).toContain("Risks, Issues &amp; Dependencies");
+    expect(documentXml).toContain("Recommendation");
+    expect(documentXml).toContain("Source Register");
+    expect(explicitPageBreaks).toHaveLength(0);
+  });
+
+  it("preserves section page breaks for non-charter deliverables", async () => {
+    const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const explicitPageBreaks =
+      documentXml.match(/<w:pageBreakBefore\s*\/>/g) ?? [];
+
+    expect(explicitPageBreaks).toHaveLength(4);
   });
 });
 
@@ -350,7 +489,14 @@ describe("HTML preview", () => {
     // Labels wrap across <text> lines rather than being cut mid-word, so assert
     // the words survived rather than a contiguous string. "decisio" would mean
     // the old character-slice is back.
-    for (const word of ["Intake", "aligns", "demand", "Approval", "records", "decision"]) {
+    for (const word of [
+      "Intake",
+      "aligns",
+      "demand",
+      "Approval",
+      "records",
+      "decision",
+    ]) {
       expect(out).toContain(word);
     }
     expect(out).not.toMatch(/decisio</);
@@ -468,9 +614,7 @@ describe("HTML renderer — roadmap exhibit (REF_EXECUTIVE_ROADMAP)", () => {
             },
             {
               label: "Change & Adoption",
-              items: [
-                { label: "Enterprise adoption program", start: "Scale" },
-              ],
+              items: [{ label: "Enterprise adoption program", start: "Scale" }],
             },
           ],
         },
@@ -547,7 +691,9 @@ describe("DOCX renderer — visual exhibits", () => {
     );
     const zip = await JSZip.loadAsync(buf);
     const documentXml = await zip.file("word/document.xml")!.async("string");
-    expect(documentXml).not.toMatch(/exhibit could not be rendered as an image/);
+    expect(documentXml).not.toMatch(
+      /exhibit could not be rendered as an image/,
+    );
     expect(documentXml).not.toMatch(/Service Tower Scope Map/);
     const mediaFiles = Object.keys(zip.files).filter((f) =>
       /^word\/media\//.test(f),
@@ -716,7 +862,8 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
           "Keep transition constraints in the open-input list until confirmed.",
         ],
         exhibitKey: "tower_scope_map",
-        speakerNotes: "Evidence traceability stays in speaker notes, not bullets.",
+        speakerNotes:
+          "Evidence traceability stays in speaker notes, not bullets.",
         citationsUsed: [1, 2],
       },
     ];
@@ -725,7 +872,9 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     const zip = await JSZip.loadAsync(buf);
     const slides = await slideXmlFiles(buf);
     const inDeckTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
-    expect(slides).toHaveLength(1 + doc.deckSlides.length + inDeckTables.length + 1);
+    expect(slides).toHaveLength(
+      1 + doc.deckSlides.length + inDeckTables.length + 1,
+    );
     const authoredSlide = slides.find((s) =>
       s.includes("Approve the sourcing package"),
     );
@@ -775,7 +924,9 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
           "",
           [
             "- This supporting bullet is also intentionally long and includes the unique token",
-            "unchecked-overflow-tail-token that should never appear because the bullet must be shortened before rendering.",
+            "unchecked-overflow-tail-token that should never appear on the slide face because a point of this length",
+            "is document prose rather than a slide point, and so it has to be held off the face in full rather than",
+            "printed there or cut down to a stump.",
           ].join(" "),
           "- A concise supporting point remains visible.",
         ].join("\n"),
@@ -793,6 +944,139 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     expect(denseSlide).not.toContain(
       "look like a landscape document instead of an executive deck",
     );
+    // Held off the face means absent, not amputated: no stump of either long
+    // claim, and nothing ending in an ellipsis.
+    expect(denseSlide).not.toContain("This opening paragraph is intentionally");
+    expect(denseSlide).not.toContain("This supporting bullet is also");
+    expect(denseSlide).not.toMatch(/\.{3}|…/);
+  });
+
+  // The section fallback used to cut every point at a word cap and print the
+  // stump with an ellipsis, and to promote a paragraph label to the headline.
+  // These run the rendered FILE through the same extractor and scanner that
+  // sign-off uses, so the renderer and the gate are proven against each other
+  // rather than each against its own fixture.
+  function defectShapedDocument() {
+    const doc = goodDocument();
+    doc.deckSlides = [];
+    doc.generatedSections = [
+      {
+        key: "findings",
+        title: "Discovery Findings",
+        bodyMarkdown: [
+          "**Section verdict.** The readout supports a bounded design phase while the investment decision is held.",
+          "",
+          "- The value hypothesis is excluded from scoring because the planning-stage annual value figure has no certified baseline behind it.",
+          "- Handle time and first-contact resolution are reported on different definitions across the two source extracts and must not be blended.",
+          "- Section boundary. The evidence base is synthetic, which limits every quantitative statement in this readout.",
+        ].join("\n"),
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+    return doc;
+  }
+
+  it("prints fallback slide points whole and never promotes a scaffolding label", async () => {
+    const buf = await renderDeliverablePptx(defectShapedDocument());
+    const slides = await slideXmlFiles(buf);
+    const slide = slides.find((s) => s.includes("Discovery Findings"));
+
+    expect(slide).toBeDefined();
+    expect(slide).toContain(
+      "The readout supports a bounded design phase while the investment decision is held.",
+    );
+    expect(slide).toContain("has no certified baseline behind it.");
+    expect(slide).toContain("and must not be blended.");
+    expect(slide).toContain(
+      "The evidence base is synthetic, which limits every quantitative statement in this readout.",
+    );
+    // Three points, three bullet glyphs: the list is visibly a list.
+    expect(slide!.match(/<a:buChar /g) ?? []).toHaveLength(3);
+    expect(slide).not.toMatch(/Section (?:verdict|boundary)/);
+    expect(slide).not.toMatch(/\.{3}|…/);
+  });
+
+  it("a fallback deck passes the sign-off scanner's truncation and scaffolding rules", async () => {
+    const buf = await renderDeliverablePptx(defectShapedDocument());
+    const extracted = await extractOfficeText(new Uint8Array(buf), "pptx");
+    expect(extracted.ok).toBe(true);
+    if (!extracted.ok) return;
+
+    // Not vacuous: the authored input carries the scaffolding, so a clean
+    // result below is the renderer's doing and not an innocent fixture.
+    const authored = defectShapedDocument()
+      .generatedSections.map((section) => section.bodyMarkdown)
+      .join("\n");
+    expect(scanClientReadiness(authored).findings.map((f) => f.kind)).toContain(
+      "authoring_scaffold_label",
+    );
+    expect(extracted.text).toContain("has no certified baseline behind it.");
+
+    const found = scanClientReadiness(extracted.text).findings.map(
+      (f) => f.kind,
+    );
+    expect(found).not.toContain("truncated_claim");
+    expect(found).not.toContain("authoring_scaffold_label");
+  });
+
+  it("carries a claim too long for the face in the speaker notes, in full", async () => {
+    const doc = goodDocument();
+    doc.deckSlides = [];
+    const longTail =
+      "held-in-full-tail-token " +
+      Array.from({ length: 70 }, (_, i) => `detail${i}`).join(" ");
+    doc.generatedSections = [
+      {
+        key: "s",
+        title: "Long Point Section",
+        bodyMarkdown: `The opening claim stands.\n\n- A long point about ${longTail}.\n- A short point stays.`,
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+    const zip = await JSZip.loadAsync(await renderDeliverablePptx(doc));
+    const slideNames = Object.keys(zip.files).filter((f) =>
+      /^ppt\/slides\/slide\d+\.xml$/.test(f),
+    );
+    let face = "";
+    for (const name of slideNames) {
+      const xml = await zip.file(name)!.async("string");
+      if (xml.includes("Long Point Section")) face = xml;
+    }
+    expect(face).toContain("A short point stays.");
+    expect(face).not.toContain("held-in-full-tail-token");
+
+    const notes = (
+      await Promise.all(
+        Object.keys(zip.files)
+          .filter((f) => /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(f))
+          .map((f) => zip.file(f)!.async("string")),
+      )
+    ).join("\n");
+    expect(notes).toContain("held-in-full-tail-token");
+    expect(notes).toContain("detail69");
+  });
+
+  it("the cover does not assert a grade the status line beneath it denies", async () => {
+    const slides = await slideXmlFiles(
+      await renderDeliverablePptx(goodDocument()),
+    );
+    expect(slides[0]).toContain("not approved");
+    expect(slides[0]).toContain("WORKING DRAFT FOR REVIEW");
+    expect(slides[0].toUpperCase()).not.toContain("BOARD-GRADE DELIVERABLE");
+
+    const html = renderDeliverableHtml(goodDocument());
+    expect(html).toContain("Working draft for review");
+    expect(html.toLowerCase()).not.toContain("board-grade deliverable");
+
+    const docZip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(goodDocument())),
+    );
+    const documentXml = await docZip.file("word/document.xml")!.async("string");
+    // The DOCX eyebrow helper uppercases its text.
+    expect(documentXml).toContain("WORKING DRAFT FOR REVIEW");
+    expect(documentXml.toLowerCase()).not.toContain("board-grade deliverable");
   });
 
   it("does not repeat the governing sentence as a bullet when markdown emphasis differs", async () => {

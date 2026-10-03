@@ -42,6 +42,11 @@ import type {
   SourceEventArchetype,
   ValueLeverRule,
 } from '@/lib/source/archetypes/types';
+import {
+  citedDocFor,
+  idSegment,
+  usd,
+} from '@/lib/source/facts/view/stage-beat-formatters';
 import type { ValueLeverResult } from '@/lib/source/facts/evaluators/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 import type {
@@ -66,33 +71,6 @@ export interface BafoFactBeatInput {
   nextStageName: string | null;
 }
 
-/** USD, as a reader reads it. Ranges only — never a point estimate. */
-function usd(amount: number): string {
-  return `$${Math.round(amount).toLocaleString('en-US')}`;
-}
-
-/**
- * The document a lever's number can be cited to, or null.
- *
- * Reads the FIRST consumed fact that has a citation rather than the first
- * required input, because an input the evaluator did not consume says nothing
- * about where the number came from.
- */
-function citedDocFor(
-  result: ValueLeverResult,
-  citations: Record<string, FactSourceCitation | null>,
-): string | null {
-  for (const ref of result.evidenceRefs) {
-    const citation = citations[ref.factKey];
-    if (citation?.doc) {
-      return citation.locator
-        ? `${citation.doc} · ${citation.locator}`
-        : citation.doc;
-    }
-  }
-  return null;
-}
-
 /** The rule a result came from, by key. */
 function ruleIndex(
   archetype: SourceEventArchetype,
@@ -100,15 +78,6 @@ function ruleIndex(
   return new Map(
     (archetype.valueLeverRules ?? []).map((rule) => [rule.key, rule]),
   );
-}
-
-/**
- * A lever key as a task id segment: lowercased, non-alphanumerics collapsed. The
- * rule keys are `AMS.ENHANCEMENT_LEAKAGE`-shaped, and a task id reaches the DOM
- * as a React key.
- */
-function idSegment(leverKey: string): string {
-  return leverKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 /**

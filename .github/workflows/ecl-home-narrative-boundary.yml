@@ -1,0 +1,61 @@
+name: ECL Home narrative boundary
+
+# The Home narrative builder decides which projection rows and derived signals a model may read.
+# This runs the suite that executes that decision: planted rows and signals without a current
+# readiness proof must stay out of the packet, and generation must refuse when nothing is admitted.
+#
+# The path list is every file the suite loads or reads. The suite checks the list against its own
+# import graph and file reads, so a file it starts to depend on has to be added here to pass.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ecl-home-narrative-boundary.yml"
+      - "docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json"
+      - "package.json"
+      # Not read by the suite: it pins the toolchain the suite runs on.
+      - "package-lock.json"
+      - "scripts/data-build/build-enterprise-thesis.ts"
+      - "scripts/data-build/build-home-chapters.ts"
+      - "scripts/data-build/enterprise-signal-packet.ts"
+      - "scripts/data-build/home-lens-quality.ts"
+      - "scripts/data-build/technology-estate.ts"
+      - "scripts/ecl/__tests__/home-narrative-admission-boundary.test.ts"
+      - "scripts/ecl/__tests__/home-narrative-readiness.test.ts"
+      - "scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs"
+      - "scripts/ecl/build_home_ecl_narrative_layer.ts"
+      - "scripts/ecl/home-narrative-readiness.ts"
+      - "scripts/ecl/home_page_prompt_contracts.ts"
+      - "scripts/ecl/readback_home_ecl_narrative_layer.ts"
+      - "scripts/exec/cli-entry.mjs"
+      - "scripts/ops/submit-aca-operator-job.mjs"
+      - "src/config/tenants/CANONICAL_TENANTS.ts"
+      - "src/lib/enterprise-data/canonical-build/canonical-tenant-data-build.ts"
+      - "src/lib/enterprise-data/intake/enrichment-firewall.ts"
+      - "src/lib/enterprise-data/source-adapters/csv-source-adapter.ts"
+      - "src/lib/enterprise-data/source-adapters/mapping-profiles.ts"
+      - "src/lib/governance/agent-context-bundle.ts"
+      - "src/lib/governance/context-corpus-policy.ts"
+      - "src/lib/home/preview/home-narrative-packet.ts"
+      - "tsconfig.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  home-narrative-boundary:
+    name: Home narrative admission boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run the Home narrative builder suite
+        run: npm run test:ecl-home-narrative-layer

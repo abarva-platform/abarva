@@ -1,0 +1,94 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: answer-length-depth rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-28T08:22:16.000Z",
+  "base": "5fbde65541fbc91a3a13a953ca25414fb0601917",
+  "directory": "src/lib/intelligence/ask/__tests__",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. It is suite 5 of the 11 in the claimable half; 6 remain, all in src/__tests__/integration/agents.",
+    "The gated half of T-495 -- the rows carrying textIsTheSubject -- is NOT touched here.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw, which is left as the historical draw it is. Measured: with the workflow step added and this record absent, t770-scanner-wiring-refusal fails 2 of 7 and names this suite."
+  ],
+  "method": [
+    "Re-verified on origin/main 5fbde65541 by running the suite, not by reading it: 5 passed of 5. Three of the five read synthesizer.ts as text -- one sliced the file from the literal 'ANSWER-ONLY STREAMING MODE' to its end, one grepped it for '200-word target', one grepped it for every 'Target 90-160 words' run up to the next double quote. Green was never the criterion.",
+    "The three scanner cases were DELETED rather than repaired. The two cases over the exported contract constants CXO_ANSWER_QUALITY_CONTRACT and GENERAL_ADVISORY_CONTRACT were already behaviour -- they assert the value of an exported string -- and are kept byte-for-byte, as the T-492 verdict for this file asked.",
+    "Replacement cases drive the real synthesizeStream down both of its paths (answerOnlyStreaming true, the live chat path; and false, the rich-text non-streaming path) and read the exact system and user content through the synthesizer's own onModelInput hook. Only the audited Anthropic client is mocked, because it is I/O; every prompt builder and the model-input cleaner run for real.",
+    "Non-vacuity measured by a throwaway probe, not assumed: each path's system input carries exactly 3 'Target 90-160 words' lines (the CXO contract, the universal answer contract and the rich-text override), and the streaming path carries exactly one ANSWER-ONLY STREAMING MODE line.",
+    "The first draft matched every line mentioning '90-160 words' and failed 2 of 7: the shape contract's PYRAMID BRIEF OVERRIDE names 90-160 words as the 'preferred default for an analytical answer' with no 400-word clause. That line states a default, not a cap, and was outside the deleted case's own rule, so the matcher was narrowed to 'Target 90-160 words' -- the statement the deleted case matched -- with the reason written in the suite. The line is recorded under residuals rather than silently excluded.",
+    "Five mutations against synthesizer.ts, each verified by git diff --numstat to have changed the file before either suite ran, and each run against the new suite and the deleted scanner."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/lib/intelligence/ask/__tests__/answer-length-depth.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": true,
+      "collected": true,
+      "green": true,
+      "totalTests": 7,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": false,
+      "drivesProductionEntryPoint": "synthesizeStream",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/intelligence-library-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "The three deleted cases asserted that words appear in synthesizer.ts. Measured against two mutations that change what a model receives -- the answer-only directive dropped from the system prompt template, and a computed '200-word target' appended to the user prompt -- the deleted scanner stayed green on both. Five behavioural cases replace them: the streaming path's system input carries one ANSWER-ONLY STREAMING MODE line with the 'Length follows depth', roughly-400-word and portfolio-review allowance; on each path every 'Target 90-160 words' line the model reads also states the 400-word allowance; and on each path neither system nor user input references a '200-word target'."
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "drop ${answerOnlyDirective} from both rawSystem templates, so the streaming directive is never sent",
+      "result": "1 of 7 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "the streaming directive reaching the model"
+    },
+    {
+      "mutation": "strip ', up to roughly 400 words where the question needs it' from the universal answer contract line",
+      "result": "2 of 7 failed",
+      "deletedScanner": "1 of 5 failed",
+      "catches": "a target line without the deep-dive allowance, on both paths"
+    },
+    {
+      "mutation": "in the answer-only directive, 'may run to roughly 400 words' -> 'may run to roughly 160 words'",
+      "result": "1 of 7 failed",
+      "deletedScanner": "1 of 5 failed",
+      "catches": "the streaming path's own allowance"
+    },
+    {
+      "mutation": "append a computed ['200', 'word target'].join('-') sentence to the user prompt",
+      "result": "2 of 7 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "a stale length target reaching the model, on both paths"
+    },
+    {
+      "mutation": "append a computed 'Target 90-160 words for every answer, whatever its depth.' line to the system input",
+      "result": "2 of 7 failed",
+      "deletedScanner": "1 of 5 failed",
+      "catches": "a new target line that caps deep dives, on both paths"
+    }
+  ],
+  "residualsNotClosedHere": [
+    "The directory src/lib/intelligence/ask/__tests__ still cannot be wired whole: it holds ask-guardrails.test.ts, left red on purpose behind an owner decision (T-497's gated half). The suite is named individually for that reason.",
+    "OBSERVED, not acted on -- a prompt-content decision, not a test decision: the PYRAMID BRIEF OVERRIDE paragraph in CONSULTANT_ANSWER_SHAPE_CONTRACT and CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH (response-policy.ts) reaches the model on both paths and says an analytical answer is 'Answer -> Proof -> Move in 90-160 words' and that 'Answer', 'Proof' and 'Move' are the allowed labels, while the universal answer contract (sent on both paths) and the ANSWER-ONLY STREAMING MODE directive (streaming path) say never to print 'Answer', 'Proof' or 'Move' as a header or lead-in. Filed to the backlog as decision needed."
+  ]
+}

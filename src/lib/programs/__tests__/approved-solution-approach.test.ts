@@ -52,6 +52,48 @@ describe("approved solution approach", () => {
     expect(block).toContain("Do not reopen, blend, or silently replace it");
   });
 
+  it("keeps audit lineage out of the model-facing prompt block", () => {
+    const approved = parseApprovedSolutionApproach({
+      solutionContextDigest: {
+        approach: "Governed agent assist with human approval",
+        chosenOption: "Option B",
+        tradeoffsAccepted: ["Human review remains mandatory"],
+        options: [
+          { id: "A", name: "Option A", summary: "Workflow only" },
+          { id: "B", name: "Option B", summary: "Governed agent assist" },
+        ],
+        decisions: [
+          {
+            phase: 3,
+            decision: "Approved solution option: Option B",
+            rationale:
+              "Best balance of value, controls, and time to proof.",
+            approvedBy: "u1",
+            approvedAt: "2026-07-23T00:00:00.000Z",
+          },
+        ],
+      },
+      decisionLineage: {
+        decisionId: "decision-123",
+        decisionVersion: "2026-07-23T00:00:00.000Z",
+        selectedOptionId: "B",
+        selectedOptionVersion: "1",
+        contextSnapshotHash: "ctx-456",
+        architectureModelVersion: ARCHITECTURE_MODEL_VERSION,
+      },
+    });
+    expect(approved).not.toBeNull();
+
+    const block = formatApprovedSolutionApproach(approved!);
+
+    expect(block).toContain("Chosen option: Option B");
+    expect(block).not.toMatch(/decision id|decision hash|version/i);
+    expect(block).not.toContain(approved!.decisionHash);
+    expect(block).not.toContain("decision-123");
+    expect(block).not.toContain("2026-07-23T00:00:00.000Z");
+    expect(block).not.toContain("(B v1)");
+  });
+
   it("loads client-safe option approval decisions that store approver role instead of raw user id", () => {
     const rawDecision = {
       phase: 3,

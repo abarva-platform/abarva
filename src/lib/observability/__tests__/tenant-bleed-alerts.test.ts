@@ -1,4 +1,5 @@
 import { detectCrossTenantWriteIntent } from '@/lib/agent/tenant-guardrails';
+import { ALL_CLIENTS } from '@/lib/client-config';
 import {
   resetStructuredLogSinkForTests,
   setStructuredLogSinkForTests,
@@ -22,6 +23,14 @@ describe('tenant bleed alerts', () => {
   });
 
   it('logs a simulated cross-tenant write attempt with both tenant scopes', () => {
+    // The requested tenant's display name is read from the client registry rather
+    // than pinned. It was pinned to a fixture display name that a later change
+    // deliberately replaced with a generic one, which left this case red and
+    // unrun (T-795). The registry is the input the resolver reads, so a resolver
+    // that drops or substitutes the name still fails here.
+    const requested = ALL_CLIENTS.find((client) => client.id === 'apexretail');
+    expect(requested?.name).toBeTruthy();
+
     const intent = detectCrossTenantWriteIntent({
       activeClientKey: 'meridian',
       activeClientName: 'Meridian Health System',
@@ -47,7 +56,7 @@ describe('tenant bleed alerts', () => {
         activeClientKey: 'meridian',
         activeClientName: 'Meridian Health System',
         requestedClientKey: 'apexretail',
-        requestedClientName: 'Apex Retail Group',
+        requestedClientName: requested!.name,
       },
       metadata: {
         blocked: true,

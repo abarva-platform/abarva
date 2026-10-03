@@ -13,6 +13,7 @@ import type {
 const mockAdapter = {
   listArtifactStateRows: jest.fn(),
   listArtifactStateMetadataRows: jest.fn(),
+  listArtifactStateReviewRows: jest.fn(),
   listGateCriterionStateRows: jest.fn(),
   listEvidenceStateRows: jest.fn(),
   listEventFactRows: jest.fn(),
@@ -30,6 +31,7 @@ describe("canvas substrate queries", () => {
     jest.clearAllMocks();
     mockAdapter.listArtifactStateRows.mockResolvedValue([]);
     mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([]);
     mockAdapter.listGateCriterionStateRows.mockResolvedValue([]);
     mockAdapter.listEvidenceStateRows.mockResolvedValue([]);
     mockAdapter.listEventFactRows.mockResolvedValue([]);
@@ -51,6 +53,81 @@ describe("canvas substrate queries", () => {
     expect(rows[0]?.bodyGenerationMetadata).toBeNull();
   });
 
+  it("projects only a current-stage review receipt without sending body or reasoning", async () => {
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
+      artifactRow({ id: "state-1", linked_artifact_id: "registry-1", artifact_code: "d01_strategy_memo", stage_key: "strategy" }),
+    ]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([
+      artifactRow({
+        id: "state-1",
+        linked_artifact_id: "registry-1",
+        artifact_code: "d01_strategy_memo",
+        stage_key: "strategy",
+        body: "Large confidential draft body.",
+        body_generation_metadata: {
+          generatedAt: "2026-09-28T19:00:00Z",
+          reasoningEnvelope: { internal: "Do not forward" },
+          qualityGate: {
+            passed: false,
+            finalSummary: "Unsupported claim.",
+            reviews: [{ privateReasoning: "Do not forward review notes" }],
+          },
+        },
+      }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "strategy");
+
+    expect(mockAdapter.listArtifactStateReviewRows).toHaveBeenCalledWith("event-1", "strategy");
+    expect(rows[0]).toMatchObject({
+      linkedArtifactId: "registry-1",
+      body: null,
+      bodyGenerationMetadata: {
+        qualityGate: { passed: false, finalSummary: "Unsupported claim." },
+      },
+    });
+    expect(JSON.stringify(rows[0])).not.toContain("Large confidential draft body");
+    expect(JSON.stringify(rows[0])).not.toContain("Do not forward");
+  });
+
+  it("does not project a review receipt after a later human body edit", async () => {
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
+      artifactRow({ id: "state-1", linked_artifact_id: "registry-1", stage_key: "strategy" }),
+    ]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([
+      artifactRow({
+        id: "state-1",
+        stage_key: "strategy",
+        body_generation_metadata: {
+          generatedAt: "2026-09-28T19:00:00Z",
+          humanEditedAt: "2026-09-28T19:01:00Z",
+          qualityGate: { passed: true, finalSummary: "Prior body passed." },
+        },
+      }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "strategy");
+    expect(rows[0]?.bodyGenerationMetadata).toBeNull();
+  });
+
+  it("does not project a review receipt when a human edit cannot be ordered", async () => {
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
+      artifactRow({ id: "state-1", stage_key: "strategy" }),
+    ]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([
+      artifactRow({
+        id: "state-1",
+        body_generation_metadata: {
+          humanEditedAt: "unknown",
+          qualityGate: { passed: true },
+        },
+      }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "strategy");
+    expect(rows[0]?.bodyGenerationMetadata).toBeNull();
+  });
+
   it("merges cited source_event_facts into effective evidence", async () => {
     mockAdapter.listEvidenceStateRows.mockResolvedValue([
       evidenceRow({
@@ -61,10 +138,8 @@ describe("canvas substrate queries", () => {
       }),
     ]);
     mockAdapter.listEventFactRows.mockResolvedValue([
-      factRow({
-        id: "fact-ticket-history",
-        fact_key: "annual_change_order_spend",
-      }),
+      ticketFactRow("L2", "fact-ticket-l2"),
+      ticketFactRow("L3", "fact-ticket-l3"),
     ]);
 
     const evidence = await listEffectiveEvidenceStatesForEvent("event-1");
@@ -75,8 +150,16 @@ describe("canvas substrate queries", () => {
       requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
       currentState: "Available",
       sourceArtifactId: null,
-      sourceEventFactIds: ["fact-ticket-history"],
+      sourceEventFactIds: ["fact-ticket-l2", "fact-ticket-l3"],
     });
+  });
+
+  it("does not derive ticket-history readiness from finance facts", async () => {
+    mockAdapter.listEventFactRows.mockResolvedValue([
+      factRow({ id: "fact-finance", fact_key: "annual_change_order_spend" }),
+    ]);
+
+    expect(await listEffectiveEvidenceStatesForEvent("event-1")).toEqual([]);
   });
 
   it("returns stage substrate with fact-backed evidence filtered to the requested stage", async () => {
@@ -87,10 +170,8 @@ describe("canvas substrate queries", () => {
       criterionRow({ criterion_id: "EVID-SCOPE-01" }),
     ]);
     mockAdapter.listEventFactRows.mockResolvedValue([
-      factRow({
-        id: "fact-ticket-history",
-        fact_key: "annual_change_order_spend",
-      }),
+      ticketFactRow("L2", "fact-ticket-l2"),
+      ticketFactRow("L3", "fact-ticket-l3"),
       factRow({
         id: "fact-pricing",
         fact_key: "vendor_headline_bid",
@@ -108,7 +189,7 @@ describe("canvas substrate queries", () => {
     expect(substrate.evidence).toHaveLength(1);
     expect(substrate.evidence[0]).toMatchObject({
       requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-      sourceEventFactIds: ["fact-ticket-history"],
+      sourceEventFactIds: ["fact-ticket-l2", "fact-ticket-l3"],
     });
   });
 });
@@ -204,4 +285,24 @@ function factRow(
     is_stale: false,
     ...overrides,
   };
+}
+
+function ticketFactRow(tier: "L2" | "L3", id: string): SourceEventFactRow {
+  return factRow({
+    id,
+    fact_key: "ticket_count",
+    entity_kind: "tower",
+    entity_ref: "Service desk",
+    value_numeric: tier === "L2" ? 42 : 13,
+    unit: "count",
+    source_citation: {
+      doc: "ticket-history.csv",
+      locator: `${tier} ticket count`,
+      source_sha256: "a".repeat(64),
+      support_tier: tier,
+      month: "2026-08",
+      time_window: "Business hours",
+      source_basis: "Synthetic smoke scenario",
+    },
+  });
 }

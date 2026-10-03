@@ -24,7 +24,7 @@
 // (5) says so explicitly.
 
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
@@ -156,18 +156,30 @@ const DERIVED_STAGE_KEYS = ARMED_STAGE_KEYS.filter(
   (stageKey) => buildStageView(stageKey).beatProvenance?.tasks === "fact_derived",
 );
 
-/**
- * A stage that STILL carries an approver reading as a person's name.
- *
- * Searched, not named. This constant was the literal `"bafo"` and went red when
- * `bafo` became the first derived stage — which is the right failure, but a
- * literal makes the next flip a breakage instead of a move. Four exemplars carry a
- * personal name; the carrying set is measured from the builder.
- */
-const NAMED_APPROVER_STAGE = CARRIED_STAGE_KEYS.find((stageKey) =>
+/** Every armed stage whose EXEMPLAR approver reads as a person. Four of ten. */
+const NAMED_APPROVER_STAGES = ARMED_STAGE_KEYS.filter((stageKey) =>
   PERSON_NAME_APPROVER.test(liveStageScaffoldFor(stageKey).gate.approver),
-)!;
-const NAMED_APPROVER = liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver;
+);
+
+/**
+ * A stage that STILL carries its beats AND has an approver reading as a person's
+ * name.
+ *
+ * ITEM U-545, and the change here is the point rather than an aside. This was a
+ * `.find(...)!` over the carried set, and its one remaining member was `value`.
+ * Deriving that stage's beats emptied the intersection, so the `!` would have
+ * handed `undefined` to `liveStageScaffoldFor`, which resolves through its default
+ * arm to Scope — a case still named after a conjunction it no longer measures.
+ *
+ * So the intersection is searched and allowed to be empty, its emptiness is
+ * asserted in its own right, and the two properties it bundled are asserted over
+ * their own non-empty populations below. A future stage landing
+ * carried-and-person-named fails that emptiness assertion, which is the signal to
+ * reinstate the conjunction rather than inherit silence.
+ */
+const CARRIED_NAMED_APPROVER_STAGES = CARRIED_STAGE_KEYS.filter((stageKey) =>
+  PERSON_NAME_APPROVER.test(liveStageScaffoldFor(stageKey).gate.approver),
+);
 
 const SCOPE_EXEMPLAR_TASK_TITLES = liveStageScaffoldFor("scope").tasks.map(
   (task) => task.title,
@@ -216,35 +228,56 @@ describe("U-533 · the exemplar approver does NOT reach this reader", () => {
    * play by finding this stage's exemplar task titles on the page; only then does
    * it assert the approver's absence.
    */
-  it("renders the carried task titles but not the carried approver", () => {
-    expect(NAMED_APPROVER).toMatch(PERSON_NAME_APPROVER);
-    // The exemplar this searched stage resolves to, asserted by identity against
-    // the switch rather than against a literal name: the literal was
-    // "SAMPLE_BAFO_STAGE" and it pinned this case to the one stage that later
-    // stopped carrying.
-    expect(liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE)).toMatch(
-      /^SAMPLE_[A-Z_]+_STAGE$/,
-    );
-    expect(buildStageView(NAMED_APPROVER_STAGE).beatProvenance).toEqual({
-      tasks: "scaffold",
-      gate: "scaffold",
-      scaffoldSource: liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE),
-    });
+  it("has no carried stage left whose exemplar approver reads as a person", () => {
+    // Population before property, so the emptiness is a measurement rather than
+    // an artefact of either set being empty: there really are person-named
+    // exemplars, and there really are stages still carrying.
+    expect(NAMED_APPROVER_STAGES.length).toBeGreaterThan(0);
+    expect(CARRIED_STAGE_KEYS.length).toBeGreaterThan(0);
+    expect(CARRIED_NAMED_APPROVER_STAGES).toEqual([]);
+  });
 
-    const exemplarTaskTitles = liveStageScaffoldFor(
-      NAMED_APPROVER_STAGE,
-    ).tasks.map((task) => task.title);
-    expect(exemplarTaskTitles.length).toBeGreaterThan(0);
+  it("renders the carried task titles on every carried stage", () => {
+    // The first half of the retired conjunction, over its own population: a
+    // carried stage's exemplar beats really do reach this reader.
+    for (const stageKey of CARRIED_STAGE_KEYS) {
+      const exemplarTaskTitles = liveStageScaffoldFor(stageKey).tasks.map(
+        (task) => task.title,
+      );
+      expect(exemplarTaskTitles.length).toBeGreaterThan(0);
+      expect(liveStageScaffoldSourceFor(stageKey)).toMatch(
+        /^SAMPLE_[A-Z_]+_STAGE$/,
+      );
+      expect(buildStageView(stageKey).beatProvenance).toEqual({
+        tasks: "scaffold",
+        gate: "scaffold",
+        scaffoldSource: liveStageScaffoldSourceFor(stageKey),
+      });
 
-    renderStage(NAMED_APPROVER_STAGE, NAMED_APPROVER_STAGE);
-
-    // Population: the carried beats really did reach this render.
-    for (const title of exemplarTaskTitles) {
-      expect(screen.getAllByText(title).length).toBeGreaterThan(0);
+      cleanup();
+      renderStage(stageKey, stageKey);
+      for (const title of exemplarTaskTitles) {
+        expect(screen.getAllByText(title).length).toBeGreaterThan(0);
+      }
     }
+  });
 
-    // And the carried approver did not.
-    expect(screen.queryAllByText(new RegExp(NAMED_APPROVER))).toHaveLength(0);
+  it("renders no exemplar person's name, on any armed stage", () => {
+    // The second half, and widened from one sampled stage to the whole armed set:
+    // "the carried approver does not reach this reader" is a claim about every
+    // stage, and the four person-named exemplars are all now derived.
+    expect(NAMED_APPROVER_STAGES.length).toBeGreaterThan(0);
+    for (const stageKey of NAMED_APPROVER_STAGES) {
+      const named = liveStageScaffoldFor(stageKey).gate.approver;
+      expect(named).toMatch(PERSON_NAME_APPROVER);
+      const view = buildStageView(stageKey);
+      // Population: this render really did receive a view with content on it.
+      expect(view.tasks.length).toBeGreaterThan(0);
+      cleanup();
+      renderStage(stageKey, view.stageName);
+      expect(screen.getAllByText(view.tasks[0]!.title).length).toBeGreaterThan(0);
+      expect(screen.queryAllByText(new RegExp(named))).toHaveLength(0);
+    }
   });
 });
 
@@ -274,9 +307,8 @@ describe("U-534/U-535/U-538/U-540/U-542 · a flipped stage renders derived conte
     // signal, so that stage renders its UN-OBSERVED beat -- which is the state a
     // canvas with no award fact should show, and is still derived rather than the
     // exemplar, so the cases below hold over it unchanged.
-    expect(DERIVED_STAGE_KEYS).toHaveLength(5);
-    expect(CARRIED_STAGE_KEYS).toHaveLength(5);
-    expect(NAMED_APPROVER_STAGE).toBeDefined();
+    expect(DERIVED_STAGE_KEYS).toHaveLength(6);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(4);
   });
 
   it.each(DERIVED_STAGE_KEYS)(
@@ -351,7 +383,7 @@ describe("U-534/U-535/U-538/U-540/U-542 · a flipped stage renders derived conte
     }
   });
 
-  it("still names the exemplar for the eight that carry", () => {
+  it("still names the exemplar for every stage that carries", () => {
     for (const stageKey of CARRIED_STAGE_KEYS) {
       expect(buildStageView(stageKey).beatProvenance?.scaffoldSource).toBe(
         liveStageScaffoldSourceFor(stageKey),

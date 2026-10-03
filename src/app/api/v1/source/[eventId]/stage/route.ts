@@ -35,6 +35,7 @@ import { persistAutoAssessment } from "@/lib/source/gate-auto-assessment-persist
 import { normalizeApprovalReason } from "@/lib/source/source-governance-enforcement";
 import type { SourceStageConfirmations } from "@/lib/source/approval-decision";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
 import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import {
   isGateApprovalStrictMode,
@@ -121,7 +122,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const persistedEventLookupId = resolvedEventId ?? eventId;
     const { data: persistedEvent, error: fetchError } = await supabase
       .from("source_events")
-      .select("id, client_key, current_stage_key, lifecycle_state")
+      .select("id, client_key, current_stage_key, lifecycle_state, approval_policy_code, created_by_user_id")
       .eq("id", persistedEventLookupId)
       .maybeSingle();
 
@@ -147,7 +148,13 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const canAdvance = Boolean(
       accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed,
     );
-    const strictMode = isGateApprovalStrictMode();
+    let approvalPolicy;
+    try {
+      approvalPolicy = resolveSourceApprovalPolicy(persistedEvent?.approval_policy_code);
+    } catch {
+      return Response.json({ error: "invalid_approval_policy" }, { status: 409 });
+    }
+    const strictMode = isGateApprovalStrictMode() && !approvalPolicy.selfApprovalAllowed;
     if (!canAdvance) {
       return Response.json(
         {
@@ -166,6 +173,15 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           { status: 404 },
         );
       }
+      if (approvalPolicy.selfApprovalAllowed) {
+        return Response.json(
+          {
+            error: "use_event_approval_route",
+            detail: "Self-policy stage decisions must use the audited event approval action.",
+          },
+          { status: 409 },
+        );
+      }
 
       await scaffoldNewEventSubstrate(
         persistedEvent.id,
@@ -180,10 +196,14 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         normalizeSourceStageKey(persistedEvent.current_stage_key) ?? "strategy";
       const currentActorUserId =
         currentUser?.personId ?? currentUser?.clerkUserId ?? null;
+      const isSelfApproval = Boolean(
+        persistedEvent.created_by_user_id &&
+        [tenancy?.userId, currentUser?.clerkUserId].includes(persistedEvent.created_by_user_id),
+      );
       const canPilotSelfApprove =
         selfApproveIfAuthorized && canAdvance && !strictMode;
       if (
-        selfApproveIfAuthorized &&
+        (selfApproveIfAuthorized || isSelfApproval) &&
         strictMode &&
         !isStrictModeApprovalRole(tenancy?.role ?? currentUser?.primaryRole)
       ) {
@@ -196,7 +216,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           { status: 403 },
         );
       }
-      if (selfApproveIfAuthorized && strictMode) {
+      if ((selfApproveIfAuthorized || isSelfApproval) && strictMode) {
         return Response.json(
           {
             error: "forbidden",
@@ -268,6 +288,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         artifacts,
         evidence,
         reason,
+        approvalPolicyCode: approvalPolicy.code,
       });
       if (!gateContract.ok) {
         return Response.json(

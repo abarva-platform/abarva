@@ -1,0 +1,5 @@
+scenario_id,structured_output,workflow_change,role_change,expected_route,expected_p3_depth,hold_condition
+ROUTE-01,workflow_automation,limited,none,process_change,Bounded workflow concept and controls sufficient to estimate; no detailed organization redesign,Hold if approved evidence does not support impact values
+ROUTE-02,reports_dashboards,none,none,technical_product,Data/report architecture lineage quality access estimate and business adoption owner; no full process redesign,Hold if business owner or adoption responsibility is missing
+ROUTE-03,mixed,unknown,unknown,unresolved,Do not select P3 depth or give confident solution recommendation,Hold until human validates workflow and role impact with cited approved evidence
+ROUTE-04,service_operating_model,limited,material,operating_model_change,Bounded operating-model implications; detail only the elements required to estimate,Hold if role/accountability decision lacks accountable reviewer

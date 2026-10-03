@@ -1,7 +1,7 @@
 const mockRequireTenancy = jest.fn();
 const mockTenancyErrorResponse = jest.fn();
 const mockGetProgramById = jest.fn();
-const mockHasAuthority = jest.fn();
+const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockSignOffDeliverable = jest.fn();
 const mockSaveMoveArtifact = jest.fn();
 const mockListMoveArtifacts = jest.fn();
@@ -9,6 +9,7 @@ const mockDownloadArtifactBytes = jest.fn();
 const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockWriteAuditLog = jest.fn();
 const mockExtractOfficeText = jest.fn();
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -19,8 +20,9 @@ jest.mock("@/lib/programs/queries", () => ({
   getProgramById: (...args: unknown[]) => mockGetProgramById(...args),
 }));
 
-jest.mock("@/lib/programs/governance", () => ({
-  hasAuthority: (...args: unknown[]) => mockHasAuthority(...args),
+jest.mock("@/lib/auth/program-access-policy", () => ({
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    mockLoadUserProgramAccessPolicy(...args),
 }));
 
 jest.mock("@/lib/programs/mutations", () => ({
@@ -48,6 +50,12 @@ jest.mock("@/lib/programs/evidence-ingestion", () => ({
     mockExtractProgramEvidenceFromUploadBuffer(...args),
 }));
 
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadApprovedMoveEvidenceSnapshot(...args),
+}));
+
 let deliverableRow: {
   deliverable_type_key: string;
   title: string;
@@ -55,6 +63,7 @@ let deliverableRow: {
 } | null;
 let versionRow: {
   id?: string | null;
+  created_at?: string | null;
   structured_data: Record<string, unknown> | null;
   content?: string | null;
 } | null;
@@ -82,7 +91,16 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
             select: () => ({
               eq: () => ({
                 eq: () => ({
-                  maybeSingle: async () => ({ data: versionRow, error: null }),
+                  maybeSingle: async () => ({
+                    data: versionRow
+                      ? {
+                          ...versionRow,
+                          created_at:
+                            versionRow.created_at ?? "2026-09-29T17:00:00.000Z",
+                        }
+                      : null,
+                    error: null,
+                  }),
                 }),
               }),
             }),
@@ -96,6 +114,7 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
 
 const ctx = {
   clientId: "client-1",
+  clientKey: "tenant-1",
   userId: "person-1",
   role: "client_admin",
   email: "reviewer@example.com",
@@ -120,6 +139,36 @@ function req(body?: Record<string, unknown>): Request {
   );
 }
 
+function uploadReq(
+  fileText: string,
+  acknowledgeReadinessBlockers = false,
+  approvalRationale?: string,
+): Request {
+  const form = new FormData();
+  form.append(
+    "file",
+    new File([fileText], "client-reviewed-charter.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }),
+  );
+  if (acknowledgeReadinessBlockers) {
+    form.append("acknowledgeReadinessBlockers", "true");
+  }
+  if (approvalRationale) form.append("approvalRationale", approvalRationale);
+  return new Request(
+    "http://test/api/v1/programs/prog-1/deliverables/deliverable-1/sign-off",
+    { method: "POST", body: form },
+  );
+}
+
+function emptyUploadReq(): Request {
+  const form = new FormData();
+  return new Request(
+    "http://test/api/v1/programs/prog-1/deliverables/deliverable-1/sign-off",
+    { method: "POST", body: form },
+  );
+}
+
 describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off", () => {
   beforeEach(() => {
     jest.resetModules();
@@ -129,8 +178,30 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       throw err;
     });
     mockGetProgramById.mockResolvedValue({ id: "prog-1", name: "Test Move" });
-    mockHasAuthority.mockResolvedValue(true);
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: true,
+    });
     mockSignOffDeliverable.mockResolvedValue(true);
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "revision-current",
+      approvedEvidenceCount: 1,
+      rows: [],
+      latestEvidenceActivityAt: "2026-09-29T16:00:00.000Z",
+      revisionByPhase: {
+        1: "revision-current",
+        2: "revision-current",
+        3: "revision-current",
+        4: "revision-current",
+        5: "revision-current",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: "2026-09-29T16:00:00.000Z",
+        2: "2026-09-29T16:00:00.000Z",
+        3: "2026-09-29T16:00:00.000Z",
+        4: "2026-09-29T16:00:00.000Z",
+        5: "2026-09-29T16:00:00.000Z",
+      },
+    });
     deliverableRow = {
       deliverable_type_key: "business_case",
       title: "Business Case",
@@ -138,7 +209,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     };
     versionRow = {
       id: "version-1",
-      structured_data: { source: "generated_by_orchestrator" },
+      structured_data: {
+        source: "generated_by_orchestrator",
+        evidenceSnapshotHash: "revision-current",
+      },
       content:
         "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
     };
@@ -214,12 +288,67 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       expect.objectContaining({
         approvedArtifactId: undefined,
         approvedContent: undefined,
+        approvalLineage: expect.objectContaining({
+          source: "moves_program_generate",
+          evidenceSnapshotHash: "revision-current",
+          approvalMode: "approve_generated_deliverable_as_is",
+        }),
       }),
     );
   });
 
+  it("refuses generated sign-off when approved evidence changed after generation", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "revision-newer",
+      approvedEvidenceCount: 2,
+      rows: [],
+      latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
+      revisionByPhase: {
+        1: "revision-newer",
+        2: "revision-newer",
+        3: "revision-newer",
+        4: "revision-newer",
+        5: "revision-newer",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: "2026-09-29T18:00:00.000Z",
+        2: "2026-09-29T18:00:00.000Z",
+        3: "2026-09-29T18:00:00.000Z",
+        4: "2026-09-29T18:00:00.000Z",
+        5: "2026-09-29T18:00:00.000Z",
+      },
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "generated_artifact_evidence_not_current",
+    });
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("passes an approval rationale to the lifecycle mutation", async () => {
+    const rationale =
+      "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+    const { POST } = await import("../route");
+    const res = await POST(req({ approvalRationale: rationale }), { params });
+
+    expect(res.status).toBe(200);
+    expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      "deliverable-1",
+      expect.objectContaining({ approvalRationale: rationale }),
+    );
+  });
+
   it("requires approver authority before checking type key or provenance", async () => {
-    mockHasAuthority.mockResolvedValue(false);
+    mockRequireTenancy.mockResolvedValue({ ...ctx, role: "maestro" });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: false,
+    });
     deliverableRow = {
       deliverable_type_key: "design_spec",
       title: "Solution Design Specification",
@@ -239,10 +368,25 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       "<p>Target-state architecture. Generated with claude-sonnet-5 from record " +
       "5bbf2d7c-328c-41e0-8a69-50094cd15f75.</p>";
 
+    it("rejects an empty multipart approval rather than falling through to draft sign-off", async () => {
+      const { POST } = await import("../route");
+      const res = await POST(emptyUploadReq(), { params });
+
+      expect(res.status).toBe(400);
+      await expect(res.json()).resolves.toMatchObject({
+        error: "file_required",
+      });
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
     it("refuses sign-off when the document contains something a client must not see", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -261,7 +405,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("names the escape hatch in the refusal, so the reviewer is not stuck", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -271,10 +418,109 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       expect(body.acknowledgeField).toBe("acknowledgeReadinessBlockers");
     });
 
+    it("refuses an uploaded replacement with client-readiness blockers before saving or signing it off", async () => {
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText: LEAKY,
+        extractedStructured: {
+          parse_method: "docx-mammoth",
+          warnings: [],
+        },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({
+        artifactId: "artifact-approved-1",
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(uploadReq(LEAKY), { params });
+
+      expect(res.status).toBe(422);
+      const body = await res.json();
+      expect(body.error).toBe("client_readiness_blockers");
+      expect(
+        body.blockers.map((finding: { kind: string }) => finding.kind).sort(),
+      ).toEqual(["model_name", "uuid"]);
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("records an explicit acknowledgement before accepting an uploaded replacement with blockers", async () => {
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText: LEAKY,
+        extractedStructured: {
+          parse_method: "docx-mammoth",
+          warnings: [],
+        },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({
+        artifactId: "artifact-approved-1",
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(uploadReq(LEAKY, true), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSaveMoveArtifact).toHaveBeenCalledTimes(1);
+      expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+        ctx,
+        "prog-1",
+        "deliverable-1",
+        expect.objectContaining({
+          approvedArtifactId: "artifact-approved-1",
+          approvedContent: expect.objectContaining({ content: LEAKY }),
+        }),
+      );
+      expect(mockWriteAuditLog).toHaveBeenCalledWith(
+        ctx,
+        expect.objectContaining({
+          action: "deliverable_signed_off_with_readiness_blockers",
+          evidenceRefs: expect.arrayContaining([
+            "model_name: claude-sonnet-5",
+            "uuid: 5bbf2d7c-328c-41e0-8a69-50094cd15f75",
+          ]),
+        }),
+      );
+      await expect(res.json()).resolves.toMatchObject({
+        clientReadiness: { verdict: "acknowledged" },
+      });
+    });
+
+    it("passes an uploaded approval rationale to the lifecycle mutation", async () => {
+      const rationale =
+        "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText:
+          "A bounded charter with supported scope and clear limitations.",
+        extractedStructured: { parse_method: "docx-mammoth", warnings: [] },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({
+        artifactId: "artifact-approved-1",
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(
+        uploadReq("clean reviewed charter", false, rationale),
+        { params },
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+        ctx,
+        "prog-1",
+        "deliverable-1",
+        expect.objectContaining({
+          approvedArtifactId: "artifact-approved-1",
+          approvalRationale: rationale,
+        }),
+      );
+    });
+
     it("proceeds when the reviewer explicitly acknowledges the findings", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -293,7 +539,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("writes the accepted findings to the audit log, so the override is not silent", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -326,7 +575,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("does not block on review-only findings", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: "<p>The quality score was 80 for this operating model.</p>",
       };
 
@@ -342,7 +594,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("reports not_scanned rather than clear when there is no content", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: null,
       };
 
@@ -452,6 +707,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
         structured_data: {
           source: "generated_by_orchestrator",
           requiresOfficeCompanionScan: true,
+          evidenceSnapshotHash: "revision-current",
         },
         content:
           "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
@@ -490,6 +746,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
         structured_data: {
           source: "generated_by_orchestrator",
           requiresOfficeCompanionScan: true,
+          evidenceSnapshotHash: "revision-current",
         },
         content:
           "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",

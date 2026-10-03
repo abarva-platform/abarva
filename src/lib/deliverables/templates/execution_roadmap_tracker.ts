@@ -66,9 +66,9 @@ export const executionRoadmapTrackerTemplateStructure = {
       key: 'reestimation_events',
       title: 'Reestimation Events',
       required: true,
-      description: 'Capture any formal reestimation, its trigger, and whether sponsor re-approval was required.',
+      description: 'Capture any formal reestimation, its trigger, and whether the authorized workspace user recorded a revised approval.',
       example_completed:
-        'Week-31 refresh widened the P95 band after a new compliance dependency surfaced; sponsor re-approval was not required because the P80 commitment remained intact.',
+        'A refresh widened the P95 band after a new compliance dependency surfaced; the authorized workspace user recorded that re-approval was not required because the P80 commitment remained intact.',
     },
     {
       key: 'genome_feedback_candidates',
@@ -110,7 +110,7 @@ export const executionRoadmapTrackerQualityRubric: ExecutionRoadmapTrackerRubric
   {
     criterion: 'reestimations_have_chain_of_reasoning',
     rationale:
-      'A tracker should show when the estimate changed, why, and whether sponsor re-approval was triggered.',
+      'A tracker should show when the estimate changed, why, and whether authorized workspace re-approval was triggered.',
     severity: 'major',
   },
   {

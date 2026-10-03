@@ -70,6 +70,11 @@ import type {
   SourceEventArchetype,
   ValueLeverRule,
 } from '@/lib/source/archetypes/types';
+import {
+  citedDocFor,
+  idSegment,
+  usd,
+} from '@/lib/source/facts/view/stage-beat-formatters';
 import type { ValueLeverResult } from '@/lib/source/facts/evaluators/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 import type {
@@ -94,42 +99,12 @@ export interface EvaluationFactBeatInput {
   nextStageName: string | null;
 }
 
-/** USD, as a reader reads it. Ranges only — never a point estimate. */
-function usd(amount: number): string {
-  return `$${Math.round(amount).toLocaleString('en-US')}`;
-}
-
-/**
- * The document a lever's number can be cited to, or null. Reads the first
- * CONSUMED fact that carries a citation — an input the evaluator did not consume
- * says nothing about where the number came from.
- */
-function citedDocFor(
-  result: ValueLeverResult,
-  citations: Record<string, FactSourceCitation | null>,
-): string | null {
-  for (const ref of result.evidenceRefs) {
-    const citation = citations[ref.factKey];
-    if (citation?.doc) {
-      return citation.locator
-        ? `${citation.doc} · ${citation.locator}`
-        : citation.doc;
-    }
-  }
-  return null;
-}
-
 function ruleIndex(
   archetype: SourceEventArchetype,
 ): Map<string, ValueLeverRule> {
   return new Map(
     (archetype.valueLeverRules ?? []).map((rule) => [rule.key, rule]),
   );
-}
-
-/** A key as an id segment — a task id reaches the DOM as a React key. */
-function idSegment(key: string): string {
-  return key.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 /** A weight as a reader reads it: `0.3` → `30%`. */

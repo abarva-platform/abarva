@@ -3,15 +3,16 @@
 // src/lib/source/analytics/types.ts. See docs/build/moves-design/*.
 
 import type { BuildingBlockKey } from './building-blocks';
+import { getPhaseName } from '../phase-labels';
 
 /** Client-facing phase codes and labels. Never expose internal terms. */
 export type MovePhaseCode = 'P2' | 'P3' | 'P4' | 'P5' | 'TOWER';
 
 export const PHASE_LABELS: Record<MovePhaseCode, string> = {
-  P2: 'Understand Current State',
-  P3: 'Choose the Approach',
-  P4: 'Build the Plan',
-  P5: 'Prepare to Execute',
+  P2: getPhaseName(2),
+  P3: getPhaseName(3),
+  P4: getPhaseName(4),
+  P5: getPhaseName(5),
   TOWER: 'Track Outcomes',
 };
 

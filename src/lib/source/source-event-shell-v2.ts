@@ -98,6 +98,8 @@ export interface SourceShellStep {
   template: StageTaskView["template"] | null;
   provenance: StageTaskView["provenance"] | null;
   factTemplateCode: StageTaskView["factTemplateCode"] | null;
+  confirmationVersion?: string;
+  approvalPolicyCode?: string | null;
 }
 
 export interface SourceShellFileItem {
@@ -127,6 +129,8 @@ export interface SourceShellFileItem {
   complianceReviewMessage: string | null;
   /** First-mile extraction status from the durable Source artifact row. */
   parseStatus: string | null;
+  /** Registry origin distinguishes rendered work products from uploaded evidence. */
+  sourceOrigin?: string | null;
   /** Search/vector readiness status from the durable Source artifact row. */
   embeddingStatus: string | null;
   /** Graph/entity projection status from the durable Source artifact row. */
@@ -188,6 +192,7 @@ export type SourceShellStageArtifactReadiness = SourceStageArtifactReadiness;
 export interface SourceEventShellView {
   event: {
     id: string;
+    approvalPolicyCode?: SourcingEventSummary["approvalPolicyCode"];
     code: string;
     name: string;
     tenantName: string;
@@ -243,6 +248,7 @@ export interface SourceEventShellView {
 
 export interface SourceShellArtifactLike {
   id: string;
+  recordKind?: "canvas_state" | "registry_artifact";
   artifactCode?: string | null;
   artifactKind?: string | null;
   stageKey?: string | null;
@@ -265,6 +271,7 @@ export interface SourceShellArtifactLike {
   clientFinalAcceptedAt?: string | null;
   clientFinalAcceptedBy?: string | null;
   sourceGeneratedArtifactId?: string | null;
+  linkedArtifactId?: string | null;
   body?: string | null;
   bodyMarkdown?: string | null;
   renderedText?: string | null;
@@ -287,6 +294,7 @@ export interface BuildSourceEventShellViewInput {
   tenantName: string;
   viewedStageKey: SourceStageKey;
   stageView: StageAnalyticsView;
+  gateCriteriaReady?: boolean;
   stepInsight?: StepInsightView | null;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
@@ -314,7 +322,16 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
   const merged = registryArtifacts.map((artifact) => {
     const code = artifactCodeFor(artifact);
     const state = code ? statesByCode.get(code) : undefined;
-    if (!state || artifactBodyFor(artifact)?.trim()) return artifact;
+    if (!state) return artifact;
+    const registryBody = artifactBodyFor(artifact)?.trim();
+    if (registryBody) {
+      if (registryBody !== state.body?.trim()) return artifact;
+      return {
+        ...artifact,
+        bodyGenerationMetadata:
+          state.bodyGenerationMetadata ?? artifact.bodyGenerationMetadata,
+      };
+    }
     return {
       ...artifact,
       body: state.body,
@@ -322,6 +339,8 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
         state.bodyFormat === "markdown" ? state.body : artifact.bodyMarkdown,
       renderedText:
         state.bodyFormat !== "markdown" ? state.body : artifact.renderedText,
+      bodyGenerationMetadata:
+        state.bodyGenerationMetadata ?? artifact.bodyGenerationMetadata,
     };
   });
   const existingCodes = new Set(
@@ -352,6 +371,7 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
       body: state.body,
       bodyMarkdown: state.bodyFormat === "markdown" ? state.body : null,
       renderedText: state.bodyFormat !== "markdown" ? state.body : null,
+      bodyGenerationMetadata: state.bodyGenerationMetadata,
     });
     existingCodes.add(state.artifactCode);
   }
@@ -364,7 +384,8 @@ export function buildSourceEventShellView(
 ): SourceEventShellView {
   const activeWorkspace = input.activeWorkspace ?? "steps";
   const tasks = input.stageView.tasks;
-  const ready = tasks.filter((task) => isTaskCaptured(task)).length;
+  const ready = tasks.filter((task) =>
+    isTaskCaptured(task, input.event.approvalPolicyCode)).length;
   const total = tasks.length;
   const resolvedJourney = input.journey ?? SOURCE_JOURNEYS.competitive_rfp;
   const viewedStageLabel =
@@ -428,7 +449,7 @@ export function buildSourceEventShellView(
     },
   );
 
-  const groups = groupSteps(tasks);
+  const groups = groupSteps(tasks, input.event.approvalPolicyCode);
   const stepsById = new Map(
     groups.flatMap((group) => group.steps).map((step) => [step.id, step]),
   );
@@ -436,13 +457,36 @@ export function buildSourceEventShellView(
     tasks
       .map((task) => stepsById.get(task.id))
       .find((step) => step && step.status !== "captured") ?? null;
-  const artifacts = (input.artifacts ?? []).map((artifact) =>
+  const statesByLinkedArtifactId = new Map(
+    (input.artifacts ?? [])
+      .filter((artifact) =>
+        artifact.recordKind === "canvas_state" &&
+        artifact.linkedArtifactId &&
+        artifact.bodyGenerationMetadata,
+      )
+      .map((artifact) => [artifact.linkedArtifactId!, artifact]),
+  );
+  const registeredArtifacts = (input.artifacts ?? [])
+    .filter((artifact) => artifact.recordKind !== "canvas_state")
+    .map((artifact) => {
+      const state = statesByLinkedArtifactId.get(artifact.id);
+      if (!state) return artifact;
+      const registryBody = artifactBodyFor(artifact)?.trim();
+      if (registryBody && (!state.body || registryBody !== state.body.trim())) {
+        return artifact;
+      }
+      return {
+        ...artifact,
+        bodyGenerationMetadata: state.bodyGenerationMetadata,
+      };
+    });
+  const artifacts = registeredArtifacts.map((artifact) =>
     toFileItem(
       artifact,
       input.latestArtifactAcceptancesById?.get(artifact.id) ?? null,
     ),
   );
-  const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
+  const lifecycle = buildSourceArtifactLifecycleSummary(registeredArtifacts);
   const artifactReadiness = stageArtifactReadinessFor(
     lifecycle,
     input.viewedStageKey,
@@ -533,6 +577,7 @@ export function buildSourceEventShellView(
         approvalRecorded: viewedStageApprovalRecorded,
         workflowComplete: completedViewedStage,
         artifactsReady: artifactReadiness.ready,
+        gateCriteriaReady: input.gateCriteriaReady,
         gateActionArmed:
           viewedStageIsCurrent && Boolean(input.stageView.gate.action),
         approvalRationale: viewedStageIsCurrent
@@ -554,6 +599,7 @@ export function buildSourceEventShellView(
   return {
     event: {
       id: input.event.id,
+      approvalPolicyCode: input.event.approvalPolicyCode,
       code: input.event.code,
       name: input.event.name,
       tenantName: input.tenantName,
@@ -673,16 +719,25 @@ function normalizeCurrentStageApprovalItem(
   };
 }
 
-function isTaskCaptured(task: StageTaskView): boolean {
+function isTaskCaptured(
+  task: StageTaskView,
+  approvalPolicyCode?: string | null,
+): boolean {
+  if (task.id === "strategy.confirm" && approvalPolicyCode === "self_v1") {
+    return task.evidenceComplete === true;
+  }
   return task.state === "done" || task.evidenceComplete === true;
 }
 
-function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
+function groupSteps(
+  tasks: readonly StageTaskView[],
+  approvalPolicyCode?: string | null,
+): SourceShellStepGroup[] {
   const groups = new Map<string, SourceShellStep[]>();
   tasks.forEach((task, index) => {
     const label = taskGroupLabel(task);
     const list = groups.get(label) ?? [];
-    list.push(toShellStep(task, list.length === 0, index));
+    list.push(toShellStep(task, list.length === 0, index, approvalPolicyCode));
     groups.set(label, list);
   });
   return Array.from(groups.entries())
@@ -698,8 +753,9 @@ function toShellStep(
   task: StageTaskView,
   firstInGroup: boolean,
   order: number,
+  approvalPolicyCode?: string | null,
 ): SourceShellStep {
-  const captured = isTaskCaptured(task);
+  const captured = isTaskCaptured(task, approvalPolicyCode);
   return {
     id: task.id,
     order,
@@ -714,6 +770,8 @@ function toShellStep(
     template: task.template ?? null,
     provenance: task.provenance ?? null,
     factTemplateCode: task.factTemplateCode ?? null,
+    confirmationVersion: task.confirmationVersion,
+    approvalPolicyCode,
   };
 }
 
@@ -877,6 +935,7 @@ function toFileItem(
       ? SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE
       : null,
     parseStatus: artifact.parseStatus ?? null,
+    sourceOrigin: artifact.sourceOrigin ?? null,
     embeddingStatus: artifact.embeddingStatus ?? null,
     graphStatus: artifact.graphStatus ?? null,
     latestAcceptance,

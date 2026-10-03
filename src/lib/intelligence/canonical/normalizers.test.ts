@@ -10,15 +10,26 @@ import {
 } from './normalizers';
 
 describe('canonical pattern normalizers', () => {
+  // Item T-497. The two healthcare rows below read `healthcare` until 2026-09-27.
+  // INDUSTRY_ALIASES has mapped `healthcare`, `health_care`, `provider` and
+  // `payer` to the more specific canonical band `healthcare_provider` since its
+  // only commit, `5d795a3976` -- which is also this suite's only commit, so the
+  // expectation was never satisfiable and the suite has never passed. Nothing
+  // moved; the pair shipped disagreeing with itself. The code is right: both
+  // `healthcare` and `healthcare_provider` are canonical, and resolving an input
+  // that says "provider" to the narrower band is the deliberate choice. Note the
+  // medtech aliases resolve to `healthcare_medtech` instead, so the map does not
+  // funnel every healthcare alias to one band.
   it.each([
     ['financial-services', ['financial_services']],
     ['financial_services,energy', ['financial_services', 'energy']],
     ['retail-cpg', ['retail']],
     ['cross-industry', ['cross_industry']],
-    ['healthcare/provider', ['healthcare']],
-    ['health-care', ['healthcare']],
+    ['healthcare/provider', ['healthcare_provider']],
+    ['health-care', ['healthcare_provider']],
     ['fs', ['financial_services']],
     ['cpg', ['retail']],
+    ['medtech', ['healthcare_medtech']],
   ])('normalizes industry alias %s', (input, expected) => {
     expect(normalizeIndustry(input).values).toEqual(expected);
   });

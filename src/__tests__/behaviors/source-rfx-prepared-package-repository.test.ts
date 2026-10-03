@@ -8,6 +8,8 @@ jest.mock("@/lib/data-plane/azureRead", () => ({
 }));
 
 import { readPreparedRfxPackagesForEvent } from "@/lib/source/rfx-delivery/prepared-package-repository";
+import { writePreparedRfxPackageVersion, type PreparedPackageWriteInput } from "@/lib/source/rfx-delivery/write-prepared-package-version";
+import type { SqlRunner, TxSessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
 
 const eventId = "11111111-1111-4111-8111-111111111111";
 const tenantKey = "tenant-alpha";
@@ -18,7 +20,7 @@ const content = {
   packageVersionId: "version-1",
   version: 1,
   disclosureClassification: "confidential",
-  authentication: { method: "shared_secret", secretRef: "vault-ref" },
+  authentication: { method: "shared_secret" as const, secretRef: "vault-ref" },
   expiresAt: "2026-10-01T00:00:00.000Z",
   artifacts: [{ artifactId: "22222222-2222-4222-8222-222222222222", sha256: "a".repeat(64) }],
   recipients: [{
@@ -112,5 +114,100 @@ describe("Stage 06 prepared-package readback", () => {
     await expect(readPreparedRfxPackagesForEvent({ clientKey: "", eventId }))
       .resolves.toEqual({ registryAvailable: false, versions: [] });
     expect(withSessionMock).not.toHaveBeenCalled();
+  });
+});
+
+function writeInput(): PreparedPackageWriteInput {
+  return {
+    release: {
+      package: {
+        packageId: content.packageId, tenantKey, eventId,
+        disclosureScope: { classification: "confidential_rfp", includedArtifactIds: [content.artifacts[0].artifactId] },
+        authentication: content.authentication,
+        expiresAt: "2026-10-15T00:00:00Z",
+        recipients: [{
+          recipientId: "recipient-1", legalEntityId: "vendor-1", contactId: "contact-1",
+          contactName: "Named contact", contactEmail: "contact@example.test", contactPolicy: "contact_allowed",
+        }],
+        receipts: [],
+      },
+      supplierContactPolicies: { "vendor-1": "contact_allowed" },
+      asOf: "2026-10-01T00:00:00Z",
+    },
+    artifacts: content.artifacts,
+    recipientAuthorities: [{
+      recipientId: "recipient-1", candidateAuthorityId: "candidate-1",
+      candidateTenantKey: tenantKey, candidateEventId: eventId,
+      candidateLegalEntityId: "vendor-1", candidateState: "accepted",
+      contactAuthorityId: "contact-authority-1", contactTenantKey: tenantKey,
+      contactEventId: eventId, contactLegalEntityId: "vendor-1", contactId: "contact-1",
+      contactName: "Named contact", contactEmail: "contact@example.test",
+      contactPolicy: "contact_allowed", contactState: "approved",
+      contactApprovedByUserId: "contact-approver", contactApprovedAt: "2026-09-30T00:00:00Z",
+      contactEvidenceReference: "contact-evidence", ndaAuthorityId: "nda-1",
+      ndaTenantKey: tenantKey, ndaEventId: eventId, ndaLegalEntityId: "vendor-1",
+      ndaState: "recorded",
+    }],
+    approvedByUserId: "approver-1", approvedAt: "2026-10-01T00:00:00Z",
+    approvalEvidenceReference: "approval-1",
+  };
+}
+
+function writeStore() {
+  const writes: unknown[][] = [];
+  const sql: string[] = [];
+  const run: SqlRunner = async <R>(query: string, params: unknown[]): Promise<R[]> => {
+    sql.push(query);
+    if (query.includes("FROM source_events")) {
+      if (!query.includes("client_key = $1") || params[0] !== tenantKey) return [];
+      return (query.includes("id = $2::uuid") && params[1] !== eventId ? [] : [{ id: eventId }]) as R[];
+    }
+    if (query.includes("FROM source_event_rfx_package_version")) {
+      return (writes.length ? [{ version_number: writes.length }] : []) as R[];
+    }
+    if (query.includes("INSERT INTO source_event_rfx_package_version")) {
+      writes.push(params);
+      return [{ id: `row-${writes.length}` }] as R[];
+    }
+    return [];
+  };
+  const tx: TxSessionRunner = async (fn) => fn(run);
+  return { tx, writes, sql };
+}
+
+describe("prepared RFx package version write", () => {
+  it("allocates n+1 without rewriting the first digest-bound snapshot", async () => {
+    const db = writeStore();
+    const first = await writePreparedRfxPackageVersion(writeInput(), db.tx, () => "version-1");
+    const frozen = JSON.stringify(db.writes[0]);
+    const second = await writePreparedRfxPackageVersion(writeInput(), db.tx, () => "version-2");
+    expect(first).toMatchObject({ ok: true, version: 1 });
+    expect(second).toMatchObject({ ok: true, version: 2 });
+    expect(db.writes).toHaveLength(2);
+    expect(JSON.stringify(db.writes[0])).toBe(frozen);
+    expect(createHash("sha256").update(db.writes[0][5] as string).digest("hex")).toBe(db.writes[0][6]);
+    expect(db.sql.some((query) => /^\s*(UPDATE|DELETE)\b/i.test(query))).toBe(false);
+  });
+
+  it("refuses a different event in the same tenant before writing", async () => {
+    const db = writeStore();
+    const proposed = writeInput();
+    const foreignEvent = "33333333-3333-4333-8333-333333333333";
+    proposed.release.package.eventId = foreignEvent;
+    proposed.recipientAuthorities[0].candidateEventId = foreignEvent;
+    proposed.recipientAuthorities[0].contactEventId = foreignEvent;
+    proposed.recipientAuthorities[0].ndaEventId = foreignEvent;
+    expect(await writePreparedRfxPackageVersion(proposed, db.tx, () => "version-1"))
+      .toMatchObject({ ok: false, code: "event_unavailable" });
+    expect(db.writes).toHaveLength(0);
+  });
+
+  it("refuses a do-not-contact recipient before writing", async () => {
+    const db = writeStore();
+    const proposed = writeInput();
+    proposed.release.package.recipients[0].contactPolicy = "do_not_contact";
+    expect(await writePreparedRfxPackageVersion(proposed, db.tx, () => "version-1"))
+      .toMatchObject({ ok: false, code: "release_not_ready" });
+    expect(db.writes).toHaveLength(0);
   });
 });

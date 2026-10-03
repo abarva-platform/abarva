@@ -80,6 +80,21 @@ jobs:
           fi
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
+      - name: Verify private operator proof token binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          job_json="$(az containerapp job show \
+            --name job-abarva-private-operator-eus \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json)"
+          secret_present="$(jq -r '[.properties.configuration.secrets[]?.name] | index("parallel-run-token") != null' <<<"$job_json")"
+          env_present="$(jq -r '[.properties.template.containers[]?.env[]? | select(.name == "ABARVA_PRIVATE_BROWSER_PROOF_TOKEN" and .secretRef == "parallel-run-token")] | length > 0' <<<"$job_json")"
+          if [[ "$secret_present" != "true" || "$env_present" != "true" ]]; then
+            echo "Private operator is missing the Key Vault-backed parallel-run-token binding. Deploy infra/azure/parameters/private-operator.lab.bicepparam before rerunning this proof." >&2
+            exit 1
+          fi
+
       - name: Run default-route product browser proof in private operator
         run: |
           npm run ops:aca-job -- \

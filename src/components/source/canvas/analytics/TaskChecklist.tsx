@@ -89,8 +89,10 @@ export function TaskChecklist({
       ),
   );
 
-  const done = tasks.filter(
-    (t) => t.state === "done" || locallyDone.has(t.id),
+  const done = tasks.filter((t) =>
+    t.id === "strategy.confirm"
+      ? t.state === "done" || t.evidenceComplete === true
+      : t.state === "done" || locallyDone.has(t.id),
   ).length;
 
   return (
@@ -122,7 +124,9 @@ export function TaskChecklist({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {tasks.map((task) => {
-          const isDone = task.state === "done" || locallyDone.has(task.id);
+          const isDone = task.id === "strategy.confirm"
+            ? task.state === "done" || task.evidenceComplete === true
+            : task.state === "done" || locallyDone.has(task.id);
           const isOpen = openId === task.id;
           return (
             <TaskRow
@@ -303,7 +307,8 @@ function TaskRow({
                     eventId={eventId}
                     stageKey={stageKey}
                     factTemplateCode={factTemplateCode}
-                    onUploaded={task.id === "scope.sponsor" ? () => router.refresh() : onComplete}
+                    evidenceRequirementId={task.id === "scope.app-inventory" ? evidenceRequirementId ?? undefined : undefined}
+                    onUploaded={task.id === "scope.sponsor" || task.id === "scope.app-inventory" ? () => router.refresh() : onComplete}
                   />
                 )}
               </EvidenceRequestPanel>
@@ -365,6 +370,10 @@ function TaskRow({
               <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
                 Completion is read back from verified commitment evidence.
               </span>
+            ) : task.id === "strategy.confirm" && eventId && !task.confirmationVersion && !isDone ? (
+              <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+                This strategy decision requires the governed Event Owner approval path.
+              </span>
             ) : effectiveState === "done" ? (
               <span
                 style={{
@@ -379,6 +388,33 @@ function TaskRow({
               <button
                 type="button"
                 onClick={async () => {
+                  if (task.id === "strategy.confirm") {
+                    if (!eventId || stageKey !== "strategy" || !task.confirmationVersion) return;
+                    setIsCompleting(true);
+                    setCompletionError(null);
+                    try {
+                      const response = await fetch(
+                        `/api/v1/source/${encodeURIComponent(eventId)}/strategy-confirmation`,
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ version: task.confirmationVersion, confirmed: true }),
+                        },
+                      );
+                      const result = (await response.json().catch(() => null)) as {
+                        ok?: boolean; detail?: string; error?: string;
+                      } | null;
+                      if (!response.ok || !result?.ok) {
+                        throw new Error(result?.detail ?? result?.error ?? "Strategy confirmation could not be saved.");
+                      }
+                      router.refresh();
+                    } catch (error) {
+                      setCompletionError(error instanceof Error ? error.message : "Strategy confirmation could not be saved.");
+                    } finally {
+                      setIsCompleting(false);
+                    }
+                    return;
+                  }
                   if (!canPersistAnswer) {
                     onComplete();
                     return;
@@ -971,6 +1007,7 @@ interface DropZoneProps {
    * LIVE. Absent → registry-only upload (the current behavior).
    */
   factTemplateCode?: string;
+  evidenceRequirementId?: string;
   onUploaded?: () => void;
   onUploadReadback?: (readback: TaskProvideUploadReadback) => void;
 }
@@ -989,6 +1026,7 @@ export function TaskProvideUpload({
   eventId,
   stageKey,
   factTemplateCode,
+  evidenceRequirementId,
   onUploaded,
   onUploadReadback,
 }: DropZoneProps) {
@@ -1013,6 +1051,7 @@ export function TaskProvideUpload({
         eventId,
         stageKey,
         file,
+        evidenceRequirementId,
       });
 
       // 2) When this task binds a template, ALSO parse the file into typed facts.

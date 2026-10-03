@@ -14,6 +14,67 @@ import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 
 describe("Source artifact prompt registry provider config", () => {
+  it("binds later parsed ticket excerpts and refuses an invented baseline in d07", () => {
+    const ctx = makeD09Context(["synthetic-ticket-export.csv"]);
+    ctx.event.currentStageKey = "scope";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      "ticket_group,volume\nservice_desk,68",
+      "ticket_group,volume\nendpoint_patch,47",
+    ];
+
+    const template = getPromptTemplate("d07_ticket_synth");
+    expect(template?.version).toBe(3);
+    const message = template?.buildUserMessage(ctx, { d01_strategy_memo: "Approved process strategy." });
+
+    expect(message).toContain("synthetic-ticket-export.csv");
+    expect(message).toContain("service_desk,68");
+    expect(message).toContain("endpoint_patch,47");
+    expect(message).toMatch(/excerpts? (?:may be|are) incomplete/i);
+    expect(template?.systemPrompt).not.toMatch(/construct a representative baseline/i);
+    expect(message).toContain("never construct a plausible baseline");
+  });
+
+  it("keeps ticket rows beyond the old 500-character cut within one parsed chunk", () => {
+    const ctx = makeD09Context(["synthetic-ticket-export.csv"]);
+    ctx.event.currentStageKey = "scope";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      [
+        "Service Tower,Support Tier,Month,Time Window,Ticket Count,SLA Breach Count,Source Basis",
+        ...Array.from({ length: 7 }, (_, index) =>
+          `Service desk,L2,2026-08,Business hours,${index + 1},0,Synthetic scenario for workflow testing`,
+        ),
+        "Endpoint and patch,L3,2026-08,After hours,3,0,Synthetic scenario for workflow testing",
+      ].join("\n"),
+    ];
+    expect(ctx.uploadedEvidence![0].chunkExcerpts[0].length).toBeGreaterThan(500);
+
+    const message = getPromptTemplate("d07_ticket_synth")?.buildUserMessage(ctx, {
+      d01_strategy_memo: "Approved process strategy.",
+    });
+
+    expect(message).toContain("Endpoint and patch,L3,2026-08,After hours,3,0");
+  });
+
+  it("bounds the extra d07 context to scope CSV evidence and marks truncation", () => {
+    const ctx = makeD09Context(["scope-tickets.csv", "strategy-note.csv"]);
+    ctx.uploadedEvidence![0].chunkExcerpts = Array.from(
+      { length: 5 },
+      (_, index) => `SCOPE_ROW_${index + 1}_${"x".repeat(850)}`,
+    );
+    ctx.uploadedEvidence![1].stageKey = "strategy";
+    ctx.uploadedEvidence![1].chunkExcerpts = ["STRATEGY_FIRST", "STRATEGY_SECOND"];
+
+    const message = getPromptTemplate("d07_ticket_synth")?.buildUserMessage(ctx, {
+      d01_strategy_memo: "Approved process strategy.",
+    });
+
+    expect(message).toContain("SCOPE_ROW_1_");
+    expect(message).toContain("[TRUNCATED]");
+    expect(message).not.toContain("SCOPE_ROW_5_");
+    expect(message).toContain("STRATEGY_FIRST");
+    expect(message).not.toContain("STRATEGY_SECOND");
+  });
+
   it("maps every canonical artifact into a Source decision-package story contract", () => {
     expect(() => assertSourceArtifactStoryContractCoverage()).not.toThrow();
 
@@ -83,6 +144,185 @@ describe("Source artifact prompt registry provider config", () => {
         requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
       }),
     ).toBe("Not Requested");
+  });
+
+  it("binds current Strategy applicability, SELF policy, and uncleared gate to d01 and d02", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      {
+        ...ctx.evidence[0],
+        requirementId: "EVID-SRC-STR-INCUMBENT",
+        stage: "strategy",
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "No incumbent for this synthetic event.",
+      },
+      {
+        ...ctx.evidence[0],
+        id: "evidence-spend",
+        requirementId: "EVID-SRC-STR-SPEND-BASELINE",
+        stage: "strategy",
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "No historical spend for this synthetic event.",
+      },
+    ];
+    ctx.gateCriteria = [{
+      id: "criterion-1",
+      sourceEventId: "event-1",
+      tenantKey: "skyharbor",
+      criterionId: "GATE-STRATEGY-01",
+      fromStage: "strategy",
+      toStage: "scope",
+      state: "pending",
+      reviewerUserId: null,
+      reviewedAt: null,
+      notes: null,
+      evidenceArtifactIds: [],
+      waiverApprovalId: null,
+      createdAt: "2026-06-12T00:00:00.000Z",
+      updatedAt: "2026-06-12T00:00:00.000Z",
+    }];
+
+    for (const code of ["d01_strategy_memo", "d02_value_target"]) {
+      const message = getPromptTemplate(code)!.buildUserMessage(ctx, {});
+      expect(message).toContain("EVID-SRC-STR-INCUMBENT; applicability=not_applicable");
+      expect(message).toContain("EVID-SRC-STR-SPEND-BASELINE; applicability=not_applicable");
+      expect(message).toContain("approval_policy=self_v1");
+      expect(message).toContain("GATE-STRATEGY-01; state=pending");
+      expect(message).toContain("When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead.");
+      expect(message).toContain("Do not tell the decision owner to record approval or advance the event while any Strategy criterion is pending.");
+    }
+  });
+
+  it("includes the ending of a short single-chunk upload in the actual Strategy prompts", () => {
+    const ctx = makeD09Context(["synthetic-planning-trigger.txt"]);
+    ctx.event.currentStageKey = "strategy";
+    const completeChunk = `${"Planning context. ".repeat(70)}Final approval boundary.`;
+    ctx.uploadedEvidence![0].chunkExcerpts = [completeChunk];
+
+    for (const code of ["d01_strategy_memo", "d02_value_target"]) {
+      const message = getPromptTemplate(code)!.buildUserMessage(ctx, {});
+      expect(message).toContain("synthetic-planning-trigger.txt");
+      expect(message).toContain(completeChunk);
+      expect(message).toContain("Final approval boundary.");
+    }
+
+    const scopeMessage = getPromptTemplate("d05_scope_memo")!.buildUserMessage(ctx, {});
+    expect(scopeMessage).toContain(`Excerpt: ${completeChunk.slice(0, 500)}`);
+    expect(scopeMessage).not.toContain("Final approval boundary.");
+  });
+
+  it("keeps the existing draft excerpt limit for multi-chunk uploads", () => {
+    const ctx = makeD09Context(["synthetic-long-evidence.txt"]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      "A".repeat(900),
+      "B".repeat(900),
+    ];
+
+    const message = getPromptTemplate("d01_strategy_memo")!.buildUserMessage(ctx, {});
+    expect(message).toContain(`Excerpt: ${"A".repeat(500)}`);
+    expect(message).not.toContain("A".repeat(501));
+    expect(message).not.toContain("B".repeat(500));
+  });
+
+  it("marks recommended and policy-excluded Strategy evidence as nonblocking in both drafts", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      {
+        ...ctx.evidence[0],
+        requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+      {
+        ...ctx.evidence[0],
+        id: "sponsor-evidence",
+        requirementId: "EVID-SRC-STR-SPONSOR-COMMIT",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+    ];
+
+    for (const code of ["d01_strategy_memo", "d02_value_target"]) {
+      const message = getPromptTemplate(code)!.buildUserMessage(ctx, {});
+      expect(message).toMatch(/EVID-SRC-STR-MARKET-BENCHMARK;[^\n]*level=recommended;[^\n]*gate_blocking=false/);
+      expect(message).toMatch(/EVID-SRC-STR-SPONSOR-COMMIT;[^\n]*policy_applies=false;[^\n]*gate_blocking=false/);
+      expect(message).toContain("Recommended evidence is optional and cannot become a gate prerequisite.");
+    }
+  });
+
+  it("does not call an unapproved d01 body approved in the d02 prompt", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.artifactStates = [{
+      ...makeArtifactState("d01_strategy_memo", "Unreviewed planning draft."),
+      status: "needs_review",
+    }];
+
+    const message = getPromptTemplate("d02_value_target")!.buildUserMessage(ctx, {
+      d01_strategy_memo: "Unreviewed planning draft.",
+    });
+    expect(message).not.toContain("Approved Sourcing Strategy Memo");
+    expect(message).not.toContain("Unreviewed planning draft.");
+  });
+
+  it("keeps an unsized d02 target and measurement window open when evidence is absent", () => {
+    const template = getPromptTemplate("d02_value_target")!;
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.estimatedValueUsd = 1_500_000;
+
+    expect(template.systemPrompt).toContain(
+      "If no bound baseline supports low/base/high amounts, write not established in all three amount cells",
+    );
+    expect(template.systemPrompt).toContain(
+      "Do not create illustrative, proxy, or synthetic spend baselines or sensitivity amounts to fill the table",
+    );
+    expect(template.systemPrompt).toContain(
+      "The intake candidate opportunity is a validation hypothesis, not the base case or a sizing input",
+    );
+    expect(template.systemPrompt).toContain(
+      "Leave the first measurement window client-to-set unless its dates and owner are present in bound evidence",
+    );
+    expect(template.systemPrompt).not.toContain(
+      "State the value target as a RANGE (low / base / high)",
+    );
+    expect(template.systemPrompt).not.toContain(
+      "Name the realization owner and the first measurement window.",
+    );
+    expect(template.buildUserMessage(ctx, {})).toContain(
+      "Candidate opportunity / validation target from intake (not contract value or realized savings): $1,500,000",
+    );
+  });
+
+  it("puts human trigger review and the actual next stage in the d01 gate agenda", () => {
+    const prompt = getPromptTemplate("d01_strategy_memo")!.systemPrompt;
+    expect(prompt).toContain(
+      "Make human review of available trigger evidence an explicit gate-session agenda action before any criterion outcome is recorded",
+    );
+    expect(prompt).toContain(
+      "Strategy approval advances only to Define/Scope, not directly to RFP or market release",
+    );
+  });
+
+  it("keeps optional evidence open and planning status visible in d02 excerpts", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    const template = getPromptTemplate("d02_value_target")!;
+    const message = template.buildUserMessage(ctx, {});
+    for (const text of [
+      "An available gate evidence file still needs explicit human review when the criterion is pending",
+      "Do not say all open evidence gaps must close or be formally deferred before the gate; recommended evidence may remain open without blocking",
+    ]) {
+      expect(message).toContain(text);
+    }
+    expect(template.systemPrompt).toContain(
+      "Put planning-only and unvalidated status in the sizing table header or adjacent caption",
+    );
   });
 
   it("lets legacy suffixed prompt keys resolve without changing the legacy prompt keys", () => {
@@ -163,38 +403,49 @@ describe("Source artifact prompt registry provider config", () => {
     }
   });
 
-  it("configures the D09 RFP package as a board-grade, source-disciplined deliverable", () => {
+  it("configures the D09 RFP package as a board-grade bidder draft", () => {
     const template = getPromptTemplate("d09_rfp_pack");
 
     expect(template?.version).toBeGreaterThanOrEqual(10);
     expect(template?.maxTokens).toBeGreaterThanOrEqual(5000);
-    expect(template?.systemPrompt).toContain("Source register");
-    expect(template?.systemPrompt).toContain("Risk, issue, dependency");
-    expect(template?.systemPrompt).toContain("issue-to-release gap");
+    expect(template?.systemPrompt).toContain("vendor-facing RFP package");
     expect(template?.systemPrompt).toContain("Vendor Response Workbook");
-    expect(template?.systemPrompt).toContain("friendly exhibit labels");
+    expect(template?.systemPrompt).toContain("friendly exhibit labels only when an exhibit is explicitly identified as vendor-disclosable");
     expect(template?.systemPrompt).toContain("Never stop after a partial table");
-    expect(template?.systemPrompt).toContain("Section budget");
     expect(template?.systemPrompt).toContain("Preserve sections §7–§11");
     expect(template?.systemPrompt).toContain(
       "Do not use bracketed client fill-in markers",
     );
-    expect(template?.systemPrompt).toContain(
-      "blocking gate and downstream impact",
-    );
-    expect(template?.systemPrompt).toContain("Compact required appendix block");
-    expect(template?.systemPrompt).toContain("§11A table");
-    expect(template?.systemPrompt).toContain(
-      "RFP package draft complete — pending client closure of registered gaps.",
-    );
+    expect(template?.systemPrompt).not.toContain("blocking gate and downstream impact");
+    expect(template?.systemPrompt).not.toContain("RFP package draft complete — pending client closure of registered gaps.");
     expect(template?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
     expect(template?.systemPrompt).toContain("Vendor Claim Register");
     expect(template?.systemPrompt).toContain("Commercial Exceptions Table");
-    expect(template?.systemPrompt).toContain("Requirement-to-response matrix");
+    expect(template?.systemPrompt).toContain("Requirement Response Matrix");
     expect(template?.systemPrompt).toContain("Evaluation Criterion ID");
     expect(template?.systemPrompt).toContain(
       "Comply | Partially Comply | Exception | Not Applicable",
     );
+    expect(template?.systemPrompt).toMatch(/buyer name.*(?:clinical|patient-facing)/i);
+    expect(template?.systemPrompt).toMatch(/release state.*draft.*not issued/i);
+  });
+
+  it("does not feed internal release controls to the legacy D09 fallback prompt", () => {
+    const ctx = makeD09Context(["buyer_private_release_register.csv"]);
+    ctx.event.name = "Internal workflow test with private owner note";
+    ctx.uploadedEvidence![0].chunkExcerpts = ["Release-Hold RH-05 blocks distribution."];
+    const template = getPromptTemplate("d09_rfp_pack")!;
+    const message = template.buildUserMessage(ctx, {
+      d01_strategy_memo: "Internal negotiation target: 12-15%.",
+      d05_scope_memo: "Release-Hold Governing Table: RH-05 blocks external distribution.",
+    });
+
+    expect(message).toContain(ctx.tenantName);
+    expect(message).not.toContain(ctx.event.name);
+    expect(message).not.toMatch(/Release-Hold|RH-05|internal negotiation target/i);
+    expect(message).not.toContain("buyer_private_release_register.csv");
+    expect(template.systemPrompt).not.toMatch(/gap closure register|blocking gate and downstream impact/i);
+    expect(template.systemPrompt).not.toMatch(/Reference the value-target range from d01/i);
   });
 
   it("keeps the existing core Source generation artifacts available", () => {
@@ -1015,53 +1266,27 @@ describe("Source artifact prompt registry provider config", () => {
     expect(d05Message).not.toContain("artifact-1");
   });
 
-  it("binds uploaded evidence-room files into the D09 RFP coverage map", () => {
+  it("does not treat parsed buyer evidence-room files as issued D09 exhibits", () => {
     const template = getPromptTemplate("d09_rfp_pack");
     const ctx = makeD09Context([
       "08_Locked_Pricing_Assumptions_Volume_Bands.csv",
       "09_Evaluation_Criteria_Weights_APPROVED.csv",
       "10_Vendor_Response_Expectations.csv",
-      "13_Security_Compliance_Control_Posture.csv",
-      "14_Transition_Ops_Blackout_Calendar.csv",
-      "15_Run_vs_Change_Financial_Baseline.csv",
     ]);
 
     const message = template?.buildUserMessage(ctx, {
-      d01_strategy_memo: "# Strategy",
-      d05_scope_memo: "# Scope",
+      d01_strategy_memo: "# Strategy with internal savings target",
+      d05_scope_memo: "# Scope with release holds",
     });
 
-    expect(message).toContain("D09 RFP EVIDENCE COVERAGE MAP");
-    expect(message).toContain("GOVERNED EVIDENCE STATE SUMMARY (NORMALIZED FOR D09)");
-    expect(message).toContain(
-      "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)",
-    );
-    expect(message).toContain("Exhibit 08 — Locked pricing assumptions");
-    expect(message).toContain("satisfies=EVID-SRC-PRICE-ASSUMPTIONS");
-    expect(message).toContain("Exhibit 09 — Approved evaluation criteria");
-    expect(message).toContain("satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE");
-    expect(message).toContain("Exhibit 10 — Vendor response expectations");
-    expect(message).toContain("satisfies=EVID-SRC-RFP-LEGAL-TEMPLATE");
-    expect(message).toContain("Exhibit 13 — Security and compliance");
-    expect(message).toContain("satisfies=EVID-SRC-DEC-RISK-REGISTER");
-    expect(message).toContain("Exhibit 14 — Transition operations blackout");
-    expect(message).toContain("Exhibit 15 — Run-vs-change financial baseline");
-    expect(message).toContain(
-      "do not call that requirement Not Requested in the source register",
-    );
-    expect(message).toContain("§10 must include a risk register");
-    expect(message).toContain("§11 must include a gap closure register");
-    expect(message).toContain(
-      "do not call that requirement Not Requested in the source register",
-    );
-    expect(message).toContain(
-      "§9 must include weights/scoring/disqualification controls",
-    );
-    expect(message).toContain(
-      "blocking-gap closure table with accountable role",
-    );
-    expect(message).toContain("every section §1 through §11 must appear");
-    expect(message).toContain("§7–§11 must not be sacrificed");
+    expect(message).toContain(ctx.tenantName);
+    expect(message).toContain("not supplied to this drafting context");
+    expect(message).not.toContain("D09 RFP EVIDENCE COVERAGE MAP");
+    expect(message).not.toContain("GOVERNED EVIDENCE STATE SUMMARY");
+    expect(message).not.toContain("09_Evaluation_Criteria_Weights_APPROVED.csv");
+    expect(message).not.toContain("internal savings target");
+    expect(message).not.toContain("release holds");
+    expect(message).not.toContain("satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE");
   });
 
   it("configures the pricing-stage prompts as a sequenced workflow", () => {

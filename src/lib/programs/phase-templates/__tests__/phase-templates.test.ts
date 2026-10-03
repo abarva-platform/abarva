@@ -112,8 +112,10 @@ describe('client-friendly + governed', () => {
   });
 
   it('phase labels are client-friendly (no P-codes as labels)', () => {
-    expect(PHASE_LABELS.P2).toBe('Understand Current State');
-    expect(PHASE_LABELS.P3).toBe('Choose the Approach');
+    expect(PHASE_LABELS.P2).toBe('Discover & Diagnose');
+    expect(PHASE_LABELS.P3).toBe('Design Future State');
+    expect(PHASE_LABELS.P4).toBe('Roadmap & Business Case');
+    expect(PHASE_LABELS.P5).toBe('Mobilize & Handoff');
   });
 });
 

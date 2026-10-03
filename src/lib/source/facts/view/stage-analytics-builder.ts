@@ -23,7 +23,10 @@ import {
   archetypeForEventType,
   listSourceArchetypes,
 } from '@/lib/source/archetypes/registry';
-import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
+import {
+  EVENT_TYPE_TO_ARCHETYPE_ID,
+  resolveArchetypeForEvent,
+} from '@/lib/source/archetypes/event-archetype-resolver';
 import {
   SOURCE_CATEGORY_IDS,
   type SourceCategoryId,
@@ -74,6 +77,11 @@ import {
   buildSelectionFactDerivedTasks,
 } from './selection-fact-beats';
 import {
+  VALUE_STAGE_KEY,
+  buildValueFactDerivedGate,
+  buildValueFactDerivedTasks,
+} from './value-fact-beats';
+import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
@@ -112,6 +120,12 @@ export function resolveValueArchetype(
   if (categoryId) return null;
 
   if (!eventType) return null;
+  // The canonical resolver explicitly leaves coarse legacy types unresolved.
+  // Do not re-resolve one by matching a pack's broad eventType label.
+  if (
+    Object.hasOwn(EVENT_TYPE_TO_ARCHETYPE_ID, eventType) &&
+    EVENT_TYPE_TO_ARCHETYPE_ID[eventType] === null
+  ) return null;
   const exactMatches = listSourceArchetypes().filter(
     (candidate) =>
       candidate.eventType === eventType &&
@@ -151,12 +165,18 @@ export interface BuildLiveStageInput {
    * two states apart and this field is where the distinction enters.
    */
   committedValueByLeverKey?: ReadonlyMap<string, number>;
+  /**
+   * Existing tenant-scoped per-lever realized-to-date signal, when available
+   * (`readRealizedValueLevers`). `undefined` means NO realized fact has been read
+   * — NOT that nothing has realized; `value-fact-beats` keeps those two states
+   * apart and this field is where the distinction enters.
+   */
+  realizedValueByLeverKey?: ReadonlyMap<string, number>;
 }
 
 /**
- * Build a live StageAnalyticsView, or null when the facts are too thin to compute
- * a single lever. The waterfall beat is live + cited; the intel lead reflects the
- * real computed / needs-evidence counts.
+ * Build a live StageAnalyticsView when value facts compute, or when a complete
+ * RFP clause assessment is supplied. The latter never creates a value waterfall.
  */
 export function buildLiveStageView(
   input: BuildLiveStageInput,
@@ -169,37 +189,40 @@ export function buildLiveStageView(
   const factMap: EventFactMap = input.inputs;
   const leverResults = evaluateValueLevers(archetype, factMap);
   const waterfall = buildValueWaterfall(leverResults);
+  const hasQuantifiedValue = waterfall.computedLeverCount > 0;
+  const hasRfpChecklist = input.stageKey === RFP_STAGE_KEY &&
+    input.rfpClausePresentLeverKeys !== undefined &&
+    (input.inputs.rfp_clause_present === 0 || input.inputs.rfp_clause_present === 1);
 
-  // Gate: only go live when at least one lever actually computed. Otherwise the
-  // canvas falls back to the honestly-marked sample view.
-  if (waterfall.computedLeverCount < 1) return null;
+  if (!hasQuantifiedValue && !hasRfpChecklist) return null;
 
-  const waterfallView = buildLiveWaterfallView({
+  const waterfallView = hasQuantifiedValue ? buildLiveWaterfallView({
     leverResults,
     archetypeId: archetype.id,
     citations: input.citations,
     baselineLabel: input.baselineLabel ?? 'Committed value baseline',
     baselineAmount: input.baselineAmount ?? 0,
-  });
+  }) : undefined;
 
-  const rollup = quantifiedRollup(waterfallView.bands);
+  const rollup = waterfallView ? quantifiedRollup(waterfallView.bands) : null;
   const insufficientCount = waterfall.insufficientLevers.length;
 
-  const intelPoints: IntelPointView[] = [
-    {
+  const intelPoints: IntelPointView[] = hasQuantifiedValue && rollup ? [{
       tone: 'found',
       tag: 'Computed',
       text:
         `${rollup.quantifiedBandCount} value ${rollup.quantifiedBandCount === 1 ? 'lever' : 'levers'} ` +
         `computed from committed facts — every figure traces to a cited ${'source_event_facts'} row.`,
-    },
-    {
+    }, {
       tone: 'archetype',
       tag: 'Archetype',
       text: `${archetype.name} value-lever rules drove the classification into the five value types.`,
-    },
-  ];
-  if (insufficientCount > 0) {
+    }] : [{
+      tone: 'found',
+      tag: 'Checklist reviewed',
+      text: `${input.rfpClausePresentLeverKeys?.size ?? 0} of ${archetype.valueLeverRules?.length ?? 0} value-lever clauses have an included-clause fact. An explicit absence is not an included clause.`,
+    }];
+  if (hasQuantifiedValue && insufficientCount > 0) {
     intelPoints.push({
       tone: 'muted',
       tag: 'Needs evidence',
@@ -221,8 +244,8 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
-  // Items U-534, U-535, U-538, U-540 and U-542. Five stages' intake beats are
-  // derived from event facts and the resolved archetype. The other five carry
+  // Items U-534, U-535, U-538, U-540, U-542 and U-545. Six stages' intake beats
+  // are derived from event facts and the resolved archetype. The other four carry
   // exemplar content and say so below. `factBeats`
   // is the single switch: nothing downstream infers which stage is derived, and
   // the beat provenance is declared from the same value so the label cannot
@@ -256,6 +279,15 @@ export function buildLiveStageView(
     committedByLeverKey: input.committedValueByLeverKey,
     nextStageName,
   };
+  // Item U-545. No `nextStageName`: this is the terminal stage, and the gate
+  // reads its onward target (there is none) from the terminal contract rather
+  // than from a computed label a caller could hand it.
+  const valueBeatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    realizedByLeverKey: input.realizedValueByLeverKey,
+  };
   const FACT_DERIVED_BEATS: Readonly<
     Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
   > = {
@@ -279,6 +311,10 @@ export function buildLiveStageView(
       tasks: buildSelectionFactDerivedTasks(selectionBeatInput),
       gate: buildSelectionFactDerivedGate(selectionBeatInput),
     }),
+    [VALUE_STAGE_KEY]: () => ({
+      tasks: buildValueFactDerivedTasks(valueBeatInput),
+      gate: buildValueFactDerivedGate(valueBeatInput),
+    }),
   };
   const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;
 
@@ -288,8 +324,9 @@ export function buildLiveStageView(
     purpose: scaffold.purpose,
     intel: {
       provenance: 'live',
-      lead:
-        "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      lead: hasQuantifiedValue
+        ? "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate."
+        : 'The RFP clause checklist has persisted decisions. No monetary value is computed from this review.',
       points: intelPoints,
     },
     // Derived where `factBeats` is present; otherwise the intake beats are not

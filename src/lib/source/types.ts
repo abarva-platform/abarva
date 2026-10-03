@@ -254,6 +254,7 @@ export interface SourcingEventSummary {
   openAlerts: number;
   owner: string;
   decisionOwner?: string | null;
+  approvalPolicyCode?: 'legacy_signed_scope_v1' | 'self_v1' | null;
   /** Persisted request description exposed by the Source event projection. */
   triggerDescription?: string | null;
   /** Persisted intake summary containing the governed scope facts. */

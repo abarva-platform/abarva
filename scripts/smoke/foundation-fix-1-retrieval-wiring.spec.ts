@@ -9,7 +9,7 @@ config({ path: '.env.local' });
 const WIPRO_PROMPT = 'Before you give me RFI questions, what do you know about Wipro current scope contract terms exit clauses concentration across our portfolio?';
 
 async function collectSentinelText(query: string): Promise<string> {
-  const { runSentinelReasoning } = await import('@/lib/agents/sentinel-reasoning/state-machine');
+  const { runSentinelReasoning } = await import('@/lib/agent/sentinel-reasoning/state-machine');
   const chunks: string[] = [];
   for await (const stage of runSentinelReasoning({
     query,
@@ -27,7 +27,7 @@ function count(pattern: RegExp, text: string): number {
 }
 
 async function main(): Promise<void> {
-  const { classifySentinelIntent } = await import('@/lib/agents/sentinel-reasoning/intent-classifier');
+  const { classifySentinelIntent } = await import('@/lib/agent/sentinel-reasoning/intent-classifier');
   const bundle = await buildEnterpriseAgentContextBundleAsync({
     tenantKey: 'apexretail',
     agentName: 'Sentinel',

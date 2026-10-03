@@ -20,13 +20,18 @@ function validate(csvText: string): CandidateSupplierRegistryValidation {
 }
 
 describe("synthetic candidate-supplier registry package", () => {
-  it("proves two eligible synthetic legal entities for every registered Source archetype", () => {
+  it("proves five AMS candidates and at least two for every other archetype", () => {
     const result = validate(fs.readFileSync(csvPath, "utf8"));
 
     expect(result.status).toBe("pass");
     expect(result.summary.expectedArchetypeCount).toBe(10);
     expect(result.summary.coveredArchetypeCount).toBe(10);
-    expect(result.summary.eligibleCandidateRows).toBe(20);
+    expect(result.summary.eligibleCandidateRows).toBe(23);
+    expect(
+      result.coverageMatrix.find(
+        (item) => item.archetypeId === "AMS_MANAGED_SERVICES",
+      )?.eligibleRows,
+    ).toHaveLength(5);
     expect(result.summary.negativeControlRows).toBe(5);
     expect(result.summary.contactPolicies.length).toBeGreaterThanOrEqual(4);
     expect(result.summary.existingContractStatuses).toEqual(
@@ -48,14 +53,14 @@ describe("synthetic candidate-supplier registry package", () => {
     ]);
   });
 
-  it("fails closed when an archetype loses its second eligible candidate", () => {
+  it("fails closed when an archetype loses all but one eligible candidate", () => {
     const lines = fs.readFileSync(csvPath, "utf8").trimEnd().split(/\r?\n/u);
     const header = lines[0];
     const mutated = [
       header,
-      ...lines
-        .slice(1)
-        .filter((line) => !line.startsWith("SYN-SUP-AMS-002,")),
+      ...lines.slice(1).filter(
+        (line) => !/^SYN-SUP-AMS-00[2-5],/u.test(line),
+      ),
     ].join("\n");
 
     const result = validate(`${mutated}\n`);

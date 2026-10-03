@@ -82,9 +82,9 @@ function buildCharterSpec(overrides?: {
       },
     ],
     signoff: {
-      sponsorName: 'James Wright',
-      sponsorSignatureLine: '_____ (signature)',
-      signedAt: '2026-04-29T12:00:00.000Z',
+      approverName: 'Authorized workspace user',
+      approvalRecordLine: 'Approved in Moves after evidence review.',
+      approvedAt: '2026-04-29T12:00:00.000Z',
     },
   };
 
@@ -155,7 +155,10 @@ function buildOutcomeSpec(): DeliverableSpec {
       { challenge: 'Consent lag', mitigation: 'Shipped fan-out.' },
     ],
     learningsForCatalog: [
-      { learning: 'Consent is a P3 constraint.', applicability: 'cross-archetype' },
+      {
+        learning: 'Consent is a P3 constraint.',
+        applicability: 'cross-archetype',
+      },
     ],
     p6HandoffPlan: {
       standingOwner: 'Linda Chen',

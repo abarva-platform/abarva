@@ -634,7 +634,7 @@ Visible status requirement:
 - Title or subtitle must state: "P3 Draft — based on approved P2 diagnostic for design shaping".
 - State that P2 was approved only for P3 draft shaping.
 - State that P2 is not final and P3 is not final.
-- Carry forward sponsor/signoff, missing evidence, and unresolved decision caveats.
+- Carry forward the sponsor contact and communication preference, missing evidence, and unresolved decision caveats. Sponsor sign-off is not required.
 
 AbarVa boundary:
 - AbarVa helps define the new way of working, future-state direction, human + AI roles, control
@@ -940,7 +940,7 @@ ${missingInputsActionBlock(ctx)}
 4. Readiness and gates
 - Draft/final mode: ${args.generationMode}
 - Draft caveat when applicable: ${args.generationMode === "draft" ? (args.draftCaveat ?? STRATEGIC_MOVES_DRAFT_CAVEAT) : "Not a draft artifact."}
-- Final artifacts require capture complete, sponsor/owner conditions satisfied, evidence covered or waived, gate approval, golden-bar pass, and no hard blockers.
+- Final artifacts require capture complete, accountable owner conditions satisfied, evidence covered or explicitly waived, approval by an authorized workspace user, golden-bar pass, and no hard blockers. Sponsor approval is not a condition.
 
 5. Phase-specific assignment
 ${phaseAssignmentForArtifact({ artifact: args.artifact, phase: args.phase, context: ctx })}

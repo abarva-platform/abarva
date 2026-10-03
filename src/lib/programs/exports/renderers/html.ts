@@ -266,9 +266,7 @@ function objectTable(
   const head = columns.map((c) => `<th>${esc(c.label)}</th>`).join('');
   const body = rows
     .map((row) => {
-      const cells = columns
-        .map((c) => `<td>${esc(row[c.key])}</td>`)
-        .join('');
+      const cells = columns.map((c) => `<td>${esc(row[c.key])}</td>`).join('');
       return `<tr>${cells}</tr>`;
     })
     .join('');
@@ -303,23 +301,29 @@ function renderProgramCharterBody(payload: ProgramCharterPayload): string {
   out.push('<h3>Out of scope</h3>');
   out.push(listOrEmpty(vh?.outOfScope, 'No out-of-scope items recorded.'));
 
-  // Sponsor.
+  // Sponsor progress contact.
   const s = payload.sponsor;
-  out.push('<h2>Sponsor commitment</h2>');
+  out.push('<h2>Sponsor contact</h2>');
   out.push(
     labeled(
-      'Sponsor',
+      'Contact',
       hasText(s?.name) ? `${s.name} (${s.role ?? ''})`.trim() : '',
     ),
   );
-  out.push('<h3>Decision rights</h3>');
-  out.push(listOrEmpty(s?.decisionRights, 'No decision rights recorded.'));
-  if (hasText(s?.successionOwner)) {
-    out.push(labeled('Succession owner', s.successionOwner));
-  }
-  if (hasText(s?.cadence)) {
-    out.push(labeled('Sponsor cadence', s.cadence));
-  }
+  out.push(labeled('Email', s?.email ?? 'Not recorded'));
+  out.push(
+    labeled(
+      'Phase-progress emails',
+      s?.progressEmailPreference === true
+        ? 'Enabled'
+        : s?.progressEmailPreference === false
+          ? 'Not requested'
+          : 'Preference not recorded',
+    ),
+  );
+  out.push(
+    '<p>The sponsor is listed as a progress contact only. Product approvals are recorded by an authorized workspace user.</p>',
+  );
 
   // Recommended path.
   const rp = payload.recommendedPath;
@@ -408,15 +412,15 @@ function renderProgramCharterBody(payload: ProgramCharterPayload): string {
     ),
   );
 
-  // Sign-off.
+  // Authorized workspace-user approval record.
   const so = payload.signoff;
-  out.push('<h2>Sponsor sign-off</h2>');
-  out.push(labeled('Sponsor', so?.sponsorName));
-  if (hasText(so?.sponsorSignatureLine)) {
-    out.push(`<p>${esc(so.sponsorSignatureLine)}</p>`);
+  out.push('<h2>Approval record</h2>');
+  out.push(labeled('Authorized workspace user', so?.approverName));
+  if (hasText(so?.approvalRecordLine)) {
+    out.push(`<p>${esc(so.approvalRecordLine)}</p>`);
   }
-  if (hasText(so?.signedAt)) {
-    out.push(labeled('Signed at', so.signedAt));
+  if (hasText(so?.approvedAt)) {
+    out.push(labeled('Approved at', so.approvedAt));
   }
   if (hasText(so?.notes)) {
     out.push('<h3>Notes</h3>');
@@ -529,10 +533,7 @@ function renderOutcomeReportBody(payload: OutcomeReportPayload): string {
     ];
     out.push(
       `<ul>${sorted
-        .map(
-          (l) =>
-            `<li>[${esc(l.applicability)}] ${esc(l.learning)}</li>`,
-        )
+        .map((l) => `<li>[${esc(l.applicability)}] ${esc(l.learning)}</li>`)
         .join('')}</ul>`,
     );
   }
@@ -543,9 +544,7 @@ function renderOutcomeReportBody(payload: OutcomeReportPayload): string {
   out.push(labeled('Standing owner', hp?.standingOwner));
   out.push(labeled('Review cadence', hp?.quarterlyReviewCadence));
   out.push('<h3>Kill / expand thresholds</h3>');
-  out.push(
-    listOrEmpty(hp?.killOrExpandThresholds, 'No thresholds recorded.'),
-  );
+  out.push(listOrEmpty(hp?.killOrExpandThresholds, 'No thresholds recorded.'));
 
   return out.join('\n');
 }
@@ -571,11 +570,7 @@ function humanizeKey(key: string): string {
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** True when an array is a uniform array of plain objects (renders as table). */

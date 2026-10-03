@@ -50,6 +50,18 @@ describe("canonicalClientDisplayName", () => {
     expect(demoSafeClientText("proof: Baggage Disruption Recovery")).toBe(
       "Baggage Disruption Recovery",
     );
+    // Trailing end-to-end run identifiers (e.g. "… Claude E2E 1002") are a
+    // synthetic-run artifact and must not show on a client surface, while a real
+    // move title is left intact.
+    expect(
+      demoSafeClientText("Member Service Agent Assist Claude E2E 1002"),
+    ).toBe("Member Service Agent Assist");
+    expect(demoSafeClientText("Treasury E2E 42 modernization")).toBe(
+      "Treasury modernization",
+    );
+    expect(demoSafeClientText("Member Service Agent Assist")).toBe(
+      "Member Service Agent Assist",
+    );
     expect(
       demoSafeClientText(
         "CANARY - SkyHarbor Recovery Command IROPS Architecture - skyharbor-canary-20260622161738",

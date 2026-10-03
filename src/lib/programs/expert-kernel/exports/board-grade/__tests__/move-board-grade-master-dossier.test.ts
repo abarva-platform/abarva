@@ -321,7 +321,7 @@ describe('buildMoveMasterDossier — a Move with no resolvable function', () => 
     );
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).toContain('Honest unbound state');
-    expect(html).toContain('No curated Domain Function Pack');
+    expect(html).toContain('No curated domain reference model');
     // No verdict word, no fabricated economics, no sibling-deck links — the
     // unbound deck states the gap and stops.
     expect(html).toContain('Kernel');

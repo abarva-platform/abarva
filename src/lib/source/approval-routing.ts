@@ -20,6 +20,7 @@ export interface SourceApprovalRoutingEvent {
   id: string;
   decisionOwner?: string | null;
   createdByUserId?: string | null;
+  actingUserId?: string | null;
 }
 
 export type SourceApproverResolution =
@@ -29,7 +30,7 @@ export type SourceApproverResolution =
       name: string;
       userId: string | null;
       personId: string | null;
-      basis: "event-created-by" | "event-decision-owner-name";
+      basis: "event-created-by" | "event-decision-owner-name" | "authenticated-criterion-actor";
     }
   | {
       status: "unresolved";
@@ -101,6 +102,23 @@ export function resolveApprover(
   event: SourceApprovalRoutingEvent,
   ownerRole: SourceApprovalOwnerRole,
 ): SourceApproverResolution {
+  if (ownerRole === "event-owner") {
+    const userId = event.actingUserId?.trim();
+    return userId
+      ? {
+          status: "resolved",
+          ownerRole,
+          name: "Event Owner",
+          userId,
+          personId: null,
+          basis: "authenticated-criterion-actor",
+        }
+      : {
+          status: "unresolved",
+          ownerRole,
+          reason: "No authenticated Event Owner actor is recorded.",
+        };
+  }
   if (ownerRole === "sourcing-lead") {
     const userId = event.createdByUserId?.trim();
     if (userId) {

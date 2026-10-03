@@ -28,6 +28,7 @@ export type SourceNewStage05NdaCoverage = {
   status: "ready" | "blocked" | "empty" | "unavailable";
   asOf: string;
   suppliers: readonly SourceNewStage05SupplierCoverage[];
+  publishedTemplateVersions?: readonly string[];
   nextAction: {
     label: string;
     detail: string;
@@ -46,6 +47,7 @@ const unavailableProjection = (asOf: string): SourceNewStage05NdaCoverage => ({
   status: "unavailable",
   asOf,
   suppliers: [],
+  publishedTemplateVersions: [],
   nextAction: {
     label: "Restore candidate authority",
     detail:
@@ -85,6 +87,7 @@ export function buildSourceNewStage05NdaCoverage(
       status: "empty",
       asOf: input.asOf,
       suppliers: [],
+      publishedTemplateVersions: [],
       nextAction: {
         label: "Accept candidate panel",
         detail:
@@ -179,6 +182,13 @@ export function buildSourceNewStage05NdaCoverage(
     },
   );
 
+  const publishedTemplateVersions = input.suppliers.every(({ ndaAuthority }) => ndaAuthority.registryAvailable)
+    ? [...new Set(input.suppliers[0].ndaAuthority.publishedTemplateVersions)]
+        .filter((version) => input.suppliers.every(({ ndaAuthority }) =>
+          ndaAuthority.publishedTemplateVersions.includes(version)))
+        .sort()
+    : [];
+
   const hasUnavailable = suppliers.some(
     (supplier) => supplier.state === "unavailable",
   );
@@ -208,6 +218,7 @@ export function buildSourceNewStage05NdaCoverage(
     status,
     asOf: input.asOf,
     suppliers,
+    publishedTemplateVersions,
     nextAction,
   };
 }

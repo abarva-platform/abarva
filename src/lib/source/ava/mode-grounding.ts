@@ -1094,6 +1094,9 @@ function buildRiskExposureGrounding(
   const rulesByKey = new Map<string, ValueLeverRule>(
     (archetype.valueLeverRules ?? []).map((r) => [r.key, r]),
   );
+  const unsizedRules = (archetype.valueLeverRules ?? []).filter((rule) =>
+    insight.needsEvidenceLevers.includes(rule.name),
+  );
 
   const lines = [
     "RISK EXPOSURE GROUNDING (authoritative — the same value-pool levers the canvas Strategy tab renders, with each lever's stated commercial risk and confidence):",
@@ -1109,6 +1112,14 @@ function buildRiskExposureGrounding(
       `  ${bar.label} (${valueTypeLabel(bar.valueType)}, confidence ${bar.confidence}): ${fmtUsdRange(bar.low, bar.high)}. Commercial risk: ${riskFrag}`,
     );
   }
+  for (const rule of unsizedRules) {
+    const riskFrag = rule.commercialRisk
+      ? rule.commercialRisk
+      : "no commercial-risk note is declared for this lever in the archetype playbook — do not invent one.";
+    lines.push(
+      `  ${rule.name} (${valueTypeLabel(rule.valueType)}, confidence ${rule.defaultConfidence}): unsized — source evidence required. Commercial risk: ${riskFrag}`,
+    );
+  }
   if (insight.needsEvidenceLevers.length > 0) {
     lines.push(
       `Levers needing evidence before they can be sized (unsized risk, not zero risk): ${insight.needsEvidenceLevers.join(", ")}.`,
@@ -1116,7 +1127,10 @@ function buildRiskExposureGrounding(
   }
   lines.push(
     ...valueTypeClassificationLines(
-      insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+      [
+        ...insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+        ...unsizedRules.map((rule) => ({ label: rule.name, valueType: rule.valueType })),
+      ],
     ),
   );
 

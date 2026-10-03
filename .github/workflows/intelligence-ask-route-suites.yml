@@ -1,0 +1,89 @@
+name: Intelligence Ask route suites
+
+# The Ask route's OWN answer-mode controls, item C-567.
+#
+# Why this workflow exists rather than another line in `unit-suites.yml`, which
+# already names the three other suites in this directory. That file was held by
+# a live claim in another agent's worktree when this suite was written, and the
+# operator protocol refuses a claim that names a held file. Wiring it here
+# rather than waiting costs nothing that matters, and the reason is measured
+# rather than asserted: `docs/ci/required-status-checks.json` mirrors 19
+# required contexts on `main` and NEITHER the `Unit suites` jobs NOR
+# `Intelligence library suites` is one of them. So the three sibling Ask route
+# suites already run in a job that cannot block a merge, and this one has
+# exactly the same standing. Nothing here should be quoted as a merge gate --
+# item T-595's lesson is that a named, quotable step belonging to a
+# non-required check is how a true sentence about a real run becomes false
+# evidence about what gates the repository. Fold this step back into
+# `unit-suites.yml` when that file is free; nothing depends on it living here.
+#
+# `check-named-suite-requiredness` is satisfied for the same measured reason:
+# it refuses a NON-required job that names a file a REQUIRED job sweeps, and no
+# required job sweeps `src/app/api/intelligence/ask/__tests__`. Naming the file
+# in a non-required job is how it runs at all.
+#
+# It is NOT in `src/__tests__/behaviors`, and that is also measured rather than
+# taste. `Behavior coverage floor` runs that whole directory under `--coverage`
+# with no `collectCoverageFrom`, so every file a suite LOADS enters the
+# denominator; the comment in `unit-suites.yml` records one Ask-route suite
+# moving that aggregate from 90.90 / 71.33 to 83.75 / 42.19 against floors of
+# 90 / 60, with every case passing. This suite imports the same route.
+#
+# BOUNDARIES, reviewed on the same terms as the sibling route suites: the
+# retrieval-and-model pipeline (`@/lib/intelligence/ask`, behind which the
+# audited Anthropic client sits), Clerk, the Maestro person, tenant resolution,
+# session memory, Sentinel intent and synthesis telemetry are all replaced. The
+# answer-mode helpers are deliberately NOT replaced -- they are the subject, and
+# a suite that stubbed them could not fail when the route stopped calling them.
+# Nothing here can reach Postgres, a model, or an outbound send.
+#
+# Named by exact file, not by directory: the other three files in this
+# directory are named in `unit-suites.yml` and running them twice would buy
+# nothing, and a file added here later should get the same boundary review
+# rather than being adopted by a glob.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  intelligence-ask-route-suites:
+    name: Intelligence Ask route suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the Ask route answer-mode wiring suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/intelligence/ask/__tests__/c567-ask-route-answer-mode-wiring.test.ts
+          --no-coverage --ci
+
+      # Item C-569. The same eight call sites, the five the C-567 suite does not
+      # reach -- measured by instrumenting all eight and running that suite,
+      # which enters 419, 874 and 1417 and no others. Same boundaries as the
+      # step above, plus `buildServerSourceAnswerContext`, the tenant-access and
+      # Source read-model seam the two Source sites sit behind. Named by exact
+      # file for the reason the header gives, and kept as its own step so a
+      # failure names which draw of sites broke rather than "the Ask route".
+      - name: Run the Ask route answer-mode call-site suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/intelligence/ask/__tests__/c569-ask-route-answer-mode-call-sites.test.ts
+          --no-coverage --ci

@@ -161,6 +161,8 @@ export interface StageTaskView {
    * behavior (the just-uploaded success path still flips a task done live).
    */
   evidenceComplete?: boolean;
+  /** Current event fingerprint required for an audited owner confirmation. */
+  confirmationVersion?: string;
 }
 
 // ── Beat 3 · the gate ────────────────────────────────────────────────────────

@@ -79,7 +79,7 @@ export interface AdvanceEngagementPhaseInput {
 // --- Slice 3f: shared-helper write shapes -----------------------------------
 //
 // These three ops back the DB writes inside the `src/lib/programs` shared
-// helpers (`advancePhase`, `requestFounderApproval`, `draftModuleDeliverable`).
+// helpers (`advancePhase`, `draftModuleDeliverable`).
 // Unlike the seed/advance ops above, the helpers RE-THROW on a DB error and
 // depend on the inserted row ids, so these ops return a `ProgramsWriteOutcome`
 // — `ok:false` carries the error message the helper turns back into a throw,
@@ -108,18 +108,6 @@ export interface AdvancePhaseTxInput {
   // engagements.charter JSONB during the phase advance. Already flag-gated
   // upstream in mutations.advancePhase — the adapter just persists it.
   readonly discoveryPlan?: DiscoveryPlan | null;
-}
-
-/** The `requestFounderApproval` insert into `founder_approval_requests`. */
-export interface FounderApprovalInsertInput {
-  readonly programId: string;
-  readonly requestedByUserId: string;
-  readonly requestType: string;
-  readonly headline: string;
-  readonly context: Record<string, unknown>;
-  readonly approverUserId: string | null;
-  readonly approverRole: string | null;
-  readonly deadlineAtIso: string | null;
 }
 
 /** The `draftModuleDeliverable` upsert: deliverables_v2 row + version insert. */
@@ -179,14 +167,6 @@ export interface ProgramsWriteAdapter {
   runAdvancePhase(
     input: AdvancePhaseTxInput,
   ): Promise<ProgramsWriteOutcome<{ snapshotId: string }>>;
-
-  /**
-   * Insert a `founder_approval_requests` row. `data.approvalId` is the new
-   * row id. On a DB error returns `ok:false` — the helper re-throws.
-   */
-  insertFounderApproval(
-    input: FounderApprovalInsertInput,
-  ): Promise<ProgramsWriteOutcome<{ approvalId: string }>>;
 
   /**
    * Run the `draftModuleDeliverable` write: upsert the `deliverables_v2` row
@@ -349,27 +329,6 @@ export function createSupabaseProgramsWriteAdapter(
       });
       if (logErr) return { ok: false, error: logErr.message };
       return { ok: true, data: { snapshotId } };
-    },
-
-    async insertFounderApproval(input) {
-      const sb = getClient();
-      const { data, error } = await sb
-        .from('founder_approval_requests')
-        .insert({
-          engagement_id: input.programId,
-          request_type: input.requestType,
-          status: 'pending',
-          requested_by_user_id: input.requestedByUserId,
-          approver_user_id: input.approverUserId,
-          approver_role: input.approverRole,
-          headline: input.headline,
-          context_jsonb: input.context,
-          deadline_at: input.deadlineAtIso,
-        })
-        .select('id')
-        .single();
-      if (error) return { ok: false, error: error.message };
-      return { ok: true, data: { approvalId: (data as { id: string }).id } };
     },
 
     async updateEngagementCharter(input) {
@@ -614,34 +573,6 @@ export function createAzureProgramsWriteAdapter(
       }
     },
 
-    async insertFounderApproval(input) {
-      try {
-        const rows = await session((run) =>
-          run<{ id: string }>(
-            'INSERT INTO founder_approval_requests '
-              + '(engagement_id, request_type, status, requested_by_user_id, '
-              + 'approver_user_id, approver_role, headline, context_jsonb, deadline_at) '
-              + "VALUES ($1, $2, 'pending', $3, $4, $5, $6, $7, $8) RETURNING id",
-            [
-              input.programId,
-              input.requestType,
-              input.requestedByUserId,
-              input.approverUserId,
-              input.approverRole,
-              input.headline,
-              input.context,
-              input.deadlineAtIso,
-            ],
-          ),
-        );
-        const approvalId = rows[0]?.id;
-        if (!approvalId) return { ok: false, error: 'approval insert returned no id' };
-        return { ok: true, data: { approvalId } };
-      } catch (err) {
-        return { ok: false, error: err instanceof Error ? err.message : String(err) };
-      }
-    },
-
     async updateEngagementCharter(input) {
       try {
         await session((run) =>
@@ -695,7 +626,8 @@ export function createAzureProgramsWriteAdapter(
             nextVersion = (existingRows[0].current_version ?? 0) + 1;
             await run(
               'UPDATE deliverables_v2 '
-                + "SET current_version = $1, status = 'draft', updated_at = now() "
+                + "SET current_version = $1, status = 'draft', "
+                + 'requires_revalidation = false, updated_at = now() '
                 + 'WHERE id = $2',
               [nextVersion, deliverableId],
             );
@@ -703,8 +635,8 @@ export function createAzureProgramsWriteAdapter(
             const createdRows = await run<{ id: string }>(
               'INSERT INTO deliverables_v2 '
                 + '(engagement_id, deliverable_type_key, title, status, '
-                + 'current_version, created_by) '
-                + "VALUES ($1, $2, $3, 'draft', 1, 'nexus') RETURNING id",
+                + 'current_version, created_by, requires_revalidation) '
+                + "VALUES ($1, $2, $3, 'draft', 1, 'nexus', false) RETURNING id",
               [input.programId, input.deliverableTypeKey, input.title],
             );
             deliverableId = createdRows[0]?.id ?? '';

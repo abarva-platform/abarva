@@ -46,11 +46,19 @@ function addQuestionRows(
 ): void {
   ws.columns = [...VISIBLE_COLUMNS];
   for (const question of questions) {
+    const context = [
+      question.prefilledResponse,
+      question.whyItMatters,
+    ].filter(Boolean);
+    const evidence = [
+      ...question.suggestedEvidence,
+      ...question.evidenceRefs.map((ref) => `Existing evidence: ${ref}`),
+    ];
     ws.addRow({
       question: question.question,
-      response: question.prefilledResponse ? "Needs validation" : "",
-      context: question.prefilledResponse ?? "",
-      evidence: question.evidenceRefs.join("; "),
+      response: "",
+      context: context.join("\n"),
+      evidence: evidence.join("; "),
       owner: question.likelyOwnerRole,
       status: question.state,
     });
@@ -80,8 +88,8 @@ export async function renderStageReadinessWorkbookXlsx(
   start.addRow({ item: "Move", value: spec.moveName });
   start.addRow({ item: "Workbook", value: spec.artifactName });
   start.addRow({
-    item: "Pre-filled questions",
-    value: String(spec.startHere.alreadyPrefilled),
+    item: "Evidence references included",
+    value: String(spec.startHere.evidenceReferencesIncluded),
   });
   start.addRow({
     item: "Needs input",

@@ -136,11 +136,11 @@ describe("ApprovalDecisionPanel", () => {
 
   // ── PRE-W4-PR-4 · escalation actions + SLA badge ────────────────────
   describe("escalation actions", () => {
-    it("renders notify-sponsor and escalate buttons", () => {
+    it("renders escalation only, with no sponsor approval-reminder action", () => {
       render(<ApprovalDecisionPanel requestId="req-1" />);
       expect(
-        screen.getByTestId("approval-notify-sponsor-button"),
-      ).toBeInTheDocument();
+        screen.queryByTestId("approval-notify-sponsor-button"),
+      ).not.toBeInTheDocument();
       expect(
         screen.getByTestId("approval-escalate-button"),
       ).toBeInTheDocument();
@@ -154,34 +154,11 @@ describe("ApprovalDecisionPanel", () => {
       expect(badge.getAttribute("data-sla-bucket")).toBe("breach");
     });
 
-    it("amber palette on notify when notifyCount > 0", () => {
-      render(<ApprovalDecisionPanel requestId="req-1" notifyCount={2} />);
-      const btn = screen.getByTestId("approval-notify-sponsor-button");
-      expect(btn).toHaveTextContent("(2)");
-    });
-
     it("escalate disabled when escalationLevel=2", () => {
       render(<ApprovalDecisionPanel requestId="req-1" escalationLevel={2} />);
       const btn = screen.getByTestId("approval-escalate-button");
       expect(btn).toBeDisabled();
       expect(btn).toHaveTextContent(/Escalated/);
-    });
-
-    it("clicking notify-sponsor calls the action and shows a banner", async () => {
-      const notify = jest.fn().mockResolvedValue({
-        ok: true,
-        notifiedAt: "2026-05-30T12:00:00Z",
-        notifyCount: 1,
-        escalationLevel: 1,
-      });
-      render(
-        <ApprovalDecisionPanel requestId="req-1" notifySponsor={notify} />,
-      );
-      fireEvent.click(screen.getByTestId("approval-notify-sponsor-button"));
-      await waitFor(() => expect(notify).toHaveBeenCalledWith("req-1"));
-      expect(
-        await screen.findByTestId("approval-decision-notice"),
-      ).toHaveTextContent(/Reminder logged/);
     });
 
     it("escalate opens confirmation, calls action, navigates to queue", async () => {

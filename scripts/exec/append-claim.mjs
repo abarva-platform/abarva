@@ -388,8 +388,34 @@ function main(argv) {
     );
   }
 
+  /*
+   * C-564. A RELEASE is exempt from the file-overlap half.
+   *
+   * The file half asks whether any path this record names is already held by
+   * another live claim, and refuses when one is. For a CLAIM that is the whole
+   * point (T-707). For a RELEASE it is the wrong question: a release asserts
+   * the work is finished and the paths are free, so an overlap can only mean a
+   * successor has already taken them — the normal case, and the one the
+   * release unblocks. Reproduced on the live register while closing C-563: the
+   * item half answered `already-yours` and did not refuse, the file half
+   * refused, and nothing was appended. `--action abstain` is exempt one rung
+   * down for the same reason — the moment you most need to record the decision
+   * is the moment the gate refuses.
+   *
+   * The exemption is implemented by NOT ASKING the file half, rather than by
+   * ignoring its answer or by weakening `fileOverlap`: the question the gate is
+   * asked is the question whose answer is wanted, and one reader of one
+   * grammar. The `files:` list still reaches the appended line, which is the
+   * half the `--files`-less workaround silently lost.
+   *
+   * The ITEM half is untouched. A release of an item another identity holds is
+   * still refused, so this cannot be used to write a release over someone
+   * else's claim.
+   */
+  const askFileHalf = files !== undefined && action !== "release";
+
   const forwarded = allFlagValues("--gate-arg");
-  const unknown = [...forwarded, ...(files !== undefined ? ["--files"] : [])].filter(
+  const unknown = [...forwarded, ...(askFileHalf ? ["--files"] : [])].filter(
     (f) => f.startsWith("--") && !advertised.has(f),
   );
   if (unknown.length) {
@@ -405,7 +431,7 @@ function main(argv) {
   if (flag("--now")) gateArgs.push("--now", flag("--now"));
   if (flag("--window-hours")) gateArgs.push("--window-hours", flag("--window-hours"));
   if (has("--strict")) gateArgs.push("--strict");
-  if (files !== undefined) gateArgs.push("--files", files);
+  if (askFileHalf) gateArgs.push("--files", files);
   for (const extra of forwarded) gateArgs.push(extra);
 
   let status = 0;

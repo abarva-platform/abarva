@@ -6,6 +6,7 @@
 //
 // Run: node scripts/data-build/tenant-scenario-model/__tests__/run-placeholder-corruption-fix-tests.mjs
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Papa from "papaparse";
@@ -41,15 +42,33 @@ function assert(condition, message) {
  * hides the diff while Jest still executes a data build, and the
  * `process.exit()` at the end still runs inside a worker. The write is the
  * defect; the diff was only the symptom that happened to be visible.
+ *
+ * A DIRECT run is a different case (D-512): the suite still has to execute the
+ * fix to check it, and until 2026-10-01 that wrote the tracked candidate tree,
+ * exiting 0 with a -125/+27 diff left behind. It now writes only under a temp
+ * directory it creates and removes. Pinned by
+ * `src/__tests__/behaviors/d512-placeholder-runner-writes-no-tracked-path.test.ts`.
  */
 function main() {
+  const candidatesRoot = fs.mkdtempSync(path.join(os.tmpdir(), "placeholder-corruption-fix-"));
+  try {
+    run(candidatesRoot);
+  } finally {
+    fs.rmSync(candidatesRoot, { recursive: true, force: true });
+  }
+  console.log(failures === 0 ? `\nAll checks passed.` : `\n${failures} check(s) FAILED.`);
+  process.exit(failures === 0 ? 0 : 1);
+}
+
+function run(candidatesRoot) {
   for (const [tenantKey, targets] of Object.entries(TARGETS)) {
-    const results = fixTenant(tenantKey, targets);
+    const results = fixTenant(tenantKey, targets, { candidatesRoot });
     for (const result of results) {
       const inputFile = targets.find((t) => t.file.includes(result.domain))?.file;
       const inputPath = path.join(repoRoot, "datasets/tenant-inputs/active", tenantKey, "current", inputFile);
       const inputRows = Papa.parse(fs.readFileSync(inputPath, "utf8"), { header: true, skipEmptyLines: true }).data;
-      const candidatePath = path.join(repoRoot, result.candidate_output);
+      const candidatePath = path.resolve(repoRoot, result.candidate_output);
+      assert(!path.relative(candidatesRoot, candidatePath).startsWith(".."), `${tenantKey}/${result.domain}: the candidate was written under the run's temp directory, not the repository`);
       const candidateRows = Papa.parse(fs.readFileSync(candidatePath, "utf8"), { header: true, skipEmptyLines: true }).data;
 
       assert(candidateRows.length === inputRows.length, `${tenantKey}/${result.domain}: candidate has the same row count as the real active file (${candidateRows.length} vs ${inputRows.length})`);
@@ -82,13 +101,10 @@ function main() {
   for (const tenantKey of Object.keys(TARGETS)) {
     const activeDir = path.join(repoRoot, "datasets/tenant-inputs/active", tenantKey, "current");
     const before = fs.readdirSync(activeDir).sort();
-    fixTenant(tenantKey, TARGETS[tenantKey]);
+    fixTenant(tenantKey, TARGETS[tenantKey], { candidatesRoot });
     const after = fs.readdirSync(activeDir).sort();
     assert(JSON.stringify(before) === JSON.stringify(after), `${tenantKey}: running the fix does not add, remove, or modify any file under active/current (file listing unchanged)`);
   }
-
-  console.log(failures === 0 ? `\nAll checks passed.` : `\n${failures} check(s) FAILED.`);
-  process.exit(failures === 0 ? 0 : 1);
 }
 
 // Only when invoked as a script. `import.meta.url` and argv[1] agree only for a

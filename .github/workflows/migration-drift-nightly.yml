@@ -112,68 +112,49 @@ jobs:
           echo "rc=$?" >> "$GITHUB_OUTPUT"
           cat audit-artifacts/migration-drift/dry.log
 
-      # THREE OUTCOMES, KEPT APART.
+      # FIVE OUTCOMES, KEPT APART, AND THE REASON THEY HAVE TO BE.
       #
-      #   checked + clean   → no pending migrations
-      #   checked + drift   → pending migrations exist
-      #   NOT CHECKED       → the job did not run, or produced no readable output
+      #   CLEAN          every migration is recorded as applied
+      #   DRIFT_PENDING  committed and not applied   -> apply them
+      #   DRIFT_LEDGER   an applied file was edited  -> do NOT apply; investigate
+      #   DRIFT_BLOCKED  pending + unaudited destructive SQL -> human audit
+      #   NOT_CHECKED    the run could not say       -> fix the harness
       #
-      # The third is the one that matters. A monitor that cannot reach the
-      # database has not found "no drift" — it has found nothing, and must say
-      # so rather than exiting quietly or implying a clean result. This is the
-      # same rule the product applies to unreadable documents: not-checked is
-      # never reported as clean.
+      # NOT_CHECKED is the one that matters most. A monitor that cannot reach
+      # the database has not found "no drift" -- it has found nothing, and must
+      # say so rather than exiting quietly or implying a clean result. This is
+      # the same rule the product applies to unreadable documents: not-checked
+      # is never reported as clean.
+      #
+      # This was 40 lines of inline bash until item C-629, and it got three of
+      # the five wrong: CLEAN was inferred from a MISSING drift header instead
+      # of the runner's own clean marker, so a truncated log read as clean;
+      # DRIFT_LEDGER and DRIFT_BLOCKED both leave the runner with exit code 1
+      # and so were reported as a failure to connect, pointing the operator at
+      # Azure login for a finding the run had actually made; and the pending
+      # count was re-derived from a 14-digit-timestamp filename regex that
+      # matches none of the 42 three-digit legacy names in supabase/migrations.
+      #
+      # It now lives in a repo-owned script with a behavioral test that drives
+      # the real CLI over all five log shapes above, including this workflow's
+      # own ACA line prefixes. That test lives in `src/__tests__/behaviors`, so
+      # it runs on every pull request inside the required `Behavior coverage
+      # floor` job and blocks a merge.
+      #
+      # A step naming that suite here, in this nightly, was the first thing
+      # tried and is forbidden: `named-suite-requiredness` refuses a suite
+      # named in a job that cannot block a merge when a required job already
+      # runs it, because the quotable line would then belong to a run with no
+      # authority. The rule is in docs/ci/README-suite-wiring.md. Read the
+      # proof out of the required job's own log, not from here.
       - name: Classify result
         shell: bash
         run: |
           set -uo pipefail
-          logs="audit-artifacts/migration-drift/dry/04-logs.txt"
-          rc="${{ steps.dry.outputs.rc }}"
-
-          if [[ "$rc" != "0" || ! -s "$logs" ]]; then
-            {
-              echo "## Result — NOT CHECKED"
-              echo ""
-              echo "The drift check did not run to completion, so **drift state is unknown**."
-              echo "This is not a clean result and must not be read as one."
-              echo ""
-              echo "- operator job exit code: \`${rc}\`"
-              echo "- job log present: \`$([[ -s "$logs" ]] && echo yes || echo no)\`"
-              echo ""
-              echo "Check Azure login, the operator job, and the"
-              echo "\`azure-postgres-control-database-url\` secret."
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::NOT CHECKED · drift state unknown — the check could not run"
-            exit 1
-          fi
-
-          if grep -q "Pending migrations" "$logs"; then
-            pending="$(grep -A200 "Pending migrations" "$logs" | grep -oE '[0-9]{14}_[a-z0-9_]+\.sql' | sort -u)"
-            count="$(echo "$pending" | grep -c . || true)"
-            {
-              echo "## Result — DRIFT"
-              echo ""
-              echo "**${count} migration(s) committed but not applied.**"
-              echo ""
-              echo '```'
-              echo "$pending"
-              echo '```'
-              echo ""
-              echo "Apply via the \`Database migration — lab\` workflow (mode=apply)."
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::DRIFT · ${count} migration(s) committed but not applied"
-            exit 1
-          fi
-
-          {
-            echo "## Result — CHECKED, NO DRIFT"
-            echo ""
-            echo "All migrations in the repository are recorded as applied."
-            echo ""
-            echo "Note: this compares the migrations directory against the"
-            echo "\`schema_migrations\` ledger. A migration recorded as applied"
-            echo "whose objects are absent from the database is NOT detected here."
-          } >> "$GITHUB_STEP_SUMMARY"
+          node scripts/ci/classify-migration-drift.mjs \
+            --rc "${{ steps.dry.outputs.rc }}" \
+            --log audit-artifacts/migration-drift/dry/04-logs.txt \
+            --summary "$GITHUB_STEP_SUMMARY"
 
       - name: Upload drift-check evidence
         if: always()

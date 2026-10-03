@@ -151,7 +151,9 @@ export function ClaimCard({
                       fontWeight: 600,
                     }}
                   >
-                    From your systems
+                    {item.evidenceRefs?.length
+                      ? "From your systems"
+                      : "Source link unavailable"}
                   </span>
                 ) : null}
               </div>
@@ -187,6 +189,8 @@ export function ClaimCard({
 
 function evidenceLabel(item: ResolvedEvidence): string {
   if (item.unresolved) return "Evidence source mapping pending";
+  if (item.origin === "context" && !item.evidenceRefs?.length)
+    return "Source mapping not established";
   if (item.origin === "signal")
     return item.signalKind === "testimony"
       ? "Leadership interviews"

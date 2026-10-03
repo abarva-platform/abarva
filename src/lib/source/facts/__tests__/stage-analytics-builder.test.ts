@@ -53,6 +53,10 @@ describe('resolveValueArchetype', () => {
     );
   });
 
+  it('does not turn an unclassified infrastructure event into Cloud FinOps', () => {
+    expect(resolveValueArchetype('infrastructure', null)).toBeNull();
+  });
+
   it('resolves Contract Renewal only from its governed classified category', () => {
     expect(resolveValueArchetype('managed_service', 'saas_renewal')?.id).toBe(
       'CONTRACT_RENEWAL',
@@ -105,6 +109,22 @@ describe('buildLiveStageView', () => {
       archetypeId: ARCHETYPE_ID,
     });
     expect(view).toBeNull();
+  });
+
+  it('shows a reviewed RFP checklist without inventing a monetary waterfall', () => {
+    const view = buildLiveStageView({
+      inputs: { rfp_clause_present: 0 },
+      citations: {},
+      archetypeId: ARCHETYPE_ID,
+      stageKey: 'rfp',
+      rfpClausePresentLeverKeys: new Set(),
+    });
+    expect(view).not.toBeNull();
+    expect(view!.intel.provenance).toBe('live');
+    expect(view!.waterfall).toBeUndefined();
+    expect(view!.tasks[0].id).toBe('rfp.clause-coverage');
+    expect(view!.tasks[0].subtitle).toContain('0 of 6');
+    expect(view!.intel.lead).not.toContain('value we computed');
   });
 
   it('builds Cloud FinOps analytics without evaluating AMS rules', () => {

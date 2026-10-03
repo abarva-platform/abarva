@@ -60,6 +60,17 @@ export interface GovernedEvidenceItem {
   provenanceRef: string;
 }
 
+/** A numeric value explicitly marked unsupported or excluded by governed evidence. */
+export interface ExcludedNumericClaim {
+  citationNumber: number;
+  sourceLabel: string;
+  kind: "currency" | "percentage" | "date";
+  /** Regular-expression sources for equivalent renderings of this same value. */
+  matchPatterns: string[];
+  /** Exact source rendering, used only to redact model-facing evidence. */
+  sourceValue: string;
+}
+
 export interface MissingEvidenceItem {
   evidenceFamily: string;
   label: string;
@@ -156,6 +167,16 @@ export interface QualityBar {
    * still being tuned against real generations.
    */
   advisoryBandMax?: number;
+  /**
+   * Depth-aware override for this deck's slide floor. When set, it REPLACES the
+   * fixed SLIDE_BANDS[type].min for both the generator instruction
+   * (deckLengthInstruction) and the gate (judgeSlideCount), so a smaller-scope
+   * Move is not forced to the full-scope slide count. Derived in build-request
+   * from confirmed scope (see shared/depth-aware-floor.ts); only ever lowers the
+   * band's min, never raises it, and the band ceiling is untouched. Undefined
+   * preserves the fixed band exactly.
+   */
+  slideFloor?: number;
   requiresCitations: boolean;
   requiresDecisionSection: boolean;
   requiresRecommendation: boolean;
@@ -206,7 +227,11 @@ export interface DeliverableIntelligenceRequest {
   deliverableType: string; // 'rfp_package' | 'business_case' | 'charter' | …
   audience: AudienceRole[];
   decisionContext: string; // the decision this artifact must support
+  /** Registry-authored, deliverable-specific generation constraints. */
+  generationPromptGuidance?: string;
   governedEvidenceBundle: GovernedEvidenceItem[];
+  /** Explicitly excluded values that must not appear in generated client artifacts. */
+  prohibitedNumericClaims?: ExcludedNumericClaim[];
   sourceRegister: SourceRegisterEntry[];
   /**
    * High-signal facts selected from governed evidence that must remain visible
@@ -395,6 +420,7 @@ export type GenerationPass =
   | "board_grade_rewrite" // Pass 5 — revise to board-grade
   | "render_package" // Pass 6 — structure for renderers
   | "section_draft" // decomposed: write ONE planned section (bounded-parallel fan-out)
+  | "section_repair" // targeted repair for a section below its contract prose target
   | "synthesis"; // decomposed: the doc-level structured fields (recommendation, tables, checklist)
 
 export interface PassPrompt {
@@ -464,6 +490,8 @@ export interface QualityValidationResult {
 /** The structured document the model returns at render_package time. */
 export interface RenderableDeliverable {
   title: string;
+  /** Canonical deliverable key, carried by persistence for format-specific layout. */
+  deliverableType?: string;
   subtitle?: string;
   clientDisplayName: string;
   initiativeDisplayName: string;
@@ -525,6 +553,13 @@ export interface RenderableTable {
   columns: string[];
   rows: string[][];
   targetFormat: OutputFormat;
+  /**
+   * Zero-based index of the column that carries a status / RAG / ownership value
+   * (e.g. a risk level, an acceptance pass/fail, a readiness state). When set,
+   * the renderer colours that column's cells by value (see shared/cell-tone.ts),
+   * so an executive table reads at a glance. Undefined renders a plain table.
+   */
+  statusColumn?: number;
 }
 
 export interface ExhibitFlowNode {

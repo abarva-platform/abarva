@@ -27,6 +27,7 @@ Run from the repo root with a local `.env.local` containing:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `CLERK_TESTING_TOKEN_SECRET_KEY` (or the `CLERK_SECRET_KEY` fallback)
 
 The target app must be reachable at `BASE_URL` and must have the corresponding Clerk users provisioned. If a user is missing, provision the canonical persona first:
 
@@ -39,7 +40,7 @@ For CI or other automated browser runs against Clerk bot protection, provide a s
 - `CLERK_TESTING_TOKEN_SECRET_KEY`, preferred and scoped for testing-token creation; or
 - `CLERK_SECRET_KEY`, used as the fallback when no dedicated testing-token secret is configured.
 
-The crawl harness mints a short-lived Clerk testing token and injects it into Clerk Frontend API requests as `__clerk_testing_token` before the ticket sign-in exchange. This is a test-only automation allowance; it does not disable Clerk, bypass tenant metadata checks, or broaden any agent user's client access.
+The crawl harness mints a short-lived Clerk testing token and injects it only into Frontend API requests for the exact host decoded from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or the same-origin Clerk proxy). This supports custom Clerk domains without sending the token to unrelated hosts or static assets. The token is attached before the ticket sign-in exchange. This is a test-only automation allowance; it does not disable Clerk, bypass tenant metadata checks, or broaden any agent user's client access.
 
 ## Create Storage States
 
@@ -100,14 +101,16 @@ test("crawl Airline Demo signed-in pages", async ({ page }) => {
 
 ## Failure Modes
 
-| Failure                                         | Meaning                                                                                         | Fix                                                                                                                                           |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Missing CLERK_SECRET_KEY`                      | The script cannot mint Clerk sign-in tickets.                                                   | Add the local secret to `.env.local`; do not commit it.                                                                                       |
-| `You have been banned`                          | Clerk bot protection blocked the browser-side ticket exchange before the app route was reached. | Ensure testing tokens are enabled in the Clerk instance and `CLERK_TESTING_TOKEN_SECRET_KEY` or `CLERK_SECRET_KEY` is available to the crawl. |
-| `No Clerk user found`                           | The canonical persona has not been provisioned in Clerk.                                        | Run `scripts/provision-cxo-personas.ts` for that client.                                                                                      |
-| `publicMetadata.clientId=<x>; expected <y>`     | The user is mapped to the wrong tenant.                                                         | Fix Clerk metadata before crawling.                                                                                                           |
-| `Responsible AI training API returned <status>` | The training gate did not record completion for the signed-in user.                             | Confirm the training ledger is reachable and the acknowledgment was accepted first.                                                           |
-| `redirected to sign-in`                         | Auth state did not work for the target app.                                                     | Confirm `BASE_URL`, Clerk keys, deployment, and user status.                                                                                  |
+| Failure                                            | Meaning                                                                                         | Fix                                                                                                                                                                                                    |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Missing CLERK_SECRET_KEY`                         | The script cannot mint Clerk sign-in tickets.                                                   | Add the local secret to `.env.local`; do not commit it.                                                                                                                                                |
+| `crawl_clerk_frontend_api_host_missing_or_invalid` | The crawl cannot safely determine which Clerk API host may receive the testing token.           | Set the matching public key from the target app alongside the backend secret; do not broaden the interceptor to arbitrary hosts.                                                                       |
+| `You have been banned`                             | Clerk bot protection blocked the browser-side ticket exchange before the app route was reached. | Ensure testing tokens are enabled in the Clerk instance and `CLERK_TESTING_TOKEN_SECRET_KEY` or `CLERK_SECRET_KEY` is available to the crawl.                                                          |
+| `This ticket is invalid`                           | The Frontend API rejected the one-time ticket; the route was not reached.                       | Confirm the Frontend API host matches the secret-key instance and that the testing token was attached to the Frontend API request. The crawl now fails rather than reporting this as a successful run. |
+| `No Clerk user found`                              | The canonical persona has not been provisioned in Clerk.                                        | Run `scripts/provision-cxo-personas.ts` for that client.                                                                                                                                               |
+| `publicMetadata.clientId=<x>; expected <y>`        | The user is mapped to the wrong tenant.                                                         | Fix Clerk metadata before crawling.                                                                                                                                                                    |
+| `Responsible AI training API returned <status>`    | The training gate did not record completion for the signed-in user.                             | Confirm the training ledger is reachable and the acknowledgment was accepted first.                                                                                                                    |
+| `redirected to sign-in`                            | Auth state did not work for the target app.                                                     | Confirm `BASE_URL`, Clerk keys, deployment, and user status.                                                                                                                                           |
 
 ## Cleanup
 

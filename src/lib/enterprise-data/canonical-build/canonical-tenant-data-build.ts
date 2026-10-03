@@ -22,7 +22,7 @@ export const CANONICAL_DATA_BUILD_REPORT_DIR =
   "reports/canonical-data-build/latest";
 export const CANONICAL_DATA_BUILD_REGISTRY_PATH =
   "datasets/tenant-inputs/tenant-input-registry.json";
-export const CANONICAL_DATA_BUILD_VERSION = "canonical-tenant-data-build/v1";
+export const CANONICAL_DATA_BUILD_VERSION = "canonical-tenant-data-build/v2";
 
 const BLOCKED_TENANT_KEYS = new Set(["northstar-clinical"]);
 const PLACEHOLDER_TOKENS = new Set([
@@ -88,6 +88,7 @@ type Registry = {
 
 type DomainKey =
   | "enterprise_profile"
+  | "business_segments"
   | "business_functions"
   | "org_ownership"
   | "workforce_roles"
@@ -384,6 +385,19 @@ const DOMAIN_CONFIG: Record<
     ],
     nameLabel: "entity",
   },
+  business_segments: {
+    canonicalDomain: "enterprise_structure",
+    objectType: "business_segment",
+    primaryFields: ["segment_key"],
+    nameLabel: "segment key",
+    relationshipFields: [
+      {
+        field: "pnl_owner_role",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
+    ],
+  },
   business_functions: {
     canonicalDomain: "enterprise_structure",
     objectType: "business_function",
@@ -399,6 +413,11 @@ const DOMAIN_CONFIG: Record<
         field: "executive_owner",
         relationshipType: "owned_by",
         targetObjectType: "person_or_role",
+      },
+      {
+        field: "business_segment_key",
+        relationshipType: "belongs_to_segment",
+        targetObjectType: "business_segment",
       },
     ],
   },
@@ -984,6 +1003,10 @@ const DOMAIN_MATCHERS: Array<{ domain: DomainKey; patterns: RegExp[] }> = [
   {
     domain: "enterprise_profile",
     patterns: [/enterprise[_-]profile/i, /portfolio[_-]entity[_-]registry/i],
+  },
+  {
+    domain: "business_segments",
+    patterns: [/business[_-]segments/i],
   },
   {
     domain: "business_functions",
@@ -1679,7 +1702,10 @@ function buildRecordFromRow(args: {
   }
 
   attributes.displayName = {
-    value: primary,
+    value:
+      sourceFile.domain === "business_segments"
+        ? row.segment_name?.trim() || primary
+        : primary,
     valueType: "string",
     confidence: 0.9,
   };
@@ -2118,6 +2144,12 @@ function buildEntityLookup(
     const displayName = String(record.attributes.displayName?.value ?? "");
     for (const objectType of lookupObjectTypes(record.objectType)) {
       add(record.tenantKey, objectType, displayName, canonicalKey);
+      if (record.objectType === "business_segment") {
+        const declaredKey = record.attributes.segmentKey?.value;
+        if (typeof declaredKey === "string") {
+          add(record.tenantKey, objectType, declaredKey, canonicalKey);
+        }
+      }
       // Resolution rule 4: a source-system id, scoped by type. Intake carries these in declared id
       // columns — `system_id` holds `APP-0003`, and the integrations tab references applications by
       // that id rather than by name. It is a legitimate reference, not the placeholder leakage it
@@ -2276,14 +2308,17 @@ function identityPartsForRecord(record: CanonicalIngestionRecord): {
   domain: string;
   normalizedName: string;
 } {
-  const displayName = String(
-    record.attributes.displayName?.value ??
+  const identity = String(
+    (record.objectType === "business_segment"
+      ? record.attributes.segmentKey?.value
+      : null) ??
+      record.attributes.displayName?.value ??
       record.canonicalObjectKey ??
       record.sourceObjectId,
   );
   return {
     domain: domainForRecord(record) ?? record.objectType,
-    normalizedName: normalizeIdentifier(displayName),
+    normalizedName: normalizeIdentifier(identity),
   };
 }
 

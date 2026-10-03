@@ -226,7 +226,13 @@ function renderTable(node: MdTable): Table {
     const cells: TableCell[] = (r.children as MdTableCell[]).map(
       (c) => renderTableCell(c, isHeader),
     );
-    rows.push(new TableRow({ children: cells, tableHeader: isHeader }));
+    rows.push(
+      new TableRow({
+        children: cells,
+        tableHeader: isHeader,
+        cantSplit: true,
+      }),
+    );
     isHeader = false;
   }
   return new Table({

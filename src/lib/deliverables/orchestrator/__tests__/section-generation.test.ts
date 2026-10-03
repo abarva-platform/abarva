@@ -7,10 +7,14 @@ import {
   buildSourceRegister,
   assembleDeliverable,
   consolidateOpenInputPlaceholders,
+  exhibitRejectionReason,
   type SynthesisResult,
 } from "../section-generation";
+import { validateDeliverableQuality } from "../quality-validator";
+import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 import type { GovernedEvidenceItem, RenderableSection } from "../types";
 
 describe("mapWithConcurrency", () => {
@@ -130,6 +134,108 @@ describe("buildSourceRegister", () => {
         (r) => r.citationNumber,
       ),
     ).toEqual([1]);
+  });
+
+  it("normalizes an under-authored P2 discovery deck to the governed slide contract", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "discovery_report",
+      outputFormats: ["pptx"],
+      qualityBar: {
+        ...resolveQualityBar("moves", "discovery_report"),
+        minBodyWords: 0,
+        requiresSourceRegister: false,
+      },
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "exec_summary",
+        title: "Executive Summary",
+        bodyMarkdown:
+          "The member-service workflow can proceed to design only if tool, policy, and human-approval gaps remain explicit [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+      {
+        key: "current_state",
+        title: "Current-State Findings",
+        bodyMarkdown:
+          "Agents move between CRM, eligibility, claims, prior authorization, knowledge, and supervisor channels during one member contact [2].",
+        groundingMode: "governed_facts",
+        citationsUsed: [2],
+      },
+      {
+        key: "maturity_gaps",
+        title: "Maturity, Benchmark & Gaps",
+        bodyMarkdown:
+          "The highest-risk gaps are disposition quality, knowledge ownership, and inconsistent handoff evidence [3].",
+        groundingMode: "mixed",
+        citationsUsed: [3],
+      },
+      {
+        key: "readiness_implications",
+        title: "Readiness & Implications",
+        bodyMarkdown:
+          "Design must preserve human approval for coverage, payment, prior authorization, appeal, grievance, clinical, and pharmacy decisions [4].",
+        groundingMode: "mixed",
+        citationsUsed: [4],
+      },
+      {
+        key: "recommendation",
+        title: "Recommended Move & Next Steps",
+        bodyMarkdown:
+          "Proceed to design with retrieval, citation, and approval controls; defer autonomy and writeback [5].",
+        groundingMode: "mixed",
+        citationsUsed: [5],
+      },
+    ];
+    const synth: SynthesisResult = {
+      recommendation:
+        "Proceed to design with explicit controls and no autonomous member-impacting decisions.",
+      nextActions: ["Review the design boundary with the sponsor."],
+      deckSlides: [
+        {
+          key: "executive_answer",
+          title: "Executive Answer",
+          governingMessage: "Proceed, but only with controls.",
+        },
+        {
+          key: "current_state",
+          title: "Current State",
+          governingMessage: "The workflow is fragmented.",
+        },
+        {
+          key: "root_causes",
+          title: "Root Causes",
+          governingMessage: "The root causes are operational.",
+        },
+        {
+          key: "proceed_hold_stop",
+          title: "Proceed, Hold or Stop",
+          governingMessage: "Proceed to design.",
+        },
+      ],
+      tables: [],
+    };
+
+    const doc = assembleDeliverable(req, sections, synth, []);
+
+    expect(doc.deckSlides).toHaveLength(10);
+    expect(doc.deckSlides?.map((slide) => slide.key)).toEqual([
+      "executive_answer",
+      "what_we_assessed",
+      "current_state",
+      "what_is_working",
+      "what_is_not_working",
+      "root_causes",
+      "metrics_evidence",
+      "implications",
+      "readiness",
+      "proceed_hold_stop",
+    ]);
+    expect(validateDeliverableQuality(doc, req).blockers.join(" ")).not.toMatch(
+      /slides.*needs at least/i,
+    );
   });
 });
 
@@ -279,7 +385,7 @@ describe("assembleDeliverable", () => {
       {
         key: "charter_decision",
         title: "Charter Decision & Immediate Next Steps",
-      bodyMarkdown:
+        bodyMarkdown:
           "Approve Discovery with the charter scope, authorization conditions, evidence families, and caveats carried forward.",
         groundingMode: "mixed",
         citationsUsed: [],
@@ -303,7 +409,7 @@ describe("assembleDeliverable", () => {
     });
   });
 
-  it("adds decision-useful authorization conditions when a Moves charter is below its prose floor", () => {
+  it("does not pad a thin canonical Moves charter with boilerplate", () => {
     const req = amsRfpRequest({
       module: "moves",
       deliverableType: "charter",
@@ -318,13 +424,15 @@ describe("assembleDeliverable", () => {
     });
     const thinBody =
       "Sponsor alignment, evidence acceptance, decision rights, scope control, owner attendance, value discipline, review cadence, and caveat handling are confirmed for discovery.";
-    const sections: RenderableSection[] = Array.from({ length: 7 }, (_, i) => ({
-      key: `charter_section_${i + 1}`,
-      title: i === 0 ? "Charter Decision" : `Charter Working Section ${i + 1}`,
-      bodyMarkdown: thinBody,
-      groundingMode: "mixed",
-      citationsUsed: [],
-    }));
+    const sections: RenderableSection[] = CHARTER_CONTRACT.sections.map(
+      (section) => ({
+        key: section.key,
+        title: section.title,
+        bodyMarkdown: thinBody,
+        groundingMode: "mixed",
+        citationsUsed: [],
+      }),
+    );
 
     const doc = assembleDeliverable(
       req,
@@ -336,12 +444,16 @@ describe("assembleDeliverable", () => {
       excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
     });
 
+    expect(doc.generatedSections).toHaveLength(
+      CHARTER_CONTRACT.sections.length,
+    );
+    expect(wordCount).toBeLessThan(700);
+    expect(doc.generatedSections.map((section) => section.key)).toEqual(
+      CHARTER_CONTRACT.sections.map((section) => section.key),
+    );
     expect(
-      doc.generatedSections.some(
-        (section) => section.key === "authorization_conditions",
-      ),
-    ).toBe(true);
-    expect(wordCount).toBeGreaterThanOrEqual(700);
+      doc.generatedSections.map((section) => section.bodyMarkdown).join(" "),
+    ).not.toContain("Discovery authorization should preserve");
   });
 
   it("adds a risk-table fallback for Moves target architecture when synthesis omits it", () => {
@@ -673,5 +785,49 @@ describe("consolidateOpenInputPlaceholders", () => {
       consolidateOpenInputPlaceholders(sections);
     expect(cleaned[0]).toBe(sections[0]);
     expect(harvested).toHaveLength(0);
+  });
+});
+
+describe("exhibitRejectionReason", () => {
+  const kept = {
+    key: "raci",
+    title: "Handoff RACI",
+    kind: "matrix",
+    description:
+      "Shows who is accountable for each handoff item. Three items have no named owner; those block launch.",
+    targetFormat: "docx",
+    data: {
+      kind: "matrix",
+      axes: { x: "Role", y: "Work" },
+      cells: [
+        { x: "Sponsor", y: "Scope", label: "A" },
+        { x: "Data owner", y: "Access", label: "A" },
+      ],
+    },
+  } as never;
+
+  it("keeps an exhibit with typed data and a description of three statements", () => {
+    expect(exhibitRejectionReason(kept)).toBeNull();
+  });
+
+  it("says why an exhibit is not kept", () => {
+    expect(
+      exhibitRejectionReason({ ...(kept as object), data: {} } as never),
+    ).toMatch(/not a supported payload kind/);
+    expect(
+      exhibitRejectionReason({
+        ...(kept as object),
+        data: { kind: "matrix", cells: [{ x: "a", y: "b" }] },
+      } as never),
+    ).toMatch(/below that kind's minimum content/);
+    expect(
+      exhibitRejectionReason({
+        ...(kept as object),
+        description: "Shows who is accountable.",
+      } as never),
+    ).toBe("description has fewer than three distinct statements");
+    expect(
+      exhibitRejectionReason({ ...(kept as object), title: " " } as never),
+    ).toBe("key, title or description is empty");
   });
 });

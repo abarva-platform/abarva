@@ -132,7 +132,7 @@ describe('POST /api/v1/programs', () => {
       userId: 'cto',
       userName: 'cto',
       role: 'sponsor',
-      approvalAuthority: 'sponsor',
+      approvalAuthority: 'contributor',
     });
   });
 

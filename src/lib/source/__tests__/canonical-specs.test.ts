@@ -139,6 +139,16 @@ describe('canonical evidence requirements · coverage', () => {
     expect(evidenceById('EVID-NOPE')).toBeUndefined();
   });
 
+  it('resolves the in-step Scope decision without adding an upload requirement', () => {
+    for (const id of [
+      'EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION',
+      'EVID-SRC-SCOPE-EXCLUSIONS-DECISION',
+    ]) {
+      expect(evidenceById(id)?.acceptedFileTypes).toEqual([]);
+      expect(SOURCE_EVIDENCE_REQUIREMENTS.some((requirement) => requirement.requirementId === id)).toBe(false);
+    }
+  });
+
   it('accepts parseable tabular sourcing-rule evidence', () => {
     expect(
       evidenceById('EVID-SRC-RFP-SOURCING-RULES')?.acceptedFileTypes,

@@ -8,9 +8,7 @@
 //   - ProgramDetailView      → /programs/:programId (single program)
 //   - ProgramOriginationView → /programs/new        (origination flow)
 //
-// Phase model: 7-phase P0–P6 (Originate / Discovery / Synthesis / Design /
-// Execution Roadmap / Approval & Mobilization / Tower Handoff) per the
-// Programs strategy-to-approval operating model.
+// Six governed Moves phases (P0–P5) followed by Tower outcome tracking.
 //
 // Do NOT modify types.ui.ts solely to accommodate these types.
 
@@ -28,24 +26,23 @@ import type {
   ViewerRole,
 } from "./types.ui";
 import { getClientOption } from "@/lib/client-config";
+import { getMovesStageName } from "./phase-labels";
 
-// ── Canonical phase model (7-phase P0–P6) ─────────────────────────────
-// Shell wave canonical lifecycle per PHASE_LABEL_MAP in programs-fixture.ts.
-// Hard gates at P1 entry (Discovery approved), P3 entry (Design approved),
-// P5 entry (Approval & Mobilization approved). Soft transitions on remaining phases.
+// ── Canonical Moves phases plus Tower outcome tracking ────────────────
+// Integer stage ids remain compatible with existing stored program state.
 
 export const CANONICAL_SEVEN_PHASES = [
-  { canonicalPhase: 0, name: "Originate", gateType: "none" as const },
-  { canonicalPhase: 1, name: "Discovery", gateType: "hard" as const },
-  { canonicalPhase: 2, name: "Synthesis", gateType: "soft" as const },
-  { canonicalPhase: 3, name: "Design", gateType: "hard" as const },
-  { canonicalPhase: 4, name: "Execution Roadmap", gateType: "soft" as const },
+  { canonicalPhase: 0, name: getMovesStageName(0), gateType: "none" as const },
+  { canonicalPhase: 1, name: getMovesStageName(1), gateType: "hard" as const },
+  { canonicalPhase: 2, name: getMovesStageName(2), gateType: "soft" as const },
+  { canonicalPhase: 3, name: getMovesStageName(3), gateType: "hard" as const },
+  { canonicalPhase: 4, name: getMovesStageName(4), gateType: "soft" as const },
   {
     canonicalPhase: 5,
-    name: "Approval & Mobilization",
+    name: getMovesStageName(5),
     gateType: "hard" as const,
   },
-  { canonicalPhase: 6, name: "Tower Handoff", gateType: "none" as const },
+  { canonicalPhase: 6, name: getMovesStageName(6), gateType: "none" as const },
 ] as const;
 
 // Back-compat alias — remove after all consumers migrate to CANONICAL_SEVEN_PHASES

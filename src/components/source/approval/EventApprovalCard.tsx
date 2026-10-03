@@ -33,6 +33,8 @@ interface EventApprovalCardProps {
   currentStageHref: string;
   /** Exact immutable Request version shown on this approval page. */
   requestAuthorityVersionId?: string | null;
+  /** The current Request version already has its intake acceptance receipt. */
+  requestAlreadyAccepted?: boolean;
   /** When true, approving also generates the strategy memo (Strategy-at-P0). */
   generateMemoOnApprove?: boolean;
 }
@@ -88,6 +90,7 @@ export function EventApprovalCard({
   currentUserCanApprove,
   currentStageHref,
   requestAuthorityVersionId = null,
+  requestAlreadyAccepted = false,
   generateMemoOnApprove = false,
 }: EventApprovalCardProps) {
   const router = useRouter();
@@ -102,11 +105,18 @@ export function EventApprovalCard({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const reasonReady = reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
-  // Strategy-at-P0 makes approval the strategy gate: the three GATE-STRATEGY
-  // criteria are confirmed here as explicit checkboxes. Other tenants keep the
-  // single accountable-decision confirm.
-  const gateReady = generateMemoOnApprove
+  const reasonLength = reason.trim().length;
+  const reasonRemaining = Math.max(
+    0,
+    SOURCE_APPROVAL_REASON_MIN_LENGTH - reasonLength,
+  );
+  const reasonReady = reasonRemaining === 0;
+  const reasonHelp = reasonReady
+    ? "Minimum met"
+    : `${reasonRemaining} more character${reasonRemaining === 1 ? "" : "s"} needed`;
+  // A returned Strategy decision must not be re-presented as Request intake.
+  const strategyDecision = generateMemoOnApprove || requestAlreadyAccepted;
+  const gateReady = strategyDecision
     ? strategyGate.mandate && strategyGate.value && strategyGate.archetype
     : confirmed;
   const actionReady =
@@ -135,9 +145,9 @@ export function EventApprovalCard({
     : !requestAuthorityVersionId
       ? "The current Request version is unavailable. Reload or repair the governed intake before approval."
       : !reasonReady
-        ? `Add an audit rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
+        ? `Add an audit rationale: ${reasonHelp}.`
         : !gateReady
-          ? generateMemoOnApprove
+          ? strategyDecision
             ? "Confirm all three strategy-gate checks."
             : "Confirm the accountable human decision."
           : "Ready to approve.";
@@ -154,32 +164,20 @@ export function EventApprovalCard({
         body: JSON.stringify({
           action: action === "reject" ? "reject" : "approve",
           notes:
-            action !== "reject" && generateMemoOnApprove
+            action !== "reject" && strategyDecision
               ? `${reason}\n\nEvent Owner confirmed the strategy mandate, value target, and archetype.`
               : reason,
-          // The approve route validates `confirmations` (all three required keys)
-          // via evaluateSourceApprovalDecision — sending a bare `confirmed` flag
-          // 422s for gate tenants. Map the gate checkboxes (or the single confirm
-          // for non-gate tenants) onto the canonical confirmation keys. The
-          // in-canvas Strategy gate sends the same shape.
+          // Request acceptance and Strategy-at-P0 attest different decisions.
           confirmed: true,
-          confirmations: {
-            strategyMemoReviewed: generateMemoOnApprove
-              ? strategyGate.mandate
-              : confirmed,
-            valueTargetConfirmed: generateMemoOnApprove
-              ? strategyGate.value
-              : confirmed,
-            archetypeRigorConfirmed: generateMemoOnApprove
-              ? strategyGate.archetype
-              : confirmed,
-          },
-          // The event-creation approval unlocks the working canvas where the
-          // strategy memo is actually drafted — the GATE-STRATEGY-01 readiness
-          // check it would otherwise trigger belongs to a LATER, separate
-          // stage-advance action (leaving Strategy once the memo exists), not
-          // to this first approval. The server verifies self-approval authority
-          // and still evaluates the current gate readiness.
+          confirmations: strategyDecision
+            ? {
+                strategyMemoReviewed: strategyGate.mandate,
+                valueTargetConfirmed: strategyGate.value,
+                archetypeRigorConfirmed: strategyGate.archetype,
+              }
+            : { requestFactsReviewed: confirmed },
+          // The server derives self-approval authority. In the standard journey,
+          // this Request decision opens Strategy; its evidence gate stays later.
           selfApproveIfAuthorized:
             action === "approve" && isSelfApproval && pilotMode,
           requestAuthorityVersionId,
@@ -195,7 +193,7 @@ export function EventApprovalCard({
       // heartbeat-protected for the ~30-60s Anthropic call). Best-effort: if the
       // memo can't be produced, the approval still stands and we navigate on —
       // the strategy substance lives in the captured intake facts regardless.
-      if (action === "approve" && generateMemoOnApprove) {
+      if (action === "approve" && generateMemoOnApprove && !requestAlreadyAccepted) {
         setNotice("Approved — generating your strategy memo…");
         try {
           await fetch(
@@ -250,13 +248,15 @@ export function EventApprovalCard({
           <div style={EYEBROW_STYLE}>Source Approval</div>
           <h1 style={H1_STYLE}>{eventName}</h1>
           <p style={LEDE_STYLE}>
-            Approve the event intake before the working canvas unlocks. AbarVa
+            {requestAlreadyAccepted
+              ? "Review the returned Strategy decision before stage advancement."
+              : "Approve the event intake before the working canvas unlocks."} AbarVa
             assists with the record; the client owns the decision.
           </p>
         </div>
       </section>
 
-      <section style={GRID_STYLE}>
+      <section data-testid="source-approval-grid" style={GRID_STYLE}>
         <div style={LEFT_COL_STYLE}>
           <section data-testid="source-approval-brief" style={BRIEF_CARD_STYLE}>
             <div style={SECTION_HEADER_STYLE}>
@@ -264,9 +264,7 @@ export function EventApprovalCard({
                 <div style={EYEBROW_STYLE}>Approval brief</div>
                 <h2 style={SECTION_TITLE_STYLE}>What you are approving</h2>
               </div>
-              <span style={READY_CHIP_STYLE}>
-                {actionReady ? "Ready" : "Needs input"}
-              </span>
+              <span style={READY_CHIP_STYLE}>{briefFacts.length} facts</span>
             </div>
             <dl style={FACT_LIST_STYLE}>
               {briefFacts.map((fact) => (
@@ -340,6 +338,8 @@ export function EventApprovalCard({
             </span>
             <textarea
               data-testid="source-approval-rationale"
+              aria-describedby="source-approval-rationale-help"
+              aria-invalid={reasonLength > 0 && !reasonReady}
               value={reason}
               disabled={!currentUserCanApprove || Boolean(busyAction)}
               onChange={(event) => setReason(event.target.value)}
@@ -347,12 +347,18 @@ export function EventApprovalCard({
               placeholder="Record what you reviewed and why this event should move."
               style={TEXTAREA_STYLE}
             />
-            <span style={FIELD_HELP_STYLE}>
-              Minimum {SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.
+            <span
+              id="source-approval-rationale-help"
+              data-testid="source-approval-rationale-help"
+              aria-live="polite"
+              style={FIELD_HELP_STYLE}
+            >
+              {reasonLength} / {SOURCE_APPROVAL_REASON_MIN_LENGTH} characters ·{" "}
+              {reasonHelp}
             </span>
           </label>
 
-          {generateMemoOnApprove ? (
+          {strategyDecision ? (
             <div style={{ display: "grid", gap: 8, marginBottom: 4 }}>
               <div style={EYEBROW_STYLE}>Confirm the strategy gate</div>
               <label style={CHECKBOX_ROW_STYLE}>
@@ -369,7 +375,8 @@ export function EventApprovalCard({
                   }
                 />
                 <span>
-                  Event Owner confirms the sourcing mandate and strategy memo review.
+                  Event Owner confirms the sourcing mandate and strategy memo
+                  review.
                 </span>
               </label>
               <label style={CHECKBOX_ROW_STYLE}>
@@ -422,6 +429,18 @@ export function EventApprovalCard({
             </label>
           )}
 
+          {!actionReady &&
+          !busyAction &&
+          currentUserCanApprove &&
+          requestAuthorityVersionId ? (
+            <p
+              data-testid="source-approval-action-hint"
+              role="status"
+              style={FIELD_HELP_STYLE}
+            >
+              {blockerLabel}
+            </p>
+          ) : null}
           <div style={ACTION_ROW_STYLE}>
             <details style={MORE_STYLE}>
               <summary style={MORE_SUMMARY_STYLE}>Other decisions</summary>
@@ -457,18 +476,6 @@ export function EventApprovalCard({
                 Send to {coApprover.displayName}
               </button>
             ) : null}
-            <button
-              type="button"
-              data-testid="source-approval-approve"
-              disabled={!actionReady}
-              onClick={() => void submitAction("approve")}
-              style={{
-                ...PRIMARY_BUTTON_STYLE,
-                opacity: actionReady ? 1 : 0.45,
-              }}
-            >
-              {busyAction === "approve" ? "Approving..." : "Approve"}
-            </button>
           </div>
 
           {error ? <div style={ERROR_STYLE}>{error}</div> : null}
@@ -488,8 +495,8 @@ export function EventApprovalCard({
               <div style={NEXT_STYLE}>
                 <strong>What happens next</strong>
                 <span>
-                  {generateMemoOnApprove
-                    ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
+                  {strategyDecision
+                    ? "Approve: the Strategy gate is checked before the event advances to Scope."
                     : "Approve: event unlocks at Stage 1 Strategy."}
                 </span>
                 {coApprover ? (
@@ -508,6 +515,29 @@ export function EventApprovalCard({
           </details>
         </aside>
       </section>
+      <div data-testid="source-approval-progress-dock" style={PROGRESS_DOCK_STYLE}>
+        {actionReady || busyAction === "approve" ? (
+          <button
+            type="button"
+            data-testid="source-approval-approve"
+            disabled={Boolean(busyAction)}
+            onClick={() => void submitAction("approve")}
+            style={PROGRESS_BUTTON_STYLE}
+          >
+            {busyAction === "approve" ? "Approving..." : "Approve"}
+          </button>
+        ) : (
+          <div
+            data-testid="source-approval-progress-status"
+            role="status"
+            aria-live="polite"
+            style={PROGRESS_STATUS_STYLE}
+          >
+            <strong>{busyAction ? "Decision in progress" : "Approval locked"}</strong>
+            <span>{busyAction ? "Recording the decision." : blockerLabel}</span>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
@@ -661,6 +691,7 @@ const PAGE_STYLE: CSSProperties = {
   minHeight: "100%",
   background: SHELL.PAPER,
   padding: "10px clamp(18px, 2.4vw, 32px) 22px",
+  paddingBottom: 100,
   overflow: "auto",
 };
 
@@ -691,6 +722,7 @@ const BANNER_TEXT_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
   fontSize: 12,
   color: SHELL.INK,
+  overflowWrap: "anywhere",
 };
 
 const HEADER_STYLE: CSSProperties = {
@@ -729,7 +761,7 @@ const LEDE_STYLE: CSSProperties = {
 
 const GRID_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(330px, 0.58fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 440px), 1fr))",
   gap: 12,
   alignItems: "start",
 };
@@ -737,6 +769,7 @@ const GRID_STYLE: CSSProperties = {
 const LEFT_COL_STYLE: CSSProperties = {
   display: "grid",
   gap: 10,
+  minWidth: 0,
 };
 
 const BRIEF_CARD_STYLE: CSSProperties = {
@@ -787,7 +820,7 @@ const FACT_LIST_STYLE: CSSProperties = {
 
 const FACT_ROW_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(150px, 0.34fr) minmax(0, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
   gap: 16,
   padding: "7px 0",
   borderBottom: `1px solid ${SHELL.CARD_LINE}`,
@@ -813,6 +846,7 @@ const BLOCKER_STRIP_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
+  flexWrap: "wrap",
   gap: 12,
   border: `1px solid ${SHELL.PEACH_LINE}`,
   borderRadius: 8,
@@ -836,6 +870,7 @@ const RIGHT_PANEL_STYLE: CSSProperties = {
   top: 10,
   display: "grid",
   gap: 9,
+  minWidth: 0,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
@@ -1051,11 +1086,47 @@ const BASE_BUTTON_STYLE: CSSProperties = {
   cursor: "pointer",
 };
 
-const PRIMARY_BUTTON_STYLE: CSSProperties = {
-  ...BASE_BUTTON_STYLE,
-  border: `1px solid ${SHELL.INK}`,
-  background: SHELL.INK,
+const PROGRESS_DOCK_STYLE: CSSProperties = {
+  background: SHELL.CARD_WHITE,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  bottom: 16,
+  boxShadow: "0 8px 28px rgba(12, 26, 58, 0.18)",
+  boxSizing: "border-box",
+  maxWidth: "calc(100vw - 32px)",
+  padding: 6,
+  position: "fixed",
+  right: "clamp(16px, 5vw, 60px)",
+  width: 500,
+  zIndex: 80,
+};
+
+const PROGRESS_BUTTON_STYLE: CSSProperties = {
+  background: SHELL.MINT_TEXT,
+  border: `1px solid ${SHELL.MINT_TEXT}`,
+  borderRadius: 6,
   color: SHELL.CARD_WHITE,
+  cursor: "pointer",
+  fontFamily: SHELL.SANS,
+  fontSize: 15,
+  fontWeight: 800,
+  minHeight: 48,
+  padding: "10px 14px",
+  textAlign: "center",
+  width: "100%",
+};
+
+const PROGRESS_STATUS_STYLE: CSSProperties = {
+  background: "#e8ebee",
+  borderRadius: 6,
+  color: SHELL.INK_SOFT,
+  display: "grid",
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  gap: 2,
+  lineHeight: 1.35,
+  minHeight: 48,
+  padding: "9px 12px",
 };
 
 const SECONDARY_BUTTON_STYLE: CSSProperties = {

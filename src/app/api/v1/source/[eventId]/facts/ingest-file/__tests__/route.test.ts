@@ -10,6 +10,8 @@
  * @jest-environment node
  */
 
+import { createHash } from "node:crypto";
+
 const tenancy = {
   clientId: "client-1",
   clientKey: "lakeshore",
@@ -72,6 +74,8 @@ jest.mock("@/lib/source/artifact-registry", () => ({
 import { POST } from "../route";
 import { updateSourceArtifactProcessingState } from "@/lib/source/artifact-registry";
 import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
+import { deriveFactBackedEvidenceStates } from "@/lib/source/canvas-substrate/fact-derived-evidence";
+import type { SourceEventFactInsert } from "@/lib/source/facts/fact-types";
 import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
 
 function fakeFluentClient() {
@@ -93,6 +97,12 @@ function fakeFluentClient() {
 const VOLUMETRICS_CSV = [
   "Service Tower,Annual Change-Order Spend (USD),Recurring/Avoidable Share (%),Projected Volume Decline (%),Automatable Effort Pool (USD),Chronic SLA Miss Rate (%),Notes",
   "End User Compute,1200000,35,12,450000,4,steady",
+].join("\n");
+
+const TICKET_CSV = [
+  "Service Tower,Support Tier,Month,Time Window,Ticket Count,SLA Breach Count,Source Basis,Fixture Status",
+  "Service desk,L2,2026-08,Business hours,42,3,Synthetic smoke scenario,SYNTHETIC TEST DATA ONLY",
+  "Service desk,L3,2026-08,After hours,13,1,Synthetic smoke scenario,SYNTHETIC TEST DATA ONLY",
 ].join("\n");
 
 /** Build a real NextRequest-like object with a multipart FormData body. */
@@ -162,37 +172,65 @@ describe("POST facts/ingest-file — happy path", () => {
   });
 
   it("writes facts that hydrate the matching workflow upload task on readback", async () => {
-    const res = await POST(fileRequest({ artifactId: "artifact-1" }), ctx);
+    const res = await POST(fileRequest({
+      csv: TICKET_CSV, filename: "ticket-history.csv",
+      templateCode: "TICKET_HISTORY_V1",
+    }), ctx);
     expect(res.status).toBe(200);
 
-    const writtenFacts = insertFacts.mock.calls[0][0] as Array<{
-      fact_key: string;
-      value_numeric: number | null;
-    }>;
+    const writtenFacts = insertFacts.mock.calls[0][0] as SourceEventFactInsert[];
+    expect(writtenFacts).toHaveLength(4);
+    expect(writtenFacts[0].source_citation).toMatchObject({
+      doc: "ticket-history.csv",
+      source_sha256: createHash("sha256").update(TICKET_CSV).digest("hex"),
+      support_tier: "L2", month: "2026-08", time_window: "Business hours",
+    });
     const factInputs = writtenFacts.reduce<Record<string, number>>((acc, fact) => {
       if (typeof fact.value_numeric === "number") {
         acc[fact.fact_key] = fact.value_numeric;
       }
       return acc;
     }, {});
+    const evidenceStates = deriveFactBackedEvidenceStates(writtenFacts.map((fact, index) => ({
+      ...fact,
+      id: `fact-${index}`,
+      captured_at: "2026-08-31T00:00:00.000Z",
+      is_stale: false,
+    })));
+    expect(evidenceStates).toMatchObject([{
+      requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+      currentState: "Available",
+      sourceEventFactIds: ["fact-0", "fact-2"],
+    }]);
     const volumetricsTask: StageTaskView = {
       id: "scope.volumetrics",
-      title: "Provide the volumetrics",
+      title: "Provide ticket volumes",
       subtitle: "Ticket history",
       type: "provide",
       state: "todo",
-      guide: "Upload service-tower volumetrics.",
-      cta: "Upload volumetrics",
-      factTemplateCode: "VOLUMETRICS_V1",
+      guide: "Upload L2/L3 ticket history.",
+      cta: "Upload ticket history",
+      factTemplateCode: "TICKET_HISTORY_V1",
     };
 
     const [hydrated] = hydrateTaskEvidenceState({
       tasks: [volumetricsTask],
       factInputs,
+      evidenceStates,
       stageKey: "scope",
     });
 
     expect(hydrated.evidenceComplete).toBe(true);
+  });
+
+  it("rejects a partial ticket file atomically", async () => {
+    const res = await POST(fileRequest({
+      csv: TICKET_CSV.replace("Service desk,L3", "Service desk,L2"),
+      filename: "ticket-history.csv", templateCode: "TICKET_HISTORY_V1",
+    }), ctx);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("invalid_upload");
+    expect(insertFacts).not.toHaveBeenCalled();
   });
 
   it("marks the uploaded artifact parsed only when typed facts are written", async () => {

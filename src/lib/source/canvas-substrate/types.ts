@@ -130,6 +130,10 @@ export interface SourceEventEvidenceStateRow {
   stage_key: SourceStageKey;
   current_state: SourceEventEvidenceCurrentState;
   source_artifact_id: string | null;
+  applicability_status?: 'applicable' | 'not_applicable';
+  applicability_reason?: string | null;
+  applicability_actor_user_id?: string | null;
+  applicability_decided_at?: string | null;
   notes: string | null;
   last_synced_at: string | null;
   created_at: string;
@@ -144,6 +148,10 @@ export interface SourceEventEvidence {
   stage: SourceStageKey;
   currentState: SourceEventEvidenceCurrentState;
   sourceArtifactId: string | null;
+  applicabilityStatus?: 'applicable' | 'not_applicable';
+  applicabilityReason?: string | null;
+  applicabilityActorUserId?: string | null;
+  applicabilityDecidedAt?: string | null;
   sourceEventFactIds?: string[];
   notes: string | null;
   lastSyncedAt: string | null;
@@ -213,6 +221,10 @@ export function evidenceStateRowToView(
     stage: row.stage_key,
     currentState: row.current_state,
     sourceArtifactId: row.source_artifact_id,
+    applicabilityStatus: row.applicability_status,
+    applicabilityReason: row.applicability_reason ?? null,
+    applicabilityActorUserId: row.applicability_actor_user_id ?? null,
+    applicabilityDecidedAt: row.applicability_decided_at ?? null,
     notes: row.notes,
     lastSyncedAt: row.last_synced_at,
     createdAt: row.created_at,

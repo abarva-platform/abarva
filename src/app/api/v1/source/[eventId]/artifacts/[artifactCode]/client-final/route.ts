@@ -40,6 +40,7 @@ import type {
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type { SourceStageKey } from "@/lib/source/types";
+import { findD09VendorDisclosureViolations } from "@/lib/source/agent-generation/vendor-pack-disclosure";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -245,6 +246,28 @@ export async function POST(request: Request, { params }: RouteContext) {
   if (dataProtection.decision === "quarantine") {
     return sensitiveUploadRejectedResponse(dataProtection);
   }
+  if (!extractedClientFinal.text?.trim()) {
+    return jsonError(
+      422,
+      "unreadable_client_final",
+      "This file has no readable text. Upload a text-readable final; an image-only scan cannot become the authoritative artifact.",
+    );
+  }
+
+  if (artifactCode === "d09_rfp_pack") {
+    const violations = findD09VendorDisclosureViolations(extractedClientFinal.text);
+    if (violations.length > 0) {
+      return Response.json(
+        {
+          ok: false,
+          error: "vendor_disclosure_violation",
+          detail: "Remove buyer-private targets and internal workflow material before accepting a vendor package.",
+          violations: violations.map(({ code }) => code),
+        },
+        { status: 422 },
+      );
+    }
+  }
 
   let siblingArtifacts: SourceArtifactRecord[];
   let previousGenerated: SourceArtifactRecord | null;
@@ -256,12 +279,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     siblingArtifacts = allArtifacts.filter(
       (artifact) => artifact.artifactType === artifactCode,
     );
+    // The first Client Final supersedes its draft; later revisions still need that provenance.
     previousGenerated =
-      resolveAuthoritativeArtifact(
-        siblingArtifacts.filter(
-          (artifact) => artifact.artifactGroup === "generated",
-        ),
-      ) ?? null;
+      siblingArtifacts.find((artifact) => artifact.artifactGroup === "generated") ?? null;
     previousAuthoritative = resolveAuthoritativeArtifact(siblingArtifacts);
   } catch (error) {
     return jsonError(
@@ -436,18 +456,20 @@ export async function POST(request: Request, { params }: RouteContext) {
       stakeholderGroup,
       textExtraction: {
         method: extractedClientFinal.method,
-        bodyAvailable: Boolean(extractedClientFinal.text),
+        bodyAvailable: true,
         warnings: extractedClientFinal.warnings,
       },
       sourceGeneratedArtifactId:
         previousGenerated?.id ?? artifactState.linked_artifact_id,
       governanceMessage: CLIENT_FINAL_GOVERNANCE_MESSAGE,
     };
-    const updatedMetadata = {
+    const updatedMetadata: Record<string, unknown> = {
       ...previousMetadata,
       clientFinal: clientFinalMetadata,
       clientFinalChangeSummary: changeSummary,
     };
+    // A review of the previous draft or final cannot certify new uploaded bytes.
+    delete updatedMetadata.qualityGate;
     const updateResult = await selectSourceWriteAdapter(
       undefined,
       client.key,
@@ -455,7 +477,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       artifactRowId: artifactState.id,
       columns: {
         body: extractedClientFinal.text,
-        body_format: extractedClientFinal.text ? "markdown" : null,
+        body_format: "markdown",
         body_authored_by: tenancy.userId,
         body_updated_at: acceptedAt,
         linked_artifact_id: artifact.id,

@@ -1,5 +1,5 @@
-import { classifySentinelIntent, runSentinelReasoning } from '../../../src/lib/agents/sentinel-reasoning';
-import { callSentinelModel } from '../../../src/lib/agents/sentinel-reasoning/model';
+import { classifySentinelIntent, runSentinelReasoning } from '../../../src/lib/agent/sentinel-reasoning';
+import { callSentinelModel } from '../../../src/lib/agent/sentinel-reasoning/model';
 
 const QUESTIONS = [
   'As Apex CTO, where should I use AI to improve IT productivity without just buying more tools?',

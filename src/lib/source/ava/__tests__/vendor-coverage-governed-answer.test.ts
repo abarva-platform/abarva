@@ -247,7 +247,7 @@ describe('buildVendorCoverageGovernedAnswer', () => {
       clientKey: 'meridian',
       tenantId: 'tenant-meridian',
       question: 'How are vendors doing on response coverage?',
-      eventType: 'infrastructure',
+      eventType: 'managed_service',
     });
 
     expect(readEventFacts).toHaveBeenCalledWith({
@@ -324,7 +324,7 @@ describe('buildVendorCoverageGovernedAnswer', () => {
       clientKey: 'skyharbor',
       tenantId: 'tenant-skyharbor',
       question: 'Which claims are unsupported or lack evidence?',
-      eventType: 'infrastructure',
+      eventType: 'managed_service',
     });
 
     expect(answer).not.toBeNull();
@@ -337,5 +337,26 @@ describe('buildVendorCoverageGovernedAnswer', () => {
       'Vendor C',
     ]);
     expect(JSON.stringify(answer)).not.toContain('Amadeus');
+  });
+
+  it('does not assign a vendor-coverage value pack to an unclassified coarse type', async () => {
+    mockReadEventFacts.mockResolvedValue({ inputs: {}, citations: {} });
+    mockReadVendorLeverResponses.mockResolvedValue({
+      signalPresent: true,
+      vendors: ['Vendor A'],
+      statusByVendorLever: new Map([
+        ['Vendor A', new Map<string, ResponseStatus>([['AMS.VOLUME_BAND_PRICING', 'addressed']])],
+      ]),
+    });
+    mockReadVendorLeverResponseFacts.mockResolvedValue([fact()]);
+
+    const answer = await buildVendorCoverageGovernedAnswer({
+      eventId: 'event-1',
+      clientKey: 'meridian',
+      tenantId: 'tenant-meridian',
+      question: 'How are vendors doing on response coverage?',
+      eventType: 'infrastructure',
+    });
+    expect(answer).toBeNull();
   });
 });

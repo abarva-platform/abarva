@@ -1,4 +1,4 @@
-import { syncEventIntakeEvidence } from "../event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "../event-intake-sync";
 
 function fakeDb(existing: Record<string, unknown> | null) {
   const writes: Array<{ op: string; payload: Record<string, unknown> }> = [];
@@ -23,52 +23,67 @@ function fakeDb(existing: Record<string, unknown> | null) {
   };
 }
 
-describe("syncEventIntakeEvidence", () => {
+describe("repairLegacyClientStatedTriggerEvidence", () => {
   const input = {
     sourceEventId: "event-1",
     tenantKey: "client-a",
-    triggerDescription: "A renewal and service-quality trigger was captured.",
   };
 
-  it("upgrades a scaffolded trigger to client-stated Available", async () => {
+  it("leaves the scaffolded trigger open when intake narrative exists", async () => {
     const { db, writes } = fakeDb({ current_state: "Not Requested" });
-    await expect(syncEventIntakeEvidence(input, db)).resolves.toBe(true);
-    expect(writes).toHaveLength(1);
-    expect(writes[0]).toEqual(
-      expect.objectContaining({
-        op: "update",
-        payload: expect.objectContaining({ current_state: "Available" }),
-      }),
-    );
+    await expect(repairLegacyClientStatedTriggerEvidence(input, db)).resolves.toBe(false);
+    expect(writes).toHaveLength(0);
   });
 
-  it("does not create evidence when the event trigger is empty", async () => {
+  it("does not create evidence when the scaffold row is missing", async () => {
     const { db, writes } = fakeDb(null);
-    await expect(
-      syncEventIntakeEvidence({ ...input, triggerDescription: "  " }, db),
-    ).resolves.toBe(false);
+    await expect(repairLegacyClientStatedTriggerEvidence(input, db)).resolves.toBe(false);
     expect(writes).toHaveLength(0);
   });
 
   it("never downgrades stronger reviewed evidence", async () => {
-    const { db, writes } = fakeDb({ current_state: "Usable Evidence" });
-    await expect(syncEventIntakeEvidence(input, db)).resolves.toBe(false);
+    const { db, writes } = fakeDb({
+      current_state: "Usable Evidence",
+      source_artifact_id: "artifact-trigger-1",
+    });
+    await expect(repairLegacyClientStatedTriggerEvidence(input, db)).resolves.toBe(false);
     expect(writes).toHaveLength(0);
   });
 
-  it("inserts the canonical Strategy requirement when the row is absent", async () => {
+  it("does not create evidence when only intake narrative is present", async () => {
     const { db, writes } = fakeDb(null);
-    await expect(syncEventIntakeEvidence(input, db)).resolves.toBe(true);
+    await expect(repairLegacyClientStatedTriggerEvidence(input, db)).resolves.toBe(false);
+    expect(writes).toHaveLength(0);
+  });
+
+  it("repairs the legacy client-stated Available row back to open", async () => {
+    const { db, writes } = fakeDb({
+      current_state: "Available",
+      source_artifact_id: null,
+      notes:
+        "Client-stated sourcing trigger captured in the governed event intake; explicit human review is required before a hard gate can clear.",
+    });
+    await expect(repairLegacyClientStatedTriggerEvidence(input, db)).resolves.toBe(true);
+    expect(writes).toHaveLength(1);
     expect(writes[0]).toEqual(
       expect.objectContaining({
-        op: "insert",
+        op: "update",
         payload: expect.objectContaining({
-          requirement_id: "EVID-SRC-STR-TRIGGER",
-          stage_key: "strategy",
-          current_state: "Available",
-          source_artifact_id: null,
+          current_state: "Not Requested",
+          notes: expect.stringContaining("not record-backed evidence"),
         }),
       }),
     );
+    expect(writes[0]?.payload).not.toHaveProperty("source_artifact_id");
+  });
+
+  it("preserves available evidence linked to an uploaded artifact", async () => {
+    const { db, writes } = fakeDb({
+      current_state: "Available",
+      source_artifact_id: "artifact-trigger-1",
+      notes: "Parsed trigger artifact reviewed by the sourcing lead.",
+    });
+    await expect(repairLegacyClientStatedTriggerEvidence(input, db)).resolves.toBe(false);
+    expect(writes).toHaveLength(0);
   });
 });

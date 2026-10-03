@@ -1,10 +1,79 @@
 import { deliverableBelongsToPhase } from "../phase-deliverables";
 import {
   getPhaseDocumentSet,
+  DELIVERABLE_REGISTRY,
   PHASE_CANONICAL_KEYS,
+  phaseCanonicalKeysForRoute,
 } from "../deliverable-registry";
 
 describe("deliverableBelongsToPhase", () => {
+  it("keeps P3 design estimate-ready and P4 estimates human-reviewable", () => {
+    const architecture = DELIVERABLE_REGISTRY.find(
+      (item) => item.deliverableTypeKey === "target_state_architecture",
+    );
+    const solutionDesign = DELIVERABLE_REGISTRY.find(
+      (item) => item.deliverableTypeKey === "solution_design",
+    );
+    const financialModel = DELIVERABLE_REGISTRY.find(
+      (item) => item.deliverableTypeKey === "financial_model",
+    );
+    expect(architecture?.generationPromptHint).toContain(
+      "low-level build instructions",
+    );
+    expect(solutionDesign?.generationPromptHint).toContain(
+      "complete solution design",
+    );
+    expect(financialModel?.sections.join("\n")).toContain(
+      "Delivery Model (Internal/Vendor/Hybrid)",
+    );
+    expect(financialModel?.sections.join("\n")).toContain(
+      "Human Reviewer",
+    );
+    expect(financialModel?.generationPromptHint).toContain(
+      "never assert automatic savings",
+    );
+  });
+
+  it("uses an estimation-sized P3 package for a confirmed technical product route", () => {
+    expect(
+      phaseCanonicalKeysForRoute(3, {
+        route: "technical_product",
+        recommendation: "technical_product",
+        decision: "confirm",
+        evidenceReference: "evidence-1",
+        validatedBy: "reviewer-1",
+        rationale: "Confirmed system recommendation.",
+        solutionOutput: "reports_dashboards",
+        workflowChange: "none",
+        roleAccountabilityChange: "none",
+        adoptionOwner: "Business analytics lead",
+        adoptionResponsibility: "business",
+      }),
+    ).toEqual(["target_state_architecture", "requirements_traceability"]);
+    expect(
+      phaseCanonicalKeysForRoute(3, {
+        route: "process_change",
+        recommendation: "process_change",
+        decision: "confirm",
+        evidenceReference: "evidence-1",
+        validatedBy: "reviewer-1",
+        rationale: "Confirmed system recommendation.",
+        solutionOutput: "workflow_automation",
+        workflowChange: "limited",
+        roleAccountabilityChange: "none",
+        adoptionOwner: "Operations owner",
+        adoptionResponsibility: "business",
+      }),
+    ).toEqual([
+      "target_state_architecture",
+      "process_change_estimate_brief",
+      "requirements_traceability",
+    ]);
+    expect(phaseCanonicalKeysForRoute(3, null)).toEqual(
+      PHASE_CANONICAL_KEYS[3],
+    );
+  });
+
   it("counts the canonical phase gate deliverable (the eval's missing charter)", () => {
     // P1 gate deliverable typeKey is "charter" (PHASE_WORKFLOW[1]).
     expect(deliverableBelongsToPhase("charter", 1, "charter")).toBe(true);

@@ -54,6 +54,7 @@ import {
   type ScorableChapter,
   type MustNotDoViolation,
 } from "./home-lens-quality";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type HomeLensContract = {
@@ -1380,7 +1381,7 @@ async function main() {
   console.log("and the legacy reader are untouched.");
 }
 
-if (process.argv[1] && process.argv[1].includes("build-home-chapters")) {
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exit(1);

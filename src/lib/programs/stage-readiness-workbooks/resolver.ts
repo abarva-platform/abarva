@@ -55,7 +55,7 @@ function requirementForPriority(
 }
 
 function stateForFamily(family: DiscoveryFamilyCoverage): QuestionState {
-  if (family.status === "covered") return "prefilled_confirmed";
+  if (family.status === "covered") return "prefilled_needs_confirmation";
   return family.required ? "insufficient_evidence" : "needs_answer";
 }
 
@@ -93,12 +93,6 @@ function tabForFamily(familyId: string, label: string): string {
   return "Other Inputs";
 }
 
-function questionText(family: DiscoveryFamilyCoverage): string {
-  return family.status === "covered"
-    ? `Confirm whether the pre-filled evidence for ${family.label.toLowerCase()} is current and complete.`
-    : `Provide the missing information for ${family.label.toLowerCase()}.`;
-}
-
 function sanitizeId(value: string): string {
   return value
     .toLowerCase()
@@ -131,6 +125,131 @@ function buildDimensionEntry(
   };
 }
 
+interface InterviewQuestionTemplate {
+  id: string;
+  responseType: StageReadinessWorkbookQuestion["responseType"];
+  question: (label: string) => string;
+  why: (entry: AssessmentDimensionPlanEntry) => string;
+  evidence: (packet: MoveEvidenceNeedPacket | undefined) => string[];
+  owner: (packet: MoveEvidenceNeedPacket | undefined) => string;
+}
+
+const MISSING_EVIDENCE_INTERVIEW_TEMPLATES: InterviewQuestionTemplate[] = [
+  {
+    id: "current_state",
+    responseType: "text",
+    question: (label) =>
+      `Describe the current-state reality for ${label.toLowerCase()}: what happens today, where it starts and ends, and which teams touch it.`,
+    why: (entry) =>
+      `${entry.rationale} Start with the operating path so the next phase does not design against a generic workflow.`,
+    evidence: (packet) => [
+      ...(packet?.acceptedFormats.map((format) => `${format} source`) ?? []),
+      "Current-state workflow notes",
+      "Interview transcript or operating notes",
+    ],
+    owner: (packet) => packet?.ownerSource ?? "Process owner / accountable SME",
+  },
+  {
+    id: "volume_baseline",
+    responseType: "text",
+    question: (label) =>
+      `What volumes, frequency, cycle times, backlog, cost, quality, or service metrics should anchor ${label.toLowerCase()}? Include period, population, and known data gaps.`,
+    why: () =>
+      "The workbook needs the denominator, period, and population before any value, staffing, or prioritization claim is safe.",
+    evidence: () => [
+      "KPI export",
+      "Queue or case-volume report",
+      "Finance or operations baseline",
+    ],
+    owner: () => "Operations owner + Finance / analytics",
+  },
+  {
+    id: "systems_data",
+    responseType: "text",
+    question: (label) =>
+      `Which systems, data fields, files, reports, or knowledge sources prove ${label.toLowerCase()}? Name the system of record, refresh cadence, owner, and access constraint.`,
+    why: () =>
+      "P2 needs sourceable records, not just recollection. This also separates client facts from assumptions and reference patterns.",
+    evidence: () => [
+      "System inventory",
+      "Data extract",
+      "Report screenshot",
+      "Access or lineage note",
+    ],
+    owner: () => "Data owner / system owner",
+  },
+  {
+    id: "exceptions_controls",
+    responseType: "text",
+    question: (label) =>
+      `Where does ${label.toLowerCase()} fail, vary by segment, require escalation, or carry risk? Capture exceptions, controls, decision rights, and review triggers.`,
+    why: () =>
+      "The useful design constraints usually sit in exceptions, controls, and escalation paths rather than in the happy path.",
+    evidence: () => [
+      "Exception log",
+      "Controls matrix",
+      "Policy excerpt",
+      "Escalation or audit sample",
+    ],
+    owner: () => "Risk / compliance owner + process owner",
+  },
+  {
+    id: "decision_owner",
+    responseType: "text",
+    question: (label) =>
+      `Who can confirm ${label.toLowerCase()}, what evidence will they upload, and what open decision must be resolved before the next phase?`,
+    why: () =>
+      "Every gap needs an accountable owner and an explicit next action, otherwise the workbook becomes a list of interesting questions rather than a route to phase readiness.",
+    evidence: () => [
+      "Named owner",
+      "Decision note",
+      "Uploaded file list",
+      "Known gap rationale",
+    ],
+    owner: (packet) => packet?.ownerSource ?? "Accountable executive delegate",
+  },
+];
+
+const PREFILLED_EVIDENCE_VALIDATION_TEMPLATES: InterviewQuestionTemplate[] = [
+  {
+    id: "confirm_currency",
+    responseType: "yes_no_partial",
+    question: (label) =>
+      `Confirm whether the pre-filled evidence for ${label.toLowerCase()} is current, complete, and still representative of the operating reality.`,
+    why: (entry) => entry.rationale,
+    evidence: (packet) =>
+      packet?.acceptedFormats.map((format) => `${format} source`) ?? [
+        "Approved evidence reference",
+      ],
+    owner: (packet) => packet?.ownerSource ?? "Client owner / evidence steward",
+  },
+  {
+    id: "changed_since_capture",
+    responseType: "text",
+    question: (label) =>
+      `What changed since the evidence for ${label.toLowerCase()} was captured? Call out date changes, scope changes, system changes, policy changes, and volume shifts.`,
+    why: () =>
+      "A pre-filled row is useful only if it is still current enough to guide the next phase.",
+    evidence: () => [
+      "Updated note",
+      "Recent KPI extract",
+      "Change log",
+      "Owner attestation",
+    ],
+    owner: () => "Evidence owner / process owner",
+  },
+  {
+    id: "known_gaps",
+    responseType: "text",
+    question: (label) =>
+      `What is not covered by the existing ${label.toLowerCase()} evidence, and what file or interview would close that gap?`,
+    why: () =>
+      "Validated evidence should preserve known gaps instead of hiding them behind a confirmed status.",
+    evidence: () => ["Gap note", "Follow-up file", "Interview owner"],
+    owner: () => "Evidence steward",
+  },
+];
+
 export function buildAssessmentDimensionPlan(input: {
   moveId: string;
   phase: number;
@@ -151,29 +270,36 @@ export function buildAssessmentDimensionPlan(input: {
   };
 }
 
-function buildQuestion(
+function buildQuestions(
   family: DiscoveryFamilyCoverage,
   entry: AssessmentDimensionPlanEntry,
   packet: MoveEvidenceNeedPacket | undefined,
-): StageReadinessWorkbookQuestion {
-  return {
-    questionId: `q_${sanitizeId(family.familyId)}`,
+): StageReadinessWorkbookQuestion[] {
+  const templates =
+    family.status === "covered"
+      ? PREFILLED_EVIDENCE_VALIDATION_TEMPLATES
+      : MISSING_EVIDENCE_INTERVIEW_TEMPLATES;
+
+  return templates.map((template) => ({
+    questionId: `q_${sanitizeId(family.familyId)}_${template.id}`,
     dimensionId: family.familyId,
-    question: questionText(family),
-    whyItMatters: entry.rationale,
-    responseType: "yes_no_partial",
-    suggestedEvidence:
-      packet?.acceptedFormats.map((format) => `${format} source`) ?? [],
-    likelyOwnerRole: packet?.ownerSource ?? "Client owner / evidence steward",
+    question: template.question(family.label),
+    whyItMatters: template.why(entry),
+    responseType: template.responseType,
+    suggestedEvidence: template.evidence(packet),
+    likelyOwnerRole: template.owner(packet),
     required: entry.requirement === "required",
-    state: entry.status,
+    state:
+      family.status === "covered" && template.id !== "confirm_currency"
+        ? "needs_answer"
+        : entry.status,
     prefilledResponse:
-      family.status === "covered"
+      family.status === "covered" && template.id === "confirm_currency"
         ? `Available evidence: ${family.evidenceTitles.join("; ")}`
         : null,
     evidenceRefs: family.evidenceIds,
     sourceClass: entry.evidenceSourceClass,
-  };
+  }));
 }
 
 function groupTabs(
@@ -228,19 +354,23 @@ export function buildStageReadinessWorkbookSpec(
 ): StageReadinessWorkbookSpec {
   const packets = packetByFamilyId(input.evidenceNeedPackets);
   const dimensionPlan = buildAssessmentDimensionPlan(input);
-  const questions = input.readiness.families.map((family) => {
+  const questions = input.readiness.families.flatMap((family) => {
     const entry = dimensionPlan.dimensions.find(
       (dimension) => dimension.dimensionId === family.familyId,
     );
     if (!entry) {
       throw new Error(`Missing dimension plan entry for ${family.familyId}`);
     }
-    return buildQuestion(family, entry, packets.get(family.familyId));
+    return buildQuestions(family, entry, packets.get(family.familyId));
   });
   const tabs = groupTabs(questions);
   const openItems = questions
     .filter((question) =>
-      ["needs_answer", "insufficient_evidence"].includes(question.state),
+      [
+        "needs_answer",
+        "insufficient_evidence",
+        "prefilled_needs_confirmation",
+      ].includes(question.state),
     )
     .map((question) => {
       const packet = packets.get(question.dimensionId);
@@ -279,8 +409,8 @@ export function buildStageReadinessWorkbookSpec(
     startHere: {
       purpose:
         "Prepare the next phase without asking for information already available in approved evidence.",
-      alreadyPrefilled: questions.filter(
-        (q) => q.state === "prefilled_confirmed",
+      evidenceReferencesIncluded: questions.filter(
+        (question) => question.prefilledResponse !== null,
       ).length,
       needsInput: openItems.length,
       requiredAreas,

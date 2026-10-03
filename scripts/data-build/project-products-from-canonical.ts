@@ -18,6 +18,7 @@ type Args = {
 const PRODUCT_OBJECTS: Record<ProductKey, string[]> = {
   home: [
     "tenant_profile",
+    "business_segment",
     "business_function",
     "org_owner",
     "workforce_role",

@@ -1,7 +1,5 @@
 import { useRef, useState, type CSSProperties, type FormEvent } from "react";
 
-import { CLIENT_FINAL_GOVERNANCE_MESSAGE } from "@/lib/source/client-final-artifacts";
-
 interface AcceptClientFinalButtonProps {
   eventId: string;
   artifactCode: string;
@@ -106,7 +104,11 @@ export function AcceptClientFinalButton({
         >
           <div style={EYEBROW_STYLE}>Authoritative version</div>
           <strong style={TITLE_STYLE}>{artifactName}</strong>
-          <p style={COPY_STYLE}>{CLIENT_FINAL_GOVERNANCE_MESSAGE}</p>
+          <p style={COPY_STYLE}>
+            AbarVa generated the working draft. Upload a file the client has
+            reviewed and approved; it becomes authoritative only when
+            confirmation succeeds.
+          </p>
           <p style={COPY_STYLE}>
             Confirming this file makes it the authoritative version. Source approval
             rights and a recorded reason are required.
@@ -121,6 +123,9 @@ export function AcceptClientFinalButton({
               style={INPUT_STYLE}
             />
           </label>
+          <p style={COPY_STYLE}>
+            Use a text-readable final. Image-only scans cannot clear this gate.
+          </p>
           <label style={LABEL_STYLE}>
             Approval rationale
             <textarea name="note" rows={3} required style={TEXTAREA_STYLE} />

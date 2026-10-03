@@ -30,6 +30,7 @@ function makeCtx(surface = '/programs/test-program') {
     accessPolicy: {
       accessLevel: 'program_user',
       programIdsAllowed: null,
+      canApproveGates: true,
       canPublishDeliverables: true,
       canViewFinancialData: false,
     },
@@ -58,7 +59,10 @@ describe('complete_deliverables tool', () => {
   });
 
   it('persists a P0 seed package with the canonical origination key', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock.mockResolvedValueOnce({
       deliverableId: 'origination',
       versionId: 'v0',
@@ -72,7 +76,12 @@ describe('complete_deliverables tool', () => {
           {
             deliverable_type_key: 'origination_brief',
             title: 'P0 Origination Brief',
-            content_outline: ['Problem trigger', 'Sponsor candidate', 'Value hypothesis', 'P1 evidence family'],
+            content_outline: [
+              'Problem trigger',
+              'Sponsor candidate',
+              'Value hypothesis',
+              'P1 evidence family',
+            ],
           },
         ],
       },
@@ -91,19 +100,46 @@ describe('complete_deliverables tool', () => {
   });
 
   it('persists a P5 approval package in one batch', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock
-      .mockResolvedValueOnce({ deliverableId: 'business-case', versionId: 'v1', status: 'signed_off' })
-      .mockResolvedValueOnce({ deliverableId: 'funding', versionId: 'v2', status: 'signed_off' })
-      .mockResolvedValueOnce({ deliverableId: 'alignment', versionId: 'v3', status: 'signed_off' });
+      .mockResolvedValueOnce({
+        deliverableId: 'business-case',
+        versionId: 'v1',
+        status: 'signed_off',
+      })
+      .mockResolvedValueOnce({
+        deliverableId: 'funding',
+        versionId: 'v2',
+        status: 'signed_off',
+      })
+      .mockResolvedValueOnce({
+        deliverableId: 'alignment',
+        versionId: 'v3',
+        status: 'signed_off',
+      });
 
     const result = await completeDeliverablesTool.handler(
       {
         program_id: 'program-1',
         deliverables: [
-          { deliverable_type_key: 'business_case', title: 'Business case', content_outline: ['Value narrative', 'Risks'] },
-          { deliverable_type_key: 'funding_approval', title: 'Funding approval', content_outline: ['Capacity envelope approved'] },
-          { deliverable_type_key: 'sponsor_alignment', title: 'Sponsor alignment', content_outline: ['Sarah Chen aligned'] },
+          {
+            deliverable_type_key: 'business_case',
+            title: 'Business case',
+            content_outline: ['Value narrative', 'Risks'],
+          },
+          {
+            deliverable_type_key: 'funding_approval',
+            title: 'Funding approval',
+            content_outline: ['Capacity envelope approved'],
+          },
+          {
+            deliverable_type_key: 'sponsor_alignment',
+            title: 'Sponsor alignment',
+            content_outline: ['Sarah Chen aligned'],
+          },
         ],
       },
       makeCtx(),
@@ -124,8 +160,11 @@ describe('complete_deliverables tool', () => {
     );
   });
 
-  it('blocks signed batch persistence when the user lacks publish rights', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+  it('blocks signed batch persistence when the user lacks gate-approval permission', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
 
     const result = await completeDeliverablesTool.handler(
       {
@@ -143,19 +182,24 @@ describe('complete_deliverables tool', () => {
         accessPolicy: {
           accessLevel: 'program_user',
           programIdsAllowed: null,
-          canPublishDeliverables: false,
+          canApproveGates: false,
+          canPublishDeliverables: true,
           canViewFinancialData: false,
         },
       },
     );
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe('forbidden:can_publish_deliverables_required');
+    if (!result.success)
+      expect(result.error).toBe('forbidden:can_approve_gates_required');
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
-  it('blocks signed batch persistence when no publish policy was resolved', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+  it('blocks signed batch persistence when no approval policy was resolved', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
 
     const result = await completeDeliverablesTool.handler(
       {
@@ -173,25 +217,52 @@ describe('complete_deliverables tool', () => {
 
     expect(result).toMatchObject({
       success: false,
-      error: 'forbidden:can_publish_deliverables_required',
+      error: 'forbidden:can_approve_gates_required',
     });
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
   it('persists a P2 synthesis package with canonical artifact keys', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
     completeDeliverableMock
-      .mockResolvedValueOnce({ deliverableId: 'options', versionId: 'v1', status: 'signed_off' })
-      .mockResolvedValueOnce({ deliverableId: 'charter', versionId: 'v2', status: 'signed_off' })
-      .mockResolvedValueOnce({ deliverableId: 'workshop', versionId: 'v3', status: 'signed_off' });
+      .mockResolvedValueOnce({
+        deliverableId: 'options',
+        versionId: 'v1',
+        status: 'signed_off',
+      })
+      .mockResolvedValueOnce({
+        deliverableId: 'charter',
+        versionId: 'v2',
+        status: 'signed_off',
+      })
+      .mockResolvedValueOnce({
+        deliverableId: 'workshop',
+        versionId: 'v3',
+        status: 'signed_off',
+      });
 
     const result = await completeDeliverablesTool.handler(
       {
         program_id: 'program-1',
         deliverables: [
-          { deliverable_type_key: 'synthesis_options_memo', title: 'Synthesis options memo', content_outline: ['Option A', 'Option B'] },
-          { deliverable_type_key: 'charter', title: 'Signed charter', content_outline: ['Promise contract'] },
-          { deliverable_type_key: 'workshop_facilitator_guide', title: 'Tradeoff workshop guide', content_outline: ['Agenda', 'Decision outputs'] },
+          {
+            deliverable_type_key: 'synthesis_options_memo',
+            title: 'Synthesis options memo',
+            content_outline: ['Option A', 'Option B'],
+          },
+          {
+            deliverable_type_key: 'charter',
+            title: 'Signed charter',
+            content_outline: ['Promise contract'],
+          },
+          {
+            deliverable_type_key: 'workshop_facilitator_guide',
+            title: 'Tradeoff workshop guide',
+            content_outline: ['Agenda', 'Decision outputs'],
+          },
         ],
       },
       makeCtx(),
@@ -209,23 +280,33 @@ describe('complete_deliverables tool', () => {
       3,
       expect.anything(),
       'program-1',
-      expect.objectContaining({ deliverableTypeKey: 'workshop_facilitator_guide' }),
+      expect.objectContaining({
+        deliverableTypeKey: 'workshop_facilitator_guide',
+      }),
     );
   });
 
   it('rejects unsupported deliverables before writing', async () => {
-    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client-1',
+      userId: 'user-1',
+    });
 
     const result = await completeDeliverablesTool.handler(
       {
         program_id: 'program-1',
-        deliverables: [{ deliverable_type_key: 'spreadsheet_dump', title: 'Bad' }],
+        deliverables: [
+          { deliverable_type_key: 'spreadsheet_dump', title: 'Bad' },
+        ],
       },
       makeCtx(),
     );
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe('unsupported_deliverable_type:spreadsheet_dump');
+    if (!result.success)
+      expect(result.error).toBe(
+        'unsupported_deliverable_type:spreadsheet_dump',
+      );
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,13 @@
   "renameProcedure": "Add the new name to the aliases array of the existing entry, then re-run. Never delete an entry: a deleted ID orphans every edge that referenced it.",
   "entries": [
     {
+      "id": "DAT-b22a08bc04",
+      "type": "data_asset",
+      "canonicalName": "ACARS / Satcom Datalink Gateway analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-119287abd7",
       "type": "data_asset",
       "canonicalName": "ACARS datalink message data",
@@ -47,6 +54,27 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-621ceca16e",
+      "type": "data_asset",
+      "canonicalName": "AIMS Crew Pairing & Rostering analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1767c4df06",
+      "type": "data_asset",
+      "canonicalName": "AIMS Crew Pairing & Rostering analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-599b987151",
+      "type": "data_asset",
+      "canonicalName": "AIMS Crew Pairing & Rostering analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-802e35fb1c",
       "type": "data_asset",
       "canonicalName": "Aircraft and fleet master reference data",
@@ -75,6 +103,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-df18f0a6ab",
+      "type": "data_asset",
+      "canonicalName": "Aircraft Weight & Balance Calculator analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-705846d816",
       "type": "data_asset",
       "canonicalName": "Airport concession lease data",
@@ -99,6 +134,34 @@
       "id": "DAT-64b348e8c8",
       "type": "data_asset",
       "canonicalName": "Airworthiness directive compliance dashboard data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9a25722661",
+      "type": "data_asset",
+      "canonicalName": "Amadeus Altéa Departure Control (DCS) analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-60a221c542",
+      "type": "data_asset",
+      "canonicalName": "Amadeus Altéa Inventory analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-27e7b7fec0",
+      "type": "data_asset",
+      "canonicalName": "Amadeus Altéa Inventory analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-543f5c3342",
+      "type": "data_asset",
+      "canonicalName": "Amadeus Altéa Reservations analytics feed to Snowflake — Commercial Analytics Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -271,6 +334,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-37250be624",
+      "type": "data_asset",
+      "canonicalName": "Catering Planning & Ordering System analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-419ac392b3",
       "type": "data_asset",
       "canonicalName": "Change advisory board meeting minutes data",
@@ -306,6 +376,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-a9a56bdfa2",
+      "type": "data_asset",
+      "canonicalName": "Co-Brand Card Partner Interface analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-987c2a2d11",
       "type": "data_asset",
       "canonicalName": "Co-brand card transaction data",
@@ -337,6 +414,43 @@
       "id": "DAT-34f0375a9a",
       "type": "data_asset",
       "canonicalName": "Common-use terminal session data",
+      "aliases": [
+        "Common-use terminal session data — Use Terminal Equipment — Chicago (ORD) — Primary Hub"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c208b27555",
+      "type": "data_asset",
+      "canonicalName": "Common-use terminal session data — Use Terminal Equipment — Dallas-Fort Worth (DFW) — Secondary Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3ecf1f7951",
+      "type": "data_asset",
+      "canonicalName": "Common-use terminal session data — Use Terminal Equipment — Denver (DEN) — Meridian Integration Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8d617d0a67",
+      "type": "data_asset",
+      "canonicalName": "Common-use terminal session data — Use Terminal Equipment — London Heathrow (LHR) — International Station",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-670d6aebe9",
+      "type": "data_asset",
+      "canonicalName": "Common-use terminal session data — Use Terminal Equipment — Miami (MIA) — Cargo & Latin America Gateway",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9be2a983ae",
+      "type": "data_asset",
+      "canonicalName": "Common-use terminal session data — Use Terminal Equipment — Seattle (SEA) — Pacific Gateway",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -432,9 +546,51 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-1a690c2ab0",
+      "type": "data_asset",
+      "canonicalName": "Corporate Security Badge/Access Control — Platform A analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-24372b3866",
+      "type": "data_asset",
+      "canonicalName": "Corporate Security Badge/Access Control — Platform A analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-312a8c949e",
+      "type": "data_asset",
+      "canonicalName": "Corporate Travel Portal analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-64dd0efc37",
       "type": "data_asset",
       "canonicalName": "Cost-center and profitability data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4add12e5bb",
+      "type": "data_asset",
+      "canonicalName": "Coupa Contract Lifecycle Management analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-47ed0db764",
+      "type": "data_asset",
+      "canonicalName": "Coupa Sourcing analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ab23da0768",
+      "type": "data_asset",
+      "canonicalName": "Coupa Sourcing analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -470,6 +626,13 @@
       "id": "DAT-a194ffb2d1",
       "type": "data_asset",
       "canonicalName": "Crew grievance evidence attachment data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d8dfa54665",
+      "type": "data_asset",
+      "canonicalName": "Crew Legality & FAR117 Tracking analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -530,6 +693,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-3ebd5fffec",
+      "type": "data_asset",
+      "canonicalName": "CrowdStrike EDR/MDR analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-5bc23afde9",
       "type": "data_asset",
       "canonicalName": "Customer AI feature and model data",
@@ -554,6 +724,13 @@
       "id": "DAT-7ad6d06858",
       "type": "data_asset",
       "canonicalName": "Customer service case data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-32bd80c1ff",
+      "type": "data_asset",
+      "canonicalName": "CyberArk PAM analytics feed to Databricks — Ops AI Workspace",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -596,6 +773,20 @@
       "id": "DAT-9f40e60d1b",
       "type": "data_asset",
       "canonicalName": "Data-quality rule and exception data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-09d0a0feef",
+      "type": "data_asset",
+      "canonicalName": "Databricks — MRO Predictive Workspace curated publication to Tableau Enterprise BI",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-12837b7dd4",
+      "type": "data_asset",
+      "canonicalName": "Databricks — Ops AI Workspace curated publication to Tableau Enterprise BI",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -670,6 +861,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-a179239c45",
+      "type": "data_asset",
+      "canonicalName": "DocuSign CLM (Enterprise Contracts) analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-1422b2afe8",
       "type": "data_asset",
       "canonicalName": "Duty-free inventory data",
@@ -701,6 +899,15 @@
       "id": "DAT-d4a5f3099b",
       "type": "data_asset",
       "canonicalName": "EDIFACT booking data",
+      "aliases": [
+        "EDIFACT booking data — Sabre"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-419ec2e548",
+      "type": "data_asset",
+      "canonicalName": "EDIFACT booking data — Travelport",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -757,6 +964,13 @@
       "id": "DAT-295e5d229d",
       "type": "data_asset",
       "canonicalName": "Energy consumption monitoring data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d566f8a0c2",
+      "type": "data_asset",
+      "canonicalName": "Engine Health Monitoring Feed — GE analytics feed to Databricks — MRO Predictive Workspace",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -880,6 +1094,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-6703b4f136",
+      "type": "data_asset",
+      "canonicalName": "Fleet Assignment Optimizer analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-38b630d343",
       "type": "data_asset",
       "canonicalName": "Fleet delivery and transition data",
@@ -918,6 +1139,20 @@
       "id": "DAT-4db842b7a3",
       "type": "data_asset",
       "canonicalName": "Fuel hedge and forward-contract data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4a8f584107",
+      "type": "data_asset",
+      "canonicalName": "Fuel Hedging & Trading System analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-135be95d8f",
+      "type": "data_asset",
+      "canonicalName": "Fuel Hedging & Trading System analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -964,6 +1199,20 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-a11dd25a5c",
+      "type": "data_asset",
+      "canonicalName": "Gate Management System analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-252902c04b",
+      "type": "data_asset",
+      "canonicalName": "GDS Booking Connector — Sabre analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-0038173667",
       "type": "data_asset",
       "canonicalName": "GE engine sensor telemetry data",
@@ -992,6 +1241,34 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-56d86cd3e4",
+      "type": "data_asset",
+      "canonicalName": "Genesys Cloud CX analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-69d6578844",
+      "type": "data_asset",
+      "canonicalName": "Genesys Cloud CX analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-fd3517b1d2",
+      "type": "data_asset",
+      "canonicalName": "Ground Equipment (GSE) Fleet Management analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-32bf2f3d73",
+      "type": "data_asset",
+      "canonicalName": "Ground Equipment (GSE) Fleet Management analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-2b3fb5f19c",
       "type": "data_asset",
       "canonicalName": "Ground equipment fuel consumption log data",
@@ -999,9 +1276,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-f81f8acbe0",
+      "type": "data_asset",
+      "canonicalName": "Ground Handling Partner Portal analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-da362b0f19",
       "type": "data_asset",
       "canonicalName": "Ground support equipment telemetry data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a3d37fc601",
+      "type": "data_asset",
+      "canonicalName": "Group & Charter Booking Desk Tool analytics feed to Snowflake — Commercial Analytics Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1062,6 +1353,55 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-3ac47ef108",
+      "type": "data_asset",
+      "canonicalName": "IBM Maximo CMMS analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d3716501a9",
+      "type": "data_asset",
+      "canonicalName": "IBM Maximo CMMS analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1ea384f49c",
+      "type": "data_asset",
+      "canonicalName": "iCargo Booking & Management analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-833f60602a",
+      "type": "data_asset",
+      "canonicalName": "iCargo Booking & Management analytics feed to Teradata Enterprise Warehouse — Cargo Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-12b6ca02f8",
+      "type": "data_asset",
+      "canonicalName": "iCargo DG Compliance analytics feed to Teradata Enterprise Warehouse — Cargo Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-cba42441b2",
+      "type": "data_asset",
+      "canonicalName": "iCargo DG Compliance analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1ad3eefc37",
+      "type": "data_asset",
+      "canonicalName": "iCargo Track & Trace analytics feed to Teradata Enterprise Warehouse — Cargo Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-1536b31bb3",
       "type": "data_asset",
       "canonicalName": "Identity federation and SSO session data",
@@ -1072,6 +1412,13 @@
       "id": "DAT-614a741e63",
       "type": "data_asset",
       "canonicalName": "IFE content library and usage data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-df77848c54",
+      "type": "data_asset",
+      "canonicalName": "In-Flight Entertainment (IFE) Content Management analytics feed to Snowflake — Loyalty & Personalization Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1111,6 +1458,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-22645c5235",
+      "type": "data_asset",
+      "canonicalName": "Interline & Codeshare Settlement Engine analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-06b1b77b69",
       "type": "data_asset",
       "canonicalName": "Interline baggage agreement data",
@@ -1139,6 +1493,34 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-dd739906cf",
+      "type": "data_asset",
+      "canonicalName": "IROPS Recovery Cockpit analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e8b68205c3",
+      "type": "data_asset",
+      "canonicalName": "IROPS Recovery Cockpit analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-00cee82cf8",
+      "type": "data_asset",
+      "canonicalName": "IROPS Recovery Cockpit analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7019813811",
+      "type": "data_asset",
+      "canonicalName": "IROPS Recovery Cockpit analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-a43a2719a4",
       "type": "data_asset",
       "canonicalName": "Irregular-ops passenger rebooking overflow data",
@@ -1160,9 +1542,30 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-083a76c37f",
+      "type": "data_asset",
+      "canonicalName": "JetPlan Flight Planning analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-7bc238b151",
       "type": "data_asset",
       "canonicalName": "Kiosk check-in transaction data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7713bf25a0",
+      "type": "data_asset",
+      "canonicalName": "Lease Portfolio Management Tool analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a2ead3abd9",
+      "type": "data_asset",
+      "canonicalName": "LeaseAccelerator (Aircraft Lease Accounting) analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1202,6 +1605,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-e784cdb478",
+      "type": "data_asset",
+      "canonicalName": "Legacy Segmentation Warehouse Job analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-c5d802654d",
       "type": "data_asset",
       "canonicalName": "Legacy static fare-table data",
@@ -1212,6 +1622,27 @@
       "id": "DAT-6b31684693",
       "type": "data_asset",
       "canonicalName": "Legacy ticket archive data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6d1679e527",
+      "type": "data_asset",
+      "canonicalName": "Legacy Union Grievance Tracker analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ce673b6f7c",
+      "type": "data_asset",
+      "canonicalName": "Lido/NetLine Schedule Planning analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a4cfc40efc",
+      "type": "data_asset",
+      "canonicalName": "Lido/NetLine Schedule Planning analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1233,6 +1664,596 @@
       "id": "DAT-670e96f980",
       "type": "data_asset",
       "canonicalName": "Local check-in terminal data",
+      "aliases": [
+        "Local check-in terminal data — in Terminal — Austin (AUS)"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-196b162072",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Albuquerque (ABQ)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a4e4d717b4",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Amarillo (AMA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-488cf43ce2",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Amsterdam (AMS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7bd757bdb7",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Anchorage (ANC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b8ef088dad",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Bakersfield (BFL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-891368720e",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Baton Rouge (BTR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-bbb64dc234",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Birmingham (BHM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c164dd52e3",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Bogotá (BOG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9e4adbdc2a",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Boise (BOI)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c593fed6bd",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Boise-Idaho Falls (IDA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d9fac6c366",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Bozeman (BZN)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b8281592b0",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Buffalo (BUF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-362baa58fc",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Burlington (BTV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-14547f5172",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Calgary (YYC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-cd5650aa95",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Cancún (CUN)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d819683e64",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Charleston (CHS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e837bfbe6e",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Charlotte (CLT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f38487eb15",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Chattanooga (CHA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-07ce3a8af4",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Cleveland (CLE)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-27885f5bc8",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Colorado Springs (COS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-917c41d2db",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Columbus (CMH)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4035608eb0",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Des Moines (DSM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-981320c91b",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Dublin (DUB)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ea808e2d4b",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — El Paso (ELP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-47171e08bc",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Eugene (EUG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d8b446718f",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Frankfurt (FRA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-767816b589",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Fresno (FAT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3cf869bf0c",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Grand Rapids (GRR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-036295dbba",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Greenville-Spartanburg (GSP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-423a00f7dc",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Hartford (BDL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b8b02f60c0",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Honolulu (HNL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f2d331ce44",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Huntsville (HSV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b6b0ce963c",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Indianapolis (IND)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-817ed7045e",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Jacksonville (JAX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-29a3971c06",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Kansas City (MCI)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3a46f0f756",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Knoxville (TYS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ad9ef0e196",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Las Vegas (LAS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b80abc6539",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Lima (LIM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-32444d2e22",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Little Rock (LIT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-49dff2ed8a",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Louisville (SDF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9bdebe0ac6",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Lubbock (LBB)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a9ef4396f5",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Madrid (MAD)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6881045c11",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Medford (MFR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-552ff05040",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Memphis (MEM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0c8e35c6ec",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Mexico City (MEX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-431fcbdefa",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Milwaukee (MKE)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-79a246acd0",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Missoula (MSO)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-713fd251b1",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Monterey (MRY)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ca001e5d30",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Montreal (YUL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1e6a48bf40",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Nashville (BNA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-26c31855bf",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — New Orleans (MSY)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5cb701393d",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Norfolk (ORF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9dd3796093",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Omaha (OMA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6632afb435",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Orlando (MCO)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ee43829f01",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Palm Springs (PSP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4a65a60f8c",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Paris (CDG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-798b91e7a2",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Phoenix (PHX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6b71a190e0",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Pittsburgh (PIT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-10c447d0ea",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Portland (PDX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-76d7061b4c",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Portland Maine (PWM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-efed0d3293",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Providence (PVD)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-91972c492f",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Punta Cana (PUJ)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-36d2f72815",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Raleigh-Durham (RDU)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-528fe073e8",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Reno (RNO)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-bbec095c5f",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Richmond (RIC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-604e82e7bc",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Rochester (ROC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0f08331db5",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Sacramento (SMF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-bac53838c0",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Salt Lake City (SLC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0237bea1de",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — San Antonio (SAT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f2d04f7b48",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — San Diego (SAN)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-379c84260f",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — San Juan (SJU)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ae06278a9b",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Santa Barbara (SBA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ae8a25db3a",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — São Paulo (GRU)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8b73103acb",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Savannah (SAV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-cb12e52ba7",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Shreveport (SHV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-887aa612df",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Spokane (GEG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-15becca32a",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Syracuse (SYR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3d8d435263",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Tampa (TPA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-761f0562e3",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Tokyo Narita (NRT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f4b0a88069",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Toronto (YYZ)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3402247865",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Tucson (TUS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-15f8cb8d1c",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Tulsa (TUL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-cc8712b1fa",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Vancouver (YVR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-99c987e703",
+      "type": "data_asset",
+      "canonicalName": "Local check-in terminal data — in Terminal — Wichita (ICT)",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1247,6 +2268,43 @@
       "id": "DAT-f9ffd917d3",
       "type": "data_asset",
       "canonicalName": "Local ramp and load-control data",
+      "aliases": [
+        "Local ramp and load-control data — Chicago (ORD) — Primary Hub"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-bf18804464",
+      "type": "data_asset",
+      "canonicalName": "Local ramp and load-control data — Dallas-Fort Worth (DFW) — Secondary Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4bd5abc703",
+      "type": "data_asset",
+      "canonicalName": "Local ramp and load-control data — Denver (DEN) — Meridian Integration Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f7e728febf",
+      "type": "data_asset",
+      "canonicalName": "Local ramp and load-control data — London Heathrow (LHR) — International Station",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-815c767a75",
+      "type": "data_asset",
+      "canonicalName": "Local ramp and load-control data — Miami (MIA) — Cargo & Latin America Gateway",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-384b238feb",
+      "type": "data_asset",
+      "canonicalName": "Local ramp and load-control data — Seattle (SEA) — Pacific Gateway",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1272,9 +2330,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-694e61697c",
+      "type": "data_asset",
+      "canonicalName": "Loyalty Redemption & Booking Engine analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-77bcc77cd7",
       "type": "data_asset",
       "canonicalName": "Mainframe batch scheduling metadata",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7f1a1ad4d2",
+      "type": "data_asset",
+      "canonicalName": "Mainframe Flight Following (legacy) analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1300,9 +2372,30 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-28f21bbdc1",
+      "type": "data_asset",
+      "canonicalName": "Master Aircraft / Fleet Reference Data System analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-365e480bf1",
       "type": "data_asset",
       "canonicalName": "Meal quality audit scoring data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-bb2adcbf4a",
+      "type": "data_asset",
+      "canonicalName": "Member Data Platform (CDP) analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-53bbfbc7ad",
+      "type": "data_asset",
+      "canonicalName": "Member Data Platform (CDP) analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1349,6 +2442,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-8d91e14df7",
+      "type": "data_asset",
+      "canonicalName": "Meridian Legacy Finance System analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-190de52555",
       "type": "data_asset",
       "canonicalName": "Meridian legacy general-ledger data",
@@ -1366,6 +2466,13 @@
       "id": "DAT-a6bc2bf159",
       "type": "data_asset",
       "canonicalName": "Meridian legacy safety-report intake data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1ed1f6c43c",
+      "type": "data_asset",
+      "canonicalName": "Microsoft 365 (Email, Teams, SharePoint) analytics feed to Snowflake — Commercial Analytics Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1391,6 +2498,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-b293af4a3b",
+      "type": "data_asset",
+      "canonicalName": "MRO Predictive Maintenance Models (Databricks) analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-64b3ce7c3f",
       "type": "data_asset",
       "canonicalName": "MRO predictive-maintenance feature data",
@@ -1398,9 +2512,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-b4b0e0a857",
+      "type": "data_asset",
+      "canonicalName": "MRO Vendor Portal analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-d351e614f2",
       "type": "data_asset",
       "canonicalName": "NDA execution tracking data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-939991b969",
+      "type": "data_asset",
+      "canonicalName": "NDC Distribution API Gateway analytics feed to Snowflake — Commercial Analytics Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1433,9 +2561,30 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-6d30186bdf",
+      "type": "data_asset",
+      "canonicalName": "Okta Workforce Identity analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f6816f22f1",
+      "type": "data_asset",
+      "canonicalName": "Okta Workforce Identity analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-0c283019b9",
       "type": "data_asset",
       "canonicalName": "Onboard connectivity session data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5ee3f227d9",
+      "type": "data_asset",
+      "canonicalName": "Onboard Retail POS analytics feed to Snowflake — Loyalty & Personalization Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1450,6 +2599,13 @@
       "id": "DAT-69323adf84",
       "type": "data_asset",
       "canonicalName": "Onboard supply replenishment forecasting data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d98a51a954",
+      "type": "data_asset",
+      "canonicalName": "Onboard Wi-Fi Connectivity Platform analytics feed to Snowflake — Loyalty & Personalization Domain",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1506,6 +2662,596 @@
       "id": "DAT-92d39cb2c1",
       "type": "data_asset",
       "canonicalName": "Outstation ground-coordination data",
+      "aliases": [
+        "Outstation ground-coordination data — Austin (AUS)"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6d2b245ae1",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Albuquerque (ABQ)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a124d9f36e",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Amarillo (AMA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-676197a582",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Amsterdam (AMS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9c9d8e78de",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Anchorage (ANC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8a487e8d85",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Bakersfield (BFL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-2451b3e44a",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Baton Rouge (BTR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-63c73694f6",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Birmingham (BHM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3818156588",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Bogotá (BOG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-62a0879acb",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Boise (BOI)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-13d69637b7",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Boise-Idaho Falls (IDA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-cd8fbccf5e",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Bozeman (BZN)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-22efa7f3a2",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Buffalo (BUF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-de8d23d13e",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Burlington (BTV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-67b08b8aa6",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Calgary (YYC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-330e8dba2b",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Cancún (CUN)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a863fbd97c",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Charleston (CHS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-71289ebcef",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Charlotte (CLT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-81e6898cf4",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Chattanooga (CHA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c565d659b7",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Cleveland (CLE)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ebec3f2bb6",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Colorado Springs (COS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-aefa408c62",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Columbus (CMH)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9e19b0b83f",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Des Moines (DSM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-51ff0d0611",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Dublin (DUB)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-21725e3d11",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — El Paso (ELP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7c437b706a",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Eugene (EUG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b0f7f335de",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Frankfurt (FRA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-05aefc58c1",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Fresno (FAT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0050d144bb",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Grand Rapids (GRR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c6b99994b7",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Greenville-Spartanburg (GSP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-24432bd730",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Hartford (BDL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ab20674670",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Honolulu (HNL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a43eba09b5",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Huntsville (HSV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0b44432c57",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Indianapolis (IND)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-434494902b",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Jacksonville (JAX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5fad8a23af",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Kansas City (MCI)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1c98733fd9",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Knoxville (TYS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4925fa3cb8",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Las Vegas (LAS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6ba951caf1",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Lima (LIM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e3efd79ffb",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Little Rock (LIT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-21032d32de",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Louisville (SDF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5c568f2c29",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Lubbock (LBB)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7dbbde638f",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Madrid (MAD)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a808d76f7c",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Medford (MFR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-280c8fd4b1",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Memphis (MEM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c29cc7f619",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Mexico City (MEX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b3b8592c6e",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Milwaukee (MKE)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-29dbe08377",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Missoula (MSO)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d0ce6a3ce0",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Monterey (MRY)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-aac6f56de6",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Montreal (YUL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f8a9e3aa1b",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Nashville (BNA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-324b5ccd5c",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — New Orleans (MSY)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1465bd9baa",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Norfolk (ORF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d1ef601089",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Omaha (OMA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9864a01636",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Orlando (MCO)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e5971f147d",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Palm Springs (PSP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8ac6e530ea",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Paris (CDG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8e06871da5",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Phoenix (PHX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b4facaa8d5",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Pittsburgh (PIT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8739d0bdef",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Portland (PDX)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4134e69c8b",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Portland Maine (PWM)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-757349010a",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Providence (PVD)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6b8174aa2f",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Punta Cana (PUJ)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-14eacea611",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Raleigh-Durham (RDU)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-21cc8eaf46",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Reno (RNO)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-57ad5b614a",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Richmond (RIC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0df238d476",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Rochester (ROC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5f150c8673",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Sacramento (SMF)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9f078453f7",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Salt Lake City (SLC)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-668853be61",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — San Antonio (SAT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0ce033afa3",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — San Diego (SAN)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0756b5cfe9",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — San Juan (SJU)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-0ac07d6d4f",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Santa Barbara (SBA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c9173b38e7",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — São Paulo (GRU)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-969073bed5",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Savannah (SAV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c31330a907",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Shreveport (SHV)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e55abc2ef4",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Spokane (GEG)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a855eaf68b",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Syracuse (SYR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-876db56404",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Tampa (TPA)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-89c3add00a",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Tokyo Narita (NRT)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ac41ae2d1d",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Toronto (YYZ)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4febd01194",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Tucson (TUS)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5c22bb252d",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Tulsa (TUL)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-79b7be1ef0",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Vancouver (YVR)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8b86d65584",
+      "type": "data_asset",
+      "canonicalName": "Outstation ground-coordination data — Wichita (ICT)",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1643,6 +3389,27 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-e85b6d89ae",
+      "type": "data_asset",
+      "canonicalName": "PROS Network RM analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-71e873ea5a",
+      "type": "data_asset",
+      "canonicalName": "PROS O&D Forecasting analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b7de357c04",
+      "type": "data_asset",
+      "canonicalName": "PROS Offer & Order Management analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-f20686963a",
       "type": "data_asset",
       "canonicalName": "Purchase requisition approval routing data",
@@ -1706,9 +3473,37 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-65fdc6a08d",
+      "type": "data_asset",
+      "canonicalName": "Revenue Accounting Core analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-8e4aff1b30",
+      "type": "data_asset",
+      "canonicalName": "Revenue Accounting Core analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-98f5385bd1",
+      "type": "data_asset",
+      "canonicalName": "Revenue Accounting Core analytics feed to Teradata Enterprise Warehouse — Cargo Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-3d01f32610",
       "type": "data_asset",
       "canonicalName": "Revenue integrity audit exception review data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-95d5eb675a",
+      "type": "data_asset",
+      "canonicalName": "RFID Bag Tracking Platform analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1741,6 +3536,41 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-7d0b453936",
+      "type": "data_asset",
+      "canonicalName": "RSA Archer GRC analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-609e3c1ddf",
+      "type": "data_asset",
+      "canonicalName": "RSA Archer GRC analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7e43a9b6f8",
+      "type": "data_asset",
+      "canonicalName": "RSA Archer GRC analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-52c7068ef6",
+      "type": "data_asset",
+      "canonicalName": "RSA Archer GRC analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f8a0c79b83",
+      "type": "data_asset",
+      "canonicalName": "RSA Archer GRC analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-90635e6b9b",
       "type": "data_asset",
       "canonicalName": "Runway analysis chart requests data",
@@ -1758,6 +3588,104 @@
       "id": "DAT-dceeca15fd",
       "type": "data_asset",
       "canonicalName": "SAF blend and regulatory-reporting data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-29861c18e0",
+      "type": "data_asset",
+      "canonicalName": "Safety Management System (SMS) / ASAP Case Platform analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9ff2ad0130",
+      "type": "data_asset",
+      "canonicalName": "Salesforce Marketing Cloud (Loyalty Campaigns) analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b5f702a302",
+      "type": "data_asset",
+      "canonicalName": "Salesforce Service Cloud analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-127075526e",
+      "type": "data_asset",
+      "canonicalName": "SAP Concur (Travel & Expense) analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-fcd7536f94",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Controlling (CO) analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5d9196cd3f",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Finance (FI) analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-412ed0c2cf",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Finance (FI) analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-df94c3e62f",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Finance (FI) analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a5d10716c0",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Finance (FI) analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-01acb7c940",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Finance (FI) analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b363c7501d",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Finance (FI) analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-aed21c3cc8",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Fixed Assets analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ce28031c98",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Materials Management (MM) analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-16ca0b01e1",
+      "type": "data_asset",
+      "canonicalName": "SAP S/4HANA — Treasury analytics feed to Databricks — Ops AI Workspace",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1797,6 +3725,69 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-a41b4dd02e",
+      "type": "data_asset",
+      "canonicalName": "Self-Service Check-in Kiosk Fleet analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5830d4487d",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow CMDB analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b92df94d69",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e7f22d1a07",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-eb630d5b11",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a9a9de69d7",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a326d589bf",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-56cb8a00dd",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-2cadaca88d",
+      "type": "data_asset",
+      "canonicalName": "ServiceNow ITSM analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-686a86813e",
       "type": "data_asset",
       "canonicalName": "Shadow-IT discovery scan results data",
@@ -1832,6 +3823,27 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-8cfcd26410",
+      "type": "data_asset",
+      "canonicalName": "SkyHarbor Rewards Loyalty Core analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-94a1debfdb",
+      "type": "data_asset",
+      "canonicalName": "SkyHarbor.com Direct Booking Engine analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ed9fe6eacd",
+      "type": "data_asset",
+      "canonicalName": "Slot Coordination Tracker analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-a250335653",
       "type": "data_asset",
       "canonicalName": "Slot cross-check data",
@@ -1842,6 +3854,20 @@
       "id": "DAT-b9b32f7556",
       "type": "data_asset",
       "canonicalName": "SMS and ASAP safety-report data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-47aa28b71f",
+      "type": "data_asset",
+      "canonicalName": "Snowflake — Commercial Analytics Domain curated publication to Tableau Enterprise BI",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-1c30f24738",
+      "type": "data_asset",
+      "canonicalName": "Snowflake — Loyalty & Personalization Domain curated publication to Tableau Enterprise BI",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1895,6 +3921,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-f6496fe949",
+      "type": "data_asset",
+      "canonicalName": "Splunk Enterprise Security (SOC) analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-417d97d8e1",
       "type": "data_asset",
       "canonicalName": "Station audit checklist data",
@@ -1912,6 +3945,43 @@
       "id": "DAT-ff2a5dd431",
       "type": "data_asset",
       "canonicalName": "Station kiosk transaction data",
+      "aliases": [
+        "Station kiosk transaction data — Chicago (ORD) — Primary Hub"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-7851ab3176",
+      "type": "data_asset",
+      "canonicalName": "Station kiosk transaction data — Dallas-Fort Worth (DFW) — Secondary Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-31466f54c3",
+      "type": "data_asset",
+      "canonicalName": "Station kiosk transaction data — Denver (DEN) — Meridian Integration Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-6615109057",
+      "type": "data_asset",
+      "canonicalName": "Station kiosk transaction data — London Heathrow (LHR) — International Station",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-d731266264",
+      "type": "data_asset",
+      "canonicalName": "Station kiosk transaction data — Miami (MIA) — Cargo & Latin America Gateway",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-e084b1ca3f",
+      "type": "data_asset",
+      "canonicalName": "Station kiosk transaction data — Seattle (SEA) — Pacific Gateway",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1933,6 +4003,43 @@
       "id": "DAT-2e7ff43383",
       "type": "data_asset",
       "canonicalName": "Station-local ground-coordination data",
+      "aliases": [
+        "Station-local ground-coordination data — Chicago (ORD) — Primary Hub"
+      ],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-55635468aa",
+      "type": "data_asset",
+      "canonicalName": "Station-local ground-coordination data — Dallas-Fort Worth (DFW) — Secondary Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-dbab5fc6dd",
+      "type": "data_asset",
+      "canonicalName": "Station-local ground-coordination data — Denver (DEN) — Meridian Integration Hub",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3c0295b711",
+      "type": "data_asset",
+      "canonicalName": "Station-local ground-coordination data — London Heathrow (LHR) — International Station",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-af228fd2ea",
+      "type": "data_asset",
+      "canonicalName": "Station-local ground-coordination data — Miami (MIA) — Cargo & Latin America Gateway",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-f92e5aaf90",
+      "type": "data_asset",
+      "canonicalName": "Station-local ground-coordination data — Seattle (SEA) — Pacific Gateway",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -1968,6 +4075,34 @@
       "id": "DAT-b06fbb769c",
       "type": "data_asset",
       "canonicalName": "Temperature-controlled shipment monitoring data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-b52ae33b3f",
+      "type": "data_asset",
+      "canonicalName": "Teradata Enterprise Warehouse — Cargo Subject Area curated publication to Tableau Enterprise BI",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-71ac4fc819",
+      "type": "data_asset",
+      "canonicalName": "Teradata Enterprise Warehouse — Crew & Ops Subject Area curated publication to Tableau Enterprise BI",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-5996649b2c",
+      "type": "data_asset",
+      "canonicalName": "Teradata Enterprise Warehouse — Finance Subject Area curated publication to Power BI Premium (Finance & Ops)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-c949bf92cf",
+      "type": "data_asset",
+      "canonicalName": "Teradata Enterprise Warehouse — Loyalty Legacy Subject Area curated publication to Tableau Enterprise BI",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2017,6 +4152,41 @@
       "id": "DAT-dc1119156e",
       "type": "data_asset",
       "canonicalName": "Travel risk monitoring data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-cbac118d2f",
+      "type": "data_asset",
+      "canonicalName": "TRAX Engineering Records analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9a0322955b",
+      "type": "data_asset",
+      "canonicalName": "TRAX Engineering Records analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-93d3126743",
+      "type": "data_asset",
+      "canonicalName": "TRAX Inventory / Rotables analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-746f1bb1bf",
+      "type": "data_asset",
+      "canonicalName": "TRAX Line Maintenance analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-4a48111712",
+      "type": "data_asset",
+      "canonicalName": "TRAX Reliability analytics feed to Databricks — MRO Predictive Workspace",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2105,6 +4275,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-eb82374282",
+      "type": "data_asset",
+      "canonicalName": "Virtual Assistant / Chatbot analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-fe7522dff7",
       "type": "data_asset",
       "canonicalName": "Virtual-assistant chat transcript data",
@@ -2126,9 +4303,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-20489ee413",
+      "type": "data_asset",
+      "canonicalName": "Vulnerability Management Platform analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-d0c37649b2",
       "type": "data_asset",
       "canonicalName": "Vulnerability scan and remediation data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-48b2e19a09",
+      "type": "data_asset",
+      "canonicalName": "Weather & NOTAM Briefing Service analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2168,9 +4359,86 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "DAT-613cf5ef78",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Databricks — MRO Predictive Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-ed3bfcf9f0",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Databricks — Ops AI Workspace",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-427d9a2a7e",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Snowflake — Commercial Analytics Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-08def27fc5",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Snowflake — Loyalty & Personalization Domain",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-bec6b8e5a1",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Teradata Enterprise Warehouse — Cargo Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-9ef67b84a3",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-2349438fe8",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-a778b9b6c7",
+      "type": "data_asset",
+      "canonicalName": "Workday Core HR analytics feed to Teradata Enterprise Warehouse — Loyalty Legacy Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-62906624be",
+      "type": "data_asset",
+      "canonicalName": "Workday Payroll analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-13a286228e",
+      "type": "data_asset",
+      "canonicalName": "Workday Recruiting analytics feed to Teradata Enterprise Warehouse — Finance Subject Area",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "DAT-5fafdb7295",
       "type": "data_asset",
       "canonicalName": "Workforce forecasting and adherence data",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "DAT-3957341f5b",
+      "type": "data_asset",
+      "canonicalName": "WorldTracer Baggage Tracing analytics feed to Teradata Enterprise Warehouse — Crew & Ops Subject Area",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2336,6 +4604,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "INF-0095b31b8a",
+      "type": "infrastructure",
+      "canonicalName": "Amadeus data center (Erding, DE) — vendor-hosted Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "INF-5f1b7e0cf6",
       "type": "infrastructure",
       "canonicalName": "AWS Data & Analytics Account",
@@ -2367,6 +4642,13 @@
       "id": "INF-dbbe54a052",
       "type": "infrastructure",
       "canonicalName": "Azure Identity & Security Landing Zone",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-2ff52fe73d",
+      "type": "infrastructure",
+      "canonicalName": "Chicago (ORD) — station infrastructure Platform",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2406,9 +4688,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "INF-4e1a4813f3",
+      "type": "infrastructure",
+      "canonicalName": "Denver (DEN) — station infrastructure Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "INF-d754dc6f61",
       "type": "infrastructure",
       "canonicalName": "Denver Meridian Co-lo Facility",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-4c21eb8b62",
+      "type": "infrastructure",
+      "canonicalName": "Denver, CO — former Meridian data center Platform",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2476,6 +4772,27 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "INF-adce6beed7",
+      "type": "infrastructure",
+      "canonicalName": "Local station-managed outstation system Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-2cd9efe2d5",
+      "type": "infrastructure",
+      "canonicalName": "Menzies Aviation-managed outstation system Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-23e46d2c39",
+      "type": "infrastructure",
+      "canonicalName": "Miami (MIA) cargo — station infrastructure Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "INF-98b06bf0c2",
       "type": "infrastructure",
       "canonicalName": "Panasonic Onboard Wi-Fi / IFE Network",
@@ -2493,6 +4810,20 @@
       "id": "INF-c89a431f65",
       "type": "infrastructure",
       "canonicalName": "PureConnect On-Prem Telephony Infrastructure (2 international sites)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-4ff5b4dc5d",
+      "type": "infrastructure",
+      "canonicalName": "Seattle (SEA) — station infrastructure Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-11934c868c",
+      "type": "infrastructure",
+      "canonicalName": "ServiceNow vendor-hosted Platform",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -2553,9 +4884,114 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "INF-509c758745",
+      "type": "infrastructure",
+      "canonicalName": "Swissport International-managed outstation system Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "INF-8329420f3c",
       "type": "infrastructure",
       "canonicalName": "Teradata Enterprise Warehouse Appliance",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-6268161742",
+      "type": "infrastructure",
+      "canonicalName": "Trax vendor-hosted private cloud Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-4d7da379a9",
+      "type": "infrastructure",
+      "canonicalName": "Vendor SaaS Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "INF-fc16b61e12",
+      "type": "infrastructure",
+      "canonicalName": "Workday vendor-hosted Platform",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-090d246d5c",
+      "type": "managed_service",
+      "canonicalName": "Accenture Non-Core Application Support",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-ed755f41fd",
+      "type": "managed_service",
+      "canonicalName": "CrowdStrike MDR",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-0dca59ebea",
+      "type": "managed_service",
+      "canonicalName": "Deloitte Workday Managed Services",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-1102e26313",
+      "type": "managed_service",
+      "canonicalName": "Foundever Overflow Agent Services",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-fb7e417dca",
+      "type": "managed_service",
+      "canonicalName": "Gate Gourmet / dnata Catering",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-2c1f0f7e30",
+      "type": "managed_service",
+      "canonicalName": "Genpact AP BPO",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-c88ab51619",
+      "type": "managed_service",
+      "canonicalName": "IBM Mainframe Managed Operations",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-0b44bbb0af",
+      "type": "managed_service",
+      "canonicalName": "Infosys BPM Tier-1 Service Desk",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-4ba1c7d0d3",
+      "type": "managed_service",
+      "canonicalName": "JLL Facilities Management",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-fedf0238a6",
+      "type": "managed_service",
+      "canonicalName": "Menzies/Swissport Ground Handling",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "MAN-939a346d79",
+      "type": "managed_service",
+      "canonicalName": "Palo Alto Networks Managed Security",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -3060,6 +5496,13 @@
       "id": "ORG-1f887f6629",
       "type": "org_unit",
       "canonicalName": "Director Vulnerability Management & Threat Intelligence",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "ORG-2c1ca3c335",
+      "type": "org_unit",
+      "canonicalName": "General Counsel",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -3694,6 +6137,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "ORG-d6e811541e",
+      "type": "org_unit",
+      "canonicalName": "VP Corporate Real Estate",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "ORG-b7221bbf78",
       "type": "org_unit",
       "canonicalName": "VP Corporate Real Estate & Facilities",
@@ -3764,6 +6214,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "ORG-c04d2a45aa",
+      "type": "org_unit",
+      "canonicalName": "VP IT Service Management",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "ORG-cc4ee36fbc",
       "type": "org_unit",
       "canonicalName": "VP IT Service Management & Support",
@@ -3792,9 +6249,282 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "POR-049c510925",
+      "type": "portfolio_company",
+      "canonicalName": "SkyHarbor Air",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-28a307e66e",
+      "type": "process",
+      "canonicalName": "Airport Check-in & Boarding Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-7e6de33b2a",
+      "type": "process",
+      "canonicalName": "Baggage Mishandling Trace & Recovery Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-d7f72fa9db",
+      "type": "process",
+      "canonicalName": "Cargo Booking & Capacity Allocation Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-88b75dcbff",
+      "type": "process",
+      "canonicalName": "Catering Order & Galley Loading Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-1a2519eeb1",
+      "type": "process",
+      "canonicalName": "Component Reliability Review Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-f4bbf8fe85",
+      "type": "process",
+      "canonicalName": "Contact Center Case Handling Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-da9a82ec3c",
+      "type": "process",
+      "canonicalName": "Contact Center Workforce Forecasting Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-9095e2ec7e",
+      "type": "process",
+      "canonicalName": "Corporate Badge Provisioning Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-89c583303d",
+      "type": "process",
+      "canonicalName": "Crew Legality Exception Handling",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-72af93c52a",
+      "type": "process",
+      "canonicalName": "Crew Pairing & Rostering Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-33d5ace988",
+      "type": "process",
+      "canonicalName": "Dangerous Goods Compliance Check Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-4d86797f3d",
+      "type": "process",
+      "canonicalName": "Data Access Request Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-009699b425",
+      "type": "process",
+      "canonicalName": "Employee Onboarding Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-0a46f20ab5",
+      "type": "process",
+      "canonicalName": "ETL / Data Pipeline Failure Response Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-c9082351a7",
+      "type": "process",
+      "canonicalName": "Fare Filing Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-7474a5b6bd",
+      "type": "process",
+      "canonicalName": "Flight Dispatch Release Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-bf747bcfe2",
+      "type": "process",
+      "canonicalName": "Interline & Codeshare Settlement Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-eba3ac1657",
+      "type": "process",
+      "canonicalName": "IROPS Disruption Recovery Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-ed3eb8a8d4",
+      "type": "process",
+      "canonicalName": "IT Incident Management Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-c47fb8644c",
+      "type": "process",
+      "canonicalName": "Line Maintenance Work Order Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-60635bd1ce",
+      "type": "process",
+      "canonicalName": "Loyalty Award Redemption Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-524292fa62",
+      "type": "process",
+      "canonicalName": "Member Personalization Segmentation Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-d123fc0026",
+      "type": "process",
+      "canonicalName": "Meridian Regional Systems Cutover Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-c752b76e82",
+      "type": "process",
+      "canonicalName": "Monthly Financial Close Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-a3875a68a6",
+      "type": "process",
+      "canonicalName": "O&D Revenue Management Forecast Cycle",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-0fc9a2c145",
+      "type": "process",
+      "canonicalName": "Onboard Retail Revenue Reconciliation Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-67c7b1d298",
+      "type": "process",
+      "canonicalName": "Predictive Maintenance Alert Triage",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-424a37d37c",
+      "type": "process",
+      "canonicalName": "Procurement Sourcing & Contract Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-af637d481d",
+      "type": "process",
+      "canonicalName": "Ramp Turn Coordination Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-796e830be4",
+      "type": "process",
+      "canonicalName": "Refund & Compensation Case Resolution Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-63ae2cbe89",
+      "type": "process",
+      "canonicalName": "Schedule Construction & Fleet Assignment Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-234dac441b",
+      "type": "process",
+      "canonicalName": "Union Grievance Case Management Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-e0aee71568",
+      "type": "process",
+      "canonicalName": "Vendor Invoice / AP Processing",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-7d981c9792",
+      "type": "process",
+      "canonicalName": "Voluntary Safety Report (ASAP) Review Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRO-4dff670bdd",
+      "type": "process",
+      "canonicalName": "Vulnerability Remediation Process",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-4cd532c14b",
       "type": "program",
       "canonicalName": "Aircraft Lease Accounting (ASC 842) Automation",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-9879044ffd",
+      "type": "program",
+      "canonicalName": "Airport turn management modernization",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-f7245f43a1",
+      "type": "program",
+      "canonicalName": "Airport, Common-Use & Baggage Technology Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-e9d7328488",
+      "type": "program",
+      "canonicalName": "Baggage tracking and recovery modernization",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -3806,9 +6536,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-4bd1435c20",
+      "type": "program",
+      "canonicalName": "Contact Center Agent Assist",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-bf65166ca0",
       "type": "program",
       "canonicalName": "Corporate Badge / Access Control Consolidation",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-9507458854",
+      "type": "program",
+      "canonicalName": "Crew & Flight Operations Modernization Program",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -3820,9 +6564,30 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-cc73f6fc0b",
+      "type": "program",
+      "canonicalName": "Crew Recovery Optimization",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-252e763844",
       "type": "program",
       "canonicalName": "CyberArk PAM Full Coverage Rollout",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-0da26206e9",
+      "type": "program",
+      "canonicalName": "Cybersecurity & IT Risk Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-261e0be342",
+      "type": "program",
+      "canonicalName": "Data & Analytics Modernization Program",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -3834,6 +6599,20 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-2bdcb39e1f",
+      "type": "program",
+      "canonicalName": "Digital Channels, NDC & Offer/Order Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-9ba74a0cd7",
+      "type": "program",
+      "canonicalName": "Digital concierge and journey orchestration modernization",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-abe9f275df",
       "type": "program",
       "canonicalName": "GenAI Use Case Expansion Program",
@@ -3841,9 +6620,37 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-01c70390f3",
+      "type": "program",
+      "canonicalName": "Infrastructure & Cloud Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-1aae3860d9",
+      "type": "program",
+      "canonicalName": "IROPS Agentic Recovery Cockpit",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-6d64586756",
       "type": "program",
       "canonicalName": "IROPS AI Recovery Cockpit Expansion",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-ee474f07aa",
+      "type": "program",
+      "canonicalName": "Loyalty personalization modernization",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-b97a7e2b18",
+      "type": "program",
+      "canonicalName": "Mainframe & Core Transaction Estate Modernization Program",
       "aliases": [],
       "firstSeen": "wave1"
     },
@@ -3862,6 +6669,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-e82a89af83",
+      "type": "program",
+      "canonicalName": "MRO & Engineering Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-8065382432",
       "type": "program",
       "canonicalName": "MRO Predictive Model Monitoring Automation",
@@ -3876,6 +6690,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-abac5dd964",
+      "type": "program",
+      "canonicalName": "Network Planning, Scheduling & Revenue Management Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-c9361191b8",
       "type": "program",
       "canonicalName": "Outstation CUTE/CUPPS Refresh Program",
@@ -3883,9 +6704,23 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "PRG-b56405a1a6",
+      "type": "program",
+      "canonicalName": "Passenger Service System & Distribution Modernization Program",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "PRG-1bf735e782",
       "type": "program",
       "canonicalName": "PureConnect to Genesys Cloud CX Migration",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "PRG-f4951ea6e1",
+      "type": "program",
+      "canonicalName": "Revenue management and pricing modernization",
       "aliases": [],
       "firstSeen": "wave1"
     },

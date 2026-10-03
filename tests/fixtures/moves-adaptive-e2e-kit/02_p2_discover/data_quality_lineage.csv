@@ -1,0 +1,6 @@
+field_or_feed,source_system,synthetic_sample_issue,severity,downstream_risk,control_or_next_step,owner_role,evidence_ref
+claim_status,claims platform,status timestamp missing in 3 of 20 synthetic samples,medium,agent may present stale status,require timestamp and freshness display,Claims Platform Owner,SYN-DATA-01
+authorization_attachment_flag,authorization platform,attachment metadata mismatch in 4 of 20 samples,high,missing-document status could be wrong,do not infer; link source case and escalate,Authorization Operations Owner,SYN-DATA-01
+eligibility_effective_date,eligibility platform,two overlapping effective-date rows in 1 sample,high,incorrect coverage statement,show source row date; agent confirms,Eligibility Product Owner,SYN-DATA-01
+knowledge_current_flag,knowledge service,one published article conflicts with review SLA,medium,stale instruction could surface,filter by owner review and conflict state,Knowledge Operations Owner,SYN-KNOW-01
+interaction_summary,CRM,free-text summary not fully structured,low,draft summary may omit context,human review before save,CRM Product Owner,SYN-SESSION-OPS-01

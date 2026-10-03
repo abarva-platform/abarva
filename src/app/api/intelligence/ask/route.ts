@@ -9,8 +9,8 @@ import { inferClientKeyFromEmail } from "@/lib/client-config";
 import {
   classifySentinelIntent,
   runSentinelReasoning,
-} from "@/lib/agents/sentinel-reasoning";
-import type { SentinelCitation } from "@/lib/agents/sentinel-reasoning";
+} from "@/lib/agent/sentinel-reasoning";
+import type { SentinelCitation } from "@/lib/agent/sentinel-reasoning";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { assembleUserContextBlock } from "@/lib/agent/prompts/_shared/user-context";
 import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";

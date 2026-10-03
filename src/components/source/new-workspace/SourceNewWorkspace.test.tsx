@@ -12,6 +12,7 @@ import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
 import type { HistoricalRequestSummary } from "@/lib/source/new-workspace/historical-request-summary";
 import {
   buildScorecardAuthorityView,
@@ -22,6 +23,9 @@ import type { AgentDockProps } from "@/components/agent/AgentDock";
 
 const mockUseAtlasPageState = jest.fn();
 const mockAgentDockProps: AgentDockProps[] = [];
+const mockRefresh = jest.fn();
+
+jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockRefresh }) }));
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -134,9 +138,64 @@ const unavailableScorecardAuthority = buildScorecardAuthorityView({
   scores: [],
 });
 
+describe("Stage 05 executed NDA capture", () => {
+  const ndaFile = {
+    id: "22222222-2222-4222-8222-222222222222",
+    title: "Executed NDA scan", artifactGroup: "upload", artifactType: "nda_executed",
+    lifecycleState: "current", blobSha256: "a".repeat(64),
+  } as SourceNewFileRow;
+  const ndaCoverage = (versions: string[]): SourceNewStage05NdaCoverage => ({
+    status: "blocked", asOf: "2026-10-02T00:00:00Z", publishedTemplateVersions: versions,
+    suppliers: [{
+      legalEntityId: "VEN-001", legalName: "Example supplier", state: "not_covered",
+      reason: "No authority recorded", authorityReference: null,
+      evidenceReference: "candidate-1", evidenceCaveats: [],
+    }],
+    nextAction: { label: "Resolve NDA coverage", detail: "Record evidence." },
+  });
+
+  it("withholds the record action until template and uploaded evidence are present", () => {
+    const { rerender } = render(<SourceNewNdaCapture eventId="event-1" files={[ndaFile]} coverage={ndaCoverage([])} />);
+    expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
+    expect(screen.getByText(/Legal must publish/)).toBeTruthy();
+    rerender(<SourceNewNdaCapture eventId="event-1" files={[]} coverage={ndaCoverage(["NDA-V1"])} />);
+    expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
+    expect(screen.getByText(/Upload the executed NDA/)).toBeTruthy();
+  });
+
+  it("posts the selected governed identities and refreshes coverage on success", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    const priorFetch = global.fetch;
+    global.fetch = fetchMock;
+    try {
+      render(<SourceNewNdaCapture eventId="event-1" files={[ndaFile]} coverage={ndaCoverage(["NDA-V1"])} />);
+      const form = screen.getByRole("form", { name: "Record executed NDA" });
+      for (const input of form.querySelectorAll("input")) {
+        if (input.name === "effectiveFrom") input.value = "2026-09-30";
+        if (input.name === "executedAt") input.value = "2026-09-30T12:00";
+        if (input.name === "supplierSignatoryName") input.value = "Supplier signer";
+        if (input.name === "buyerSignatoryName") input.value = "Buyer signer";
+        if (input.name === "privateEvidenceRef") input.value = "private://nda-evidence";
+        if (input.name === "evidenceReference") input.value = "Reviewed signed pages and private record.";
+      }
+      fireEvent.submit(form);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      const body = fetchMock.mock.calls[0][1].body as FormData;
+      expect(body.get("vendorId")).toBe("VEN-001");
+      expect(body.get("artifactId")).toBe(ndaFile.id);
+      expect(body.get("templateVersion")).toBe("NDA-V1");
+      expect(body.get("executedAt")).toBe(new Date("2026-09-30T12:00").toISOString());
+      await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    } finally {
+      global.fetch = priorFetch;
+    }
+  });
+});
+
 beforeEach(() => {
   mockUseAtlasPageState.mockReturnValue(null);
   mockAgentDockProps.length = 0;
+  mockRefresh.mockClear();
 });
 
 // Blocked rather than empty: these cases are about other parts of the

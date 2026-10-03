@@ -71,6 +71,81 @@ function decisionsBlock(ctx: SolutionContext): string {
   );
 }
 
+function compactPromptLine(value: string | null | undefined, limit = 360): string {
+  const text = (value ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return "Not captured.";
+  return text.length > limit ? `${text.slice(0, limit)}...` : text;
+}
+
+function approvedEvidenceBlock(ctx: SolutionContext): string {
+  const lines = ["GOVERNED SOURCE REGISTER:"];
+  if (!ctx.evidencePackets.length) {
+    lines.push("[no approved evidence packets loaded for this artifact context]");
+  } else {
+    ctx.evidencePackets.slice(0, 30).forEach((packet, index) => {
+      const marker = `${index + 1}`;
+      const phase = packet.phase == null ? "phase not set" : `P${packet.phase}`;
+      lines.push(
+        `- [${marker}] ${packet.title} (${packet.evidenceType}; ${phase}; approved=${packet.approvedAt ?? "recorded"})`,
+        `  Summary: ${compactPromptLine(packet.summary)}`,
+      );
+      if (packet.observations.length) {
+        lines.push(
+          `  Observations: ${packet.observations
+            .slice(0, 6)
+            .map((observation) => compactPromptLine(observation, 220))
+            .join(" | ")}`,
+        );
+      }
+      if (packet.assumptions.length) {
+        lines.push(
+          `  Assumptions: ${packet.assumptions
+            .slice(0, 4)
+            .map((assumption) => compactPromptLine(assumption, 220))
+            .join(" | ")}`,
+        );
+      }
+      if (packet.openQuestions.length) {
+        lines.push(
+          `  Open questions: ${packet.openQuestions
+            .slice(0, 4)
+            .map((question) => compactPromptLine(question, 220))
+            .join(" | ")}`,
+        );
+      }
+      if (packet.citations.length) {
+        lines.push(
+          `  Citations: ${packet.citations
+            .slice(0, 4)
+            .map(
+              (citation) =>
+                `"${compactPromptLine(citation.quote, 160)}" (${compactPromptLine(citation.locator, 80)})`,
+            )
+            .join(" | ")}`,
+        );
+      }
+    });
+  }
+
+  const evidenceMap = ctx.evidenceMap ?? [];
+  lines.push("CARRIED-FORWARD EVIDENCE MAP:");
+  if (!evidenceMap.length) {
+    lines.push("[none captured in prior phase digest]");
+  } else {
+    const offset = Math.min(ctx.evidencePackets.length, 30);
+    evidenceMap.slice(0, 30).forEach((item, index) => {
+      lines.push(
+        `- [${offset + index + 1}] ${compactPromptLine(item.claim, 220)} | source=${compactPromptLine(item.source, 180)}`,
+      );
+    });
+  }
+
+  lines.push(
+    "Use these approved packets and carried-forward evidence-map entries as governed support. Cite client-specific facts with the numeric [n] marker in draft prose, and label unsupported numeric/date claims as assumptions or missing evidence.",
+  );
+  return lines.join("\n");
+}
+
 function p3FutureStateBoundaryBlock(args: {
   artifact: DeliverableKey;
   phase: number;
@@ -92,7 +167,7 @@ function p3FutureStateBoundaryBlock(args: {
   return `\nP3 FUTURE-STATE BLUEPRINT BOUNDARY
 ${draftStatus}
 ${optionRule}
-- Carry forward P2 caveats, missing evidence, sponsor/signoff limits, and client-to-complete fields.
+- Carry forward P2 caveats, missing evidence, the listed sponsor contact and progress-email preference, and client-to-complete fields. Product approval is recorded by an authorized workspace user.
 - AbarVa's role is to shape, govern, prove, and help the client decide. The client and delivery teams own detailed process redesign, BPMN/workflow design, system configuration, data engineering, implementation, training, adoption execution, and run-state operations.
 - Use client-facing labels: Future-State Direction, New Way of Working Blueprint, Target Operating Concept, Implementation work packages for client/delivery teams.
 - Do not write that AbarVa implements, executes, configures systems, trains users, runs operations, or completes end-to-end automation.`;
@@ -135,6 +210,7 @@ export function buildArtifactPrompt(args: {
         .map((g) => `- ${g}`)
         .join("\n") || "[MISSING — diagnosis not captured]"),
     decisionsBlock(ctx),
+    approvedEvidenceBlock(ctx),
     "HUMAN REVIEW NOTES:\n" +
       (ctx.humanApprovalNotes.length
         ? ctx.humanApprovalNotes.map((n) => `- ${n}`).join("\n")
@@ -158,7 +234,7 @@ export function buildArtifactPrompt(args: {
 
   const draftBlock =
     generationMode === "draft"
-      ? `\nDRAFT STATUS REQUIREMENT:\n- This is a pre-gate review draft, not a final or board-ready artifact.\n- Include this visible caveat near the top of the artifact: "${args.draftCaveat ?? "Draft status: This artifact was generated before formal phase approval and is intended for review only."}"\n- Write for sponsor review, workshop preparation, and refinement.\n- Do not imply phase approval, sponsor signoff, final acceptance, or board-ready quality.\n- Include a concise "Client to Complete Before Final" exhibit listing the open gate items and missing evidence.\n- The artifact may be visually strong, but every recommendation must be phrased as draft/review-ready until the gate is approved.`
+      ? `\nDRAFT STATUS REQUIREMENT:\n- This is a pre-gate review draft, not a final or board-ready artifact.\n- Include this visible caveat near the top of the artifact: "${args.draftCaveat ?? "Draft status: This artifact was generated before formal phase approval and is intended for review only."}"\n- Write for workspace review, workshop preparation, and refinement; sponsors receive progress updates only when explicitly selected.\n- Do not imply phase approval, sponsor signoff, final acceptance, or board-ready quality.\n- Include a concise "Client to Complete Before Final" exhibit listing the open gate items and missing evidence.\n- The artifact may be visually strong, but every recommendation must be phrased as draft/review-ready until the gate is approved.`
       : "";
 
   const user = `You are generating "${profile.title}" for phase P${phase}.

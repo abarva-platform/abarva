@@ -1802,7 +1802,7 @@ Available artifact types and their EXACT JSON shapes:
            "severity": "hard"|"soft", "status": "met"|"unmet"|"unknown",
            "detail"?: <one-line elaboration>}
    Example (P2 Synthesis pack item charter-signed-off):
-   [[artifact:phase-progress]]{"evidenceItemId":"charter-signed-off","label":"Charter signed off by sponsor","severity":"hard","status":"unmet","detail":"User said the charter is in draft; sponsor has not signed yet."}[[/artifact]]
+   [[artifact:phase-progress]]{"evidenceItemId":"charter-signed-off","label":"Charter approved by authorized workspace user","severity":"hard","status":"unmet","detail":"The charter remains in draft and no authorized-user approval is recorded."}[[/artifact]]
 
 10. anti-pattern-flag — Surface 2. When the conversation reveals an
     active pack anti-pattern signal, emit a flag card. The detectedSignal

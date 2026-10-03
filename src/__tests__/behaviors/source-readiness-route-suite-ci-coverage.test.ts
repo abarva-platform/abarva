@@ -30,6 +30,7 @@ const ownedFiles = [
   // event approval page or the event detail route's Strategy stage, so it joins
   // the owned set in the change that creates it.
   "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx",
+  "src/app/(maestro)/source/__tests__/scope-stage-action-without-value.test.tsx",
 ] as const;
 
 const quarantinedFiles = [
@@ -93,7 +94,7 @@ describe("Source readiness and route suite CI ownership", () => {
     }
   });
 
-  it("runs the seven behavior-bearing suites and leaves the exact quarantine out", () => {
+  it("runs the behavior-bearing suites and leaves the exact quarantine out", () => {
     const commands = jestCommands();
     const command = commands.find((candidate) =>
       candidate.includes(ownedFiles[0]),
@@ -121,14 +122,14 @@ describe("Source readiness and route suite CI ownership", () => {
     expect(partial("src/lib/source/rfp-readiness/__tests__")).toBeUndefined();
     // 1 -> 2 of 3: U-511 wired the not-found suite. 3 of 4: U-514 added the
     // requester-estimate disclosure suite and wired it in the same change.
-    // 4 of 5: U-517 added the approval financial-permission suite, likewise
-    // wired in its own change. The remaining uncovered file, the tenant-named
+    // 4 of 5: U-517 added the approval financial-permission suite. The stage
+    // action regression adds one more named route suite. The uncovered file, the tenant-named
     // source scanner, is still the exact quarantine above — the covered count
     // moves with each wiring and the total moves with each new file, so neither
     // can drift unnoticed.
     expect(partial("src/app/(maestro)/source/__tests__")).toMatchObject({
-      testFiles: 5,
-      coveredTestFiles: 4,
+      testFiles: 6,
+      coveredTestFiles: 5,
     });
   });
 });

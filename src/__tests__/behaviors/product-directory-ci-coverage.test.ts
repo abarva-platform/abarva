@@ -91,6 +91,30 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   the reason the baseline below is now a list: from this entry on, the set
  *   difference is what the gate prints, so the three caveats above are
  *   self-evident from the diff rather than reconstructed in prose.
+ * 2026-09-27: 154 after T-493 wired nine of the ten directories in its draw.
+ *   Eight, not nine, and measured per-directory from two census runs on this
+ *   change's base rather than inferred from the count: the eight above left the
+ *   uncovered set with nothing entering it, while the ninth,
+ *   `src/scripts/__tests__`, was 5 of 6 covered and therefore PARTIAL, so
+ *   wiring it moved it out of the partial set and never reached this one — the
+ *   `source/ava` and `data-plane` case again. The tenth drawn directory,
+ *   `src/lib/intelligence/synthesis/__tests__`, is NOT wired and stays in this
+ *   list: it holds a red suite and a source-text scanner, and a directory is
+ *   wired by fixing it rather than by adding it to a green command.
+ * 2026-09-28: 153 after adding `src/lib/crawl/__tests__` to the Unit Suites
+ *   workflow for authenticated crawl proof contracts.
+ * 2026-10-01: 42 after item 26 draw 18 wired thirteen single-file directories
+ *   whole (evidence-trace, deal-pack, industry-intelligence, mrm-screen,
+ *   should-cost, sourcing, stage-gate, stage-packs, taxonomy, telemetry,
+ *   workforce-economics, workshops, scripts/qa). The vacuity floor below was
+ *   `> 50`, a live-corpus precondition that went red only because the dark set
+ *   shrank; it is lowered to `> 30` in the same change. It guards against a
+ *   filter that matches nothing, not against progress.
+ * 2026-10-01: 41 after item 26 ran four of the five suites in
+ *   `src/lib/intelligence/synthesis/__tests__` by named file. The 2026-09-27
+ *   note above kept it here; it is PARTIAL now (4 of 5), so it leaves this
+ *   fully-dark list. The fifth, a T-495 source-text scanner, stays unrun and
+ *   `t493-wired-directory-ci-coverage.test.ts` asserts it.
  */
 const DARK_PRODUCT_DIRECTORY_COUNT = DARK_PRODUCT_DIRECTORY_BASELINE.length;
 
@@ -131,17 +155,17 @@ describe("dark test directories outside src/__tests__", () => {
     // Vacuity floor. If the filter ever matched nothing — a renamed root, a
     // changed census shape — the comparison below would pass at zero against
     // an equally empty baseline and this file would be decoration.
-    expect(darkProductDirectories.length).toBeGreaterThan(50);
-    expect(
-      darkProductDirectories.every((d) => d.startsWith("src/")),
-    ).toBe(true);
+    expect(darkProductDirectories.length).toBeGreaterThan(30);
+    expect(darkProductDirectories.every((d) => d.startsWith("src/"))).toBe(
+      true,
+    );
   });
 
   it("keeps the committed baseline sorted, unique and non-empty", () => {
     // The diff treats both sides as sets, so an unsorted or duplicated
     // baseline would still compare correctly — but it would review badly, and
     // a duplicate is refused rather than collapsed.
-    expect(DARK_PRODUCT_DIRECTORY_COUNT).toBeGreaterThan(50);
+    expect(DARK_PRODUCT_DIRECTORY_COUNT).toBeGreaterThan(30);
     expect(new Set(DARK_PRODUCT_DIRECTORY_BASELINE).size).toBe(
       DARK_PRODUCT_DIRECTORY_COUNT,
     );

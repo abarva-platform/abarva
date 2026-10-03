@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   reconcileDraftWithAcknowledged,
   resolvePhaseCaptureStatus,
@@ -35,27 +36,51 @@ import {
   PhaseApproveAndBuild,
   type PhaseBuildArtifact,
 } from "@/components/strategic-moves/PhaseApproveAndBuild";
-import { PhaseRoleApprovalsSummary } from "@/components/strategic-moves/PhaseRoleApprovalsSummary";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
+import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import {
+  currentPhaseRequiredEvidenceGaps,
+  phaseProgressReadiness,
+} from "@/lib/programs/phase-progress-readiness";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
+import type { ApprovedPhaseEvidenceReference } from "@/lib/programs/approved-phase-evidence";
 import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
+import {
+  SOLUTION_OUTPUT_TYPES,
+  SOLUTION_ROUTE_LABELS,
+  isBusinessChangeAssessmentComplete,
+  parseBusinessChangeAssessment,
+  parseSolutionRouteValidation,
+  recommendSolutionRoute,
+  resolveConfirmedSolutionRoute,
+  type BusinessChangeAssessment,
+  type ConfirmedSolutionRoute,
+  type SolutionOutputType,
+} from "@/lib/programs/solution-route-assessment";
 import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
+import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import {
   assembleP3SolutionOptions,
   buildP3DesignInputsPackFromSignals,
+  p2SourceEvidenceTitle,
   type P3OptionSet,
 } from "@/lib/programs/phase-templates/p3-option-assembler";
+import {
+  inferSelectedOptionId,
+  restoreApprovedOptionId,
+  type UploadedSolutionOptionSet,
+} from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
 import {
   buildNextPhaseReadinessPack,
@@ -63,13 +88,12 @@ import {
 } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import { buildMovesChatAvaAnswerPacket } from "@/lib/programs/moves-chat-answer-packet";
 import { demoSafeClientText } from "@/lib/client-config";
-import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import {
-  APPROVAL_ROLE_LABELS,
-  type ApprovalRole,
-  requiredApprovalRolesFor,
-} from "@/lib/programs/deliverable-role-approval-policy";
+  PHASE_CANONICAL_KEYS,
+  phaseCanonicalKeysForRoute,
+} from "@/lib/programs/deliverable-registry";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+import { getPhaseName } from "@/lib/programs/phase-labels";
 
 interface AvaChatMessage {
   id: string;
@@ -100,6 +124,12 @@ interface Substep {
   label: string;
 }
 
+interface PhaseProgressHeaderState {
+  label: string;
+  tone: "ready" | "open" | "complete";
+  openEvidenceCount: number;
+}
+
 interface PhaseContract {
   phase: number;
   code: string;
@@ -116,6 +146,8 @@ interface PhaseContract {
 }
 
 interface MovesPhaseStandaloneClientProps {
+  /** Server-resolved permission for evidence and phase approval actions. */
+  canApproveGates?: boolean;
   /**
    * Authoritative phase-capture values, preloaded server-side. Passed as a prop
    * rather than fetched after mount so the page never renders a synthesized or
@@ -125,22 +157,29 @@ interface MovesPhaseStandaloneClientProps {
   initialPhaseCaptureValues?: Record<string, string>;
   /** Revision of those values; echoed on save so a stale write is rejected. */
   initialPhaseCaptureRevision?: string;
+  initialBusinessChangeAssessment?: string;
+  initialApprovedEvidenceReferences?: ApprovedPhaseEvidenceReference[];
+  initialConfirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+  /** The option set declared in the Move's approved design-phase evidence. */
+  uploadedSolutionOptionSet?: UploadedSolutionOptionSet | null;
+  /** The design decision already recorded for this Move, if any — restored as
+   *  the selected option after a reload. */
+  approvedSolutionOption?: {
+    selectedOptionId: string;
+    chosenOption: string;
+  } | null;
   move: StrategicMove;
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
+  evidenceReadinessAvailable?: boolean;
   carriesForwardContent: DeliverableContentSignal[];
+  p3PriorPhaseContent?: DeliverableContentSignal[];
   phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
   initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
+  syntheticEvidencePackHref?: string | null;
   currentStateReadiness?: ReadinessReport | null;
-  /**
-   * Count of attached evidence found inside the current Move context extract.
-   * The phase page and File Cabinet can show evidence before legacy linked
-   * evidence relations exist, so the local phase aVa composer must forward the
-   * same count as the AppShell provider.
-   */
-  moveContextExtractEvidenceCount?: number;
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
@@ -158,6 +197,7 @@ interface MovesPhaseStandaloneClientProps {
 interface MoveArtifactApiRow {
   artifactId: string;
   artifactType: string;
+  deliverableTypeKey?: string | null;
   family: string;
   title: string;
   phase: number | null;
@@ -180,6 +220,7 @@ type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
 interface PhaseEvidenceArtifact {
   artifactId: string;
+  family?: string;
   fileName: string | null;
   title: string;
   phase: number | null;
@@ -294,28 +335,6 @@ function mergeAvaDraftProposals(
   return [...byKey.values()];
 }
 
-function inferP3SelectedOptionIdFromRecommendation(
-  recommendation: unknown,
-  options: P3OptionSet["options"],
-): string {
-  const normalized = String(recommendation ?? "").toLowerCase();
-  if (!normalized.trim()) return "";
-  const direct = options.find((option) => {
-    const id = option.id.toLowerCase();
-    const label = option.label.toLowerCase();
-    return (
-      normalized.includes(`option ${id}`) ||
-      normalized.includes(`${id}:`) ||
-      normalized.includes(label)
-    );
-  });
-  if (direct) return direct.id;
-  const recommended = options.find((option) => option.recommended);
-  return recommended && normalized.includes("recommended")
-    ? recommended.id
-    : "";
-}
-
 interface StageReadinessWorkbookParsePreview {
   ok: boolean;
   issues?: Array<{ severity?: string; code?: string; message?: string }>;
@@ -331,9 +350,24 @@ interface StageReadinessWorkbookParsePreview {
   proposalSet?: {
     artifactId?: string;
     artifactVersion?: number;
+    proposalSetId?: string;
+    transition?: { fromPhase?: number; toPhase?: number };
     status?: string;
     proposalCount?: number;
     pendingCount?: number;
+    review?: {
+      status?: string;
+      acceptedCount?: number;
+      rejectedCount?: number;
+      needsValidationCount?: number;
+      pendingCount?: number;
+      readiness?: {
+        ready?: number;
+        partial?: number;
+        insufficientEvidence?: number;
+        unknown?: number;
+      };
+    };
     proposals?: Array<{
       proposalId?: string;
       questionId?: string;
@@ -391,7 +425,7 @@ const PHASES: PhaseContract[] = [
       { key: "decide", label: "Frame" },
       { key: "approve", label: "Gate approval" },
     ],
-    sessions: ["Problem framing", "Sponsor alignment", "Evidence inventory"],
+    sessions: ["Problem framing", "Stakeholder context", "Evidence inventory"],
     templates: [
       { name: "Move Origination Brief", type: "DOCX" },
       { name: "Value Hypothesis Canvas", type: "XLSX" },
@@ -419,7 +453,7 @@ const PHASES: PhaseContract[] = [
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: [
-      "Sponsor charter review",
+      "Authorized workspace-user charter review",
       "Scope boundary workshop",
       "Success metric review",
     ],
@@ -440,8 +474,8 @@ const PHASES: PhaseContract[] = [
   {
     phase: 2,
     code: "P2",
-    navLabel: "Understand Current State",
-    title: "Understand Current State",
+    navLabel: getPhaseName(2),
+    title: getPhaseName(2),
     question: "What is true now, before we design the future state?",
     lede: "Diagnose the current state before choosing a path. Use operational evidence, metrics, systems, workforce signals, and constraints.",
     substeps: [
@@ -474,8 +508,8 @@ const PHASES: PhaseContract[] = [
   {
     phase: 3,
     code: "P3",
-    navLabel: "Choose the Approach",
-    title: "Choose the Approach",
+    navLabel: getPhaseName(3),
+    title: getPhaseName(3),
     question: "Which solution approach should we use?",
     lede: "Design each lane enough to estimate effort, sequence the roadmap, and map risk. aVa recommends; your SMEs decide and approve.",
     substeps: [
@@ -511,8 +545,8 @@ const PHASES: PhaseContract[] = [
   {
     phase: 4,
     code: "P4",
-    navLabel: "Build the Plan",
-    title: "Build the Plan",
+    navLabel: getPhaseName(4),
+    title: getPhaseName(4),
     question:
       "What plan, value case, and sequencing should leadership approve?",
     lede: "Convert the chosen approach into workstreams, delivery scenarios, economics, and dependencies. Shape the executive commit package.",
@@ -546,30 +580,30 @@ const PHASES: PhaseContract[] = [
   {
     phase: 5,
     code: "P5",
-    navLabel: "Prepare to Execute",
-    title: "Prepare to Execute",
-    question: "Is the organization ready to execute and track outcomes?",
-    lede: "Prepare ownership, controls, adoption, value tracking, and Tower handoff. Make approved value measurable after launch.",
+    navLabel: getPhaseName(5),
+    title: getPhaseName(5),
+    question: "Is the approved roadmap ready for handoff?",
+    lede: "Confirm receiving owners, open conditions, and Tower measurement acceptance. Moves ends at handoff; project execution happens outside the product.",
     substeps: [
       { key: "prepare", label: "Prepare" },
-      { key: "workstreams", label: "Execution Readiness" },
+      { key: "workstreams", label: "Handoff Readiness" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: [
-      "Mobilization readiness",
-      "Controls and adoption review",
+      "Receiving-owner handoff review",
+      "Open conditions and adoption ownership",
       "Tower metric handoff",
     ],
     templates: [
       { name: "Mobilization Handoff", type: "DOCX" },
-      { name: "Adoption & Controls Plan", type: "XLSX" },
+      { name: "Open Conditions & Ownership", type: "XLSX" },
       { name: "Tower Outcome Ledger", type: "XLSX" },
     ],
-    avaRole: "Execution-readiness partner",
+    avaRole: "Handoff partner",
     avaContext:
-      "I help make the handoff explicit: owners, controls, adoption evidence, and Tower metrics.",
+      "I confirm the approved roadmap, receiving owners, open conditions, adoption responsibility, and Tower measurement handoff. I do not execute the project.",
     avaQuestions: [
-      "What is not ready for execution?",
+      "Which handoff conditions remain open?",
       "Which metric goes to Tower?",
       "Who owns value leakage?",
     ],
@@ -588,6 +622,25 @@ export const MOVES_STANDALONE_SUGGESTED_QUESTIONS = PHASES.map((phase) => ({
   phase: phase.phase,
   suggestedPrompts: phase.avaQuestions,
 }));
+
+/**
+ * What approving a satisfied gate does, in the confirmation dialog.
+ *
+ * `currentOpenPhase` is the phase the Move is in. Approving that phase's own
+ * gate opens the NEXT phase — the dialog used to name the current one ("opens
+ * P2" while approving the P2 gate). Re-approving an earlier gate opens
+ * nothing: the Move stays where it is.
+ */
+export function gateOnlyConfirmSummaryFor(
+  phase: Pick<PhaseContract, "phase" | "code">,
+  currentOpenPhase: Pick<PhaseContract, "phase" | "code" | "title">,
+): string {
+  if (currentOpenPhase.phase > phase.phase) {
+    return `This re-submits the already-satisfied ${phase.code} gate against current evidence. The Move stays in ${currentOpenPhase.code} ${currentOpenPhase.title}. It does not regenerate artifacts.`;
+  }
+  const opens = phaseFor(Math.min(phase.phase + 1, 5));
+  return `This submits the already-satisfied ${phase.code} gate and opens ${opens.code} ${opens.title}. It does not regenerate artifacts.`;
+}
 
 function phaseFor(phaseNum: number): PhaseContract {
   return PHASES.find((phase) => phase.phase === phaseNum) ?? PHASES[0];
@@ -625,7 +678,7 @@ function mapArtifactApiRowToBuildArtifact(
 ): PhaseBuildArtifact {
   return {
     artifactId: artifact.artifactId,
-    deliverableTypeKey: artifact.artifactType,
+    deliverableTypeKey: artifact.deliverableTypeKey ?? artifact.artifactType,
     documentTitle: artifact.title,
     phase: artifact.phase,
     status: artifact.status,
@@ -655,18 +708,26 @@ function samePhaseBuildArtifactIds(
 }
 
 export function MovesPhaseStandaloneClient({
+  canApproveGates = false,
   initialPhaseCaptureValues,
   initialPhaseCaptureRevision,
+  initialBusinessChangeAssessment = "",
+  initialApprovedEvidenceReferences = [],
+  initialConfirmedSolutionRoute = null,
+  uploadedSolutionOptionSet = null,
+  approvedSolutionOption = null,
   move,
   phaseNum,
   phaseTallies,
   evidenceNeedPackets,
+  evidenceReadinessAvailable = true,
   carriesForwardContent,
+  p3PriorPhaseContent = [],
   phaseBuildArtifacts = [],
   phaseNavigationStatus,
   initialStageReadinessPreview = null,
+  syntheticEvidencePackHref = null,
   currentStateReadiness = null,
-  moveContextExtractEvidenceCount = 0,
   initialSubstepKey,
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
@@ -682,6 +743,13 @@ export function MovesPhaseStandaloneClient({
   const readinessWorkbookHref =
     phase.phase < 5
       ? `/api/v1/programs/${encodeURIComponent(move.id)}/stage-readiness-workbook?phase=${phase.phase}`
+      : null;
+  const phaseScopedStageReadinessPreview =
+    initialStageReadinessPreview?.proposalSet?.transition?.fromPhase ===
+      phase.phase &&
+    initialStageReadinessPreview.proposalSet.transition?.toPhase ===
+      phase.phase + 1
+      ? initialStageReadinessPreview
       : null;
   const currentPhase = move.currentPhase ?? 0;
   const terminalComplete = Boolean(move.terminalComplete);
@@ -749,18 +817,50 @@ export function MovesPhaseStandaloneClient({
     null,
   );
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
-  const topLevelHardGateCriteria = move.gateCriteria.filter(
-    (criterion) => criterion.severity === "hard",
+  const topLevelRequiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phase.phase,
   );
+  const phaseEvidenceChecklistConfigured =
+    phase.phase < 2 ||
+    (phase.phase === 2
+      ? currentStateReadiness !== null
+      : evidenceNeedPackets.some((packet) => packet.phase === phase.phase));
+  const topLevelEvidenceCheckAvailable =
+    evidenceReadinessAvailable &&
+    phaseEvidenceChecklistConfigured &&
+    (phase.phase !== 2 || currentStateReadiness !== null);
+  const p0EvidencePacket = evidenceNeedPackets.find(
+    (packet) =>
+      packet.phase === 0 && packet.familyId === "p0_origination_source",
+  );
+  const p0EvidenceGateCriterion = {
+    id: "p0_source_evidence",
+    label: "One uploaded P0 source file reviewed",
+    severity: "hard" as const,
+    completed:
+      topLevelEvidenceCheckAvailable && p0EvidencePacket?.status === "covered",
+  };
+  const topLevelHardGateCriteria = [
+    ...move.gateCriteria.filter((criterion) => criterion.severity === "hard"),
+    ...(phase.phase === 0 ? [p0EvidenceGateCriterion] : []),
+  ];
   const topLevelHardGateMet = topLevelHardGateCriteria.filter(
     (criterion) => criterion.completed,
   ).length;
-  const topLevelHardGateTotal =
-    topLevelHardGateCriteria.length || move.gateCriteria.length;
+  const topLevelHardGateOpenCount =
+    topLevelHardGateCriteria.length - topLevelHardGateMet;
+  const phaseHardGatesPassed =
+    isHistoricalPhase || gateApproved || topLevelHardGateOpenCount === 0;
+  const topLevelHardGateTotal = topLevelHardGateCriteria.length;
   const hardGateProgressLabel =
     topLevelHardGateTotal > 0
       ? `${topLevelHardGateMet}/${topLevelHardGateTotal} hard met`
       : "no hard gates";
+  const topLevelEvidenceReady =
+    topLevelEvidenceCheckAvailable &&
+    topLevelRequiredEvidenceGaps.length === 0 &&
+    (phase.phase !== 2 || currentStateReadiness?.hardGaps.length === 0);
   const progressPct = Math.round(
     ((substepIndex + 1) / phase.substeps.length) * 100,
   );
@@ -768,7 +868,7 @@ export function MovesPhaseStandaloneClient({
     isHistoricalPhase || gateApproved
       ? "Complete"
       : substep.key === "approve" && topLevelHardGateTotal > 0
-        ? topLevelHardGateMet >= topLevelHardGateTotal
+        ? phaseHardGatesPassed && topLevelEvidenceReady
           ? `Ready · ${hardGateProgressLabel}`
           : `Blocked · ${hardGateProgressLabel}`
         : hardGateProgressLabel;
@@ -822,7 +922,7 @@ export function MovesPhaseStandaloneClient({
     () =>
       buildP3DesignInputsPackFromSignals({
         archetype: move.archetype,
-        carriesForwardContent,
+        priorPhaseContent: p3PriorPhaseContent,
         charter: move.charter,
         evidenceNeedPackets,
         gateCriteria: move.gateCriteria,
@@ -832,7 +932,7 @@ export function MovesPhaseStandaloneClient({
         readiness: currentStateReadiness,
       }),
     [
-      carriesForwardContent,
+      p3PriorPhaseContent,
       currentStateReadiness,
       evidenceNeedPackets,
       move.archetype,
@@ -898,6 +998,16 @@ export function MovesPhaseStandaloneClient({
       cancelled = true;
     };
   }, [move.id, phase.phase]);
+  // What the file cabinet's uploader can declare a file as covering: the
+  // evidence families this Move's discovery requires, once each.
+  const declarableEvidenceFamilies = useMemo(() => {
+    const seen = new Set<string>();
+    return evidenceNeedPackets.flatMap((packet) => {
+      if (!packet.familyId || seen.has(packet.familyId)) return [];
+      seen.add(packet.familyId);
+      return [{ id: packet.familyId, label: packet.evidenceSlot }];
+    });
+  }, [evidenceNeedPackets]);
   const p3OptionSet = useMemo(
     () =>
       assembleP3SolutionOptions({
@@ -909,6 +1019,7 @@ export function MovesPhaseStandaloneClient({
         moveName: displayMoveName,
         readiness: currentStateReadiness,
         tenantName: move.tenant.name,
+        uploadedOptionSet: uploadedSolutionOptionSet,
         valueAtStake: moveValueRange,
       }),
     [
@@ -921,6 +1032,7 @@ export function MovesPhaseStandaloneClient({
       move.tenant.name,
       moveValueRange,
       p3DesignInputsPack,
+      uploadedSolutionOptionSet,
     ],
   );
   const [persistedPhaseCaptureValues, setPersistedPhaseCaptureValues] =
@@ -931,6 +1043,13 @@ export function MovesPhaseStandaloneClient({
     useState<PhaseCaptureValues>(() =>
       normalizePhaseCaptureValues(initialPhaseCaptureValues),
     );
+  const [confirmedSolutionRoute, setConfirmedSolutionRoute] =
+    useState<ConfirmedSolutionRoute | null>(initialConfirmedSolutionRoute);
+  const businessChangeAssessment =
+    phase.phase === 1
+      ? (phaseCaptureValues.business_change_assessment ??
+        initialBusinessChangeAssessment)
+      : initialBusinessChangeAssessment;
   const [phaseCaptureRevision, setPhaseCaptureRevision] = useState(
     initialPhaseCaptureRevision ?? "",
   );
@@ -941,13 +1060,13 @@ export function MovesPhaseStandaloneClient({
     Record<string, string>
   >({});
   const phaseCaptureSections = useMemo(
-    () => getPhaseCaptureSections(phase.phase),
-    [phase.phase],
+    () => getPhaseCaptureSections(phase.phase, confirmedSolutionRoute),
+    [confirmedSolutionRoute, phase.phase],
   );
   const inferredSelectedOption = useMemo(
     () =>
       phase.phase === 3
-        ? inferP3SelectedOptionIdFromRecommendation(
+        ? inferSelectedOptionId(
             persistedPhaseCaptureValues.recommendation,
             p3OptionSet.options,
           )
@@ -958,7 +1077,15 @@ export function MovesPhaseStandaloneClient({
       p3OptionSet.options,
     ],
   );
-  const effectiveSelectedOption = selectedOption || inferredSelectedOption;
+  const approvedOptionId = useMemo(
+    () =>
+      phase.phase === 3
+        ? restoreApprovedOptionId(approvedSolutionOption, p3OptionSet.options)
+        : "",
+    [approvedSolutionOption, p3OptionSet.options, phase.phase],
+  );
+  const effectiveSelectedOption =
+    selectedOption || approvedOptionId || inferredSelectedOption;
   const selectedP3Option = useMemo(
     () =>
       p3OptionSet.options.find(
@@ -1023,12 +1150,46 @@ export function MovesPhaseStandaloneClient({
       ),
     );
   }, [initialSubstepKey, isHistoricalPhase, phase.phase]);
+  const requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phase.phase,
+  );
+  const currentStateEvidenceGapCount =
+    phase.phase === 2 && currentStateReadiness
+      ? currentStateReadiness.hardGaps.length
+      : null;
+  const phaseEvidenceCheckAvailable = topLevelEvidenceCheckAvailable;
+  const phaseEvidenceCheckBlocker = !evidenceReadinessAvailable
+    ? "Evidence readiness could not be verified. Refresh this phase before continuing."
+    : !phaseEvidenceChecklistConfigured
+      ? "Required evidence checklist is not configured for this phase. Configure it before continuing."
+      : phase.phase === 2 && currentStateReadiness === null
+        ? "Current-state evidence readiness could not be checked. Refresh this phase before continuing."
+        : null;
+  const phaseEvidenceGapCount =
+    requiredEvidenceGaps.length + (currentStateEvidenceGapCount ?? 0);
+  const phaseEvidencePassed =
+    phaseEvidenceCheckAvailable && phaseEvidenceGapCount === 0;
   const phaseCaptureCompleteCount = useMemo(
     () =>
-      phaseCaptureSections.filter((section) =>
-        String(persistedPhaseCaptureValues[section.key] ?? "").trim(),
+      phaseCaptureSections.filter(
+        (section) =>
+          phaseCaptureStatusForSection(
+            section,
+            persistedPhaseCaptureValues,
+            persistedPhaseCaptureValues,
+            phaseCaptureSaveStatus,
+            businessChangeAssessment,
+            initialApprovedEvidenceReferences.map((item) => item.evidenceId),
+          ).complete,
       ).length,
-    [phaseCaptureSections, persistedPhaseCaptureValues],
+    [
+      businessChangeAssessment,
+      initialApprovedEvidenceReferences,
+      phaseCaptureSections,
+      persistedPhaseCaptureValues,
+      phaseCaptureSaveStatus,
+    ],
   );
   const phaseCaptureDirtyKeys = useMemo(
     () =>
@@ -1077,32 +1238,50 @@ export function MovesPhaseStandaloneClient({
     ? blockedPhaseRequest.reason
     : terminalP5Complete
       ? "Move handed off to Tower."
-      : phaseCaptureMissingCount > 0
-        ? `${phaseCaptureMissingCount} phase input${
-            phaseCaptureMissingCount === 1 ? "" : "s"
-          } still missing from persisted server state.`
-        : substep.key === "approve" &&
-            topLevelHardGateMet < topLevelHardGateTotal
-          ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
-              topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
-            } remain.`
-          : "No required input blockers for the current step.";
+      : !phaseEvidenceCheckAvailable
+        ? (phaseEvidenceCheckBlocker ??
+          "Evidence readiness could not be checked. Refresh this phase before continuing.")
+        : phaseEvidenceGapCount > 0
+          ? `${phaseEvidenceGapCount} required evidence item${
+              phaseEvidenceGapCount === 1 ? "" : "s"
+            } still need approval or coverage.`
+          : phaseCaptureMissingCount > 0
+            ? `${phaseCaptureMissingCount} phase input${
+                phaseCaptureMissingCount === 1 ? "" : "s"
+              } still missing from persisted server state.`
+            : !phaseHardGatesPassed
+              ? `${topLevelHardGateOpenCount} hard gate blocker${
+                  topLevelHardGateOpenCount === 1 ? "" : "s"
+                } remain before this phase can advance.`
+              : "No required input blockers for the current step.";
   const phaseProgressSignals = [
     {
       label: "Inputs",
       value: `${phaseCaptureCompleteCount}/${phaseCaptureSections.length}`,
       tone:
         phaseCaptureMissingCount === 0 && phaseCaptureDirtyCount === 0
-          ? "ready"
+          ? phaseEvidencePassed && phaseHardGatesPassed
+            ? "ready"
+            : "neutral"
           : "open",
+    },
+    {
+      label: "Evidence",
+      value: !phaseEvidenceCheckAvailable
+        ? "Not checked"
+        : phaseEvidenceGapCount === 0
+          ? "Covered"
+          : `${phaseEvidenceGapCount} open`,
+      tone:
+        !phaseEvidenceCheckAvailable || phaseEvidenceGapCount > 0
+          ? "blocked"
+          : "ready",
     },
     {
       label: "Gate",
       value: phaseReadinessLabel,
       tone:
-        isHistoricalPhase ||
-        gateApproved ||
-        topLevelHardGateMet >= topLevelHardGateTotal
+        isHistoricalPhase || gateApproved || phaseHardGatesPassed
           ? "ready"
           : "blocked",
     },
@@ -1112,30 +1291,77 @@ export function MovesPhaseStandaloneClient({
       tone: phaseCaptureMissingCount > 0 ? "open" : "neutral",
     },
   ];
-  const phaseCaptureBlocker =
-    phase.phase === 3 && !selectedP3Option
-      ? "Select the solution option that architecture should implement before Approve & Build."
-      : phase.phase >= 1 && avaLocalDraftCount > 0
-        ? `Save ${avaLocalDraftCount} aVa draft${
-            avaLocalDraftCount === 1 ? "" : "s"
-          } before Approve & Build.`
-        : phase.phase >= 1 && phaseCaptureFailedCount > 0
-          ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
-              phaseCaptureFailedCount === 1 ? "" : "s"
+  const phaseCaptureBlocker = !phaseEvidenceCheckAvailable
+    ? (phaseEvidenceCheckBlocker ??
+      "Evidence readiness could not be verified. Refresh this phase before Approve & Build.")
+    : currentStateEvidenceGapCount !== null && currentStateEvidenceGapCount > 0
+      ? `${currentStateEvidenceGapCount} current-state evidence famil${
+          currentStateEvidenceGapCount === 1 ? "y" : "ies"
+        } still need approval or coverage before Approve & Build.`
+      : phase.phase === 3 && !selectedP3Option
+        ? "Select the solution option that architecture should implement before Approve & Build."
+        : phase.phase >= 1 && avaLocalDraftCount > 0
+          ? `Save ${avaLocalDraftCount} aVa draft${
+              avaLocalDraftCount === 1 ? "" : "s"
             } before Approve & Build.`
-          : phase.phase >= 1 && phaseCaptureSavingCount > 0
-            ? `Wait for ${phaseCaptureSavingCount} phase input${
-                phaseCaptureSavingCount === 1 ? "" : "s"
-              } to save before Approve & Build.`
-            : phase.phase >= 1 && phaseCaptureDirtyCount > 0
-              ? `Save ${phaseCaptureDirtyCount} phase input${
-                  phaseCaptureDirtyCount === 1 ? "" : "s"
-                } before Approve & Build.`
-              : phase.phase >= 1 && phaseCaptureMissingCount > 0
-                ? `Complete ${phaseCaptureMissingCount} phase input${
-                    phaseCaptureMissingCount === 1 ? "" : "s"
+          : phase.phase >= 1 && phaseCaptureFailedCount > 0
+            ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
+                phaseCaptureFailedCount === 1 ? "" : "s"
+              } before Approve & Build.`
+            : phase.phase >= 1 && phaseCaptureSavingCount > 0
+              ? `Wait for ${phaseCaptureSavingCount} phase input${
+                  phaseCaptureSavingCount === 1 ? "" : "s"
+                } to save before Approve & Build.`
+              : phase.phase >= 1 && phaseCaptureDirtyCount > 0
+                ? `Save ${phaseCaptureDirtyCount} phase input${
+                    phaseCaptureDirtyCount === 1 ? "" : "s"
                   } before Approve & Build.`
-                : null;
+                : phase.phase >= 1 && phaseCaptureMissingCount > 0
+                  ? `Complete ${phaseCaptureMissingCount} phase input${
+                      phaseCaptureMissingCount === 1 ? "" : "s"
+                    } before Approve & Build.`
+                  : null;
+  const phaseProgress = phaseProgressReadiness({
+    phase: phase.phase,
+    phaseCaptureBlocker,
+    evidenceNeedPackets,
+  });
+  const phaseProgressHeaderState: PhaseProgressHeaderState | null =
+    finderSelectedSectionKey === null && substep.key === "approve"
+      ? isHistoricalPhase || gateApproved
+        ? { label: "Approved", tone: "complete", openEvidenceCount: 0 }
+        : !phaseEvidenceCheckAvailable
+          ? {
+              label: phaseEvidenceChecklistConfigured
+                ? "Evidence check unavailable"
+                : "Evidence checklist missing",
+              tone: "open",
+              openEvidenceCount: 0,
+            }
+          : phaseEvidenceGapCount > 0
+            ? {
+                label: "Review required evidence",
+                tone: "open",
+                openEvidenceCount: phaseEvidenceGapCount,
+              }
+            : !phaseHardGatesPassed
+              ? {
+                  label: "Resolve hard gate blockers",
+                  tone: "open",
+                  openEvidenceCount: 0,
+                }
+              : phaseProgress.blocker
+                ? {
+                    label: "Inputs not ready",
+                    tone: "open",
+                    openEvidenceCount: 0,
+                  }
+                : {
+                    label: "Ready to build",
+                    tone: "ready",
+                    openEvidenceCount: 0,
+                  }
+      : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
   // for its "Next phase readiness" section below — computed once here so the
@@ -1327,6 +1553,7 @@ export function MovesPhaseStandaloneClient({
           revision?: string;
           detail?: string;
           error?: string;
+          confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
         };
         if (
           res.status === 409 &&
@@ -1357,6 +1584,7 @@ export function MovesPhaseStandaloneClient({
           [fieldKey]: savedValues[fieldKey] ?? "",
         }));
         if (body.revision) setPhaseCaptureRevision(body.revision);
+        setConfirmedSolutionRoute(body.confirmedSolutionRoute ?? null);
         setAvaDraftValues((prev) => {
           const next = { ...prev };
           delete next[fieldKey];
@@ -1440,6 +1668,7 @@ export function MovesPhaseStandaloneClient({
           revision?: string;
           detail?: string;
           error?: string;
+          confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
         };
         if (
           res.status === 409 &&
@@ -1492,6 +1721,7 @@ export function MovesPhaseStandaloneClient({
           ),
         );
         if (body.revision) setPhaseCaptureRevision(body.revision);
+        setConfirmedSolutionRoute(body.confirmedSolutionRoute ?? null);
         setPhaseCaptureSaveStatus((prev) => {
           const next = { ...prev };
           for (const key of keysToSave) next[key] = "saved";
@@ -1591,8 +1821,6 @@ export function MovesPhaseStandaloneClient({
               programId: move.id,
               moveId: move.id,
               phase: phaseNum,
-              moveContextExtractEvidenceCount,
-              moveEvidenceCount: moveContextExtractEvidenceCount,
               moveDisplayCode: move.displayCode,
               moveName: displayMoveName,
               phaseLabel: phase.title,
@@ -1700,7 +1928,6 @@ export function MovesPhaseStandaloneClient({
       phaseCaptureValues,
       phaseTallies,
       phaseNum,
-      moveContextExtractEvidenceCount,
       finderReadinessPack,
     ],
   );
@@ -1791,8 +2018,21 @@ export function MovesPhaseStandaloneClient({
                 ).trim() ||
                 `${selectedP3Option.recommendationLabel}. ${selectedP3Option.evidenceBasis.join(" ")}`,
               tradeoffsAccepted: [
-                `Effort: ${selectedP3Option.effort}`,
-                `Time to value: ${selectedP3Option.timeToValue}`,
+                // A client-supplied option carries no effort or time-to-value
+                // estimate of ours; record what the client stated instead.
+                ...(selectedP3Option.clientSupplied
+                  ? [
+                      selectedP3Option.clientSupplied.condition
+                        ? `Condition: ${selectedP3Option.clientSupplied.condition}`
+                        : "",
+                      selectedP3Option.clientSupplied.scope
+                        ? `Scope: ${selectedP3Option.clientSupplied.scope}`
+                        : "",
+                    ].filter(Boolean)
+                  : [
+                      `Effort: ${selectedP3Option.effort}`,
+                      `Time to value: ${selectedP3Option.timeToValue}`,
+                    ]),
                 ...selectedP3Option.risks.map(
                   (risk) => `Risk accepted for design: ${risk}`,
                 ),
@@ -1801,7 +2041,8 @@ export function MovesPhaseStandaloneClient({
                 id: option.id,
                 name: option.label,
                 summary: option.summary,
-                scores: option.scores,
+                // Template scores are not an assessment of a client option.
+                ...(option.clientSupplied ? {} : { scores: option.scores }),
                 recommended: option.recommended,
               })),
             }),
@@ -1907,7 +2148,7 @@ export function MovesPhaseStandaloneClient({
         `Gate approval failed (HTTP ${approvalRes.status})`;
       setGateApprovalStatus("blocked");
       setGateApprovalMessage(
-        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve or upload the client-approved deliverable in Files & Evidence, then re-run Approve & Build.`,
+        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve the draft or upload an edited version in Files & Evidence, then re-run Approve & Build.`,
       );
       throw new Error(blockedMessage);
     }
@@ -2185,7 +2426,8 @@ export function MovesPhaseStandaloneClient({
               </div>
               {!collapsedRail && (
                 <p className="mxw-foot">
-                  <b>aVa</b> guides P0-P4 · Atlas takes over P5 Execute.
+                  <b>aVa</b> guides P0-P5 · Tower tracks execution after
+                  handoff.
                 </p>
               )}
             </aside>
@@ -2222,7 +2464,13 @@ export function MovesPhaseStandaloneClient({
                     activeView={workspaceView}
                     onSelect={setWorkspaceView}
                   />
-                  <FileCabinetPanel moveId={move.id} phase={phase.phase} />
+                  <FileCabinetPanel
+                    moveId={move.id}
+                    phase={phase.phase}
+                    canApproveGates={canApproveGates}
+                    onEvidenceChanged={refreshPhase}
+                    evidenceFamilies={declarableEvidenceFamilies}
+                  />
                 </>
               ) : workspaceView === "intelligence" ? (
                 <>
@@ -2364,6 +2612,7 @@ export function MovesPhaseStandaloneClient({
                   </div>
                   <ApprovalsOverview
                     currentMoveId={move.id}
+                    canApproveGates={canApproveGates}
                     phaseTallies={phaseTallies}
                     reachablePhase={move.currentPhase ?? 0}
                     viewingPhase={phase.phase}
@@ -2420,7 +2669,8 @@ export function MovesPhaseStandaloneClient({
                             setWorkspaceView("phase");
                             setFinderSelectedSectionKey(null);
                             (
-                              workbookReviewRef.current ?? document.documentElement
+                              workbookReviewRef.current ??
+                              document.documentElement
                             ).scrollIntoView({
                               behavior: "smooth",
                               block: "start",
@@ -2441,10 +2691,24 @@ export function MovesPhaseStandaloneClient({
                         >
                           Download P{phase.phase + 1} readiness workbook
                         </a>
+                        {syntheticEvidencePackHref ? (
+                          <a
+                            className="mxw-stage-download"
+                            download
+                            href={syntheticEvidencePackHref}
+                          >
+                            Download sample upload files
+                          </a>
+                        ) : null}
                         <div ref={workbookReviewRef}>
                           <StageReadinessWorkbookPreviewControl
+                            key={
+                              phaseScopedStageReadinessPreview?.proposalSet
+                                ? `${phaseScopedStageReadinessPreview.proposalSet.artifactId ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${phaseScopedStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
+                                : "no-stored-proposal-set"
+                            }
                             apiPath={readinessWorkbookHref}
-                            initialPreview={initialStageReadinessPreview}
+                            initialPreview={phaseScopedStageReadinessPreview}
                             onReviewSaved={() => router.refresh()}
                           />
                         </div>
@@ -2498,6 +2762,19 @@ export function MovesPhaseStandaloneClient({
                         )
                       }
                       phase={phase}
+                      gateApproved={gateApproved}
+                      phaseEvidencePassed={phaseEvidencePassed}
+                      phaseHardGatesPassed={phaseHardGatesPassed}
+                      evidenceReadinessAvailable={phaseEvidenceCheckAvailable}
+                      progressHeaderState={phaseProgressHeaderState}
+                      onOpenFiles={openFilesWorkspace}
+                      businessChangeAssessment={businessChangeAssessment}
+                      approvedEvidenceReferences={
+                        initialApprovedEvidenceReferences
+                      }
+                      reviewerIdentity={
+                        currentUser?.email ?? "signed-in reviewer"
+                      }
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={displayPhaseCaptureValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
@@ -2507,11 +2784,17 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
                           currentStateReadiness={currentStateReadiness}
                           evidenceCount={evidenceCount}
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
+                          phaseEvidencePassed={phaseEvidencePassed}
+                          phaseHardGatesPassed={phaseHardGatesPassed}
+                          evidenceReadinessAvailable={
+                            phaseEvidenceCheckAvailable
+                          }
                           gateApproved={gateApproved}
                           gateApprovalMessage={gateApprovalMessage}
                           gateApprovalStatus={gateApprovalStatus}
@@ -2522,6 +2805,14 @@ export function MovesPhaseStandaloneClient({
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
                           approverLabel={approverLabel}
+                          businessChangeAssessment={businessChangeAssessment}
+                          confirmedSolutionRoute={confirmedSolutionRoute}
+                          approvedEvidenceReferences={
+                            initialApprovedEvidenceReferences
+                          }
+                          reviewerIdentity={
+                            currentUser?.email ?? "signed-in reviewer"
+                          }
                           onFinalizePhaseCapture={finalizePhaseCapture}
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -2560,6 +2851,18 @@ export function MovesPhaseStandaloneClient({
                         )
                       }
                       phase={phase}
+                      phaseEvidencePassed={phaseEvidencePassed}
+                      phaseHardGatesPassed={phaseHardGatesPassed}
+                      evidenceReadinessAvailable={phaseEvidenceCheckAvailable}
+                      progressHeaderState={phaseProgressHeaderState}
+                      onOpenFiles={openFilesWorkspace}
+                      businessChangeAssessment={businessChangeAssessment}
+                      approvedEvidenceReferences={
+                        initialApprovedEvidenceReferences
+                      }
+                      reviewerIdentity={
+                        currentUser?.email ?? "signed-in reviewer"
+                      }
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={phaseCaptureValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
@@ -2569,11 +2872,17 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
                           currentStateReadiness={currentStateReadiness}
                           evidenceCount={evidenceCount}
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
+                          phaseEvidencePassed={phaseEvidencePassed}
+                          phaseHardGatesPassed={phaseHardGatesPassed}
+                          evidenceReadinessAvailable={
+                            phaseEvidenceCheckAvailable
+                          }
                           gateApproved={gateApproved}
                           gateApprovalMessage={gateApprovalMessage}
                           gateApprovalStatus={gateApprovalStatus}
@@ -2584,6 +2893,14 @@ export function MovesPhaseStandaloneClient({
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
                           approverLabel={approverLabel}
+                          businessChangeAssessment={businessChangeAssessment}
+                          confirmedSolutionRoute={confirmedSolutionRoute}
+                          approvedEvidenceReferences={
+                            initialApprovedEvidenceReferences
+                          }
+                          reviewerIdentity={
+                            currentUser?.email ?? "signed-in reviewer"
+                          }
                           onFinalizePhaseCapture={finalizePhaseCapture}
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -2884,9 +3201,8 @@ function WorkspaceSurfaceTabs({
 //
 // Entirely derived from `phaseTallies` (getMovePhaseTallies(move) — already
 // computed server-side and threaded through as a prop, no new fetch here).
-// Approver is always the static "Sponsor" label: every GATE_RULES entry in
-// governance.ts uses the single constant `approverRole: "sponsor"` today —
-// this does not imply a multi-role approval model exists.
+// Product approvals are recorded by the authenticated workspace user with
+// gate-approval permission. Sponsor identity is contact metadata only.
 //
 // "Review & approve" reuses the same two navigation mechanisms already used
 // elsewhere in this file: a real Link to the phase's own route for any other
@@ -2914,37 +3230,20 @@ function approvalStatusClass(row: PhaseTallyRow): string {
   return "upcoming";
 }
 
-function approvalRoleLabelForPhase(phase: number): string {
-  const roleOrder: ApprovalRole[] = [
-    "business",
-    "technology",
-    "finance",
-    "risk_security",
-  ];
-  const roles = new Set(
-    (PHASE_CANONICAL_KEYS[phase] ?? []).flatMap((key) =>
-      requiredApprovalRolesFor(key),
-    ),
-  );
-
-  if (roles.size === 0) {
-    return "Not yet assigned";
-  }
-
-  return roleOrder
-    .filter((role) => roles.has(role))
-    .map((role) => APPROVAL_ROLE_LABELS[role])
-    .join(" · ");
+function approvalRoleLabelForPhase(_phase: number): string {
+  return "Authorized workspace user";
 }
 
 function ApprovalsOverview({
   currentMoveId,
+  canApproveGates,
   phaseTallies,
   reachablePhase,
   viewingPhase,
   onReviewCurrentPhase,
 }: {
   currentMoveId: string;
+  canApproveGates: boolean;
   phaseTallies: PhaseTallyRow[];
   reachablePhase: number;
   viewingPhase: number;
@@ -2984,13 +3283,13 @@ function ApprovalsOverview({
             <span className="mxw-approvals-action">
               {isViewingRow ? (
                 <button onClick={onReviewCurrentPhase} type="button">
-                  Review &amp; approve →
+                  {canApproveGates ? "Review & approve →" : "View gate →"}
                 </button>
               ) : isReachable ? (
                 <Link
                   href={`/strategic-moves/${currentMoveId}/phase/${row.phase}`}
                 >
-                  Review &amp; approve →
+                  {canApproveGates ? "Review & approve →" : "View gate →"}
                 </Link>
               ) : (
                 <span className="mxw-approvals-noaction">
@@ -3127,16 +3426,64 @@ function phaseCaptureStatusForSection(
   draftValues: PhaseCaptureValues,
   persistedValues: PhaseCaptureValues,
   saveStatus: Record<string, PhaseCaptureSaveStatus>,
+  businessChangeAssessment = "",
+  approvedEvidenceReferences: readonly string[] = [],
+  evidencePassed = true,
+  evidenceReadinessAvailable = true,
 ): PhaseCaptureStatusView {
   // Delegates to the shared, unit-tested state machine so the badge's meaning
   // is asserted somewhere other than a browser run. See phase-capture-status.ts
   // for the invariant: Done means the visible value is reproducible from the
   // server after a no-store reload.
-  return resolvePhaseCaptureStatus({
+  const status = resolvePhaseCaptureStatus({
     draft: String(draftValues[section.key] ?? ""),
     persisted: String(persistedValues[section.key] ?? ""),
     saveStatus: saveStatus[section.key],
   });
+  if (!status.complete) return status;
+
+  const persisted = String(persistedValues[section.key] ?? "");
+  const structuredValid =
+    section.structured === "business-change"
+      ? isBusinessChangeAssessmentComplete(persisted)
+      : section.structured === "solution-route"
+        ? Boolean(
+            resolveConfirmedSolutionRoute({
+              businessChangeAssessment:
+                businessChangeAssessment ||
+                parseSolutionRouteValidation(persisted)
+                  ?.businessChangeAssessmentSnapshot,
+              routeValidation: persisted,
+              approvedEvidenceReferences,
+            }),
+          )
+        : section.structured === "estimate-model"
+          ? evaluateEstimateModel(persisted).readyForApproval
+          : true;
+  if (!structuredValid) {
+    return { label: "Needs valid details", complete: false, tone: "open" };
+  }
+  if (!evidenceReadinessAvailable) {
+    return {
+      label: "Evidence check unavailable",
+      complete: false,
+      tone: "open",
+    };
+  }
+  if (!evidencePassed) {
+    return { label: "Evidence open", complete: false, tone: "open" };
+  }
+  return status;
+}
+
+function phaseCaptureStatusForDisplay(
+  status: PhaseCaptureStatusView,
+  phase: number,
+  phaseHardGatesPassed: boolean,
+): PhaseCaptureStatusView {
+  return phase >= 1 && status.complete && !phaseHardGatesPassed
+    ? { label: "Captured · gate open", complete: false, tone: "open" }
+    : status;
 }
 
 function workflowIndexForSelectedSection(
@@ -3228,6 +3575,15 @@ function PhaseContractStepsCanvas({
   onSelectSubstep,
   onToggleComingUp,
   phase,
+  gateApproved,
+  phaseEvidencePassed,
+  phaseHardGatesPassed,
+  evidenceReadinessAvailable,
+  progressHeaderState,
+  onOpenFiles,
+  businessChangeAssessment,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
   persistedPhaseCaptureValues,
@@ -3251,6 +3607,15 @@ function PhaseContractStepsCanvas({
   onSelectSubstep: (index: number) => void;
   onToggleComingUp: () => void;
   phase: PhaseContract;
+  gateApproved: boolean;
+  phaseEvidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
+  evidenceReadinessAvailable: boolean;
+  progressHeaderState: PhaseProgressHeaderState | null;
+  onOpenFiles: () => void;
+  businessChangeAssessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
   persistedPhaseCaptureValues: PhaseCaptureValues;
@@ -3282,26 +3647,26 @@ function PhaseContractStepsCanvas({
         ) + 1
       : phaseCaptureSections.length + substepIndex + 1;
   const totalStepCount = phaseCaptureSections.length + phase.substeps.length;
-  const detailComplete = selectedSection
-    ? phaseCaptureStatusForSection(
-        selectedSection,
-        phaseCaptureValues,
-        persistedPhaseCaptureValues,
-        phaseCaptureSaveStatus,
-      ).complete
-    : terminalP5Complete
-      ? true
-      : substepIndex < phase.substeps.length - 1
-        ? true
-        : false;
   const detailStatus = selectedSection
-    ? phaseCaptureStatusForSection(
-        selectedSection,
-        phaseCaptureValues,
-        persistedPhaseCaptureValues,
-        phaseCaptureSaveStatus,
+    ? phaseCaptureStatusForDisplay(
+        phaseCaptureStatusForSection(
+          selectedSection,
+          phaseCaptureValues,
+          persistedPhaseCaptureValues,
+          phaseCaptureSaveStatus,
+          businessChangeAssessment,
+          approvedEvidenceReferences.map((item) => item.evidenceId),
+          phaseEvidencePassed,
+          evidenceReadinessAvailable,
+        ),
+        phase.phase,
+        phaseHardGatesPassed,
       )
     : null;
+  const detailComplete = selectedSection
+    ? Boolean(detailStatus?.complete)
+    : terminalP5Complete ||
+      (gateApproved && phase.substeps[substepIndex]?.key === "approve");
   const selectedAvaProposal = selectedSection
     ? (avaDraftProposalsByKey.get(selectedSection.key) ?? null)
     : null;
@@ -3344,11 +3709,20 @@ function PhaseContractStepsCanvas({
         <div className="mxw-contract-group">
           <div className="mxw-contract-group-label">Inputs</div>
           {phaseCaptureSections.map((section) => {
-            const status = phaseCaptureStatusForSection(
+            const captureStatus = phaseCaptureStatusForSection(
               section,
               phaseCaptureValues,
               persistedPhaseCaptureValues,
               phaseCaptureSaveStatus,
+              businessChangeAssessment,
+              approvedEvidenceReferences.map((item) => item.evidenceId),
+              phaseEvidencePassed,
+              evidenceReadinessAvailable,
+            );
+            const status = phaseCaptureStatusForDisplay(
+              captureStatus,
+              phase.phase,
+              phaseHardGatesPassed,
             );
             const selected = selectedSectionKey === section.key;
             return (
@@ -3365,6 +3739,18 @@ function PhaseContractStepsCanvas({
                   {status.complete ? "✓" : ""}
                 </span>
                 <strong>{section.label}</strong>
+                {captureStatus.complete && !status.complete ? (
+                  <small>Captured · gate open</small>
+                ) : null}
+                {!captureStatus.complete &&
+                (status.label === "Evidence open" ||
+                  status.label === "Evidence check unavailable") ? (
+                  <small>
+                    {status.label === "Evidence open"
+                      ? "Needs approved evidence"
+                      : "Evidence check unavailable"}
+                  </small>
+                ) : null}
               </button>
             );
           })}
@@ -3375,10 +3761,12 @@ function PhaseContractStepsCanvas({
             const active = selectedWorkflow
               ? index === substepIndex
               : index === activeWorkflowIndex;
-            const complete = terminalP5Complete || index < substepIndex;
+            const complete =
+              terminalP5Complete || (gateApproved && item.key === "approve");
+            const visited = index < substepIndex && !complete;
             return (
               <button
-                className={`mxw-contract-step ${active ? "active" : ""}`}
+                className={`mxw-contract-step ${active ? "active" : ""} ${visited ? "visited" : ""} ${complete ? "complete" : ""}`}
                 key={item.key}
                 onClick={() => {
                   onSelectSubstep(index);
@@ -3387,10 +3775,14 @@ function PhaseContractStepsCanvas({
                 }}
                 type="button"
               >
-                <span className={complete ? "done" : ""} aria-hidden>
-                  {complete ? "✓" : ""}
+                <span
+                  className={complete ? "done" : visited ? "visited" : ""}
+                  aria-hidden
+                >
+                  {complete ? "✓" : visited ? "·" : ""}
                 </span>
                 <strong>{item.label}</strong>
+                {visited ? <small>Viewed</small> : null}
               </button>
             );
           })}
@@ -3441,7 +3833,32 @@ function PhaseContractStepsCanvas({
             Step {Math.max(detailStepNumber, 1)} of {totalStepCount}
           </small>
           <h2>{detailTitle}</h2>
-          <b>{detailStatus?.label ?? (detailComplete ? "Done" : "Open")}</b>
+          <b>
+            {detailStatus?.label ??
+              progressHeaderState?.label ??
+              (detailComplete ? "Done" : "Open")}
+          </b>
+          <div className="mxw-step-progress-actions">
+            {progressHeaderState ? (
+              progressHeaderState.openEvidenceCount > 0 ? (
+                <button
+                  className="mxw-step-progress-status open"
+                  onClick={onOpenFiles}
+                  type="button"
+                >
+                  {progressHeaderState.label} ·{" "}
+                  {progressHeaderState.openEvidenceCount}
+                </button>
+              ) : (
+                <span
+                  className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                >
+                  {progressHeaderState.label}
+                </span>
+              )
+            ) : null}
+            <div id="mxw-step-progress-action" />
+          </div>
         </div>
 
         {selectedSection ? (
@@ -3499,19 +3916,45 @@ function PhaseContractStepsCanvas({
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
               />
             ) : null}
-            <textarea
-              aria-label={selectedSection.label}
-              className="mxw-contract-input"
-              onChange={(event) =>
-                onPhaseCaptureValueChange(
-                  selectedSection.key,
-                  event.target.value,
-                )
-              }
-              placeholder={selectedSection.description}
-              rows={selectedSection.structured === "facts" ? 4 : 6}
-              value={phaseCaptureValues[selectedSection.key] ?? ""}
-            />
+            {selectedSection.structured === "business-change" ? (
+              <BusinessChangeAssessmentForm
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : selectedSection.structured === "solution-route" ? (
+              <SolutionRouteValidationForm
+                assessment={businessChangeAssessment}
+                approvedEvidenceReferences={approvedEvidenceReferences}
+                reviewerIdentity={reviewerIdentity}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : selectedSection.structured === "estimate-model" ? (
+              <EstimateModelEditor
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            ) : (
+              <textarea
+                aria-label={selectedSection.label}
+                className="mxw-contract-input"
+                onChange={(event) =>
+                  onPhaseCaptureValueChange(
+                    selectedSection.key,
+                    event.target.value,
+                  )
+                }
+                placeholder={selectedSection.description}
+                rows={selectedSection.structured === "facts" ? 4 : 6}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            )}
             {selectedAvaDraftApplied ? (
               <div className="mxw-ava-local-draft">
                 <span>
@@ -3567,6 +4010,12 @@ function FinderStepsColumns({
   onSelectSubstep,
   onToggleComingUp,
   phase,
+  phaseEvidencePassed,
+  phaseHardGatesPassed,
+  evidenceReadinessAvailable,
+  businessChangeAssessment,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
   persistedPhaseCaptureValues,
@@ -3574,6 +4023,8 @@ function FinderStepsColumns({
   phaseCaptureSaveStatus,
   readinessPack,
   selectedSectionKey,
+  progressHeaderState,
+  onOpenFiles,
   substepBody,
   substepIndex,
 }: {
@@ -3583,6 +4034,12 @@ function FinderStepsColumns({
   onSelectSubstep: (index: number) => void;
   onToggleComingUp: () => void;
   phase: PhaseContract;
+  phaseEvidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
+  evidenceReadinessAvailable: boolean;
+  businessChangeAssessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
   persistedPhaseCaptureValues: PhaseCaptureValues;
@@ -3590,6 +4047,8 @@ function FinderStepsColumns({
   phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
   readinessPack: NextPhaseReadinessPack;
   selectedSectionKey: string | null;
+  progressHeaderState: PhaseProgressHeaderState | null;
+  onOpenFiles: () => void;
   substepBody: ReactNode;
   substepIndex: number;
 }) {
@@ -3604,11 +4063,19 @@ function FinderStepsColumns({
   // Reading the raw save-status map here used to miss the case that matters
   // most: a value that diverges from the server with no in-flight save.
   const selectedDetailStatus = selectedSection
-    ? phaseCaptureStatusForSection(
-        selectedSection,
-        phaseCaptureValues,
-        persistedPhaseCaptureValues,
-        phaseCaptureSaveStatus,
+    ? phaseCaptureStatusForDisplay(
+        phaseCaptureStatusForSection(
+          selectedSection,
+          phaseCaptureValues,
+          persistedPhaseCaptureValues,
+          phaseCaptureSaveStatus,
+          businessChangeAssessment,
+          approvedEvidenceReferences.map((item) => item.evidenceId),
+          phaseEvidencePassed,
+          evidenceReadinessAvailable,
+        ),
+        phase.phase,
+        phaseHardGatesPassed,
       )
     : null;
 
@@ -3619,13 +4086,24 @@ function FinderStepsColumns({
           <h3>{phase.code} inputs</h3>
           <ul>
             {phaseCaptureSections.map((section) => {
-              const status = phaseCaptureStatusForSection(
+              const captureStatus = phaseCaptureStatusForSection(
                 section,
                 phaseCaptureValues,
                 persistedPhaseCaptureValues,
                 phaseCaptureSaveStatus,
+                businessChangeAssessment,
+                approvedEvidenceReferences.map((item) => item.evidenceId),
+                phaseEvidencePassed,
+                evidenceReadinessAvailable,
               );
-              const blocked = section.required && !status.complete;
+              const status = phaseCaptureStatusForDisplay(
+                captureStatus,
+                phase.phase,
+                phaseHardGatesPassed,
+              );
+              const blocked = section.required && !captureStatus.complete;
+              const capturedGateOpen =
+                captureStatus.complete && !status.complete;
               const selected = selectedSectionKey === section.key;
               return (
                 <li key={section.key}>
@@ -3639,9 +4117,20 @@ function FinderStepsColumns({
                     <span className="mxw-finder-step-title">
                       {section.label}
                     </span>
-                    {blocked ? (
+                    {capturedGateOpen ? (
                       <span className="mxw-finder-step-subtitle">
-                        {status.label === "Open" ? "Needs input" : status.label}
+                        Captured · gate open
+                      </span>
+                    ) : blocked ? (
+                      <span className="mxw-finder-step-subtitle">
+                        {captureStatus.label === "Open"
+                          ? "Needs input"
+                          : captureStatus.label === "Evidence open"
+                            ? "Needs approved evidence"
+                            : captureStatus.label ===
+                                "Evidence check unavailable"
+                              ? "Evidence check unavailable"
+                              : captureStatus.label}
                       </span>
                     ) : status.complete ? (
                       <span className="mxw-finder-step-state">Captured</span>
@@ -3740,10 +4229,46 @@ function FinderStepsColumns({
         }
         className="mxw-finder-detail"
       >
+        <header className="mxw-contract-detail-top">
+          <small>
+            Step{" "}
+            {selectedSection
+              ? phaseCaptureSections.findIndex(
+                  (section) => section.key === selectedSection.key,
+                ) + 1
+              : phaseCaptureSections.length + substepIndex + 1}{" "}
+            of {phaseCaptureSections.length + phase.substeps.length}
+          </small>
+          <h2>
+            {selectedSection?.label ??
+              phase.substeps[substepIndex]?.label ??
+              phase.title}
+          </h2>
+          <div className="mxw-step-progress-actions">
+            {progressHeaderState ? (
+              progressHeaderState.openEvidenceCount > 0 ? (
+                <button
+                  className="mxw-step-progress-status open"
+                  onClick={onOpenFiles}
+                  type="button"
+                >
+                  {progressHeaderState.label} ·{" "}
+                  {progressHeaderState.openEvidenceCount}
+                </button>
+              ) : (
+                <span
+                  className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                >
+                  {progressHeaderState.label}
+                </span>
+              )
+            ) : null}
+            <div id="mxw-step-progress-action" />
+          </div>
+        </header>
         {selectedSection ? (
           <section className="mxw-finder-detail-panel">
             <header>
-              <h2>{selectedSection.label}</h2>
               <p>{selectedSection.description}</p>
             </header>
             {selectedSection.structured === "facts" ? (
@@ -3751,18 +4276,44 @@ function FinderStepsColumns({
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
               />
             ) : null}
-            <textarea
-              aria-label={selectedSection.label}
-              className="mxw-finder-detail-input"
-              onChange={(event) =>
-                onPhaseCaptureValueChange(
-                  selectedSection.key,
-                  event.target.value,
-                )
-              }
-              rows={selectedSection.structured === "facts" ? 3 : 6}
-              value={phaseCaptureValues[selectedSection.key] ?? ""}
-            />
+            {selectedSection.structured === "business-change" ? (
+              <BusinessChangeAssessmentForm
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : selectedSection.structured === "solution-route" ? (
+              <SolutionRouteValidationForm
+                assessment={businessChangeAssessment}
+                approvedEvidenceReferences={approvedEvidenceReferences}
+                reviewerIdentity={reviewerIdentity}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : selectedSection.structured === "estimate-model" ? (
+              <EstimateModelEditor
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            ) : (
+              <textarea
+                aria-label={selectedSection.label}
+                className="mxw-finder-detail-input"
+                onChange={(event) =>
+                  onPhaseCaptureValueChange(
+                    selectedSection.key,
+                    event.target.value,
+                  )
+                }
+                rows={selectedSection.structured === "facts" ? 3 : 6}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            )}
             {selectedDetailStatus?.tone === "error" ? (
               <p className="mxw-capture-save-error" role="alert">
                 {phaseCaptureSaveErrors[selectedSection.key] ||
@@ -3782,6 +4333,18 @@ function FinderStepsColumns({
       </div>
     </div>
   );
+}
+
+function StepHeaderActionPortal({ children }: { children: ReactNode }) {
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setTarget(
+      document.getElementById("mxw-step-progress-action") as HTMLElement | null,
+    );
+  }, []);
+
+  return target ? createPortal(children, target) : null;
 }
 
 // Structured "facts" review table (metric · value, with an inline citation
@@ -3848,12 +4411,16 @@ function FinderFactsTable({ rawValue }: { rawValue: string }) {
 }
 
 function PhaseBody({
+  canApproveGates,
   carriesForwardContent,
   currentStateReadiness,
   displayMoveName,
   evidenceCount,
   findingsEvidenceLabel,
   evidenceNeedPackets,
+  phaseEvidencePassed,
+  phaseHardGatesPassed,
+  evidenceReadinessAvailable,
   gateApproved,
   gateApprovalMessage,
   gateApprovalStatus,
@@ -3863,6 +4430,10 @@ function PhaseBody({
   onContinueCurrentPhase,
   onApproveP0Gate,
   approverLabel,
+  businessChangeAssessment,
+  confirmedSolutionRoute,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   onFinalizePhaseCapture,
   onOpenFiles,
   onPhaseCaptureValueChange,
@@ -3883,12 +4454,16 @@ function PhaseBody({
   substep,
   terminalComplete,
 }: {
+  canApproveGates: boolean;
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
   displayMoveName: string;
   evidenceCount: number;
   findingsEvidenceLabel: string;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
+  phaseEvidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
+  evidenceReadinessAvailable: boolean;
   gateApproved: boolean;
   gateApprovalMessage: string | null;
   gateApprovalStatus: "idle" | "approving" | "approved" | "blocked";
@@ -3902,6 +4477,10 @@ function PhaseBody({
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
   approverLabel: string | null;
+  businessChangeAssessment: string;
+  confirmedSolutionRoute: ConfirmedSolutionRoute | null;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
@@ -3933,6 +4512,12 @@ function PhaseBody({
         <>
           <PhaseCaptureEditor
             completeCount={phaseCaptureCompleteCount}
+            evidencePassed={phaseEvidencePassed}
+            phaseHardGatesPassed={phaseHardGatesPassed}
+            evidenceReadinessAvailable={evidenceReadinessAvailable}
+            businessChangeAssessment={businessChangeAssessment}
+            approvedEvidenceReferences={approvedEvidenceReferences}
+            reviewerIdentity={reviewerIdentity}
             onChange={onPhaseCaptureValueChange}
             phase={phase}
             persistedValues={persistedPhaseCaptureValues}
@@ -3945,8 +4530,9 @@ function PhaseBody({
             <h2>Initial transformation posture</h2>
             <p>
               Capture the starting hypothesis for P2 discovery. This is not the
-              selected solution approach; P3 will choose the approach after
-              current-state evidence, constraints, and readiness are proven.
+              selected solution approach; P3 will validate the approach and
+              right-size the design after current-state evidence and constraints
+              are reviewed.
             </p>
             <PostureCards
               selectedOption={selectedOption}
@@ -4030,6 +4616,7 @@ function PhaseBody({
         <CurrentStateReadinessPanel
           programId={move.id}
           readiness={currentStateReadiness}
+          canApproveGates={canApproveGates}
         />
         <section className="mxw-zone">
           <h2>Findings to review</h2>
@@ -4087,7 +4674,7 @@ function PhaseBody({
           <section className="mxw-zone">
             <h2>Files to upload</h2>
             <p>
-              Upload sponsor review notes, scope workshop notes, success metric
+              Upload stakeholder input, scope workshop notes, success metric
               decisions, stakeholder map updates, or completed charter
               templates. Multiple files are allowed; uploaded files stay as Move
               evidence until reviewed.
@@ -4226,9 +4813,27 @@ function PhaseBody({
 
   const nextPhaseContract =
     PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
-  const hardGateCriteria = move.gateCriteria.filter(
-    (criterion) => criterion.severity === "hard",
+  const openRequiredEvidence = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phase.phase,
   );
+  const p0EvidenceGateCriterion = {
+    id: "p0_source_evidence",
+    label: "One uploaded P0 source file reviewed",
+    completed:
+      evidenceReadinessAvailable &&
+      evidenceNeedPackets.some(
+        (packet) =>
+          packet.phase === 0 &&
+          packet.familyId === "p0_origination_source" &&
+          packet.status === "covered",
+      ),
+    severity: "hard" as const,
+  };
+  const hardGateCriteria = [
+    ...move.gateCriteria.filter((criterion) => criterion.severity === "hard"),
+    ...(phase.phase === 0 ? [p0EvidenceGateCriterion] : []),
+  ];
   const softGateCriteria = move.gateCriteria.filter(
     (criterion) => criterion.severity === "soft",
   );
@@ -4242,7 +4847,13 @@ function PhaseBody({
   const openSoftCriteria = softGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
-  const isGateBlocked = openHardCriteria.length > 0;
+  const isGateBlocked =
+    !isHistoricalPhase &&
+    !gateApproved &&
+    (openHardCriteria.length > 0 ||
+      openRequiredEvidence.length > 0 ||
+      !evidenceReadinessAvailable ||
+      Boolean(phaseCaptureBlocker));
   const approvalDecisionTitle = isHistoricalPhase
     ? terminalComplete
       ? "Move handed off to Tower"
@@ -4259,7 +4870,12 @@ function PhaseBody({
     : gateApproved
       ? "The governed build and gate record are on file. Review artifacts in Files & Evidence before using them externally."
       : isGateBlocked
-        ? `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`
+        ? !evidenceReadinessAvailable
+          ? "Evidence readiness could not be verified. Refresh this phase before approval."
+          : openRequiredEvidence.length > 0
+            ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
+            : (phaseCaptureBlocker ??
+              `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
         : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
@@ -4274,7 +4890,11 @@ function PhaseBody({
     : gateApproved
       ? "Review generated artifacts"
       : isGateBlocked
-        ? "Clear hard blockers"
+        ? openRequiredEvidence.length > 0
+          ? "Upload and review evidence"
+          : !evidenceReadinessAvailable
+            ? "Refresh evidence status"
+            : "Clear hard blockers"
         : "Run Approve & Build";
   const p0ApprovalGeneratedCriteria = new Set([
     "program_seed_recorded",
@@ -4292,7 +4912,8 @@ function PhaseBody({
     carriesForwardContent,
   });
   const phaseInputsReady = phase.phase === 0 || !phaseCaptureBlocker;
-  const evidenceReady = evidenceCount > 0 || isHistoricalPhase || gateApproved;
+  const evidenceReady =
+    phaseEvidencePassed || isHistoricalPhase || gateApproved;
   const generatedArtifactCount = phaseBuildArtifacts.length;
   const gateProofCount = evidenceCount || generatedArtifactCount;
   const gateProofNoun =
@@ -4317,9 +4938,9 @@ function PhaseBody({
       met: isHistoricalPhase || gateApproved || phaseInputsReady,
     },
     {
-      item: "Evidence attached or carried as gap",
+      item: "Required evidence approved or waived",
       meaning:
-        "Reviewed/approved evidence or explicit caveats are visible before approval. Uploaded files do not become authoritative until reviewed.",
+        "Every required evidence need is covered by approved evidence or a recorded waiver. Uploaded or unreviewed files do not make this check green.",
       met: evidenceReady,
     },
     {
@@ -4338,7 +4959,8 @@ function PhaseBody({
     !isHistoricalPhase &&
     phase.phase >= 1 &&
     openHardCriteria.length === 0 &&
-    !phaseCaptureBlocker;
+    !phaseCaptureBlocker &&
+    openRequiredEvidence.length === 0;
   const gateOnlyConfirmTitle =
     phase.phase >= 5
       ? "Complete P5 and hand off to Tower?"
@@ -4346,7 +4968,7 @@ function PhaseBody({
   const gateOnlyConfirmSummary =
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
-      : `This submits the already-satisfied ${phase.code} gate and opens ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}. It does not regenerate artifacts.`;
+      : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
   const primaryHardBlocker = openHardCriteria[0]?.label ?? null;
   const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
@@ -4382,6 +5004,12 @@ function PhaseBody({
         <PhaseCaptureEditor
           compact
           completeCount={phaseCaptureCompleteCount}
+          evidencePassed={phaseEvidencePassed}
+          phaseHardGatesPassed={phaseHardGatesPassed}
+          evidenceReadinessAvailable={evidenceReadinessAvailable}
+          businessChangeAssessment={businessChangeAssessment}
+          approvedEvidenceReferences={approvedEvidenceReferences}
+          reviewerIdentity={reviewerIdentity}
           onChange={onPhaseCaptureValueChange}
           phase={phase}
           persistedValues={persistedPhaseCaptureValues}
@@ -4392,7 +5020,7 @@ function PhaseBody({
         />
       ) : null}
       <section className="mxw-review">
-        <h2>Gate approval</h2>
+        <h2>{phase.phase === 0 ? "Decision checks" : "Gate approval"}</h2>
         {isHistoricalPhase ? (
           terminalComplete ? (
             <p>
@@ -4505,17 +5133,6 @@ function PhaseBody({
             ))}
           </ul>
         </details>
-        <details className="mxw-gate-detail">
-          <summary>
-            <span>Role approvals</span>
-            <strong>Open review record</strong>
-          </summary>
-          <PhaseRoleApprovalsSummary
-            moveId={move.id}
-            phase={phase.phase}
-            deliverables={move.deliverables}
-          />
-        </details>
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
@@ -4527,37 +5144,43 @@ function PhaseBody({
           <div className="mxw-gate-note">
             <strong>Why some checks are still open</strong>
             <span>
-              P0 approval itself signs the origination brief, so the seed and
-              value checks turn green during approval. If anything remains
-              blocked after approval, the exact failed check will appear here.
+              P0 cannot advance on intake answers alone. Upload one source file
+              for this Move in Files &amp; Evidence, review its extracted
+              content, then return here for authorized user approval. The brief
+              is signed and P1 opens only after the evidence requirement and
+              other hard checks pass.
             </span>
           </div>
         ) : null}
         <div className="mxw-approve-build" id="mxw-approve-build-action">
           {isHistoricalPhase ? (
-            <button
-              className="mxw-gate-button"
-              onClick={onContinueCurrentPhase}
-              type="button"
-            >
-              {terminalComplete
-                ? "Open Tower →"
-                : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
-            </button>
-          ) : phase.phase >= 1 && canSubmitSatisfiedGate ? (
-            <>
+            <StepHeaderActionPortal>
               <button
-                className="mxw-gate-button"
-                disabled={gateApprovalStatus === "approving"}
-                onClick={() => setP0ConfirmOpen(true)}
+                className="mxw-gate-button mxw-step-gate-button"
+                onClick={onContinueCurrentPhase}
                 type="button"
               >
-                {gateApprovalStatus === "approving"
-                  ? "Approving..."
-                  : phase.phase >= 5
-                    ? "Complete P5 and open Tower →"
-                    : `Approve ${phase.code} gate →`}
+                {terminalComplete
+                  ? "Open Tower →"
+                  : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
               </button>
+            </StepHeaderActionPortal>
+          ) : phase.phase >= 1 && canApproveGates && canSubmitSatisfiedGate ? (
+            <>
+              <StepHeaderActionPortal>
+                <button
+                  className="mxw-gate-button mxw-step-gate-button"
+                  disabled={gateApprovalStatus === "approving"}
+                  onClick={() => setP0ConfirmOpen(true)}
+                  type="button"
+                >
+                  {gateApprovalStatus === "approving"
+                    ? "Approving..."
+                    : phase.phase >= 5
+                      ? "Complete P5 and open Tower →"
+                      : `Approve ${phase.code} gate →`}
+                </button>
+              </StepHeaderActionPortal>
               <GateApprovalConfirmDialog
                 open={p0ConfirmOpen}
                 title={gateOnlyConfirmTitle}
@@ -4577,12 +5200,16 @@ function PhaseBody({
                 }}
               />
             </>
-          ) : phase.phase >= 1 ? (
+          ) : phase.phase >= 1 && canApproveGates ? (
             <PhaseApproveAndBuild
               archetype={move.archetype}
               approverLabel={approverLabel}
               clientDisplayName={move.tenant.name}
               disabledReason={phaseCaptureBlocker}
+              deliverableKeys={phaseCanonicalKeysForRoute(
+                phase.phase,
+                confirmedSolutionRoute,
+              )}
               evidenceNeedPackets={evidenceNeedPackets}
               inputCount={phaseCaptureCompleteCount}
               initialArtifacts={phaseBuildArtifacts}
@@ -4590,25 +5217,37 @@ function PhaseBody({
               moveName={displayMoveName}
               onBeforeBuild={onFinalizePhaseCapture}
               onBuildSettled={onApproveAfterBuild}
+              blockOnEvidenceGaps
+              actionPortalTargetId="mxw-step-progress-action"
               phaseLabel={`${phase.code} ${phase.title}`}
               phaseNum={phase.phase}
             />
-          ) : (
+          ) : phase.phase >= 1 ? (
+            <StepHeaderActionPortal>
+              <span className="mxw-gate-note">
+                Approval is available to an authorized workspace user.
+              </span>
+            </StepHeaderActionPortal>
+          ) : canApproveGates ? (
             <>
-              <button
-                className="mxw-gate-button"
-                disabled={gateApprovalStatus === "approving"}
-                onClick={() => setP0ConfirmOpen(true)}
-                type="button"
-              >
-                {gateApprovalStatus === "approving"
-                  ? "Approving..."
-                  : "Approve gate →"}
-              </button>
+              {openRequiredEvidence.length === 0 ? (
+                <StepHeaderActionPortal>
+                  <button
+                    className="mxw-gate-button mxw-step-gate-button"
+                    disabled={gateApprovalStatus === "approving"}
+                    onClick={() => setP0ConfirmOpen(true)}
+                    type="button"
+                  >
+                    {gateApprovalStatus === "approving"
+                      ? "Approving..."
+                      : "Approve gate →"}
+                  </button>
+                </StepHeaderActionPortal>
+              ) : null}
               <GateApprovalConfirmDialog
                 open={p0ConfirmOpen}
                 title="Approve the P0 gate?"
-                summary="This approves the origination brief and unlocks P1 Charter. The approved brief is what carries forward — review it before confirming."
+                summary="This records your approval of the origination brief and unlocks P1 Charter. Your signed-in account must have Move approval permission. At least one uploaded P0 source file must already have a human-approved extraction."
                 approverLabel={approverLabel}
                 confirmLabel="Approve gate"
                 onCancel={() => setP0ConfirmOpen(false)}
@@ -4618,6 +5257,12 @@ function PhaseBody({
                 }}
               />
             </>
+          ) : (
+            <StepHeaderActionPortal>
+              <span className="mxw-gate-note">
+                Approval is available to an authorized workspace user.
+              </span>
+            </StepHeaderActionPortal>
           )}
         </div>
         {isHistoricalPhase ? (
@@ -5195,7 +5840,7 @@ function DecisionOptionsActionPanel({
         rationaleFor:
           "Highest long-term value if evidence supports broader change.",
         rationaleAgainst:
-          "Highest readiness burden and sponsor commitment required.",
+          "Highest readiness burden; accountable business owner and adoption plan required.",
       },
     ],
     [],
@@ -5203,7 +5848,7 @@ function DecisionOptionsActionPanel({
   const [title, setTitle] = useState(
     `${moveName} P${phase} key design decision`,
   );
-  const [ownerRole, setOwnerRole] = useState("Move sponsor");
+  const [ownerRole, setOwnerRole] = useState("Authorized workspace user");
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [options, setOptions] = useState(defaultOptions);
   const [status, setStatus] = useState<DecisionOptionSaveStatus>("idle");
@@ -5396,11 +6041,69 @@ function normalizeUploadName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ");
 }
 
+const CURRENT_STATE_FILENAME_ALIASES: Record<string, readonly string[]> = {
+  member_service_process_map: [
+    "workflow walkthrough",
+    "member service process",
+    "process and escalation map",
+    "agent journey",
+  ],
+  member_service_metrics_baseline: [
+    "monthly kpi baseline",
+    "metric dictionary",
+    "contact center performance baseline",
+    "contact center kpi",
+    "conflict register",
+  ],
+  member_service_systems_data_landscape: [
+    "system inventory",
+    "systems data landscape",
+    "integration inventory",
+    "application inventory",
+    "data source inventory",
+  ],
+  knowledge_policy_content_inventory: [
+    "knowledge inventory",
+    "policy inventory",
+    "script inventory",
+  ],
+  contact_center_transcripts_intents: [
+    "transcript",
+    "intent taxonomy",
+    "speech analytics",
+  ],
+  phi_controls_and_human_approval: [
+    "security control matrix",
+    "phi controls",
+    "privacy control inventory",
+    "human approval control matrix",
+    "human approval boundaries",
+  ],
+  member_service_org_change_readiness: [
+    "org change readiness",
+    "stakeholder map",
+    "training adoption",
+    "change readiness",
+  ],
+  solution_delivery_estimation_context: [
+    "delivery estimation context",
+    "implementation capacity",
+    "delivery cadence",
+  ],
+};
+
 function inferCurrentStateFamilies(
   fileName: string,
   instruments: CurrentStateInstrument[],
 ): CurrentStateInstrument[] {
   const normalized = normalizeUploadName(fileName);
+  const explicitMatches = instruments.filter((instrument) =>
+    (CURRENT_STATE_FILENAME_ALIASES[instrument.key] ?? []).some((alias) =>
+      normalized.includes(normalizeUploadName(alias)),
+    ),
+  );
+  if (explicitMatches.length > 0) return explicitMatches;
+
   const semanticMatches = instruments.filter((instrument) => {
     const family = normalizeUploadName(
       `${instrument.key} ${instrument.label} ${instrument.documentFamily ?? ""}`,
@@ -5498,21 +6201,7 @@ function inferCurrentStateFamilies(
   const directMatches = instruments.filter((instrument) =>
     candidateKeys.has(instrument.key),
   );
-  if (directMatches.length > 0) return directMatches;
-
-  const firstMissingHard = instruments.find(
-    (instrument) =>
-      instrument.documentFamily &&
-      instrument.severity === "hard" &&
-      instrument.status !== "committed",
-  );
-  if (firstMissingHard) return [firstMissingHard];
-
-  const firstMissing = instruments.find(
-    (instrument) =>
-      instrument.documentFamily && instrument.status !== "committed",
-  );
-  return firstMissing ? [firstMissing] : [];
+  return directMatches;
 }
 
 function CurrentStateFamilyUploadPanel({
@@ -5530,6 +6219,9 @@ function CurrentStateFamilyUploadPanel({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadMode, setUploadMode] = useState<
+    "readiness_evidence" | "session_notes"
+  >("readiness_evidence");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<FamilyUploadResult[]>([]);
   const documentFamilies = readiness.instruments.filter(
@@ -5561,6 +6253,8 @@ function CurrentStateFamilyUploadPanel({
     );
     const payload = (await res.json().catch(() => ({}))) as {
       reviewState?: string;
+      sourceArtifactId?: string;
+      sourceArtifactStored?: boolean;
       detail?: string;
       error?: string;
     };
@@ -5576,6 +6270,16 @@ function CurrentStateFamilyUploadPanel({
           `Upload failed (HTTP ${res.status})`,
       };
     }
+    if (!payload.sourceArtifactId || payload.sourceArtifactStored !== true) {
+      return {
+        familyKey: instrument.key,
+        familyLabel: instrument.label,
+        fileName: file.name,
+        status: "error",
+        detail:
+          "The original source was not retained in the Artifact Vault, so this upload is not available for review or generation.",
+      };
+    }
     return {
       familyKey: instrument.key,
       familyLabel: instrument.label,
@@ -5583,8 +6287,8 @@ function CurrentStateFamilyUploadPanel({
       status: "uploaded",
       detail:
         payload.reviewState === "committed"
-          ? "Committed to readiness"
-          : "Uploaded for review",
+          ? "Original retained in the Artifact Vault; committed to readiness"
+          : "Original retained in the Artifact Vault; awaiting human review",
     };
   }
 
@@ -5654,6 +6358,58 @@ function CurrentStateFamilyUploadPanel({
     };
   }
 
+  async function uploadSessionArtifact(
+    file: File,
+  ): Promise<FamilyUploadResult> {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("phase", String(phase));
+    form.append("family", "session_artifact");
+    const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    const payload = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      detail?: string;
+      error?: string;
+      evidence?: {
+        id?: string | null;
+        reviewId?: string | null;
+        status?: string;
+        warning?: string;
+      };
+    };
+    if (
+      !res.ok ||
+      !payload.ok ||
+      !payload.evidence?.id ||
+      !payload.evidence.reviewId ||
+      payload.evidence.status === "not_captured"
+    ) {
+      return {
+        familyKey: "session_artifact",
+        familyLabel: "Workshop / session notes",
+        fileName: file.name,
+        status: "error",
+        detail:
+          payload.evidence?.warning ||
+          payload.detail ||
+          payload.error ||
+          "Parsing and review registration did not complete; this file cannot ground a build.",
+      };
+    }
+    return {
+      familyKey: "session_artifact",
+      familyLabel: "Workshop / session notes",
+      fileName: file.name,
+      status: "uploaded",
+      detail:
+        "Parsed and awaiting human review; it cannot ground generation until approved.",
+    };
+  }
+
   async function uploadBulk(files: FileList | null | undefined) {
     const selectedFiles = Array.from(files ?? []);
     if (selectedFiles.length === 0 || busy) return;
@@ -5667,6 +6423,11 @@ function CurrentStateFamilyUploadPanel({
     const nextResults: FamilyUploadResult[] = [];
     try {
       for (const file of selectedFiles) {
+        if (uploadMode === "session_notes") {
+          setMessage(`Uploading ${file.name} as workshop/session notes...`);
+          nextResults.push(await uploadSessionArtifact(file));
+          continue;
+        }
         const mappedFamilies = inferCurrentStateFamilies(
           file.name,
           openFamilies,
@@ -5704,7 +6465,9 @@ function CurrentStateFamilyUploadPanel({
       ).length;
       const failed = nextResults.length - succeeded;
       setMessage(
-        `${succeeded} mapped upload${succeeded === 1 ? "" : "s"} created${failed ? `; ${failed} failed` : ""}. Review-required items must still be accepted before they become gate-ready.`,
+        uploadMode === "session_notes"
+          ? `${succeeded} session file${succeeded === 1 ? "" : "s"} parsed and awaiting human review${failed ? `; ${failed} failed` : ""}. Approved evidence is required before generation.`
+          : `${succeeded} mapped upload${succeeded === 1 ? "" : "s"} created${failed ? `; ${failed} failed` : ""}. Review-required items must still be accepted before they become gate-ready.`,
       );
       onRefreshPhase();
     } finally {
@@ -5733,6 +6496,21 @@ function CurrentStateFamilyUploadPanel({
         </button>
       </header>
       <div className="mxw-family-upload-strip">
+        <label className="mxw-family-upload-mode">
+          <span>Upload type</span>
+          <select
+            aria-label="P2 upload mode"
+            onChange={(event) =>
+              setUploadMode(event.target.value as typeof uploadMode)
+            }
+            value={uploadMode}
+          >
+            <option value="readiness_evidence">
+              Evidence mapped to P2 readiness
+            </option>
+            <option value="session_notes">Workshop / session notes</option>
+          </select>
+        </label>
         <input
           aria-label="Upload P2 current-state evidence files"
           className="mxw-hidden-file"
@@ -5805,6 +6583,9 @@ function EvidenceUploadControl({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<UploadWorkStatus>("idle");
+  const [uploadFamily, setUploadFamily] = useState<
+    "uploaded_evidence" | "session_artifact"
+  >("uploaded_evidence");
   const [message, setMessage] = useState("");
   const [phaseArtifacts, setPhaseArtifacts] = useState<PhaseEvidenceArtifact[]>(
     [],
@@ -5812,17 +6593,23 @@ function EvidenceUploadControl({
 
   const loadPhaseArtifacts = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/v1/programs/${moveId}/artifacts?family=uploaded_evidence`,
-        {
-          credentials: "include",
-        },
+      const responses = await Promise.all(
+        ["uploaded_evidence", "session_artifact"].map((family) =>
+          fetch(`/api/v1/programs/${moveId}/artifacts?family=${family}`, {
+            credentials: "include",
+          }),
+        ),
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = (await res.json().catch(() => ({}))) as {
+      if (responses.some((res) => !res.ok))
+        throw new Error("Artifact list unavailable");
+      const payloads = (await Promise.all(
+        responses.map((res) => res.json().catch(() => ({}))),
+      )) as Array<{
         artifacts?: PhaseEvidenceArtifact[];
-      };
-      const rows = Array.isArray(payload.artifacts) ? payload.artifacts : [];
+      }>;
+      const rows = payloads.flatMap((payload) =>
+        Array.isArray(payload.artifacts) ? payload.artifacts : [],
+      );
       setPhaseArtifacts(
         rows.filter(
           (a) => a.phase === phase && a.lifecycleState !== "superseded",
@@ -5844,7 +6631,7 @@ function EvidenceUploadControl({
     const form = new FormData();
     form.append("file", file);
     form.append("phase", String(phase));
-    form.append("family", "uploaded_evidence");
+    form.append("family", uploadFamily);
     form.append("title", uploadTitle);
     const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
       method: "POST",
@@ -5855,10 +6642,27 @@ function EvidenceUploadControl({
       ok?: boolean;
       detail?: string;
       error?: string;
+      evidence?: {
+        id?: string | null;
+        reviewId?: string | null;
+        reviewStatus?: string;
+        parseMethod?: string;
+        status?: string;
+        warning?: string;
+      };
     };
     if (!res.ok || !payload.ok) {
       throw new Error(
         payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
+      );
+    }
+    if (
+      payload.evidence?.status === "not_captured" ||
+      !payload.evidence?.id ||
+      !payload.evidence.reviewId
+    ) {
+      throw new Error(
+        `Uploaded ${file.name}, but evidence parsing or review registration failed. This file is not available to generation. ${payload.evidence?.warning ?? "Retry ingestion or contact support."}`,
       );
     }
   }
@@ -5886,8 +6690,8 @@ function EvidenceUploadControl({
       setStatus("uploaded");
       setMessage(
         selectedFiles.length === 1
-          ? `Uploaded ${selectedFiles[0]?.name ?? "file"}`
-          : `Uploaded ${selectedFiles.length} files`,
+          ? `Uploaded ${selectedFiles[0]?.name ?? "file"} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}; parsed and awaiting human review before generation.`
+          : `Uploaded ${selectedFiles.length} files as ${uploadFamily === "session_artifact" ? "session files" : "evidence"}; parsed and awaiting human review before generation.`,
       );
       await loadPhaseArtifacts();
     } catch (err) {
@@ -5901,6 +6705,19 @@ function EvidenceUploadControl({
   return (
     <div className="mxw-upload-stack">
       <div className="mxw-upload-control">
+        <label className="mxw-upload-family">
+          <span>File type</span>
+          <select
+            aria-label="Evidence file type"
+            onChange={(event) =>
+              setUploadFamily(event.target.value as typeof uploadFamily)
+            }
+            value={uploadFamily}
+          >
+            <option value="uploaded_evidence">Evidence</option>
+            <option value="session_artifact">Workshop / session notes</option>
+          </select>
+        </label>
         <input
           aria-label={buttonLabel}
           className="mxw-hidden-file"
@@ -5937,7 +6754,10 @@ function EvidenceUploadControl({
             <div key={artifact.artifactId}>
               <span>{artifact.fileName ?? artifact.title}</span>
               <em>
-                v{artifact.version} · {artifactStatusLabel(artifact.status)}
+                {artifact.family === "session_artifact"
+                  ? "Session file"
+                  : "Evidence"}{" "}
+                · v{artifact.version} · {artifactStatusLabel(artifact.status)}
                 {artifact.qualityScore != null
                   ? ` · Automated quality signal ${artifact.qualityScore}/100`
                   : ""}
@@ -5970,7 +6790,13 @@ function StageReadinessWorkbookPreviewControl({
     () =>
       new Set(
         initialPreview?.proposalSet?.proposals
-          ?.filter((proposal) => proposal.disposition === "pending")
+          ?.filter(
+            (proposal) =>
+              proposal.answerState !== "blank" &&
+              Boolean(proposal.response?.trim()) &&
+              (proposal.disposition === "pending" ||
+                proposal.disposition === "needs_validation"),
+          )
           .map((proposal) => proposal.proposalId)
           .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
           [],
@@ -6078,6 +6904,50 @@ function StageReadinessWorkbookPreviewControl({
         );
       }
       const review = payload.proposalReview ?? {};
+      const reviewSummary = {
+        status:
+          review.status ??
+          (review.pendingCount === 0 && review.needsValidationCount === 0
+            ? "accepted"
+            : "review_required"),
+        acceptedCount: review.acceptedCount ?? 0,
+        rejectedCount: review.rejectedCount ?? 0,
+        needsValidationCount: review.needsValidationCount ?? 0,
+        pendingCount: review.pendingCount ?? 0,
+        readiness: review.readiness,
+      };
+      const selectedIdsSet = new Set(selectedIds);
+      const reviewedProposals = (proposalSet.proposals ?? []).map((proposal) =>
+        proposal.proposalId && selectedIdsSet.has(proposal.proposalId)
+          ? { ...proposal, disposition }
+          : proposal,
+      );
+      setPreview((current) =>
+        current?.proposalSet
+          ? {
+              ...current,
+              proposalSet: {
+                ...current.proposalSet,
+                status: reviewSummary.status,
+                pendingCount: reviewSummary.pendingCount,
+                review: reviewSummary,
+                proposals: reviewedProposals,
+              },
+            }
+          : current,
+      );
+      setSelectedProposalIds(
+        new Set(
+          reviewedProposals
+            .filter(
+              (proposal) =>
+                proposal.disposition === "pending" ||
+                proposal.disposition === "needs_validation",
+            )
+            .map((proposal) => proposal.proposalId)
+            .filter((proposalId): proposalId is string => Boolean(proposalId)),
+        ),
+      );
       setReviewStatus("saved");
       setReviewMessage(
         `Review saved · ${review.acceptedCount ?? 0} accepted · ${review.needsValidationCount ?? 0} needs validation · ${review.rejectedCount ?? 0} rejected`,
@@ -6102,11 +6972,41 @@ function StageReadinessWorkbookPreviewControl({
       ? `${preview.summary.requiredAnswered ?? 0}/${preview.summary.requiredTotal} required`
       : null;
   const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
+  const blankProposalCount =
+    preview?.proposalSet?.proposals?.filter(
+      (proposal) =>
+        proposal.answerState === "blank" || !proposal.response?.trim(),
+    ).length ?? 0;
+  const proposalReview = preview?.proposalSet?.review;
+  const reviewActionCount =
+    preview?.proposalSet?.proposals?.filter(
+      (proposal) =>
+        proposal.answerState !== "blank" &&
+        Boolean(proposal.response?.trim()) &&
+        (proposal.disposition === "pending" ||
+          proposal.disposition === "needs_validation"),
+    ).length ?? 0;
+  const proposalReviewMessage = proposalReview
+    ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
+      (proposalReview.readiness
+        ? ` · readiness ${proposalReview.readiness.ready ?? 0} ready / ${proposalReview.readiness.insufficientEvidence ?? 0} insufficient / ${proposalReview.readiness.unknown ?? 0} unknown`
+        : "")
+    : "";
   const storedProposalMessage =
-    preview?.proposalSet?.artifactId && status === "idle" && pendingProposalCount > 0
+    preview?.proposalSet?.artifactId &&
+    status === "idle" &&
+    preview.proposalSet.status !== "accepted" &&
+    pendingProposalCount > 0
       ? `Stored workbook responses awaiting review · ${pendingProposalCount}/${preview.proposalSet.proposalCount ?? pendingProposalCount} pending proposals`
       : "";
-  const statusMessage = message || storedProposalMessage;
+  const statusMessage = [
+    proposalReviewMessage || message || storedProposalMessage,
+    blankProposalCount > 0
+      ? `${blankProposalCount} blank response${blankProposalCount === 1 ? "" : "s"}. Complete the Response cells and upload the workbook again before review.`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="mxw-workbook-preview">
@@ -6141,10 +7041,17 @@ function StageReadinessWorkbookPreviewControl({
       preview.proposalSet.proposals?.length ? (
         <div className="mxw-workbook-review">
           <div className="mxw-workbook-review-summary">
-            <strong>Workbook responses awaiting review</strong>
+            <strong>
+              {proposalReview?.status === "accepted"
+                ? "Workbook responses reviewed"
+                : proposalReview
+                  ? "Workbook review recorded"
+                  : "Workbook responses awaiting review"}
+            </strong>
             <span>
-              {selectedProposalIds.size}/{preview.proposalSet.proposals.length}{" "}
-              selected · upload is not acceptance
+              {proposalReview
+                ? `${preview.proposalSet.proposals.length} responses reviewed · ${reviewActionCount} still open`
+                : `${selectedProposalIds.size}/${preview.proposalSet.proposals.length} selected · upload is not acceptance`}
             </span>
           </div>
           <div className="mxw-workbook-review-list">
@@ -6154,7 +7061,14 @@ function StageReadinessWorkbookPreviewControl({
                 <label key={proposalId || proposal.questionId}>
                   <input
                     checked={selectedProposalIds.has(proposalId)}
-                    disabled={!proposalId || reviewStatus === "saving"}
+                    disabled={
+                      !proposalId ||
+                      proposal.answerState === "blank" ||
+                      !proposal.response?.trim() ||
+                      reviewStatus === "saving" ||
+                      (proposal.disposition !== "pending" &&
+                        proposal.disposition !== "needs_validation")
+                    }
                     onChange={(event) => {
                       setSelectedProposalIds((current) => {
                         const next = new Set(current);
@@ -6172,42 +7086,47 @@ function StageReadinessWorkbookPreviewControl({
                     <b>{proposal.question ?? proposal.questionId}</b>
                     <em>
                       {proposal.requirement ?? "required"} ·{" "}
-                      {proposal.answerState ?? "answered"}
+                      {proposal.answerState === "blank" ||
+                      !proposal.response?.trim()
+                        ? "response required in workbook"
+                        : `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`}
                     </em>
                   </span>
                 </label>
               );
             })}
           </div>
-          <div className="mxw-workbook-review-actions">
-            <button
-              disabled={
-                selectedProposalIds.size === 0 || reviewStatus === "saving"
-              }
-              onClick={() => void reviewSelectedProposals("accepted")}
-              type="button"
-            >
-              Accept selected
-            </button>
-            <button
-              disabled={
-                selectedProposalIds.size === 0 || reviewStatus === "saving"
-              }
-              onClick={() => void reviewSelectedProposals("needs_validation")}
-              type="button"
-            >
-              Mark needs validation
-            </button>
-            <button
-              disabled={
-                selectedProposalIds.size === 0 || reviewStatus === "saving"
-              }
-              onClick={() => void reviewSelectedProposals("rejected")}
-              type="button"
-            >
-              Reject selected
-            </button>
-          </div>
+          {reviewActionCount > 0 ? (
+            <div className="mxw-workbook-review-actions">
+              <button
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => void reviewSelectedProposals("accepted")}
+                type="button"
+              >
+                Accept selected
+              </button>
+              <button
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => void reviewSelectedProposals("needs_validation")}
+                type="button"
+              >
+                Mark needs validation
+              </button>
+              <button
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => void reviewSelectedProposals("rejected")}
+                type="button"
+              >
+                Reject selected
+              </button>
+            </div>
+          ) : null}
           {reviewMessage ? (
             <span className={`mxw-workbook-review-status ${reviewStatus}`}>
               {reviewMessage}
@@ -6251,9 +7170,377 @@ function TemplatesAndSessions({ phase }: { phase: PhaseContract }) {
   );
 }
 
+const ROUTE_IMPACT_CHOICES = ["none", "limited", "material"] as const;
+const SOLUTION_OUTPUT_LABELS: Record<SolutionOutputType, string> = {
+  reports_dashboards: "Reports / dashboards",
+  data_product: "Data product",
+  workflow_automation: "Workflow automation",
+  service_operating_model: "Service / operating model",
+  mixed: "Mixed solution",
+};
+
+function editableStructuredRecord(value: string): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function BusinessChangeAssessmentForm({
+  onChange,
+  value,
+}: {
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const record = editableStructuredRecord(value);
+  const update = (key: string, next: string) =>
+    onChange(JSON.stringify({ ...record, [key]: next }));
+
+  return (
+    <div className="mxw-structured-form">
+      <label>
+        Expected workflow change
+        <select
+          aria-label="Expected workflow change"
+          onChange={(event) =>
+            update("expectedWorkflowChange", event.target.value)
+          }
+          value={
+            typeof record.expectedWorkflowChange === "string"
+              ? record.expectedWorkflowChange
+              : ""
+          }
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Expected role / accountability change
+        <select
+          aria-label="Expected role or accountability change"
+          onChange={(event) =>
+            update("expectedRoleAccountabilityChange", event.target.value)
+          }
+          value={
+            typeof record.expectedRoleAccountabilityChange === "string"
+              ? record.expectedRoleAccountabilityChange
+              : ""
+          }
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Adoption owner
+        <input
+          aria-label="Adoption owner"
+          onChange={(event) => update("adoptionOwner", event.target.value)}
+          placeholder="Business owner or role"
+          value={
+            typeof record.adoptionOwner === "string" ? record.adoptionOwner : ""
+          }
+        />
+      </label>
+      <label>
+        Adoption responsibility
+        <select
+          aria-label="Adoption responsibility"
+          onChange={(event) =>
+            update("adoptionResponsibility", event.target.value)
+          }
+          value={
+            typeof record.adoptionResponsibility === "string"
+              ? record.adoptionResponsibility
+              : ""
+          }
+        >
+          <option value="">Select owner</option>
+          <option value="business">Business</option>
+          <option value="delivery_team">Delivery team</option>
+          <option value="shared">Shared</option>
+        </select>
+      </label>
+      <label>
+        Evidence reference for this hypothesis
+        <input
+          aria-label="Evidence reference for the business change hypothesis"
+          onChange={(event) => update("evidenceReference", event.target.value)}
+          placeholder="Interview, uploaded file, or source record"
+          value={
+            typeof record.evidenceReference === "string"
+              ? record.evidenceReference
+              : ""
+          }
+        />
+      </label>
+      <label>
+        Sponsor / validator
+        <input
+          aria-label="Sponsor or validator"
+          onChange={(event) => update("validatedBy", event.target.value)}
+          placeholder="Name or accountable role"
+          value={
+            typeof record.validatedBy === "string" ? record.validatedBy : ""
+          }
+        />
+      </label>
+      <p className="mxw-structured-note">
+        P1 records the hypothesis and adoption owner. P2 must validate or
+        correct it against current-state evidence before P3 depth changes.
+      </p>
+    </div>
+  );
+}
+
+function SolutionRouteValidationForm({
+  assessment,
+  approvedEvidenceReferences,
+  onChange,
+  reviewerIdentity,
+  value,
+}: {
+  assessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  onChange: (value: string) => void;
+  reviewerIdentity: string;
+  value: string;
+}) {
+  const record = editableStructuredRecord(value);
+  const p1Assessment: BusinessChangeAssessment | null =
+    parseBusinessChangeAssessment(assessment);
+  const output = record.solutionOutput;
+  const workflowChange = record.workflowChange;
+  const roleChange = record.roleAccountabilityChange;
+  const recommendation =
+    SOLUTION_OUTPUT_TYPES.includes(output as SolutionOutputType) &&
+    ROUTE_IMPACT_CHOICES.includes(
+      workflowChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+    ) &&
+    ROUTE_IMPACT_CHOICES.includes(
+      roleChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+    )
+      ? recommendSolutionRoute({
+          solutionOutput: output as SolutionOutputType,
+          workflowChange:
+            workflowChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+          roleAccountabilityChange:
+            roleChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+        })
+      : "unresolved";
+  const decision = record.decision;
+
+  const update = (key: string, next: unknown) => {
+    const routeImpactChanged = [
+      "solutionOutput",
+      "workflowChange",
+      "roleAccountabilityChange",
+      "evidenceReference",
+    ].includes(key);
+    onChange(
+      JSON.stringify({
+        ...record,
+        businessChangeAssessmentSnapshot: p1Assessment,
+        [key]: next,
+        ...(routeImpactChanged
+          ? { decision: "", selectedRoute: "", correctionRationale: "" }
+          : {}),
+        validatedBy: reviewerIdentity,
+      }),
+    );
+  };
+  const updateDecision = (nextDecision: string) => {
+    onChange(
+      JSON.stringify({
+        ...record,
+        businessChangeAssessmentSnapshot: p1Assessment,
+        decision: nextDecision,
+        selectedRoute:
+          nextDecision === "confirm" && recommendation !== "unresolved"
+            ? recommendation
+            : nextDecision === "correct"
+              ? (record.selectedRoute ?? "")
+              : "",
+        validatedBy: reviewerIdentity,
+      }),
+    );
+  };
+
+  return (
+    <div className="mxw-structured-form">
+      <div className="mxw-structured-context">
+        <strong>P1 hypothesis</strong>
+        {p1Assessment ? (
+          <span>
+            Workflow: {p1Assessment.expectedWorkflowChange}; roles:{" "}
+            {p1Assessment.expectedRoleAccountabilityChange}; adoption:{" "}
+            {p1Assessment.adoptionResponsibility} ({p1Assessment.adoptionOwner})
+          </span>
+        ) : (
+          <span>
+            Complete and save the P1 business-change assessment first.
+          </span>
+        )}
+      </div>
+      <label>
+        Solution output
+        <select
+          aria-label="Solution output"
+          onChange={(event) => update("solutionOutput", event.target.value)}
+          value={typeof output === "string" ? output : ""}
+        >
+          <option value="">Select solution output</option>
+          {SOLUTION_OUTPUT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {SOLUTION_OUTPUT_LABELS[type]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Current-state workflow impact
+        <select
+          aria-label="Validated workflow impact"
+          onChange={(event) => update("workflowChange", event.target.value)}
+          value={typeof workflowChange === "string" ? workflowChange : ""}
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Current-state role / accountability impact
+        <select
+          aria-label="Validated role or accountability impact"
+          onChange={(event) =>
+            update("roleAccountabilityChange", event.target.value)
+          }
+          value={typeof roleChange === "string" ? roleChange : ""}
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Evidence reference
+        <select
+          aria-label="P2 evidence reference"
+          onChange={(event) => update("evidenceReference", event.target.value)}
+          value={
+            typeof record.evidenceReference === "string"
+              ? record.evidenceReference
+              : ""
+          }
+          disabled={approvedEvidenceReferences.length === 0}
+        >
+          <option value="">
+            {approvedEvidenceReferences.length === 0
+              ? "No approved P2 evidence yet"
+              : "Select approved P2 evidence"}
+          </option>
+          {approvedEvidenceReferences.map((evidence) => (
+            <option key={evidence.evidenceId} value={evidence.evidenceId}>
+              {evidence.title} · {evidence.familyKey}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="mxw-structured-recommendation" aria-live="polite">
+        <span>System recommendation</span>
+        <strong>{SOLUTION_ROUTE_LABELS[recommendation]}</strong>
+      </div>
+      <label>
+        Human decision
+        <select
+          aria-label="Human route decision"
+          onChange={(event) => updateDecision(event.target.value)}
+          value={typeof decision === "string" ? decision : ""}
+        >
+          <option value="">Review before confirming</option>
+          <option value="confirm">Confirm recommendation</option>
+          <option value="correct">Correct recommendation</option>
+        </select>
+      </label>
+      {decision === "correct" ? (
+        <>
+          <label>
+            Selected route
+            <select
+              aria-label="Corrected solution route"
+              onChange={(event) => update("selectedRoute", event.target.value)}
+              value={
+                typeof record.selectedRoute === "string"
+                  ? record.selectedRoute
+                  : ""
+              }
+            >
+              <option value="">Select route</option>
+              {Object.entries(SOLUTION_ROUTE_LABELS)
+                .filter(([route]) => route !== "unresolved")
+                .map(([route, label]) => (
+                  <option key={route} value={route}>
+                    {label}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Correction rationale
+            <textarea
+              aria-label="Route correction rationale"
+              onChange={(event) =>
+                update("correctionRationale", event.target.value)
+              }
+              rows={3}
+              value={
+                typeof record.correctionRationale === "string"
+                  ? record.correctionRationale
+                  : ""
+              }
+            />
+          </label>
+        </>
+      ) : null}
+      <p className="mxw-structured-note">
+        {approvedEvidenceReferences.length === 0
+          ? "Upload and approve at least one P2 evidence item before confirming this route."
+          : `Confirmation is saved with the authenticated reviewer identity (${reviewerIdentity}). P3 stays on the full contract until this decision matches the current P1 snapshot and an approved evidence item.`}
+      </p>
+    </div>
+  );
+}
+
 function PhaseCaptureEditor({
   compact = false,
   completeCount,
+  evidencePassed,
+  phaseHardGatesPassed,
+  evidenceReadinessAvailable,
+  businessChangeAssessment,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   onChange,
   phase,
   persistedValues,
@@ -6264,6 +7551,12 @@ function PhaseCaptureEditor({
 }: {
   compact?: boolean;
   completeCount: number;
+  evidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
+  evidenceReadinessAvailable: boolean;
+  businessChangeAssessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   onChange: (key: string, value: string) => void;
   phase: PhaseContract;
   persistedValues: PhaseCaptureValues;
@@ -6283,22 +7576,32 @@ function PhaseCaptureEditor({
             {phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}
           </h2>
           <p>
-            These are the fields the gate saves and approves. Edit them here
-            before running Approve &amp; Build.
+            Saved inputs are not phase completion. Required evidence must be
+            approved or formally waived before these inputs can show complete or
+            the phase can advance.
           </p>
         </div>
         <strong>
-          {completeCount} / {sections.length}
+          {completeCount} / {sections.length} saved
         </strong>
       </header>
       <div className="mxw-capture-grid">
         {sections.map((section, index) => {
           const value = values[section.key] ?? "";
-          const status = phaseCaptureStatusForSection(
+          const captureStatus = phaseCaptureStatusForSection(
             section,
             values,
             persistedValues,
             saveStatus,
+            businessChangeAssessment,
+            approvedEvidenceReferences.map((item) => item.evidenceId),
+            evidencePassed,
+            evidenceReadinessAvailable,
+          );
+          const status = phaseCaptureStatusForDisplay(
+            captureStatus,
+            phase.phase,
+            phaseHardGatesPassed,
           );
           return (
             <label
@@ -6309,13 +7612,33 @@ function PhaseCaptureEditor({
               <strong>{section.label}</strong>
               <small>{section.description}</small>
               <em>{status.label}</em>
-              <textarea
-                aria-label={section.label}
-                onChange={(event) => onChange(section.key, event.target.value)}
-                placeholder={section.description}
-                rows={compact ? 2 : 3}
-                value={value}
-              />
+              {captureStatus.complete && !status.complete ? (
+                <small>Inputs are captured; the phase gate remains open.</small>
+              ) : null}
+              {section.structured === "business-change" ? (
+                <BusinessChangeAssessmentForm
+                  value={value}
+                  onChange={(next) => onChange(section.key, next)}
+                />
+              ) : section.structured === "solution-route" ? (
+                <SolutionRouteValidationForm
+                  assessment={businessChangeAssessment}
+                  approvedEvidenceReferences={approvedEvidenceReferences}
+                  reviewerIdentity={reviewerIdentity}
+                  value={value}
+                  onChange={(next) => onChange(section.key, next)}
+                />
+              ) : (
+                <textarea
+                  aria-label={section.label}
+                  onChange={(event) =>
+                    onChange(section.key, event.target.value)
+                  }
+                  placeholder={section.description}
+                  rows={compact ? 2 : 3}
+                  value={value}
+                />
+              )}
               {status.tone === "error" ? (
                 <small className="mxw-capture-save-error" role="alert">
                   {saveErrors[section.key] ||
@@ -6341,33 +7664,50 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
         (option) => option.id === optionSet.recommendedOptionId,
       )
     : null;
+  const clientOptions = optionSet.source === "move_uploaded_options";
 
   return (
     <div className="mxw-option-summary">
       <div>
         <span>Source</span>
-        <strong>P2 design inputs pack</strong>
+        <strong>
+          {clientOptions
+            ? `Move evidence: ${optionSet.sourceTitle ?? "uploaded options"}`
+            : optionSet.sourceEvidenceLabels?.length
+              ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.map(p2SourceEvidenceTitle).join(", ")}`
+              : "P2 source evidence unavailable"}
+        </strong>
         <small>
-          {optionSet.evidenceBasis.length} evidence signal
-          {optionSet.evidenceBasis.length === 1 ? "" : "s"}
+          {clientOptions
+            ? `${optionSet.options.length} options as supplied by the client`
+            : `${optionSet.evidenceBasis.length} grounded signal${
+                optionSet.evidenceBasis.length === 1 ? "" : "s"
+              } in the design pack`}
         </small>
       </div>
       <div>
         <span>Recommendation</span>
         <strong>
-          {recommendation ? recommendation.label : "Provisional only"}
+          {clientOptions
+            ? "Client decision"
+            : recommendation
+              ? recommendation.label
+              : "Provisional only"}
         </strong>
         <small>
-          {recommendation
-            ? `${recommendation.confidence} confidence - human decision still required`
-            : "More evidence needed before a recommendation is safe"}
+          {clientOptions
+            ? "These are the client's options; they are not scored or ranked here"
+            : recommendation
+              ? `${recommendation.confidence} confidence - human decision still required`
+              : "More evidence needed before a recommendation is safe"}
         </small>
       </div>
       <div>
         <span>Open gaps</span>
         <strong>{optionSet.missingEvidence.length}</strong>
         <small>
-          {optionSet.missingEvidence[0] ?? "No required gap listed"}
+          {optionSet.missingEvidence[0] ??
+            "No open gap was supplied to this comparison"}
         </small>
       </div>
     </div>
@@ -6398,36 +7738,61 @@ function OptionCards({
           <span>{option.id}</span>
           <strong>{option.label}</strong>
           {option.recommended ? <em>✓ {option.recommendationLabel}</em> : null}
-          <small>{option.summary}</small>
-          <dl>
-            <div>
-              <dt>Impact</dt>
-              <dd>{option.businessImpact}</dd>
-            </div>
-            <div>
-              <dt>Data/platform</dt>
-              <dd>{option.dataPlatformImplications}</dd>
-            </div>
-            <div>
-              <dt>Human + AI split</dt>
-              <dd>{option.humanAiSplit}</dd>
-            </div>
-            <div>
-              <dt>Controls</dt>
-              <dd>{option.controls}</dd>
-            </div>
-          </dl>
-          <div className="mxw-option-meta">
-            <b>{option.timeToValue}</b>
-            <b>{option.effort}</b>
-            <b>Score {option.totalScore}</b>
-            <b>{option.confidence} confidence</b>
-          </div>
-          <div className="mxw-option-blocks">
-            {option.requiredBuildingBlocks.slice(0, 6).map((block) => (
-              <i key={block}>{buildingBlockLabel(block)}</i>
-            ))}
-          </div>
+          {option.clientSupplied ? (
+            // The client's option, as written. No score, confidence, effort or
+            // building blocks: none of those were supplied, and none is ours
+            // to add.
+            <dl>
+              {(
+                [
+                  ["Benefit", option.clientSupplied.benefit],
+                  ["Trade-off", option.clientSupplied.tradeoff],
+                  ["Condition", option.clientSupplied.condition],
+                  ["Scope", option.clientSupplied.scope],
+                ] as const
+              )
+                .filter(([, value]) => value)
+                .map(([term, value]) => (
+                  <div key={term}>
+                    <dt>{term}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+            </dl>
+          ) : (
+            <>
+              <small>{option.summary}</small>
+              <dl>
+                <div>
+                  <dt>Impact</dt>
+                  <dd>{option.businessImpact}</dd>
+                </div>
+                <div>
+                  <dt>Data/platform</dt>
+                  <dd>{option.dataPlatformImplications}</dd>
+                </div>
+                <div>
+                  <dt>Human + AI split</dt>
+                  <dd>{option.humanAiSplit}</dd>
+                </div>
+                <div>
+                  <dt>Controls</dt>
+                  <dd>{option.controls}</dd>
+                </div>
+              </dl>
+              <div className="mxw-option-meta">
+                <b>{option.timeToValue}</b>
+                <b>{option.effort}</b>
+                <b>Score {option.totalScore}</b>
+                <b>{option.confidence} confidence</b>
+              </div>
+              <div className="mxw-option-blocks">
+                {option.requiredBuildingBlocks.slice(0, 6).map((block) => (
+                  <i key={block}>{buildingBlockLabel(block)}</i>
+                ))}
+              </div>
+            </>
+          )}
           {option.notRecommendedYetReasons.length > 0 ? (
             <div className="mxw-option-caution">
               <b>Not recommended yet if:</b>
@@ -6760,6 +8125,9 @@ function MovesStandaloneStyles() {
 .mxw-family-upload>header h2{font-family:Georgia,serif;font-size:21px;font-weight:700;letter-spacing:-.35px;line-height:1.15;margin:0;color:var(--ink)}
 .mxw-family-upload>header p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:5px 0 0;max-width:74ch}
 .mxw-family-upload-strip{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mxw-family-upload-mode,.mxw-upload-family{display:grid;gap:4px;color:var(--muted);font-size:10px;font-weight:800}
+.mxw-family-upload-mode select,.mxw-upload-family select{min-height:36px;max-width:100%;border:1px solid var(--line-2);border-radius:6px;background:var(--card);color:var(--ink);font:inherit;font-size:12px;padding:7px 9px}
+.mxw-family-upload-mode select:focus,.mxw-upload-family select:focus{outline:2px solid rgba(42,90,168,.18);border-color:var(--blue)}
 .mxw-family-upload-strip>span{font-size:12.5px;color:var(--muted);font-weight:750}
 .mxw-family-upload-message{border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink-2);font-size:12.5px;line-height:1.45;margin:0;padding:10px 12px}
 .mxw-family-results{display:grid;gap:6px}
@@ -6788,7 +8156,7 @@ function MovesStandaloneStyles() {
 .mxw-inline-upload strong{display:block;font-size:14px}
 .mxw-inline-upload span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;max-width:64ch}
 .mxw-upload-stack{display:grid;gap:10px;justify-items:end;min-width:min(440px,100%)}
-.mxw-upload-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.mxw-upload-control{display:flex;align-items:end;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .mxw-hidden-file{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
 .mxw-upload-control button{padding:10px 16px;border-radius:9px;background:var(--ink);color:#fff;border:0;font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer}
 .mxw-upload-control button:disabled{opacity:.6;cursor:wait}
@@ -6898,15 +8266,6 @@ function MovesStandaloneStyles() {
 .mxw-gate-mini-list p{margin:3px 0 0;color:var(--muted);font-size:12px;line-height:1.35}
 .mxw-gate-mini-list em{font-style:normal;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:4px 8px;white-space:nowrap}
 .mxw-gate-mini-list li.met em{border-color:rgba(29,143,104,.28);color:var(--green)}
-.mxw-role-approvals-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:#fff}
-.mxw-role-approvals-row{display:flex;flex-direction:column;gap:5px}
-.mxw-role-approvals-title{font-size:12px;font-weight:800;color:var(--ink)}
-.mxw-role-approvals-pills{display:flex;flex-wrap:wrap;gap:6px}
-.mxw-role-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:3px 8px;border-radius:999px;white-space:nowrap}
-.mxw-role-pill-pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
-.mxw-role-pill-reviewed{border:1px solid rgba(176,115,15,.32);background:var(--amber-tint);color:var(--amber)}
-.mxw-role-pill-approved{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
-.mxw-role-pill-rejected{border:1px solid rgba(200,60,60,.35);background:rgba(200,60,60,.08);color:#B4513C}
 .mxw-approval-disclosures{display:grid;gap:9px;margin:14px 0 0}
 .mxw-approval-disclosures details{border:1px solid var(--line);border-radius:12px;background:var(--soft);overflow:hidden}
 .mxw-approval-disclosures summary{display:flex;align-items:center;justify-content:space-between;gap:14px;list-style:none;cursor:pointer;padding:11px 13px}
@@ -7180,7 +8539,7 @@ function MovesStandaloneStyles() {
 .mxw-finder-fact-value{margin-right:6px}
 .mxw-finder-citation-toggle{border:none;background:#e4ecf9;color:#2a5aa8;border-radius:999px;width:20px;height:20px;line-height:20px;font-size:11px;cursor:pointer;padding:0}
 .mxw-finder-citation-caption{display:block;margin-top:4px;font-size:11.5px;color:#5b6c8a}
-.mxw-contract-card{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 12px 32px rgba(12,26,58,.05)}
+.mxw-contract-card{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:visible;box-shadow:0 12px 32px rgba(12,26,58,.05)}
 .mxw-contract-nav{border-right:1px solid rgba(12,26,58,.09);background:#fbfbfc;padding:24px 12px 16px;display:flex;flex-direction:column;gap:16px}
 .mxw-contract-group{display:grid;gap:5px}
 .mxw-contract-group-label{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#a7adb8;padding:0 8px 5px}
@@ -7189,7 +8548,10 @@ function MovesStandaloneStyles() {
 .mxw-contract-step.active{border-color:rgba(42,90,168,.14);background:#fff;color:#0c1a3a;box-shadow:inset 3px 0 0 #2a5aa8}
 .mxw-contract-step>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-step>span.done{border-color:#1d9e75;background:#1d9e75}
+.mxw-contract-step.visited{color:#8b95a8}
+.mxw-contract-step>span.visited{border-color:#d8dde5;background:#f1f3f6;color:#8b95a8}
 .mxw-contract-step strong{min-width:0;font-size:13px;font-weight:700;line-height:1.2;color:inherit}
+.mxw-contract-step small{color:#8b95a8;font-size:10px;font-weight:650}
 .mxw-contract-comingup{border-top:1px solid rgba(12,26,58,.12);padding:16px 8px 2px}
 .mxw-contract-comingup button{appearance:none;border:1px solid rgba(42,90,168,.14);border-radius:8px;background:#fff;color:#0c1a3a;cursor:pointer;font-size:12px;font-weight:850;line-height:1.35;padding:8px 10px;text-align:left;width:100%;box-shadow:0 1px 2px rgba(12,26,58,.04)}
 .mxw-contract-comingup div{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -7198,7 +8560,7 @@ function MovesStandaloneStyles() {
 .mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
 .mxw-contract-nav-foot{margin-top:4px;border-top:1px solid rgba(12,26,58,.14);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
 .mxw-contract-detail{padding:28px 30px 24px;min-width:0;scroll-margin-top:96px}
-.mxw-contract-detail-top{display:grid;grid-template-columns:22px auto minmax(0,auto) auto;align-items:center;gap:10px;margin-bottom:18px}
+.mxw-contract-detail-top{position:sticky;top:72px;z-index:24;display:grid;grid-template-columns:22px auto minmax(0,1fr) auto minmax(0,max-content);align-items:center;gap:10px;margin:-10px -12px 18px;padding:10px 12px;background:rgba(255,255,255,.97);border-bottom:1px solid rgba(12,26,58,.10);box-shadow:0 5px 14px rgba(12,26,58,.06);backdrop-filter:blur(8px)}
 .mxw-contract-detail-top>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-detail-top>span.done{border-color:#1d9e75;background:#1d9e75}
 .mxw-contract-detail-top small{color:#8b95a8;font-size:12px;font-weight:700;white-space:nowrap}
@@ -7206,6 +8568,15 @@ function MovesStandaloneStyles() {
 .mxw-contract-detail-top b{border-radius:8px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-style:normal;font-weight:800;letter-spacing:.12em;padding:4px 7px;text-transform:uppercase}
 .mxw-contract-detail-top b{background:rgba(12,26,58,.06);color:#8b95a8}
 .mxw-contract-detail-top>span.done~b{background:rgba(29,158,117,.13);color:#147c5b}
+.mxw-step-progress-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.mxw-step-progress-status{border:1px solid #d8dde5;border-radius:8px;background:#f1f3f6;color:#667085;padding:6px 9px;font-size:10px;font-weight:800;white-space:nowrap}
+button.mxw-step-progress-status{cursor:pointer}
+.mxw-step-progress-status.ready,.mxw-step-progress-status.complete{border-color:rgba(20,124,91,.18);background:#e8f5ef;color:#147c5b}
+.mxw-step-progress-status.open{border-color:#d8dde5;background:#f1f3f6;color:#667085}
+.mxw-phase-progress-button,.mxw-step-gate-button{border:0!important;border-radius:8px!important;background:#147c5b!important;color:#fff!important;box-shadow:0 2px 8px rgba(20,124,91,.20);font-size:12.5px!important;font-weight:850!important;line-height:1.2!important;min-height:38px;cursor:pointer}
+.mxw-phase-progress-button:hover,.mxw-step-gate-button:hover{background:#0f684c!important}
+.mxw-phase-progress-button:disabled,.mxw-step-gate-button:disabled{background:#d8dde5!important;color:#667085!important;box-shadow:none;cursor:not-allowed}
+.mxw-phase-progress-button:focus-visible,.mxw-step-gate-button:focus-visible{outline:3px solid rgba(42,90,168,.35);outline-offset:2px}
 .mxw-contract-form{display:grid;gap:13px}
 .mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
 .mxw-ava-draft-card{display:grid;gap:10px;border:1px solid rgba(29,158,117,.22);border-radius:11px;background:#f8fffc;padding:12px}
@@ -7232,8 +8603,9 @@ function MovesStandaloneStyles() {
   .mxw-finder-steps-menu{width:100%;flex-basis:auto}
   .mxw-contract-card{grid-template-columns:1fr}
   .mxw-contract-nav{border-right:0;border-bottom:1px solid rgba(12,26,58,.09)}
-  .mxw-contract-detail-top{grid-template-columns:22px auto minmax(0,1fr)}
-  .mxw-contract-detail-top b{justify-self:start}
+  .mxw-contract-detail-top{top:60px;grid-template-columns:22px auto minmax(0,1fr)}
+  .mxw-contract-detail-top b{grid-column:2;justify-self:start}
+  .mxw-step-progress-actions{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}
 }
 /*
  * Approvals overview. Rendered only when workspaceView === "approvals".
@@ -7257,6 +8629,59 @@ function MovesStandaloneStyles() {
 .mxw-approvals-action button,.mxw-approvals-action a{border:0;background:none;color:#2a5aa8;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
 .mxw-approvals-action button:hover,.mxw-approvals-action a:hover{text-decoration:underline}
 .mxw-approvals-noaction{font-size:12.5px;color:#9aa4b5;font-weight:600}
+.mxw-structured-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mxw-structured-form>label{display:grid;align-content:start;gap:5px;color:#5b6c8a;font-size:11px;font-weight:800}
+.mxw-structured-form input,.mxw-structured-form select,.mxw-structured-form textarea{width:100%;min-width:0;border:1px solid rgba(12,26,58,.16);border-radius:8px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;font-weight:500;line-height:1.4;padding:9px 10px}
+.mxw-structured-form input:focus,.mxw-structured-form select:focus,.mxw-structured-form textarea:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-structured-context,.mxw-structured-recommendation,.mxw-structured-note{grid-column:1/-1;margin:0}
+.mxw-structured-context{display:grid;gap:4px;border-left:3px solid #2a5aa8;border-radius:5px;background:#f3f6fc;padding:9px 11px;color:#28364f;font-size:12px;line-height:1.45}
+.mxw-structured-context strong,.mxw-structured-recommendation span{color:#5b6c8a;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.mxw-structured-recommendation{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid rgba(29,158,117,.18);border-radius:8px;background:#f7fcf9;padding:10px 12px}
+.mxw-structured-recommendation strong{color:#147c5b;font-size:13px}
+.mxw-structured-note{color:#6c7890;font-size:11.5px;line-height:1.45}
+.mxw-estimate-model{display:grid;gap:12px;min-width:0}
+.mxw-estimate-toolbar{display:flex;align-items:end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mxw-estimate-field{display:grid;align-content:start;gap:5px;min-width:0;color:#5b6c8a;font-size:11px;font-weight:800}
+.mxw-estimate-field input,.mxw-estimate-field select{width:100%;min-width:0;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;font-weight:500;line-height:1.35;padding:8px 9px}
+.mxw-estimate-field input:focus,.mxw-estimate-field select:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-estimate-currency{width:142px}
+.mxw-estimate-add,.mxw-estimate-legacy button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;border:1px solid rgba(42,90,168,.18);border-radius:6px;background:#fff;color:#2a5aa8;font-size:12px;font-weight:800;padding:7px 10px;cursor:pointer}
+.mxw-estimate-add:hover,.mxw-estimate-legacy button:hover{background:#f3f6fc}
+.mxw-estimate-pair{display:grid;gap:10px;border:1px solid rgba(12,26,58,.13);border-radius:8px;background:#fff;padding:12px}
+.mxw-estimate-pair-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 34px;align-items:end;gap:9px}
+.mxw-estimate-remove{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(12,26,58,.14);border-radius:6px;background:#fff;color:#5b6c8a;cursor:pointer}
+.mxw-estimate-remove:hover{border-color:#a73535;color:#a73535}
+.mxw-estimate-scenarios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.mxw-estimate-scenario{display:grid;gap:9px;min-width:0;margin:0;border:1px solid rgba(12,26,58,.12);border-radius:6px;padding:10px}
+.mxw-estimate-scenario legend{padding:0 5px;color:#0c1a3a;font-size:12px;font-weight:850}
+.mxw-estimate-scenario:first-child{background:#f7f9fc}
+.mxw-estimate-scenario:last-child{background:#fbfaf7}
+.mxw-estimate-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mxw-estimate-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mxw-estimate-wide{grid-column:1/-1}
+.mxw-estimate-empty,.mxw-estimate-legacy,.mxw-estimate-notes,.mxw-estimate-errors,.mxw-estimate-ready{margin:0;border:1px solid rgba(12,26,58,.12);border-radius:6px;padding:10px 12px;color:#5b6c8a;font-size:12px;line-height:1.45}
+.mxw-estimate-empty{background:#f7f9fc}
+.mxw-estimate-legacy{display:grid;gap:9px;background:#fbfaf7}
+.mxw-estimate-legacy p,.mxw-estimate-notes p{margin:0}
+.mxw-estimate-legacy pre{max-height:200px;overflow:auto;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:#28364f;font:12px/1.45 ui-monospace,SFMono-Regular,monospace}
+.mxw-estimate-notes summary{cursor:pointer;color:#28364f;font-size:12px;font-weight:800}
+.mxw-estimate-notes p{margin-top:8px;white-space:pre-wrap}
+.mxw-estimate-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;border:1px solid rgba(29,158,117,.18);border-left:3px solid #1d9e75;border-radius:6px;background:#f7fcf9;padding:11px}
+.mxw-estimate-totals h3,.mxw-estimate-totals p{grid-column:1/-1;margin:0}
+.mxw-estimate-totals h3{color:#0c1a3a;font-size:13px}
+.mxw-estimate-totals>div{display:grid;gap:3px;border:1px solid rgba(12,26,58,.10);border-radius:6px;background:#fff;padding:8px}
+.mxw-estimate-totals strong{color:#0c1a3a;font-size:12px}
+.mxw-estimate-totals span{color:#147c5b;font-size:13px;font-weight:850;overflow-wrap:anywhere}
+.mxw-estimate-totals small,.mxw-estimate-totals p{color:#5b6c8a;font-size:10.5px;line-height:1.4}
+.mxw-estimate-review{display:grid;grid-template-columns:minmax(180px,.75fr) minmax(0,1.25fr);align-items:end;gap:10px}
+.mxw-estimate-attestation{display:flex;align-items:flex-start;gap:8px;color:#28364f;font-size:12px;line-height:1.4}
+.mxw-estimate-attestation input{flex:0 0 auto;margin:2px 0 0;accent-color:#147c5b}
+.mxw-estimate-errors{border-color:rgba(186,117,23,.28);background:#fffbf2;color:#7a560d}
+.mxw-estimate-errors ul{display:grid;gap:3px;margin:6px 0 0;padding-left:18px}
+.mxw-estimate-ready{border-color:rgba(29,158,117,.2);background:#f0fbf7;color:#147c5b;font-weight:750}
+@media (max-width:960px){.mxw-estimate-scenarios{grid-template-columns:1fr}}
+@media (max-width:720px){.mxw-estimate-pair-head,.mxw-estimate-review{grid-template-columns:1fr}.mxw-estimate-remove{justify-self:start}.mxw-estimate-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}.mxw-estimate-inputs,.mxw-estimate-totals{grid-template-columns:1fr}}
+@media (max-width:720px){.mxw-structured-form{grid-template-columns:1fr}}
       `}</style>
   );
 }
