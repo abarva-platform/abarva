@@ -78,6 +78,12 @@ describe("proxy public route patterns", () => {
     }
   });
 
+  it("admits only the signed e-signature callback, not neighboring Source APIs", () => {
+    expect(isPublicRoute(new NextRequest("https://app.abarva.ai/api/webhooks/esign"))).toBe(true);
+    expect(isPublicRoute(new NextRequest("https://app.abarva.ai/api/webhooks/esign/other"))).toBe(false);
+    expect(isPublicRoute(new NextRequest("https://app.abarva.ai/api/v1/source/event/nda/esign/status"))).toBe(false);
+  });
+
   it("does not treat unrelated auth API paths as public", () => {
     const request = new NextRequest("https://app.abarva.ai/api/auth/other");
     expect(isPublicRoute(request)).toBe(false);
