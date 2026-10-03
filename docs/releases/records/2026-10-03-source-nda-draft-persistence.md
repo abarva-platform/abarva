@@ -1,4 +1,4 @@
-# 2026-10-03-source-nda-draft-persistence — Persist Unsent NDA Envelopes
+# 2026-10-03-source-nda-draft-persistence — NDA Envelope Draft State
 
 ## Release ID
 
@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-The demo signing workflow gains a database state for an unsent envelope. The database binds that draft to an accepted event candidate and the hash of an applicable, published template. A later send must be a separate, auditable state transition. A completion callback cannot process a draft.
+The demo signing workflow gains a database state for an unsent envelope. The database binds that draft to an accepted event candidate and the hash of an applicable, published template. A later send must be a separate, auditable state transition. A completion callback cannot process a draft. This release does not expose a product write path yet.
 
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
 - Layer 3, Canonical Model: the existing tenant-fenced envelope workflow table gains a draft state and document-hash binding; it does not become executed-NDA authority or a commercial fact.
-- Layer 4, Products: Source gains a draft persistence adapter and a fail-closed callback guard.
+- Layer 4, Products: Source gains a fail-closed callback guard for an unsent draft.
 
 ## Client Applicability
 
@@ -29,20 +29,20 @@ The demo signing workflow gains a database state for an unsent envelope. The dat
 ## Changes Included
 
 - Add an authored migration for draft status, nullable sent timestamp, immutable document hash, and database checks at draft creation and send.
-- Add a tenant/event/supplier/candidate-fenced repository for recording and marking a draft sent.
+- Verify the draft schema's identity and state checks in behavior coverage.
 - Refuse viewed, declined, and completed callbacks on an unsent draft.
 - No route, provider call, email, signature, or live data mutation.
 
 ## QA / Validation
 
-- Red-first repository and draft-callback tests failed before implementation.
+- Red-first draft-state and callback tests failed before implementation.
 - Focused NDA tests, TypeScript, lint, release gates and PR CI are recorded on the PR.
 - A temporary removal of the callback draft guard failed the behavior test; the guard was restored.
 - The migration was executed only on a disposable local Postgres instance with fixture rows. It accepted a valid unsent draft and a valid send, and rejected hash mismatch, direct-sent insert, send after template retirement, and sent-timestamp rewrite. No shared database migration was run.
 
 ## Rollout Plan
 
-Squash merge after applicable CI; let only the repo-owned ACA main workflow deploy code. Applying the migration to the shared Product/Lab database is a separate, specifically authorized repo-owned migration job. The new repository is not exposed by a route until that approval and a later send-path release.
+Squash merge after applicable CI; let only the repo-owned ACA main workflow deploy code. Applying the migration to the shared Product/Lab database is a separate, specifically authorized repo-owned migration job. A repository and route will be released together later; neither is part of this change.
 
 ## Deployment Authority
 
@@ -64,4 +64,4 @@ PR diff and checks, focused behavior tests, callback mutation result, disposable
 
 ## Known Gaps
 
-The route that obtains the exact Legal-published PDF, persists the draft before delivery, reconciles a send acknowledgement and enables the operator UI remains unbuilt. The shared migration remains unapplied until separately authorized.
+The route and repository that obtain the exact Legal-published PDF, persist the draft before delivery, reconcile a send acknowledgement and enable the operator UI remain unbuilt. The shared migration remains unapplied until separately authorized.
