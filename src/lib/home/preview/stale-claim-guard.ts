@@ -4,6 +4,7 @@ import type {
   TechObjectType,
   VisualOpportunity,
 } from "./types";
+import { splitNarrativeSentences } from "./narrative-sentences";
 
 type BundleSlice = Pick<HomeReviewBundle, "chapters" | "technologyEstate">;
 
@@ -94,10 +95,7 @@ export function sanitizeHomeNarrativeText(
   context: StaleHomeClaimContext,
 ): string {
   if (!text) return text;
-  const sentences = text
-    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-    ?.map((sentence) => sentence.trim())
-    .filter(Boolean) ?? [text];
+  const sentences = splitNarrativeSentences(text);
   return sentences
     .filter((sentence) => !isStaleHomeClaim(sentence, context))
     .join(" ")

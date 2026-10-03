@@ -2,6 +2,7 @@ import "server-only";
 
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import { splitNarrativeSentences } from "@/lib/home/preview/narrative-sentences";
 import type {
   AvaAnswerPacket,
   AvaArtifact,
@@ -569,10 +570,7 @@ function dropStaleEvidenceSentences(
   context: StaleClaimContext,
 ): string {
   if (!text) return text;
-  const sentences = text
-    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-    ?.map((sentence) => sentence.trim())
-    .filter(Boolean) ?? [text];
+  const sentences = splitNarrativeSentences(text);
   return sentences
     .filter((sentence) => !isStaleAvaClaim(sentence, context))
     .join(" ");
@@ -1313,10 +1311,7 @@ function sanitizeVisibleStaleClaims(
   const replacement =
     "Use the current Vendor Contracts table for supplier concentration; the live record does not support the older supplier-pair concentration wording.";
   const paragraphs = text.split(/\n{2,}/).map((paragraph) => {
-    const sentences = paragraph
-      .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-      ?.map((sentence) => sentence.trim())
-      .filter(Boolean) ?? [paragraph];
+    const sentences = splitNarrativeSentences(paragraph);
     const next = sentences
       .map((sentence) =>
         isStaleAvaClaim(sentence, context) ? replacement : sentence,
@@ -1414,10 +1409,7 @@ function splitLongParagraph(paragraph: string, maxWords: number): string[] {
     return cleaned ? [cleaned] : [];
   if (/^\s*[-*]\s+/.test(cleaned)) return chunkWords(cleaned, maxWords);
 
-  const sentences = cleaned
-    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-    ?.map((part) => part.trim())
-    .filter(Boolean) ?? [cleaned];
+  const sentences = splitNarrativeSentences(cleaned);
   const chunks: string[] = [];
   let current = "";
   for (const sentence of sentences) {
