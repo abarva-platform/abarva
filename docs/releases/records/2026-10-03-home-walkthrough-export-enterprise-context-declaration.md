@@ -69,10 +69,48 @@ unconditional, so not `experimental`.
   `enterpriseContextExportAbsence`, which answers *why* a chapter carries no context section.
 - `src/lib/home/export/walkthrough-export.tsx` — renders the declaration in the HTML path (both the
   mixed-narrative and reviewed-snapshot branches) and in the PDF path.
-- `src/__tests__/behaviors/home-walkthrough-export-enterprise-context.test.tsx` — new behavioral
-  suite, placed where the required `Behavior coverage floor` check runs it.
+- `src/lib/home/export/__tests__/enterprise-context-declaration.test.tsx` — new behavioral suite.
+- `.github/workflows/integrity.yml` — one step in the **required** `Routes and disclaimers` job runs
+  `src/lib/home/export` with coverage off.
+- `package.json` — `test:home-export` runs the same directory locally.
 
 No migration, no route change, no schema change, no dependency change.
+
+### Why the suite is wired by a named step rather than by the behaviour-directory sweep
+
+It was first placed in `src/__tests__/behaviors`, and the required `Behavior coverage floor` check
+went red there — with **188 of 188 suites and 1946 of 1946 tests passing**. The gate failed on its
+own coverage floor: `lines 87.88% < 90%`.
+
+That was measured rather than guessed, on both sides, in two separate worktrees:
+
+| | files in denominator | lines | covered | pct | gate |
+|---|---|---|---|---|---|
+| merge base `3dc2d655b1` | 247 | 121,053 | 109,169 | **90.18%** | passes |
+| branch, suite in `behaviors` | 268 | 132,076 | 116,076 | **87.88%** | fails |
+
+`jest.config.ts` sets `coverageProvider: 'v8'` and declares no `collectCoverageFrom` and no
+`coveragePathIgnorePatterns`, so the denominator is whatever the run loads. Exercising this exporter
+loads 21 files the behaviours run had never loaded — 11,023 lines, 4,116 of them uncovered, led by
+`ecl-projection-bundle.ts` (3,278 lines, 2,004 missed), the synthetic pack generator
+`scripts/ecl/load_synthetic_enterprise_v1.ts` (1,081 / 733) and `page-tables.ts` (2,761 / 641).
+
+**Remove exactly those 21 files from the denominator and the branch reads 90.18% — the base's figure
+to the decimal.** No file already in scope lost coverage, and nothing was removed from the
+denominator. The code this change adds measures 95.8% and 96.6%. So the red was the suite's
+*exposure* of large modules, not uncovered work it introduced.
+
+The suite therefore runs in a required job with `--no-coverage`, which is the pattern
+`coverage-threshold.yml` already uses for five named suites. Nothing was weakened to achieve it: no
+threshold lowered, no coverage ignore added, no case deleted, and the assertions still drive the real
+exporter over a context built by the real `buildHomeEnterpriseContext` from the synthetic pack. The
+alternative — rebuilding the record as a hand-written context literal to keep the module out of
+scope — was rejected because it would trade real evidence for a green number.
+
+The step names the **directory**, not one file, which also wires
+`src/lib/home/export/__tests__/walkthrough-export.test.tsx`. That suite was reached by no workflow
+and no npm script, so its eight green cases — including the repository's only assertions that the
+five enterprise-context section titles render — gated nothing.
 
 ## QA / Validation
 
@@ -118,6 +156,11 @@ destructured-argument mismatch is exactly what the typecheck names.
 Prettier-clean, and were not Prettier-clean on the base commit either — verified by running
 `prettier --check` against both in the baseline worktree. Reformatting them would produce a large
 diff unrelated to this change, so they were left as the repository has them.
+
+**Control gates for the wiring itself:** `scripts/quality/check-named-suite-requiredness.mjs` exits
+`0` ("every individually named suite that a required job also runs is named inside a required job"),
+and `unit-directory-ci-coverage`, `named-suite-requiredness` and `t557-unrun-suite-wiring` run
+3 suites / 68 tests / 0 failing.
 
 **Not validated:** no signed-in walk was performed, so nothing here is live-proven. See Known Gaps.
 
@@ -168,12 +211,16 @@ suite reverts with the code, so no gate is left asserting behaviour that is no l
 - **One element of the seven is not section-owned.** `source dates` is rendered by the document
   header as well as by the section, so it reads present even when the section is wholly absent. The
   declaration makes that unambiguous but does not change where the element comes from.
-- **The pre-existing renderer suite for this module runs in no workflow and no npm script.** Its
-  green cases, including the ones asserting the context section titles, gate nothing. That is why
-  the new suite was placed under `src/__tests__/behaviors`. Wiring or retiring the older suite is
-  separate work and is recorded against the backlog item this change closes; it is not done here,
-  because the forward-only id band for new work in that lane is exhausted and widening it is an
-  owner decision the backlog already carries.
+- **The behaviour coverage floor's denominator is accidental, and `main` has 0.18 percentage points
+  of headroom above it.** Because the gate collects v8 coverage with no `collectCoverageFrom`, any
+  new behavioural suite that exercises a large under-covered module lowers the total regardless of
+  how well the new code is covered — as this change demonstrates, at 95.8% and 96.6% on its own
+  files. That makes the gate an obstacle to adding behavioural coverage, which is the opposite of
+  its purpose and works directly against the backlog's standing request for a behavioural test per
+  declared control. Giving the gate an explicit `collectCoverageFrom` scope would fix it, but that
+  changes a required gate's meaning repository-wide and is a decision rather than a drive-by; it is
+  **not** done here and is raised for the owner. The workaround used here is sound and established,
+  but it is a workaround.
 - **Out of scope:** whether the live export *should* read the serving projection when no `provider`
   query parameter is supplied. That is a routing question about which bundle the export is handed,
   not about whether the document says what it was handed, and changing it would alter what every

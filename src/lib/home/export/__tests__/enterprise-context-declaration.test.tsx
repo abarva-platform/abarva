@@ -31,11 +31,11 @@ import type {
   HomeRecordRenderSource,
   HomeReviewBundle,
 } from "@/lib/home/preview/types";
-import { generatePack } from "../../../scripts/ecl/load_synthetic_enterprise_v1";
+import { generatePack } from "../../../../../scripts/ecl/load_synthetic_enterprise_v1";
 import {
   buildSyntheticHomeDependencyRows,
   buildSyntheticHomeRows,
-} from "../../../scripts/ecl/synthetic_enterprise_home_rows";
+} from "../../../../../scripts/ecl/synthetic_enterprise_home_rows";
 
 const servingRecordSource: HomeRecordRenderSource = {
   kind: "ecl_serving_projection",
