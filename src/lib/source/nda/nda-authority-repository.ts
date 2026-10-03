@@ -54,6 +54,10 @@ export type NdaAuthorityReadInput = {
   supplierLegalEntityId: string;
 };
 
+export type NdaAuthorityPanelReadInput = Omit<NdaAuthorityReadInput, "supplierLegalEntityId"> & {
+  supplierLegalEntityIds: readonly string[];
+};
+
 const UNAVAILABLE: NdaAuthorityRead = {
   registryAvailable: false,
   publishedTemplateVersions: [],
@@ -69,20 +73,17 @@ function iso(value: string | Date): string {
   return value instanceof Date ? value.toISOString() : value;
 }
 
-/**
- * Read the governed Stage 05 authority slice for one event and one declared
- * supplier legal entity. Any missing relation or malformed scope fails closed.
- */
-export async function readNdaAuthorityForEvent(
-  input: NdaAuthorityReadInput,
-): Promise<NdaAuthorityRead> {
-  if (
-    !nonempty(input.clientKey) ||
-    !nonempty(input.eventId) ||
-    !nonempty(input.supplierLegalEntityId)
-  ) {
-    return UNAVAILABLE;
+/** One session and three authority reads regardless of accepted-panel size. */
+export async function readNdaAuthorityForEventPanel(
+  input: NdaAuthorityPanelReadInput,
+): Promise<Map<string, NdaAuthorityRead>> {
+  const supplierIds = [...new Set(input.supplierLegalEntityIds)];
+  const unavailable = () => new Map(supplierIds.map((id) => [id, UNAVAILABLE]));
+  if (!nonempty(input.clientKey) || !nonempty(input.eventId) ||
+      supplierIds.some((id) => !nonempty(id))) {
+    return unavailable();
   }
+  if (supplierIds.length === 0) return new Map();
 
   try {
     return await azureRead.withSession(async (run) => {
@@ -119,13 +120,13 @@ export async function readNdaAuthorityForEvent(
           AND artifact.tenant_key = authority.client_key
          WHERE authority.client_key = $1
            AND authority.source_event_id = $2::uuid
-           AND authority.supplier_legal_entity_id = $3
+           AND authority.supplier_legal_entity_id = ANY($3::text[])
            AND authority.authority_state = 'recorded'
            AND artifact.artifact_type = 'nda_executed'
            AND artifact.lifecycle_state = 'current'
            AND NULLIF(BTRIM(COALESCE(artifact.blob_sha256, artifact.sha256)), '') IS NOT NULL
          ORDER BY authority.executed_at DESC, authority.nda_id ASC`,
-        [input.clientKey, input.eventId, input.supplierLegalEntityId],
+        [input.clientKey, input.eventId, supplierIds],
       );
       const waiverRows = await run<WaiverRow>(
         `SELECT waiver_id, client_key, supplier_legal_entity_id,
@@ -134,21 +135,36 @@ export async function readNdaAuthorityForEvent(
          FROM source_event_nda_waivers
          WHERE client_key = $1
            AND source_event_id = $2::uuid
-           AND supplier_legal_entity_id = $3
+           AND supplier_legal_entity_id = ANY($3::text[])
            AND revoked_at IS NULL
          ORDER BY approved_at DESC, waiver_id ASC`,
-        [input.clientKey, input.eventId, input.supplierLegalEntityId],
+        [input.clientKey, input.eventId, supplierIds],
       );
 
-      return {
-        // A successful empty read is materially different from a relation that
-        // does not exist or cannot be read. No applicable version is published;
-        // the registry is still modelled and available.
+      const requested = new Set(supplierIds);
+      const inScope = (row: ExecutedNdaRow | WaiverRow) =>
+        row.client_key === input.clientKey &&
+        row.source_event_id === input.eventId &&
+        requested.has(row.supplier_legal_entity_id);
+      const executedBySupplier = new Map<string, ExecutedNdaRow[]>();
+      const waiversBySupplier = new Map<string, WaiverRow[]>();
+      for (const row of executedNdaRows) {
+        if (!inScope(row)) continue;
+        const rows = executedBySupplier.get(row.supplier_legal_entity_id) ?? [];
+        rows.push(row);
+        executedBySupplier.set(row.supplier_legal_entity_id, rows);
+      }
+      for (const row of waiverRows) {
+        if (!inScope(row)) continue;
+        const rows = waiversBySupplier.get(row.supplier_legal_entity_id) ?? [];
+        rows.push(row);
+        waiversBySupplier.set(row.supplier_legal_entity_id, rows);
+      }
+
+      return new Map(supplierIds.map((supplierId): [string, NdaAuthorityRead] => [supplierId, {
         registryAvailable: true,
-        publishedTemplateVersions: templateRows.map(
-          (row) => row.template_version,
-        ),
-        executedNdas: executedNdaRows.map((row) => ({
+        publishedTemplateVersions: templateRows.map((row) => row.template_version),
+        executedNdas: (executedBySupplier.get(supplierId) ?? []).map((row) => ({
           ndaId: row.nda_id,
           tenantKey: row.client_key,
           supplierLegalEntityId: row.supplier_legal_entity_id,
@@ -177,7 +193,7 @@ export async function readNdaAuthorityForEvent(
             privateEvidenceRef: row.private_evidence_ref,
           },
         })),
-        waivers: waiverRows.map((row) => ({
+        waivers: (waiversBySupplier.get(supplierId) ?? []).map((row) => ({
           waiverId: row.waiver_id,
           tenantKey: row.client_key,
           supplierLegalEntityId: row.supplier_legal_entity_id,
@@ -187,9 +203,21 @@ export async function readNdaAuthorityForEvent(
           approvedByLegalName: row.approved_by_legal_name,
           approvedAt: iso(row.approved_at),
         })),
-      };
+      }]));
     });
   } catch {
-    return UNAVAILABLE;
+    return unavailable();
   }
+}
+
+/** Read one supplier through the same tenant- and event-scoped panel contract. */
+export async function readNdaAuthorityForEvent(
+  input: NdaAuthorityReadInput,
+): Promise<NdaAuthorityRead> {
+  const panel = await readNdaAuthorityForEventPanel({
+    clientKey: input.clientKey,
+    eventId: input.eventId,
+    supplierLegalEntityIds: [input.supplierLegalEntityId],
+  });
+  return panel.get(input.supplierLegalEntityId) ?? UNAVAILABLE;
 }
