@@ -479,7 +479,27 @@ function buildReasonClaimIo() {
  * two uncovered — counting it as one covered surface overstates the programme
  * by every control the suite never touched.
  */
-function validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex) {
+/**
+ * The two things that can be wrong with an uncovered control, and they have
+ * opposite remedies and different owners.
+ *
+ * `render-the-control` — the control is not on the surface at all. A behavioral
+ * test here would pin an absence, not prove a control, and raising the coverage
+ * number for a screen no reader reaches is what closed item 41 ruled out. The
+ * fix is to render it, which is an owner decision.
+ *
+ * `write-a-test` — the control is on the surface and nothing proves it. This is
+ * the only shape a behavioral test fixes, so it is the only shape the report
+ * offers as drawable.
+ *
+ * Until item C-636 the difference lived only in the `reason` prose. The report
+ * cannot act on prose, so it offered all ten uncovered controls on the same
+ * terms and an agent drawing "the next declared control with no behavioral
+ * test" could draw one whose control is not rendered.
+ */
+const UNCOVERED_REMEDIES = new Set(['render-the-control', 'write-a-test']);
+
+function validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex, reachable) {
   const declared = control.behavioralTest;
   const problems = [];
 
@@ -499,6 +519,28 @@ function validateBehavioralTest(control, controlLabel, workflowRuns, surface, su
     if (typeof declared.reason !== 'string' || declared.reason.trim().length < 40) {
       problems.push(
         `${controlLabel}: an uncovered control needs a concrete reason saying what is not proven`,
+      );
+    }
+
+    // Which remedy applies is a fact about the surface, so it is declared and
+    // checked rather than read out of the reason.
+    if (!UNCOVERED_REMEDIES.has(declared.remedy)) {
+      problems.push(
+        `${controlLabel}: an uncovered control must declare remedy as one of ` +
+          `${Array.from(UNCOVERED_REMEDIES).join(', ')} — got ${
+            declared.remedy === undefined ? '(nothing)' : JSON.stringify(declared.remedy)
+          }. The report offers only write-a-test controls as drawable, so an undeclared ` +
+          `remedy would silently drop this control out of the draw or into it.`,
+      );
+    } else if (declared.remedy === 'write-a-test' && reachable === false) {
+      // The contradiction that makes the field load-bearing rather than
+      // decorative: a test cannot be the remedy for a control on a surface no
+      // route reaches, because the test would mount the component itself and
+      // prove the component rather than the product.
+      problems.push(
+        `${controlLabel}: declares remedy write-a-test, but no route reaches ${
+          surface?.path ?? 'its surface'
+        } — a test there proves the component, not the product. The remedy is render-the-control.`,
       );
     }
 
@@ -799,7 +841,14 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
     }
     seenKinds.add(kind);
 
-    const behavioral = validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex);
+    const behavioral = validateBehavioralTest(
+      control,
+      controlLabel,
+      workflowRuns,
+      surface,
+      suiteIndex,
+      reachability.reachable,
+    );
     problems.push(...behavioral.problems);
     tally.declared += 1;
     if (!reachability.reachable) {
@@ -811,11 +860,22 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
       tally.covered += 1;
     }
     if (!behavioral.covered) {
-      // Named, not just counted — item C-411. The restocking backlog item is
+      // Named, not just counted — item C-411. The restocking backlog item was
       // defined as "the next declared control with no behavioral test", and
       // until this list existed the report answered only how many there were,
       // so answering it meant searching the test tree instead of reading the
-      // gate. Collected in the same pass as the tally rather than recomputed
+      // gate.
+      //
+      // That definition was still wrong, and item C-636 corrected it: uncovered
+      // is not drawable. Ten controls have no behavioral test and for all ten a
+      // test is the wrong remedy — five sit on a surface no route reaches, and
+      // five are measured absent from a surface that is reached. Drawing from
+      // this list wrote tests for controls no reader can see, which raises the
+      // coverage number and changes nothing about the product. So each row
+      // carries its declared remedy and the report states the drawable count
+      // separately; the draw reads that count, not this length.
+      //
+      // Collected in the same pass as the tally rather than recomputed
       // afterwards: two walks of one catalog can disagree, and then the count
       // and the names are evidence against each other rather than for the
       // same fact.
@@ -824,6 +884,7 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
         kind,
         path: surface?.path ?? null,
         reachable: reachability.reachable,
+        remedy: control.behavioralTest?.remedy ?? null,
       });
     }
 
@@ -866,6 +927,7 @@ export function renderUncoveredRoster(uncovered, declared) {
       `Controls with no behavioral test: 0 of ${declared}. Every declared control names the case that proves it.`,
     ];
   }
+  const drawable = uncovered.filter((control) => control.remedy === 'write-a-test');
   const lines = [
     `Controls with no behavioral test: ${uncovered.length} of ${declared}. Named here so the next one ` +
       'can be read off this report rather than searched for in the test tree.',
@@ -875,8 +937,30 @@ export function renderUncoveredRoster(uncovered, declared) {
   )) {
     lines.push(
       `  - ${control.surfaceId}:${control.kind} — ${control.path ?? 'no path declared'}` +
-        (control.reachable ? '' : ' — not on any screen'),
+        (control.reachable ? '' : ' — not on any screen') +
+        ` — remedy: ${control.remedy ?? 'undeclared'}`,
     );
+  }
+
+  // The count that answers the question an agent actually asks. "Uncovered" is
+  // not "drawable": for a control whose remedy is render-the-control a test
+  // would pin an absence, so offering it as the next draw turns the coverage
+  // number into the measure instead of the product.
+  lines.push(
+    `Drawable by a behavioral test: ${drawable.length} of ${uncovered.length} uncovered. ` +
+      'A control is drawable only where the control is on the surface and nothing proves it.',
+  );
+  if (drawable.length === 0) {
+    lines.push(
+      '  Nothing is drawable: a behavioral test is not the remedy for any of them, so the draw ' +
+        'stops here rather than writing a test for a control no reader can see.',
+    );
+  } else {
+    for (const control of [...drawable].sort((a, b) =>
+      `${a.surfaceId}:${a.kind}`.localeCompare(`${b.surfaceId}:${b.kind}`),
+    )) {
+      lines.push(`  - draw: ${control.surfaceId}:${control.kind} — ${control.path ?? 'no path declared'}`);
+    }
   }
   return lines;
 }

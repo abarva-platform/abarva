@@ -117,12 +117,22 @@ describe("C-574 · the Tower aVa dock is a catalogued AI surface", () => {
     ).toEqual([]);
   });
 
-  it("the live audit passes and names all five controls as uncovered on a screen", () => {
+  // Updated by item C-636, which appended the declared remedy to every roster
+  // line. The expectation is not relaxed to accommodate the new suffix — it
+  // names the remedy, because for this surface the remedy is the whole point:
+  // the dock is on a screen a reader reaches and the five controls are
+  // MEASURED ABSENT from it, so a behavioral test would pin an absence and the
+  // fix is to render them, which is this item's own open owner decision.
+  // Asserting `render-the-control` here means re-labelling these five as
+  // drawable — claiming a test is what they need — turns this case red.
+  it("the live audit passes and names all five controls as uncovered on a screen, each needing a render rather than a test", () => {
     expect(live.code).toBe(0);
     const named = rosterLines(live.output).filter((line) => line.includes(`- ${SURFACE_ID}:`));
 
     expect(named).toEqual(
-      MEASURED_KINDS.map((kind) => `  - ${SURFACE_ID}:${kind} — ${SHELL_PATH}`),
+      MEASURED_KINDS.map(
+        (kind) => `  - ${SURFACE_ID}:${kind} — ${SHELL_PATH} — remedy: render-the-control`,
+      ),
     );
   });
 
