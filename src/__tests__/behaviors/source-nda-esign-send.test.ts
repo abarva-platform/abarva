@@ -5,7 +5,7 @@ import type { EsignProvider } from "@/lib/source/esign/provider";
 const eventId = "11111111-1111-4111-8111-111111111111";
 const candidateId = "22222222-2222-4222-8222-222222222222";
 const envelopeId = "33333333-3333-4333-8333-333333333333";
-const bytes = new TextEncoder().encode("%PDF-1.4\nSYNTHETIC TEST FIXTURE\nSUPPLIER_SIGNATURE_HERE\nBUYER_SIGNATURE_HERE");
+const bytes = new TextEncoder().encode("%PDF-1.4\nSYNTHETIC TEST FIXTURE\nFictional Supplier LLC\nSUPPLIER_SIGNATURE_HERE\nBUYER_SIGNATURE_HERE");
 const documentSha256 = createHash("sha256").update(bytes).digest("hex");
 
 const input = {
@@ -50,6 +50,7 @@ function harness() {
       candidateAuthorityId: candidateId,
       contactAuthorityId: input.contactAuthorityId,
       contactName: "Fictional Contact",
+      supplierLegalName: "Fictional Supplier LLC",
       templateVersion: input.templateVersion,
       documentSha256,
       blobContainer: "source-artifacts",
@@ -99,6 +100,20 @@ describe("synthetic NDA send boundary", () => {
   it("refuses a test PDF without distinct signer anchors", async () => {
     const { deps } = harness();
     deps.extractText.mockResolvedValueOnce("SYNTHETIC TEST FIXTURE\nSignature: ______\nSignature: ______");
+    expect(await sendSyntheticNdaForSignature(input, deps)).toEqual({ ok: false, code: "document_mismatch" });
+    expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
+  });
+
+  it("refuses unresolved legal-party placeholders before draft creation", async () => {
+    const { deps } = harness();
+    deps.extractText.mockResolvedValueOnce("SYNTHETIC TEST FIXTURE\nFictional Supplier LLC\n[COUNTERPARTY LEGAL NAME]\nSUPPLIER_SIGNATURE_HERE\nBUYER_SIGNATURE_HERE");
+    expect(await sendSyntheticNdaForSignature(input, deps)).toEqual({ ok: false, code: "document_mismatch" });
+    expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
+  });
+
+  it("refuses a document for a different supplier", async () => {
+    const { deps } = harness();
+    deps.extractText.mockResolvedValueOnce("SYNTHETIC TEST FIXTURE\nAnother Supplier LLC\nSUPPLIER_SIGNATURE_HERE\nBUYER_SIGNATURE_HERE");
     expect(await sendSyntheticNdaForSignature(input, deps)).toEqual({ ok: false, code: "document_mismatch" });
     expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
   });

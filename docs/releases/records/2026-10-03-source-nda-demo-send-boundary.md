@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-An authenticated Source operator can request a synthetic NDA signing envelope only when the event has an accepted supplier, a published event-specific test template, and an approved active contact. The document bytes must match the published hash and carry visible test and signing markers. The provider first creates an unsent draft; the application records that draft before asking the provider to send. All demo recipients are routed through the configured internal test inbox. A failed or uncertain send is not retried automatically and never counts as executed NDA coverage.
+An authenticated Source operator can request a synthetic NDA signing envelope only when the event has an accepted supplier, a published event-specific test template, and an approved active contact. The document bytes must match the published hash, name the canonical supplier legal entity, contain distinct test signing markers, and have no unresolved bracketed party placeholders. The provider first creates an unsent draft; the application records that draft before asking the provider to send. All demo recipients are routed through the configured internal test inbox. A failed or uncertain send is not retried automatically and never counts as executed NDA coverage.
 
 ## Layer Impact
 
@@ -64,4 +64,4 @@ PR and CI URL, official ACA run, digest/revision/worker readback, focused test o
 ## Known Gaps
 
 The Stage 05 operator control, embedded signing link, declined/expired handling, provider configuration, template publication, approved contacts, executed-NDA filing and four-of-four signed-in close proof are separate slices. An uncertain provider/DB outcome is held as an unsent local draft for operator reconciliation; it is not retried or counted as coverage.
-The existing synthetic NDA template fixture contains generic signature lines rather than the two distinct signing anchors required by this route. A new, visibly synthetic template version with both anchors must be reviewed and published before a demo send can succeed.
+The existing synthetic NDA template fixture contains generic signature lines and an unresolved counterparty name rather than a concrete supplier-specific document with two distinct signing anchors. Four separate, visibly synthetic PDF versions with the correct canonical supplier names and both anchors must be reviewed and published for the four-candidate demo round trip. Reusing the generic template or swapping one supplier's document for another fails closed. A future governed document-assembly path is separate work before production use.

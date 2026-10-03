@@ -18,6 +18,7 @@ export type NdaSigningAuthority = {
   candidateAuthorityId: string;
   contactAuthorityId: string;
   contactName: string;
+  supplierLegalName: string;
   templateVersion: string;
   documentSha256: string;
   blobContainer: string;
@@ -53,6 +54,7 @@ type AuthorityRow = {
   candidate_id: string;
   contact_authority_id: string;
   contact_name: string;
+  supplier_legal_name: string;
   template_version: string;
   content_sha256: string;
   blob_container: string;
@@ -70,9 +72,13 @@ export async function readSyntheticNdaSigningAuthority(
         `SELECT candidate.id AS candidate_id,
                 contact_authority.authority_id AS contact_authority_id,
                 contact_authority.approved_contact_name AS contact_name,
+                vendor.legal_name AS supplier_legal_name,
                 template.template_version, template.content_sha256,
                 artifact.blob_container, artifact.blob_uri
          FROM source_event_candidate_supplier_authority candidate
+         JOIN source.vendor vendor
+           ON vendor.tenant_key = candidate.client_key
+          AND vendor.vendor_id = candidate.vendor_id
          JOIN source_event_rfx_contact_authority contact_authority
            ON contact_authority.client_key = candidate.client_key
           AND contact_authority.source_event_id = candidate.source_event_id
@@ -127,6 +133,7 @@ export async function readSyntheticNdaSigningAuthority(
         candidateAuthorityId: row.candidate_id,
         contactAuthorityId: row.contact_authority_id,
         contactName: row.contact_name,
+        supplierLegalName: row.supplier_legal_name,
         templateVersion: row.template_version,
         documentSha256: row.content_sha256,
         blobContainer: row.blob_container,
@@ -162,6 +169,7 @@ export async function sendSyntheticNdaForSignature(
   }
   if (!authority || authority.contactAuthorityId !== input.contactAuthorityId ||
       authority.templateVersion !== input.templateVersion ||
+      !authority.supplierLegalName.trim() ||
       !uuid.test(authority.candidateAuthorityId) ||
       authority.blobContainer !== "source-artifacts" ||
       !authority.blobPath.startsWith(`${input.clientKey}/${input.eventId}/`) ||
@@ -182,9 +190,14 @@ export async function sendSyntheticNdaForSignature(
   } catch {
     return { ok: false, code: "document_mismatch" };
   }
-  if (!documentText || !documentText.includes("SYNTHETIC TEST FIXTURE") ||
-      !documentText.includes("SUPPLIER_SIGNATURE_HERE") ||
-      !documentText.includes("BUYER_SIGNATURE_HERE")) {
+  const normalizedText = documentText?.replace(/\s+/g, " ").trim() ?? "";
+  if (!normalizedText.includes("SYNTHETIC TEST FIXTURE") ||
+      !normalizedText.includes("SUPPLIER_SIGNATURE_HERE") ||
+      !normalizedText.includes("BUYER_SIGNATURE_HERE") ||
+      /\[[A-Z][A-Z0-9 _/-]{2,80}\]/.test(normalizedText) ||
+      !normalizedText.toLowerCase().includes(
+        authority.supplierLegalName.replace(/\s+/g, " ").trim().toLowerCase(),
+      )) {
     return { ok: false, code: "document_mismatch" };
   }
 
