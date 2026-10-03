@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 398,
-    "fenced": 222,
-    "fencedDirect": 98,
+    "routes": 399,
+    "fenced": 223,
+    "fencedDirect": 99,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 95,
-    "behavioral": 77,
+    "behavioral": 78,
     "byteScannerOnly": 6,
     "none": 139
   },
@@ -6447,6 +6447,23 @@
       "suites": {
         "behavioral": [
           "src/app/api/v1/source/[eventId]/nda/executed/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/nda/templates/publish/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/nda/templates/publish/__tests__/route.test.ts"
         ],
         "byteScanner": []
       }
