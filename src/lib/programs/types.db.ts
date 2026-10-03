@@ -9,10 +9,12 @@ import type { ArchetypeKey } from "./types.ui";
 export type OriginSource =
   | "tower_triggered"
   | "user_initiated"
-  | "intelligence_promoted";
+  | "intelligence_promoted"
+  | "intelligence_candidate";
 export type OversightLevel = "full" | "partial" | "none";
 export type ProgramLifecycleState =
   | "draft"
+  | "shaping"
   | "submitted_for_approval"
   | "approved"
   | "rejected"

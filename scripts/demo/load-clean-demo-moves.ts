@@ -63,7 +63,11 @@ export function engagementPayload(move: DemoMove): Record<string, unknown> {
       email: move.sponsor.email,
     },
     problem_statement: move.thesis,
-    program_archetype: "ai_product_enablement",
+    industry_code: move.industryCode,
+    function_code: move.functionCode,
+    objective_code: move.objectiveCode,
+    topic_code: move.topicCode,
+    program_archetype: move.programArchetype,
     origin_source: "intelligence_candidate",
     status: "active",
     // Shaping candidate — NOT 'approved'/funded. Current phase is where it sits;
@@ -131,7 +135,7 @@ export function buildLoadSpec(flags: Flags): Record<string, unknown> {
     archive_name_patterns: flags.cleanTestMoves
       ? TEST_MOVE_PATTERNS.map((re) => re.source)
       : [],
-    archive_action: "set status 'archived' (never hard-delete)",
+    archive_action: "set lifecycle_state to 'archived' (never hard-delete)",
     note: "Apply via the governed ACA data-build job with the evidence/phase workstream; this script writes nothing.",
   };
 }
@@ -157,7 +161,7 @@ function printPlan(flags: Flags): void {
     );
   }
   if (flags.cleanTestMoves) {
-    log(`would archive moves whose name matches a test-run pattern (status 'archived', never hard-delete):`);
+    log(`would archive moves whose name matches a test-run pattern (lifecycle_state 'archived', never hard-delete):`);
     for (const re of TEST_MOVE_PATTERNS) log(`  • /${re.source}/${re.flags}`);
   } else {
     log(`(pass --clean-test to also plan archiving test-named moves)`);

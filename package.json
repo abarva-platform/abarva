@@ -244,6 +244,7 @@
     "audit:default-runtime-invisibility": "node scripts/audit/default-runtime-invisibility.mjs",
     "demo:skyharbor:capture": "node scripts/demo/skyharbor-demo-capture.mjs",
     "demo:environment:verify": "tsx scripts/demo/verify-demo-environment-readiness.ts",
+    "moves:clean-demo:load-job": "npx tsx scripts/demo/clean-demo-moves-aca-job.ts",
     "smoke:p19-evidence-ledger": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p19-evidence-ledger.spec.ts",
     "smoke:foundation-fix-1-retrieval-wiring": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/foundation-fix-1-retrieval-wiring.spec.ts",
     "smoke:sentinel-tenant-pin": "npx tsx scripts/smoke/sentinel-tenant-pin.spec.ts",
