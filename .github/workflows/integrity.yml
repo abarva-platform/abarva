@@ -52,3 +52,21 @@ jobs:
 
       - name: Findings harness
         run: npm run test:findings-harness
+
+      # The Home walkthrough export's own suites. They run here, in a REQUIRED job,
+      # with coverage off, and both halves of that matter.
+      #
+      # `--no-coverage`: the `Behavior coverage floor` gate collects v8 coverage with no
+      # `collectCoverageFrom`, so its denominator is whatever the run loaded. Exercising this
+      # exporter loads `ecl-projection-bundle.ts`, the synthetic pack generator and
+      # `page-tables.ts` -- 11,023 lines, 4,116 of them uncovered -- which moved that gate's
+      # total from 90.18% to 87.88% while the new code itself measured 95.8% and 96.6%.
+      # Measured on both sides, not inferred: removing those files from the denominator
+      # returns the branch to 90.18%, the base's exact figure. Running the suite here keeps the
+      # assertions and keeps the floor honest about the code it was written to measure.
+      #
+      # The whole directory, not one named file: `walkthrough-export.test.tsx` was reached by
+      # no workflow and no npm script, so its assertions that the enterprise-context sections
+      # render gated nothing. Naming the directory wires it in the same step.
+      - name: Home walkthrough export suites
+        run: npx jest src/lib/home/export --no-coverage --ci --runInBand
