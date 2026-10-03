@@ -135,12 +135,13 @@ export async function recordExecutedNda(
          FROM source_nda_template_versions
          WHERE client_key = $1
            AND template_version = $2
+           AND (source_event_id IS NULL OR source_event_id = $5::uuid)
            AND publication_state = 'published'
            AND published_at <= $3::timestamptz
            AND effective_from <= $4::date
            AND (effective_to IS NULL OR effective_to >= $4::date)
          FOR SHARE`,
-        [input.clientKey, input.templateVersion, input.executedAt, input.executedAt.slice(0, 10)],
+        [input.clientKey, input.templateVersion, input.executedAt, input.executedAt.slice(0, 10), input.eventId],
       );
       if (templates.length !== 1) {
         return { ok: false, code: "published_template_unavailable" };

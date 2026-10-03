@@ -7,6 +7,8 @@
  * all three:
  *
  *   - **Legal** owns versioned NDA text and any deviation from it.
+ *   - Lab-only synthetic-admin publication is marked separately and cannot
+ *     stand for production Legal publication.
  *   - **Procurement** owns event, supplier and affiliate scope metadata.
  *   - Day one is a controlled upload of an executed document. Nothing here
  *     generates, sends or signs anything.
@@ -38,7 +40,7 @@ export type ExecutedNdaRecord = {
   ndaId: string;
   tenantKey: string;
   supplierLegalEntityId: string;
-  /** Legal owns this. A record citing a template version Legal has not published is not authority. */
+  /** A record citing a version without applicable publication authority is not evidence. */
   templateVersion: string;
   scopeLevel: NdaScopeLevel;
   /** Procurement owns this. Empty means the NDA is not scoped to any event. */
@@ -83,7 +85,7 @@ export type NdaCoverageInput = {
   tenantKey: string;
   eventId: string;
   supplierLegalEntityId: string;
-  /** Template versions Legal has published. A record outside this set is not authority. */
+  /** Applicable published versions, including the event-scoped lab-only variant. */
   publishedTemplateVersions: readonly string[];
   executedNdas: readonly ExecutedNdaRecord[];
   waivers: readonly NdaWaiverRecord[];
@@ -117,7 +119,7 @@ export type NdaCoverageResult = {
 
 const TEMPLATE_CAVEAT =
   "The published template versions were supplied by the caller, not verified " +
-  "against a Legal-owned register. A wrong list changes this answer.";
+  "against the authority register here. A wrong list changes this answer.";
 
 const AFFILIATE_CAVEAT =
   "This entity is covered as an affiliate, and the affiliate list was asserted " +
@@ -187,7 +189,7 @@ export function describeWaiverDefects(
  * Decide NDA coverage for one supplier on one event.
  *
  * Fails closed throughout: the only paths to a covered state are an executed
- * NDA that reaches this event on a template Legal published, or a waiver with
+ * NDA that reaches this event on a published template, or a waiver with
  * all four of its requirements met.
  */
 export function evaluateNdaCoverage(input: NdaCoverageInput): NdaCoverageResult {
@@ -205,7 +207,7 @@ export function evaluateNdaCoverage(input: NdaCoverageInput): NdaCoverageResult 
     return {
       state: "not_covered",
       reason:
-        "Legal has published no NDA template versions, so no executed document can be checked against one.",
+        "No published NDA template version is available for this event, so no executed document can be checked against one.",
       evidenceCaveats: [TEMPLATE_CAVEAT],
     };
   }

@@ -191,7 +191,7 @@ describe("no silent waiver", () => {
     expect(result.waiver).toBeUndefined();
   });
 
-  it("refuses everything when Legal has published no template versions", () => {
+  it("refuses everything when no published template applies to the event", () => {
     // The control on the control: with no published templates, no executed
     // document can be checked, so nothing may pass on the NDA path.
     const result = evaluateNdaCoverage(
@@ -199,6 +199,6 @@ describe("no silent waiver", () => {
     );
 
     expect(result.state).toBe("not_covered");
-    expect(result.reason).toContain("no NDA template versions");
+    expect(result.reason).toContain("No published NDA template version is available for this event");
   });
 });

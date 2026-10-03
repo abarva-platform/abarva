@@ -155,12 +155,22 @@ describe("Stage 05 executed NDA capture", () => {
   });
 
   it("withholds the record action until template and uploaded evidence are present", () => {
-    const { rerender } = render(<SourceNewNdaCapture eventId="event-1" files={[ndaFile]} coverage={ndaCoverage([])} />);
+    const { rerender } = render(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[ndaFile]} coverage={ndaCoverage([])} />);
     expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
     expect(screen.getByText(/Legal must publish/)).toBeTruthy();
-    rerender(<SourceNewNdaCapture eventId="event-1" files={[]} coverage={ndaCoverage(["NDA-V1"])} />);
+    rerender(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[]} coverage={ndaCoverage(["NDA-V1"])} />);
     expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
     expect(screen.getByText(/Upload the executed NDA/)).toBeTruthy();
+  });
+
+  it("shows lab-only template publication without presenting it as Legal approval", () => {
+    const templateFile: SourceNewFileRow = { ...ndaFile, artifactType: "nda_template", fileFormat: "pdf", title: "Synthetic template" };
+    const { rerender } = render(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[templateFile]} coverage={ndaCoverage([])} />);
+    expect(screen.queryByRole("form", { name: "Publish synthetic NDA template" })).toBeNull();
+    rerender(<SourceNewNdaCapture eventId="event-1" clientKey="meridian-health" files={[templateFile]} coverage={ndaCoverage([])} />);
+    expect(screen.getByRole("form", { name: "Publish synthetic NDA template" })).toBeTruthy();
+    expect(screen.getByText(/not Legal approval or an executed NDA/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
   });
 
   it("posts the selected governed identities and refreshes coverage on success", async () => {
@@ -168,7 +178,7 @@ describe("Stage 05 executed NDA capture", () => {
     const priorFetch = global.fetch;
     global.fetch = fetchMock;
     try {
-      render(<SourceNewNdaCapture eventId="event-1" files={[ndaFile]} coverage={ndaCoverage(["NDA-V1"])} />);
+      render(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[ndaFile]} coverage={ndaCoverage(["NDA-V1"])} />);
       const form = screen.getByRole("form", { name: "Record executed NDA" });
       for (const input of form.querySelectorAll("input")) {
         if (input.name === "effectiveFrom") input.value = "2026-09-30";

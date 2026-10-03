@@ -61,6 +61,7 @@ describe("Source New event route authorization", () => {
   });
 
   it("reads only the authorized event file cabinet", async () => {
+    const todayUtc = new Date().toISOString().slice(0, 10);
     jest.mocked(getSourcingEventForResolvedClient).mockResolvedValue({
       id: "event-1",
       code: "SRC-1",
@@ -86,6 +87,7 @@ describe("Source New event route authorization", () => {
     expect(demoPage.props.demoMode).toBe(true);
     const governedPage = await SourceNewEventPage(params);
     expect(governedPage.props.demoMode).toBe(false);
+    expect(governedPage.props.event.asOfDate).toBe("2026-03-10");
     expect(listSourceArtifacts).toHaveBeenCalledWith(
       "event-1",
       { tenantKey: "tenant-a" },
@@ -94,7 +96,7 @@ describe("Source New event route authorization", () => {
     expect(readSourceNewStage05NdaCoverage).toHaveBeenCalledWith({
       clientKey: "tenant-a",
       eventId: "event-1",
-      asOf: "2026-03-10",
+      asOf: todayUtc,
     });
   });
 

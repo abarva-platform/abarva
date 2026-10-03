@@ -1,5 +1,5 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { readNdaAuthorityForEvent } from "../nda-authority-repository";
+import { readNdaAuthorityForEvent, readNdaAuthorityForEventPanel } from "../nda-authority-repository";
 
 jest.mock("@/lib/data-plane/azureRead", () => ({
   azureRead: { withSession: jest.fn() },
@@ -110,16 +110,17 @@ describe("readNdaAuthorityForEvent", () => {
       "SELECT set_config('app.tenant_key', $1, false)",
       ["example-tenant"],
     ]);
-    expect(run.mock.calls[1][1]).toEqual(["example-tenant"]);
+    expect(run.mock.calls[1][1]).toEqual(["example-tenant", "11111111-1111-4111-8111-111111111111"]);
     expect(run.mock.calls[1][0]).toContain("client_key = $1");
+    expect(run.mock.calls[1][0]).toContain("source_event_id IS NULL OR source_event_id = $2::uuid");
     expect(run.mock.calls[2][1]).toEqual([
       "example-tenant",
       "11111111-1111-4111-8111-111111111111",
-      "VEN-001",
+      ["VEN-001"],
     ]);
     expect(run.mock.calls[2][0]).toContain("client_key = $1");
     expect(run.mock.calls[2][0]).toContain("source_event_id = $2::uuid");
-    expect(run.mock.calls[2][0]).toContain("supplier_legal_entity_id = $3");
+    expect(run.mock.calls[2][0]).toContain("supplier_legal_entity_id = ANY($3::text[])");
     expect(run.mock.calls[2][0]).toContain("authority.executed_at");
     expect(run.mock.calls[2][0]).toContain("artifact_type = 'nda_executed'");
     expect(run.mock.calls[2][0]).toContain("lifecycle_state = 'current'");
@@ -129,7 +130,7 @@ describe("readNdaAuthorityForEvent", () => {
     expect(run.mock.calls[3][1]).toEqual([
       "example-tenant",
       "11111111-1111-4111-8111-111111111111",
-      "VEN-001",
+      ["VEN-001"],
     ]);
     expect(run.mock.calls[3][0]).toContain("revoked_at IS NULL");
   });
@@ -192,5 +193,60 @@ describe("readNdaAuthorityForEvent", () => {
       executedNdas: [],
       waivers: [],
     });
+  });
+
+  it("reads a 60-supplier panel in four tenant-scoped queries and never credits another event", async () => {
+    const eventId = "11111111-1111-4111-8111-111111111111";
+    const supplierIds = Array.from({ length: 60 }, (_, index) => `VEN-${index + 1}`);
+    run.mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ template_version: "mutual-v1" }])
+      .mockResolvedValueOnce([
+        {
+          nda_id: "nda-1", client_key: "example-tenant", source_event_id: eventId,
+          supplier_legal_entity_id: supplierIds[0], template_version: "mutual-v1",
+          scope_level: "event_only", covered_affiliate_entity_ids: [],
+          effective_from: "2026-01-01", effective_to: null,
+          executed_at: "2026-02-15T12:00:00.000Z", uploaded_by_user_id: "user-1",
+          document_sha256: "a".repeat(64), signature_method: null,
+          supplier_signatory_name: null, buyer_signatory_name: null,
+          certificate_sha256: null, private_evidence_ref: null,
+        },
+        {
+          nda_id: "wrong-event", client_key: "example-tenant", source_event_id: "other-event",
+          supplier_legal_entity_id: supplierIds[1], template_version: "mutual-v1",
+        },
+        {
+          nda_id: "wrong-tenant", client_key: "other-tenant", source_event_id: eventId,
+          supplier_legal_entity_id: supplierIds[2], template_version: "mutual-v1",
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const result = await readNdaAuthorityForEventPanel({
+      clientKey: "example-tenant", eventId, supplierLegalEntityIds: supplierIds,
+    });
+
+    expect(withSession).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(4);
+    expect(run.mock.calls[2][0]).toContain("supplier_legal_entity_id = ANY($3::text[])");
+    expect(run.mock.calls[3][0]).toContain("supplier_legal_entity_id = ANY($3::text[])");
+    expect(run.mock.calls[2][1]).toEqual(["example-tenant", eventId, supplierIds]);
+    expect(run.mock.calls[3][1]).toEqual(["example-tenant", eventId, supplierIds]);
+    expect(result.size).toBe(60);
+    expect(result.get(supplierIds[0])?.executedNdas).toHaveLength(1);
+    expect(result.get(supplierIds[1])?.executedNdas).toEqual([]);
+    expect(result.get(supplierIds[2])?.executedNdas).toEqual([]);
+    expect(result.get(supplierIds[59])?.publishedTemplateVersions).toEqual(["mutual-v1"]);
+  });
+
+  it("fails the whole panel closed if any authority query fails", async () => {
+    run.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+      .mockRejectedValueOnce(new Error("authority unavailable"));
+    const result = await readNdaAuthorityForEventPanel({
+      clientKey: "example-tenant",
+      eventId: "11111111-1111-4111-8111-111111111111",
+      supplierLegalEntityIds: ["VEN-1", "VEN-2"],
+    });
+    expect([...result.values()].every((value) => value.registryAvailable === false)).toBe(true);
   });
 });

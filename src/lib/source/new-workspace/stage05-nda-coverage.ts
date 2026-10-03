@@ -3,7 +3,7 @@ import {
   type AcceptedEventCandidate,
 } from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
 import {
-  readNdaAuthorityForEvent,
+  readNdaAuthorityForEventPanel,
   type NdaAuthorityRead,
 } from "@/lib/source/nda/nda-authority-repository";
 import { evaluateNdaCoverage } from "@/lib/source/nda/nda-scope-authority";
@@ -206,7 +206,7 @@ export function buildSourceNewStage05NdaCoverage(
       ? {
           label: "Resolve NDA coverage",
           detail:
-            "File an executed NDA on a Legal-published template or record a named, expiring Legal waiver for every uncovered supplier.",
+            "File an executed NDA on an applicable published template or record a named, expiring Legal waiver for every uncovered supplier.",
         }
       : {
           label: "Open market package gate",
@@ -236,16 +236,20 @@ export async function readSourceNewStage05NdaCoverage(input: {
     return unavailableProjection(input.asOf);
   }
 
-  const suppliers = await Promise.all(
-    candidates.acceptedCandidates.map(async (candidate) => ({
-      candidate,
-      ndaAuthority: await readNdaAuthorityForEvent({
-        clientKey: input.clientKey,
-        eventId: input.eventId,
-        supplierLegalEntityId: candidate.legalEntityId,
-      }),
-    })),
-  );
+  const authority = await readNdaAuthorityForEventPanel({
+    clientKey: input.clientKey,
+    eventId: input.eventId,
+    supplierLegalEntityIds: candidates.acceptedCandidates.map((candidate) => candidate.legalEntityId),
+  });
+  const suppliers = candidates.acceptedCandidates.map((candidate) => ({
+    candidate,
+    ndaAuthority: authority.get(candidate.legalEntityId) ?? {
+      registryAvailable: false,
+      publishedTemplateVersions: [],
+      executedNdas: [],
+      waivers: [],
+    },
+  }));
 
   return buildSourceNewStage05NdaCoverage({
     ...input,
