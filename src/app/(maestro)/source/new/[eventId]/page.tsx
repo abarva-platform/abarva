@@ -108,7 +108,7 @@ export default async function SourceNewEventPage({
     readSourceNewStage05NdaCoverage({
       clientKey: activeClient.key,
       eventId: event.id,
-      asOf: asOfDate,
+      asOf: new Date().toISOString().slice(0, 10),
     }),
     listSourceArtifactsForStage(activeClient.key, event.id, "responses")
       .then((data) => ({ kind: "available" as const, data }))

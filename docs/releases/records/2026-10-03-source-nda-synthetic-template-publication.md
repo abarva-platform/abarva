@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-A named Source stage approver can publish a hash-verified, visibly synthetic NDA template for one lab event. The record is explicitly a synthetic admin decision, not Legal publication or a signed NDA. Production Legal publication remains unchanged.
+A named Source stage approver can publish a hash-verified, visibly synthetic NDA template for one lab event. The record is explicitly a synthetic admin decision, not Legal publication or a signed NDA. Production Legal publication remains unchanged. NDA coverage is evaluated as of the current UTC date, not the event value ledger's last update.
 
 ## Layer Impact
 
@@ -28,7 +28,7 @@ A named Source stage approver can publish a hash-verified, visibly synthetic NDA
 
 ## Changes Included
 
-- A signed-in publication route, a hash and PDF-text verifier, event-scoped NDA reads, and the Source New capture panel. The schema is tracked in its own release.
+- A signed-in publication route, a hash and PDF-text verifier, event-scoped NDA reads, and the Source New capture panel. The Stage 05 coverage read uses today's UTC date while the historical value-ledger snapshot remains unchanged. The schema is tracked in its own release.
 
 ## QA / Validation
 
@@ -36,6 +36,7 @@ A named Source stage approver can publish a hash-verified, visibly synthetic NDA
 - PASS: focused unit and route tests cover tenant, event, actor, file type, byte hash, visible synthetic marker, and lack of downstream signed-NDA authority.
 - PASS: focused ESLint, TypeScript typecheck, and all 11 release gates.
 - PASS: tenancy-fence census regenerated from the guarded route and its behavioral test; all 15 census tests and the shape check pass.
+- PASS: the page-route test failed first when Stage 05 used an older value-ledger date, then passed with the current UTC date without changing the historical event snapshot.
 - PASS: the prerequisite schema was separately proved against disposable PostgreSQL 16, including event-scope rejection. This app PR does not apply it.
 - BLOCKED: database apply and signed-in readback remain separate proof layers that need migration authorization.
 
