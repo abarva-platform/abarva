@@ -2,6 +2,7 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { SourceNdaEsignConfig } from "./config";
 import type {
   CreateEsignEnvelopeInput,
+  EsignDraftEnvelope,
   EsignEnvelope,
   EsignProvider,
   EsignSigner,
@@ -124,7 +125,7 @@ export function createDocuSignProvider(config: Config, dependencies: Dependencie
   }
 
   return {
-    async createEnvelope(input): Promise<EsignEnvelope> {
+    async createDraftEnvelope(input): Promise<EsignDraftEnvelope> {
       validateEnvelope(config, input);
       const signers = input.signers.map((signer, index) => ({
         recipientId: signer.recipientId,
@@ -140,7 +141,7 @@ export function createDocuSignProvider(config: Config, dependencies: Dependencie
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          status: "sent",
+          status: "created",
           emailSubject: "Synthetic NDA signing test",
           documents: [{ documentId: "1", name: "Synthetic NDA.pdf", fileExtension: "pdf", documentBase64: Buffer.from(input.documentPdf).toString("base64") }],
           recipients: { signers },
@@ -152,8 +153,23 @@ export function createDocuSignProvider(config: Config, dependencies: Dependencie
           ] },
         }),
       }));
-      if (!envelope.envelopeId || envelope.status !== "sent") throw new Error("docusign_invalid_envelope");
-      return { envelopeId: envelope.envelopeId, status: "sent" };
+      if (!envelope.envelopeId || envelope.status !== "created") throw new Error("docusign_invalid_envelope");
+      return { envelopeId: envelope.envelopeId, status: "created" };
+    },
+
+    async sendDraftEnvelope({ tenantKey, envelopeId }): Promise<EsignEnvelope> {
+      if (config.environment !== "demo" || tenantKey !== SYNTHETIC_TENANT) {
+        throw new Error("tenant_environment_mismatch");
+      }
+      if (!/^[^@\s]+@abarva\.ai$/i.test(config.testInbox)) throw new Error("invalid_test_inbox");
+      if (!envelopeId.trim()) throw new Error("invalid_envelope_id");
+      const envelope = await jsonResponse<{ envelopeId?: string; status?: string }>(await api(`/envelopes/${encodeURIComponent(envelopeId)}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "sent" }),
+      }));
+      if (envelope.envelopeId !== envelopeId || envelope.status !== "sent") throw new Error("docusign_invalid_envelope");
+      return { envelopeId, status: "sent" };
     },
 
     async getSigningLink({ envelopeId, eventId, vendorId, signer, returnUrl }) {
