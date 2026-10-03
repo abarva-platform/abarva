@@ -50,6 +50,16 @@ No change to the canonical model, source adapters, product UI, or client intake.
   honesty boundary, and the coordinated-apply contract (ACA job, idempotent
   upsert by `initiativeLink`, reuse the existing seed machinery).
 - `scripts/demo/__tests__/clean-demo-moves.test.ts`: validates the set.
+- `scripts/demo/load-clean-demo-moves.ts`: a **dry-run-default, DB-free-in-dry-run**
+  loader. Dry-run prints the exact payloads without opening a DB connection;
+  `--apply` (coordinated ACA step) upserts by graph node id and, with
+  `--clean-test`, archives test-named moves. It deliberately seeds only identity +
+  sponsor + charter content + current phase + an honest (null/pending, never
+  funded) value, and leaves `gates_passed` empty — gate/evidence honesty is owned
+  by the evidence/phase workstream, never fabricated here.
+- `scripts/demo/__tests__/load-clean-demo-moves.test.ts`: asserts those invariants
+  (no funded value, no asserted gate approvals, entry phase, charter inputs,
+  stable graph ids, test-name archiving never hits a clean move).
 
 ## QA / Validation
 
@@ -58,6 +68,9 @@ No change to the canonical model, source adapters, product UI, or client intake.
   placeholder scaffolding on any field; early phases only and no fabricated
   funded value; every chartered move carries all six P1 inputs; names and ids
   match the derived candidate opportunities in the source artifact.
+- Loader dry-run runs DB-free and prints a coherent plan for all five moves
+  (value=null/pending, gates_passed=[]); `--clean-test` lists the archive
+  patterns. 10 tests pass across the spec and the loader.
 - Scoped `tsc`: no type errors. `eslint`: clean.
 - `npm run release:check --base origin/main --head HEAD`: all gates pass.
 
