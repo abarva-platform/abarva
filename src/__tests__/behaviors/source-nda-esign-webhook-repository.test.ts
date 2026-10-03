@@ -1,3 +1,7 @@
+jest.mock("@/lib/data-plane/objectStorage", () => ({
+  getObjectStorageAdapter: jest.fn(),
+}));
+
 import { createWebhookEnvelopeStore } from "@/lib/source/esign/webhook-repository";
 import type { TxSessionRunner, SqlRunner } from "@/lib/data-plane/read-adapters/azureSession";
 
