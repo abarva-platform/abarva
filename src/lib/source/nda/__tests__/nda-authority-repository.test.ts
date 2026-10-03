@@ -215,6 +215,10 @@ describe("readNdaAuthorityForEvent", () => {
           nda_id: "wrong-event", client_key: "example-tenant", source_event_id: "other-event",
           supplier_legal_entity_id: supplierIds[1], template_version: "mutual-v1",
         },
+        {
+          nda_id: "wrong-tenant", client_key: "other-tenant", source_event_id: eventId,
+          supplier_legal_entity_id: supplierIds[2], template_version: "mutual-v1",
+        },
       ])
       .mockResolvedValueOnce([]);
 
@@ -231,6 +235,7 @@ describe("readNdaAuthorityForEvent", () => {
     expect(result.size).toBe(60);
     expect(result.get(supplierIds[0])?.executedNdas).toHaveLength(1);
     expect(result.get(supplierIds[1])?.executedNdas).toEqual([]);
+    expect(result.get(supplierIds[2])?.executedNdas).toEqual([]);
     expect(result.get(supplierIds[59])?.publishedTemplateVersions).toEqual(["mutual-v1"]);
   });
 
