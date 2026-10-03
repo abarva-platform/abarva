@@ -7,20 +7,24 @@
 // write and evidence ingestion are mocked so the test can assert that a
 // quarantined file never reaches them.
 
-const saveMoveArtifactMock = jest.fn(async () => ({
-  artifactId: "artifact-1",
-  version: 1,
-  blobStored: true,
-}));
-const ingestMock = jest.fn(async () => ({
-  evidenceId: "evidence-1",
-  reviewId: "review-1",
-  reviewState: "review_required",
-  parseMethod: "markdown-line-parser",
-  warnings: [],
-  whatFound: [],
-  whereUsed: [],
-}));
+let savedArtifactArguments: unknown[][] = [];
+let ingestedEvidenceArguments: unknown[][] = [];
+const saveMoveArtifactMock = jest.fn(async (...args: unknown[]) => {
+  savedArtifactArguments.push(args);
+  return { artifactId: "artifact-1", version: 1, blobStored: true };
+});
+const ingestMock = jest.fn(async (...args: unknown[]) => {
+  ingestedEvidenceArguments.push(args);
+  return {
+    evidenceId: "evidence-1",
+    reviewId: "review-1",
+    reviewState: "review_required",
+    parseMethod: "markdown-line-parser",
+    warnings: [],
+    whatFound: [],
+    whereUsed: [],
+  };
+});
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: async () => ({
@@ -75,6 +79,8 @@ describe("Move artifact upload — sensitive-data guard", () => {
   beforeEach(() => {
     saveMoveArtifactMock.mockClear();
     ingestMock.mockClear();
+    savedArtifactArguments = [];
+    ingestedEvidenceArguments = [];
   });
 
   it.each([
@@ -102,5 +108,9 @@ describe("Move artifact upload — sensitive-data guard", () => {
     expect(json.ok).toBe(true);
     expect(saveMoveArtifactMock).toHaveBeenCalledTimes(1);
     expect(ingestMock).toHaveBeenCalledTimes(1);
+    expect((savedArtifactArguments[0]?.[1] as { phase: number }).phase).toBe(2);
+    expect((ingestedEvidenceArguments[0]?.[1] as { phase: number }).phase).toBe(
+      2,
+    );
   });
 });

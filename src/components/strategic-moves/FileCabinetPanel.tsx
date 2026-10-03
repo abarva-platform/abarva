@@ -13,6 +13,7 @@ import {
   type PendingEvidenceReview,
 } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
+import { getPhaseLabel, TOTAL_PHASES } from "@/lib/programs/phase-labels";
 
 interface Artifact {
   artifactId: string;
@@ -1920,6 +1921,15 @@ export function FileCabinetPanel({
   const [uploadFamily, setUploadFamily] = useState<
     "uploaded_evidence" | "session_artifact"
   >("uploaded_evidence");
+  const [uploadPhase, setUploadPhase] = useState(phase);
+
+  const onUploadPhaseChange = useCallback(
+    (nextPhase: number) => {
+      setUploadPhase(nextPhase);
+      if (nextPhase !== phase) setDeclaredFamily("");
+    },
+    [phase],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1993,7 +2003,7 @@ export function FileCabinetPanel({
       try {
         const fd = new FormData();
         fd.append("file", file);
-        fd.append("phase", String(phase));
+        fd.append("phase", String(uploadPhase));
         fd.append("family", uploadFamily);
         if (uploadFamily === "uploaded_evidence" && declaredFamily) {
           fd.append("evidenceFamily", declaredFamily);
@@ -2022,11 +2032,12 @@ export function FileCabinetPanel({
         setUploadState(notCaptured ? "error" : "idle");
         setUploadMsg(
           notCaptured
-            ? `Uploaded ${file.name}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
+            ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
             : evidence?.reviewStatus
-              ? `Uploaded ${file.name} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
-              : `Uploaded ${file.name}${j.blobStored ? " to secure storage" : ""}.`,
+              ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
+              : `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}${j.blobStored ? " to secure storage" : ""}.`,
         );
+        if (!notCaptured) setUploadPhase(phase);
         await load();
         onEvidenceChanged?.();
       } catch (e) {
@@ -2034,12 +2045,25 @@ export function FileCabinetPanel({
         setUploadMsg(e instanceof Error ? e.message : "upload failed");
       }
     },
-    [moveId, phase, load, uploadFamily, declaredFamily, onEvidenceChanged],
+    [
+      moveId,
+      phase,
+      uploadPhase,
+      load,
+      uploadFamily,
+      declaredFamily,
+      onEvidenceChanged,
+    ],
   );
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setUploadPhase(phase);
+    setDeclaredFamily("");
+  }, [phase]);
 
   const visible = useMemo(
     () =>
@@ -2148,7 +2172,41 @@ export function FileCabinetPanel({
               <option value="session_artifact">Workshop / session notes</option>
             </select>
           </label>
+          <label
+            style={{
+              display: "grid",
+              gap: 3,
+              color: "#5A6472",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            <span>Evidence applies to phase</span>
+            <select
+              aria-label="Evidence applies to phase"
+              onChange={(event) =>
+                onUploadPhaseChange(Number(event.target.value))
+              }
+              value={uploadPhase}
+              style={{
+                minHeight: 32,
+                border: "1px solid #D5DAE2",
+                borderRadius: 5,
+                background: "#fff",
+                color: "#1A1A18",
+                fontSize: 11.5,
+                padding: "5px 8px",
+              }}
+            >
+              {Array.from({ length: TOTAL_PHASES }, (_, value) => (
+                <option key={value} value={value}>
+                  {getPhaseLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
           {evidenceFamilies.length > 0 &&
+          uploadPhase === phase &&
           uploadFamily === "uploaded_evidence" ? (
             <label
               style={{
