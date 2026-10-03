@@ -86,5 +86,14 @@ jobs:
           RLS_PRECONDITION_TEST_DATABASE_URL: postgresql://rls_fixture_admin:rls_fixture_admin@127.0.0.1:5432/rls_precondition_fixture
         run: node --import tsx --test tests/security/test_rls_precondition_cause.ts
 
-      - name: Hold the runner's classification of a precondition to the suite's own wording
-        run: npx jest --runTestsByPath src/__tests__/behaviors/rls-precondition-classification.test.ts tests/security/rls-regression-contract.test.ts
+      # Deliberately does NOT name
+      # src/__tests__/behaviors/rls-precondition-classification.test.ts. That
+      # suite is already swept by the required `Behavior coverage floor` job, and
+      # naming it here would make the quotable line the one that cannot block a
+      # merge while the blocking line stays anonymous --
+      # scripts/quality/check-named-suite-requiredness.mjs refuses exactly that,
+      # and refused this file before it was corrected. Read that suite's result
+      # out of the required job's own log. Only the contract test, which no
+      # required job sweeps, is named here.
+      - name: Hold the suite's precondition wording to the token the classifier keys on
+        run: npx jest --runTestsByPath tests/security/rls-regression-contract.test.ts

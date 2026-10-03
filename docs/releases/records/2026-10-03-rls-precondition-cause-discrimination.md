@@ -181,6 +181,13 @@ proven as a result of this release — it changes what the next run of that lane
   action that actually closes the question is to re-run the lane from a vantage that can
   compare. Which vantage the private operator job connects as was not established in this
   change, and is not asserted here.
+- **The new workflow names one suite, and a repo control decided which one.**
+  `scripts/quality/check-named-suite-requiredness.mjs` — which runs inside the required
+  `Behavior coverage floor` job — refused the first version of this workflow, because it named
+  the behaviour suite that the required job already sweeps. That makes the quotable line the one
+  that cannot block a merge while the blocking line stays anonymous. The workflow now names only
+  the contract test, which no required job sweeps; the behaviour suite's result is read out of
+  the required job's own log. Caught locally before CI reached it, and the audit now passes.
 - **The new workflow is not a required status check.** It runs on pull requests touching the
   named paths, and it passes; whether the branch ruleset requires it is a repository setting,
   not something this PR can change. Until it is required, a future PR could merge past a red
