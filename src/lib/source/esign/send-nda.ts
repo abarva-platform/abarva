@@ -192,8 +192,8 @@ export async function sendSyntheticNdaForSignature(
   }
   const normalizedText = documentText?.replace(/\s+/g, " ").trim() ?? "";
   if (!normalizedText.includes("SYNTHETIC TEST FIXTURE") ||
-      !normalizedText.includes("SUPPLIER_SIGNATURE_HERE") ||
-      !normalizedText.includes("BUYER_SIGNATURE_HERE") ||
+      normalizedText.split("SUPPLIER_SIGNATURE_HERE").length !== 2 ||
+      normalizedText.split("BUYER_SIGNATURE_HERE").length !== 2 ||
       /\[[^\]]{2,80}\]/.test(normalizedText) ||
       !normalizedText.toLowerCase().includes(
         authority.supplierLegalName.replace(/\s+/g, " ").trim().toLowerCase(),
