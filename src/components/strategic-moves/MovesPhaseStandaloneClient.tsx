@@ -652,10 +652,6 @@ function nextPhaseFor(phase: PhaseContract): PhaseContract | null {
   return PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
 }
 
-function phaseWorkspaceLabel(phase: PhaseContract): string {
-  return `${phase.code} · ${phase.title}`;
-}
-
 function formatArchetype(value: string | null | undefined): string {
   if (!value) return "Strategic Move";
   return value
@@ -2846,6 +2842,7 @@ export function MovesPhaseStandaloneClient({
                   ) : (
                     <FinderStepsColumns
                       comingUpExpanded={finderComingUpExpanded}
+                      gateApproved={gateApproved}
                       onPhaseCaptureValueChange={setPhaseCaptureValue}
                       onSelectSection={setFinderSelectedSectionKey}
                       onSelectSubstep={setSubstepIndex}
@@ -3570,7 +3567,10 @@ function workflowIndexForSelectedSection(
 function ReferenceDraftCallout({ value }: { value: string | undefined }) {
   if (!value?.trim()) return null;
   return (
-    <aside aria-label="Synthetic reference draft" className="mxw-reference-draft">
+    <aside
+      aria-label="Synthetic reference draft"
+      className="mxw-reference-draft"
+    >
       <div className="mxw-reference-draft-head">
         <strong>AbarVa reference draft</strong>
         <span>Synthetic · review before use</span>
@@ -3950,6 +3950,15 @@ function PhaseContractStepsCanvas({
           </div>
         </div>
 
+        <WorkflowContinueAction
+          gateApproved={gateApproved}
+          onSelectSection={onSelectSection}
+          onSelectSubstep={onSelectSubstep}
+          phase={phase}
+          selectedWorkflow={selectedWorkflow}
+          substepIndex={substepIndex}
+        />
+
         {selectedSection ? (
           <div className="mxw-contract-form">
             <p>{selectedSection.description}</p>
@@ -4120,6 +4129,7 @@ function PhaseContractStepsCanvas({
 
 function FinderStepsColumns({
   comingUpExpanded,
+  gateApproved,
   onPhaseCaptureValueChange,
   onSelectSection,
   onSelectSubstep,
@@ -4145,6 +4155,7 @@ function FinderStepsColumns({
   substepIndex,
 }: {
   comingUpExpanded: boolean;
+  gateApproved: boolean;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
   onSelectSection: (key: string | null) => void;
   onSelectSubstep: (index: number) => void;
@@ -4304,39 +4315,45 @@ function FinderStepsColumns({
             })}
           </ul>
         </div>
-        <div className="mxw-finder-comingup" data-testid="mxw-finder-comingup">
-          <button
-            aria-expanded={comingUpExpanded}
-            className="mxw-finder-comingup-toggle"
-            onClick={onToggleComingUp}
-            type="button"
+        {selectedSectionKey === null &&
+        phase.substeps[substepIndex]?.key === "approve" ? (
+          <div
+            className="mxw-finder-comingup"
+            data-testid="mxw-finder-comingup"
           >
-            What {readinessPack.nextPhaseLabel} will need
-          </button>
-          {comingUpExpanded ? (
-            readinessPack.openNeeds.length > 0 ? (
-              <div
-                className="mxw-finder-comingup-chips"
-                data-testid="mxw-finder-comingup-chips"
-              >
-                {readinessPack.openNeeds.map((need) => (
-                  <span
-                    className={`mxw-finder-chip ${
-                      need.priority === "required" ? "req" : "opt"
-                    }`}
-                    key={need.evidenceSlot}
-                  >
-                    {need.evidenceSlot}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mxw-finder-comingup-empty">
-                No open evidence needs for {readinessPack.nextPhaseLabel} yet.
-              </p>
-            )
-          ) : null}
-        </div>
+            <button
+              aria-expanded={comingUpExpanded}
+              className="mxw-finder-comingup-toggle"
+              onClick={onToggleComingUp}
+              type="button"
+            >
+              What {readinessPack.nextPhaseLabel} will need
+            </button>
+            {comingUpExpanded ? (
+              readinessPack.openNeeds.length > 0 ? (
+                <div
+                  className="mxw-finder-comingup-chips"
+                  data-testid="mxw-finder-comingup-chips"
+                >
+                  {readinessPack.openNeeds.map((need) => (
+                    <span
+                      className={`mxw-finder-chip ${
+                        need.priority === "required" ? "req" : "opt"
+                      }`}
+                      key={need.evidenceSlot}
+                    >
+                      {need.evidenceSlot}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mxw-finder-comingup-empty">
+                  No open evidence needs for {readinessPack.nextPhaseLabel} yet.
+                </p>
+              )
+            ) : null}
+          </div>
+        ) : null}
       </nav>
       <div
         aria-label={
@@ -4383,6 +4400,14 @@ function FinderStepsColumns({
             <div id="mxw-step-progress-action" />
           </div>
         </header>
+        <WorkflowContinueAction
+          gateApproved={gateApproved}
+          onSelectSection={onSelectSection}
+          onSelectSubstep={onSelectSubstep}
+          phase={phase}
+          selectedWorkflow={selectedSectionKey === null}
+          substepIndex={substepIndex}
+        />
         {selectedSection ? (
           <section className="mxw-finder-detail-panel">
             <header>
@@ -4468,6 +4493,62 @@ function StepHeaderActionPortal({ children }: { children: ReactNode }) {
   }, []);
 
   return target ? createPortal(children, target) : null;
+}
+
+function WorkflowContinueAction({
+  gateApproved,
+  onSelectSection,
+  onSelectSubstep,
+  phase,
+  selectedWorkflow,
+  substepIndex,
+}: {
+  gateApproved: boolean;
+  onSelectSection: (key: string | null) => void;
+  onSelectSubstep: (index: number) => void;
+  phase: PhaseContract;
+  selectedWorkflow: boolean;
+  substepIndex: number;
+}) {
+  const nextStep = phase.substeps[substepIndex + 1];
+  const currentStep = phase.substeps[substepIndex];
+  if (
+    phase.phase < 3 ||
+    !selectedWorkflow ||
+    gateApproved ||
+    !nextStep ||
+    currentStep?.key === "approve"
+  ) {
+    return null;
+  }
+
+  return (
+    <StepHeaderActionPortal>
+      <button
+        className="mxw-contract-continue"
+        data-testid="mxw-workflow-next-action"
+        onClick={() => {
+          onSelectSubstep(substepIndex + 1);
+          onSelectSection(null);
+          const scrollDetail = () => {
+            const detail = document.querySelector(
+              ".mxw-contract-detail, .mxw-finder-detail",
+            );
+            if (typeof detail?.scrollIntoView !== "function") return;
+            detail.scrollIntoView({ block: "start", behavior: "smooth" });
+          };
+          if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(scrollDetail);
+          } else {
+            window.setTimeout(scrollDetail, 0);
+          }
+        }}
+        type="button"
+      >
+        Continue to {nextStep.label}
+      </button>
+    </StepHeaderActionPortal>
+  );
 }
 
 // Structured "facts" review table (metric · value, with an inline citation
@@ -4625,6 +4706,9 @@ function PhaseBody({
   terminalComplete: boolean;
 }) {
   const [p0ConfirmOpen, setP0ConfirmOpen] = useState(false);
+  const selectedP3Option = p3OptionSet.options.find(
+    (option) => option.id === selectedOption,
+  );
   if (phase.phase === 0 && substep !== "approve") {
     return <P0OriginationHandoff move={move} />;
   }
@@ -4667,14 +4751,19 @@ function PhaseBody({
     }
 
     if (phase.phase >= 2 && phase.phase <= 5) {
-      const nextPhase = nextPhaseFor(phase);
-
       return (
         <PhasePreparePanel
-          evidenceNeedPackets={evidenceNeedPackets}
+          evidenceNeedPackets={evidenceNeedPackets.filter(
+            (packet) => packet.phase === phase.phase,
+          )}
           move={move}
-          nextPhaseLabel={
-            nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"
+          nextWorkflowLabel={
+            phase.substeps[
+              Math.max(
+                phase.substeps.findIndex((item) => item.key === "prepare") + 1,
+                0,
+              )
+            ]?.label ?? "the next workflow step"
           }
           phase={phase}
           terminalComplete={terminalComplete}
@@ -4811,17 +4900,19 @@ function PhaseBody({
     return (
       <>
         <section className="mxw-zone">
-          <h2>Decide the approach</h2>
+          <h2>Confirm the selected approach</h2>
           <p>
-            Use the SME session to confirm, deviate, or define a new option.
-            Deviations are allowed; the rationale must be captured.
+            Review the option selected in Compare Options. Return to that step
+            if the team needs to change its choice.
           </p>
-          <P3OptionSummary optionSet={p3OptionSet} />
-          <OptionCards
-            optionSet={p3OptionSet}
-            selectedOption={selectedOption}
-            onSelectOption={onSelectOption}
-          />
+          <div className="mxw-decision-selected-option">
+            <span>Selected option</span>
+            <strong>
+              {selectedP3Option
+                ? `${selectedP3Option.id} · ${selectedP3Option.label}`
+                : "No option selected yet"}
+            </strong>
+          </div>
         </section>
         <DecisionEvidenceActionPanel
           buttonLabel="Upload decision files"
@@ -4829,6 +4920,7 @@ function PhaseBody({
           moveId={move.id}
           onOpenFiles={onOpenFiles}
           phase={phase.phase}
+          secondaryAction
           title="Solution Approach Decision Summary"
         />
       </>
@@ -4863,31 +4955,56 @@ function PhaseBody({
   }
 
   if (substep === "canvas" || substep === "workstreams") {
+    const isHandoff = phase.phase === 5;
+    const lanes = isHandoff
+      ? [
+          [
+            "Receiving owners",
+            "Name the business, delivery, and service owners who accept the approved roadmap handoff.",
+          ],
+          [
+            "Open conditions",
+            "Carry unresolved assumptions, dependencies, and decisions with accountable owners.",
+          ],
+          [
+            "Adoption ownership",
+            "Confirm who owns training, adoption, and operational change after handoff.",
+          ],
+          [
+            "Tower measures",
+            "Pass approved metric definitions, baselines, targets, and proof rules to Tower.",
+          ],
+        ]
+      : [
+          ["Process", "Workflow changes, decision rights, and handoff model."],
+          ["Data", "Evidence, semantic layer, quality rules, and lineage."],
+          [
+            "Technology",
+            "Integration, automation, platform, and control posture.",
+          ],
+          [
+            "People",
+            "Human + AI work split, adoption, and operating ownership.",
+          ],
+        ];
     return (
       <section className="mxw-zone">
         <h2>
-          {substep === "canvas" ? "The Building-Blocks Canvas" : "Workstreams"}
+          {substep === "canvas"
+            ? "The Building-Blocks Canvas"
+            : isHandoff
+              ? "Handoff readiness"
+              : "Plan workstreams"}
         </h2>
         <p>
-          Design fidelity is strategy-grade: each lane is defined just far
-          enough to estimate effort, sequence the roadmap, and price the risk.
+          {substep === "canvas"
+            ? "Define each lane only far enough to estimate effort, sequence the roadmap, and map risk."
+            : isHandoff
+              ? "Prepare the approved roadmap and its open conditions for Tower. Project execution happens after handoff, outside Moves."
+              : "Define work packages, owners, dependencies, and sequence only to the level needed to estimate and approve the roadmap. Detailed execution planning follows approval."}
         </p>
         <div className="mxw-lanes">
-          {[
-            [
-              "Process",
-              "Workflow changes, decision rights, and handoff model.",
-            ],
-            ["Data", "Evidence, semantic layer, quality rules, and lineage."],
-            [
-              "Technology",
-              "Integration, automation, platform, and control posture.",
-            ],
-            [
-              "People",
-              "Human + AI work split, adoption, and operating ownership.",
-            ],
-          ].map(([lane, detail], index) => (
+          {lanes.map(([lane, detail], index) => (
             <article className="mxw-lane" key={lane}>
               <header>
                 <span>{index + 1}</span>
@@ -5782,13 +5899,13 @@ function statusLabel(status: MoveEvidenceNeedPacket["status"]): string {
 function PhasePreparePanel({
   evidenceNeedPackets,
   move,
-  nextPhaseLabel,
+  nextWorkflowLabel,
   phase,
   terminalComplete,
 }: {
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   move: StrategicMove;
-  nextPhaseLabel: string;
+  nextWorkflowLabel: string;
   phase: PhaseContract;
   terminalComplete: boolean;
 }) {
@@ -5815,7 +5932,7 @@ function PhasePreparePanel({
           <p>
             {terminalComplete
               ? "This Move is complete. Tower is now the execution and value-tracking surface."
-              : "Use this as the phase briefing. The step tabs above are the workflow: prepare, upload or decide, review, then approve and build."}
+              : "Review this phase brief, then continue to the next workflow step. Evidence review and phase approval remain separate checks."}
           </p>
         </div>
         <strong>{phase.code}</strong>
@@ -5833,17 +5950,16 @@ function PhasePreparePanel({
           <span>Do now</span>
           <p>
             Check the sessions, templates, evidence slots, and open blockers
-            below before uploading files or approving anything.
+            below before continuing to the next workflow step.
           </p>
           <b>Prepare</b>
         </div>
         <div>
           <span>Done when</span>
           <p>
-            The team knows exactly which outputs to upload, which gaps can
-            carry, and what Approve & Build will generate.
+            The team understands the phase purpose and current evidence needs.
           </p>
-          <b>Ready for next tab</b>
+          <b>Continue to {nextWorkflowLabel}</b>
         </div>
         <div>
           <span>Live state</span>
@@ -5852,7 +5968,7 @@ function PhasePreparePanel({
             {missingEvidenceCount === 1 ? "" : "s"} · {openHardGateCount} hard
             gate{openHardGateCount === 1 ? "" : "s"} open.
           </p>
-          <b>{nextPhaseLabel}</b>
+          <b>Current phase</b>
         </div>
       </div>
       <div className="mxw-command-grid">
@@ -5885,7 +6001,7 @@ function PhasePreparePanel({
               {openHardGateCount} hard gate{openHardGateCount === 1 ? "" : "s"}{" "}
               open
             </li>
-            <li>Next phase: {nextPhaseLabel}</li>
+            <li>Next workflow step: {nextWorkflowLabel}</li>
           </ul>
         </article>
       </div>
@@ -6097,7 +6213,7 @@ function DecisionOptionsActionPanel({
           </div>
           <div className="mxw-kdd-actions">
             <button
-              className="mxw-btn mxw-primary"
+              className="mxw-btn mxw-secondary"
               disabled={status === "saving"}
               onClick={() => void recordDecision()}
               type="button"
@@ -6119,6 +6235,7 @@ function DecisionEvidenceActionPanel({
   onOpenFiles,
   moveId,
   phase,
+  secondaryAction = false,
   title,
 }: {
   buttonLabel: string;
@@ -6126,17 +6243,20 @@ function DecisionEvidenceActionPanel({
   onOpenFiles?: () => void;
   moveId: string;
   phase: number;
+  secondaryAction?: boolean;
   title: string;
 }) {
   return (
-    <section className="mxw-action-panel" aria-label={heading}>
+    <section
+      className={`mxw-action-panel ${secondaryAction ? "supporting" : ""}`}
+      aria-label={heading}
+    >
       <div>
         <span>Action required</span>
         <h2>{heading}</h2>
         <p>
-          Upload the working-session files here. Then continue to Gate approval,
-          where AbarVa runs the governed phase build and advances only from the
-          approved record.
+          Upload working-session files here. They remain evidence until a human
+          reviews them; uploading alone does not clear the phase gate.
         </p>
       </div>
       <EvidenceUploadControl
@@ -6144,6 +6264,7 @@ function DecisionEvidenceActionPanel({
         moveId={moveId}
         onOpenFiles={onOpenFiles}
         phase={phase}
+        secondaryAction={secondaryAction}
         title={title}
       />
     </section>
@@ -6696,12 +6817,14 @@ function EvidenceUploadControl({
   moveId,
   onOpenFiles,
   phase,
+  secondaryAction = false,
   title,
 }: {
   buttonLabel: string;
   moveId: string;
   onOpenFiles?: () => void;
   phase: number;
+  secondaryAction?: boolean;
   title: string;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -6850,6 +6973,7 @@ function EvidenceUploadControl({
           type="file"
         />
         <button
+          className={secondaryAction ? "secondary" : undefined}
           disabled={status === "uploading"}
           onClick={() => inputRef.current?.click()}
           type="button"
@@ -8106,6 +8230,8 @@ function MovesStandaloneStyles() {
 .mxw-btn{padding:10px 18px;border-radius:9px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer}
 .mxw-primary{background:var(--ink);color:#fff}
 .mxw-primary:hover{background:#000}
+.mxw-secondary{border:1px solid var(--line-2);background:var(--card);color:var(--ink)}
+.mxw-secondary:hover{background:var(--soft)}
 .mxw-workflow-guide{border:1px solid var(--line-2);border-top:0;border-radius:0 0 13px 13px;background:var(--card);box-shadow:var(--shadow);padding:16px;margin:0 0 18px}
 .mxw-guide-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
 .mxw-guide-head>div{display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}
@@ -8220,6 +8346,9 @@ function MovesStandaloneStyles() {
 .mxw-option-summary span{display:block;font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:4px}
 .mxw-option-summary strong{display:block;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-option-summary small{display:block;font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxw-decision-selected-option{display:grid;gap:4px;border:1px solid var(--line-2);border-radius:9px;background:var(--soft);padding:12px 14px;margin-top:12px}
+.mxw-decision-selected-option span{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}
+.mxw-decision-selected-option strong{font-size:14px;color:var(--ink)}
 .mxw-options{display:grid;gap:10px}
 .mxw-options button{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;display:grid;grid-template-columns:28px 1fr auto;gap:10px;text-align:left;cursor:pointer;align-items:center}
 .mxw-options button.selected{border-color:var(--green);background:var(--green-tint)}
@@ -8239,6 +8368,8 @@ function MovesStandaloneStyles() {
 .mxw-option-caution{border:1px solid rgba(176,115,15,.25);border-radius:10px;background:var(--amber-tint);padding:9px 10px;font-size:12px;color:var(--ink-2);line-height:1.4}
 .mxw-option-caution b{display:block;color:var(--amber);font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px}
 .mxw-action-panel{margin-top:18px;border:1px solid rgba(29,143,104,.28);border-radius:14px;background:linear-gradient(180deg,var(--green-tint),var(--card) 70%);box-shadow:var(--shadow);padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}
+.mxw-action-panel.supporting{border-color:var(--line-2);background:var(--soft);box-shadow:none}
+.mxw-action-panel.supporting>div>span{color:var(--muted)}
 .mxw-action-panel span{display:block;font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--green);font-weight:900;margin-bottom:4px}
 .mxw-action-panel h2{font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:-.35px;line-height:1.15;margin:0;color:var(--ink)}
 .mxw-action-panel p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:5px 0 0;max-width:72ch}
@@ -8282,6 +8413,7 @@ function MovesStandaloneStyles() {
 .mxw-upload-control{display:flex;align-items:end;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .mxw-hidden-file{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
 .mxw-upload-control button{padding:10px 16px;border-radius:9px;background:var(--ink);color:#fff;border:0;font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer}
+.mxw-upload-control button.secondary{border:1px solid var(--line-2);background:var(--card);color:var(--ink)}
 .mxw-upload-control button:disabled{opacity:.6;cursor:wait}
 .mxw-upload-status{font-size:12px;font-weight:700;color:var(--muted)}
 .mxw-upload-status.uploaded{color:var(--green)}

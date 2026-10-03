@@ -55,6 +55,26 @@ function contractStepButton(name: RegExp | string): HTMLElement {
   return stepButton;
 }
 
+function workflowStepButton(name: RegExp | string): HTMLElement {
+  const groups = Array.from(
+    screen
+      .getByTestId("mxw-contract-card")
+      .querySelectorAll<HTMLElement>(".mxw-contract-group"),
+  );
+  const workflowGroup = groups.find(
+    (group) =>
+      group.querySelector(".mxw-contract-group-label")?.textContent ===
+      "Workflow",
+  );
+  if (!workflowGroup) throw new Error("Workflow step group not found");
+  return within(workflowGroup).getByRole("button", { name });
+}
+
+function selectP3Option(name: RegExp | string): void {
+  fireEvent.click(workflowStepButton(/Compare Options/i));
+  fireEvent.click(screen.getByRole("button", { name }));
+}
+
 const mockRouterPush = jest.fn();
 const mockRouterRefresh = jest.fn();
 
@@ -237,6 +257,46 @@ const completeP1CaptureValues = {
   }),
 };
 
+const completeSolutionRouteValue = JSON.stringify({
+  businessChangeAssessmentSnapshot: JSON.parse(
+    completeP1CaptureValues.business_change_assessment,
+  ),
+  solutionOutput: "reports_dashboards",
+  workflowChange: "limited",
+  roleAccountabilityChange: "none",
+  evidenceReference: "approved-p2-evidence",
+  decision: "confirm",
+  selectedRoute: "technical_product",
+  correctionRationale: "",
+  validatedBy: "Authorized workspace user",
+});
+
+const completeEstimateModelValue = JSON.stringify({
+  currency: "USD",
+  reviewer: "Finance reviewer",
+  reviewConfirmed: true,
+  sourceNotes: "Synthetic planning assumptions for the UI test.",
+  rows: ["internal", "vendor"].map((deliveryModel) => ({
+    pairId: "reporting-foundation",
+    workPackage: "Reporting foundation",
+    role: "Data engineer",
+    deliveryModel,
+    lowHours: 10,
+    baseHours: 20,
+    highHours: 30,
+    ratePerHour: deliveryModel === "internal" ? 100 : 150,
+    rateSource: "Planning rate card",
+    inputBasis: "assumption",
+    evidenceReference: "",
+    assumption: "One bounded reporting release",
+    confidence: "medium",
+    aiEligiblePct: 10,
+    aiToolAssumption:
+      "Assistant accelerates scaffolding; human review remains included.",
+    humanReviewHours: 2,
+  })),
+});
+
 function coveredEvidencePacketsForPhase(
   phase: number,
 ): MoveEvidenceNeedPacket[] {
@@ -305,6 +365,20 @@ function makeCurrentStateReadiness(): ReadinessReport {
     coverageScore: 0,
     hardGaps: ["eng_performance_dora"],
     softGaps: [],
+  };
+}
+
+function makeCoveredCurrentStateReadiness(): ReadinessReport {
+  const readiness = makeCurrentStateReadiness();
+  return {
+    ...readiness,
+    instruments: readiness.instruments.map((instrument) => ({
+      ...instrument,
+      status: "committed",
+      committedRows: 1,
+    })),
+    coverageScore: 100,
+    hardGaps: [],
   };
 }
 
@@ -849,7 +923,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       fireEvent.click(
         within(screen.getByLabelText("P3 steps")).getByRole("button", {
-          name: /Record Decision/i,
+          name: /Compare Options/i,
         }),
       );
       const cards = optionCards(container);
@@ -874,7 +948,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       fireEvent.click(
         within(screen.getByLabelText("P3 steps")).getByRole("button", {
-          name: /Record Decision/i,
+          name: /Compare Options/i,
         }),
       );
       const second = optionCards(first.container)[1];
@@ -896,7 +970,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       fireEvent.click(
         within(screen.getByLabelText("P3 steps")).getByRole("button", {
-          name: /Record Decision/i,
+          name: /Compare Options/i,
         }),
       );
       const selected = optionCards(container).filter((card) =>
@@ -1937,7 +2011,9 @@ describe("MovesPhaseStandaloneClient", () => {
     // The empty box guides with a worked example, not the prompt echoed back as
     // ghost text (which read as pre-filled).
     expect(sponsorField.placeholder).toMatch(/^e\.g\./);
-    expect(sponsorField.placeholder).not.toMatch(/resolvable workspace identity/i);
+    expect(sponsorField.placeholder).not.toMatch(
+      /resolvable workspace identity/i,
+    );
     expect(
       (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
     ).toBe("");
@@ -2730,7 +2806,7 @@ describe("MovesPhaseStandaloneClient", () => {
         canApproveGates
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        initialSubstepKey="decide"
+        initialSubstepKey="options"
         move={makeMove({
           name: "Meridian Member Experience AI Assist",
           archetype: "Contact Center Agent Assist",
@@ -2760,7 +2836,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Decide the approach" }),
+      screen.getByRole("heading", { name: "Recommended strategy path" }),
     ).toBeInTheDocument();
     expect(
       screen.getAllByText("Governed agent-assist layer on current systems")
@@ -4117,23 +4193,20 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Record Decision/i));
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
 
     expect(
-      screen.getByRole("heading", { name: "Decide the approach" }),
+      screen.getByRole("heading", {
+        name: "Confirm the selected approach",
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         name: "Upload evidence for approach decision",
       }),
     ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Operational playbook and metric discipline/i,
-      }),
-    );
-
-    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(workflowStepButton(/Approve & Build/i));
 
     expect(
       screen.getByRole("heading", { name: "Gate approval" }),
@@ -4261,12 +4334,8 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBe(false);
 
     fireEvent.click(screen.getByRole("button", { name: /Stage workspace/i }));
-    fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Operational playbook and metric discipline/i,
-      }),
-    );
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     expect(
       screen.queryByRole("button", { name: /Review governed build/i }),
@@ -4428,12 +4497,8 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Operational playbook and metric discipline/i,
-      }),
-    );
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
@@ -4474,12 +4539,8 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Operational playbook and metric discipline/i,
-      }),
-    );
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
@@ -4564,12 +4625,8 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Operational playbook and metric discipline/i,
-      }),
-    );
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
@@ -5577,6 +5634,258 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.queryByTestId("mxw-contract-comingup"),
       ).not.toBeInTheDocument();
+    });
+
+    it.each([
+      {
+        phase: 3,
+        substep: "prepare",
+        next: "Compare Options",
+        hiddenPanel: "Options & recommendation",
+      },
+      {
+        phase: 3,
+        substep: "options",
+        next: "Record Decision",
+        visiblePanel: "Options & recommendation",
+        hiddenPanel: "Confirm the selected approach",
+      },
+      {
+        phase: 3,
+        substep: "decide",
+        next: "Design Canvas",
+        visiblePanel: "Confirm the selected approach",
+        hiddenPanel: "The Building-Blocks Canvas",
+      },
+      {
+        phase: 3,
+        substep: "canvas",
+        next: "Approve & Build",
+        visiblePanel: "The Building-Blocks Canvas",
+      },
+      {
+        phase: 4,
+        substep: "prepare",
+        next: "Value Case",
+        hiddenPanel: "The value case",
+      },
+      {
+        phase: 4,
+        substep: "value",
+        next: "Plan Workstreams",
+        visiblePanel: "The value case",
+        hiddenPanel: "Plan workstreams",
+      },
+      {
+        phase: 4,
+        substep: "workstreams",
+        next: "Approve & Build",
+        visiblePanel: "Plan workstreams",
+      },
+      {
+        phase: 5,
+        substep: "prepare",
+        next: "Handoff Readiness",
+        hiddenPanel: "Handoff readiness",
+      },
+      {
+        phase: 5,
+        substep: "workstreams",
+        next: "Approve & Build",
+        visiblePanel: "Handoff readiness",
+      },
+    ])(
+      "P$phase $substep has one header action that advances to $next, with downstream prep withheld until approval",
+      async ({ phase, substep, next, visiblePanel, hiddenPanel }) => {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+            initialSubstepKey={substep as "prepare"}
+            move={makeMove({ currentPhase: phase })}
+            phaseNum={phase}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        const action = await screen.findByTestId("mxw-workflow-next-action");
+        const actionSlot = document.getElementById("mxw-step-progress-action");
+        expect(actionSlot?.querySelectorAll("button")).toHaveLength(1);
+        expect(action).toHaveTextContent(`Continue to ${next}`);
+        expect(
+          screen.queryByTestId("mxw-contract-comingup"),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByTestId("mxw-finder-comingup"),
+        ).not.toBeInTheDocument();
+        if (visiblePanel) {
+          expect(
+            screen.getByRole("heading", { name: visiblePanel }),
+          ).toBeInTheDocument();
+        }
+        if (hiddenPanel) {
+          expect(
+            screen.queryByRole("heading", { name: hiddenPanel }),
+          ).not.toBeInTheDocument();
+        }
+
+        if (phase === 3 && substep === "decide") {
+          expect(
+            screen.getByRole("button", { name: "Upload decision files" }),
+          ).toHaveClass("secondary");
+          expect(
+            screen.getByRole("heading", {
+              name: "Confirm the selected approach",
+            }),
+          ).toBeInTheDocument();
+        }
+        if (phase === 5 && substep === "workstreams") {
+          expect(
+            screen.getByRole("heading", { name: "Handoff readiness" }),
+          ).toBeInTheDocument();
+          expect(
+            screen.getByText(
+              /Project execution happens after handoff, outside Moves/i,
+            ),
+          ).toBeInTheDocument();
+        }
+
+        fireEvent.click(action);
+        await waitFor(() => {
+          expect(workflowStepButton(new RegExp(next, "i"))).toHaveClass(
+            "active",
+          );
+        });
+
+        if (next === "Approve & Build") {
+          expect(
+            screen.queryByTestId("mxw-workflow-next-action"),
+          ).not.toBeInTheDocument();
+          expect(
+            screen.getByTestId("mxw-contract-comingup"),
+          ).toBeInTheDocument();
+        }
+      },
+    );
+
+    it("saved structured business-change capture enables Continue and advances", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(contractStepButton(/Business change & adoption owner/i));
+      expect(
+        screen.getByLabelText("Expected workflow change"),
+      ).toBeInTheDocument();
+      const continueButton = screen.getByRole("button", {
+        name: "Continue to Upload Evidence",
+      });
+      expect(continueButton).toBeEnabled();
+      fireEvent.click(continueButton);
+      expect(contractStepButton(/Upload Evidence/i)).toHaveClass("active");
+    });
+
+    it("saved Finder facts enable Continue and advance", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          currentStateReadiness={makeCoveredCurrentStateReadiness()}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+          initialPhaseCaptureValues={completeP2CaptureValues}
+          initialSubstepKey="prepare"
+          move={makeMove({ currentPhase: 2 })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(contractStepButton(/Baseline metrics/i));
+      expect(screen.getByText("Cycle time")).toBeInTheDocument();
+      const continueButton = screen.getByRole("button", {
+        name: "Save & continue",
+      });
+      expect(continueButton).toBeEnabled();
+      fireEvent.click(continueButton);
+      expect(contractStepButton(/Gaps \/ root causes/i)).toHaveClass("active");
+    });
+
+    it("saved evidence-backed solution-route capture enables Continue and advances", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          currentStateReadiness={makeCoveredCurrentStateReadiness()}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+          initialApprovedEvidenceReferences={[
+            {
+              evidenceId: "approved-p2-evidence",
+              title: "Approved discovery record",
+              familyKey: "current_state_evidence",
+            },
+          ]}
+          initialBusinessChangeAssessment={
+            completeP1CaptureValues.business_change_assessment
+          }
+          initialPhaseCaptureValues={{
+            ...completeP2CaptureValues,
+            solution_route_validation: completeSolutionRouteValue,
+          }}
+          initialSubstepKey="prepare"
+          move={makeMove({ currentPhase: 2 })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(contractStepButton(/Validate solution route/i));
+      expect(screen.getByLabelText("Human route decision")).toBeInTheDocument();
+      const continueButton = screen.getByRole("button", {
+        name: "Continue to Upload & Review",
+      });
+      expect(continueButton).toBeEnabled();
+      fireEvent.click(continueButton);
+      expect(contractStepButton(/Upload & Review/i)).toHaveClass("active");
+    });
+
+    it("reviewed estimate model enables Continue and advances", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={{
+            estimates_capacity: completeEstimateModelValue,
+          }}
+          initialSubstepKey="prepare"
+          move={makeMove({ currentPhase: 4 })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(contractStepButton(/Estimates & capacity/i));
+      expect(
+        screen.getByLabelText("Editable estimate model"),
+      ).toBeInTheDocument();
+      const continueButton = screen.getByRole("button", {
+        name: "Save & continue",
+      });
+      expect(continueButton).toBeEnabled();
+      fireEvent.click(continueButton);
+      expect(contractStepButton(/Value plan & business case/i)).toHaveClass(
+        "active",
+      );
     });
 
     it("shows a Continue on each input step: disabled until the required value is captured, then advancing to the next step", () => {
