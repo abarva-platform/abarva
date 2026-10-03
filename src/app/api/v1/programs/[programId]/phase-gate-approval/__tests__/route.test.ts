@@ -26,6 +26,9 @@ const mockListApprovedPhaseEvidence = jest.fn();
 const mockResolveConfirmedSolutionRoute = jest.fn();
 const mockPersistP0PhaseCaptureFromSource = jest.fn();
 const mockSbFrom = jest.fn();
+const mockLoadDiscoveryEvidenceReadiness = jest.fn();
+const mockBuildMoveEvidenceNeedPackets = jest.fn();
+const mockLoadAcceptedStageReadinessContext = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -77,6 +80,21 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 jest.mock("@/lib/programs/p0-source-evidence", () => ({
   loadP0MinimumEvidenceStatus: (...args: unknown[]) =>
     mockLoadP0MinimumEvidenceStatus(...args),
+}));
+
+jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
+  loadDiscoveryEvidenceReadiness: (...args: unknown[]) =>
+    mockLoadDiscoveryEvidenceReadiness(...args),
+}));
+
+jest.mock("@/lib/programs/evidence-readiness/move-evidence-need-packet", () => ({
+  buildMoveEvidenceNeedPackets: (...args: unknown[]) =>
+    mockBuildMoveEvidenceNeedPackets(...args),
+}));
+
+jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
+  loadAcceptedStageReadinessContext: (...args: unknown[]) =>
+    mockLoadAcceptedStageReadinessContext(...args),
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
@@ -172,6 +190,63 @@ beforeEach(() => {
     gatesPassed: [],
   });
   mockListApprovedPhaseEvidence.mockResolvedValue([]);
+  mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({});
+  mockBuildMoveEvidenceNeedPackets.mockImplementation(
+    (input: { moveId: string; currentPhase: number }) => [
+      {
+        moveId: input.moveId,
+        phase: input.currentPhase,
+        artifactType: "discovery_report",
+        evidenceSlot: "Contact center KPI baseline",
+        familyId: "contact_center_kpis",
+        priority: "required",
+        ownerSource: "Operations and Finance",
+        acceptedFormats: ["CSV"],
+        exampleTemplate: "KPI baseline",
+        exampleContent: [],
+        whyItMatters: "Evidence-backed baseline",
+        blockedArtifacts: [
+          {
+            artifactType: "discovery_report",
+            title: "Discovery Report",
+            phase: input.currentPhase + 1,
+            reason: "Required evidence",
+          },
+        ],
+        canDraftBoundary: {
+          canDraft: true,
+          canDraftLabel: "Can draft",
+          cannotDraftLabel: "Cannot draft",
+        },
+        preliminaryGenerationCaveat: null,
+        waiverOption: null,
+        nextAction: "Review the approved KPI file.",
+        status: "covered",
+        evidenceIds: ["ev-kpi"],
+        evidenceTitles: ["contact-center-kpis.csv"],
+      },
+    ],
+  );
+  mockLoadAcceptedStageReadinessContext.mockResolvedValue({
+    moveId: "prog-1",
+    sourcePhase: 3,
+    targetPhase: 4,
+    reviewArtifactId: "review-1",
+    reviewArtifactVersion: 1,
+    proposals: [
+      {
+        proposalId: "proposal-kpi",
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+    ],
+    acceptedResponses: [],
+    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+  });
   mockResolveConfirmedSolutionRoute.mockReturnValue(null);
   // Capture is complete by default so tests can focus on the gate check.
   mockGetPhaseCaptureSections.mockReturnValue([
@@ -230,6 +305,24 @@ beforeEach(() => {
 });
 
 describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
+  it("does not advance when the transition workbook has no accepted, evidence-backed review", async () => {
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "transition_evidence_incomplete",
+      requiredEvidenceGaps: [
+        expect.objectContaining({
+          evidenceSlot: "Contact center KPI baseline",
+          status: "partial",
+        }),
+      ],
+    });
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
   it("blocks approval on a hard gate failure and fabricates nothing", async () => {
     mockEvaluateGate.mockImplementation(
       async (_ctx: unknown, _programId: string, phase: number) => ({

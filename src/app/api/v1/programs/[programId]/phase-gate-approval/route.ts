@@ -36,6 +36,11 @@ import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-ass
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
+import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
+import { loadAcceptedStageReadinessContext } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
 import {
   phaseApprovalMatchesEvidence,
   type PhaseGateEvidenceState,
@@ -96,6 +101,41 @@ function terminalTowerHandoffComplete(
     program.lifecycleState === "completed" &&
     gatePassedIncludes(program.gatesPassed, 5)
   );
+}
+
+async function transitionEvidenceReadiness(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  moveName: string,
+  phase: number,
+): Promise<{ available: boolean; gaps: ReturnType<typeof currentPhaseRequiredEvidenceGaps> }> {
+  if (phase < 1 || phase > 4) return { available: true, gaps: [] };
+  try {
+    const readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
+    const packets = buildMoveEvidenceNeedPackets({
+      moveId: programId,
+      moveName,
+      currentPhase: phase,
+      readiness,
+    });
+    const workbook = await loadAcceptedStageReadinessContext(
+      ctx,
+      programId,
+      phase + 1,
+    );
+    const assessedPackets = applyStageReadinessToEvidencePackets(
+      packets,
+      phase,
+      workbook?.proposals ?? null,
+      programId,
+    );
+    return {
+      available: true,
+      gaps: currentPhaseRequiredEvidenceGaps(assessedPackets, phase),
+    };
+  } catch {
+    return { available: false, gaps: [] };
+  }
 }
 
 async function captureCompletion(
@@ -334,8 +374,18 @@ export async function GET(
         : await evaluateGate(ctx, programId, phase, phase + 1, {
             allowHistoricalPhase: true,
           });
-    const gateReady =
+    const governanceGateReady =
       !gate || !gate.failedChecks.some((check) => check.severity === "hard");
+    const transitionReadiness = await transitionEvidenceReadiness(
+      ctx,
+      programId,
+      program.name ?? "Move",
+      phase,
+    );
+    const gateReady =
+      governanceGateReady &&
+      transitionReadiness.available &&
+      transitionReadiness.gaps.length === 0;
     const approved = snapshotApproved && gateReady;
     const approvalStale =
       !approved &&
@@ -354,11 +404,23 @@ export async function GET(
       approved,
       approvalStale,
       gate,
+      transitionReadiness: {
+        available: transitionReadiness.available,
+        ready: transitionReadiness.available && transitionReadiness.gaps.length === 0,
+        openCount: transitionReadiness.gaps.length,
+        blockers: transitionReadiness.gaps.map((gap) => ({
+          evidenceSlot: gap.evidenceSlot,
+          status: gap.status,
+          nextAction: gap.nextAction,
+        })),
+      },
       evidenceSnapshotAvailable: Boolean(evidence),
       p0Evidence,
       canApprove:
         capture.complete &&
         gateReady &&
+        transitionReadiness.available &&
+        transitionReadiness.gaps.length === 0 &&
         !approved &&
         Boolean(evidence) &&
         (phase === 0
@@ -518,6 +580,40 @@ export async function POST(
             ? "tower_handoff_complete_or_already_terminal"
             : `open_phase_${phase + 1}`,
       });
+    }
+
+    const transitionReadiness = await transitionEvidenceReadiness(
+      ctx,
+      programId,
+      program.name ?? "Move",
+      phase,
+    );
+    if (!transitionReadiness.available) {
+      return Response.json(
+        {
+          error: "transition_evidence_readiness_unavailable",
+          phase,
+          detail:
+            "The current transition evidence and workbook review could not be verified. The phase gate was not submitted.",
+        },
+        { status: 503 },
+      );
+    }
+    if (transitionReadiness.gaps.length > 0) {
+      return Response.json(
+        {
+          error: "transition_evidence_incomplete",
+          phase,
+          requiredEvidenceGaps: transitionReadiness.gaps.map((gap) => ({
+            evidenceSlot: gap.evidenceSlot,
+            status: gap.status,
+            nextAction: gap.nextAction,
+          })),
+          detail:
+            "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+        },
+        { status: 409 },
+      );
     }
 
     const rationale =

@@ -63,8 +63,76 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
 }));
 const getModuleState: jest.Mock = jest.fn(async () => []);
 let evidencePacketsForTest: MoveEvidenceNeedPacket[] = [];
-const buildMoveEvidenceNeedPackets = jest.fn(() => evidencePacketsForTest);
+const buildMoveEvidenceNeedPackets = jest.fn(
+  (input: { moveId?: string; currentPhase?: number }) => {
+    if (evidencePacketsForTest.length > 0) return evidencePacketsForTest;
+    const phase = Math.max(2, input.currentPhase ?? 2);
+    return [
+      {
+        moveId: input.moveId ?? "move-1",
+        phase,
+        artifactType: "discovery_report",
+        evidenceSlot: "Contact center KPI baseline",
+        familyId: "contact_center_kpis",
+        priority: "required",
+        ownerSource: "Operations and Finance",
+        acceptedFormats: ["CSV"],
+        exampleTemplate: "KPI baseline",
+        exampleContent: [],
+        whyItMatters: "Evidence-backed baseline",
+        blockedArtifacts: [
+          {
+            artifactType: "discovery_report",
+            title: "Discovery Report",
+            phase: phase + 1,
+            reason: "Required evidence",
+          },
+        ],
+        canDraftBoundary: {
+          canDraft: true,
+          canDraftLabel: "Can draft",
+          cannotDraftLabel: "Cannot draft",
+        },
+        preliminaryGenerationCaveat: null,
+        waiverOption: null,
+        nextAction: "Review the approved KPI file.",
+        status: "covered",
+        evidenceIds: ["ev-kpi"],
+        evidenceTitles: ["contact-center-kpis.csv"],
+      } as MoveEvidenceNeedPacket,
+    ];
+  },
+);
 const loadDiscoveryEvidenceReadiness = jest.fn(async () => ({}));
+const loadAcceptedStageReadinessContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
+  void args;
+  return {
+    moveId: "move-1",
+    sourcePhase: 1,
+    targetPhase: 2,
+    reviewArtifactId: "review-1",
+    reviewArtifactVersion: 1,
+    proposals: [
+      {
+        proposalId: "proposal-kpi",
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required" as const,
+        answerState: "answered" as const,
+        disposition: "accepted" as const,
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+    ],
+    acceptedResponses: [],
+    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+  };
+});
+const formatAcceptedStageReadinessContextForPrompt = jest.fn(
+  (...args: unknown[]) => {
+    void args;
+    return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
+  },
+);
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
   {
@@ -216,9 +284,16 @@ jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
 jest.mock(
   "@/lib/programs/evidence-readiness/move-evidence-need-packet",
   () => ({
-    buildMoveEvidenceNeedPackets: () => buildMoveEvidenceNeedPackets(),
+    buildMoveEvidenceNeedPackets: (input: unknown) =>
+      buildMoveEvidenceNeedPackets(input as { moveId?: string; currentPhase?: number }),
   }),
 );
+jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
+  loadAcceptedStageReadinessContext: (...args: unknown[]) =>
+    loadAcceptedStageReadinessContext(...args),
+  formatAcceptedStageReadinessContextForPrompt: (...args: unknown[]) =>
+    formatAcceptedStageReadinessContextForPrompt(...args),
+}));
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -252,6 +327,28 @@ beforeEach(() => {
   evidencePacketsForTest = [];
   buildMoveEvidenceNeedPackets.mockClear();
   loadDiscoveryEvidenceReadiness.mockClear();
+  loadAcceptedStageReadinessContext.mockClear();
+  loadAcceptedStageReadinessContext.mockResolvedValue({
+    moveId: "move-1",
+    sourcePhase: 1,
+    targetPhase: 2,
+    reviewArtifactId: "review-1",
+    reviewArtifactVersion: 1,
+    proposals: [
+      {
+        proposalId: "proposal-kpi",
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+    ],
+    acceptedResponses: [],
+    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+  });
+  formatAcceptedStageReadinessContextForPrompt.mockClear();
   mockLoadApprovedMoveEvidenceSnapshot.mockReset();
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
     tenantKey: "skyharbor-air",
@@ -352,6 +449,47 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);
     expect(sequentialCalls).toHaveLength(0);
+  });
+
+  it("blocks a phase build when the accepted workbook still marks required evidence unknown", async () => {
+    loadAcceptedStageReadinessContext.mockResolvedValueOnce({
+      moveId: "m-p2",
+      sourcePhase: 2,
+      targetPhase: 3,
+      reviewArtifactId: "review-p2",
+      reviewArtifactVersion: 1,
+      proposals: [
+        {
+          proposalId: "proposal-kpi",
+          questionId: "q_kpi_baseline",
+          dimensionId: "contact_center_kpis",
+          requirement: "required",
+          answerState: "unknown",
+          disposition: "accepted",
+          evidenceOrSource: "Existing evidence: ev-kpi",
+        },
+      ],
+      acceptedResponses: [],
+      readiness: { ready: 0, partial: 0, insufficientEvidence: 0, unknown: 1 },
+    });
+
+    const res = await POST(
+      req({ moveId: "m-p2", phase: 2, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({
+      error: "required_evidence_open",
+      requiredEvidenceGaps: [
+        expect.objectContaining({
+          evidenceSlot: "Contact center KPI baseline",
+          status: "partial",
+          nextAction: expect.stringMatching(/replace unknown/i),
+        }),
+      ],
+    });
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
   });
 
   it("fails closed when evidence readiness cannot be verified", async () => {
@@ -618,6 +756,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     const decisionContext = (
       createCalls[0]?.jobPayload as { decisionContext: string }
     ).decisionContext;
+    expect(decisionContext).toContain("ACCEPTED STAGE READINESS RESPONSE");
     expect(decisionContext).toContain(
       "APPROVED SCOPE BASIS: Technical product / data solution.",
     );
