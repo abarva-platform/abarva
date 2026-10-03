@@ -6,7 +6,7 @@ export type WebhookEnvelope = {
   eventId: string;
   vendorId: string;
   providerEnvelopeId: string;
-  status: EsignEnvelopeStatus;
+  status: "created" | EsignEnvelopeStatus;
 };
 
 export type CompletedEnvelopeEvidence = {
@@ -43,6 +43,9 @@ export async function processVerifiedEsignEvent(
   const envelope = await deps.store.read(event.envelopeId);
   if (!envelope || envelope.clientKey !== "meridian-health" ||
       envelope.providerEnvelopeId !== event.envelopeId) return { state: "not_found" };
+  if (envelope.status === "created") {
+    return { state: event.status === "sent" ? "duplicate" : "conflict" };
+  }
 
   if (event.status === "sent") return { state: "duplicate" };
   if (event.status === "viewed") {

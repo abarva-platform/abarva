@@ -12,7 +12,7 @@ const signedDocument = Buffer.from("%PDF-1.7 signed synthetic document");
 const certificate = Buffer.from("%PDF-1.7 synthetic completion certificate");
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
-function harness(initialStatus: "sent" | "viewed" | "completed" | "declined" = "sent") {
+function harness(initialStatus: "created" | "sent" | "viewed" | "completed" | "declined" = "sent") {
   let status = initialStatus;
   const provider = {
     fetchCompletedDocuments: jest.fn(async () => ({ signedDocument, certificate })),
@@ -82,6 +82,18 @@ describe("verified Source NDA webhook processing", () => {
     expect(await processVerifiedEsignEvent(event("completed"), deps)).toEqual({ state: "conflict" });
     expect(deps.provider.fetchCompletedDocuments).not.toHaveBeenCalled();
     expect(deps.upload).not.toHaveBeenCalled();
+  });
+
+  it("does not process delivery or completion events while an envelope is still a draft", async () => {
+    const deps = harness("created");
+    for (const status of ["viewed", "declined", "completed"] as const) {
+      expect(await processVerifiedEsignEvent(event(status), deps)).toEqual({ state: "conflict" });
+    }
+    expect(deps.provider.fetchCompletedDocuments).not.toHaveBeenCalled();
+    expect(deps.upload).not.toHaveBeenCalled();
+    expect(deps.store.markViewed).not.toHaveBeenCalled();
+    expect(deps.store.markDeclined).not.toHaveBeenCalled();
+    expect(deps.store.markCompleted).not.toHaveBeenCalled();
   });
 
   it("does not mark completion when either PDF is invalid or upload fails", async () => {
