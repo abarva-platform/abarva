@@ -1449,5 +1449,216 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// Item T-801 — the write/no-write verdict must survive a truncated read.
+//
+// Found by making the mistake, not by reading the code. This helper announced a
+// successful append with `Appended to <file>:` followed by the claim line, and
+// on the UNDETERMINED path that announcement arrived AFTER two lines of
+// advisory prose. An invocation piped through `head -3` showed the advisory and
+// hid the announcement, the run read its own write as a refusal, and item
+// U-553 ended with two release lines eleven seconds apart. Three register
+// controls were run against the duplicate and none of them detects it.
+//
+// The fix is a signal the control carries itself, so the assertions below are
+// about the SHAPE of the output rather than about any one message:
+//
+//   1. every path prints exactly one `VERDICT:` line;
+//   2. it is the LAST line of stdout, so a tail read cannot miss it;
+//   3. it is on STDOUT on every path, including refusals whose prose is on
+//      stderr, because a pipe captures stdout and the incident was a pipe;
+//   4. what it says agrees with whether the register actually changed —
+//      established by digest, independently of the helper's own claim.
+//
+// (4) is the one that matters, and it is a COUNT over all five enumerated
+// paths rather than five separate expectations, so a verdict line that is
+// right on the path someone happened to test and wrong on another cannot read
+// as green.
+//
+// The expected strings are written out as literals here on purpose. Importing
+// them from the helper would measure the fix against itself, and a wording
+// that is wrong in both places would pass.
+// ---------------------------------------------------------------------------
+{
+  const WROTE = /^VERDICT: WROTE /;
+  const NOTHING_APPENDED = /^VERDICT: (?:REFUSED|NOT WRITTEN), nothing appended/;
+
+  /** The last non-empty line of stdout — a `tail -1` read, done in process. */
+  const lastStdoutLine = (stdout) => {
+    const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
+    return lines.length > 0 ? lines[lines.length - 1] : "";
+  };
+
+  /**
+   * One invocation per sanctioned exit path. `expectWrite` is NOT the
+   * assertion — the digest delta is. It is recorded so a path that silently
+   * stops exercising what it names shows up as a disagreement rather than
+   * passing quietly.
+   */
+  const paths = [];
+
+  // (a) The clean claim. Nothing advisory, nothing refused.
+  {
+    const { dir, file } = fixture([]);
+    const before = digest(file);
+    const r = run([...base({ file, item: "T-801", identity: ME }), "--now", NOW]);
+    paths.push({ name: "clean claim", r, wrote: digest(file) !== before, expectWrite: true });
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // (b) Advisory-then-write: the exact path the incident was on. The checkout
+  //     cannot be read, so the record review reports UNDETERMINED on stdout
+  //     and the line is written anyway — deliberate, and pinned above.
+  {
+    const { dir, file } = fixture([]);
+    const empty = fs.mkdtempSync(path.join(os.tmpdir(), "append-claim-t801-norepo-"));
+    const before = digest(file);
+    const r = run([
+      ...base({ file, item: "C-900", identity: ME, message: PROOF_RAN }),
+      "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+      "--repo", empty, "--base", "trunk",
+    ]);
+    paths.push({ name: "advisory-then-write (UNDETERMINED)", r, wrote: digest(file) !== before, expectWrite: true });
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(empty, { recursive: true, force: true });
+  }
+
+  // (c) The ownership refusal — another identity holds the item.
+  {
+    const { dir, file } = fixture([
+      `2026-09-22T17:40:00Z | ${OTHER} | item T-800 claimed — branch \`x\``,
+    ]);
+    const before = digest(file);
+    const r = run([...base({ file, item: "T-800", identity: ME }), "--now", NOW]);
+    paths.push({ name: "ownership refusal", r, wrote: digest(file) !== before, expectWrite: false });
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // (d) The strict refusal — the line contradicts a record the branch writes.
+  {
+    const { dir, file } = fixture([]);
+    const repo = repoFixture({ "2026-09-26-fixture-release.md": RECORD_REQUIRED_NOT_RUN });
+    const before = digest(file);
+    const r = run([
+      ...base({ file, item: "C-900", identity: ME, message: PROOF_RAN }),
+      "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+      "--repo", repo, "--base", "trunk", "--strict",
+    ]);
+    paths.push({ name: "strict refusal", r, wrote: digest(file) !== before, expectWrite: false });
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+
+  // (e) `--dry-run`. Exit 0 and nothing written, and it printed the claim line
+  //     LAST — byte-for-byte the shape a successful append printed, which is
+  //     the second inversion available here and the opposite of the incident.
+  {
+    const { dir, file } = fixture([]);
+    const before = digest(file);
+    const r = run([...base({ file, item: "T-801", identity: ME }), "--now", NOW, "--dry-run"]);
+    paths.push({ name: "--dry-run", r, wrote: digest(file) !== before, expectWrite: false });
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  check(
+    "T-801 setup — all five sanctioned paths ran, and each did what its name says",
+    paths.length === 5 && paths.every((p) => p.wrote === p.expectWrite),
+    paths.map((p) => `${p.name}: wrote=${p.wrote} expected=${p.expectWrite} status=${p.r.status}`).join("\n"),
+  );
+
+  // (1) Exactly one verdict line per path. Two would be as unreadable as none.
+  {
+    const wrong = paths.filter(
+      (p) => p.r.stdout.split("\n").filter((l) => /^VERDICT: /.test(l)).length !== 1,
+    );
+    check(
+      "T-801 — every path prints exactly one VERDICT line on stdout, counted over all five",
+      wrong.length === 0,
+      wrong.map((p) => `${p.name}: ${p.r.stdout.split("\n").filter((l) => /^VERDICT: /.test(l)).length} verdict line(s)\nstdout=${p.r.stdout}\nstderr=${p.r.stderr}`).join("\n\n"),
+    );
+  }
+
+  // (2) + (3) It is the last line of stdout. Both halves matter: last, so a
+  // tail read reaches it; on stdout, because the incident was `| head -3` and a
+  // pipe does not carry stderr.
+  {
+    const wrong = paths.filter((p) => !/^VERDICT: /.test(lastStdoutLine(p.r.stdout)));
+    check(
+      "T-801 — the VERDICT line is the LAST line of stdout on every path, counted over all five",
+      wrong.length === 0,
+      wrong.map((p) => `${p.name}: last stdout line was ${JSON.stringify(lastStdoutLine(p.r.stdout))}\nstdout=${p.r.stdout}\nstderr=${p.r.stderr}`).join("\n\n"),
+    );
+  }
+
+  // (4) THE ACCEPTANCE. A `tail -1` read of stdout alone decides write vs
+  // no-write, and what it decides is what the register actually did. The truth
+  // side comes from the digest, never from the helper's own words.
+  {
+    const disagreed = paths.filter((p) => {
+      const last = lastStdoutLine(p.r.stdout);
+      const saysWrote = WROTE.test(last);
+      const saysNothing = NOTHING_APPENDED.test(last);
+      if (saysWrote === saysNothing) return true; // ambiguous or silent
+      return saysWrote !== p.wrote;
+    });
+    check(
+      "T-801 THE ACCEPTANCE — a tail -1 read of stdout agrees with the register's digest on all five paths",
+      disagreed.length === 0,
+      disagreed.map((p) => `${p.name}: register wrote=${p.wrote}, last stdout line=${JSON.stringify(lastStdoutLine(p.r.stdout))}`).join("\n"),
+    );
+  }
+
+  // The inversion that actually happened, pinned as its own case so the
+  // regression has a name: three lines from the TOP of the write path's stdout
+  // used to contain no announcement at all.
+  {
+    const undetermined = paths.find((p) => p.name === "advisory-then-write (UNDETERMINED)");
+    check(
+      "T-801 — the path the duplicate release came from reports WROTE as its final line",
+      WROTE.test(lastStdoutLine(undetermined.r.stdout)) &&
+        /UNDETERMINED/.test(undetermined.r.stdout),
+      `stdout=${undetermined.r.stdout}`,
+    );
+  }
+
+  // Mutation anchors. Swapping the final line between the write and the refuse
+  // path must fail a NAMED case, not only the count above.
+  {
+    const refusal = paths.find((p) => p.name === "ownership refusal");
+    check(
+      "T-801 — the ownership refusal's final stdout line says nothing was appended",
+      NOTHING_APPENDED.test(lastStdoutLine(refusal.r.stdout)) && refusal.r.status === 1,
+      `status=${refusal.r.status} stdout=${refusal.r.stdout}`,
+    );
+    const dry = paths.find((p) => p.name === "--dry-run");
+    check(
+      "T-801 — --dry-run exits 0 and its final stdout line still says nothing was appended",
+      NOTHING_APPENDED.test(lastStdoutLine(dry.r.stdout)) && dry.r.status === 0,
+      `status=${dry.r.status} stdout=${dry.r.stdout}`,
+    );
+    const clean = paths.find((p) => p.name === "clean claim");
+    check(
+      "T-801 — the clean claim's final stdout line names the file it wrote",
+      /^VERDICT: WROTE \S/.test(lastStdoutLine(clean.r.stdout)),
+      `stdout=${clean.r.stdout}`,
+    );
+  }
+
+  // A usage error writes nothing either, and it is reached before the gate —
+  // so it is the path most likely to be left without the signal.
+  {
+    const { dir, file } = fixture([]);
+    const before = digest(file);
+    const r = run(["--file", file, "--item", "T-801", "--identity", ME]);
+    check(
+      "T-801 — a usage error appends nothing and says so as its final stdout line",
+      r.status === 2 && digest(file) === before && NOTHING_APPENDED.test(lastStdoutLine(r.stdout)),
+      `status=${r.status} changed=${digest(file) !== before}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
