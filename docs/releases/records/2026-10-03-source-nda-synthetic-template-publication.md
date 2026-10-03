@@ -37,6 +37,7 @@ A named Source stage approver can publish a hash-verified, visibly synthetic NDA
 - PASS: focused ESLint, TypeScript typecheck, and all 11 release gates.
 - PASS: tenancy-fence census regenerated from the guarded route and its behavioral test; all 15 census tests and the shape check pass.
 - PASS: the page-route test failed first when Stage 05 used an older value-ledger date, then passed with the current UTC date without changing the historical event snapshot.
+- PASS: the behavior coverage check caught a stale Legal-only message assertion. It now checks the event-scoped no-template refusal and still requires `not_covered`.
 - PASS: the prerequisite schema was separately proved against disposable PostgreSQL 16, including event-scope rejection. This app PR does not apply it.
 - BLOCKED: database apply and signed-in readback remain separate proof layers that need migration authorization.
 
