@@ -46,6 +46,26 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   // The token with no stamp after it is still a harness identifier, and leaving
   // it renders "… Claims Platform E2E Smoke" to an executive.
   [/\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\b/gi, ""],
+  // U-556. Every rule above is anchored on the harness token `E2E`, which is
+  // what made them safe — and also what made them blind. A compact run stamp
+  // can reach a client-visible label with no harness token anywhere near it,
+  // and from our own code rather than from a synthetic name:
+  // `deriveDisplayCode` in `src/lib/programs/transformers.ts` builds the middle
+  // segment of every rendered move display code from the first slug piece of
+  // the move name, copied verbatim, so a move whose name begins with a stamp
+  // renders `<SLUG>-20260622161738-2026` on the board. The stamp is consumed
+  // together with the separator that attached it, so no doubled separator is
+  // left where it was.
+  //
+  // Two bounds, both deliberate and both pinned by a named case in
+  // `src/__tests__/behaviors/moves-title-identifier-corpus.test.ts`. The date
+  // half must carry a plausible century, so a 14-digit account or contract
+  // number that cannot be a date survives whole — the rule identifies a stamp
+  // rather than counting digits. And all 14 digits are required, so an 8-digit
+  // date standing on its own in a title is left alone. The `T` is optional
+  // because both forms occur: our stamp helpers mint `20260923T222629Z`, and
+  // the shape this rule was written for carries no `T` at all.
+  [/\s*[-–—:]?\s*\b(?:19|20)\d{6}T?\d{6}Z?\b/g, ""],
   [
     /\bApex Retail Group(?:\s+Retail Group|\s+Group)+\b/gi,
     DEMO_SAFE_CLIENT_NAMES.apexretail,

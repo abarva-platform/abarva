@@ -33,8 +33,15 @@ const IDENTIFIER_SHAPES: ReadonlyArray<readonly [string, RegExp]> = [
   ["run token", /\bE2E\b/i],
   // A full ISO-ish build vintage: 2026-09-11T05-13, 2026-09-11T05:13:07.
   ["iso build vintage", /\d{4}-\d{2}-\d{2}T\d{2}[-:]\d{2}/],
-  // A compact run stamp: 20260923T222629Z.
-  ["compact run stamp", /\d{8}T\d{6}Z?/],
+  // A compact run stamp: 20260923T222629Z -- and the SAME grammar with no `T`
+  // between the date and the time, 20260622161738. The `T` was required here
+  // until U-556, which is why the second form was invisible to every count
+  // below: a detector that recognizes half of its own declared class reports
+  // clean on the other half, and the suite reads green. The detector is
+  // deliberately broader than the sanitizer rule that cleans it -- measuring
+  // and fixing must not share an expression, or a rule that is wrong in both
+  // places reads as clean.
+  ["compact run stamp", /\d{8}T?\d{6}Z?/],
   // The residue the merge's own rule leaves when it eats the leading year of
   // an ISO vintage: "Rich Evidence-09-11T05-13". This shape is not in the raw
   // corpus at all -- it is manufactured by sanitizing, which is why a detector
@@ -78,6 +85,36 @@ const IDENTIFIER_BEARING_TITLES: readonly string[] = [
   // The bare trailing run id the merge was written for. It stays in the corpus
   // so a rewrite cannot regress the one shape that already worked.
   "Member Service Agent Assist Claude E2E 1002",
+  // U-556. A compact run stamp with no `T`, and -- the part that matters --
+  // with no harness token anywhere in the string for a rule to anchor on.
+  // Every rule above is anchored on `E2E`, so neither of these two could ever
+  // have been cleaned by them, and the detector could not see them either.
+  //
+  // The first is MEASURED, not invented. `deriveDisplayCode` in
+  // `src/lib/programs/transformers.ts` builds the middle segment of every move
+  // display code the board renders from `firstSegment(name)` -- the first
+  // hyphen-separated piece of the slugified move name, copied verbatim -- so a
+  // move whose name begins with a stamp puts that stamp on a rendered label.
+  // Executed on `b6bcb12977`:
+  //   deriveDisplayCode(
+  //     { name: "20260622161738 recovery", createdAt: "2026-06-22T16:17:38.000Z" },
+  //     { industryCode: null, slug: "demo-tenant" },
+  //   )
+  // returns exactly the first string below. `displayCode` is sanitized and
+  // rendered at three Moves call sites, so this is a client-surface label and
+  // not a hypothetical. The derivation is pinned where it lives, in
+  // `src/lib/programs/__tests__/strategic-moves-transformers.test.ts`; it is
+  // not imported here, because importing that module would pull its whole line
+  // count into the behavior coverage floor's denominator.
+  "DEMOTENANT-20260622161738-2026",
+  // The second is the suffix shape U-556 was filed against, written with a
+  // placeholder slug rather than a tenant's. Stated plainly: no client surface
+  // was shown to produce it -- the one string on disk carrying this shape is a
+  // composite of a move name and a display code that a 2026-06-29 test author
+  // joined into one argument, and no call site passes the two fields together.
+  // It is in the corpus because it is the same SHAPE as the measured row above,
+  // and a rule general enough to clean one must clean both.
+  "Recovery Command Architecture - demo-tenant-canary-20260622161738",
 ];
 
 /**
@@ -93,6 +130,13 @@ const LEGITIMATE_TITLES: readonly string[] = [
   "Q3 2027 Treasury Modernization",
   "Baggage Disruption Recovery Control Tower",
   "Revenue Integrity Program 2028",
+  // U-556 guards. The stamp rule added for the two rows above consumes 14
+  // digits, so these pin the two ways it could overreach: an 8-digit date on
+  // its own is NOT a run stamp and must survive whole, and a 14-digit figure
+  // that cannot be a date must survive too -- which is why the rule requires a
+  // plausible century on the date half rather than counting digits.
+  "Contract 20260622 Renewal Programme",
+  "Legacy Account 12345678901234 Migration",
 ];
 
 describe("Moves client surface carries no build or run identifier", () => {
@@ -177,6 +221,15 @@ describe("Moves client surface carries no build or run identifier", () => {
       "Member Service Agent Assist",
     ],
     ["Treasury E2E 42 modernization", "Treasury modernization"],
+    // U-556. Each of these fails if the compact-stamp rule is removed, and the
+    // count assertions above do not: the first is a derived display code and
+    // the second a slug-and-stamp suffix, and neither carries a token any other
+    // rule is anchored on.
+    ["DEMOTENANT-20260622161738-2026", "DEMOTENANT-2026"],
+    [
+      "Recovery Command Architecture - demo-tenant-canary-20260622161738",
+      "Recovery Command Architecture - demo-tenant-canary",
+    ],
   ])("renders %s without its identifier", (raw, expected) => {
     expect(demoSafeClientText(raw)).toBe(expected);
   });

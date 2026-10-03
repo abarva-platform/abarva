@@ -10,6 +10,7 @@ import {
 } from "@/lib/programs/transformers";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { evaluateGate } from "@/lib/programs/governance";
+import { demoSafeClientText } from "@/lib/client-config";
 
 jest.mock("@/lib/data-plane/azureRead", () => ({
   azureRead: {
@@ -74,6 +75,38 @@ describe("strategic move transformer helpers", () => {
       { industryCode: "MH", slug: "meridian-health" },
     );
     expect(code).toBe("MH-HEALTHCARE-2026");
+  });
+
+  // U-556. `deriveDisplayCode` copies `firstSegment(name)` -- the first
+  // hyphen-separated piece of the slugified move name -- into the middle of the
+  // code verbatim, so the rendered display code inherits whatever token leads
+  // the move name, including a build or run stamp. That is a client-surface
+  // label: `displayCode` is rendered by `MoveListTable` and in two places in
+  // `StrategicMovesHomeClient`. Both halves are asserted, because only the pair
+  // is the invariant: the stamp reaches the derived code, AND the shared client
+  // sanitizer removes it before it renders.
+  it("carries a leading run stamp from the move name into the derived display code", () => {
+    expect(
+      deriveDisplayCode(
+        {
+          name: "20260622161738 recovery",
+          createdAt: "2026-06-22T16:17:38.000Z",
+        },
+        { industryCode: null, slug: "demo-tenant" },
+      ),
+    ).toBe("DEMOTENANT-20260622161738-2026");
+  });
+
+  it("renders no run stamp on the client surface for such a move", () => {
+    const code = deriveDisplayCode(
+      {
+        name: "20260622161738 recovery",
+        createdAt: "2026-06-22T16:17:38.000Z",
+      },
+      { industryCode: null, slug: "demo-tenant" },
+    );
+    expect(demoSafeClientText(code)).toBe("DEMOTENANT-2026");
+    expect(demoSafeClientText(code)).not.toMatch(/\d{8}T?\d{6}Z?/);
   });
 
   it("derives compact map labels", () => {
