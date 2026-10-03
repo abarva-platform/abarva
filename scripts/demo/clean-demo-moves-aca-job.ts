@@ -14,6 +14,7 @@ import {
   graphNodeId,
 } from "./load-clean-demo-moves";
 import { CLEAN_DEMO_MOVES } from "./clean-demo-moves";
+import { resolveTenantAlias, tenantAliasesFor } from "../../src/lib/tenant/aliases";
 import {
   blobProofStore,
   jobLimits,
@@ -331,15 +332,58 @@ async function assertSchema(client: pg.Client): Promise<void> {
   }
 }
 
-async function resolveClientId(client: pg.Client, tenantKey: string): Promise<string> {
-  const result = await client.query<{ id: string; slug: string | null }>(
-    "select id, slug from clients where tenant_key = $1",
-    [tenantKey],
-  );
-  if (result.rowCount !== 1 || result.rows[0]?.slug !== tenantKey) {
-    throw new Error("Canonical tenant key did not resolve to exactly one matching client row");
+type ClientIdentityRow = {
+  id: string;
+  tenant_key: string | null;
+  slug: string | null;
+};
+
+export function canonicalClientLookupAliases(tenantKey: string): string[] {
+  const canonicalKey = resolveTenantAlias(tenantKey)?.canonicalKey;
+  if (!canonicalKey || canonicalKey !== tenantKey) {
+    throw new Error("Requested tenant key is not the declared canonical tenant");
   }
-  return result.rows[0].id;
+  return Array.from(
+    new Set(
+      tenantAliasesFor(tenantKey).map((value) =>
+        value.trim().toLowerCase().replace(/_/g, "-"),
+      ),
+    ),
+  );
+}
+
+export function resolveCanonicalClientRow(
+  rows: ClientIdentityRow[],
+  tenantKey: string,
+): ClientIdentityRow {
+  const canonicalKey = resolveTenantAlias(tenantKey)?.canonicalKey;
+  if (!canonicalKey || canonicalKey !== tenantKey) {
+    throw new Error("Requested tenant key is not the declared canonical tenant");
+  }
+  if (rows.length !== 1) {
+    throw new Error("Canonical tenant identity did not resolve to exactly one client row");
+  }
+
+  const [row] = rows;
+  if (
+    resolveTenantAlias(row.tenant_key)?.canonicalKey !== canonicalKey ||
+    resolveTenantAlias(row.slug)?.canonicalKey !== canonicalKey
+  ) {
+    throw new Error("Client row identity fields do not resolve to the declared canonical tenant");
+  }
+  return row;
+}
+
+async function resolveClientId(client: pg.Client, tenantKey: string): Promise<string> {
+  const aliases = canonicalClientLookupAliases(tenantKey);
+  const result = await client.query<ClientIdentityRow>(
+    `select id::text as id, tenant_key, slug from clients
+     where lower(replace(btrim(tenant_key), '_', '-')) = any($1::text[])
+        or lower(replace(btrim(slug), '_', '-')) = any($1::text[])
+     order by id`,
+    [aliases],
+  );
+  return resolveCanonicalClientRow(result.rows, tenantKey).id;
 }
 
 async function readTenantMoves(

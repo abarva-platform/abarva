@@ -2,11 +2,57 @@ import { CLEAN_DEMO_MOVES } from "../clean-demo-moves";
 import {
   archivePlanHash,
   buildDbEngagement,
+  canonicalClientLookupAliases,
   isTestMoveName,
   p1ReferenceDrafts,
+  resolveCanonicalClientRow,
 } from "../clean-demo-moves-aca-job";
 
 describe("governed clean demo Moves job mapping", () => {
+  it("queries only aliases declared for the canonical tenant", () => {
+    expect(canonicalClientLookupAliases("meridian-health")).toContain(
+      "meridian-health-global",
+    );
+    expect(canonicalClientLookupAliases("meridian-health")).toContain("meridian");
+    expect(() => canonicalClientLookupAliases("meridian_health_global")).toThrow(
+      "not the declared canonical tenant",
+    );
+  });
+
+  it("resolves a client row through its explicitly declared tenant aliases", () => {
+    const row = {
+      id: "client-id",
+      tenant_key: "meridian_health_global",
+      slug: "meridian",
+    };
+
+    expect(resolveCanonicalClientRow([row], "meridian-health")).toBe(row);
+  });
+
+  it("fails closed for missing, ambiguous, or cross-tenant client identities", () => {
+    const row = {
+      id: "client-id",
+      tenant_key: "meridian_health_global",
+      slug: "meridian",
+    };
+
+    expect(() => resolveCanonicalClientRow([], "meridian-health")).toThrow(
+      "exactly one client row",
+    );
+    expect(() => resolveCanonicalClientRow([row, row], "meridian-health")).toThrow(
+      "exactly one client row",
+    );
+    expect(() =>
+      resolveCanonicalClientRow(
+        [{ ...row, slug: "skyharbor_global" }],
+        "meridian-health",
+      ),
+    ).toThrow("identity fields");
+    expect(() => resolveCanonicalClientRow([row], "meridian_health_global")).toThrow(
+      "not the declared canonical tenant",
+    );
+  });
+
   it("maps the canonical engagement row without inventing values or gate state", () => {
     for (const move of CLEAN_DEMO_MOVES) {
       const row = buildDbEngagement(move, "client-id", "sponsor-id");

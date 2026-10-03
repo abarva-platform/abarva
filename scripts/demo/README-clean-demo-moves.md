@@ -36,9 +36,11 @@ npx tsx scripts/demo/load-clean-demo-moves.ts --json --clean-test
 
 Apply only through the shared digest-pinned ACA operator job, using
 `scripts/demo/clean-demo-moves-aca-job.ts` and the contract in
-`docs/ops/aca-data-build-job-rule.md`. The job resolves tenant identity from
-`tenant-input-registry.json` plus the exact canonical `clients.tenant_key`,
-prints the exact test-move archive candidates in a read-only preflight, and
+`docs/ops/aca-data-build-job-rule.md`. The job resolves the canonical tenant
+declared in `tenant-input-registry.json` through the code-owned tenant alias
+registry. Both `clients.tenant_key` and `clients.slug` must resolve to that
+same canonical key, and exactly one client row may match. It prints the exact
+test-move archive candidates in a read-only preflight, and
 requires the apply run to present the same archive-plan hash. It archives via
 `lifecycle_state='archived'` (never hard-deletes or overloads legacy `status`),
 then inserts or idempotently reuses the five graph IDs in one transaction.
