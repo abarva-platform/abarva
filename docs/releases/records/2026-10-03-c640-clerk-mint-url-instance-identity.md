@@ -84,10 +84,41 @@ path.
   drive the real sign-in handler.
 - This record.
 
-No workflow file changes: `src/lib/crawl/__tests__` is already named as a
-directory by the `Run signed-in crawl proof contracts` step of
-`.github/workflows/unit-suites.yml`, so the live-path cases run in the required
-`Unit suites that pass on main` check the day they land.
+- `.github/workflows/coverage-threshold.yml` — names
+  `src/lib/crawl/__tests__` as a directory, with `--no-coverage`, inside the
+  **required** `Behavior coverage floor` job. See the correction below.
+
+### Correction: the job those cases already ran in cannot block a merge
+
+`src/lib/crawl/__tests__` was already named as a directory by a step of
+`.github/workflows/unit-suites.yml`, and the change that created that step
+recorded it as running in "the required `Unit suites that pass on main`
+check". **It is required by no ruleset.** Checked across every rule applying to
+`main` rather than one endpoint: four rules, nineteen required contexts in
+total, and zero occurrences of that job's name among them. The job runs and
+passes; it cannot block.
+
+**That is not cosmetic, and it was established by execution.** Deleting the
+single line `mint.url = token.url` from the crawl's sign-in helper — the line
+this entire change rests on — leaves `src/__tests__/behaviors` at **29 of 29
+passing**, which is all the required floor sweeps, and is caught only by the
+live-path suite in the non-required job (**2 failed of 7**). So one of this
+change's own eleven mutations was enforced by a run that cannot fail a merge: a
+guard that cannot fail the thing it guards, which is the defect this repository
+keeps finding.
+
+The fix follows the repository's own established pattern rather than inventing
+one — the same job already carries several steps moved there for exactly this
+reason. The directory is named inside the required job, so the gate and the
+quotable name are the same run; `--no-coverage` keeps the 514-line crawl
+handler out of the sweep's denominator, so **the floor is not moved**; and it is
+named as a _directory_, so a suite written there tomorrow blocks the day it
+lands. The step in `unit-suites.yml` stays, and the duplicate second run is
+deliberate.
+
+**The new step is proven to run and to fail, not asserted to.** Its exact
+command exits **1** under that mutation (`2 failed / 22 passed of 24`) and **0**
+without it (`24 passed of 24`).
 
 ## QA / Validation
 
@@ -108,23 +139,23 @@ run and printed inside the same batch** — the control is printed because a
 batch that silently executes nothing reads exactly like a batch that catches
 nothing:
 
-| mutation | failing cases |
-|---|---|
-| green control, no mutation | 0 failed / 53 passed |
-| compare bare hosts, not instance identities | 2 |
-| `compareClerkInstances` always answers `same` | 8 |
-| a development host acquires a production identity | 7 |
-| widen the bare development suffix to an identity instead of `null` | 2 |
-| test the shorter development suffix first | 8 |
-| treat an unsound comparison as a mismatch | 1 |
-| stop dropping the leading portal/API label | 3 |
-| drop the bare-suffix ambiguity guard | 1 |
-| log the mint url verbatim instead of its host | 1 |
-| never carry the mint url into the observation | 2 |
-| prefer the mint url over the ticket's own issuer | 1 |
+| mutation                                                           | failing cases        |
+| ------------------------------------------------------------------ | -------------------- |
+| green control, no mutation                                         | 0 failed / 53 passed |
+| compare bare hosts, not instance identities                        | 2                    |
+| `compareClerkInstances` always answers `same`                      | 8                    |
+| a development host acquires a production identity                  | 7                    |
+| widen the bare development suffix to an identity instead of `null` | 2                    |
+| test the shorter development suffix first                          | 8                    |
+| treat an unsound comparison as a mismatch                          | 1                    |
+| stop dropping the leading portal/API label                         | 3                    |
+| drop the bare-suffix ambiguity guard                               | 1                    |
+| log the mint url verbatim instead of its host                      | 1                    |
+| never carry the mint url into the observation                      | 2                    |
+| prefer the mint url over the ticket's own issuer                   | 1                    |
 
 **A twelfth mutation SURVIVED and the code changed rather than the test.** The
-first implementation compared the two identities' *kind* before their id, and
+first implementation compared the two identities' _kind_ before their id, and
 deleting that comparison changed no outcome. The fixture it was meant to decide
 already differs by id, and no input can reach it: every host under the
 development suffix is routed to the development branch or gets no identity at
@@ -158,8 +189,14 @@ written before the implementation.
   rather than asserted — the pure cases import only a module already in the
   denominator, and the cases that import the 514-line live handler are in
   `src/lib/crawl/__tests__/`, which the floor does not sweep.
-- `node scripts/release-check.mjs --base origin/main --head HEAD` — recorded in
-  the pull request.
+- `node scripts/release-check.mjs --base origin/main --head HEAD` — 11 of 11
+  gates ran and passed.
+- All **19** main-ruleset required checks verified individually **by name**
+  against the ruleset API on head `52829f3c4c`: 19 of 19 pass, with 36 pass /
+  5 configured-skip / **0 failures of any kind** among all 41 check runs. The
+  workflow step added after that read is re-verified on the new head.
+- The newly required step's own command, run both ways: exit `1` under the
+  `mint.url` mutation, exit `0` unmutated.
 
 ## Rollout Plan
 
