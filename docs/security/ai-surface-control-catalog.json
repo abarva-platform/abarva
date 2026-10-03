@@ -1,6 +1,6 @@
 {
   "schema": "abarva.ai-surface-control-catalog.v1",
-  "description": "Audit truth source for AI output and consequential-action controls. CI validates every cataloged control has concrete code evidence.",
+  "description": "Audit truth source for AI output and consequential-action controls. CI validates every cataloged control has concrete code evidence. Every requiredControls entry declares behavioralTest: either a path the catalog workflow runs, or status \"none\" with a reason, a tree-checked knownSuites list, and a remedy saying which fix applies — \"write-a-test\" when the control is on the surface and nothing proves it, \"render-the-control\" when the control is not on the surface, where a test would pin an absence. Only write-a-test controls are drawable as the next behavioral test; the gate reports that count separately from the uncovered count (item C-636).",
   "controls": [
     {
       "id": "agent-response-output",
@@ -287,7 +287,8 @@
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -305,7 +306,8 @@
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -323,7 +325,8 @@
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -341,7 +344,8 @@
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -359,7 +363,8 @@
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         }
       ],
@@ -398,7 +403,8 @@
               "src/lib/tower/__tests__/case-attribute-widening.test.ts",
               "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
               "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -426,7 +432,8 @@
               "src/lib/tower/__tests__/case-attribute-widening.test.ts",
               "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
               "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -454,7 +461,8 @@
               "src/lib/tower/__tests__/case-attribute-widening.test.ts",
               "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
               "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -482,7 +490,8 @@
               "src/lib/tower/__tests__/case-attribute-widening.test.ts",
               "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
               "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -510,7 +519,8 @@
               "src/lib/tower/__tests__/case-attribute-widening.test.ts",
               "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
               "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         }
       ]

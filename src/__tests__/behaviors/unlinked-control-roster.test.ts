@@ -50,6 +50,10 @@ type BehavioralTest = {
   status?: string;
   path?: string;
   reason?: string;
+  // Item C-636. An uncovered control declares which remedy would fix it, and
+  // the gate refuses one that does not, so a fixture that blinds a control has
+  // to declare it too.
+  remedy?: string;
   knownSuites?: string[];
   provenCases?: string[];
 };
@@ -58,6 +62,7 @@ type Catalog = {
   controls: Array<{
     id: string;
     path: string;
+    routeReachable?: boolean;
     requiredControls: Array<{ kind: string; behavioralTest?: BehavioralTest }>;
   }>;
   catalogClaimCoverage?: Array<{ surfaceId?: string; controlKind?: string; status?: string }>;
@@ -175,6 +180,13 @@ function blind(catalog: Catalog, surfaceId: string, kind: string): void {
       "Blinded by a behavioral test fixture. No behavioral test is declared here, so nothing " +
       "proves this control reaches a screen; the suites below reference the module without " +
       "proving this kind.",
+    // Item C-636 made the remedy a declared, enforced field: the gate refuses
+    // an uncovered control that omits it, and refuses `write-a-test` on a
+    // surface no route reaches. It is derived from the surface the fixture
+    // happens to pick rather than fixed here, so blinding a control on an
+    // unmounted surface stays a valid fixture instead of tripping the
+    // contradiction rule and failing this case for the wrong reason.
+    remedy: surface.routeReachable === false ? "render-the-control" : "write-a-test",
     knownSuites: suitesReferencing(moduleToken(surface.path)),
   };
   catalog.catalogClaimCoverage = (catalog.catalogClaimCoverage ?? []).filter(
@@ -281,20 +293,45 @@ describe("the control catalog names the controls with no behavioral test", () =>
     // sorted order either. A two-entry fixture in descending order cannot tell
     // a sort from a reverse, and a case that both a fix and its mutation pass
     // is not pinning anything.
+    // Updated by item C-636: every roster line now carries the declared
+    // remedy, and the renderer appends a drawable-count section after the
+    // roster. All three fixtures share one remedy so that the ordering stays
+    // the only variable this case can fail on, and the assertion is scoped to
+    // the roster lines rather than to every line the renderer emits — a sort
+    // case that also pins an unrelated trailing section fails for two reasons
+    // and tells you neither.
     const lines = renderUncoveredRoster(
       [
-        { surfaceId: "charlie-surface", kind: "citation", path: "src/c.tsx", reachable: true },
-        { surfaceId: "alpha-surface", kind: "ai-label", path: "src/a.tsx", reachable: false },
-        { surfaceId: "bravo-surface", kind: "confidence", path: "src/b.tsx", reachable: true },
+        {
+          surfaceId: "charlie-surface",
+          kind: "citation",
+          path: "src/c.tsx",
+          reachable: true,
+          remedy: "render-the-control",
+        },
+        {
+          surfaceId: "alpha-surface",
+          kind: "ai-label",
+          path: "src/a.tsx",
+          reachable: false,
+          remedy: "render-the-control",
+        },
+        {
+          surfaceId: "bravo-surface",
+          kind: "confidence",
+          path: "src/b.tsx",
+          reachable: true,
+          remedy: "render-the-control",
+        },
       ],
       44,
     );
 
     expect(lines[0]).toMatch(/Controls with no behavioral test: 3 of 44\./);
-    expect(lines.slice(1)).toEqual([
-      "  - alpha-surface:ai-label — src/a.tsx — not on any screen",
-      "  - bravo-surface:confidence — src/b.tsx",
-      "  - charlie-surface:citation — src/c.tsx",
+    expect(lines.filter((line) => line.trimStart().startsWith("- "))).toEqual([
+      "  - alpha-surface:ai-label — src/a.tsx — not on any screen — remedy: render-the-control",
+      "  - bravo-surface:confidence — src/b.tsx — remedy: render-the-control",
+      "  - charlie-surface:citation — src/c.tsx — remedy: render-the-control",
     ]);
   });
 });
