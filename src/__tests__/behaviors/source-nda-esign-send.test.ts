@@ -111,6 +111,13 @@ describe("synthetic NDA send boundary", () => {
     expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
   });
 
+  it("refuses any unfinished effective-date or address field", async () => {
+    const { deps } = harness();
+    deps.extractText.mockResolvedValueOnce("SYNTHETIC TEST FIXTURE\nFictional Supplier LLC\n[Effective Date]\n[address]\nSUPPLIER_SIGNATURE_HERE\nBUYER_SIGNATURE_HERE");
+    expect(await sendSyntheticNdaForSignature(input, deps)).toEqual({ ok: false, code: "document_mismatch" });
+    expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
+  });
+
   it("refuses a document for a different supplier", async () => {
     const { deps } = harness();
     deps.extractText.mockResolvedValueOnce("SYNTHETIC TEST FIXTURE\nAnother Supplier LLC\nSUPPLIER_SIGNATURE_HERE\nBUYER_SIGNATURE_HERE");

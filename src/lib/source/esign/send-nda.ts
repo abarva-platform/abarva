@@ -194,7 +194,7 @@ export async function sendSyntheticNdaForSignature(
   if (!normalizedText.includes("SYNTHETIC TEST FIXTURE") ||
       !normalizedText.includes("SUPPLIER_SIGNATURE_HERE") ||
       !normalizedText.includes("BUYER_SIGNATURE_HERE") ||
-      /\[[A-Z][A-Z0-9 _/-]{2,80}\]/.test(normalizedText) ||
+      /\[[^\]]{2,80}\]/.test(normalizedText) ||
       !normalizedText.toLowerCase().includes(
         authority.supplierLegalName.replace(/\s+/g, " ").trim().toLowerCase(),
       )) {
