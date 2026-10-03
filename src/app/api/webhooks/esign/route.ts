@@ -47,7 +47,7 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     const status = code === "invalid_signature" ? 401
-      : code === "webhook_secret_missing" || code.startsWith("key_vault_") ? 503 : 400;
+      : code === "invalid_event" ? 400 : 503;
     return Response.json({ ok: false }, { status });
   }
 

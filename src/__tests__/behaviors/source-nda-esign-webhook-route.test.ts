@@ -52,6 +52,13 @@ describe("public DocuSign demo callback", () => {
     expect(processMock).not.toHaveBeenCalled();
   });
 
+  it("asks the provider to retry when signature verification infrastructure is unavailable", async () => {
+    verifyWebhook.mockRejectedValueOnce(new Error("fetch failed"));
+    expect((await POST(signedRequest())).status).toBe(503);
+    expect(storeMock).not.toHaveBeenCalled();
+    expect(processMock).not.toHaveBeenCalled();
+  });
+
   it("processes a verified callback only for the synthetic tenant", async () => {
     const response = await POST(signedRequest());
     expect(response.status).toBe(202);
