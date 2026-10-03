@@ -12,8 +12,11 @@ const proof = {
   source_set_hash: "a".repeat(64),
   projection_hash: "b".repeat(64),
   readback_proof_uri: "https://example.invalid/readback.json",
-  rows: 3643,
-  source_linked_rows: 3643,
+  projection_version: 2,
+  canonical_relationships: 11727,
+  dependency_relationship_rows: 346,
+  rows: 3989,
+  source_linked_rows: 3989,
   row_types: {
     enterprise_profile: 1,
     business_segment: 3,
@@ -22,6 +25,7 @@ const proof = {
     program: 24,
     application: 344,
     contract: 230,
+    relationship: 346,
   },
   client_attestation_state: "not_client_attested",
   serving_state: "shadow_not_promoted",
@@ -42,9 +46,12 @@ const refusedProofs: Record<string, Partial<typeof proof>> = {
   client_attestation_state: { client_attestation_state: "client_attested" },
   serving_state: { serving_state: "home_active" },
   projection_hash: { projection_hash: "B".repeat(64) },
+  projection_version: { projection_version: 1 },
+  canonical_relationships: { canonical_relationships: 11726 },
+  dependency_relationship_rows: { dependency_relationship_rows: 345 },
   // Fewer rows, every one of them still source-linked.
-  rows: { rows: 3642, source_linked_rows: 3642 },
-  source_linked_rows: { source_linked_rows: 3642 },
+  rows: { rows: 3988, source_linked_rows: 3988 },
+  source_linked_rows: { source_linked_rows: 3988 },
   enterprise_profile: {
     row_types: { ...proof.row_types, enterprise_profile: 2 },
   },
@@ -56,8 +63,9 @@ const refusedProofs: Record<string, Partial<typeof proof>> = {
   program: { row_types: { ...proof.row_types, program: 25 } },
   application: { row_types: { ...proof.row_types, application: 24 } },
   contract: { row_types: { ...proof.row_types, contract: 229 } },
+  relationship: { row_types: { ...proof.row_types, relationship: 345 } },
 };
-assert.equal(Object.keys(refusedProofs).length, 15);
+assert.equal(Object.keys(refusedProofs).length, 19);
 for (const [condition, changed] of Object.entries(refusedProofs)) {
   assert.throws(
     () => assertProjectionProof({ ...proof, ...changed }, expected),

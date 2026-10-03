@@ -10,6 +10,16 @@ export interface CanonicalHomeObject {
   attributes_json: Record<string, unknown>;
 }
 
+export interface CanonicalHomeRelationship {
+  id: string;
+  from_object_id: string;
+  to_object_id: string;
+  relationship_type: string;
+  source_record_id: string;
+  value_state: string;
+  attributes_json: Record<string, unknown>;
+}
+
 export interface SyntheticHomeRow {
   page_key: string;
   row_key: string;
@@ -19,6 +29,7 @@ export interface SyntheticHomeRow {
   summary: string | null;
   primary_object_id: string;
   source_record_id: string;
+  supporting_source_record_ids?: string[];
   source_hash: string;
   value_state: string;
   display_payload_json: Record<string, unknown>;
@@ -88,6 +99,7 @@ export type ProjectedHomeRow = Pick<
   | "summary"
   | "primary_object_id"
   | "source_record_id"
+  | "supporting_source_record_ids"
   | "source_hash"
   | "value_state"
   | "display_payload_json"
@@ -114,6 +126,7 @@ export function projectedRowsHash(rows: readonly ProjectedHomeRow[]): string {
         row.summary ?? null,
         row.primary_object_id,
         row.source_record_id,
+        ...(row.supporting_source_record_ids?.length ? [row.supporting_source_record_ids] : []),
         row.source_hash,
         row.value_state,
         canonical(row.display_payload_json),
@@ -127,21 +140,15 @@ export type PersistedHomeRow = Omit<ProjectedHomeRow, "source_record_id"> & {
 };
 
 /**
- * The projected row a persisted row is. A projection writes exactly one source
- * reference per row; any other shape is kept as it was read, so it can never
- * be taken for the reference a projection wrote.
+ * The projected row a persisted row is. Dependency rows carry one edge source
+ * and two endpoint sources; other rows carry only their primary source.
  */
 export function persistedProjectedRow(row: PersistedHomeRow): ProjectedHomeRow {
   const refs = row.source_refs_json;
-  const only =
-    Array.isArray(refs) && refs.length === 1
-      ? (refs[0] as Record<string, unknown> | null)
-      : null;
-  const written =
-    only !== null &&
-    typeof only === "object" &&
-    Object.keys(only).length === 1 &&
-    typeof only.source_record_id === "string";
+  const expected = row.row_type === "relationship" ? 3 : 1;
+  const written = Array.isArray(refs) && refs.length === expected &&
+    refs.every((ref) => ref !== null && typeof ref === "object" &&
+      Object.keys(ref).length === 1 && typeof ref.source_record_id === "string");
   return {
     page_key: row.page_key,
     row_key: row.row_key,
@@ -151,8 +158,11 @@ export function persistedProjectedRow(row: PersistedHomeRow): ProjectedHomeRow {
     summary: row.summary,
     primary_object_id: row.primary_object_id,
     source_record_id: written
-      ? (only.source_record_id as string)
+      ? refs[0].source_record_id
       : `unrecognised:${JSON.stringify(canonical(refs))}`,
+    ...(written && expected === 3 ? {
+      supporting_source_record_ids: [refs[1].source_record_id, refs[2].source_record_id],
+    } : {}),
     source_hash: row.source_hash,
     value_state: row.value_state,
     display_payload_json: row.display_payload_json,
@@ -259,4 +269,90 @@ export function buildSyntheticHomeRows(
   return rows.sort((a, b) =>
     `${a.page_key}:${a.row_key}`.localeCompare(`${b.page_key}:${b.row_key}`),
   );
+}
+
+/** Bound the Home graph to relationships that explain current risks and programs. */
+export function buildSyntheticHomeDependencyRows(
+  objects: readonly CanonicalHomeObject[],
+  relationships: readonly CanonicalHomeRelationship[],
+): SyntheticHomeRow[] {
+  const byId = new Map(objects.map((object) => [object.id, object]));
+  if (byId.size !== objects.length) throw new Error("Duplicate canonical object ID");
+  for (const edge of relationships) {
+    if (!byId.has(edge.from_object_id) || !byId.has(edge.to_object_id)) {
+      throw new Error("Resolved canonical relationship has a missing endpoint");
+    }
+    if (!edge.source_record_id || edge.value_state !== "known") {
+      throw new Error("Canonical relationship lacks accepted source lineage");
+    }
+  }
+  const attentionRisks = new Set(objects.filter((object) => {
+    if (object.object_type !== "risk") return false;
+    const severity = String(object.attributes_json.severity ?? "").toLowerCase();
+    const control = String(object.attributes_json.control_state ?? "").toLowerCase();
+    return ["critical", "high"].includes(severity) &&
+      ["partially_effective", "unknown"].includes(control);
+  }).map((object) => object.id));
+  const programs = new Set(objects.filter((object) =>
+    object.object_type === "program").map((object) => object.id));
+  const selected = new Set(relationships.filter((edge) =>
+    (edge.relationship_type === "APPLIES_TO" && attentionRisks.has(edge.from_object_id)) ||
+    (edge.relationship_type === "CHANGES" && programs.has(edge.from_object_id))
+  ).map((edge) => edge.id));
+  const applications = new Set(relationships.filter((edge) => selected.has(edge.id))
+    .map((edge) => edge.to_object_id)
+    .filter((id) => ["application", "application_module"].includes(byId.get(id)?.object_type ?? "")));
+  for (const edge of relationships) {
+    if (applications.has(edge.from_object_id) &&
+      ["SUPPLIED_BY", "COVERED_BY", "FEEDS"].includes(edge.relationship_type)) {
+      selected.add(edge.id);
+    }
+  }
+  const dataProducts = new Set(relationships.filter((edge) =>
+    selected.has(edge.id) && edge.relationship_type === "FEEDS" &&
+    byId.get(edge.to_object_id)?.object_type === "data_product"
+  ).map((edge) => edge.to_object_id));
+  for (const edge of relationships) {
+    if (dataProducts.has(edge.from_object_id) && edge.relationship_type === "HOSTED_ON") {
+      selected.add(edge.id);
+    }
+  }
+  return relationships.filter((edge) => selected.has(edge.id)).map((edge) => {
+    const from = byId.get(edge.from_object_id)!;
+    const to = byId.get(edge.to_object_id)!;
+    if (!from.source_record_id || !to.source_record_id) {
+      throw new Error("Dependency endpoint lacks source lineage");
+    }
+    const nativeId = String(edge.attributes_json.native_relationship_id ?? edge.id);
+    const asOf = String(edge.attributes_json.source_as_of ?? "");
+    return {
+      page_key: "relationships",
+      row_key: nativeId,
+      row_type: "relationship",
+      section_key: "relationships",
+      title: `${from.display_name} ${edge.relationship_type} ${to.display_name}`,
+      summary: null,
+      primary_object_id: from.id,
+      source_record_id: edge.source_record_id,
+      supporting_source_record_ids: [from.source_record_id, to.source_record_id],
+      source_hash: hash({ id: edge.id, from: from.id, to: to.id,
+        type: edge.relationship_type, source: edge.source_record_id, asOf }),
+      value_state: edge.value_state,
+      display_payload_json: {
+        relationship_id: nativeId,
+        from_object_id: from.id,
+        from_object_key: from.object_key,
+        from_object_type: from.object_type,
+        from_object_name: from.display_name,
+        to_object_id: to.id,
+        to_object_key: to.object_key,
+        to_object_type: to.object_type,
+        to_object_name: to.display_name,
+        relationship_type: edge.relationship_type,
+        evidence_basis: "source_recorded_synthetic_reference",
+        source_as_of: asOf,
+        scope: "risk_and_program_dependency_slice",
+      },
+    };
+  }).sort((a, b) => a.row_key.localeCompare(b.row_key));
 }

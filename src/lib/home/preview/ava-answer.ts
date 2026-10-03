@@ -11,6 +11,7 @@ import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacke
 import {
   answerHomeCurrentContext,
   canAnswerFromCurrentContext,
+  isHomeGraphExhibitRequest,
 } from "@/lib/home/preview/current-context-answer";
 import {
   homeSourceCoverageGapLabelForVersion,
@@ -785,8 +786,6 @@ const ALLOWED_STATUS = new Set(["answered", "partial", "no_data"]);
 const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
 const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
-const GRAPH_EXHIBIT_REQUEST_RE =
-  /\b(show|draw|render|create|display|visuali[sz]e|graph|map)\b.*\b(graph|network|relationship map|connections?|dependencies)\b|\b(graph|network|relationship map)\b.*\b(risks?|vendors?|applications?|systems?|data|programs?|contracts?|connect|connections?|dependencies)\b/i;
 const INTERNAL_RECOVERY_CAVEAT_RE =
   /\b(advisor model|advisor engine|unparseable|could not be exported|exported safely|packag(?:e|ed|ing)|JSON|parser|parse)\b/i;
 const DEFAULT_RECOVERY_CAVEAT =
@@ -831,7 +830,18 @@ export async function answerHomeAvaQuestion(args: {
     args.bundle.contextVersion &&
     canAnswerFromCurrentContext(args.bundle.contextVersion)
   ) {
-    if (isGraphExhibitRequest(question)) {
+    const currentAnswer = answerHomeCurrentContext({
+      context: currentContext,
+      version: args.bundle.contextVersion,
+      recordMarker: args.bundle.provenance?.canonical_snapshot_hash,
+      tenantKey: args.tenantKey,
+      question,
+    });
+    if (currentAnswer && (!isHomeGraphExhibitRequest(question) ||
+      currentAnswer.artifacts.some((artifact) => artifact.artifact === "graph"))) {
+      return currentAnswer;
+    }
+    if (isHomeGraphExhibitRequest(question)) {
       return buildFallbackPacket(
         args.tenantKey,
         question,
@@ -840,14 +850,6 @@ export async function answerHomeAvaQuestion(args: {
         [],
       );
     }
-    const currentAnswer = answerHomeCurrentContext({
-      context: currentContext,
-      version: args.bundle.contextVersion,
-      recordMarker: args.bundle.provenance?.canonical_snapshot_hash,
-      tenantKey: args.tenantKey,
-      question,
-    });
-    if (currentAnswer) return currentAnswer;
   }
   if (
     args.bundle.contextVersion &&
@@ -877,7 +879,7 @@ export async function answerHomeAvaQuestion(args: {
     question,
   );
 
-  if (isGraphExhibitRequest(question)) {
+  if (isHomeGraphExhibitRequest(question)) {
     return buildGraphUnavailablePacket({
       context,
       tenantKey: args.tenantKey,
@@ -1201,10 +1203,6 @@ function packageModelResponse(
       [],
     )
   );
-}
-
-function isGraphExhibitRequest(question: string): boolean {
-  return GRAPH_EXHIBIT_REQUEST_RE.test(question);
 }
 
 function buildGraphUnavailablePacket(input: {

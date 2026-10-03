@@ -32,17 +32,19 @@ import {
   type ProofStore,
 } from "./synthetic_enterprise_home_job";
 import {
+  buildSyntheticHomeDependencyRows,
   buildSyntheticHomeRows,
   persistedProjectedRow,
   projectedRowsHash,
   type CanonicalHomeObject,
   type PersistedHomeRow,
   type SyntheticHomeRow,
+  type CanonicalHomeRelationship,
 } from "./synthetic_enterprise_home_rows";
 
 const jobName = "ecl-synthetic-enterprise-v2-project";
 const surface = "home_enterprise_landscape";
-const version = 1;
+const version = 2;
 
 function hash(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -131,6 +133,9 @@ type PlannedProjection = {
   projectionHash: string;
   projectedRowsHash: string;
   rowTypes: Record<string, number>;
+  relationshipIdByNative: Map<string, string>;
+  canonicalRelationships: number;
+  dependencyRelationshipRows: number;
   validation: Record<string, unknown>;
 };
 
@@ -142,6 +147,7 @@ const requiredFamilies: Record<string, number> = {
   business_function: 14,
   program: 24,
   metric: 36,
+  relationship: 346,
 };
 
 /** What a projection of the canonical rows, as they are now, writes. It reads and changes nothing. */
@@ -193,7 +199,44 @@ async function planProjection(
       "Canonical object count changed after independent readback",
     );
   }
-  const rows = buildSyntheticHomeRows(canonical.rows);
+  const relationships = await db.query<CanonicalHomeRelationship>(`
+    select edge.id::text, edge.from_object_id::text, edge.to_object_id::text,
+      edge.relationship_type, edge.source_record_id::text, edge.value_state,
+      edge.attributes_json
+    from ecl_context.relationship edge
+    join ecl_source.source_record source
+      on source.tenant_key = edge.tenant_key
+     and source.assessment_id = edge.assessment_id
+     and source.id = edge.source_record_id
+     and source.parse_state = 'parsed'
+    join ecl_source.source_file file
+      on file.tenant_key = source.tenant_key
+     and file.assessment_id = source.assessment_id
+     and file.id = source.source_file_id
+     and file.quality_state = 'accepted'
+     and file.metadata_json->>'source_set_hash' = $3
+    where edge.tenant_key = $1 and edge.assessment_id = $2
+  `, [manifest.tenant_key, manifest.assessment_id, manifest.source_set_hash]);
+  if (relationships.rows.length !== normalized.relationships.length) {
+    throw new ProjectionDrift("Canonical relationship count or source acceptance changed after readback");
+  }
+  const objectKeyById = new Map(canonical.rows.map((object) => [object.id, object.object_key]));
+  const expectedEdges = new Map(normalized.relationships.map((edge) => [edge.id, edge]));
+  const relationshipIdByNative = new Map<string, string>();
+  for (const edge of relationships.rows) {
+    const nativeId = String(edge.attributes_json.native_relationship_id ?? "");
+    const expected = expectedEdges.get(nativeId);
+    if (!expected || relationshipIdByNative.has(nativeId) ||
+      edge.relationship_type !== expected.type ||
+      objectKeyById.get(edge.from_object_id) !== expected.from_object_id ||
+      objectKeyById.get(edge.to_object_id) !== expected.to_object_id) {
+      throw new ProjectionDrift("Canonical relationship identity or endpoint drifted after readback");
+    }
+    relationshipIdByNative.set(nativeId, edge.id);
+  }
+  const dependencyRows = buildSyntheticHomeDependencyRows(canonical.rows, relationships.rows);
+  const rows = [...buildSyntheticHomeRows(canonical.rows), ...dependencyRows]
+    .sort((a, b) => `${a.page_key}:${a.row_key}`.localeCompare(`${b.page_key}:${b.row_key}`));
   const rowTypes: Record<string, number> = {};
   for (const row of rows) {
     rowTypes[row.row_type] = (rowTypes[row.row_type] ?? 0) + 1;
@@ -209,13 +252,18 @@ async function planProjection(
   }
   return {
     rows,
+    relationshipIdByNative,
+    canonicalRelationships: relationships.rows.length,
+    dependencyRelationshipRows: dependencyRows.length,
     snapshotId: stableUuid(
       "synthetic-home-snapshot",
+      String(version),
       manifest.assessment_id,
       manifest.source_set_hash,
     ),
     manifestId: stableUuid(
       "synthetic-home-manifest",
+      String(version),
       manifest.assessment_id,
       manifest.source_set_hash,
     ),
@@ -225,6 +273,8 @@ async function planProjection(
     validation: {
       accepted_source_files: catalog.rows.length,
       canonical_objects: canonical.rows.length,
+      canonical_relationships: relationships.rows.length,
+      dependency_relationship_rows: dependencyRows.length,
       projected_rows: rows.length,
       source_links: rows.length,
       required_families: requiredFamilies,
@@ -260,8 +310,9 @@ async function ownCommittedProjection(
     `select id::text, snapshot_id::text, projection_version, source_hash,
             projection_hash, row_count, quality_state, admission_status, proof_uri
      from ecl_projection.projection_manifest
-     where tenant_key = $1 and assessment_id = $2 and projection_key = $3`,
-    [...scope, surface],
+     where tenant_key = $1 and assessment_id = $2 and projection_key = $3
+       and projection_version = $4`,
+    [...scope, surface, version],
   );
   const committed = manifests.rows[0];
   if (
@@ -310,8 +361,9 @@ async function ownCommittedProjection(
             display_payload_json, projection_manifest_id::text,
             projection_version, quality_state, admission_status
      from ecl_projection.home_enterprise_landscape
-     where tenant_key = $1 and assessment_id = $2`,
-    scope,
+     where tenant_key = $1 and assessment_id = $2
+       and projection_manifest_id = $3 and projection_version = $4`,
+    [...scope, planned.manifestId, version],
   );
   if (
     persisted.rows.length !== planned.rows.length ||
@@ -329,10 +381,14 @@ async function ownCommittedProjection(
   }
   const linked = await db.query<{ entries: string; links: string }>(
     `select (select count(*) from ecl_projection.projection_entry
-        where tenant_key = $1 and assessment_id = $2) as entries,
-       (select count(*) from ecl_projection.projection_entry_source_record_ref
-        where tenant_key = $1 and assessment_id = $2) as links`,
-    scope,
+        where tenant_key = $1 and assessment_id = $2
+          and projection_manifest_id = $3 and projection_version = $4) as entries,
+       (select count(*) from ecl_projection.projection_entry_source_record_ref ref
+        join ecl_projection.projection_entry entry on entry.id = ref.projection_entry_id
+        where ref.tenant_key = $1 and ref.assessment_id = $2
+          and entry.projection_manifest_id = $3 and entry.projection_version = $4
+          and ref.ref_role = 'primary_source') as links`,
+    [...scope, planned.manifestId, version],
   );
   if (
     Number(linked.rows[0].entries) !== planned.rows.length ||
@@ -378,6 +434,8 @@ export async function writeShadowHomeProjection(
     readback_proof_uri: readbackUri,
     projection_manifest_id: planned.manifestId,
     projection_version: version,
+    canonical_relationships: planned.canonicalRelationships,
+    dependency_relationship_rows: planned.dependencyRelationshipRows,
     projection_hash: planned.projectionHash,
     projected_rows_hash: planned.projectedRowsHash,
     rows: planned.rows.length,
@@ -404,11 +462,12 @@ export async function writeShadowHomeProjection(
     const occupied = await db.query<{ n: string }>(
       `
       select (select count(*) from ecl_projection.projection_manifest
-        where tenant_key = $1 and assessment_id = $2 and projection_key = $3)
+        where tenant_key = $1 and assessment_id = $2 and projection_key = $3
+          and projection_version = $4)
         + (select count(*) from ecl_projection.home_enterprise_landscape
-        where tenant_key = $1 and assessment_id = $2) as n
+        where tenant_key = $1 and assessment_id = $2 and projection_version = $4) as n
     `,
-      [manifest.tenant_key, manifest.assessment_id, surface],
+      [manifest.tenant_key, manifest.assessment_id, surface, version],
     );
     if (Number(occupied.rows[0].n) !== 0) {
       let own: Awaited<ReturnType<typeof ownCommittedProjection>> = null;
@@ -427,7 +486,7 @@ export async function writeShadowHomeProjection(
       return proofCore(planned, "already_projected", own);
     }
     const planned = await planProjection(db, pack);
-    const { rows, snapshotId, manifestId, projectionHash } = planned;
+    const { rows, snapshotId, manifestId, projectionHash, relationshipIdByNative } = planned;
     await db.query(
       `insert into ecl_context.snapshot
       (id, tenant_key, assessment_id, snapshot_key, snapshot_type, source_hash,
@@ -437,7 +496,7 @@ export async function writeShadowHomeProjection(
         snapshotId,
         manifest.tenant_key,
         manifest.assessment_id,
-        `synthetic-home-${manifest.source_set_hash}`,
+        `synthetic-home-v${version}-${manifest.source_set_hash}`,
         manifest.source_set_hash,
         projectionHash,
         runId,
@@ -467,6 +526,7 @@ export async function writeShadowHomeProjection(
     const entryRows = rows.map((row) => {
       const entryId = stableUuid(
         "synthetic-home-entry",
+        String(version),
         manifest.assessment_id,
         row.page_key,
         row.row_key,
@@ -482,10 +542,21 @@ export async function writeShadowHomeProjection(
         row_key: row.row_key,
         row_type: row.row_type,
         source_hash: row.source_hash,
-        refs_content_hash: hash([row.primary_object_id, row.source_record_id]),
+        refs_content_hash: hash([
+          row.row_type === "relationship"
+            ? [row.display_payload_json.from_object_id, row.display_payload_json.to_object_id]
+            : [row.primary_object_id],
+          row.row_type === "relationship" ? [relationshipIdByNative.get(row.row_key)] : [],
+          [row.source_record_id, ...(row.supporting_source_record_ids ?? [])],
+        ]),
         refs_cache_json: {
-          objects: [row.primary_object_id],
-          source_records: [row.source_record_id],
+          objects: row.row_type === "relationship"
+            ? [row.display_payload_json.from_object_id, row.display_payload_json.to_object_id]
+            : [row.primary_object_id],
+          relationships: row.row_type === "relationship"
+            ? [relationshipIdByNative.get(row.row_key)]
+            : [],
+          source_records: [row.source_record_id, ...(row.supporting_source_record_ids ?? [])],
         },
         display_cache_json: { page_key: row.page_key, title: row.title },
       };
@@ -522,15 +593,62 @@ export async function writeShadowHomeProjection(
         ["sort_order", "integer"],
         ["source_hash", "text"],
       ],
-      rows.map((row, index) => ({
+      rows.flatMap((row, index) => [row.source_record_id,
+        ...(row.supporting_source_record_ids ?? [])].map((sourceId, sourceIndex) => ({
         tenant_key: manifest.tenant_key,
         assessment_id: manifest.assessment_id,
         projection_entry_id: entryRows[index].id,
-        source_record_id: row.source_record_id,
-        ref_role: "primary_source",
+        source_record_id: sourceId,
+        ref_role: sourceIndex === 0 ? "primary_source" : "endpoint_source",
+        sort_order: sourceIndex + 1,
+        source_hash: row.source_hash,
+      }))),
+    );
+    await insertBatch(
+      db,
+      "ecl_projection.projection_entry_object_ref",
+      [
+        ["tenant_key", "text"],
+        ["assessment_id", "text"],
+        ["projection_entry_id", "uuid"],
+        ["object_id", "uuid"],
+        ["ref_role", "text"],
+        ["sort_order", "integer"],
+        ["source_hash", "text"],
+      ],
+      rows.flatMap((row, index) => row.row_type === "relationship"
+        ? ["from_object_id", "to_object_id"].map((key, endpointIndex) => ({
+            tenant_key: manifest.tenant_key,
+            assessment_id: manifest.assessment_id,
+            projection_entry_id: entryRows[index].id,
+            object_id: row.display_payload_json[key],
+            ref_role: key,
+            sort_order: endpointIndex + 1,
+            source_hash: row.source_hash,
+          }))
+        : []),
+    );
+    await insertBatch(
+      db,
+      "ecl_projection.projection_entry_relationship_ref",
+      [
+        ["tenant_key", "text"],
+        ["assessment_id", "text"],
+        ["projection_entry_id", "uuid"],
+        ["relationship_id", "uuid"],
+        ["ref_role", "text"],
+        ["sort_order", "integer"],
+        ["source_hash", "text"],
+      ],
+      rows.flatMap((row, index) => row.row_type === "relationship" ? [{
+        tenant_key: manifest.tenant_key,
+        assessment_id: manifest.assessment_id,
+        projection_entry_id: entryRows[index].id,
+        relationship_id: relationshipIdByNative.get(row.row_key),
+        ref_role: "canonical_edge",
         sort_order: 1,
         source_hash: row.source_hash,
-      })),
+      }] : []),
     );
     await insertBatch(
       db,
@@ -550,6 +668,7 @@ export async function writeShadowHomeProjection(
         ["title", "text"],
         ["summary", "text"],
         ["primary_object_id", "uuid"],
+        ["relationship_ids_json", "jsonb"],
         ["source_refs_json", "jsonb"],
         ["basis_summary", "text"],
         ["value_state", "text"],
@@ -562,6 +681,7 @@ export async function writeShadowHomeProjection(
         ...row,
         id: stableUuid(
           "synthetic-home-row",
+          String(version),
           manifest.assessment_id,
           row.page_key,
           row.row_key,
@@ -572,7 +692,12 @@ export async function writeShadowHomeProjection(
         projection_manifest_id: manifestId,
         projection_entry_id: entryRows[index].id,
         projection_version: version,
-        source_refs_json: [{ source_record_id: row.source_record_id }],
+        relationship_ids_json: row.row_type === "relationship"
+          ? [relationshipIdByNative.get(row.row_key)]
+          : [],
+        source_refs_json: [row.source_record_id,
+          ...(row.supporting_source_record_ids ?? [])]
+          .map((sourceRecordId) => ({ source_record_id: sourceRecordId })),
         basis_summary: "synthetic_reference_not_client_attested",
         quality_state: "passed",
         admission_status: "not_applicable",
@@ -581,11 +706,13 @@ export async function writeShadowHomeProjection(
     const checks = await db.query<{ projected: string; links: string }>(
       `
       select (select count(*) from ecl_projection.home_enterprise_landscape
-        where tenant_key = $1 and assessment_id = $2) as projected,
-        (select count(*) from ecl_projection.projection_entry_source_record_ref
-        where tenant_key = $1 and assessment_id = $2) as links
+        where tenant_key = $1 and assessment_id = $2 and projection_version = $3) as projected,
+        (select count(*) from ecl_projection.projection_entry_source_record_ref ref
+          join ecl_projection.projection_entry entry on entry.id = ref.projection_entry_id
+          where ref.tenant_key = $1 and ref.assessment_id = $2
+            and entry.projection_version = $3 and ref.ref_role = 'primary_source') as links
     `,
-      [manifest.tenant_key, manifest.assessment_id],
+      [manifest.tenant_key, manifest.assessment_id, version],
     );
     if (
       Number(checks.rows[0].projected) !== rows.length ||

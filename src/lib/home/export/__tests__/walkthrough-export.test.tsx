@@ -8,7 +8,10 @@ import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
 import { buildHomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
 import { buildTechnologyEstateFromHomeProjectionRows } from "@/lib/home/preview/ecl-projection-bundle";
 import { generatePack } from "../../../../../scripts/ecl/load_synthetic_enterprise_v1";
-import { buildSyntheticHomeRows } from "../../../../../scripts/ecl/synthetic_enterprise_home_rows";
+import {
+  buildSyntheticHomeDependencyRows,
+  buildSyntheticHomeRows,
+} from "../../../../../scripts/ecl/synthetic_enterprise_home_rows";
 import {
   buildHomeWalkthroughPdf,
   renderHomeWalkthroughHtml,
@@ -156,7 +159,7 @@ describe("Home walkthrough export", () => {
   it("preserves generated enterprise context in HTML and PDF", async () => {
     const pack = await generatePack("v2");
     try {
-      const rows = buildSyntheticHomeRows(pack.normalized.objects.map((object) => ({
+      const objects = pack.normalized.objects.map((object) => ({
         id: object.id,
         object_key: object.id,
         object_type: object.type,
@@ -167,7 +170,19 @@ describe("Home walkthrough export", () => {
           ...object.attributes,
           source_as_of: object.source_as_of,
         },
-      })));
+      }));
+      const rows = [
+        ...buildSyntheticHomeRows(objects),
+        ...buildSyntheticHomeDependencyRows(objects, pack.normalized.relationships.map((edge) => ({
+          id: edge.id,
+          from_object_id: edge.from_object_id,
+          to_object_id: edge.to_object_id,
+          relationship_type: edge.type,
+          source_record_id: `source-${edge.id}`,
+          value_state: "known",
+          attributes_json: { native_relationship_id: edge.id, source_as_of: edge.source_as_of },
+        }))),
+      ];
       const sourceByRow = new Map(rows.map((row) => [row.row_key, row.source_record_id]));
       const context = buildHomeEnterpriseContext(rows, (row) => {
         const source = sourceByRow.get(row.row_key);
@@ -193,6 +208,7 @@ describe("Home walkthrough export", () => {
         "Segment scale and governed footprint",
         "Priority ownership and delivery",
         "Function ownership and footprint",
+        "Risk and program connections to applications, suppliers, data and hosting",
         "Program investment by declared priority",
         "High and critical risks needing control review",
       ]) {
@@ -217,6 +233,10 @@ describe("Home walkthrough export", () => {
       expect(pdfMarkup).toContain("1 is unsupported");
       expect(html).toContain("1 program without a declared priority");
       expect(pdfMarkup).toContain("1 program without a declared priority");
+      expect(html).not.toContain("1 programs have no declared priority");
+      expect(pdfMarkup).not.toContain("1 programs have no declared priority");
+      expect(html).toContain("Critical dependency paths");
+      expect(pdfMarkup).toContain("Critical dependency paths");
       expect(html).not.toContain("0 program financial records are incomplete");
       expect(pdfMarkup).not.toContain("0 claim statuses need separate review");
       expect(html).toContain("120 of 480 spend records lack a verifiable completed-period actual");

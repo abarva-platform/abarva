@@ -53,7 +53,7 @@ export function enterpriseContextExportSection(
       paragraphs: [
         context.profile.businessModel,
         evidence(context.profile),
-        `${context.sharedFunctionIds.length} functions serve the enterprise across segments; ${context.unlinkedPrograms.length} programs have no declared priority. Changes over time are not established by this view.`,
+        `${context.sharedFunctionIds.length} functions serve the enterprise across segments; ${context.unlinkedPrograms.length} ${context.unlinkedPrograms.length === 1 ? "program has" : "programs have"} no declared priority. Changes over time are not established by this view.`,
         caveat,
       ],
       tables: [{
@@ -146,6 +146,32 @@ export function enterpriseContextExportSection(
           evidence(fn),
         ]),
         note: "Synthetic reference; not client-attested. Shared functions remain unallocated.",
+      }],
+    };
+  }
+
+  if (chapterId === "technology_data" && context.dependencyProof) {
+    const proof = context.dependencyProof;
+    const paths = [...proof.riskPaths.slice(0, 3), ...proof.programPaths.slice(0, 3)];
+    return {
+      title: "Critical dependency paths",
+      paragraphs: [
+        `${new Set(proof.riskPaths.map((path) => path.subject.id)).size} priority risks and ${new Set(proof.programPaths.map((path) => path.subject.id)).size} programs have recorded asset links in this bounded slice.`,
+        `${proof.projectedLinks} source-linked relationship rows are available; this does not establish the full enterprise blast radius. Missing direct links are not inferred.`,
+        "Synthetic reference; not client-attested. Source dates do not attest current data currency.",
+        caveat,
+      ],
+      tables: [{
+        caption: "Risk and program connections to applications, suppliers, data and hosting",
+        columns: ["Risk or program", "Affected asset", "Supplier / contract", "Data / hosting", "Evidence"],
+        rows: paths.map((path) => [
+          `${path.subjectKind === "risk" ? "Risk" : "Program"}: ${path.subject.name}`,
+          path.asset.name,
+          [path.supplier?.name, path.contract?.name].filter(Boolean).join(" / ") || "No direct link in this slice",
+          [path.dataProduct?.name, path.platform?.name].filter(Boolean).join(" / ") || "No direct link in this slice",
+          `${path.asOf ? `As of ${path.asOf}` : "Source date not established"}; ${path.sourceRefs.length} source records`,
+        ]),
+        note: "Canonical ID-linked relationships only. Each displayed path includes source-linked endpoints and edges.",
       }],
     };
   }

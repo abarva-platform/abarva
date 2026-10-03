@@ -226,6 +226,40 @@ const context = {
   evidenceClass: "synthetic_reference",
 } satisfies HomeEnterpriseContext;
 
+const dependencyContext: HomeEnterpriseContext = {
+  ...context,
+  dependencyProof: {
+    projectedLinks: 346,
+    asOf: "2026-09-30",
+    riskPaths: [{
+      primaryLinkKey: "edge-risk-1",
+      subject: { id: "risk-id", name: "Recovery capacity gap", type: "risk" },
+      subjectKind: "risk",
+      subjectState: "critical; unknown",
+      asset: { id: "app-id", name: "Claims platform", type: "application" },
+      supplier: { id: "vendor-id", name: "Vendor A", type: "vendor" },
+      contract: null,
+      dataProduct: { id: "data-id", name: "Claims data", type: "data_product" },
+      platform: { id: "platform-id", name: "Database cluster", type: "data_platform" },
+      sourceRefs: ["source-risk-1", "source-edge-1", "source-app-1", "source-vendor-1", "source-data-1"],
+      asOf: "2026-09-30",
+    }],
+    programPaths: [{
+      primaryLinkKey: "edge-program-1",
+      subject: { id: "program-id", name: "Modernize claims", type: "program" },
+      subjectKind: "program",
+      subjectState: "at_risk",
+      asset: { id: "app-id", name: "Claims platform", type: "application" },
+      supplier: { id: "vendor-id", name: "Vendor A", type: "vendor" },
+      contract: null,
+      dataProduct: { id: "data-id", name: "Claims data", type: "data_product" },
+      platform: { id: "platform-id", name: "Database cluster", type: "data_platform" },
+      sourceRefs: ["source-program-1", "source-edge-2", "source-app-1", "source-vendor-1", "source-data-1"],
+      asOf: "2026-09-30",
+    }],
+  },
+};
+
 describe("current Home context answers", () => {
   it("requires complete source links and accepted source files", () => {
     expect(canAnswerFromCurrentContext(version)).toBe(true);
@@ -339,6 +373,50 @@ describe("current Home context answers", () => {
       "item-level accountability is not established",
     );
     expect(ownerQuestion?.prose).not.toContain("owner: Care president");
+  });
+
+  it("answers dependencies with cited canonical paths and renders only their verified graph", async () => {
+    const question = "Which applications, vendors and data assets are critical dependencies for our top risks and programs?";
+    const answer = answerHomeCurrentContext({
+      context: dependencyContext, version, tenantKey: "meridian-health", question,
+    });
+    expect(answer?.intent).toBe("home_current_dependencies");
+    expect(answer?.directAnswer).toContain("346 source-linked relationships form a bounded slice around 1 priority risk and 1 program");
+    expect(answer?.prose).toContain("Claims platform");
+    expect(answer?.prose).toContain("Claims data");
+    expect(answer?.citations.some((citation) => citation.recordId === "source-edge-1")).toBe(true);
+    const riskCitations = answer?.relationshipsUsed[0].citationIds ?? [];
+    expect(riskCitations).toContain(answer?.citations.find((citation) =>
+      citation.recordId === "source-edge-1")?.id);
+    expect(riskCitations).not.toContain(answer?.citations.find((citation) =>
+      citation.recordId === "source-program-1")?.id);
+    expect(answer?.artifacts).toHaveLength(0);
+    const graph = await answerHomeAvaQuestion({
+      bundle: {
+        ...getHomeReviewBundle("meridian-health")!,
+        contextVersion: version,
+        thesis: {
+          ...getHomeReviewBundle("meridian-health")!.thesis,
+          signalPacket: {
+            ...getHomeReviewBundle("meridian-health")!.thesis.signalPacket,
+            homeEnterpriseContext: dependencyContext,
+          },
+        },
+      },
+      tenantKey: "meridian-health",
+      question: "Show me the graph of how risks, vendors, applications, data and programs connect.",
+    });
+    expect(graph.intent).toBe("home_current_dependencies");
+    expect(graph.artifacts[0].artifact).toBe("graph");
+    if (graph.artifacts[0].artifact === "graph") {
+      expect(graph.artifacts[0].edges).toEqual(expect.arrayContaining([
+        expect.objectContaining({ label: "applies to" }),
+        expect.objectContaining({ label: "feeds" }),
+        expect.objectContaining({ label: "hosted on" }),
+      ]));
+    }
+    expect(validateAvaAnswerPacket(graph).violations.filter((violation) =>
+      violation.severity === "error")).toEqual([]);
   });
 
   it("routes a mixed-version Home bundle to current facts without consulting stored chapter prose", async () => {

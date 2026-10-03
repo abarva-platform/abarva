@@ -140,6 +140,7 @@ export function EnterpriseContextPanel({
       "our_business",
       "strategy_value_creation",
       "how_we_operate",
+      ...(context.dependencyProof ? ["technology_data"] : []),
       "performance_value",
       "what_needs_attention",
     ].includes(chapterId)
@@ -478,6 +479,63 @@ export function EnterpriseContextPanel({
             {context.sharedFunctionIds.length === 1 ? " has" : "s have"} no
             declared segment. Function-level accountability is recorded;
             decision rights are not inferred.
+          </p>
+        </>
+      ) : null}
+      {chapterId === "technology_data" && context.dependencyProof ? (
+        <>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))",
+            gap: 18,
+            marginBottom: 24,
+          }}>
+            {metric("Priority risks with an asset link", String(new Set(context.dependencyProof.riskPaths.map((path) => path.subject.id)).size))}
+            {metric("Programs with application links", String(new Set(context.dependencyProof.programPaths.map((path) => path.subject.id)).size))}
+            {metric("Recorded data-feed paths", String([...context.dependencyProof.riskPaths, ...context.dependencyProof.programPaths].filter((path) => path.dataProduct).length))}
+          </div>
+          <h2 style={{ fontFamily: SANS, fontSize: 20, margin: "0 0 8px" }}>
+            Where critical work relies on shared assets
+          </h2>
+          <p style={{ color: V4.inkSoft, fontFamily: SANS, fontSize: 13, lineHeight: 1.5, margin: "0 0 16px" }}>
+            Recorded risk targets and program change scope connect to suppliers,
+            data feeds, and hosting where a canonical relationship exists.
+            This is a bounded dependency slice, not a complete impact model.
+          </p>
+          <Table headers={["Risk or program", "Affected asset", "Supplier / contract", "Data / hosting", "Evidence"]} minWidth={940}>
+            {[...context.dependencyProof.riskPaths.slice(0, 3), ...context.dependencyProof.programPaths.slice(0, 3)].map((path, index) => (
+              <tr key={`${path.subject.id}:${path.asset.id}:${index}`}>
+                <td style={CELL_STYLE}>
+                  <strong>{path.subject.name}</strong>
+                  <div style={{ color: V4.slate, fontSize: 12 }}>{path.subjectKind === "risk" ? "Risk" : "Program"} · {path.subjectState.replaceAll("_", " ")}</div>
+                </td>
+                <td style={CELL_STYLE}>
+                  {path.asset.name}
+                  <div><Drill label="View link" onOpen={() => onOpenMatch("relationship_edge", {
+                    field: "originalRowId",
+                    value: path.primaryLinkKey,
+                    label: `${path.subject.name} to ${path.asset.name}`,
+                  })} /></div>
+                </td>
+                <td style={CELL_STYLE}>
+                  {path.supplier?.name ?? "No direct supplier link in this slice"}
+                  {path.contract ? <div style={{ color: V4.slate, fontSize: 12 }}>Contract: {path.contract.name}</div> : null}
+                </td>
+                <td style={CELL_STYLE}>
+                  {path.dataProduct?.name ?? "No direct data-feed link in this slice"}
+                  {path.platform ? <div style={{ color: V4.slate, fontSize: 12 }}>Hosted on: {path.platform.name}</div> : null}
+                </td>
+                <td style={CELL_STYLE}>
+                  <span style={{ color: V4.slate, fontSize: 12 }}>
+                    {path.asOf ? `As of ${path.asOf}` : "Source date not established"} · {path.sourceRefs.length} source records
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </Table>
+          <p style={{ color: V4.slate, fontFamily: SANS, fontSize: 12, margin: "14px 0 0" }}>
+            Showing {Math.min(3, context.dependencyProof.riskPaths.length) + Math.min(3, context.dependencyProof.programPaths.length)} paths from {context.dependencyProof.projectedLinks} source-linked relationship rows.
+            Missing direct links are not inferred. Synthetic reference; not client-attested.
           </p>
         </>
       ) : null}

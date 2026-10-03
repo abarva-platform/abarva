@@ -1,13 +1,23 @@
-import type { AvaAnswerPacket, AvaCitation, AvaMetricRef } from "@/lib/ava-answer/contract";
+import type {
+  AvaAnswerPacket, AvaArtifact, AvaCitation, AvaMetricRef, AvaRelationshipRef,
+} from "@/lib/ava-answer/contract";
 import type { HomeEnterpriseContext } from "./ecl-enterprise-context";
+import type { EnterpriseDependencyPath } from "./ecl-dependency-proof";
 import type { HomeContextVersion } from "./types";
 import { formatValueMoney } from "./value-proof-format";
 
-type AnswerArea = "business" | "priorities" | "operating" | "value" | "risk";
+type AnswerArea = "business" | "priorities" | "operating" | "value" | "risk" | "dependencies";
+
+export function isHomeGraphExhibitRequest(question: string): boolean {
+  return /\b(show|draw|render|create|display|visuali[sz]e|graph|map)\b.*\b(graph|network|relationship map|connections?|dependencies)\b|\b(graph|network|relationship map)\b.*\b(risks?|vendors?|applications?|systems?|data|programs?|contracts?|connect|connections?|dependencies)\b/i.test(question);
+}
 
 function areaForQuestion(question: string): AnswerArea | null {
+  if (isHomeGraphExhibitRequest(question) ||
+    /\b(dependenc(?:y|ies)|connections?|relationship (?:map|graph)|network graph|graph of how)\b/i.test(question))
+    return "dependencies";
   if (
-    /\b(graphs?|charts?|diagrams?|connect(?:ion|ions)?|dependenc(?:y|ies)|commercial|contracts?|vendors?|spend|costs?|chang(?:e|ed|es|ing)|previous|since|trend|quarter)\b|\bover time\b/i.test(
+    /\b(graphs?|charts?|diagrams?|commercial|contracts?|vendors?|spend|costs?|chang(?:e|ed|es|ing)|previous|since|trend|quarter)\b|\bover time\b/i.test(
       question,
     )
   )
@@ -65,6 +75,7 @@ export function answerHomeCurrentContext(args: {
   const area = areaForQuestion(args.question);
   if (!area) return null;
   const { context, version, tenantKey, question } = args;
+  if (area === "dependencies" && !context.dependencyProof) return null;
   const citations: AvaCitation[] = [
     {
       id: "home-current-record",
@@ -74,21 +85,27 @@ export function answerHomeCurrentContext(args: {
       confidence: "high",
     },
   ];
-  const addCitation = (title: string, sourceRefs: string[]): void => {
+  const addCitation = (title: string, sourceRefs: string[]): string | null => {
     const ref = sourceRefs[0];
-    if (!ref || citations.some((citation) => citation.recordId === ref)) return;
+    if (!ref) return null;
+    const existing = citations.find((citation) => citation.recordId === ref);
+    if (existing) return existing.id;
+    const id = `home-current-source-${citations.length}`;
     citations.push({
-      id: `home-current-source-${citations.length}`,
+      id,
       label: title,
       sourceClass: "tenant-fact",
       recordId: ref,
       confidence: "high",
     });
+    return id;
   };
   let directAnswer: string;
   let bullets: string[];
   let evidenceLimit: string;
   let metricsUsed: AvaMetricRef[] = [];
+  let relationshipsUsed: AvaRelationshipRef[] = [];
+  let artifacts: AvaArtifact[] = [];
 
   if (area === "business") {
     const segments = [...context.segmentSpine.segments].sort(
@@ -186,6 +203,63 @@ export function answerHomeCurrentContext(args: {
       ]),
     ];
     evidenceLimit = `${proof.modelledClaimCount} value claims are modelled, not finance-validated; ${proof.unsupportedClaimCount} are unsupported. ${proof.excludedSpendLines} spend records lack a verifiable completed-period actual. This is synthetic reference material, not client-attested value.`;
+  } else if (area === "dependencies") {
+    const proof = context.dependencyProof!;
+    const paths = [...proof.riskPaths.slice(0, 2), ...proof.programPaths.slice(0, 2)];
+    const riskSubjects = new Set(proof.riskPaths.map((path) => path.subject.id));
+    const programSubjects = new Set(proof.programPaths.map((path) => path.subject.id));
+    directAnswer = `${proof.projectedLinks} source-linked relationships form a bounded slice around ${riskSubjects.size} priority ${riskSubjects.size === 1 ? "risk" : "risks"} and ${programSubjects.size} ${programSubjects.size === 1 ? "program" : "programs"}. These are declared paths, not a complete impact model.`;
+    bullets = paths.map((path) => {
+      const related = [
+        path.supplier ? `supplier: ${path.supplier.name}` : null,
+        path.contract ? `contract: ${path.contract.name}` : null,
+        path.dataProduct ? `feeds: ${path.dataProduct.name}` : null,
+        path.platform ? `data hosted on: ${path.platform.name}` : null,
+      ].filter(Boolean).join("; ");
+      return `${path.subjectKind === "risk" ? "Risk" : "Program"}: ${path.subject.name}; affected asset: ${path.asset.name}${related ? `; ${related}` : ""}.`;
+    });
+    const citationIdsByPath = paths.map((path) => path.sourceRefs.slice(0, 8)
+      .map((ref) => addCitation(
+        `${path.subjectKind === "risk" ? "Risk" : "Program"} dependency source`, [ref],
+      ))
+      .filter((id): id is string => Boolean(id)));
+    relationshipsUsed = paths.map((path, index) => ({
+      id: `home-dependency-${index + 1}`,
+      label: path.subjectKind === "risk" ? "Applies to" : "Changes",
+      fromLabel: path.subject.name,
+      toLabel: path.asset.name,
+      relationshipType: path.subjectKind === "risk" ? "APPLIES_TO" : "CHANGES",
+      citationIds: citationIdsByPath[index],
+    }));
+    if (isHomeGraphExhibitRequest(question)) {
+      const nodes = new Map<string, { id: string; label: string; kind: string }>();
+      const graphEdges: Array<{ from: string; to: string; label: string }> = [];
+      const connect = (
+        from: EnterpriseDependencyPath["subject"],
+        to: EnterpriseDependencyPath["asset"],
+        label: string,
+      ) => {
+        nodes.set(from.id, { id: from.id, label: from.name, kind: from.type });
+        nodes.set(to.id, { id: to.id, label: to.name, kind: to.type });
+        if (!graphEdges.some((edge) => edge.from === from.id && edge.to === to.id && edge.label === label)) {
+          graphEdges.push({ from: from.id, to: to.id, label });
+        }
+      };
+      for (const path of paths) {
+        connect(path.subject, path.asset, path.subjectKind === "risk" ? "applies to" : "changes");
+        if (path.supplier) connect(path.asset, path.supplier, "supplied by");
+        if (path.contract) connect(path.asset, path.contract, "covered by");
+        if (path.dataProduct) connect(path.asset, path.dataProduct, "feeds");
+        if (path.dataProduct && path.platform) connect(path.dataProduct, path.platform, "hosted on");
+      }
+      artifacts = [{
+        artifact: "graph", id: "home-current-dependency-graph",
+        title: "Recorded risk and program dependencies",
+        nodes: [...nodes.values()], edges: graphEdges,
+        citationIds: citations.map((citation) => citation.id),
+      }];
+    }
+    evidenceLimit = `This is a bounded ${proof.projectedLinks}-link slice of the canonical graph, not every enterprise dependency. Links and endpoints are synthetic reference records, not client-attested or independently impact-scored.`;
   } else {
     const triage = context.riskTriage;
     const top = triage.attentionRisks.slice(0, 3);
@@ -220,8 +294,8 @@ export function answerHomeCurrentContext(args: {
     prose: bullets.map((bullet) => `- ${bullet}`).join("\n"),
     factsUsed: [],
     metricsUsed,
-    relationshipsUsed: [],
-    artifacts: [],
+    relationshipsUsed,
+    artifacts,
     citations,
     gaps: [
       {
