@@ -1,6 +1,6 @@
 import { readAcceptedCandidatesForEvent } from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
 import { readNdaAuthorityForEventPanel } from "@/lib/source/nda/nda-authority-repository";
-import { readSourceNewStage05NdaCoverage } from "../stage05-nda-coverage";
+import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
 jest.mock("@/lib/source/candidate-suppliers/event-candidate-authority-repository", () => ({
   readAcceptedCandidatesForEvent: jest.fn(),
