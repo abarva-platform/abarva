@@ -26,6 +26,11 @@ export type EsignEnvelope = {
   status: EsignEnvelopeStatus;
 };
 
+export type EsignDraftEnvelope = {
+  envelopeId: string;
+  status: "created";
+};
+
 export type EsignWebhookInput = {
   body: string;
   signature: string;
@@ -42,7 +47,8 @@ export type CompletedEsignDocuments = {
 };
 
 export interface EsignProvider {
-  createEnvelope(input: CreateEsignEnvelopeInput): Promise<EsignEnvelope>;
+  createDraftEnvelope(input: CreateEsignEnvelopeInput): Promise<EsignDraftEnvelope>;
+  sendDraftEnvelope(input: { tenantKey: string; envelopeId: string }): Promise<EsignEnvelope>;
   getSigningLink(input: {
     envelopeId: string;
     eventId: string;

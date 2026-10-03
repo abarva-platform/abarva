@@ -2,6 +2,7 @@ import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from
 import type {
   CompletedEsignDocuments,
   CreateEsignEnvelopeInput,
+  EsignDraftEnvelope,
   EsignEnvelope,
   EsignProvider,
   EsignWebhookInput,
@@ -10,6 +11,7 @@ import type {
 
 type StoredEnvelope = {
   input: CreateEsignEnvelopeInput;
+  status: "created" | "sent" | "completed";
   documents: CompletedEsignDocuments | null;
 };
 
@@ -22,7 +24,7 @@ export function createInMemoryEsignProvider() {
     completeForTest(envelopeId: string, documents: CompletedEsignDocuments): void;
     webhookForTest(envelopeId: string): EsignWebhookInput;
   } = {
-    async createEnvelope(input): Promise<EsignEnvelope> {
+    async createDraftEnvelope(input): Promise<EsignDraftEnvelope> {
       if (!input.tenantKey || !input.eventId || !input.vendorId ||
           !/^[a-f0-9]{64}$/.test(input.documentSha256) ||
           createHash("sha256").update(input.documentPdf).digest("hex") !== input.documentSha256 ||
@@ -35,12 +37,21 @@ export function createInMemoryEsignProvider() {
         throw new Error("invalid_envelope");
       }
       const envelopeId = randomUUID();
-      envelopes.set(envelopeId, { input, documents: null });
+      envelopes.set(envelopeId, { input, status: "created", documents: null });
+      return { envelopeId, status: "created" };
+    },
+    async sendDraftEnvelope({ tenantKey, envelopeId }): Promise<EsignEnvelope> {
+      const envelope = envelopes.get(envelopeId);
+      if (!envelope) throw new Error("envelope_not_found");
+      if (envelope.input.tenantKey !== tenantKey) throw new Error("envelope_identity_mismatch");
+      if (envelope.status !== "created") throw new Error("envelope_not_draft");
+      envelope.status = "sent";
       return { envelopeId, status: "sent" };
     },
     async getSigningLink({ envelopeId, eventId, vendorId, signer, returnUrl }) {
       const envelope = envelopes.get(envelopeId);
       if (!envelope) throw new Error("envelope_not_found");
+      if (envelope.status === "created") throw new Error("envelope_not_sent");
       if (envelope.input.eventId !== eventId || envelope.input.vendorId !== vendorId) {
         throw new Error("envelope_identity_mismatch");
       }
@@ -91,6 +102,8 @@ export function createInMemoryEsignProvider() {
     completeForTest(envelopeId, documents) {
       const envelope = envelopes.get(envelopeId);
       if (!envelope) throw new Error("envelope_not_found");
+      if (envelope.status !== "sent") throw new Error("envelope_not_sent");
+      envelope.status = "completed";
       envelope.documents = {
         signedDocument: documents.signedDocument.slice(),
         certificate: documents.certificate.slice(),
