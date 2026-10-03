@@ -64,3 +64,4 @@ PR and CI URL, official ACA run, digest/revision/worker readback, focused test o
 ## Known Gaps
 
 The Stage 05 operator control, embedded signing link, declined/expired handling, provider configuration, template publication, approved contacts, executed-NDA filing and four-of-four signed-in close proof are separate slices. An uncertain provider/DB outcome is held as an unsent local draft for operator reconciliation; it is not retried or counted as coverage.
+The existing synthetic NDA template fixture contains generic signature lines rather than the two distinct signing anchors required by this route. A new, visibly synthetic template version with both anchors must be reviewed and published before a demo send can succeed.

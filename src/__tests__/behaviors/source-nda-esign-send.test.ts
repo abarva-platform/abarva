@@ -96,6 +96,13 @@ describe("synthetic NDA send boundary", () => {
     expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
   });
 
+  it("refuses a test PDF without distinct signer anchors", async () => {
+    const { deps } = harness();
+    deps.extractText.mockResolvedValueOnce("SYNTHETIC TEST FIXTURE\nSignature: ______\nSignature: ______");
+    expect(await sendSyntheticNdaForSignature(input, deps)).toEqual({ ok: false, code: "document_mismatch" });
+    expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
+  });
+
   it("records the unsent draft before any outbound send and uses only the lab inbox", async () => {
     const { deps, order } = harness();
     const result = await sendSyntheticNdaForSignature(input, deps);
