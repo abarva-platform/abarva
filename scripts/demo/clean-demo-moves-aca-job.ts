@@ -118,13 +118,6 @@ function assertAzureTarget(databaseUrl: string): void {
   ) {
     throw new Error("Refusing non-Azure database target");
   }
-  if (
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  ) {
-    throw new Error("Supabase environment variables must be absent in this job");
-  }
 }
 
 function assertTenantRegistry(tenantKey: string): Record<string, unknown> {
