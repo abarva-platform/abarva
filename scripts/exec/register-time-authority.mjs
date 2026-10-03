@@ -50,6 +50,8 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 
+import { branchesInClaim } from "./fossil-claims.mjs";
+
 // ---------------------------------------------------------------------------
 // Parsing. Exported so the suite can assert on structure, not on stdout prose.
 // ---------------------------------------------------------------------------
@@ -2072,6 +2074,44 @@ export function crossHalfCueMovement(texts) {
   };
 }
 
+/*
+ * A branch that is gone from `origin` is the register's own definition of a
+ * claim that has landed (item C-559).
+ *
+ * `git ls-remote` is the authority and nothing local is, because a
+ * remote-tracking ref survives the deletion of the branch it tracks until
+ * someone prunes. Reading `refs/remotes/origin/<name>` would therefore answer
+ * "still live" for a branch deleted an hour ago and "landed" for one pushed a
+ * minute ago by a run that never fetched — wrong in BOTH directions, and the
+ * second direction hands a live claim's files to another agent, which is worse
+ * than the freeze this whole item exists to end.
+ *
+ * Fails CLOSED. A network error, a missing remote, a non-zero git — anything
+ * that is not a clear "this head does not exist" — answers `false`, so the
+ * contention stands. The caller cannot turn an unanswerable question into
+ * permission by unplugging the network.
+ */
+export function branchGoneFromOrigin(branch, { repoDir, lsRemote } = {}) {
+  if (typeof branch !== "string" || !branch.trim()) return false;
+  const ask =
+    lsRemote ??
+    ((name) =>
+      execFileSync("git", ["ls-remote", "--heads", "origin", `refs/heads/${name}`], {
+        cwd: repoDir ?? process.cwd(),
+        encoding: "utf8",
+        env: { ...process.env, GH_TOKEN: "" },
+        stdio: ["ignore", "pipe", "pipe"],
+      }));
+  let out;
+  try {
+    out = ask(branch.trim());
+  } catch {
+    return false;
+  }
+  if (typeof out !== "string") return false;
+  return out.trim() === "";
+}
+
 /**
  * Every repo path a LIVE claim holds right now, with its holder and the
  * instant that hold expires (item C-566).
@@ -2137,10 +2177,14 @@ export function heldPaths(lines, { nowMs, windowHours, identity = null }) {
     // the distinction base-name keying loses, one level down from T-706.
     if (ownership === "own") continue;
 
+    // The branches this claim names, carried on every hold so resolveFileOverlap
+    // can tell when a claim whose branch(es) have landed holds nothing (item C-559).
+    const branches = branchesInClaim(line.text);
     for (const { path: held, kind } of claimedPaths(line.text)) {
       out.push({
         path: held,
         kind,
+        branches,
         agent: line.agent,
         ownership,
         lineNumber: line.lineNumber,
@@ -2155,7 +2199,12 @@ export function heldPaths(lines, { nowMs, windowHours, identity = null }) {
   return out;
 }
 
-export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
+export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours, landedBranches }) {
+  const landed = new Set(
+    Array.from(landedBranches ?? [])
+      .map((b) => String(b).trim())
+      .filter(Boolean),
+  );
   const requested = [];
   const unparsed = [];
   for (const raw of files ?? []) {
@@ -2186,8 +2235,20 @@ export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours 
       excerpt: hold.excerpt,
     };
     // A directory or glob is a SCOPE, not a lock — in either position.
-    if (want.kind === "scope" || hold.kind === "scope") notes.push(entry);
-    else conflicts.push(entry);
+    if (want.kind === "scope" || hold.kind === "scope") {
+      notes.push(entry);
+    } else if (
+      landed.size > 0 &&
+      Array.isArray(hold.branches) &&
+      hold.branches.length > 0 &&
+      hold.branches.every((b) => landed.has(b))
+    ) {
+      // Item C-559: a claim whose branch(es) have all landed holds nothing; it is
+      // a NOTE (freed), never a lock, so another run may take its files.
+      notes.push({ ...entry, landedBranches: hold.branches });
+    } else {
+      conflicts.push(entry);
+    }
   }
 
   return {
@@ -2632,6 +2693,14 @@ function flag(name) {
 function has(name) {
   return process.argv.includes(name);
 }
+/** Every value of a repeatable flag, in argv order. `flag()` returns only the first. */
+function flagAll(name) {
+  const out = [];
+  for (let i = 0; i < process.argv.length; i += 1) {
+    if (process.argv[i] === name && process.argv[i + 1] !== undefined) out.push(process.argv[i + 1]);
+  }
+  return out;
+}
 
 function isMain() {
   return process.argv[1] && process.argv[1].endsWith("register-time-authority.mjs");
@@ -2762,7 +2831,7 @@ if (isMain()) {
         // `--files` shipped in T-707 and was never added here, so from the moment
         // T-708 wired the helper up, the file half of this gate could not be run
         // through the sanctioned path at all. Found by execution, not by reading.
-        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--files a,b,c] [--now ISO] [--window-hours 3] [--strict] [--json]",
+        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--files a,b,c] [--landed-branch <name>] [--repo-dir <path>] [--now ISO] [--window-hours 3] [--strict] [--json]",
       );
       process.exit(2);
     }
@@ -2779,6 +2848,36 @@ if (isMain()) {
     // Item T-707. The file check is opt-in, and when it does not run it says
     // so: a gate that reports nothing is indistinguishable from a gate that
     // found nothing, which is the substitution this backlog exists against.
+    /*
+     * Item C-559. `--landed-branch` is a REQUEST, and this is where it is
+     * checked rather than believed. The caller names a branch it says has
+     * landed; the gate asks `origin` whether that head still exists and
+     * refuses the whole run as a usage error if it does.
+     *
+     * Refusing rather than ignoring is the point. Ignoring an unverifiable
+     * request would let a caller pass the flag, see the claim still contended,
+     * and read that as "the other agent holds it" — when what happened is that
+     * its own assertion was false. A gate that quietly discards an input it
+     * was asked to act on is the substitution this directory keeps paying for.
+     */
+    const landedRequested = flagAll("--landed-branch").map((b) => b.trim()).filter(Boolean);
+    const repoDir = flag("--repo-dir") ?? process.cwd();
+    const landedBranches = [];
+    const landedRefused = [];
+    for (const branch of landedRequested) {
+      if (branchGoneFromOrigin(branch, { repoDir })) landedBranches.push(branch);
+      else landedRefused.push(branch);
+    }
+    if (landedRefused.length) {
+      console.error(
+        `--landed-branch named ${landedRefused.length} branch(es) that origin still has a head for, ` +
+          "or that could not be resolved against origin at all. A claim is not free until its branch " +
+          "is gone; this check fails closed, so a network error reads the same as a live branch. " +
+          `Not honoured: ${landedRefused.join(", ")}`,
+      );
+      process.exit(2);
+    }
+
     const filesArg = flag("--files");
     let fileOverlap = { checked: false, requested: [], unparsed: [], conflicts: [], notes: [], refuses: false };
     if (filesArg !== undefined) {
@@ -2790,6 +2889,7 @@ if (isMain()) {
         identity,
         nowMs,
         windowHours,
+        landedBranches,
       });
     }
 
@@ -2839,6 +2939,13 @@ if (isMain()) {
           console.log(`      ${c.excerpt}`);
         }
         for (const n of fileOverlap.notes) {
+          if (n.landedBranches) {
+            console.log(
+              `    [landed] ${n.path} was held by line ${n.lineNumber} ${n.stamp} ${n.agent}, ` +
+                `whose branch(es) ${n.landedBranches.join(", ")} are gone from origin — not a lock`,
+            );
+            continue;
+          }
           console.log(`    [note] ${n.path} is a shared scope, not a lock — also named by ${n.agent} on line ${n.lineNumber}`);
         }
         for (const u of fileOverlap.unparsed) {

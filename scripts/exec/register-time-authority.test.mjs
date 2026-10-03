@@ -4472,5 +4472,238 @@ const C560_LIVE_LINE_SHA256 =
   fs.rmSync(fx.dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// C-559. A claim whose branch has landed must stop holding its files.
+//
+// THE DEFECT, measured on the live register rather than imagined: `T-493`
+// merged on 2026-09-27 at 14:32:03Z as `efb5587e60` (PR #8561) and its branch
+// `claude/exec-20260927T1255Z` was gone from `origin` within the minute. At
+// 14:34Z the file gate still reported `.github/workflows/unit-suites.yml` and
+// `src/__tests__/behaviors/product-directory-ci-coverage.baseline.json`
+// contended by its 12:59 and 13:42 lines, which refused `T-494`, `T-495`,
+// `T-496` and `T-497` — every claimable lane-T row in that day's queue — over
+// work already on `main`. There was no exit: `resolveFileOverlap` frees a hold
+// only on a release by its own author, and `resolveItemClaim` refuses a
+// release written by anyone else (item T-713, correctly). The alternatives
+// were the holder waking up or three hours.
+//
+// Every assertion below runs the control as a child process over a FIXTURE
+// register and a REAL git remote built in a temp directory, so the branch
+// question is answered by `git ls-remote` and not by a stub that agrees.
+// ---------------------------------------------------------------------------
+
+/**
+ * A real origin, on disk, with exactly the heads named. No network, and no
+ * mock of the thing under test: the gate shells out to `git ls-remote` here
+ * exactly as it does against GitHub.
+ */
+function repoWithOriginHeads(heads) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "c559-git-"));
+  const originDir = path.join(dir, "origin.git");
+  const workDir = path.join(dir, "work");
+  const git = (cwd, args) =>
+    execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+
+  fs.mkdirSync(originDir);
+  git(originDir, ["init", "--quiet", "--bare", "--initial-branch=main"]);
+  fs.mkdirSync(workDir);
+  git(workDir, ["init", "--quiet", "--initial-branch=main"]);
+  git(workDir, ["config", "user.email", "c559@example.invalid"]);
+  git(workDir, ["config", "user.name", "c559"]);
+  fs.writeFileSync(path.join(workDir, "seed.txt"), "seed\n");
+  git(workDir, ["add", "seed.txt"]);
+  git(workDir, ["commit", "--quiet", "-m", "seed"]);
+  git(workDir, ["remote", "add", "origin", originDir]);
+  git(workDir, ["push", "--quiet", "origin", "main"]);
+  for (const head of heads) {
+    git(workDir, ["push", "--quiet", "origin", `main:refs/heads/${head}`]);
+  }
+  return { dir, repoDir: workDir };
+}
+
+const C559_LINES = [
+  "2026-09-22T18:05:00Z | lane-a#run-1 | item T-880 claimed on branch `claude/landed-one` | files: scripts/exec/a.mjs",
+];
+
+{
+  // THE DEFECT. The holder's branch is gone from origin; its files must be free.
+  const { dir, file } = fixture(C559_LINES);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "THE DEFECT — a claim whose branch is gone from origin no longer holds its files",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  check(
+    "the dropped hold is REPORTED as a note, not silently discarded",
+    r.report.fileOverlap?.notes?.length === 1 &&
+      r.report.fileOverlap.notes[0].path === "scripts/exec/a.mjs" &&
+      r.report.fileOverlap.notes[0].landedBranches?.includes("claude/landed-one"),
+    JSON.stringify(r.report.fileOverlap?.notes),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // THE NEGATIVE CONTROL, and it is the whole reason the flag is a request
+  // rather than an instruction: origin STILL has that head, so the assertion
+  // is false and the run is refused as a usage error. Without this the flag
+  // is a bulldozer any agent can point at a live claim.
+  const { dir, file } = fixture(C559_LINES);
+  const origin = repoWithOriginHeads(["claude/landed-one"]);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "THE CONTROL — a --landed-branch origin still has is REFUSED as a usage error, not honoured",
+    r.status === 2 && /origin still has a head/.test(r.stderr),
+    `status=${r.status} stderr=${r.stderr.slice(0, 200)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // FAILS CLOSED. No origin remote at all, so the question cannot be answered.
+  // An unanswerable question must not read as permission.
+  const dirNoRemote = fs.mkdtempSync(path.join(os.tmpdir(), "c559-noremote-"));
+  execFileSync("git", ["init", "--quiet", "--initial-branch=main"], { cwd: dirNoRemote });
+  const { dir, file } = fixture(C559_LINES);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    dirNoRemote,
+  ]);
+  check(
+    "an unresolvable origin fails CLOSED — the request is refused, the hold stands",
+    r.status === 2,
+    `status=${r.status} stderr=${r.stderr.slice(0, 200)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(dirNoRemote, { recursive: true, force: true });
+}
+
+{
+  // NO REGRESSION. The same register, the same files, no --landed-branch:
+  // today's behaviour, unchanged. A default that quietly freed holds would
+  // turn every existing caller into the bulldozer above.
+  const { dir, file } = fixture(C559_LINES);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs");
+  check(
+    "without --landed-branch the hold stands exactly as before",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // EVERY BRANCH, NOT ANY. A record naming two branches with one still live
+  // has live work. Freeing it on the strength of the other is the direction
+  // that loses an edit, so it must stay contended.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-882 claimed on branch `claude/landed-one`, continued on branch `claude/still-live` | files: scripts/exec/a.mjs",
+  ]);
+  const origin = repoWithOriginHeads(["claude/still-live"]);
+  const r = preclaimFiles(file, "T-883", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "a claim naming a landed branch AND a live one still holds its files",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // A landed branch frees the FILES and says nothing about the ITEM. The two
+  // halves are separate gates (item T-713), and a landed branch is evidence
+  // about work, not authority to take someone's id.
+  const { dir, file } = fixture(C559_LINES);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaim(file, "T-880", "lane-b#run-2", [
+    "--files",
+    "scripts/exec/a.mjs",
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "the item gate is untouched — the id is still held by its claimant",
+    r.status === 1 && r.report.verdict === "held-by-another" && r.report.holder?.agent === "lane-a#run-1",
+    `status=${r.status} report=${JSON.stringify(r.report.verdict)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // FAIL CLOSED ON SILENCE, and this is the limit of the mechanism rather
+  // than an oversight. A claim line that names NO branch offers no evidence
+  // that anything landed, so it keeps its hold even when a sibling line by
+  // the same agent named a branch that did.
+  //
+  // In practice every line written through `append-claim.mjs` carries
+  // ``on branch `<name>` `` in its machine-generated head, so this case is
+  // reached by hand-written lines. Pinned here so the conservative reading is
+  // a decision with a case behind it, not an accident of `branchesInClaim`
+  // returning an empty array.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-884 claimed on branch `claude/landed-one` | files: scripts/exec/a.mjs",
+    "2026-09-22T18:09:00Z | lane-a#run-1 | item T-884 IN FLIGHT: PR #9999 open | files: scripts/exec/a.mjs",
+  ]);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaimFiles(file, "T-885", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "a follow-up line naming no branch keeps its hold — silence is not evidence of landing",
+    r.status === 1 &&
+      r.report.fileOverlap?.conflicts?.length === 1 &&
+      r.report.fileOverlap.conflicts[0].lineNumber === 6 &&
+      r.report.fileOverlap.notes?.length === 1,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // THE ADVERTISEMENT CONTRACT. `append-claim.mjs` probes this usage text to
+  // decide whether a flag it forwards would actually run, and refuses the
+  // claim when a flag is unadvertised — because Node ignores flags it does
+  // not recognise and the check would pass silently. `--files` shipped in
+  // T-707 unadvertised and was unrunnable through the sanctioned path for a
+  // day because of exactly this.
+  const usage = run(["--preclaim"]);
+  check(
+    "--preclaim usage advertises --landed-branch and --repo-dir, so append-claim can forward them",
+    usage.status === 2 &&
+      usage.stderr.includes("--landed-branch") &&
+      usage.stderr.includes("--repo-dir"),
+    usage.stderr.slice(0, 300),
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
