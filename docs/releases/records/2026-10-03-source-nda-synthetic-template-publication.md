@@ -40,11 +40,12 @@ A named Source stage approver can publish a hash-verified, visibly synthetic NDA
 - PASS: the behavior coverage check caught a stale Legal-only message assertion. It now checks the event-scoped no-template refusal and still requires `not_covered`.
 - PASS: a 60-supplier, mixed-archetype panel test proves one authority read and one result per accepted supplier. Repository tests assert one session and four fixed calls, fail closed on an authority error, and reject an out-of-event row. A temporary removal of the event-scope filter failed the negative test and was restored.
 - PASS: the prerequisite schema was separately proved against disposable PostgreSQL 16, including event-scope rejection. This app PR does not apply it.
-- BLOCKED: database apply and signed-in readback remain separate proof layers that need migration authorization.
+- PASS: repo-owned lab migration run 37146008226 applied the prerequisite schema and the ledger readback recorded its hash. No template data row or signed-in acceptance is inferred from schema readback.
+- BLOCKED: signed-in template publication, NDA coverage, and the 50-supplier live load case remain separate proof layers.
 
 ## Rollout Plan
 
-Merge through a PR only after the prerequisite schema is applied and verified. The repo-owned ACA main workflow deploys the image. Uploading and publishing a template are separate human actions; neither is run by deployment.
+Merge through a PR after applicable checks and review. The prerequisite schema was applied by the repo-owned lab workflow before this app merge. The repo-owned ACA main workflow deploys the image. Uploading and publishing a template are separate human actions; neither is run by deployment.
 
 ## Deployment Authority
 
@@ -67,6 +68,6 @@ Revert the application through a PR and the official main deploy workflow. The m
 
 ## Known Gaps
 
-- The prerequisite schema is not yet applied. A shared-database migration workflow may have unrelated pending migrations; do not bulk-apply without exact-set authorization.
+- The prerequisite schema was applied by lab run 37146008226 alongside four other pending migrations; this app release does not rerun or reverse that apply.
 - This does not create an executed NDA, contact a supplier, send a notification, or complete the NDA gate.
 - The fixed-query panel read is not a 50-supplier live load test or a bulk envelope-send workflow. Supplier-by-supplier document capture and provider delivery still need separate end-to-end proof.
