@@ -5637,6 +5637,48 @@ describe("MovesPhaseStandaloneClient", () => {
     });
 
     it.each([
+      { phase: 3, workbook: "Download P4 readiness workbook" },
+      { phase: 4, workbook: "Download P5 readiness workbook" },
+    ])(
+      "P$phase next-phase readiness files stay hidden until Approve & Build",
+      ({ phase, workbook }) => {
+        const move = makeMove({ currentPhase: phase });
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+            initialSubstepKey="prepare"
+            move={move}
+            phaseNum={phase}
+            phaseTallies={[...phaseTallies]}
+            syntheticEvidencePackHref={`/api/v1/programs/${move.id}/stage-readiness-evidence-pack?phase=${phase}`}
+          />,
+        );
+
+        expect(
+          screen.queryByRole("link", { name: workbook }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByLabelText("Upload completed readiness workbook"),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole("link", { name: "Download sample upload files" }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.click(workflowStepButton("Approve & Build"));
+
+        expect(screen.getByRole("link", { name: workbook })).toBeInTheDocument();
+        expect(
+          screen.getByLabelText("Upload completed readiness workbook"),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("link", { name: "Download sample upload files" }),
+        ).toBeInTheDocument();
+      },
+    );
+
+    it.each([
       {
         phase: 3,
         substep: "prepare",

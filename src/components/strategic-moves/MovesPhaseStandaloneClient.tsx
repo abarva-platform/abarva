@@ -2681,7 +2681,8 @@ export function MovesPhaseStandaloneClient({
                         </button>
                       </div>
                     ) : null}
-                    {readinessWorkbookHref ? (
+                    {readinessWorkbookHref &&
+                    (phase.phase < 3 || substep.key === "approve") ? (
                       <div className="mxw-stage-actions">
                         <a
                           className="mxw-stage-download"
