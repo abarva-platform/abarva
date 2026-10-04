@@ -10,8 +10,8 @@
 
 ## Plain-English Summary
 
-Turns the `moves_capture_v2` feature flag on for the single synthetic demo
-tenant so the redesigned 3-step phase capture can be reviewed signed-in. The
+Turns the `moves_capture_v2` AND `moves_home_v2` feature flags on for the
+single synthetic demo tenant so the redesigned 3-step phase capture can be reviewed signed-in. The
 flag stays off for every other tenant. The underlying code shipped (flag off)
 in the prior release; this only flips `includeTenants` for the demo tenant.
 
@@ -29,12 +29,12 @@ one synthetic tenant.
 - Specific clients: the synthetic demo tenant only.
 - Internal only: No.
 - Public/demo only: Yes (demo tenant).
-- Feature flag: `moves_capture_v2` (`includeTenants` now lists the demo tenant).
+- Feature flags: `moves_capture_v2` and `moves_home_v2` (`includeTenants` now lists the demo tenant).
 
 ## Changes Included
 
-- `src/lib/features/registry.ts` — `moves_capture_v2` `includeTenants` set to the
-  demo tenant.
+- `src/lib/features/registry.ts` — `moves_capture_v2` and `moves_home_v2`
+  `includeTenants` set to the demo tenant.
 - Nexus manual refreshed.
 
 ## QA / Validation
