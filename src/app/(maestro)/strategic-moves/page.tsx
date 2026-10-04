@@ -12,6 +12,10 @@ import { AppShell } from "@/components/shell/AppShell";
 import { getActiveClientRow } from "@/lib/active-client";
 import { buildPortfolioReconciliation } from "@/lib/programs/canonical-portfolio-reconciliation";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { MovesHome } from "@/components/strategic-moves/MovesHome";
+import { buildMovesHomeProps } from "@/components/strategic-moves/moves-home-adapter";
+import { strategicMoveToHomeInput } from "@/components/strategic-moves/moves-home-mapper";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +146,50 @@ export default async function StrategicMovesPage() {
     canonicalTenantKey(activeClient?.key ?? null),
     portfolio.moves.map((m) => m.name),
   ).catch(() => null);
+
+  // moves_home_v2 (flag, default OFF): the redesigned portfolio landing. Reads
+  // the SAME portfolio + reconciliation; value numbers come from the governed
+  // valueAtStake / reconciliation totals (never invented here).
+  const homeV2Enabled = isFeatureEnabled(
+    { clientKey: activeClient?.key ?? null, clientId: activeClient?.id ?? null },
+    "moves_home_v2",
+  );
+
+  if (homeV2Enabled) {
+    const moveInputs = portfolio.moves.map((m) => strategicMoveToHomeInput(m));
+    const withValue = moveInputs.filter(
+      (m) => m.value !== "Declares in Charter",
+    ).length;
+    const valueLine =
+      moveInputs.length === 0
+        ? "No moves yet."
+        : `${withValue} of ${moveInputs.length} ${moveInputs.length === 1 ? "move has" : "moves have"} declared value; the rest declare in Charter.`;
+    const homeProps = buildMovesHomeProps({
+      tenantName,
+      moves: moveInputs,
+      valueLine,
+      reconciliation: reconciliation
+        ? {
+            declaredPrograms: `${reconciliation.declaredCount} programmes`,
+            trackedRecords: `${reconciliation.trackedCount} records`,
+            declaredBudget:
+              reconciliation.declaredBudgetUsd != null
+                ? money(reconciliation.declaredBudgetUsd)
+                : "—",
+            declaredValue:
+              reconciliation.declaredValueUsd != null
+                ? money(reconciliation.declaredValueUsd)
+                : "—",
+          }
+        : null,
+      newMoveHref: "/strategic-moves/new",
+    });
+    return (
+      <AppShell surface="programs">
+        <MovesHome {...homeProps} />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell surface="programs">
