@@ -103,7 +103,8 @@ export type FeatureFlagKey =
   | "moves_solution_pattern_gate_v1"
   | "moves_capture_v2"
   | "moves_home_v2"
-  | "moves_charter_basis_v1";
+  | "moves_charter_basis_v1"
+  | "moves_capture_notes_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -414,6 +415,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_charter_basis_v1",
     summary:
       "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Off by default; the legacy approved-evidence lock stays in force until a tenant is enabled via includeTenants.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_notes_v1",
+    summary:
+      "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Off by default; the dock renders byte-for-byte as today until a tenant is enabled via includeTenants.",
     policy: "tenant",
     includeTenants: [],
   },

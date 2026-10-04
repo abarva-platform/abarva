@@ -87,4 +87,44 @@ describe("MovesCaptureWorkspace", () => {
       within(dock).getByRole("heading", { name: "Scope the bet" }),
     ).toBeInTheDocument();
   });
+  it("renders the fill-from-notes slot inside the dock when the host supplies it", () => {
+    render(
+      <MovesCaptureWorkspace
+        moveId="m1"
+        moveName="A Move"
+        phase={1}
+        avaRole="Charter partner"
+        avaThread={[]}
+        avaQuestions={[]}
+        onAvaMessage={jest.fn()}
+        tabs={<nav data-testid="ws-tabs">tabs</nav>}
+        notesFill={<div data-testid="ws-notes-fill">notes</div>}
+        captureProps={captureProps}
+      />,
+    );
+
+    const dock = screen.getByTestId("agent-dock");
+    expect(within(dock).getByTestId("ws-notes-fill")).toBeInTheDocument();
+  });
+
+  it("omits the fill-from-notes slot by default, so a flag-off dock is unchanged", () => {
+    render(
+      <MovesCaptureWorkspace
+        moveId="m1"
+        moveName="A Move"
+        phase={1}
+        avaRole="Charter partner"
+        avaThread={[]}
+        avaQuestions={[]}
+        onAvaMessage={jest.fn()}
+        tabs={<nav data-testid="ws-tabs">tabs</nav>}
+        captureProps={captureProps}
+      />,
+    );
+
+    expect(screen.queryByTestId("ws-notes-fill")).not.toBeInTheDocument();
+    const dock = screen.getByTestId("agent-dock");
+    expect(within(dock).getByTestId("ws-tabs")).toBeInTheDocument();
+    expect(within(dock).getByTestId("moves-capture-flow")).toBeInTheDocument();
+  });
 });

@@ -45,6 +45,7 @@ import {
   type MovesCaptureFlowPhase,
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
+import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -198,6 +199,8 @@ interface MovesPhaseStandaloneClientProps {
   solutionPatternGateEnabled?: boolean;
   /** `moves_capture_v2` feature flag, resolved server-side (tenant-gated, default OFF). When true, phases 1–5 render the redesigned 3-step capture flow (`MovesCaptureFlow`) in place of the contract-steps canvas. Same canonical sections/keys, saves, and structured inputs; only the capture presentation changes. */
   captureV2Enabled?: boolean;
+  /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
+  captureNotesEnabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -807,6 +810,7 @@ export function MovesPhaseStandaloneClient({
   riskAssessmentEnabled = false,
   solutionPatternGateEnabled = false,
   captureV2Enabled = false,
+  captureNotesEnabled = false,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -2799,6 +2803,18 @@ export function MovesPhaseStandaloneClient({
                       avaRole={phase.avaRole}
                       avaThread={avaThread}
                       avaQuestions={visibleAvaQuestions}
+                      notesFill={
+                        captureNotesEnabled ? (
+                          <CaptureNotesFill
+                            targets={phaseCaptureSections.map((section) => ({
+                              section,
+                              value:
+                                displayPhaseCaptureValues[section.key] ?? "",
+                            }))}
+                            onInsert={setVisiblePhaseCaptureValue}
+                          />
+                        ) : null
+                      }
                       avaLeadingActions={[
                         {
                           id: "draft-inputs",

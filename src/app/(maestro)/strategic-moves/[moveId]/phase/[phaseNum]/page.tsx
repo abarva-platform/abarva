@@ -387,6 +387,12 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_v2",
   );
+  // Governed fill-from-notes in the capture dock. Gated separately from the
+  // capture redesign itself so the dock affordance can be reviewed on its own.
+  const captureNotesEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_capture_notes_v1",
+  );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -904,6 +910,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         riskAssessmentEnabled={riskAssessmentEnabled}
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
+        captureNotesEnabled={captureNotesEnabled}
       />
     </AppShell>
   );

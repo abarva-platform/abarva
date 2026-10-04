@@ -36,6 +36,13 @@ export interface MovesCaptureWorkspaceProps {
   onAvaMessage: (text: string) => void;
   /** Workspace tab row rendered above the capture content. */
   tabs?: ReactNode;
+  /**
+   * Governed fill-from-notes affordance (`CaptureNotesFill`), rendered at the
+   * top of the dock workspace above the tabs. Absent by default and whenever
+   * `moves_capture_notes_v1` is off, in which case the dock renders exactly
+   * what it renders today.
+   */
+  notesFill?: ReactNode;
   /** The 3-step capture flow props (sections, slots, handlers). */
   captureProps: MovesCaptureFlowProps;
 }
@@ -50,6 +57,7 @@ export function MovesCaptureWorkspace({
   avaLeadingActions = [],
   onAvaMessage,
   tabs,
+  notesFill,
   captureProps,
 }: MovesCaptureWorkspaceProps) {
   const thread = useMemo(
@@ -75,6 +83,7 @@ export function MovesCaptureWorkspace({
       onMessage={(text) => onAvaMessage(text)}
       workspace={
         <>
+          {notesFill}
           {tabs}
           <MovesCaptureFlow {...captureProps} />
         </>
