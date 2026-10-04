@@ -151,6 +151,13 @@ migration, no data to unwind.
 
 ## Known Gaps
 
+- **Disclosed against this change's own proof.** The suite that proves it runs in
+  `Execution queue behavioral contract`, which is **not one of the 19 required
+  contexts** on the `main` ruleset (item `C-582`). It executes on the pull request
+  and cannot fail a merge, and that is true of every behavioural contract under
+  `scripts/exec/`. The mutation result above is a measurement taken by hand, not a
+  bar CI will hold shut on a later change.
+
 - The suppressed id is removed from the claimable lanes; the underlying collision is
   **not** settled by this change. Pinning the live definition with `definedIn` on the
   repo-owned structure map, or recording the withdrawal against the number itself,
