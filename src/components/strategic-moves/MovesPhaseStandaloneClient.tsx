@@ -40,6 +40,10 @@ import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateAppr
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
+import {
+  MovesCaptureFlow,
+  type MovesCaptureFlowPhase,
+} from "@/components/strategic-moves/MovesCaptureFlow";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -191,6 +195,8 @@ interface MovesPhaseStandaloneClientProps {
   riskAssessmentEnabled?: boolean;
   /** `moves_solution_pattern_gate_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Solutioning" workspace tab entirely (P3 only); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
   solutionPatternGateEnabled?: boolean;
+  /** `moves_capture_v2` feature flag, resolved server-side (tenant-gated, default OFF). When true, phases 1–5 render the redesigned 3-step capture flow (`MovesCaptureFlow`) in place of the contract-steps canvas. Same canonical sections/keys, saves, and structured inputs; only the capture presentation changes. */
+  captureV2Enabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -799,6 +805,7 @@ export function MovesPhaseStandaloneClient({
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
   solutionPatternGateEnabled = false,
+  captureV2Enabled = false,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -2284,6 +2291,92 @@ export function MovesPhaseStandaloneClient({
     }
   }
 
+  // ─── moves_capture_v2 (flag, default OFF): the redesigned 3-step capture ───
+  // Reuses the canonical sections/keys, saves, and the existing structured
+  // editors; only the presentation (3 steps + hand-off) differs. No input
+  // logic is reimplemented here — the structured forms are rendered via the
+  // slot below so they keep working unchanged.
+  const captureSectionInput = (section: PhaseCaptureSection): ReactNode => {
+    const value = displayPhaseCaptureValues[section.key] ?? "";
+    if (section.structured === "facts") {
+      return <FinderFactsTable rawValue={value} />;
+    }
+    if (section.structured === "business-change") {
+      return (
+        <BusinessChangeAssessmentForm
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
+      );
+    }
+    if (section.structured === "solution-route") {
+      return (
+        <SolutionRouteValidationForm
+          assessment={businessChangeAssessment}
+          approvedEvidenceReferences={initialApprovedEvidenceReferences}
+          reviewerIdentity={currentUser?.email ?? "signed-in reviewer"}
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
+      );
+    }
+    if (section.structured === "estimate-model") {
+      return (
+        <EstimateModelEditor
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
+      );
+    }
+    return (
+      <textarea
+        aria-label={section.label}
+        className="mcf-input"
+        placeholder={section.example ?? "Write your answer here."}
+        rows={4}
+        value={value}
+        onChange={(event) =>
+          setVisiblePhaseCaptureValue(section.key, event.target.value)
+        }
+      />
+    );
+  };
+
+  const isCaptureSectionComplete = (sectionKey: string): boolean => {
+    const section = phaseCaptureSections.find((s) => s.key === sectionKey);
+    if (!section) return false;
+    return phaseCaptureStatusForSection(
+      section,
+      displayPhaseCaptureValues,
+      persistedPhaseCaptureValues,
+      phaseCaptureSaveStatus,
+      businessChangeAssessment,
+      initialApprovedEvidenceReferences.map((r) => r.evidenceId),
+      phaseEvidencePassed,
+      phaseEvidenceCheckAvailable,
+    ).complete;
+  };
+
+  const capturePhases: MovesCaptureFlowPhase[] = PHASES.map((p) => {
+    const total = getPhaseCaptureSections(p.phase).length;
+    const answered =
+      p.phase < currentPhase
+        ? total
+        : p.phase === currentPhase
+          ? phaseCaptureCompleteCount
+          : 0;
+    return {
+      phase: p.phase,
+      code: p.code,
+      name: p.navLabel,
+      answered,
+      total,
+      reachable: p.phase <= currentPhase,
+    };
+  });
+
+  const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
+
   return (
     <main
       className="mxw mxw-finder-on"
@@ -2631,7 +2724,36 @@ export function MovesPhaseStandaloneClient({
                     </div>
                   </div>
 
-                  {phase.phase >= 1 && phase.phase <= 5 ? (
+                  {captureV2Enabled &&
+                  phase.phase >= 1 &&
+                  phase.phase <= 5 ? (
+                    <MovesCaptureFlow
+                      phases={capturePhases}
+                      phase={phase.phase}
+                      sections={phaseCaptureSections}
+                      isSectionComplete={isCaptureSectionComplete}
+                      renderSectionInput={captureSectionInput}
+                      sectionRecap={(s) =>
+                        displayPhaseCaptureValues[s.key] ?? ""
+                      }
+                      onSelectPhase={(p) =>
+                        router.push(`/strategic-moves/${move.id}/phase/${p}`)
+                      }
+                      onSubmitPhase={() => {
+                        /* S5: wire to gate approval + next-phase generation */
+                      }}
+                      onAdvanceToNextPhase={continueToCurrentPhase}
+                      nextPhase={
+                        nextCapturePhase
+                          ? {
+                              code: nextCapturePhase.code,
+                              name: nextCapturePhase.navLabel,
+                            }
+                          : null
+                      }
+                      initialStep={Math.min(substepIndex, 2) as 0 | 1 | 2}
+                    />
+                  ) : phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
                       avaDraftProposalsByKey={avaDraftProposalsByKey}
                       avaDraftSaveStatus={avaDraftSaveStatus}
