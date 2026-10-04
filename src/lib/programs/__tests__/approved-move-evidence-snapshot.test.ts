@@ -141,6 +141,38 @@ describe("approved Move evidence snapshot", () => {
     ).toBe(false);
   });
 
+  // C-576. Every assertion above hands the predicate a loaded snapshot, so the
+  // one input the worker's premium guard most depends on -- no approved
+  // evidence at all -- was asserted nowhere. This is where that invariant is
+  // enforced: the `!snapshot` arm of the early return at the top of
+  // `isApprovedMoveEvidenceBasisCurrent`. It is the reason the worker's own
+  // `|| !evidenceSnapshot` can never be the deciding operand of its guard, and
+  // asserting it here rather than through the worker is deliberate -- a
+  // mutation that deletes `!snapshot ||` makes this case throw, where through
+  // the worker the same mutation only shifts a completed run's status.
+  it("refuses an absent approved-evidence snapshot rather than reading through it", () => {
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot: null,
+        phase: 2,
+        recordedRevision: "p2-revision-current",
+        scope: "phase",
+        generatedAt: "2026-09-29T19:00:00.000Z",
+      }),
+    ).toBe(false);
+    // Pinned with every other conjunct of that early return satisfied, so a
+    // mutation that drops this one arm cannot be covered by a sibling arm:
+    // the revision is present, the phase is in 1..5, and generatedAt parses.
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot: null,
+        phase: 1,
+        recordedRevision: "legacy-whole-move-hash",
+        generatedAt: "2026-09-29T17:00:00.000Z",
+      }),
+    ).toBe(false);
+  });
+
   it("loads only the approved evidence scoped to the exact tenant and Move", async () => {
     mockReviewRows.push({
       evidence_id: "evidence-1",
