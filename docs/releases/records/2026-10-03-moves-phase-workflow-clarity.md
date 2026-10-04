@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
@@ -38,10 +38,12 @@ P3–P5 workflow steps now present one clear continue action at a time. Later-st
 - `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand --silent` — 114 passed.
 - `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx` — 0 errors; pre-existing unused-symbol warnings only.
 - Node 24 `tsc --noEmit` with an 8 GB heap — passed.
-- `npm run release:check -- --base origin/main --head HEAD` — all 11 gates passed on the initial implementation; rerun for this follow-up candidate.
+- Follow-up candidate PR #8940 — component suite 116/116, ESLint 0 errors, Node 24 `tsc --noEmit` passed, all PR checks passed, and local `npm run release:check -- --base origin/main --head HEAD` passed 11/11 gates.
 - Initial implementation merged as PR #8937 and deployed by run `37160398179` at merge SHA `bf47142a7942c482a3b0a222e7a002b1da23eb9a`; the runtime invariant passed on digest `sha256:1a831ae7966a5e123ed80fec008ba5a94b5423c92ecebc73cfa13d4f32e03f88`.
-- A later main deploy at SHA `1ba24079b114f1502ab01b42b47efae314d6003b` also passed the runtime invariant on digest `sha256:dc4923736cf91f7b1788c098a464569341ac6c9bede360fb3bf2b071d4abd3e2`; it contains PR #8937 but not this follow-up candidate.
-- Signed-in review loaded P3, P4, and P5 on a completed archived synthetic fixture. The active demo portfolio has no eligible P3+ Move, so capture-driven Continue cannot yet be exercised without advancing governed state. A direct P3 request on an active P1 Move correctly returned to P1.
+- Follow-up PR #8940 merged as `be8bbcb2c6d6311905a3b1c846a9aa86fae99537`; exact ACA main-deploy run `37163851972` succeeded.
+- The exact run deployed digest `sha256:62fa2be3f2572980bb31063a8362364068c40655982cec18cf7b0ba8f33df5c2` to revision `ca-abarva-web-lab-eastus--mbe8bbcb2`. Its proof bundle confirms the app template and 100%-traffic revision use that digest, both delivery worker jobs use that digest, health passed, and the runtime invariant passed. Independent Azure readback matched.
+- Signed-in browser review on a completed archived synthetic fixture confirmed P3 Prepare/Compare Options and P4 Prepare/Value Case hide next-phase workbook/sample/upload controls, while their final Approve & Build steps reveal them. P5 Handoff Readiness hides Tower handoff preparation until final Approve & Build. No evidence, approval, phase, or artifact state was changed.
+- The active demo portfolio has no eligible in-progress P3+ Move. Capture-driven Continue enabling/advance is therefore not live-proven; it remains covered by the component regression suite, not by this completed fixture.
 
 ## Rollout Plan
 
@@ -51,10 +53,10 @@ Merge by squash through a pull request. Production rollout is performed only by 
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` only.
 - Shared runtime mutators: Repo-owned main deploy workflow only.
-- Approved image digest for this follow-up candidate: Pending its exact main-deploy run.
-- Prior deployed runtime invariant: Verified for the exact runs listed in QA / Validation; the latest readback at that time showed app template, ready 100%-traffic revision, and both delivery worker jobs on one digest.
+- Approved image digest: `sha256:62fa2be3f2572980bb31063a8362364068c40655982cec18cf7b0ba8f33df5c2`.
+- Active revision: `ca-abarva-web-lab-eastus--mbe8bbcb2` at 100% traffic; app template and both delivery worker jobs match the approved digest.
 - Feature/env flag update path: None; no flag or environment change.
-- Live signed-in proof required: Full capture-driven P3–P5 Continue interaction remains pending an eligible active synthetic Move; no gate or evidence state was changed for this presentation release.
+- Live signed-in proof: P3–P5 progressive disclosure verified on a completed archived synthetic fixture. Full capture-driven P3–P5 Continue interaction remains pending an eligible active synthetic Move; no gate or evidence state was changed for this presentation release.
 
 ## Rollback Plan
 
@@ -63,9 +65,10 @@ Revert the presentation-only change in a follow-up pull request and deploy the r
 ## Audit Evidence
 
 - Source diff and component regression suite in the release PRs.
-- PR #8937, its exact ACA deploy run, digest proof, and subsequent main runtime readback are recorded above; the follow-up candidate still needs its own deploy proof.
-- Signed-in route review confirmed P3–P5 page rendering and final-step disclosure on a completed archived synthetic fixture, but does not prove an in-progress Continue interaction.
+- PRs #8937 and #8940, exact ACA deploy runs, digest proof, and independent Azure runtime readback are recorded above.
+- Signed-in route review confirmed P3–P5 progressive disclosure on a completed archived synthetic fixture, but does not prove an in-progress Continue interaction.
+- A fresh signed-in tab and a hard-refreshed existing tab showed the deployed client behavior. The initial existing tab continued to show its previously loaded client bundle until hard-refreshed.
 
 ## Known Gaps
 
-The initial implementation is deployed. This follow-up fixes the remaining early visibility of P3/P4 next-phase readiness controls; its deployment is pending. The signed-in in-progress P3–P5 walkthrough is still blocked by the absence of an eligible active synthetic Move. No workflow, evidence, approval, or generated-artifact behavior was changed.
+The signed-in in-progress P3–P5 walkthrough is still blocked by the absence of an eligible active synthetic Move. Capture-driven Continue is not claimed live-proven. No workflow, evidence, approval, or generated-artifact behavior was changed.
