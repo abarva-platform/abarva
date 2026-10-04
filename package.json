@@ -296,6 +296,7 @@
     "seed:source-renewals:meridian": "npx tsx src/scripts/seed/seed-meridian-source-renewals.ts",
     "seed:skyharbor-artifacts": "npx tsx src/scripts/seed/seed-skyharbor-moves-source-artifacts.ts",
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
+    "test:rls-classifier": "node --test scripts/security/classify-rls-regression.test.mjs",
     "test:rls-regression": "npx tsx scripts/run-rls-regression.ts",
     "test:vendor-proposal-facts-write-regression": "npx tsx scripts/run-vendor-proposal-facts-write-isolation-regression.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",

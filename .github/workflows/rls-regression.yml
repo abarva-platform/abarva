@@ -20,6 +20,14 @@ name: RLS regression (L4 SQL tenant isolation)
 # cannot run, and that is reported as NOT CHECKED rather than as a pass.
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/rls-regression.yml"
+      - "scripts/security/classify-rls-regression.mjs"
+      - "scripts/security/classify-rls-regression.test.mjs"
+      - "scripts/run-rls-regression.ts"
+      - "tests/security/rls-regression.sql"
+  merge_group:
   workflow_dispatch:
     inputs:
       environment:
@@ -51,6 +59,11 @@ jobs:
     name: RLS regression (L4)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # This job submits a job to the private operator Container App and reads a
+    # live database. The `pull_request` trigger above exists for the classifier
+    # contract only, so this half must never run from a pull request: a review
+    # of the control must not reach the subject it decides about.
+    if: github.event_name != 'pull_request' && github.event_name != 'merge_group'
 
     steps:
       - name: Checkout
@@ -150,102 +163,30 @@ jobs:
           echo "rc=$?" >> "$GITHUB_OUTPUT"
           cat audit-artifacts/rls-regression/run.log
 
-      # THREE OUTCOMES, KEPT APART. A cross-tenant leak and a check that never
-      # ran both look like "not green"; this workflow reports them separately.
+      # THREE OUTCOMES, KEPT APART — and decided by a control that runs, not
+      # by a grep ladder in this file (item C-627).
       #
-      #   GREEN       → every tenant × table probe passed
-      #   LEAK        → the suite ran and found rows belonging to another tenant
-      #   NOT CHECKED → the suite did not run; isolation state is UNKNOWN
+      #   GREEN       → every tenant × table probe passed AND the operator job
+      #                 succeeded. The one verdict that may not be inferred.
+      #   LEAK        → the suite ran and found rows belonging to another
+      #                 tenant. Outranks every other marker.
+      #   NOT CHECKED → the run established nothing about isolation. Exits
+      #                 non-zero, including when an input was unreadable.
       #
       # Classification reads the suite's own markers from the job log, because
       # the job submitter reports any non-zero container exit as "Failed" and
-      # cannot tell a leak from a connection error.
+      # cannot tell a leak from a connection error. It also reads the
+      # submitter's exit code, because the converse holds too: the submitter
+      # fails on its own post-run work independently of the container, so a
+      # green marker beside a failed job is not a pass. The behavioural suite
+      # for all of this is the `classifier-contract` job below.
       - name: Classify result
         shell: bash
         run: |
-          set -uo pipefail
-          logs="audit-artifacts/rls-regression/run/04-logs.txt"
-          rc="${{ steps.run.outputs.rc }}"
-          label="${{ steps.target.outputs.label }}"
-
-          if [[ ! -s "$logs" ]]; then
-            {
-              echo "## Result — NOT CHECKED"
-              echo ""
-              echo "**Target:** $label"
-              echo ""
-              echo "The operator job produced no readable output, so tenant-isolation"
-              echo "state is **unknown**. This is not a pass and must not be read as one."
-              echo ""
-              echo "- submitter exit code: \`${rc}\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::NOT CHECKED · isolation state unknown — no job output"
-            exit 1
-          fi
-
-          if grep -q "rls-regression: GREEN" "$logs"; then
-            {
-              echo "## Result — GREEN"
-              echo ""
-              echo "**Target:** $label"
-              echo ""
-              echo "Every tenant × table probe passed. No cross-tenant rows visible."
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          if grep -q "rls-regression: NOT CHECKED" "$logs" || grep -q "Canonical tenant(s).*missing from clients table" "$logs"; then
-            {
-              echo "## Result — NOT CHECKED"
-              echo ""
-              echo "**Target:** $label"
-              echo ""
-              echo "The suite reached the database, but a required data precondition"
-              echo "was not met. Tenant-isolation state is **unknown**, not clean"
-              echo "and not a confirmed cross-tenant leak."
-              echo ""
-              echo '```'
-              grep -m1 -E "rls-regression: NOT CHECKED|Canonical tenant\\(s\\).*missing from clients table" "$logs"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::NOT CHECKED · isolation state unknown — precondition failed"
-            exit 1
-          fi
-
-          if grep -q "rls-regression: FAILED" "$logs"; then
-            {
-              echo "## Result — TENANT ISOLATION FAILURE"
-              echo ""
-              echo "**Target:** $label"
-              echo ""
-              echo "The suite ran and did **not** pass. Treat as a potential"
-              echo "cross-tenant leak until proven otherwise."
-              echo ""
-              echo '```'
-              grep -m1 -A5 "rls-regression: FAILED" "$logs"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::RLS FAILURE · the isolation suite ran and did not pass"
-            exit 1
-          fi
-
-          # Ran, but produced neither marker — connection error, missing SQL
-          # file, or an unexpected crash. Unknown, never clean.
-          {
-            echo "## Result — NOT CHECKED"
-            echo ""
-            echo "**Target:** $label"
-            echo ""
-            echo "The suite did not reach a verdict, so tenant-isolation state is"
-            echo "**unknown**. Common causes: the database was unreachable, or"
-            echo "tests/security/rls-regression.sql is missing from the deployed image."
-            echo ""
-            echo '```'
-            tail -n 20 "$logs"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::NOT CHECKED · isolation state unknown — suite reached no verdict"
-          exit 1
+          node scripts/security/classify-rls-regression.mjs \
+            --logs audit-artifacts/rls-regression/run/04-logs.txt \
+            --rc "${{ steps.run.outputs.rc }}" \
+            --label "${{ steps.target.outputs.label }}"
 
       - name: Upload evidence
         if: always()
@@ -255,3 +196,25 @@ jobs:
           path: audit-artifacts/rls-regression
           if-no-files-found: warn
           retention-days: 30
+
+  # The classifier's behavioural contract. Runs on every pull request that
+  # touches the control or its subject, and needs no Azure, no database and no
+  # secret -- so the gate that decides a tenant-isolation verdict is now a gate
+  # that can fail in review, which the inline version never was.
+  classifier-contract:
+    name: RLS result classifier contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Run the RLS result classifier contract
+        run: npm run test:rls-classifier
