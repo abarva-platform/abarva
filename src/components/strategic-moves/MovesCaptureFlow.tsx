@@ -61,6 +61,13 @@ export interface MovesCaptureFlowProps {
   requireAnswers?: boolean;
   /** Start on this step (0..2). Defaults to 0. */
   initialStep?: 0 | 1 | 2;
+  /**
+   * Governed submit control for the final step. When provided, it replaces the
+   * built-in "Submit" button on step 3 — the host passes the real approve/build
+   * control (PhaseApproveAndBuild) so generation + the gate run through the
+   * existing pipeline, not a reimplementation.
+   */
+  approveSlot?: ReactNode;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -79,6 +86,7 @@ export function MovesCaptureFlow({
   ava,
   requireAnswers = false,
   initialStep = 0,
+  approveSlot,
 }: MovesCaptureFlowProps) {
   const groups = getPhaseStepGroups(phase);
   // view: 0..2 = steps, 3 = hand-off.
@@ -215,21 +223,25 @@ export function MovesCaptureFlow({
                       Back
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="mcf-btn-primary"
-                    disabled={requireAnswers && !stepComplete(view)}
-                    onClick={() => {
-                      if (view < 2) {
-                        go(view + 1);
-                      } else {
-                        onSubmitPhase();
-                        go(3);
-                      }
-                    }}
-                  >
-                    {view === 2 ? `Submit ${phaseName}` : "Continue"}
-                  </button>
+                  {view === 2 && approveSlot ? (
+                    <div className="mcf-approve-slot">{approveSlot}</div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mcf-btn-primary"
+                      disabled={requireAnswers && !stepComplete(view)}
+                      onClick={() => {
+                        if (view < 2) {
+                          go(view + 1);
+                        } else {
+                          onSubmitPhase();
+                          go(3);
+                        }
+                      }}
+                    >
+                      {view === 2 ? `Submit ${phaseName}` : "Continue"}
+                    </button>
+                  )}
                 </div>
               </footer>
             </>

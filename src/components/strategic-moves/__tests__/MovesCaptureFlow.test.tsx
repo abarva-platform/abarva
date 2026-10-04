@@ -125,4 +125,19 @@ describe("MovesCaptureFlow", () => {
     fireEvent.click(step1);
     expect(screen.getByRole("heading", { name: "Scope the bet" })).toBeInTheDocument();
   });
+
+  it("renders the governed approveSlot on the final step instead of the built-in Submit", () => {
+    renderFlow({
+      approveSlot: <button type="button">Approve &amp; Build</button>,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // step 3: the host's governed approve control replaces the built-in Submit
+    expect(
+      screen.getByRole("button", { name: "Approve & Build" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit Charter" }),
+    ).not.toBeInTheDocument();
+  });
 });
