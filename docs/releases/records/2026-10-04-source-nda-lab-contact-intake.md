@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a controlled path to validate four fictional NDA test-signer contacts before any data load. The default job only checks a hash-pinned input and emits proof. A later apply requires a separate named-person load approval for the exact input, an operator confirmation, a private Blob proof target, and matching canonical supplier identities.
+Adds a controlled path to validate four fictional NDA test-signer contacts before any data load. The default job only checks a hash-pinned input and emits proof. The exact input now has a named-person load approval; a later apply still requires the operator confirmation, a private Blob proof target, and matching canonical supplier identities.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Adds a controlled path to validate four fictional NDA test-signer contacts befor
 
 ## Changes Included
 
-- Synthetic contact CSV and draft dataset manifest.
+- Synthetic contact CSV and dataset manifest with exact-hash load approval.
 - Hash-checked dry-run/apply adapter, exact-row replay protection, Blob proof readback, and manual ACA operator workflow.
 - Behavioral tests and proof validation.
 
@@ -42,11 +42,12 @@ Adds a controlled path to validate four fictional NDA test-signer contacts befor
 - PASS: deliberate removal of the post-validation plan guard made the focused suite fail; restoring it returned the suite to green.
 - PASS: local dry run reported four validated contacts, zero inserts and `committed: false`.
 - PASS: Node 24 TypeScript with an 8 GB heap, scoped ESLint, and manifest validation.
-- NOT RUN: hosted checks, ACA operator dry run, data apply, and signed-in readback are separate evidence.
+- PASS: the repo-owned operator dry run validated the exact input and committed no rows (run 37173841371).
+- NOT RUN: data apply and post-apply signed-in readback remain separate evidence.
 
 ## Rollout Plan
 
-Squash merge through a PR. Only the repo-owned ACA main workflow builds and deploys the image. The operator workflow is manual-only and dry-run by default. Its apply mode must not be dispatched without a separate exact-scope data-load authorization and a committed named-person manifest load approval for this input hash. The apply path refuses to proceed if the private Blob proof target is absent.
+Squash merge through a PR. Only the repo-owned ACA main workflow builds and deploys the image. The operator workflow is manual-only and dry-run by default. Its apply mode may run only after the exact-scope data-load authorization and this named-person manifest load approval are both present in the deployed operator image. The apply path refuses to proceed if the private Blob proof target is absent.
 
 ## Deployment Authority
 
@@ -64,11 +65,12 @@ Do not run apply. For a deployed code regression, revert through a PR and offici
 
 ## Audit Evidence
 
-- PR, CI and official ACA run links: to be filled after execution.
-- Operator dry-run proof: to be captured separately; no apply proof exists yet.
+- Code PRs #8954 and #8959 merged; official ACA main run 37173817384 deployed their descendant SHA. The separate approval-record PR and its deploy are still pending.
+- Operator dry-run proof: manual run 37173841371 completed successfully for the exact input hash with no committed rows. No apply proof exists yet.
+- Non-secret load approval reference: `SOURCE-NDA-LAB-CONTACTS-20261004`.
 - Exact fixture hash: `269f6b7c6224737a9007d51032c77d1ea1bb115331ae4b8db65387266b87b06a`.
 
 ## Known Gaps
 
-- The dataset manifest intentionally lacks `load_approval`; apply must fail until a named person approves the exact source hash after review.
-- No canonical contact rows, event contact approvals, provider emails, or signed NDAs are claimed by this code release.
+- The exact-hash load approval is recorded, but this release does not itself apply the data.
+- No canonical contact rows, event contact approvals, provider emails, or signed NDAs are claimed by this release record.
