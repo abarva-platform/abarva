@@ -259,6 +259,9 @@ jobs:
           src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx
           src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx
           src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
+          src/components/strategic-moves/__tests__/MovesCaptureFlow.test.tsx
+          src/components/strategic-moves/__tests__/MovesCaptureWorkspace.test.tsx
+          src/components/strategic-moves/__tests__/ava-dock-adapter.test.ts
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
