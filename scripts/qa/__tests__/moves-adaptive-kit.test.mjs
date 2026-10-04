@@ -66,6 +66,37 @@ test("rejects workshop or session inputs mislabeled as structured evidence", () 
   });
 });
 
+test("rejects sponsor approval authority in the P1 decision record", () => {
+  withMutablePackage((root, governancePath) => {
+    const file = path.join(root, "01_p1_charter/charter_decisions.md");
+    const contents = fs.readFileSync(file, "utf8");
+    fs.writeFileSync(
+      file,
+      contents.replace(
+        /The listed sponsor is an informational contact[^\n]*/,
+        "Sponsor approves scope/funding/phase advancement.",
+      ),
+    );
+    assert.match(validatePackage(root, governancePath).join("\n"), /P1 decision rights must keep sponsors informational/);
+  });
+});
+
+test("rejects sponsor approval authority in the P5 handoff RACI", () => {
+  withMutablePackage((root, governancePath) => {
+    const file = path.join(root, "05_p5_mobilize/raci.csv");
+    const contents = fs.readFileSync(file, "utf8");
+    assert.ok(contents.includes("Authorized workspace user records phase decision; sponsor receives progress update only"));
+    fs.writeFileSync(
+      file,
+      contents.replace(
+        "Authorized workspace user records phase decision; sponsor receives progress update only",
+        "Sponsor approves phase advancement",
+      ),
+    );
+    assert.match(validatePackage(root, governancePath).join("\n"), /P5 approval evidence must not assign an in-product approval to a sponsor/);
+  });
+});
+
 test("rejects a changed estimate formula result", () => {
   withMutablePackage((root, governancePath) => {
     const file = path.join(root, "04_p4_roadmap_estimate/internal_vs_vendor_estimate.csv");
