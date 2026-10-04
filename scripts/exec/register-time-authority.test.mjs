@@ -4910,5 +4910,194 @@ const C559_LINES = [
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// C-583. `drifted_without_authority` was correctable on exactly the principle
+//        C-579 established, and was not declared correctable.
+//
+//        The control already clears the code when the SAME line quotes
+//        GitHub's `mergedAt` (`citesAuthority`). A later line quoting that
+//        same instant sources precisely what the original left out — so the
+//        asymmetry lived in the implementation, not in the rule: measured on
+//        main 815cec3b15, the identical repair read clean ON the line (0
+//        violations) and stayed failing ONE LINE BELOW it (failing 1,
+//        corrected 0). T-457 tells a lane to append a correction rather than
+//        restamp; before this, doing as instructed changed nothing the
+//        control printed, and the only way to read clean was the one thing
+//        the rule forbids.
+//
+//        The discharge is narrower than C-579's, and deliberately so. It is
+//        not "quotes two instants" and not "quotes any instant": it must
+//        quote the authoritative `mergedAt` FOR THE PULL REQUEST THE ORIGINAL
+//        ANNOUNCED, which is a figure no prose can supply and no other PR's
+//        timestamp can satisfy. The authority set is threaded into the
+//        predicate rather than re-read from the network inside it, so the
+//        discharge is decided from the same injected authority the audit used
+//        and the test never reaches GitHub.
+// ---------------------------------------------------------------------------
+{
+  // The item's own case: late announcement, then a correction quoting the
+  // authoritative instant for that same pull request.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line named no authoritative instant. GitHub's mergedAt for that pull request is 2026-09-21T13:38:07Z.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:38:07Z" } }));
+  const args = ["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"];
+  const strict = run([...args, "--strict"]);
+  const report = JSON.parse(strict.stdout || "{}");
+  const drifted = (report.violations ?? []).filter((v) => v.code === "drifted_without_authority");
+  check(
+    "C-583: a drifted line is still REPORTED after its correction — discharged, not erased",
+    drifted.length === 1 && drifted[0].stamp === "2026-09-21T16:04Z" && drifted[0].pr === 8141,
+    `violations=${JSON.stringify(report.violations)}`,
+  );
+  check(
+    "C-583: an appended line quoting the authoritative mergedAt for the announced PR discharges it",
+    drifted[0]?.corrected?.byStamp === "2026-09-21T16:05Z" &&
+      drifted[0]?.corrected?.byLine === 6,
+    `corrected=${JSON.stringify(drifted[0]?.corrected)}`,
+  );
+  check(
+    "C-583: the discharge moves the exit code under --strict, where this code is the failing verdict",
+    strict.status === 0 && (report.failing ?? []).every((v) => v.code !== "drifted_without_authority"),
+    `exit=${strict.status} failing=${JSON.stringify(report.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // NECESSITY, HALF ONE: ANOTHER PULL REQUEST'S INSTANT IS NOT THIS ONE'S.
+  // A correction otherwise perfect — below the line, quoting its stamp,
+  // marked CORRECTION, carrying a real authoritative instant — discharges
+  // nothing when the instant it quotes belongs to a different pull request.
+  // Without the per-PR lookup this would pass, and the discharge would be
+  // "quotes any timestamp the authority happens to hold".
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line named no authoritative instant. The authoritative instant is 2026-09-21T13:58:07Z.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(
+    authority,
+    JSON.stringify({
+      8141: { mergedAt: "2026-09-21T13:38:07Z" },
+      8142: { mergedAt: "2026-09-21T13:58:07Z" },
+    }),
+  );
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "C-583: a correction quoting a DIFFERENT pull request's mergedAt discharges nothing",
+    r.status === 1 &&
+      (report.corrected ?? []).length === 0 &&
+      (report.failing ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)} failing=${JSON.stringify(report.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // NECESSITY, HALF TWO: NAMING THE PULL REQUEST IS NOT QUOTING THE INSTANT.
+  // The figure the audit said was missing is a timestamp. This correction has
+  // the marker, sits below the line, quotes its stamp verbatim and names the
+  // pull request whose authority would discharge it — and supplies no instant
+  // at all. If the predicate stopped at resolving the authority entry, this
+  // would pass and the discharge would be "says CORRECTION near a PR number".
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line named no authoritative instant for PR #8141, and GitHub is the authority for it.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:38:07Z" } }));
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "C-583: a correction naming the pull request but quoting no instant discharges nothing",
+    r.status === 1 &&
+      (report.corrected ?? []).length === 0 &&
+      (report.failing ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)} failing=${JSON.stringify(report.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE ABSENT-AUTHORITY GUARD, ASSERTED WHERE IT IS REACHABLE.
+  // End to end this branch cannot be reached: the audit only raises
+  // `drifted_without_authority` after reading `mergedAt` out of the authority
+  // set, so by then the entry exists — an authority that lacks the pull
+  // request produces `authority_missing` instead. The predicate is exported
+  // and callable, though, so the guard is asserted directly rather than
+  // through a fixture that cannot express the case. Stated plainly because the
+  // alternative is a guard no mutation can kill.
+  const predicate = control.CORRECTABLE_CODES.get("drifted_without_authority");
+  const correcting = { citedTimes: ["2026-09-21T13:38:07Z"] };
+  const violation = { stamp: "2026-09-21T16:04Z", pr: 8141 };
+  check(
+    "C-583: the predicate discharges nothing when the authority set is empty",
+    typeof predicate === "function" &&
+      predicate(correcting, violation, { authority: {} }) === false &&
+      predicate(correcting, violation, { authority: null }) === false,
+    `empty=${predicate?.(correcting, violation, { authority: {} })} null=${predicate?.(correcting, violation, { authority: null })}`,
+  );
+  check(
+    "C-583: the same predicate discharges when that authority holds the announced PR",
+    typeof predicate === "function" &&
+      predicate(correcting, violation, { authority: { 8141: { mergedAt: "2026-09-21T13:38:07Z" } } }) === true,
+    "the positive half, so the assertion above cannot pass by always being false",
+  );
+}
+
+{
+  // REGRESSION GUARD, NOT A NECESSITY PROOF — labelled as such because no
+  // mutation of the predicate can kill it: this fixture has no second line, so
+  // `lines.find` has no candidate and the predicate never runs. What it pins
+  // is that the repair did not take the REPORTING with it, which is the half a
+  // too-eager discharge would quietly remove.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:38:07Z" } }));
+  const lax = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"]);
+  const strict = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const laxReport = JSON.parse(lax.stdout || "{}");
+  const strictReport = JSON.parse(strict.stdout || "{}");
+  check(
+    "C-583: an undischarged drifted line stays reported and stays advisory by default",
+    lax.status === 0 &&
+      (laxReport.corrected ?? []).length === 0 &&
+      (laxReport.advisory ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${lax.status} advisory=${JSON.stringify(laxReport.advisory)}`,
+  );
+  check(
+    "C-583: an undischarged drifted line still fails under --strict",
+    strict.status === 1 &&
+      (strictReport.failing ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${strict.status} failing=${JSON.stringify(strictReport.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE TABLE STILL FAILS CLOSED. C-583 adds one entry; it must not be read
+  // as opening the table. No sentence appended later can un-future a stamp or
+  // un-share a checkout, so these two must never acquire a predicate, and
+  // this asserts the table rather than the comment above it.
+  check(
+    "C-583: CORRECTABLE_CODES declares drifted_without_authority correctable",
+    control.CORRECTABLE_CODES.has("drifted_without_authority"),
+    `codes=${JSON.stringify([...control.CORRECTABLE_CODES.keys()])}`,
+  );
+  check(
+    "C-583: the table still fails closed — future_stamp and worktree_shared are not correctable",
+    !control.CORRECTABLE_CODES.has("future_stamp") &&
+      !control.CORRECTABLE_CODES.has("worktree_shared"),
+    `codes=${JSON.stringify([...control.CORRECTABLE_CODES.keys()])}`,
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

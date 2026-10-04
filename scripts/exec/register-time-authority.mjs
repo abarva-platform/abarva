@@ -2672,13 +2672,61 @@ const CORRECTION_MARKER = /\b(?:CORRECTION|CORRECTING|CORRECTS|CORRECTED)\b/i;
  * line the audit calls clean cannot clear another, which is a second
  * inconsistency to explain rather than a guard.
  *
- * @type {Map<string, (correcting: { citedTimes: string[] }, violation: { stamp: string }) => boolean>}
+ * Item C-583 added the second entry, and it is the same principle rather than
+ * a widening of it. `drifted_without_authority` fires on a line stamped well
+ * after its merge that does not quote the authoritative instant — and the
+ * audit ALREADY clears it when the same line does quote it (`citesAuthority`).
+ * A later line quoting that same instant supplies exactly the figure the
+ * original omitted, so refusing it meant the identical repair was accepted on
+ * the line and rejected one line below it, which is the inverse of what T-457
+ * instructs a lane to do. Its predicate is narrower than the first entry's on
+ * purpose: not "two instants" and not "any instant the authority holds", but
+ * the `mergedAt` of THE PULL REQUEST THE ORIGINAL ANNOUNCED. That figure is
+ * unavailable to prose and unsatisfiable by another pull request's timestamp,
+ * which is what keeps this from becoming a gate a sentence can pass.
+ *
+ * The resolved authority set is threaded in as context rather than re-read
+ * inside the predicate: the discharge is then decided from the same authority
+ * the audit judged against, and a table of pure functions stays testable
+ * without the network.
+ *
+ * The two predicates therefore differ in one visible way: the first excludes
+ * the flagged line's own stamp from the instants it counts, and the second
+ * does not. That is not an inconsistency. The exclusion exists because an
+ * `unsourced_elapsed` line can be "corrected" by a sentence that names only
+ * the stamp it is referring to; `drifted_without_authority` cannot be, because
+ * it only fires when the stamp is more than the tolerance away from `mergedAt`
+ * and the two are then never the same string.
+ *
+ * @type {Map<string, (correcting: { citedTimes: string[] }, violation: { stamp: string, pr?: number }, context: { authority: Record<string, {mergedAt?: string}> | null }) => boolean>}
  */
 export const CORRECTABLE_CODES = new Map([
   [
     "unsourced_elapsed",
     (correcting, violation) =>
       correcting.citedTimes.filter((t) => t !== violation.stamp).length >= 2,
+  ],
+  [
+    "drifted_without_authority",
+    (correcting, violation, context) => {
+      const mergedAt = context?.authority?.[String(violation.pr)]?.mergedAt;
+      // No authority for that pull request is not a discharge. The audit
+      // reports that case as `authority_missing` in its own right, and a
+      // lookup that finds nothing must never read as a pass. Reachable only
+      // through a direct call with an authority set that does not hold the
+      // pull request, which is why the suite asserts it on the predicate
+      // rather than end to end.
+      if (!mergedAt) return false;
+      // No `t !== violation.stamp` exclusion here, and its absence is
+      // deliberate rather than an oversight of the first entry's shape. This
+      // code only fires when the stamp is more than TOLERANCE_SECONDS after
+      // `mergedAt`, so the two can never be the same string and the exclusion
+      // could never run — measured, not reasoned: an authority whose mergedAt
+      // equals the flagged stamp yields driftSeconds 0, citesAuthority true,
+      // and no violation at all. A guard no mutation can kill is the shape
+      // this directory exists against, so it is stated here instead.
+      return correcting.citedTimes.includes(mergedAt);
+    },
   ],
 ]);
 
@@ -2707,11 +2755,18 @@ export const CORRECTABLE_CODES = new Map([
  * line it repairs and therefore inside `now`, and a discharge that expired
  * would reintroduce the permanence this item is about.
  *
+ * `authority` is passed through to the predicates rather than consulted here:
+ * C-583's discharge needs the `mergedAt` of the pull request the flagged line
+ * announced, and reading it from the set the audit already resolved keeps this
+ * function free of the network and the predicates free of a second authority.
+ *
  * @param {Array<{code:string, stamp:string, lineNumber:number}>} violations
  * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{authority?: Record<string, {mergedAt?: string}> | null}} [context]
  * @returns {Array<{code:string, stamp:string, lineNumber:number, corrected?:{byLine:number, byStamp:string}}>} the same violations
  */
-export function annotateCorrections(violations, lines) {
+export function annotateCorrections(violations, lines, context = {}) {
+  const resolved = { authority: context?.authority ?? null };
   for (const violation of violations) {
     const satisfies = CORRECTABLE_CODES.get(violation.code);
     if (!satisfies) continue;
@@ -2722,7 +2777,7 @@ export function annotateCorrections(violations, lines) {
         line.lineNumber > violation.lineNumber &&
         line.text.includes(violation.stamp) &&
         CORRECTION_MARKER.test(line.text) &&
-        satisfies(line, violation),
+        satisfies(line, violation, resolved),
     );
     if (discharge) {
       violation.corrected = { byLine: discharge.lineNumber, byStamp: discharge.stamp };
@@ -3116,7 +3171,7 @@ if (isMain()) {
   // prescribes, is still reported — it is moved out of `failing`, never out of
   // `violations`. Hiding it would make the correction unreadable, and the
   // point of the register is that the pair is readable.
-  annotateCorrections(report.violations, lines);
+  annotateCorrections(report.violations, lines, { authority });
   report.corrected = report.violations.filter((v) => v.corrected);
   const undischarged = report.violations.filter((v) => !v.corrected);
   report.failing = undischarged.filter((v) => strict || HARD_CODES.has(v.code));
