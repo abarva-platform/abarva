@@ -1,0 +1,79 @@
+facility_id,facility_name,region_label,facility_type,ehr_platform,feed_cadence,design_scope_only,attributed_lives,care_gap_capture_state,owner_role,evidence_note
+FAC-0001,Care site 001,Metro South,ambulatory,Epic,daily,no,5808,captured,Regional COO,synthetic facility row
+FAC-0002,Care site 002,Central,clinic,Epic,near-real-time,no,8221,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0003,Care site 003,Coastal,urgent care,Epic,daily,no,4306,captured,VP Clinical Operations,synthetic facility row
+FAC-0004,Care site 004,Mountain,home health,Epic,daily,no,6721,captured,Regional COO,synthetic facility row
+FAC-0005,Care site 005,Virtual,hospital,Epic,near-real-time,no,2806,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0006,Care site 006,Metro North,ambulatory,Epic,daily,no,5220,captured,VP Clinical Operations,synthetic facility row
+FAC-0007,Care site 007,Metro South,clinic,Oracle Health,weekly,yes,7634,design_only,Regional COO,legacy platform site held as design scope only
+FAC-0008,Care site 008,Central,urgent care,Epic,near-real-time,no,3719,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0009,Care site 009,Coastal,home health,Epic,daily,no,6134,captured,VP Clinical Operations,synthetic facility row
+FAC-0010,Care site 010,Mountain,hospital,Epic,daily,no,2219,captured,Regional COO,synthetic facility row
+FAC-0011,Care site 011,Virtual,ambulatory,Epic,near-real-time,no,4633,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0012,Care site 012,Metro North,clinic,Epic,daily,no,7047,captured,VP Clinical Operations,synthetic facility row
+FAC-0013,Care site 013,Metro South,urgent care,Epic,daily,no,3132,captured,Regional COO,synthetic facility row
+FAC-0014,Care site 014,Central,home health,Epic,near-real-time,no,5547,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0015,Care site 015,Coastal,hospital,Epic,daily,no,7960,captured,VP Clinical Operations,synthetic facility row
+FAC-0016,Care site 016,Mountain,ambulatory,Epic,daily,no,4046,captured,Regional COO,synthetic facility row
+FAC-0017,Care site 017,Virtual,clinic,Epic,near-real-time,no,6460,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0018,Care site 018,Metro North,urgent care,Epic,daily,no,2545,captured,VP Clinical Operations,synthetic facility row
+FAC-0019,Care site 019,Metro South,home health,Epic,daily,no,4959,captured,Regional COO,synthetic facility row
+FAC-0020,Care site 020,Central,hospital,Epic,near-real-time,no,7373,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0021,Care site 021,Coastal,ambulatory,Epic,daily,no,3459,captured,VP Clinical Operations,synthetic facility row
+FAC-0022,Care site 022,Mountain,clinic,Epic,daily,no,5873,captured,Regional COO,synthetic facility row
+FAC-0023,Care site 023,Virtual,urgent care,Epic,near-real-time,no,8286,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0024,Care site 024,Metro North,home health,Epic,daily,no,4372,captured,VP Clinical Operations,synthetic facility row
+FAC-0025,Care site 025,Metro South,hospital,Epic,daily,no,6786,captured,Regional COO,synthetic facility row
+FAC-0026,Care site 026,Central,ambulatory,Epic,near-real-time,no,2872,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0027,Care site 027,Coastal,clinic,Epic,daily,no,5285,captured,VP Clinical Operations,synthetic facility row
+FAC-0028,Care site 028,Mountain,urgent care,Epic,daily,no,7699,captured,Regional COO,synthetic facility row
+FAC-0029,Care site 029,Virtual,home health,Epic,near-real-time,no,3785,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0030,Care site 030,Metro North,hospital,Epic,daily,no,6199,captured,VP Clinical Operations,synthetic facility row
+FAC-0031,Care site 031,Metro South,ambulatory,Oracle Health,weekly,yes,2284,design_only,Regional COO,legacy platform site held as design scope only
+FAC-0032,Care site 032,Central,clinic,Epic,near-real-time,no,4698,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0033,Care site 033,Coastal,urgent care,Epic,daily,no,7112,captured,VP Clinical Operations,synthetic facility row
+FAC-0034,Care site 034,Mountain,home health,Epic,daily,no,3198,captured,Regional COO,synthetic facility row
+FAC-0035,Care site 035,Virtual,hospital,Epic,near-real-time,no,5612,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0036,Care site 036,Metro North,ambulatory,Epic,daily,no,8025,captured,VP Clinical Operations,synthetic facility row
+FAC-0037,Care site 037,Metro South,clinic,Epic,daily,no,4111,captured,Regional COO,synthetic facility row
+FAC-0038,Care site 038,Central,urgent care,Epic,near-real-time,no,6525,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0039,Care site 039,Coastal,home health,Epic,daily,no,2611,captured,VP Clinical Operations,synthetic facility row
+FAC-0040,Care site 040,Mountain,hospital,Epic,daily,no,5024,captured,Regional COO,synthetic facility row
+FAC-0041,Care site 041,Virtual,ambulatory,Epic,near-real-time,no,7438,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0042,Care site 042,Metro North,clinic,Epic,daily,no,3524,captured,VP Clinical Operations,synthetic facility row
+FAC-0043,Care site 043,Metro South,urgent care,Epic,daily,no,5938,captured,Regional COO,synthetic facility row
+FAC-0044,Care site 044,Central,home health,Epic,near-real-time,no,8352,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0045,Care site 045,Coastal,hospital,Epic,daily,no,4437,captured,VP Clinical Operations,synthetic facility row
+FAC-0046,Care site 046,Mountain,ambulatory,Epic,daily,no,6851,captured,Regional COO,synthetic facility row
+FAC-0047,Care site 047,Virtual,clinic,Epic,near-real-time,no,2937,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0048,Care site 048,Metro North,urgent care,Epic,daily,no,5350,captured,VP Clinical Operations,synthetic facility row
+FAC-0049,Care site 049,Metro South,home health,Epic,daily,no,7764,captured,Regional COO,synthetic facility row
+FAC-0050,Care site 050,Central,hospital,Epic,near-real-time,no,3850,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0051,Care site 051,Coastal,ambulatory,Epic,daily,no,6264,captured,VP Clinical Operations,synthetic facility row
+FAC-0052,Care site 052,Mountain,clinic,Epic,daily,no,2350,captured,Regional COO,synthetic facility row
+FAC-0053,Care site 053,Virtual,urgent care,Epic,near-real-time,no,4763,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0054,Care site 054,Metro North,home health,Epic,daily,no,7177,captured,VP Clinical Operations,synthetic facility row
+FAC-0055,Care site 055,Metro South,hospital,Epic,daily,no,3263,captured,Regional COO,synthetic facility row
+FAC-0056,Care site 056,Central,ambulatory,Epic,near-real-time,no,5677,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0057,Care site 057,Coastal,clinic,Epic,daily,no,8091,captured,VP Clinical Operations,synthetic facility row
+FAC-0058,Care site 058,Mountain,urgent care,Epic,daily,no,4176,captured,Regional COO,synthetic facility row
+FAC-0059,Care site 059,Virtual,home health,Epic,near-real-time,no,6590,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0060,Care site 060,Metro North,hospital,Epic,daily,no,2676,captured,VP Clinical Operations,synthetic facility row
+FAC-0061,Care site 061,Metro South,ambulatory,Epic,daily,no,5089,captured,Regional COO,synthetic facility row
+FAC-0062,Care site 062,Central,clinic,Epic,near-real-time,no,7504,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0063,Care site 063,Coastal,urgent care,Epic,daily,no,3589,captured,VP Clinical Operations,synthetic facility row
+FAC-0064,Care site 064,Mountain,home health,Oracle Health,weekly,yes,6003,design_only,Regional COO,legacy platform site held as design scope only
+FAC-0065,Care site 065,Virtual,hospital,Epic,near-real-time,no,8417,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0066,Care site 066,Metro North,ambulatory,Epic,daily,no,4502,captured,VP Clinical Operations,synthetic facility row
+FAC-0067,Care site 067,Metro South,clinic,Epic,daily,no,6917,captured,Regional COO,synthetic facility row
+FAC-0068,Care site 068,Central,urgent care,Epic,near-real-time,no,3002,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0069,Care site 069,Coastal,home health,Epic,daily,no,5416,captured,VP Clinical Operations,synthetic facility row
+FAC-0070,Care site 070,Mountain,hospital,Epic,daily,no,7830,captured,Regional COO,synthetic facility row
+FAC-0071,Care site 071,Virtual,ambulatory,Epic,near-real-time,no,3915,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0072,Care site 072,Metro North,clinic,Epic,daily,no,6330,captured,VP Clinical Operations,synthetic facility row
+FAC-0073,Care site 073,Metro South,urgent care,Epic,daily,no,2415,captured,Regional COO,synthetic facility row
+FAC-0074,Care site 074,Central,home health,Epic,near-real-time,no,4828,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0075,Care site 075,Coastal,hospital,Epic,daily,no,7243,captured,VP Clinical Operations,synthetic facility row
+FAC-0076,Care site 076,Mountain,ambulatory,Epic,daily,no,3328,captured,Regional COO,synthetic facility row
+FAC-0077,Care site 077,Virtual,clinic,Epic,near-real-time,no,5742,partial,Director Ambulatory Ops,synthetic facility row
+FAC-0078,Care site 078,Metro North,urgent care,Epic,daily,no,8156,captured,VP Clinical Operations,synthetic facility row
