@@ -387,6 +387,13 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_v2",
   );
+  // The same tenant gate the phase-capture route applies to the P1 basis gate,
+  // resolved here so the per-field basis control renders only where the relaxed
+  // gate is actually in force. Off ⇒ the control does not render at all.
+  const charterBasisEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_basis_v1",
+  );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -904,6 +911,8 @@ export default async function StrategicMovePhaseWorkspacePage({
         riskAssessmentEnabled={riskAssessmentEnabled}
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
+        charterBasisEnabled={charterBasisEnabled}
+        initialP1CharterBasisBySection={initialP1CharterBasisBySection}
       />
     </AppShell>
   );
