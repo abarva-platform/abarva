@@ -135,6 +135,7 @@
     "foundation-v2:healthcare:aad:cross-domain-isolation": "FOUNDATION_V2_DOMAIN=healthcare FOUNDATION_V2_RELEASE_CONTRACT=fixtures/foundation-v2/healthcare-golden-slice/release-contract.json FOUNDATION_V2_GOLDEN_SLICE_FIXTURE=fixtures/foundation-v2/healthcare-golden-slice/fixture-matrix.json FOUNDATION_V2_EXPECTED_FIXTURE_SHA256=fda3a9c3f96e6dab6c8ebc0abff0379a1a572b36401f679dc0b52b57e1ad345d FOUNDATION_V2_OPPOSITE_SCHEMA=foundation_v2_airline_gs FOUNDATION_V2_OPPOSITE_WRITER_ROLE=foundation_v2_airline_gs_writer FOUNDATION_V2_EMIT_PROOF_BUNDLE=true node scripts/foundation-v2/verify-cross-domain-isolation-db.mjs",
     "audit:nexus-navigation": "node scripts/audit/nexus-navigation-contract.mjs",
     "release:deploy-authority:check": "node scripts/release-control/check-deploy-authority-policy.mjs",
+    "check:aca-worker-job-set-derived": "node --test scripts/deploy/worker-job-names.test.mjs && node scripts/deploy/check-aca-runtime-invariant.mjs --print-worker-jobs",
     "deploy:aca-runtime-invariant": "node scripts/deploy/check-aca-runtime-invariant.mjs",
     "scb:truth-gates": "npx tsx src/scripts/intelligence/scb-truth-gates.ts",
     "guard:reasoning": "node scripts/guardrails/anthropic-only-reasoning.mjs",
