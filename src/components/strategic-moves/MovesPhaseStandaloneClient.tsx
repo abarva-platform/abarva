@@ -40,6 +40,11 @@ import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateAppr
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
+import {
+  MovesCaptureFlow,
+  type MovesCaptureFlowPhase,
+} from "@/components/strategic-moves/MovesCaptureFlow";
+import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -191,6 +196,8 @@ interface MovesPhaseStandaloneClientProps {
   riskAssessmentEnabled?: boolean;
   /** `moves_solution_pattern_gate_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Solutioning" workspace tab entirely (P3 only); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
   solutionPatternGateEnabled?: boolean;
+  /** `moves_capture_v2` feature flag, resolved server-side (tenant-gated, default OFF). When true, phases 1–5 render the redesigned 3-step capture flow (`MovesCaptureFlow`) in place of the contract-steps canvas. Same canonical sections/keys, saves, and structured inputs; only the capture presentation changes. */
+  captureV2Enabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -799,6 +806,7 @@ export function MovesPhaseStandaloneClient({
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
   solutionPatternGateEnabled = false,
+  captureV2Enabled = false,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -2284,11 +2292,161 @@ export function MovesPhaseStandaloneClient({
     }
   }
 
+  // ─── moves_capture_v2 (flag, default OFF): the redesigned 3-step capture ───
+  // Reuses the canonical sections/keys, saves, and the existing structured
+  // editors; only the presentation (3 steps + hand-off) differs. No input
+  // logic is reimplemented here — the structured forms are rendered via the
+  // slot below so they keep working unchanged.
+  const captureSectionInput = (section: PhaseCaptureSection): ReactNode => {
+    const value = displayPhaseCaptureValues[section.key] ?? "";
+    const input =
+      section.structured === "facts" ? (
+        <FinderFactsTable rawValue={value} />
+      ) : section.structured === "business-change" ? (
+        <BusinessChangeAssessmentForm
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
+      ) : section.structured === "solution-route" ? (
+        <SolutionRouteValidationForm
+          assessment={businessChangeAssessment}
+          approvedEvidenceReferences={initialApprovedEvidenceReferences}
+          reviewerIdentity={currentUser?.email ?? "signed-in reviewer"}
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
+      ) : section.structured === "estimate-model" ? (
+        <EstimateModelEditor
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
+      ) : (
+        <textarea
+          aria-label={section.label}
+          className="mcf-input"
+          placeholder={section.example ?? "Write your answer here."}
+          rows={4}
+          value={value}
+          onChange={(event) =>
+            setVisiblePhaseCaptureValue(section.key, event.target.value)
+          }
+        />
+      );
+
+    // aVa's governed draft for this field, surfaced for review (design's
+    // "Filled by aVa · review"). Propose → human inserts/dismisses; nothing
+    // is written until the person acts.
+    const proposal = avaDraftProposalsByKey.get(section.key);
+    if (!proposal) return input;
+    return (
+      <>
+        <div className="mcf-ava-draft" data-testid={`ava-draft-${section.key}`}>
+          <div className="mcf-ava-draft-head">
+            <span className="mcf-ava-badge">aVa draft · review</span>
+            <span className="mcf-ava-conf">{proposal.confidence} confidence</span>
+          </div>
+          <blockquote className="mcf-ava-proposed">
+            {proposal.proposedValue}
+          </blockquote>
+          {proposal.rationale ? (
+            <p className="mcf-ava-rationale">{proposal.rationale}</p>
+          ) : null}
+          <div className="mcf-ava-draft-actions">
+            <button
+              type="button"
+              className="mcf-ava-insert"
+              onClick={() => applyAvaDraftProposal(proposal)}
+            >
+              Insert as draft
+            </button>
+            <button
+              type="button"
+              className="mcf-ava-dismiss"
+              onClick={() => dismissAvaDraftProposal(section.key)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+        {input}
+      </>
+    );
+  };
+
+  const isCaptureSectionComplete = (sectionKey: string): boolean => {
+    const section = phaseCaptureSections.find((s) => s.key === sectionKey);
+    if (!section) return false;
+    return phaseCaptureStatusForSection(
+      section,
+      displayPhaseCaptureValues,
+      persistedPhaseCaptureValues,
+      phaseCaptureSaveStatus,
+      businessChangeAssessment,
+      initialApprovedEvidenceReferences.map((r) => r.evidenceId),
+      phaseEvidencePassed,
+      phaseEvidenceCheckAvailable,
+    ).complete;
+  };
+
+  const capturePhases: MovesCaptureFlowPhase[] = PHASES.map((p) => {
+    const total = getPhaseCaptureSections(p.phase).length;
+    const answered =
+      p.phase < currentPhase
+        ? total
+        : p.phase === currentPhase
+          ? phaseCaptureCompleteCount
+          : 0;
+    return {
+      phase: p.phase,
+      code: p.code,
+      name: p.navLabel,
+      answered,
+      total,
+      reachable: p.phase <= currentPhase,
+    };
+  });
+
+  const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
+
+  // The governed submit control for the capture flow's final step: the SAME
+  // PhaseApproveAndBuild the canvas uses, so generation + the gate run through
+  // the existing pipeline (rendered inline — no portal target in this flow).
+  const captureApproveSlot: ReactNode =
+    phase.phase >= 1 && phase.phase <= 5 ? (
+      canApproveGates ? (
+        <PhaseApproveAndBuild
+          archetype={move.archetype}
+          approverLabel={approverLabel}
+          clientDisplayName={move.tenant.name}
+          disabledReason={phaseCaptureBlocker}
+          deliverableKeys={phaseCanonicalKeysForRoute(
+            phase.phase,
+            confirmedSolutionRoute,
+          )}
+          evidenceNeedPackets={evidenceNeedPackets}
+          inputCount={phaseCaptureCompleteCount}
+          initialArtifacts={visiblePhaseBuildArtifacts}
+          moveId={move.id}
+          moveName={displayMoveName}
+          onBeforeBuild={finalizePhaseCapture}
+          onBuildSettled={approvePhaseGateAfterBuild}
+          blockOnEvidenceGaps
+          phaseLabel={`${phase.code} ${phase.title}`}
+          phaseNum={phase.phase}
+        />
+      ) : (
+        <span className="mcf-gate-note">
+          Approval is available to an authorized workspace user.
+        </span>
+      )
+    ) : null;
+
   return (
     <main
       className="mxw mxw-finder-on"
       data-testid="moves-phase-standalone"
       data-finder-shell="on"
+      data-capture-v2={captureV2Enabled ? "on" : "off"}
     >
       <MovesStandaloneStyles />
       <div className="mxw-contextbar" aria-label="Move context">
@@ -2631,7 +2789,56 @@ export function MovesPhaseStandaloneClient({
                     </div>
                   </div>
 
-                  {phase.phase >= 1 && phase.phase <= 5 ? (
+                  {captureV2Enabled &&
+                  phase.phase >= 1 &&
+                  phase.phase <= 5 ? (
+                    <MovesCaptureWorkspace
+                      moveId={move.id}
+                      moveName={displayMoveName}
+                      phase={phase.phase}
+                      avaRole={phase.avaRole}
+                      avaThread={avaThread}
+                      avaQuestions={visibleAvaQuestions}
+                      avaLeadingActions={[
+                        {
+                          id: "draft-inputs",
+                          label: "Draft proposed inputs",
+                          body: "",
+                          onClick: () => {
+                            void requestAvaPhaseInputDrafts();
+                          },
+                        },
+                      ]}
+                      onAvaMessage={(text) => {
+                        void sendAvaMessage(text);
+                      }}
+                      captureProps={{
+                        phases: capturePhases,
+                        phase: phase.phase,
+                        sections: phaseCaptureSections,
+                        isSectionComplete: isCaptureSectionComplete,
+                        renderSectionInput: captureSectionInput,
+                        sectionRecap: (s) =>
+                          displayPhaseCaptureValues[s.key] ?? "",
+                        onSelectPhase: (p) =>
+                          router.push(
+                            `/strategic-moves/${move.id}/phase/${p}`,
+                          ),
+                        onSubmitPhase: () => {
+                          /* S5: wire to gate approval + next-phase generation */
+                        },
+                        onAdvanceToNextPhase: continueToCurrentPhase,
+                        nextPhase: nextCapturePhase
+                          ? {
+                              code: nextCapturePhase.code,
+                              name: nextCapturePhase.navLabel,
+                            }
+                          : null,
+                        initialStep: Math.min(substepIndex, 2) as 0 | 1 | 2,
+                        approveSlot: captureApproveSlot,
+                      }}
+                    />
+                  ) : phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
                       avaDraftProposalsByKey={avaDraftProposalsByKey}
                       avaDraftSaveStatus={avaDraftSaveStatus}
@@ -8793,6 +9000,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-fab{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
 .mxw-ava-pop{position:fixed;right:24px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
 .mxw-ava-pop.open{display:block}
+.mxw[data-capture-v2="on"] .mxw-ava-fab,.mxw[data-capture-v2="on"] .mxw-ava-pop{display:none!important}
 .mxw-ava-head{display:flex;align-items:center;gap:10px;padding:15px 17px;border-bottom:1px solid var(--line)}
 .mxw-ava-head strong{display:block;font-size:14.5px}
 .mxw-ava-head small{display:block;font-size:11px;color:var(--muted)}

@@ -100,7 +100,8 @@ export type FeatureFlagKey =
   | "moves_extended_intake_fields_v1"
   | "moves_classify_fast_lane_v1"
   | "moves_risk_tier_scoring_v1"
-  | "moves_solution_pattern_gate_v1";
+  | "moves_solution_pattern_gate_v1"
+  | "moves_capture_v2";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -390,6 +391,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // (Platform policy means default ON; we need the opposite.) Flip on
     // per tenant via `includeTenants` only when a controlled lab decides
     // to re-introduce Neo4j; in production the flag stays empty.
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_v2",
+    summary:
+      "2026-10-04: Renders the redesigned 3-step phase capture (MovesCaptureFlow) for phases 1-5 in place of the contract-steps canvas — a journey strip, a 3-step bar, two to three questions per step, and a hand-off screen. Same canonical sections/keys, saves, structured editors, and gate; only the capture presentation changes. Off by default; enable per tenant via includeTenants.",
     policy: "tenant",
     includeTenants: [],
   },
