@@ -3679,6 +3679,42 @@ function PhaseContractStepsCanvas({
       aria-label={`${phase.code} phase shell`}
       data-testid="mxw-contract-card"
     >
+      <label className="mxw-compact-steps">
+        <span>Step</span>
+        <select
+          aria-label={`${phase.code} step`}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            if (value.startsWith("input:")) {
+              onSelectSection(value.slice("input:".length));
+            } else {
+              onSelectSubstep(Number(value.slice("workflow:".length)));
+              onSelectSection(null);
+            }
+            scrollContractDetailIntoView();
+          }}
+          value={
+            selectedSection
+              ? `input:${selectedSection.key}`
+              : `workflow:${substepIndex}`
+          }
+        >
+          <optgroup label="Inputs">
+            {phaseCaptureSections.map((section) => (
+              <option key={section.key} value={`input:${section.key}`}>
+                {section.label}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Workflow">
+            {phase.substeps.map((step, index) => (
+              <option key={step.key} value={`workflow:${index}`}>
+                {step.label}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </label>
       <nav className="mxw-contract-nav" aria-label={`${phase.code} steps`}>
         <div className="mxw-contract-group">
           <div className="mxw-contract-group-label">Inputs</div>
@@ -4092,6 +4128,41 @@ function FinderStepsColumns({
 
   return (
     <div className="mxw-finder-steps" data-testid="mxw-finder-steps">
+      <label className="mxw-compact-steps">
+        <span>Step</span>
+        <select
+          aria-label={`${phase.code} step`}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            if (value.startsWith("input:")) {
+              onSelectSection(value.slice("input:".length));
+            } else {
+              onSelectSubstep(Number(value.slice("workflow:".length)));
+              onSelectSection(null);
+            }
+          }}
+          value={
+            selectedSection
+              ? `input:${selectedSection.key}`
+              : `workflow:${substepIndex}`
+          }
+        >
+          <optgroup label="Inputs">
+            {phaseCaptureSections.map((section) => (
+              <option key={section.key} value={`input:${section.key}`}>
+                {section.label}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Workflow">
+            {phase.substeps.map((step, index) => (
+              <option key={step.key} value={`workflow:${index}`}>
+                {step.label}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </label>
       <nav aria-label="Phase steps" className="mxw-finder-steps-menu">
         <div className="mxw-finder-step-group">
           <h3>{phase.code} inputs</h3>
@@ -8620,11 +8691,18 @@ function MovesStandaloneStyles() {
  * Steps selector. Same token set as the finder-shell polish rules above
  * (navy/blue/teal/amber); no new colors introduced.
  */
+.mxw-compact-steps{display:none;gap:6px;padding:12px 16px;border-bottom:1px solid rgba(12,26,58,.10);background:#fbfbfc}
+.mxw-compact-steps span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5b6c8a;font-weight:800}
+.mxw-compact-steps select{width:100%;min-width:0;border:1px solid rgba(12,26,58,.16);border-radius:8px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;font-weight:700;padding:9px 10px}
+@media (max-width:600px){
+  .mxw .mxw-compact-steps{display:grid}
+  .mxw .mxw-contract-nav,.mxw .mxw-finder-steps-menu{display:none}
+}
 .mxw-finder-steps{display:block}
-.mxw-finder-steps-menu{display:flex;align-items:center;gap:18px;width:100%;overflow-x:auto;padding:10px 2px 14px;margin-bottom:18px;border-bottom:1px solid rgba(12,26,58,.10)}
-.mxw-finder-step-group{display:flex;align-items:center;gap:8px;flex:none}
+.mxw-finder-steps-menu{display:grid;gap:10px;width:100%;padding:10px 2px 14px;margin-bottom:18px;border-bottom:1px solid rgba(12,26,58,.10)}
+.mxw-finder-step-group{display:flex;align-items:flex-start;gap:8px;min-width:0}
 .mxw-finder-step-group h3{margin:0 4px 0 0;white-space:nowrap;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:#5b6c8a;font-weight:800}
-.mxw-finder-step-group ul{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:4px}
+.mxw-finder-step-group ul{list-style:none;margin:0;padding:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0}
 .mxw-finder-step-row{width:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:none;border-radius:8px;padding:7px 9px;cursor:pointer;font-size:13px;color:#28364f;white-space:nowrap}
 .mxw-finder-step-row:hover{background:#f1f3f8}
 .mxw-finder-step-row.selected{background:#e4ecf9;color:#0c1a3a}
@@ -8654,8 +8732,8 @@ function MovesStandaloneStyles() {
 .mxw-finder-citation-toggle{border:none;background:#e4ecf9;color:#2a5aa8;border-radius:999px;width:20px;height:20px;line-height:20px;font-size:11px;cursor:pointer;padding:0}
 .mxw-finder-citation-caption{display:block;margin-top:4px;font-size:11.5px;color:#5b6c8a}
 .mxw-contract-card{display:block;min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:visible;box-shadow:0 12px 32px rgba(12,26,58,.05)}
-.mxw-contract-nav{border-bottom:1px solid rgba(12,26,58,.09);border-radius:14px 14px 0 0;background:#fbfbfc;padding:12px 16px;display:flex;align-items:center;gap:18px;overflow-x:auto}
-.mxw-contract-group{display:flex;align-items:center;gap:5px;flex:none}
+.mxw-contract-nav{border-bottom:1px solid rgba(12,26,58,.09);border-radius:14px 14px 0 0;background:#fbfbfc;padding:12px 16px;display:grid;gap:8px}
+.mxw-contract-group{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
 .mxw-contract-group-label{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#7b8798;padding:0 7px;white-space:nowrap}
 .mxw-contract-step{appearance:none;border:1px solid transparent;border-radius:8px;background:transparent;color:#7b8aa5;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:36px;padding:7px 9px;text-align:left;width:auto;white-space:nowrap;flex:none}
 .mxw-contract-step:hover{background:rgba(42,90,168,.06)}
@@ -8727,6 +8805,14 @@ button.mxw-step-progress-status{cursor:pointer}
   .mxw-contract-detail-top{top:60px;grid-template-columns:22px auto minmax(0,1fr)}
   .mxw-contract-detail-top b{grid-column:2;justify-self:start}
   .mxw-step-progress-actions{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}
+}
+@media (max-width:900px){.mxw-contract-detail-top{top:100px}}
+@media (max-width:600px){
+  .mxw-stage-head{grid-template-columns:minmax(0,1fr);gap:10px}
+  .mxw-stage-head .mxw-agent-chip,.mxw-stage-head h1,.mxw-stage-head p{grid-column:1}
+  .mxw-stage-head .mxw-progress-card{grid-column:1;grid-row:auto;justify-self:stretch;width:100%}
+  .mxw-contract-detail-top{top:144px;grid-template-columns:22px minmax(0,1fr)}
+  .mxw-contract-detail-top h2,.mxw-contract-detail-top b{grid-column:1/-1;justify-self:start}
 }
 /*
  * Approvals overview. Rendered only when workspaceView === "approvals".

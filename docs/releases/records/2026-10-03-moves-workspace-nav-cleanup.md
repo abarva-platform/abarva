@@ -29,15 +29,16 @@ The same phase, capture, evidence, approval, and generated-artifact handlers con
 
 ## Changes Included
 
-- `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`: replaces the redundant workspace rail with one tab row, keeps the All Moves link, and moves P0–P5 step selectors above their detail content. The compact navigation uses the same available view list.
+- `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`: replaces the redundant workspace rail with one tab row, keeps the All Moves link, and moves P0–P5 step selectors above their detail content. The compact navigation uses the same available view list, with a step picker on phone widths.
 - `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`: verifies workspace switching, conditional views, phase links, compact controls, and the existing phase behavior against the new navigation.
 
 ## QA / Validation
 
-- `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand --silent` — 117/117 pass.
+- `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand --silent` — 119/119 pass.
 - `npm run typecheck` — clean.
 - `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx` — no errors; existing unused-symbol warnings in the component.
 - `git diff --check` — clean.
+- Local static component render in Playwright at 1440, 768, and 390 pixels: no page overflow; desktop and tablet show all step choices; phone shows a compact step picker. This checks layout only, without authentication or a live data read.
 - Visual layout at desktop and narrow widths requires a signed-in check after the upstream layout stack deploys.
 
 ## Rollout Plan

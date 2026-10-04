@@ -1491,6 +1491,7 @@ describe("MovesPhaseStandaloneClient", () => {
       const phaseSelect =
         within(compactNav).getByLabelText("Switch move phase");
       expect(phaseSelect).toBeInTheDocument();
+      expect(phaseSelect).toHaveValue("3");
       expect(
         within(compactNav).getByRole("tab", { hidden: true, name: "Stage" }),
       ).toHaveAttribute("aria-selected", "true");
@@ -1506,6 +1507,57 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(mockRouterPush).toHaveBeenCalledWith(
         "/strategic-moves/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase/2",
       );
+    });
+
+    it("the compact step picker opens an existing workflow step and returns to an input", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const picker = screen.getByLabelText("P3 step") as HTMLSelectElement;
+      const firstInput = picker.querySelector<HTMLOptionElement>(
+        'option[value^="input:"]',
+      );
+      expect(firstInput).not.toBeNull();
+      fireEvent.change(picker, { target: { value: "workflow:2" } });
+      expect(contractStepButton(/Record Decision/i)).toHaveClass("active");
+      fireEvent.change(picker, { target: { value: firstInput!.value } });
+      expect(contractStepButton(firstInput!.textContent ?? "")).toHaveClass(
+        "active",
+      );
+    });
+
+    it("the compact P0 picker changes the rendered step detail", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 0 })}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const picker = screen.getByLabelText("P0 step") as HTMLSelectElement;
+      const secondWorkflow = picker.querySelector<HTMLOptionElement>(
+        'option[value="workflow:1"]',
+      );
+      expect(secondWorkflow).not.toBeNull();
+      fireEvent.change(picker, { target: { value: secondWorkflow!.value } });
+      expect(picker).toHaveValue("workflow:1");
+      expect(
+        within(screen.getByTestId("mxw-finder-steps")).getByRole("heading", {
+          name: secondWorkflow!.textContent ?? "",
+        }),
+      ).toBeInTheDocument();
     });
 
     it("uses one desktop workspace tab row without a second left rail", () => {
