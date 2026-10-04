@@ -60,6 +60,35 @@ jobs:
           shellcheck --version
           find scripts -name '*.sh' -type f -print0 | xargs -0 shellcheck -x
 
+      # C-593. The repository's own CI helper suites under `scripts/ci/`.
+      #
+      # Wired for the same reason as the sweep below, which is item T-457's
+      # lesson restated: a suite that runs in no required job cannot fail a
+      # merge, and this one guards a branch where BOTH wrong answers are
+      # silent. `scripts/ci/snapshot-pr.mjs` decides whether a failed
+      # `gh pr create` is this repository refusing Actions the capability or a
+      # real error. Classify everything as the refusal and a genuine break is
+      # green forever; classify the refusal as a break and the job is red
+      # forever, which is where `ai-cost-daily.yml` sat for all 73 of its
+      # scheduled runs.
+      #
+      # By GLOB, not file by file, so a suite written beside it tomorrow blocks
+      # a merge the day it lands rather than the day somebody edits a list —
+      # and `nullglob` is not assumed: an empty directory would otherwise make
+      # `node` run against the literal pattern and fail for the wrong reason.
+      #
+      # Each path is echoed before it runs so the BLOCKING run carries a
+      # quotable line per suite, and every suite runs even after one fails.
+      - name: Prove the CI helper contracts can fail a merge
+        run: |
+          status=0
+          for suite in scripts/ci/*.test.mjs; do
+            [ -e "$suite" ] || continue
+            echo "--- $suite"
+            node "$suite" || status=1
+          done
+          exit "$status"
+
       # C-582. The execution-queue toolchain's own behavioural contracts.
       #
       # All fifteen of them -- the claim gate, the queue generator, the register
