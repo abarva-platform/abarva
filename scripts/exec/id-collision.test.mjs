@@ -716,7 +716,14 @@ const realRegister = path.join(operatorRoot, "EXECUTION_CLAIMS.md");
 
 if (!fs.existsSync(realBacklog)) {
   skip("the live backlog reports both collisions", `${realBacklog} is not on this machine`);
-  skip("the live backlog does not report the renumbered one", "same");
+  /*
+   * This label used to read "the live backlog does not report the renumbered
+   * one", naming the absence case C-587 removed. A skip naming a case that no
+   * longer exists reports a coverage state nobody has, so it names the two
+   * cases that stand in its place.
+   */
+  skip("no id is reported as filed twice within a single backlog section", "same");
+  skip("and the collapse is load-bearing on the live corpus, not a precaution", "same");
   skip("a live hold on an ambiguous id replays from the register", "same");
 } else {
   const backlog = fs.readFileSync(realBacklog, "utf8");
@@ -739,11 +746,68 @@ if (!fs.existsSync(realBacklog)) {
     }
   }
 
+  /*
+   * RESTATED 2026-10-04 (item C-587). This case asserted `!byId.has("T-720")`
+   * — that the live backlog does not report the third id the item named,
+   * "because the item names three collisions; two are on disk".
+   *
+   * That reason has drifted, and the drift was measured rather than guessed.
+   * The id IS on disk, in item position, three times: a filing heading at line
+   * 11696, that section's own table row at 11704, and a progress note at 11799.
+   * Two of the three classify as `filing`. What keeps the id out of
+   * `duplicates` is not absence at all — it is `backlogFilings` COLLAPSING a
+   * heading and its own table row within one section into a single filing. The
+   * reader is doing the work the comment credited to the corpus.
+   *
+   * So the case was an absence assertion over a document agents write into,
+   * and the one thing it could not survive is somebody filing that id a second
+   * time — which would make it red for the corpus having been written in,
+   * while the reader was right the whole time. The id is also the WEAKEST
+   * possible witness for the collapse: 80 sections in today's backlog have a
+   * filing-kind id occurring more than once, so singling this one out by name
+   * both narrowed the claim and tied it to a literal.
+   *
+   * The collapse is asserted directly instead, and for every id. The universal
+   * half cannot be falsified by appending — a new section can only add filings,
+   * never make two of them share a section — and the non-vacuity half is a
+   * `> 0` that appending can only push further from zero. Between them they say
+   * what the deleted case was reaching for: a reader that stopped collapsing
+   * would report an id as a duplicate of itself.
+   */
+  const sectionKey = (f) => `${f.id}||${f.sectionIndex}`;
+  const sameSection = new Map();
+  const collisionsWithinASection = [];
+  for (const filing of backlogFilings(backlog)) {
+    const key = sectionKey(filing);
+    if (sameSection.has(key)) {
+      collisionsWithinASection.push(
+        `${filing.id} reported twice in one section, lines ${sameSection.get(key)} and ${filing.lineNumber}`,
+      );
+    } else {
+      sameSection.set(key, filing.lineNumber);
+    }
+  }
   check(
-    "the live backlog does NOT report the id whose second filing was renumbered away",
-    !byId.has("T-720"),
-    "the item names three collisions; two are on disk. Reporting the third " +
-      "would mean reporting a renumber note as a live duplicate",
+    "no id is reported as filed twice within a single backlog section",
+    collisionsWithinASection.length === 0,
+    collisionsWithinASection.slice(0, 5).join("\n") +
+      "\neach of these would be an id reported as colliding with itself — one " +
+      "filing written as a heading plus its own table row",
+  );
+
+  const perSection = new Map();
+  for (const occurrence of backlogOccurrences(backlog)) {
+    if (occurrence.kind !== "filing") continue;
+    const key = `${occurrence.id}||${occurrence.sectionIndex}`;
+    perSection.set(key, (perSection.get(key) ?? 0) + 1);
+  }
+  const collapsed = [...perSection.entries()].filter(([, count]) => count > 1);
+  check(
+    "and the collapse is load-bearing on the live corpus, not a precaution",
+    collapsed.length > 0,
+    `${collapsed.length} (id, section) pairs hold more than one filing-kind ` +
+      "occurrence, so without the collapse the case above would have that many " +
+      "ids reported as duplicates of themselves",
   );
 
   check(

@@ -770,7 +770,15 @@ const LIVE_MENTIONED = [
 if (!fs.existsSync(LIVE_REGISTER)) {
   skip("the live register names the one merge of the nine that it does name", "no operator register on this host");
   skip("the live register mentions four more of the nine, so none of them is unnamed", "no operator register on this host");
-  skip("a fixed ten-character probe disagrees with this reader on the named one", "no operator register on this host");
+  /*
+   * The third label used to read "a fixed ten-character probe disagrees with
+   * this reader on the named one", naming a case that C-585 replaced and that
+   * C-587 then removed the successor of. A skip naming a case that no longer
+   * exists reports a coverage state nobody has: these are the two reader-side
+   * ablations that stand where the two absence cases were.
+   */
+  skip("with the SHA matcher off the merge is still named, so the SHA is not what earns it", "no operator register on this host");
+  skip("every line that names this merge earns it through its own subject pull request", "no operator register on this host");
 } else {
   const entries = registerEntries(fs.readFileSync(LIVE_REGISTER, "utf8"));
   const verdict = ({ sha, pr }) =>
@@ -825,7 +833,16 @@ if (!fs.existsSync(LIVE_REGISTER)) {
    * The case keeps its teeth: a reader that stopped preferring the announcement
    * would settle this merge on a line that announces nothing.
    */
-  const raw = fs.readFileSync(LIVE_REGISTER, "utf8");
+  /*
+   * THE RAW REGISTER TEXT IS DELIBERATELY NOT READ HERE ANY MORE (item C-587).
+   * This block held `const raw = fs.readFileSync(LIVE_REGISTER, "utf8")` for
+   * one purpose: to ask whether a literal was absent from it. With both such
+   * cases replaced by reader-side mechanism, nothing in this block treats the
+   * corpus as a substring haystack, and the variable is gone rather than left
+   * dangling for the next case to reach for. The register is still read — once,
+   * through `registerEntries` into `entries` above — which is the grammar's
+   * own door and the only one these cases should use.
+   */
 
   /*
    * Provenance is derived through `provenanceOf`, from the same `pulls` shape
@@ -872,12 +889,105 @@ if (!fs.existsSync(LIVE_REGISTER)) {
       "nameMerge has stopped doing the work this case exists to prove",
   );
 
+  /*
+   * RESTATED 2026-10-04 (item C-587). The case here asserted
+   * `!raw.includes(LIVE_NAMED.sha)` — that no register line quotes this merge's
+   * SHA as a full forty-character handle — and its failure message named the
+   * property it was reaching for: "the NAMED verdict is earned through the
+   * pull-request channel".
+   *
+   * It was the same shape as the ten-character absence the block above
+   * replaced, over the same corpus, written by the same repair. C-585 refused
+   * to lengthen a prefix because today it happens to miss, and then left a
+   * longer prefix of the same literal asserting the same kind of absence four
+   * cases later. Measured on `main` `bdc59a6198`, the ten-character prefix
+   * C-585 removed stood at 1 occurrence when C-585 was taken, 3 immediately
+   * after, and **6** in the register today, 7 in the backlog and 3 in the pulse
+   * — every one of them prose about this calibration. Forty characters is not
+   * a different class, only a slower clock: one agent recording this audit in
+   * the obvious way writes the handle in, and the case goes red having learnt
+   * nothing about the reader. That was proven rather than argued — appending a
+   * single ordinary line quoting the SHA to a COPY of the live register turned
+   * this case red while all four mechanism cases above stayed green.
+   *
+   * So the channel claim is asserted directly, by ABLATION ON THE READER,
+   * which is what the absence was only ever a proxy for. NAMED is reached here
+   * through `entryRole`'s `subject === pullRequest` branch, and the SHA plays
+   * no part in it:
+   *
+   *   - Replace the SHA with forty `f`s — a value no handle can carry — and
+   *     keep the real pull request. The verdict is still NAMED, the chosen line
+   *     still announces the merge, and every naming role has `shaHit` false.
+   *   - Keep the real SHA and point the merge at a pull request the register
+   *     cannot reach. The verdict must fall OFF NAMED, which is what says the
+   *     pull-request channel is load-bearing rather than incidental.
+   *
+   * Both directions are monotone under appending, which is the whole point: a
+   * register that grows can add pull-request mentions and SHA mentions, and
+   * neither can flip either case, because NAMED needs the line's own subject
+   * pull request to equal this merge's. A reader that stopped reading that
+   * subject fails the first; one that started earning NAMED off a bare SHA
+   * mention fails the second.
+   */
+  /*
+   * ABLATION ON THE READER'S CHANNELS, not on substituted values. The first
+   * draft of this repair substituted a SHA of forty `f`s and a pull request
+   * numbered 999999999, and that draft was WRONG in the same way the case it
+   * replaced was wrong: both are literals an agent can write. Appending one
+   * ordinary line reading "ffff… and PR #999999999 are the synthetic values"
+   * to a copy of the register turned the pull-request case red, because the
+   * subject parser read 999999999 as that line's own subject. A synthetic
+   * constant is not safer than a real one; it is only less likely to be typed,
+   * which is the same bet on a slower clock.
+   *
+   * So each channel is disabled at the READER instead. `entryRole` takes the
+   * SHA and the pull request it should match; passing `null` for one turns that
+   * matcher off by construction, for every line, with nothing written anywhere.
+   * No corpus can flip either direction.
+   */
+  const rolesUnder = (sha, pullRequest) =>
+    entries
+      .map((entry) => entryRole({ entry, sha, pullRequest, provenance: liveProvenance }))
+      .filter(Boolean);
+  const namedUnder = (sha, pullRequest) =>
+    rolesUnder(sha, pullRequest).filter((role) => role.role === NAMED);
+
+  const shaMatcherOff = namedUnder(null, LIVE_NAMED.pr);
   check(
-    "no register line quotes that SHA as a full forty-character handle",
-    !raw.includes(LIVE_NAMED.sha),
-    "the NAMED verdict is earned through the pull-request channel; the day a " +
-      "line quotes the full SHA it is earned differently and this case should " +
-      "be re-read rather than widened",
+    "with the SHA matcher off the merge is still named, so the SHA is not what earns it",
+    shaMatcherOff.length > 0 &&
+      shaMatcherOff.every((role) => role.shaHit === false && role.prHit === true) &&
+      shaMatcherOff.some((role) => role.reportsMerged),
+    `naming roles ${shaMatcherOff.length}; ` +
+      `shaHit set ${JSON.stringify([...new Set(shaMatcherOff.map((r) => r.shaHit))])}; ` +
+      `announcing ${shaMatcherOff.filter((r) => r.reportsMerged).length}`,
+  );
+
+  /*
+   * THE OTHER DIRECTION IS ASSERTED ON THE LINE ACTUALLY CHOSEN, not by nulling
+   * the pull request. Nulling it gives a zero, and a zero here turned out to be
+   * held up partly by the corpus rather than by the reader: with `entryRole`'s
+   * provenance guard deliberately removed — a bare SHA mention allowed to earn
+   * NAMED — that zero stayed a zero, because no line in today's register
+   * happens to combine a SHA hit, no subject pull request, and a merge-outcome
+   * lead. A case a mutation cannot kill is not proving the thing it names.
+   *
+   * What IS necessary and corpus-independent: every line that earns NAMED here
+   * earns it through `subject === pullRequest`. Under a resolved-pull-request
+   * provenance that branch is the only door to NAMED, so a reader that started
+   * promoting SHA-only lines would produce a naming role whose subject is not
+   * this pull request, and this goes red the moment it does — including on a
+   * register that quotes the full forty-character handle, which is the case the
+   * deleted absence was reaching for and could only express as a substring.
+   */
+  check(
+    "every line that names this merge earns it through its own subject pull request",
+    namingRoles.length > 0 && namingRoles.every((role) => role.subject === LIVE_NAMED.pr),
+    `naming roles ${namingRoles.length}; subjects ` +
+      `${JSON.stringify(namingRoles.map((r) => r.subject))} against pull request ` +
+      `${LIVE_NAMED.pr} — a subject that is not this pull request means NAMED was ` +
+      "earned off a SHA mention instead, which is the drift the deleted " +
+      "absence was guarding against in a way no corpus can falsify",
   );
 }
 
