@@ -310,6 +310,17 @@ left with a quietly weakened gate.
   The suites also import nothing but Node builtins and their own siblings, so
   the step cannot be broken by a dependency change and does not depend on the
   `npm ci` above it.
+- **`docs/architecture/test-ci-coverage-census.json` is left stale on purpose,
+  and the reason is arithmetic rather than laziness.** The new test file moves
+  `testFiles` and `coveredTestFiles` by one each. The committed census is a
+  report, not a gate — `audit:test-ci-coverage:check` exits 0 and says so in
+  those words — so this does not redden `main`. Refreshing it here would make
+  it *more* wrong: this branch is based on `1ca13f73a9`, where the census reads
+  2667, while `main` has since moved to 2669 for unrelated reasons.
+  Regenerating from this base would commit 2668 and the squash merge would
+  write that onto a tree whose true count is 2670, replacing a known lag with a
+  confidently wrong number. The correct refresh is one run on current `main`
+  after this merges, which is a different change.
 - **Only this directory is covered.** The contract asks its question about
   `scripts/exec/` alone. Whether other test directories in the repository run
   only in advisory jobs is a separate census, not answered here.
