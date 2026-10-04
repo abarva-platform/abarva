@@ -179,6 +179,14 @@ describe("DocuSign demo NDA adapter", () => {
     })).rejects.toThrow("invalid_event");
   });
 
+  it("maps a signed provider void callback to a terminal non-completion state", async () => {
+    const { provider } = fixture();
+    const body = JSON.stringify({ event: "envelope-voided", data: { envelopeId: "envelope-1", accountId: config.accountId } });
+    const signature = createHmac("sha256", "test-hmac-secret").update(body).digest("base64");
+    await expect(provider.verifyWebhook({ body, signature })).resolves.toEqual({ envelopeId: "envelope-1", status: "voided" });
+    await expect(provider.verifyWebhook({ body, signature: "bad" })).rejects.toThrow("invalid_signature");
+  });
+
   it("refuses an untrusted callback before requesting a signing link", async () => {
     const { provider, calls } = fixture();
     await expect(provider.getSigningLink({

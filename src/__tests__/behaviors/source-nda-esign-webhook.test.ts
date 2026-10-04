@@ -12,7 +12,7 @@ const signedDocument = Buffer.from("%PDF-1.7 signed synthetic document");
 const certificate = Buffer.from("%PDF-1.7 synthetic completion certificate");
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
-function harness(initialStatus: "created" | "sent" | "viewed" | "completed" | "declined" = "sent") {
+function harness(initialStatus: "created" | "sent" | "viewed" | "completed" | "declined" | "voided" = "sent") {
   let status = initialStatus;
   const provider = {
     fetchCompletedDocuments: jest.fn(async () => ({ signedDocument, certificate })),
@@ -30,6 +30,11 @@ function harness(initialStatus: "created" | "sent" | "viewed" | "completed" | "d
     markDeclined: jest.fn(async () => {
       if (status !== "sent" && status !== "viewed") return false;
       status = "declined";
+      return true;
+    }),
+    markVoided: jest.fn(async () => {
+      if (status !== "sent" && status !== "viewed") return false;
+      status = "voided";
       return true;
     }),
     markCompleted: jest.fn(async () => {
@@ -84,15 +89,27 @@ describe("verified Source NDA webhook processing", () => {
     expect(deps.upload).not.toHaveBeenCalled();
   });
 
+  it("records a provider void as terminal and never turns it into coverage", async () => {
+    const deps = harness();
+    expect(await processVerifiedEsignEvent(event("voided"), deps)).toEqual({ state: "processed" });
+    expect(deps.getStatus()).toBe("voided");
+    expect(await processVerifiedEsignEvent(event("voided"), deps)).toEqual({ state: "duplicate" });
+    expect(await processVerifiedEsignEvent(event("completed"), deps)).toEqual({ state: "conflict" });
+    expect(deps.provider.fetchCompletedDocuments).not.toHaveBeenCalled();
+    expect(deps.upload).not.toHaveBeenCalled();
+    expect(deps.store.markCompleted).not.toHaveBeenCalled();
+  });
+
   it("does not process delivery or completion events while an envelope is still a draft", async () => {
     const deps = harness("created");
-    for (const status of ["viewed", "declined", "completed"] as const) {
+    for (const status of ["viewed", "declined", "voided", "completed"] as const) {
       expect(await processVerifiedEsignEvent(event(status), deps)).toEqual({ state: "conflict" });
     }
     expect(deps.provider.fetchCompletedDocuments).not.toHaveBeenCalled();
     expect(deps.upload).not.toHaveBeenCalled();
     expect(deps.store.markViewed).not.toHaveBeenCalled();
     expect(deps.store.markDeclined).not.toHaveBeenCalled();
+    expect(deps.store.markVoided).not.toHaveBeenCalled();
     expect(deps.store.markCompleted).not.toHaveBeenCalled();
   });
 

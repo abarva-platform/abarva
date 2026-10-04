@@ -44,7 +44,7 @@ type OperatorSupplier = {
   contactAuthorityId: string | null;
   contactName: string | null;
   envelopeId: string | null;
-  envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | null;
+  envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | "voided" | null;
   envelopeTemplateVersion: string | null;
 };
 
@@ -61,7 +61,7 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
   const [busyVendor, setBusyVendor] = useState<string | null>(null);
   const [selectedVersions, setSelectedVersions] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
-  const [sentVendors, setSentVendors] = useState<Set<string>>(() => new Set());
+  const [sentEnvelopeIds, setSentEnvelopeIds] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
 
   const refreshStatus = useCallback(async (signal?: AbortSignal) => {
@@ -92,9 +92,13 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
     event.preventDefault();
     const current = status?.suppliers.find((row) => row.vendorId === supplier.legalEntityId);
     const templateVersion = selectedVersions[supplier.legalEntityId];
-    if (!status?.available || !current?.contactAuthorityId || current.envelopeStatus ||
+    const retryable = current?.envelopeStatus === "declined" || current?.envelopeStatus === "voided";
+    const sentEnvelopeId = sentEnvelopeIds[supplier.legalEntityId];
+    if (!status?.available || !current?.contactAuthorityId ||
+        (current.envelopeStatus && !retryable) ||
+        (sentEnvelopeId && current.envelopeId !== sentEnvelopeId) ||
         !templateVersion || !confirmed[supplier.legalEntityId] ||
-        busyVendor || sentVendors.has(supplier.legalEntityId)) return;
+        busyVendor) return;
 
     const body = new FormData();
     body.set("vendorId", supplier.legalEntityId);
@@ -108,13 +112,14 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
       const response = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/nda/esign/send`, {
         method: "POST", body,
       });
-      const result = await response.json() as { ok?: boolean; error?: string };
-      if (!response.ok || !result.ok) {
+      const result = await response.json() as { ok?: boolean; error?: string; envelopeId?: string };
+      if (!response.ok || !result.ok || !result.envelopeId) {
         setStatus(null);
         setError(`Send was not confirmed (${result.error ?? "authority unavailable"}). Reconcile the provider envelope before trying again.`);
         return;
       }
-      setSentVendors((previous) => new Set(previous).add(supplier.legalEntityId));
+      setSentEnvelopeIds((previous) => ({ ...previous, [supplier.legalEntityId]: result.envelopeId! }));
+      setConfirmed((previous) => ({ ...previous, [supplier.legalEntityId]: false }));
       setMessage("Sent to the internal test inbox. Executed NDA review is still required.");
       try {
         await refreshStatus();
@@ -138,15 +143,20 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
     <div className="snw-nda-suppliers" role="list">
       {uncovered.map((supplier) => {
         const current = status?.suppliers.find((row) => row.vendorId === supplier.legalEntityId);
-        const sent = sentVendors.has(supplier.legalEntityId);
+        const retryable = current?.envelopeStatus === "declined" || current?.envelopeStatus === "voided";
+        const sentEnvelopeId = sentEnvelopeIds[supplier.legalEntityId];
+        const awaitingReadback = Boolean(sentEnvelopeId && current?.envelopeId !== sentEnvelopeId);
         const ready = Boolean(status?.available && current?.contactAuthorityId &&
-          !current.envelopeStatus && selectedVersions[supplier.legalEntityId] &&
-          confirmed[supplier.legalEntityId] && !busyVendor && !sent);
+          (!current.envelopeStatus || retryable) && !awaitingReadback &&
+          selectedVersions[supplier.legalEntityId] &&
+          confirmed[supplier.legalEntityId] && !busyVendor);
         const stateNote = !status ? "Checking signing authority" :
           !status.available ? "Demo signing is unavailable" :
+          awaitingReadback ? "Awaiting envelope readback; do not retry" :
           !current?.contactAuthorityId ? "Approved active contact required" :
           current.envelopeStatus === "completed" ? "Completed envelope; executed NDA review is still required" :
-          current.envelopeStatus === "declined" ? "Declined envelope; not covered, review before retry" :
+          current.envelopeStatus === "declined" ? "Declined envelope; not covered, reconfirm before retry" :
+          current.envelopeStatus === "voided" ? "Voided envelope; not covered, reconfirm before retry" :
           current.envelopeStatus === "created" ? "Draft envelope needs reconciliation before another send" :
           current.envelopeStatus ? "Sent for signature; not NDA-covered" :
           "Ready to send to the internal test inbox";
@@ -168,8 +178,8 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
                 ...previous, [supplier.legalEntityId]: event.target.checked,
               }))} /> I confirm this synthetic NDA goes only to the internal test inbox.</label>
             <button className="snw-primary" type="submit" disabled={!ready}
-              aria-label={`Send NDA for ${supplier.legalName}`}>
-              {busyVendor === supplier.legalEntityId ? "Sending..." : "Send for demo signature"}
+              aria-label={`${retryable ? "Resend" : "Send"} NDA for ${supplier.legalName}`}>
+              {busyVendor === supplier.legalEntityId ? "Sending..." : retryable ? "Resend for demo signature" : "Send for demo signature"}
             </button>
           </form>
         </article>;

@@ -34,6 +34,9 @@ describe("NDA draft persistence and action-time contact fence", () => {
       { match: "INSERT INTO source_nda_esign_envelopes", rows: [{ id: "draft-row" }] },
     ]);
     expect(await createNdaDraftRepository(tx).recordDraft(identity)).toBe("draft-row");
+    expect(seen[2]).toContain("status IN ('created', 'sent', 'viewed', 'completed')");
+    expect(seen[2]).not.toContain("'voided'");
+    expect(seen[2]).not.toContain("'declined'");
     expect(seen[3]).toContain("'created', NULL");
     expect(seen[3]).not.toContain("'sent', now()");
   });
