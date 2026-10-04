@@ -1,0 +1,54 @@
+{
+  "schema": "abarva.healthcare-demo-new.phase1.boundary-snapshot/v1",
+  "status": "plan_only",
+  "tenant_key": "healthcare-demo-new",
+  "frozen_release_id": "healthcare-demo-new-source-corpus-v1.0.0",
+  "phase_0_merge_commit": "dc6e3bf7e67103eaa25755326f3911a2ec22c01f",
+  "source_package_commit": "b88babeaa5faaab077e991de1b1e83361c55c7a5",
+  "review_zip_sha256": "1c6a5aa2a265168e59ff03c2ccbdddaaef4c680c86c3fb628737957559396352",
+  "approval_manifest_sha256": "06f645913353988eb722eeccb2b89ee5f7d96fbf2b4c60d86d6bff3bee4412fd",
+  "authorized_phase": "phase_1_zero_data_infrastructure_plan",
+  "consumption_contract": {
+    "version": "phase3c2d-consumption-contracts-v1.0.0",
+    "source_path": "clients/shared/20-phase3c2d-consumption-contracts/CONSUMPTION_PROJECTION_REGISTRY.json",
+    "merged_pr": 5680,
+    "merge_commit": "6141988709b5751ea38dbb6dc0cbf4078051dab1",
+    "required_before_tenant_completion": true
+  },
+  "graph": {
+    "canonical_store": "relational_postgres",
+    "traversal_engine": "recursive_sql",
+    "age_enabled": false,
+    "age_decision": "deferred_read_side_accelerator_only_after_measured_need"
+  },
+  "approval_authority": {
+    "approver": "Anand Sundaram",
+    "scope": "plan_package_only",
+    "does_not_authorize": [
+      "azure_apply",
+      "postgres_migration_apply",
+      "source_landing",
+      "parser_execution",
+      "knowledge_publication",
+      "product_runtime_wiring"
+    ]
+  },
+  "expected_mutations_in_this_pr": [],
+  "prohibited_mutations": [
+    "create_or_update_azure_resources",
+    "shift_shared_aca_runtime_traffic",
+    "change_shared_aca_web_template",
+    "run_postgres_ddl",
+    "land_source_files",
+    "execute_parser_jobs",
+    "publish_knowledge_or_consumption_records",
+    "wire_product_modules_to_healthcare_demo_new",
+    "enable_apache_age",
+    "use_legacy_module_or_demo_pack_data_as_new_pilot_upstream_source"
+  ],
+  "airline_status": {
+    "tenant_key": "airline-demo-new",
+    "state": "blocked",
+    "must_not_be_included_in_phase_1_apply": true
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "schema": "abarva.healthcare-demo-new.phase1.consumption-contract-alignment/v1",
+  "status": "plan_only_no_runtime_mutation",
+  "tenant_key": "healthcare-demo-new",
+  "frozen_release_id": "healthcare-demo-new-source-corpus-v1.0.0",
+  "consumption_contract": {
+    "required": true,
+    "version": "phase3c2d-consumption-contracts-v1.0.0",
+    "source_path": "clients/shared/20-phase3c2d-consumption-contracts/CONSUMPTION_PROJECTION_REGISTRY.json",
+    "merged_pr": 5680,
+    "merge_commit": "6141988709b5751ea38dbb6dc0cbf4078051dab1",
+    "required_before_tenant_completion": true
+  },
+  "upstream_source_policy": {
+    "allowed_upstream_inputs": [
+      "clients/healthcare-demo-new/19-template-instantiation-source-corpus/03-source-corpus-design/parser-visible-source-manifest.csv",
+      "clients/healthcare-demo-new/19-template-instantiation-source-corpus/03-source-corpus-design/synthetic-source-samples/*"
+    ],
+    "prohibited_upstream_inputs": [
+      "old_module_owned_runtime_tables",
+      "legacy_home_packs",
+      "v6_demo_packs",
+      "v7_demo_packs",
+      "current_source_operational_tables",
+      "current_moves_workflow_tables",
+      "current_tower_marts",
+      "old_chat_or_session_facts",
+      "hidden_truth",
+      "restricted_evaluator_artifacts"
+    ],
+    "migration_audit_use_only": [
+      "existing Home, Source, Moves, Tower, Intelligence, and Tower operational tables may be inspected only as migration/audit inputs",
+      "no existing module table may become an upstream source for the new canonical Knowledge, publication, consumption, Cube, Home, aVa, Source, Moves, or Tower read path without explicit identity-map and reconciliation proof"
+    ]
+  },
+  "graph": {
+    "canonical_store": "relational_postgres",
+    "traversal_engine": "recursive_sql",
+    "age_enabled": false,
+    "age_required_for_phase1": false,
+    "age_required_for_phase2_postgres_bootstrap": false,
+    "age_required_for_zero_data_acceptance": false,
+    "age_evaluation_contract": "clients/shared/20-phase3c2d-consumption-contracts/POSTGRES_AGE_EVALUATION_PLAN.md",
+    "age_decision": "deferred_read_side_accelerator_only_after_measured_need"
+  },
+  "required_relational_read_models": [
+    "consumption.enterprise_brief_v1",
+    "consumption.enterprise_identity_v1",
+    "consumption.executive_perspective_v1",
+    "consumption.strategic_interpretation_v1",
+    "consumption.domain_summary_v1",
+    "consumption.application_inventory_v1",
+    "consumption.vendor_contract_inventory_v1",
+    "consumption.metric_observation_v1",
+    "consumption.relationship_node_v1",
+    "consumption.relationship_edge_v1",
+    "consumption.relationship_evidence_v1",
+    "consumption.evidence_gap_v1",
+    "consumption.search_document_v1",
+    "consumption.module_knowledge_packet_v1"
+  ],
+  "product_consumption_rule": {
+    "home_depends_on_cube": false,
+    "home_and_cube_are_siblings": true,
+    "cube_source": "consumption views and published metric definitions only",
+    "ava_packet_source": "consumption.module_knowledge_packet_v1 plus approved Cube measures when aggregating",
+    "renderer_rule": "products consume published projections; they do not own facts"
+  },
+  "acceptance_implications": {
+    "phase1_zero_data_acceptance_must_not_require_age": true,
+    "postgres_bootstrap_must_not_create_age_extension": true,
+    "relationship_traversal_initial_path": "indexed relational SQL plus recursive CTEs",
+    "tenant_completion_requires_projection_registry_parity": true
+  }
+}
