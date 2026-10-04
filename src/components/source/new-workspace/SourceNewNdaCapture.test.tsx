@@ -43,6 +43,26 @@ beforeEach(() => {
 afterAll(() => { global.fetch = originalFetch; });
 
 describe("Source New synthetic NDA send control", () => {
+  it("uploads a synthetic NDA as canonical pre-release evidence, not a deliverable", async () => {
+    fetchMock.mockResolvedValueOnce(response({ ok: true }));
+    render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian" files={[]}
+      coverage={{ ...coverage, publishedTemplateVersions: [] }} />);
+    const form = screen.getByRole("form", { name: "Upload synthetic NDA template" });
+    fireEvent.change(within(form).getByLabelText("Template PDF"), {
+      target: { files: [new File(["%PDF-1.7\n%%EOF"], "synthetic-nda.pdf", { type: "application/pdf" })] },
+    });
+    fireEvent.submit(form);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`/api/v1/source/${eventId}/artifacts/upload`);
+    expect(init.method).toBe("POST");
+    const body = init.body as FormData;
+    expect(body.get("stageKey")).toBe("rfp");
+    expect(body.get("artifactKind")).toBe("nda_template");
+    expect(body.get("artifactFamily")).toBe("other");
+    expect(body.get("dataClassification")).toBe("Internal");
+  });
+
   it("shows lab template publication for the event page's app client key", () => {
     render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian" files={[]}
       coverage={{ ...coverage, publishedTemplateVersions: [] }} />);

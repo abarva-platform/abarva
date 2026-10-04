@@ -195,9 +195,9 @@ function SyntheticTemplatePublication({ eventId, files }: {
     if (busy) return;
     const form = new FormData(event.currentTarget);
     if (action === "upload") {
-      form.set("stageKey", "suppliers");
+      form.set("stageKey", "rfp");
       form.set("artifactKind", "nda_template");
-      form.set("artifactFamily", "legal");
+      form.set("artifactFamily", "other");
       form.set("dataClassification", "Internal");
     }
     setBusy(true);
