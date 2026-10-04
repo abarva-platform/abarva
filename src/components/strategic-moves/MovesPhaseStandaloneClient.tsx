@@ -2408,6 +2408,39 @@ export function MovesPhaseStandaloneClient({
 
   const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
 
+  // The governed submit control for the capture flow's final step: the SAME
+  // PhaseApproveAndBuild the canvas uses, so generation + the gate run through
+  // the existing pipeline (rendered inline — no portal target in this flow).
+  const captureApproveSlot: ReactNode =
+    phase.phase >= 1 && phase.phase <= 5 ? (
+      canApproveGates ? (
+        <PhaseApproveAndBuild
+          archetype={move.archetype}
+          approverLabel={approverLabel}
+          clientDisplayName={move.tenant.name}
+          disabledReason={phaseCaptureBlocker}
+          deliverableKeys={phaseCanonicalKeysForRoute(
+            phase.phase,
+            confirmedSolutionRoute,
+          )}
+          evidenceNeedPackets={evidenceNeedPackets}
+          inputCount={phaseCaptureCompleteCount}
+          initialArtifacts={visiblePhaseBuildArtifacts}
+          moveId={move.id}
+          moveName={displayMoveName}
+          onBeforeBuild={finalizePhaseCapture}
+          onBuildSettled={approvePhaseGateAfterBuild}
+          blockOnEvidenceGaps
+          phaseLabel={`${phase.code} ${phase.title}`}
+          phaseNum={phase.phase}
+        />
+      ) : (
+        <span className="mcf-gate-note">
+          Approval is available to an authorized workspace user.
+        </span>
+      )
+    ) : null;
+
   return (
     <main
       className="mxw mxw-finder-on"
@@ -2802,6 +2835,7 @@ export function MovesPhaseStandaloneClient({
                             }
                           : null,
                         initialStep: Math.min(substepIndex, 2) as 0 | 1 | 2,
+                        approveSlot: captureApproveSlot,
                       }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
