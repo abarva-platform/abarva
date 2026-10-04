@@ -457,6 +457,11 @@ describe("MovesPhaseStandaloneClient", () => {
     createdAt: string;
     downloadUrl: string;
   }>;
+  let uploadedEvidenceRoutes: Array<{
+    fileName: string;
+    phase: number;
+    evidenceFamily: string | null;
+  }>;
   let generatedDeliverableArtifacts: Array<{
     artifactId: string;
     artifactType: string;
@@ -495,6 +500,7 @@ describe("MovesPhaseStandaloneClient", () => {
     window.scrollTo = jest.fn();
     window.open = jest.fn(() => ({}) as Window);
     uploadedEvidenceArtifacts = [];
+    uploadedEvidenceRoutes = [];
     generatedDeliverableArtifacts = [];
     currentStateFamilyIngests = [];
     structuredFamilyIngests = [];
@@ -559,6 +565,11 @@ describe("MovesPhaseStandaloneClient", () => {
         if (url.includes("/artifacts/upload") && init?.method === "POST") {
           const form = init.body as FormData;
           const file = form.get("file") as File;
+          uploadedEvidenceRoutes.push({
+            fileName: file.name,
+            phase: Number(form.get("phase") ?? 0),
+            evidenceFamily: form.get("evidenceFamily")?.toString() ?? null,
+          });
           uploadedEvidenceArtifacts.push({
             artifactId: `artifact-${uploadedEvidenceArtifacts.length + 1}`,
             family: String(form.get("family") ?? "uploaded_evidence"),
@@ -2313,11 +2324,18 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   it("uses P1 step 2 for uploading evidence, with multiple files enabled", async () => {
+    const p1EvidencePackets = coveredEvidencePacketsForPhase(2).map(
+      (packet) => ({
+        ...packet,
+        evidenceSlot: "Current-state workflow evidence",
+        familyId: "current_state_workflow_map",
+      }),
+    );
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
         carriesForwardContent={[]}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={p1EvidencePackets}
         initialSubstepKey="decide"
         move={makeMove({
           currentPhase: 1,
@@ -2343,6 +2361,10 @@ describe("MovesPhaseStandaloneClient", () => {
       "Upload decision files",
     ) as HTMLInputElement;
     expect(input).toHaveAttribute("multiple");
+    fireEvent.change(
+      screen.getByLabelText("Required evidence family (optional)"),
+      { target: { value: "current_state_workflow_map" } },
+    );
 
     fireEvent.change(input, {
       target: {
@@ -2364,6 +2386,18 @@ describe("MovesPhaseStandaloneClient", () => {
     // The list is real lifecycle data re-fetched from the artifact vault after
     // upload, not an ephemeral client-side echo of what was just picked.
     expect(screen.getAllByText(/v1 · draft/).length).toBe(2);
+    expect(uploadedEvidenceRoutes).toEqual([
+      {
+        fileName: "scope-boundary.xlsx",
+        phase: 1,
+        evidenceFamily: "current_state_workflow_map",
+      },
+      {
+        fileName: "sponsor-review.docx",
+        phase: 1,
+        evidenceFamily: "current_state_workflow_map",
+      },
+    ]);
     expect(
       screen.getByText(/awaiting human review before generation/i),
     ).toBeInTheDocument();

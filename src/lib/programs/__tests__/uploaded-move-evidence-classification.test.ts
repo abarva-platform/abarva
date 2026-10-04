@@ -1,9 +1,77 @@
 import {
   classifyUploadedMoveEvidence,
   mergeMoveEvidenceClassification,
+  reviewFamilyKeyForUploadedMoveEvidence,
 } from '../uploaded-move-evidence-classification';
 
 describe('uploaded Move evidence classification', () => {
+  it.each([
+    {
+      filename: 'red_lines_draft.csv',
+      text: 'Proposed red lines. A finance-approved baseline is not available.',
+      expected: 'control_evidence',
+    },
+    {
+      filename: 'evidence_plan.csv',
+      text: 'Evidence requested: current KPI baseline and control inventory.',
+      expected: 'evidence_plan',
+    },
+    {
+      filename: 'business_change_hypothesis.csv',
+      text: 'Proposed adoption hypothesis; no operating-model decision is approved.',
+      expected: 'adoption_change',
+    },
+    {
+      filename: 'charter_decisions_human_redline_v2.md',
+      text: 'Draft decision rights and sponsor progress-contact wording.',
+      expected: 'charter_hypothesis',
+    },
+  ])('keeps P1 working material out of KPI and approval families: $filename', ({ filename, text, expected }) => {
+    const classification = classifyUploadedMoveEvidence({
+      filename,
+      phase: 1,
+      extractedText: text,
+      originalEvidenceType: 'baseline_evidence',
+    });
+
+    expect(classification.evidenceType).toBe(expected);
+    expect(classification.reviewFamilyKey).toBe('p1_uploaded_evidence');
+    expect(classification.slotIds).toEqual([]);
+    expect(classification.evidenceType).not.toBe('kpi_value_baseline');
+    expect(classification.evidenceType).not.toBe('approval');
+  });
+
+  it('does not infer a P1 requirement family from generic baseline or decision wording', () => {
+    const classification = classifyUploadedMoveEvidence({
+      filename: 'supporting_notes.txt',
+      phase: 1,
+      extractedText: 'No approved decision or measured baseline is asserted.',
+      originalEvidenceType: 'baseline_evidence',
+    });
+
+    expect(classification.evidenceType).toBe('other');
+    expect(classification.reviewFamilyKey).toBe('p1_uploaded_evidence');
+    expect(classification.slotIds).toEqual([]);
+  });
+
+  it('uses the validated uploader declaration for routing without changing the evidence class', () => {
+    const classification = classifyUploadedMoveEvidence({
+      filename: 'evidence_plan.csv',
+      phase: 1,
+      extractedText: 'A measured baseline is requested but not supplied.',
+      originalEvidenceType: 'baseline_evidence',
+    });
+
+    expect(
+      reviewFamilyKeyForUploadedMoveEvidence({
+        classification,
+        declaredFamilyKey: 'current_state_workflow_map',
+      }),
+    ).toBe('current_state_workflow_map');
+    expect(classification.evidenceType).toBe('evidence_plan');
+    expect(classification.slotIds).toEqual([]);
+  });
+
   it('maps P2 legal request and queue files to current-state evidence slots', () => {
     const classification = classifyUploadedMoveEvidence({
       filename: 'Contract Request Log.csv',
@@ -13,6 +81,7 @@ describe('uploaded Move evidence classification', () => {
     });
 
     expect(classification.evidenceType).toBe('ticket_evidence');
+    expect(reviewFamilyKeyForUploadedMoveEvidence({ classification })).toBe('p2_business_current_state');
     expect(classification.sourceType).toBe('real_upload');
     expect(classification.slotIds).toEqual(
       expect.arrayContaining([

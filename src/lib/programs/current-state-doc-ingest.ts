@@ -32,6 +32,7 @@ import {
 import {
   classifyUploadedMoveEvidence,
   mergeMoveEvidenceClassification,
+  reviewFamilyKeyForUploadedMoveEvidence,
 } from "@/lib/programs/uploaded-move-evidence-classification";
 import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
 import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
@@ -700,11 +701,10 @@ export async function ingestUploadedMoveEvidence(
   const evidenceReview = await ensureEvidenceReviewForUploadedEvidence(ctx, {
     moveId: args.moveId,
     evidenceId,
-    familyKey:
-      args.declaredFamilyKey?.trim() ||
-      (classification.slotIds[0] ??
-        classification.evidenceType ??
-        rawEvidence.evidenceType),
+    familyKey: reviewFamilyKeyForUploadedMoveEvidence({
+      classification,
+      declaredFamilyKey: args.declaredFamilyKey,
+    }),
     archetypeId: args.archetypeId,
     phase: args.phase,
     filename: args.filename,
