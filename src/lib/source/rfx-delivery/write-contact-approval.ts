@@ -30,7 +30,8 @@ function record(value: unknown): Record<string, unknown> {
 function supplierContactAllowed(raw: unknown): boolean {
   const payload = record(raw);
   const registry = record(payload.candidate_supplier_registry ?? payload.candidateSupplierRegistry);
-  return (registry.contactPolicy ?? registry.contact_policy) === "contact_allowed";
+  const policy = registry.contactPolicy ?? registry.contact_policy;
+  return policy === "contact_allowed" || policy === "review_required";
 }
 
 export async function approveRfxContact(
