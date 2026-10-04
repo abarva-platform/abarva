@@ -77,6 +77,20 @@ export async function POST(
       );
     }
     const fromPhase = program.currentPhase ?? 0;
+    const humanRationale = normalizeMovesHumanRationale(
+      body.humanRationale ??
+        body.rationale ??
+        body.snapshot?.humanRationale ??
+        body.snapshot?.rationale,
+    );
+    const rationaleError = validateMovesHumanRationale(humanRationale);
+    if (rationaleError) {
+      return Response.json(
+        { error: "human_rationale_required", detail: rationaleError },
+        { status: 400 },
+      );
+    }
+
     if (fromPhase === 1) {
       const [modules, approvedEvidence] = await Promise.all([
         getModuleState(ctx, programId),
@@ -99,19 +113,6 @@ export async function POST(
           { status: 409 },
         );
       }
-    }
-    const humanRationale = normalizeMovesHumanRationale(
-      body.humanRationale ??
-        body.rationale ??
-        body.snapshot?.humanRationale ??
-        body.snapshot?.rationale,
-    );
-    const rationaleError = validateMovesHumanRationale(humanRationale);
-    if (rationaleError) {
-      return Response.json(
-        { error: "human_rationale_required", detail: rationaleError },
-        { status: 400 },
-      );
     }
 
     const gate = await evaluateGate(ctx, programId, fromPhase, body.toPhase, {
