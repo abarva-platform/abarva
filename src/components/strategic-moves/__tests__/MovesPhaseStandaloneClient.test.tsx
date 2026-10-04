@@ -1090,6 +1090,42 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
     });
 
+    it("moves_capture_v2 flag OFF (default): renders the contract-steps canvas, not the 3-step flow", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+    });
+
+    it("moves_capture_v2 flag ON: renders the redesigned 3-step capture flow in place of the canvas", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      // the old contract canvas is replaced
+      expect(screen.queryByTestId("mxw-contract-card")).not.toBeInTheDocument();
+      // and the flow shows the first Charter step
+      expect(
+        screen.getByRole("heading", { name: "Scope the bet" }),
+      ).toBeInTheDocument();
+    });
+
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient
