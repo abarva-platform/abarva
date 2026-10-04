@@ -162,6 +162,65 @@ describe("Stage 06 named-contact approval write", () => {
     expect(insert).toContain("approved_contact_email");
   });
 
+  it("lets a named reviewer clear review-required supplier posture for an allowed canonical contact", async () => {
+    const reviewed = {
+      ...candidate,
+      vendor_raw_payload: { candidate_supplier_registry: { contactPolicy: "review_required" } },
+    };
+    const tx = transaction((sql) => {
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) return [reviewed];
+      if (sql.includes("FROM source.vendor_contact")) return [contact];
+      if (sql.includes("INSERT INTO source_event_rfx_contact_authority")) return [{ id: "row-1" }];
+      return [];
+    });
+    await expect(approveRfxContact(input, tx, () => "2026-10-02T01:00:00Z", () => "approval-1"))
+      .resolves.toEqual({ ok: true, id: "row-1", authorityId: "approval-1" });
+  });
+
+  it("keeps do-not-contact supplier posture absolute even with a canonical allowed contact", async () => {
+    const forbidden = {
+      ...candidate,
+      vendor_raw_payload: { candidate_supplier_registry: { contactPolicy: "do_not_contact" } },
+    };
+    const sqls: string[] = [];
+    const tx = transaction((sql) => {
+      sqls.push(sql);
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) return [forbidden];
+      if (sql.includes("FROM source.vendor_contact")) return [contact];
+      if (sql.includes("INSERT INTO source_event_rfx_contact_authority")) return [{ id: "row-1" }];
+      return [];
+    });
+    await expect(approveRfxContact(input, tx, () => "2026-10-02T01:00:00Z", () => "approval-1"))
+      .resolves.toEqual({ ok: false, code: "contact_not_allowed" });
+    expect(sqls.some((sql) => sql.includes("INSERT INTO source_event_rfx_contact_authority"))).toBe(false);
+  });
+
+  it("refuses a review-required approval without a named reviewer or audit evidence", async () => {
+    const tx = transaction((sql) => {
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) return [
+        { ...candidate, vendor_raw_payload: { candidate_supplier_registry: { contactPolicy: "review_required" } } },
+      ];
+      if (sql.includes("FROM source.vendor_contact")) return [contact];
+      if (sql.includes("INSERT INTO source_event_rfx_contact_authority")) return [{ id: "row-1" }];
+      return [];
+    });
+    await expect(approveRfxContact({ ...input, approvedByUserId: "" }, tx))
+      .resolves.toEqual({ ok: false, code: "invalid_record" });
+    await expect(approveRfxContact({ ...input, evidenceReference: "thin" }, tx))
+      .resolves.toEqual({ ok: false, code: "invalid_record" });
+  });
+
+  it("refuses an undeclared supplier contact policy", async () => {
+    const tx = transaction((sql) => {
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) return [
+        { ...candidate, vendor_raw_payload: { candidate_supplier_registry: {} } },
+      ];
+      return [];
+    });
+    await expect(approveRfxContact(input, tx, () => "2026-10-02T01:00:00Z", () => "approval-1"))
+      .resolves.toEqual({ ok: false, code: "contact_not_allowed" });
+  });
+
   it("refuses an unknown or foreign-event candidate before reading a contact or writing", async () => {
     const sqls: string[] = [];
     const tx = transaction((sql) => {
