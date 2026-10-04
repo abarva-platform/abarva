@@ -34,6 +34,64 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-04 tenth wave — walked on serving SHA `a69aff1552`
+
+**Item:** C-638.
+**Walked:** 2026-10-04, between 15:42:45Z and 15:50:05Z, by
+`source-backlog-executor#20261004T153945Z`.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why it is not pinned.** C-638's acceptance says "the
+then-deployed SHA" rather than a literal, which is what makes it executable at
+all — `C-635`, filed the same day, pinned `e085442776` and became unexecutable
+the moment the runtime moved past it. This walk resolved what was serving,
+stamped it, and asserts ancestry: the serving SHA was
+`a69aff1552` (#8970), which was also `origin/main` at walk start. Both merges
+C-638 names are ancestors of it, asserted with `git merge-base --is-ancestor`:
+`2fe1d2f7f2` (#8913) and `9fbddbffa0` (#8914). **`origin/main` advanced to
+`d756684bf6` while the walk was in progress and the serving revision did not
+follow it** — both bracketing `az` reads returned the same revision — so no
+deploy occurred inside the walk, which is the property the bracket exists to
+establish.
+
+**Runtime invariant, read with read-only `az` before the walk and again after.**
+At 15:42:45Z and again at 15:50:05Z the Container App template image and the
+sole 100%-traffic revision were the same digest,
+`sha256:973c5abde5cf269a32c28e871e31b2159c3223a4300f10f2efc756ab72767b2b`, on
+revision `ca-abarva-web-lab-eastus--ma69aff15`, `Healthy` / `Running`. Two
+independent reads, identical, bracketing the walk.
+
+**What this block does not cover.** The ninth wave (C-595) walked
+`a756bfc0ef`, an ancestor of this SHA, 50 minutes earlier and explicitly
+excluded #8913 and #8914 as "named by open item C-638, whose acceptance owns
+them". Those two merges are what this block proves. Nothing here should be read
+as acceptance of any other merge.
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves artifact quality signal, on the move's Files & Evidence panel | #8913 | **pass** — and held on both sides, per artifact | A *display normalisation* defect is invisible to anyone holding only one side, so both were held in the same session. **Route side:** `GET /api/v1/programs/<id>/artifacts` returned 34 artifacts, **16** carrying a score, distinct values `{80, 82, 90}` — **0** at or below 1, **0** non-integer, **0** above 100, which is the shape `qualityScoreForDisplay` exists to guarantee. **Rendered side:** the panel printed `Automated quality signal N/100` **5** times. The two were joined **per artifact** by each card's own creation stamp rather than compared as sets, because a set-wise match is satisfiable by a sibling: `12:28 PM → 82` twice, `12:21 PM → 80` twice, `12:19 PM → 90`, and the route's value for each of those three stamps is `82`, `80`, `90`. **5 of 5 agree.** |
+| 2 | NDA envelope draft state | #8914 | **blocked** — on two preconditions, either of which alone is sufficient | The merge's subject is reached by an e-sign provider webhook, which no signed-in read can drive, and the state it would record does not exist to be read. Measured rather than assumed, via `GET /api/v1/source/<eventId>/nda/esign/status` across **all 5** of the tenant's source events: every one returned **HTTP 200** with `available: false` and `suppliers: []`. So (a) the provider is undispatched on this runtime, the same condition `C-635`'s acceptance permits stating, and (b) **zero envelopes exist**, so there is no draft whose state could be asserted. **The migration is named as the acceptance requires:** `supabase/migrations/20261003160000_source_nda_esign_draft_state.sql`. Its applied state is **not established by this walk and is not asserted** — the 200 proves only that `source_nda_esign_envelopes` reads, and the loader's query selects `provider_envelope_id, status, …` and not the `document_sha256` column the migration adds, so a 200 is consistent with either state. The nearest evidence, recorded as indirect: the most recent `apply`-mode `db-migration-lab` run (37146008226, 2026-10-03T19:13Z) reports `migrationName: 20261003170000_source_nda_synthetic_admin_publication.sql` and `totalMigrationsApplied: 406`, and 170000 sorts after 160000 — suggestive of an ordered ledger having passed it, not proof of it. No envelope was drafted or sent, and none could have been. |
+| 3 | Moves board — build and run identifiers on client-visible labels | #8938 | **pass** — third consecutive unchanged reading | A re-read of `U-553`, which C-638's acceptance asks for as a second reading. It is in fact the **third**: C-592 measured **0 of 8** on `031eec1f24` and the ninth wave reproduced **0 of 8** on `a756bfc0ef`. On `a69aff1552` the board carries **8** move names and **0** of them carry a build or run identifier — no `E2E` token, no `<YYYYMMDD>T<HHMMSS>Z` run stamp, no `Evidence-<MM>-<DD>T<HH>-<MM>` build vintage. Against U-553's own filing of **5 of 8** on `44b50dcd3d`, the count has gone 5 → 0 and has now stayed 0 across three SHAs. A changed count would itself have been the finding; it did not change. |
+| 4 | Generated narrative on the Home cockpit | #8922 | **pass** — confirmed, with a positive control the first reading did not carry | A second re-read of `C-637`, which the fifth wave already measured as 0 across 1,112,296 characters on `aa23d2c31f`. Re-measured on `a69aff1552` over the **raw server response** for `/home` — 1,188,433 bytes, the same corpus size the item measured at 1,188,437 — **0** matches for the broken shape `/\d\.\s+\d/`, in the raw response and in rendered `innerText` alike. **A zero is worth nothing without a control that the corpus was there**, so: the same response carries **1,041** correctly-formed decimals, and each of the five strings the item named by hand appears only in its correct form and **zero** times broken — `17.4%` ×10, `9.1%` ×7, `496.4M` ×10, `4.5+` ×18, `6.4%` ×6 — with the chapter-01 and chapter-08 markers the item cites present on the page. The count has gone 4 → 0. |
+
+### Stated limits of this walk
+
+Row 2 is `blocked` and names both of its preconditions and the migration file;
+it is not a quiet pass, and the migration's applied state is reported as
+unestablished rather than inferred from a 200.
+
+Rows 3 and 4 are re-readings of items already measured at 0 by earlier walks.
+They are recorded as confirmations on a newer SHA, not as new findings, and
+each cites the reading it repeats.
+
+No write was performed on any surface. No approval was submitted, no phase
+advanced, no envelope drafted or sent, no template published, no file saved to
+disk. The only interactions were navigation, a workspace-tab selection, and
+same-origin `GET` reads issued with the session already in the browser. No
+attempt was made to learn a gate's fail-closed behaviour by performing the
+write it refuses.
+
 ## 2026-10-04 ninth wave — walked on serving SHA `a756bfc0ef`
 
 **Item:** C-595.
