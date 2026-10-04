@@ -430,6 +430,53 @@ describe("Moves File Cabinet evidence review", () => {
       expect(forms[0].get("evidenceFamily")).toBe("controls_family");
     });
 
+    it("sends the explicitly selected phase instead of the page phase", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={1}
+          evidenceFamilies={families}
+        />,
+      );
+      fireEvent.change(
+        screen.getByLabelText("Required evidence this file covers"),
+        { target: { value: "controls_family" } },
+      );
+      fireEvent.change(screen.getByLabelText("Evidence applies to phase"), {
+        target: { value: "2" },
+      });
+      expect(
+        screen.queryByLabelText("Required evidence this file covers"),
+      ).toBeNull();
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].get("phase")).toBe("2");
+      expect(forms[0].has("evidenceFamily")).toBe(false);
+      expect(
+        await screen.findByText(
+          /Uploaded controls.csv for P2 Discover & Diagnose/,
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("defaults the declared upload phase to the page phase", async () => {
+      const forms: FormData[] = [];
+      mockUpload(forms);
+      render(<FileCabinetPanel moveId="move-1" phase={2} />);
+      expect(screen.getByLabelText("Evidence applies to phase")).toHaveValue(
+        "2",
+      );
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: { files: [file()] },
+      });
+      await waitFor(() => expect(forms).toHaveLength(1));
+      expect(forms[0].get("phase")).toBe("2");
+    });
+
     it("sends no family when none is stated", async () => {
       const forms: FormData[] = [];
       mockUpload(forms);
