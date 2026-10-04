@@ -123,10 +123,22 @@ assertion no mutation can kill is not evidence.
 exit 0, no diagnostics. `npx eslint` on the three changed scripts — exit 0.
 `node scripts/release-check.mjs --base origin/main --head HEAD` — see Audit Evidence.
 
-**Not verified, named as not verified.** The derivation has not been observed inside a real deploy
-run, because the only way to observe that is to merge and let the repo-owned workflow run; the
-live-binary half is proved here by running that same binary in `--print-worker-jobs` mode, which is
-the same resolution path with the Azure calls not yet reached.
+**End-to-end against live Azure, read-only.** The full checker was then run in its ordinary mode
+with Azure reachable and output directed outside the repository — `exit 0`, "ACA runtime invariant
+passed", `workerJobNamesOrigin: derived`, and `workerJobSource` naming the deploy script. The web
+half and both derived worker jobs resolved to one digest, `sha256:cdc60ad9…a2fbb`, against the sole
+100%-traffic revision `ca-abarva-web-lab-eastus--mde09c6b8`. No `az` call in that path mutates
+anything — `containerapp show`, `revision show`, `acr manifest show-metadata` and a health GET —
+and `git status` was clean afterwards. This is the derived set enforcing the real invariant, not a
+resolution stopping short of it.
+
+Note that this live reading is a *later* runtime state than the one the C-589 finding recorded: a
+further deploy has landed since, which is exactly why today's agreement is not evidence and why
+every necessity case above runs against a fixture instead.
+
+**Not verified, named as not verified.** The derivation has not yet run inside the repo-owned deploy
+workflow, because the only way to observe that is to merge and let the workflow run. The script's
+behaviour is proved here; its invocation by that workflow on a real deploy is owed.
 
 ## Rollout Plan
 
@@ -188,5 +200,6 @@ constraint applies.
   still describes a scope wider than the two jobs the deploy governs. This release makes the
   enforced set derived and auditable; it does not rewrite that sentence, because which way to
   rewrite it is the gated half.
-- No deploy run has yet exercised the derivation end to end with Azure reachable. Stated as owed,
-  not as done.
+- The repo-owned deploy workflow has not yet invoked the derivation on a real deploy. The script
+  itself has been run end to end with Azure reachable and passed; what is owed is the workflow-run
+  observation, not the script's behaviour. Stated as owed, not as done.
