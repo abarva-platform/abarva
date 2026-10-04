@@ -899,6 +899,8 @@ describe("SourceNewWorkspace", () => {
           currentStage: "rfp",
           lifecycle: "active",
           solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "user-1",
         }}
         files={[]}
       />,
@@ -930,6 +932,8 @@ describe("SourceNewWorkspace", () => {
           currentStage: "rfp",
           lifecycle: "active",
           solicitationMotion: "rfi",
+          solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "user-1",
         }}
         files={[]}
       />,
@@ -948,14 +952,45 @@ describe("SourceNewWorkspace", () => {
     expect(within(folders).queryByText("RFP")).toBeNull();
   });
 
-  it("keeps unknown or unapplied solicitation authority neutral instead of fabricating RFI or RFP", () => {
+  // The name of this case claims two fixtures and for a long time it carried
+  // one. `solicitationMotion: null` is the *unknown* half only; the *unapplied*
+  // half is a motion that is asserted and not accepted, and that shape renders
+  // through a different branch. Both are listed here so neither can be the
+  // half nobody runs. The three unapplied rows are unreachable from the live
+  // read path today — `resolveAuthority` fences them and the page maps them to
+  // null — which is why this is a latent guard, not a rendering repair.
+  it.each([
+    ["unknown — no motion recorded", { solicitationMotion: null }],
+    [
+      "unapplied — motion asserted, no acceptance recorded",
+      { solicitationMotion: "rfp" as const },
+    ],
+    [
+      "unapplied — motion asserted, acceptance time but no accepting user",
+      {
+        solicitationMotion: "rfp" as const,
+        solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+        solicitationMotionAcceptedByUserId: null,
+      },
+    ],
+    [
+      "unapplied — motion asserted, accepting user but no acceptance time",
+      {
+        solicitationMotion: "rfi" as const,
+        solicitationMotionAcceptedAt: null,
+        solicitationMotionAcceptedByUserId: "user-1",
+      },
+    ],
+  ])(
+    "keeps unknown or unapplied solicitation authority neutral instead of fabricating RFI or RFP (%s)",
+    (_label, motionFields) => {
     render(
       <SourceNewWorkspace
         event={{
           ...request,
           currentStage: "rfp",
           lifecycle: "active",
-          solicitationMotion: null,
+          ...motionFields,
         }}
         files={[]}
       />,
@@ -985,7 +1020,8 @@ describe("SourceNewWorkspace", () => {
     ).toBeTruthy();
     expect(within(folders).queryByText("RFI")).toBeNull();
     expect(within(folders).queryByText("RFP")).toBeNull();
-  });
+    },
+  );
 
   // F4's residual: the phase rail and the folder rail were corrected, but every
   // label case was rendered with an empty cabinet, so nothing exercised what an

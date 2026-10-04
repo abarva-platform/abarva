@@ -8,6 +8,7 @@ import {
   sourceNewEventTypeLabel,
   sourceNewFilePhase,
   sourceNewLifecycleLabel,
+  sourceNewMarketPackageLabel,
   sourceNewNextAction,
   sourceNewHistoricalGapPhases,
   sourceNewPhaseState,
@@ -269,5 +270,96 @@ describe("sourceNewStageLabel", () => {
     for (const stage of ["rfp", "rfp_rfi_package"]) {
       expect(sourceNewStageLabel(stage)).not.toMatch(/\bRFI\b|\bRFP\b/);
     }
+  });
+});
+
+describe("sourceNewMarketPackageLabel acceptance dependency", () => {
+  // The live read path cannot hand this function a motion without acceptance:
+  // `resolveAuthority` returns `unavailable` and the page maps that to a null
+  // motion. That fence is asserted in its own suites. These cases exist so the
+  // dependency is stated *here* as well — the function names a motion only on
+  // the evidence that the motion was accepted, rather than on the fence being
+  // somewhere upstream and nothing saying so.
+  const accepted = {
+    solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+    solicitationMotionAcceptedByUserId: "user-1",
+  };
+
+  it("names the motion once both acceptance fields are recorded", () => {
+    expect(
+      sourceNewMarketPackageLabel({ solicitationMotion: "rfp", ...accepted }),
+    ).toBe("RFP");
+    expect(
+      sourceNewMarketPackageLabel({ solicitationMotion: "rfi", ...accepted }),
+    ).toBe("RFI");
+  });
+
+  it("stays neutral when a motion is asserted with no acceptance at all", () => {
+    for (const motion of ["rfi", "rfp"] as const) {
+      expect(sourceNewMarketPackageLabel({ solicitationMotion: motion })).toBe(
+        "Market package",
+      );
+    }
+  });
+
+  it("stays neutral when a motion carries an acceptance time but no accepting user", () => {
+    for (const motion of ["rfi", "rfp"] as const) {
+      expect(
+        sourceNewMarketPackageLabel({
+          solicitationMotion: motion,
+          solicitationMotionAcceptedAt: accepted.solicitationMotionAcceptedAt,
+          solicitationMotionAcceptedByUserId: null,
+        }),
+      ).toBe("Market package");
+    }
+  });
+
+  it("stays neutral when a motion carries an accepting user but no acceptance time", () => {
+    for (const motion of ["rfi", "rfp"] as const) {
+      expect(
+        sourceNewMarketPackageLabel({
+          solicitationMotion: motion,
+          solicitationMotionAcceptedAt: null,
+          solicitationMotionAcceptedByUserId:
+            accepted.solicitationMotionAcceptedByUserId,
+        }),
+      ).toBe("Market package");
+    }
+  });
+
+  // Whitespace is not a signature. `resolveAuthority` already trims before it
+  // decides, so a blank-but-present acceptance field must not read as accepted
+  // here either, or the two layers would disagree about the same row.
+  it("does not read a whitespace-only acceptance field as acceptance", () => {
+    expect(
+      sourceNewMarketPackageLabel({
+        solicitationMotion: "rfp",
+        solicitationMotionAcceptedAt: "   ",
+        solicitationMotionAcceptedByUserId: "user-1",
+      }),
+    ).toBe("Market package");
+    expect(
+      sourceNewMarketPackageLabel({
+        solicitationMotion: "rfp",
+        solicitationMotionAcceptedAt: accepted.solicitationMotionAcceptedAt,
+        solicitationMotionAcceptedByUserId: "  ",
+      }),
+    ).toBe("Market package");
+  });
+
+  it("carries the same dependency into the phase label and the next action", () => {
+    const unaccepted = {
+      currentStage: "rfp",
+      lifecycle: "active",
+      solicitationMotion: "rfp" as const,
+    };
+
+    expect(sourceNewCurrentPhaseLabel(unaccepted)).toBe("Market package");
+    expect(sourceNewNextAction(unaccepted).label).toBe("Open market package");
+
+    expect(sourceNewCurrentPhaseLabel({ ...unaccepted, ...accepted })).toBe("RFP");
+    expect(sourceNewNextAction({ ...unaccepted, ...accepted }).label).toBe(
+      "Open RFP",
+    );
   });
 });
