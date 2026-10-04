@@ -2299,19 +2299,15 @@ export function MovesPhaseStandaloneClient({
   // slot below so they keep working unchanged.
   const captureSectionInput = (section: PhaseCaptureSection): ReactNode => {
     const value = displayPhaseCaptureValues[section.key] ?? "";
-    if (section.structured === "facts") {
-      return <FinderFactsTable rawValue={value} />;
-    }
-    if (section.structured === "business-change") {
-      return (
+    const input =
+      section.structured === "facts" ? (
+        <FinderFactsTable rawValue={value} />
+      ) : section.structured === "business-change" ? (
         <BusinessChangeAssessmentForm
           value={value}
           onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
         />
-      );
-    }
-    if (section.structured === "solution-route") {
-      return (
+      ) : section.structured === "solution-route" ? (
         <SolutionRouteValidationForm
           assessment={businessChangeAssessment}
           approvedEvidenceReferences={initialApprovedEvidenceReferences}
@@ -2319,27 +2315,61 @@ export function MovesPhaseStandaloneClient({
           value={value}
           onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
         />
-      );
-    }
-    if (section.structured === "estimate-model") {
-      return (
+      ) : section.structured === "estimate-model" ? (
         <EstimateModelEditor
           value={value}
           onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
         />
+      ) : (
+        <textarea
+          aria-label={section.label}
+          className="mcf-input"
+          placeholder={section.example ?? "Write your answer here."}
+          rows={4}
+          value={value}
+          onChange={(event) =>
+            setVisiblePhaseCaptureValue(section.key, event.target.value)
+          }
+        />
       );
-    }
+
+    // aVa's governed draft for this field, surfaced for review (design's
+    // "Filled by aVa · review"). Propose → human inserts/dismisses; nothing
+    // is written until the person acts.
+    const proposal = avaDraftProposalsByKey.get(section.key);
+    if (!proposal) return input;
     return (
-      <textarea
-        aria-label={section.label}
-        className="mcf-input"
-        placeholder={section.example ?? "Write your answer here."}
-        rows={4}
-        value={value}
-        onChange={(event) =>
-          setVisiblePhaseCaptureValue(section.key, event.target.value)
-        }
-      />
+      <>
+        <div className="mcf-ava-draft" data-testid={`ava-draft-${section.key}`}>
+          <div className="mcf-ava-draft-head">
+            <span className="mcf-ava-badge">aVa draft · review</span>
+            <span className="mcf-ava-conf">{proposal.confidence} confidence</span>
+          </div>
+          <blockquote className="mcf-ava-proposed">
+            {proposal.proposedValue}
+          </blockquote>
+          {proposal.rationale ? (
+            <p className="mcf-ava-rationale">{proposal.rationale}</p>
+          ) : null}
+          <div className="mcf-ava-draft-actions">
+            <button
+              type="button"
+              className="mcf-ava-insert"
+              onClick={() => applyAvaDraftProposal(proposal)}
+            >
+              Insert as draft
+            </button>
+            <button
+              type="button"
+              className="mcf-ava-dismiss"
+              onClick={() => dismissAvaDraftProposal(section.key)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+        {input}
+      </>
     );
   };
 

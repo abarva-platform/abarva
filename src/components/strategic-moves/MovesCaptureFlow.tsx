@@ -353,5 +353,15 @@ const MCF_CSS = `
 .mcf-next{background:var(--mcf-surface);border:1px solid var(--mcf-line);border-radius:14px;padding:32px}
 .mcf-next h2{font-family:var(--mcf-serif);font-weight:400;font-size:26px;margin:6px 0 0}
 .mcf-next-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:22px}
+.mcf-ava-draft{border:1px solid rgba(29,158,117,.3);background:#f0fbf7;border-radius:12px;padding:12px 14px;margin:0 0 10px;display:flex;flex-direction:column;gap:8px}
+.mcf-ava-draft-head{display:flex;align-items:center;gap:10px}
+.mcf-ava-badge{font-family:var(--mcf-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#147c5b;border:1px solid rgba(29,158,117,.4);border-radius:4px;padding:2px 6px}
+.mcf-ava-conf{font-size:11px;color:var(--mcf-muted);text-transform:capitalize}
+.mcf-ava-proposed{margin:0;font-size:14px;color:var(--mcf-ink);border-left:2px solid var(--mcf-accent);padding-left:11px;line-height:1.5}
+.mcf-ava-rationale{margin:0;font-size:12.5px;color:var(--mcf-muted);line-height:1.5}
+.mcf-ava-draft-actions{display:flex;gap:8px}
+.mcf-ava-insert{border:0;background:var(--mcf-accent);color:#fff;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer}
+.mcf-ava-insert:hover{background:var(--mcf-accent-hover)}
+.mcf-ava-dismiss{border:0;background:none;color:var(--mcf-muted);font-size:12.5px;font-weight:500;padding:7px 8px;cursor:pointer}
 @media (max-width:640px){.mcf-panel-intro{font-size:16px}}
 `;
