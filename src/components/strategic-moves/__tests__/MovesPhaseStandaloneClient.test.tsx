@@ -4239,9 +4239,10 @@ describe("MovesPhaseStandaloneClient", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", {
-        name: "Upload evidence for approach decision",
-      }),
+      screen.queryByRole("button", { name: "Upload decision files" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Supporting files can be added in Files & Evidence/i),
     ).toBeInTheDocument();
     fireEvent.click(workflowStepButton(/Approve & Build/i));
 
@@ -5795,6 +5796,13 @@ describe("MovesPhaseStandaloneClient", () => {
         const action = await screen.findByTestId("mxw-workflow-next-action");
         const actionSlot = document.getElementById("mxw-step-progress-action");
         expect(actionSlot?.querySelectorAll("button")).toHaveLength(1);
+        expect(
+          document
+            .querySelector(".mxw-contract-legacy-body")
+            ?.querySelectorAll(
+              ".mxw-primary, .mxw-primary-action, .mxw-step-gate-button",
+            ),
+        ).toHaveLength(0);
         expect(action).toHaveTextContent(`Continue to ${next}`);
         expect(
           screen.queryByTestId("mxw-contract-comingup"),
@@ -5815,13 +5823,20 @@ describe("MovesPhaseStandaloneClient", () => {
 
         if (phase === 3 && substep === "decide") {
           expect(
-            screen.getByRole("button", { name: "Upload decision files" }),
-          ).toHaveClass("secondary");
+            screen.queryByRole("button", { name: "Upload decision files" }),
+          ).not.toBeInTheDocument();
           expect(
             screen.getByRole("heading", {
               name: "Confirm the selected approach",
             }),
           ).toBeInTheDocument();
+        }
+        if (phase === 4 && substep === "value") {
+          expect(
+            document.querySelector(
+              ".mxw-contract-legacy-body .mxw-evidence-count-link",
+            ),
+          ).toBeNull();
         }
         if (phase === 5 && substep === "workstreams") {
           expect(
@@ -5849,6 +5864,47 @@ describe("MovesPhaseStandaloneClient", () => {
             screen.getByTestId("mxw-contract-comingup"),
           ).toBeInTheDocument();
         }
+      },
+    );
+
+    it.each([3, 4, 5])(
+      "P$phase final approval keeps one truthful primary action and no duplicate input editor",
+      async (phase) => {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+            initialSubstepKey="approve"
+            move={makeMove({ currentPhase: phase })}
+            phaseNum={phase}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        await waitFor(() => {
+          const actionSlot = document.getElementById(
+            "mxw-step-progress-action",
+          );
+          expect(actionSlot?.querySelectorAll("button")).toHaveLength(1);
+          expect(actionSlot?.querySelector("button")).toHaveTextContent(
+            /Complete phase inputs before build/i,
+          );
+          expect(actionSlot?.querySelector("button")).toBeDisabled();
+        });
+        expect(document.querySelector(".mxw-capture.compact")).toBeNull();
+        expect(screen.getByTestId("mxw-contract-comingup")).toBeInTheDocument();
+        const inputStepName =
+          phase === 3
+            ? "Solution approach & options"
+            : phase === 4
+              ? "Roadmap & sequencing"
+              : "Handoff owners & RACI";
+        expect(
+          within(screen.getByLabelText(`P${phase} steps`)).getByRole("button", {
+            name: inputStepName,
+          }),
+        ).toBeInTheDocument();
       },
     );
 
@@ -5901,6 +5957,31 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(continueButton).toBeEnabled();
       fireEvent.click(continueButton);
       expect(contractStepButton(/Gaps \/ root causes/i)).toHaveClass("active");
+    });
+
+    it("an empty structured facts array does not enable Continue", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          currentStateReadiness={makeCoveredCurrentStateReadiness()}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+          initialPhaseCaptureValues={{
+            ...completeP2CaptureValues,
+            baseline_metrics: "[]",
+          }}
+          initialSubstepKey="prepare"
+          move={makeMove({ currentPhase: 2 })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(contractStepButton(/Baseline metrics/i));
+      expect(screen.getByText("No baseline metrics captured yet.")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Save & continue" }),
+      ).toBeDisabled();
     });
 
     it("saved evidence-backed solution-route capture enables Continue and advances", () => {

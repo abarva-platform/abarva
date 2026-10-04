@@ -3479,7 +3479,9 @@ function phaseCaptureStatusForSection(
           )
         : section.structured === "estimate-model"
           ? evaluateEstimateModel(persisted).readyForApproval
-          : true;
+          : section.structured === "facts"
+            ? parseDiagnosisFacts(persisted).length > 0
+            : true;
   if (!structuredValid) {
     return { label: "Needs valid details", complete: false, tone: "open" };
   }
@@ -4932,15 +4934,10 @@ function PhaseBody({
             </strong>
           </div>
         </section>
-        <DecisionEvidenceActionPanel
-          buttonLabel="Upload decision files"
-          heading="Upload evidence for approach decision"
-          moveId={move.id}
-          onOpenFiles={onOpenFiles}
-          phase={phase.phase}
-          secondaryAction
-          title="Solution Approach Decision Summary"
-        />
+        <p className="mxw-muted-note">
+          Supporting files can be added in Files &amp; Evidence and are reviewed
+          before they count toward this phase.
+        </p>
       </>
     );
   }
@@ -5051,14 +5048,7 @@ function PhaseBody({
           </div>
           <div>
             <span>Evidence posture</span>
-            <button
-              type="button"
-              className="mxw-evidence-count-link"
-              onClick={onOpenFiles}
-              aria-label={`${evidenceCount} evidence items — open Files & Evidence`}
-            >
-              {evidenceCount} items
-            </button>
+            <strong>{evidenceCount} items</strong>
           </div>
           <div>
             <span>Decision state</span>
@@ -5258,7 +5248,7 @@ function PhaseBody({
   return (
     <>
       {phase.phase === 0 ? <P0CapturedBriefReview move={move} /> : null}
-      {phase.phase >= 1 && !isHistoricalPhase ? (
+      {phase.phase >= 1 && phase.phase <= 2 && !isHistoricalPhase ? (
         <PhaseCaptureEditor
           compact
           completeCount={phaseCaptureCompleteCount}
