@@ -10,6 +10,7 @@ import { evaluateGate } from "@/lib/programs/governance";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
@@ -96,10 +97,15 @@ export async function POST(
         getModuleState(ctx, programId),
         listApprovedPhaseEvidence(ctx, programId, 1),
       ]);
+      const requireBasis = isFeatureEnabled(
+        { clientKey: ctx.clientKey, clientId: ctx.clientId },
+        "moves_charter_basis_v1",
+      );
       const missing = missingP1CaptureSections(
         getPhaseCaptureSections(1),
         modules,
         approvedEvidence,
+        { requireBasis },
       );
       if (missing.length > 0) {
         return Response.json(
@@ -107,8 +113,9 @@ export async function POST(
             error: "capture_incomplete",
             phase: 1,
             missing,
-            detail:
-              "P1 capture requires saved fields and matching approved evidence.",
+            detail: requireBasis
+              ? "P1 capture requires every Charter field saved with a recorded basis (approved evidence, a workspace assertion, or an owned assumption)."
+              : "P1 capture requires saved fields and matching approved evidence.",
           },
           { status: 409 },
         );

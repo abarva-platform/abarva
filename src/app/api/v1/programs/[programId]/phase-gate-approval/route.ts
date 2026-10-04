@@ -32,6 +32,7 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
@@ -175,8 +176,14 @@ async function captureCompletion(
   const approvedP1Evidence =
     phase === 1 ? await listApprovedPhaseEvidence(ctx, programId, 1) : [];
   if (phase === 1) {
+    const requireBasis = isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_charter_basis_v1",
+    );
     missing.push(
-      ...missingP1CaptureSections(sections, modules, approvedP1Evidence),
+      ...missingP1CaptureSections(sections, modules, approvedP1Evidence, {
+        requireBasis,
+      }),
     );
   } else {
     for (const section of sections) {

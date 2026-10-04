@@ -102,7 +102,8 @@ export type FeatureFlagKey =
   | "moves_risk_tier_scoring_v1"
   | "moves_solution_pattern_gate_v1"
   | "moves_capture_v2"
-  | "moves_home_v2";
+  | "moves_home_v2"
+  | "moves_charter_basis_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -408,6 +409,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "2026-10-04: Renders the redesigned Moves Home portfolio landing (MovesHome) - human headline, a 'Waiting on you' triage (the specific ask per move, oldest first), an all-moves table with a six-dot phase rail, and the reconciled-with-client-inventory panel. Presentation only; reads the same portfolio + reconciliation, with value numbers from governed facts. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
     policy: "tenant",
     includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_basis_v1",
+    summary:
+      "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Off by default; the legacy approved-evidence lock stays in force until a tenant is enabled via includeTenants.",
+    policy: "tenant",
+    includeTenants: [],
   },
 ];
 

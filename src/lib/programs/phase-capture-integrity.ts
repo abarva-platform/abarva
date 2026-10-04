@@ -121,11 +121,19 @@ export function findPlaceholderValues(
  */
 export function computeCaptureRevision(
   values: Record<string, unknown>,
+  basisBySection?: Record<string, unknown>,
 ): string {
-  const canonical = Object.keys(values)
+  const valueCanonical = Object.keys(values)
     .sort()
     .map((key) => `${key}\u0000${String(values[key] ?? "")}`)
     .join("\u0001");
+  const basisKeys = Object.keys(basisBySection ?? {}).sort();
+  const basisCanonical = basisKeys.length
+    ? `\u0002${basisKeys
+        .map((key) => `${key}\u0000${JSON.stringify(basisBySection?.[key] ?? null)}`)
+        .join("\u0001")}`
+    : "";
+  const canonical = `${valueCanonical}${basisCanonical}`;
   return createHash("sha256").update(canonical).digest("hex").slice(0, 16);
 }
 
