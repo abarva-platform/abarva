@@ -34,6 +34,135 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-04 eleventh wave — walked on serving SHA `6b6b2af358`
+
+**Item:** C-596.
+**Walked:** 2026-10-04, between 22:31:41Z and 22:39:49Z, by
+`source-backlog-executor#20261004T2229Z`.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why it is not pinned.** C-596 says to resolve the serving SHA
+at walk time and assert ancestry, which is the unpinned form `C-635` proved
+necessary by becoming unexecutable when the runtime moved past the literal it
+named. The serving SHA was `6b6b2af358` (#8974), which was also `origin/main` at
+walk start and still was at walk end. `d756684bf6` (#8971), the merge this item
+exists to verdict, is an ancestor of it, asserted with
+`git merge-base --is-ancestor`.
+
+**The serving SHA is established from the registry, not from the revision
+name.** A revision suffix is a label the deploy writes, and an overtaken run can
+leave one that is not the build's own; so the serving digest was resolved
+independently — `az acr manifest show-metadata` on
+`sha256:16716748…` returns exactly one tag, `main-6b6b2af3`. The revision name
+`--m6b6b2af3` agrees with it, which is the point: two sources, one answer.
+
+**Runtime invariant, read with read-only `az` before the walk and again after
+it, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App | `ca-abarva-web-lab-eastus` |
+| Template image | `sha256:167167481e0b23bac257e5f7f651c3b98f512e15393a417f6790b153b3ebd49e` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--m6b6b2af3` — sole entry, weight 100 |
+| Revision image | identical to the template image |
+| Revision state | `active: true`, `Healthy`, `Running`, created 17:24:56Z |
+
+Read at 22:31:41Z and again at 22:39:49Z; both reads returned the same digest
+and the same sole revision, so no deploy landed inside the walk. The 17:14:57Z
+digest the item quotes was **not** reused — C-596 forbids it, and these are two
+fresh reads of a different digest.
+
+### The ancestor sweep — re-derived, and six rows newer than the last one
+
+Every first-parent merge between the oldest wave SHA this file records
+(`e085442776`) and the walked SHA was enumerated with `git rev-list
+--first-parent` and each checked with `git merge-base --is-ancestor`.
+**60 merges; all 60 are ancestors.** The ninth wave swept 54 over the same
+lower bound, so the sweep is that disposition plus the six merges that have
+landed since, each dispositioned below rather than inherited.
+
+| Disposition | Count | Merges |
+|---|---|---|
+| Dispositioned by the ninth wave's sweep, unchanged | 52 | the 54 it swept, less #8913 and #8914 |
+| Verdicted by the tenth wave | 2 | #8913 #8914 |
+| **Walked here** | 1 | #8971 |
+| No product surface — nothing under `src/app`, `src/components` or `src/lib` outside tests, so `deployed` is the ceiling | 4 | #8969 #8970 #8972 #8974 |
+| Product files, but the only path they add is behind a flag that is off for every tenant — **observed off on the runtime**, see below | 1 | #8973 |
+
+**#8963 is still open** — re-read at walk time, `state: OPEN`, `mergedAt: null` —
+so the six merges whose verdicts sit only in it (#8915 #8917 #8939 #8940 #8942
+#8944) stay excluded on exactly the ground the ninth wave excluded them, and do
+not fall back to this item. They are counted inside the 52 above.
+
+**The four no-product-surface merges were measured, not assumed:** #8969 touches
+an operator loader under `scripts/source/` and a doc; #8970 and #8972 are this
+file and a release record; #8974 is `scripts/exec/` and a release record. None
+touches a non-test file under `src/app`, `src/components` or `src/lib`.
+
+### Results
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Source New — Stage 04 accepted-candidate panel, supplier contact readiness | #8971 | **pass**, and the differing-label result is **null**: 0 of 4 rows differ — established by unreachability, not by two counts agreeing | #8971 moves the readiness test from "some active contact in the embedded registry payload carries an e-mail" to "`activeContactCount > 0`", where the count is now a `source.vendor_contact` subquery keyed on tenant and vendor. **All five of the tenant's source events were read, not one**, because a panel with no rows and a panel whose rows all agree look alike: four serialize an accepted-candidate panel with **0** rows, and one carries **4**. On that one, per supplier row, by synthetic registry id — `SYN-SUP-AMS-001`, `-002`, `-003`, `-004` — the panel prints `Active contacts: 1` and the contact blocker *"Contact requires review before any approach."*, with contact policy *review required*, all four in the `not under contract` group. **Why no row's label can differ, which is stronger than observing that none does:** `contactReadiness` returns `review_required` on the policy check *before* it reaches the line #8971 changed, so for a `review_required` row the old and new rules are the same function. The policy value that reaches the changed branch is `contactable`, and it occurs **zero** times across the serialized payloads of **all five** events — so no row on this tenant exercises the changed line at all. A null result is a pass here, and the reason it is null is recorded rather than left as a coincidence. |
+| 1a | — the same row's other client-visible half | #8971 | **pass on the after-side only**; the before-side is cited, not observed | The merge also changes the number the panel prints. Its own release record states that an independent read-only database query found four active canonical contacts while the panel still displayed **zero**. This walk observed the after-side — **1** on each of the four rows, four in total, which is the count that record names — and it cannot observe the before-side, because the runtime has moved past it. Recorded as consistent-with rather than as a measured 0 → 1 transition. |
+| 2 | Moves phase capture — the 3-step capture flow | #8973 | **excluded — flag off, and observed off rather than read off the registry** | C-596 forbids treating #8973 as live-proven while `moves_capture_v2` is off. It is off: the flag is registered `policy: "tenant"` with `includeTenants: []`, and on the signed-in Moves phase page the server serializes `captureV2Enabled: false`, the live DOM carries exactly one `data-capture-v2` element whose value is `off`, and the flag-on path's own first step string *"Scope the bet"* appears **0** times. The excluded merge is therefore excluded on an observation, not on an assertion about a config file. |
+
+### The readiness label is derived from the blocker sentence, and that is said rather than glossed
+
+C-596 asks for "the readiness label shown". The accepted-candidate row does not
+print the readiness token — it prints the blocker sentence
+`contactBlockerFor` returns for it. That mapping is injective: `ready` → no
+sentence, `prohibited` → *"Do not contact: …"*, `review_required` → *"Contact
+requires review before any approach."*, `missing_contact` → *"No active contact
+record; …"*. So the sentence determines the label uniquely and the label above
+is a derivation from what the panel renders, not a reading of a token the panel
+does not have. The literal tokens *ready* / *review required* / *prohibited*
+**do** appear on the same page, on the `Suggested for review` rows — a different
+projection, built by `buildSourceRequestSupplierSuggestions`, which #8971 does
+not touch. They are not this row's evidence and are named here so a later reader
+does not mistake them for it.
+
+### Stated limits of this walk
+
+The embedded `contacts[]` array the pre-#8971 rule read is **not serialized to
+the client** — the panel row shape drops it — so the old rule's input could not
+be recomputed from the surface. This is why row 1 is argued from the policy
+short-circuit, which needs no access to that array, rather than from a
+side-by-side of the two rules' outputs.
+
+Four of the five events carry zero accepted candidates. That is reported as
+zero driving rows, not as zero envelopes or zero contacts: an empty panel is
+equally consistent with no acceptances having been recorded and with an
+acceptance read that returns nothing, and this walk does not distinguish them.
+
+No write was performed on any surface. No approval was submitted, no candidate
+accepted, no phase advanced, no envelope drafted or sent, no template published,
+no file saved. The only interactions were navigation, one stage-section
+selection on a phase already marked `Recorded` — whose own banner states that
+viewing it does not mark it complete, approve any gate, or change the current
+stage — and same-origin `GET` reads issued with the session already in the
+browser. No Azure mutation; both `az` calls are reads.
+
+### The hydrated page offered four events; the server offered five
+
+The event list was first taken from the rendered DOM — `a[href*="/source/new/"]`
+returned **4** distinct events. The same page's server HTML returns **5**. The
+fifth was fetched and read like the other four (zero accepted-candidate rows),
+so the conclusion is unchanged, but the discrepancy is recorded because it is
+the shape of error a wave walk exists to avoid: a surface's own rendered list is
+a floor, and taking it for the population is how a row goes unverdicted. Read
+the server's list, then read every member of it.
+
+### Noted, not filed
+
+The page's raw HTML could not be read through the reading tool at two offsets:
+the tool returned `[BLOCKED: Cookie/query string data]` in place of the bytes
+around two `data-capture-v2` occurrences. The question was then answered on the
+live DOM instead, which returned the attribute value directly. Recorded because
+a censored read that is mistaken for a measurement inverts a verdict, and this
+file has recorded that class of near-miss before.
+
 ## 2026-10-04 tenth wave — walked on serving SHA `a69aff1552`
 
 **Item:** C-638.
