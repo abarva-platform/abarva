@@ -1,0 +1,175 @@
+name: Source NDA lab contact intake job
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry_run validates only; apply writes four fictional lab contacts after separate approval"
+        required: true
+        type: choice
+        options: [dry_run, apply]
+        default: dry_run
+      input_sha256:
+        description: "Exact SHA-256 of the committed synthetic contact CSV"
+        required: true
+        type: string
+      idempotency_key:
+        description: "Stable non-secret key for this input version"
+        required: true
+        type: string
+      approval_reference:
+        description: "Apply only: non-secret ID of separate data-load approval"
+        required: false
+        type: string
+        default: ""
+      confirm_apply:
+        description: "Apply only: type APPLY_NDA_LAB_CONTACTS"
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: source-nda-lab-contact-intake-job
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  lab-contact-intake:
+    name: Validate or apply fictional lab NDA contacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      JOB_MODE: ${{ inputs.mode }}
+      INPUT_SHA256: ${{ inputs.input_sha256 }}
+      IDEMPOTENCY_KEY: ${{ inputs.idempotency_key }}
+      APPROVAL_REFERENCE: ${{ inputs.approval_reference }}
+      CONFIRM_APPLY: ${{ inputs.confirm_apply }}
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID }}
+      PROOF_ACCOUNT_URL: ${{ vars.SOURCE_NDA_CONTACT_PROOF_ACCOUNT_URL }}
+      PROOF_CONTAINER: ${{ vars.SOURCE_NDA_CONTACT_PROOF_CONTAINER }}
+      PROOF_PREFIX: ${{ vars.SOURCE_NDA_CONTACT_PROOF_PREFIX }}
+      PROOF_IDENTITY_CLIENT_ID: ${{ vars.SOURCE_NDA_CONTACT_PROOF_IDENTITY_CLIENT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify exact scope and approval boundary
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$INPUT_SHA256"
+          [[ "$expected" =~ ^[a-f0-9]{64}$ ]]
+          actual="$(sha256sum datasets/source/source-nda-lab-contacts-v1/contacts.csv | cut -d' ' -f1)"
+          [[ "$actual" == "$expected" ]] || { echo 'Committed contact input hash differs from dispatch' >&2; exit 1; }
+          [[ -n "$IDEMPOTENCY_KEY" ]]
+          if [[ "$JOB_MODE" == "apply" ]]; then
+            [[ "$GITHUB_REF" == 'refs/heads/main' ]] || { echo 'Apply is main-only' >&2; exit 1; }
+            [[ "$CONFIRM_APPLY" == 'APPLY_NDA_LAB_CONTACTS' ]] || { echo 'Exact confirmation required' >&2; exit 1; }
+            [[ -n "$APPROVAL_REFERENCE" ]] || { echo 'Separate data-load approval ID required' >&2; exit 1; }
+            [[ -n "$PROOF_ACCOUNT_URL" && -n "$PROOF_CONTAINER" && -n "$PROOF_PREFIX" && -n "$PROOF_IDENTITY_CLIENT_ID" ]] || {
+              echo 'Private Blob proof target is not configured' >&2; exit 1;
+            }
+          fi
+          mkdir -p audit-artifacts/source-nda-lab-contact-intake-job
+          echo "run_id=source-nda-contact-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+          jq -n --arg mode "$JOB_MODE" --arg inputSha256 "$actual" \
+            --arg runId "source-nda-contact-${GITHUB_RUN_ID}" \
+            '{mode:$mode,inputSha256:$inputSha256,runId:$runId}' \
+            > audit-artifacts/source-nda-lab-contact-intake-job/contract.json
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Resolve current digest-pinned image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --query 'properties.template.containers[0].image' -o tsv)"
+          [[ "$image" == *@sha256:* ]] || { echo 'Current web image is not digest-pinned' >&2; exit 1; }
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "digest=${image##*@}" >> "$GITHUB_OUTPUT"
+          jq --arg digest "${image##*@}" '. + {imageDigest:$digest}' \
+            audit-artifacts/source-nda-lab-contact-intake-job/contract.json \
+            > audit-artifacts/source-nda-lab-contact-intake-job/contract.tmp
+          mv audit-artifacts/source-nda-lab-contact-intake-job/contract.tmp \
+            audit-artifacts/source-nda-lab-contact-intake-job/contract.json
+
+      - name: Run dry-run through private ACA operator
+        if: inputs.mode == 'dry_run'
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" --script source:nda-lab-contacts:job \
+            --container db-migrate \
+            --env SOURCE_NDA_CONTACT_MODE=dry_run \
+            --env SOURCE_NDA_CONTACT_TENANT_KEY=meridian-health \
+            --env SOURCE_NDA_CONTACT_INPUT_SOURCE_VERSION=v1 \
+            --env SOURCE_NDA_CONTACT_INPUT_SHA256="$INPUT_SHA256" \
+            --env SOURCE_NDA_CONTACT_RUN_ID="${{ steps.scope.outputs.run_id }}" \
+            --env SOURCE_NDA_CONTACT_IDEMPOTENCY_KEY="$IDEMPOTENCY_KEY" \
+            --env SOURCE_NDA_CONTACT_BUILD_VERSION="$GITHUB_SHA" \
+            --env SOURCE_NDA_CONTACT_IMAGE_DIGEST="${{ steps.image.outputs.digest }}" \
+            --env SOURCE_NDA_CONTACT_OPERATOR="$GITHUB_ACTOR" \
+            --env SOURCE_NDA_CONTACT_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            --env SOURCE_NDA_CONTACT_EMIT_PROOF_BUNDLE=true \
+            --out-dir audit-artifacts/source-nda-lab-contact-intake-job/live-dry-run \
+            --poll-seconds 15 --idle-verify-wait-seconds 300
+
+      - name: Run separately approved apply through private ACA operator
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" --script source:nda-lab-contacts:job \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env SOURCE_NDA_CONTACT_MODE=apply \
+            --env SOURCE_NDA_CONTACT_APPLY_APPROVED=true \
+            --env SOURCE_NDA_CONTACT_CONFIRMATION=APPLY_NDA_LAB_CONTACTS \
+            --env SOURCE_NDA_CONTACT_APPROVAL_REFERENCE="$APPROVAL_REFERENCE" \
+            --env SOURCE_NDA_CONTACT_TENANT_KEY=meridian-health \
+            --env SOURCE_NDA_CONTACT_INPUT_SOURCE_VERSION=v1 \
+            --env SOURCE_NDA_CONTACT_INPUT_SHA256="$INPUT_SHA256" \
+            --env SOURCE_NDA_CONTACT_RUN_ID="${{ steps.scope.outputs.run_id }}" \
+            --env SOURCE_NDA_CONTACT_IDEMPOTENCY_KEY="$IDEMPOTENCY_KEY" \
+            --env SOURCE_NDA_CONTACT_BUILD_VERSION="$GITHUB_SHA" \
+            --env SOURCE_NDA_CONTACT_IMAGE_DIGEST="${{ steps.image.outputs.digest }}" \
+            --env SOURCE_NDA_CONTACT_OPERATOR="$GITHUB_ACTOR" \
+            --env SOURCE_NDA_CONTACT_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            --env SOURCE_NDA_CONTACT_PROOF_ACCOUNT_URL="$PROOF_ACCOUNT_URL" \
+            --env SOURCE_NDA_CONTACT_PROOF_CONTAINER="$PROOF_CONTAINER" \
+            --env SOURCE_NDA_CONTACT_PROOF_PREFIX="$PROOF_PREFIX" \
+            --env SOURCE_NDA_CONTACT_PROOF_IDENTITY_CLIENT_ID="$PROOF_IDENTITY_CLIENT_ID" \
+            --env SOURCE_NDA_CONTACT_EMIT_PROOF_BUNDLE=true \
+            --out-dir audit-artifacts/source-nda-lab-contact-intake-job/live-apply \
+            --poll-seconds 15 --idle-verify-wait-seconds 300
+
+      - name: Validate operator quality proof
+        shell: bash
+        run: |
+          node scripts/source/validate-nda-lab-contact-proof.mjs \
+            audit-artifacts/source-nda-lab-contact-intake-job/contract.json \
+            audit-artifacts/source-nda-lab-contact-intake-job/live-${{ inputs.mode }}/summary.json
+
+      - name: Upload job evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-nda-lab-contact-intake-job
+          path: audit-artifacts/source-nda-lab-contact-intake-job
+          if-no-files-found: warn
