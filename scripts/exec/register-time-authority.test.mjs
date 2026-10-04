@@ -4705,5 +4705,210 @@ const C559_LINES = [
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// C-579. A line corrected exactly as T-457 prescribes still read as
+//        violating, forever.
+//
+//        T-457 says "Never restamp an existing line. The register is audit
+//        history; append a correction instead." The audit decided
+//        `unsourced_elapsed` from one line in isolation, so no later line
+//        could discharge it: on the real register the 2026-10-03T14:10:17Z
+//        line stayed flagged after its own correction was appended one minute
+//        later, and the only way to make the control read clean was the one
+//        thing the rule forbids. A number you can only reach by breaking the
+//        rule is not a measure of whether the rule was followed.
+//
+//        The discharge is deliberately narrow, because the failure mode on the
+//        other side is the one this whole backlog exists against: a gate
+//        satisfied by a sentence. A correcting line has to (a) come after the
+//        line it corrects, (b) name that line's stamp, (c) say it is a
+//        correction, and (d) ITSELF satisfy the code it discharges, counting
+//        the referenced stamp as a reference rather than as a figure.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line quoted an elapsed figure and named neither instant. The span is from 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  const unsourced = (report.violations ?? []).filter((v) => v.code === "unsourced_elapsed");
+  check(
+    "a corrected line is still REPORTED — the correction discharges it, it does not erase it",
+    unsourced.length === 1 && unsourced[0].stamp === "2026-09-21T16:04Z",
+    `violations=${JSON.stringify(report.violations)}`,
+  );
+  check(
+    "a corrected line carries the line and stamp that corrected it",
+    unsourced[0]?.corrected?.byStamp === "2026-09-21T16:05Z" &&
+      unsourced[0]?.corrected?.byLine === 6,
+    `corrected=${JSON.stringify(unsourced[0]?.corrected)}`,
+  );
+  check(
+    "a corrected violation is counted as corrected, not as failing",
+    (report.corrected ?? []).length === 1 &&
+      (report.failing ?? []).every((v) => v.code !== "unsourced_elapsed"),
+    `corrected=${(report.corrected ?? []).length} failing=${JSON.stringify(report.failing)}`,
+  );
+  check(
+    "a register whose only violation is corrected exits 0 — a maintained register can reach zero uncorrected",
+    r.status === 0,
+    `exit=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  check(
+    "the human-readable report names the corrected count and the line that discharged it",
+    (() => {
+      const text = run(["--file", file, "--now", NOW, "--since", SINCE]).stdout;
+      return text.includes("1 corrected") && text.includes("[corrected by line 6");
+    })(),
+    run(["--file", file, "--now", NOW, "--since", SINCE]).stdout,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE MUTATION-FACING HALF. A flagged line with NO correction must stay
+  // failing — the acceptance names this one explicitly, and it is what keeps
+  // the discharge from being a blanket amnesty.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-101 — unrelated, and it names 2026-09-21T15:00:00Z and 2026-09-21T15:38:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "an uncorrected flagged line stays failing and still exits 1",
+    r.status === 1 &&
+      (report.failing ?? []).some(
+        (v) => v.code === "unsourced_elapsed" && v.stamp === "2026-09-21T16:04Z",
+      ) &&
+      (report.corrected ?? []).length === 0,
+    `exit=${r.status} failing=${JSON.stringify(report.failing)} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A SENTENCE IS NOT A CORRECTION. The correcting line names the stamp and
+  // says CORRECTION, and that is all it does: the figure it was supposed to
+  // source is still missing. If this discharged the violation, the control
+  // would be satisfiable by prose — the 18 Sep failure mode verbatim.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line was wrong about that.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a correction that names the line but sources no instants discharges nothing",
+    r.status === 1 &&
+      (report.corrected ?? []).length === 0 &&
+      (report.failing ?? []).some((v) => v.stamp === "2026-09-21T16:04Z"),
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE REFERENCED STAMP IS A REFERENCE, NOT A FIGURE. This line names the
+  // flagged stamp and exactly one other instant. Counting the reference would
+  // make it two and discharge the violation, which is the cheapest way to
+  // fake a correction and the reason the reference is excluded.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line quoted an elapsed figure. It started at 2026-09-21T09:30:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a correction naming the referenced stamp plus one instant is one instant short, not two",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // APPEND ORDER IS THE AUTHORITY. The register is append-only, so a
+  // correction is a line BELOW the one it corrects. An earlier line that
+  // happens to name a later stamp is not a correction of it — otherwise a
+  // lane could pre-authorise its own future violations.
+  const { dir, file } = fixture([
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line quoted an elapsed figure. The span is 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z.",
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a correction appended ABOVE the line it names discharges nothing",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A CODE NOT DECLARED CORRECTABLE STAYS FAILING. No appended sentence can
+  // un-future a stamp or un-share a checkout, so the discharge table fails
+  // closed: a code absent from it is never correctable, however the
+  // correcting line is worded.
+  const { dir, file } = fixture([
+    "2026-09-21T18:30Z lane-a item T-100 — stamped in the future of the clock that read it.",
+    "2026-09-21T18:31Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T18:30Z line was stamped wrong. Read at 2026-09-21T16:00:00Z against 2026-09-21T16:04:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a future_stamp violation is not correctable by any appended line",
+    r.status === 1 &&
+      (report.failing ?? []).some((v) => v.code === "future_stamp") &&
+      (report.corrected ?? []).every((v) => v.code !== "future_stamp"),
+    `exit=${r.status} failing=${JSON.stringify(report.failing)} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+{
+  // SAYING IT IS A CORRECTION IS ONE OF THE FOUR CONDITIONS, AND IS LOAD-
+  // BEARING ON ITS OWN. This line names the flagged stamp and sources two
+  // instants, but never claims to be correcting anything — so it is a lane
+  // quoting an earlier line in passing, which happens constantly in this
+  // register, and must not silently discharge it.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — following on from my 2026-09-21T16:04Z line: the window ran 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z and nothing changed.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a later line that quotes the stamp without claiming to correct it discharges nothing",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A CORRECTION OF SOME OTHER LINE IS NOT A CORRECTION OF THIS ONE. This
+  // line is a perfectly good correction — marker, two sourced instants, below
+  // the flagged line — and it names a DIFFERENT stamp. Without the verbatim
+  // stamp reference, one well-formed correction anywhere below would discharge
+  // every flagged line above it.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:06Z lane-b item T-200 — CORRECTION, appended not restamped: my 2026-09-21T16:03Z line was wrong. The span is 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a well-formed correction naming a DIFFERENT line discharges nothing here",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

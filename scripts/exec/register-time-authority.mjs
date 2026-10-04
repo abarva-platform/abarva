@@ -2633,6 +2633,104 @@ export const HARD_CODES = new Set([
   "worktree_shared",
 ]);
 
+
+// ---------------------------------------------------------------------------
+// Corrections (item C-579).
+// ---------------------------------------------------------------------------
+
+/**
+ * A line that says it is correcting an earlier one.
+ *
+ * Deliberately only the CORRECT* family, not the AMEND* family: T-457's words
+ * are "append a correction", and an amendment in this register is a claim
+ * widening its file list rather than a figure being sourced. The narrower
+ * vocabulary is the safe direction — a lane that wants a discharge can say
+ * "CORRECTION", which is what the rule already tells it to say.
+ */
+const CORRECTION_MARKER = /\b(?:CORRECTION|CORRECTING|CORRECTS|CORRECTED)\b/i;
+
+/**
+ * Which violation codes an appended line can discharge, and what that line
+ * must itself do to discharge one.
+ *
+ * **The table fails closed: a code absent from it is never correctable.** That
+ * is not laziness, it is the semantics — no sentence appended later can
+ * un-future a stamp or un-share a checkout, so `future_stamp` and
+ * `worktree_shared` have no entry and must not acquire one. Only a defect that
+ * is *a figure missing from the line* can be repaired by a later line
+ * supplying the figure.
+ *
+ * Each predicate asks the same question the audit asked, of the correcting
+ * line, with one exclusion: the stamp it quotes to identify the line it is
+ * correcting is a REFERENCE, not one of the instants it sourced. Counting it
+ * would make "CORRECTION: my 16:04Z line was wrong, it started at 09:30:00Z"
+ * read as two timestamps, which is the cheapest possible way to fake a
+ * correction and the one this exclusion exists to stop.
+ *
+ * The predicate is otherwise the audit's own condition verbatim, duplicates
+ * included. A discharge rule stricter than the rule it discharges would mean a
+ * line the audit calls clean cannot clear another, which is a second
+ * inconsistency to explain rather than a guard.
+ *
+ * @type {Map<string, (correcting: { citedTimes: string[] }, violation: { stamp: string }) => boolean>}
+ */
+export const CORRECTABLE_CODES = new Map([
+  [
+    "unsourced_elapsed",
+    (correcting, violation) =>
+      correcting.citedTimes.filter((t) => t !== violation.stamp).length >= 2,
+  ],
+]);
+
+/**
+ * Find, for each violation, the appended line that discharges it — and annotate
+ * the violation in place rather than dropping it.
+ *
+ * The defect C-579 was filed against: `auditLines` judged every line in
+ * isolation, so T-457's prescribed repair ("never restamp; append a
+ * correction") could not reach the number the control prints. The only way to
+ * read clean was to restamp, which the rule forbids, so the figure measured
+ * nothing about whether the register had been maintained.
+ *
+ * A discharging line must clear all four conditions. Dropping any one of them
+ * turns this into a gate satisfiable by prose:
+ *
+ *   1. it is BELOW the line it corrects — the register is append-only, so an
+ *      earlier line naming a later stamp is not a correction of it, and
+ *      allowing it would let a lane pre-authorise its own next violation;
+ *   2. it quotes that line's stamp verbatim, so the reader can find the pair;
+ *   3. it says it is a correction; and
+ *   4. it satisfies `CORRECTABLE_CODES` for the code — the half that keeps a
+ *      sentence from being enough.
+ *
+ * Window is deliberately not a condition: a correction is always below the
+ * line it repairs and therefore inside `now`, and a discharge that expired
+ * would reintroduce the permanence this item is about.
+ *
+ * @param {Array<{code:string, stamp:string, lineNumber:number}>} violations
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @returns {Array<{code:string, stamp:string, lineNumber:number, corrected?:{byLine:number, byStamp:string}}>} the same violations
+ */
+export function annotateCorrections(violations, lines) {
+  for (const violation of violations) {
+    const satisfies = CORRECTABLE_CODES.get(violation.code);
+    if (!satisfies) continue;
+    if (!violation.stamp) continue;
+
+    const discharge = lines.find(
+      (line) =>
+        line.lineNumber > violation.lineNumber &&
+        line.text.includes(violation.stamp) &&
+        CORRECTION_MARKER.test(line.text) &&
+        satisfies(line, violation),
+    );
+    if (discharge) {
+      violation.corrected = { byLine: discharge.lineNumber, byStamp: discharge.stamp };
+    }
+  }
+  return violations;
+}
+
 // ---------------------------------------------------------------------------
 // Authority resolution.
 // ---------------------------------------------------------------------------
@@ -3014,8 +3112,15 @@ if (isMain()) {
 
   const strict = has("--strict");
   report.strict = strict;
-  report.failing = report.violations.filter((v) => strict || HARD_CODES.has(v.code));
-  report.advisory = report.violations.filter((v) => !strict && !HARD_CODES.has(v.code));
+  // Item C-579. A violation that a later line corrected, exactly as T-457
+  // prescribes, is still reported — it is moved out of `failing`, never out of
+  // `violations`. Hiding it would make the correction unreadable, and the
+  // point of the register is that the pair is readable.
+  annotateCorrections(report.violations, lines);
+  report.corrected = report.violations.filter((v) => v.corrected);
+  const undischarged = report.violations.filter((v) => !v.corrected);
+  report.failing = undischarged.filter((v) => strict || HARD_CODES.has(v.code));
+  report.advisory = undischarged.filter((v) => !strict && !HARD_CODES.has(v.code));
   report.driftSummary = summariseDrift(report.drift);
   report.toleranceSeconds = TOLERANCE_SECONDS;
   report.window = { since: sinceIso, now: nowIso };
@@ -3059,11 +3164,16 @@ if (isMain()) {
     }
     console.log(
       `  violations:        ${report.violations.length} ` +
-        `(${report.failing.length} failing, ${report.advisory.length} advisory` +
+        `(${report.failing.length} failing, ${report.advisory.length} advisory, ` +
+        `${report.corrected.length} corrected` +
         `${strict ? ", --strict" : ""})`,
     );
     for (const v of report.violations) {
-      const mark = report.failing.includes(v) ? "" : " [advisory]";
+      const mark = v.corrected
+        ? ` [corrected by line ${v.corrected.byLine} (${v.corrected.byStamp})]`
+        : report.failing.includes(v)
+          ? ""
+          : " [advisory]";
       console.log(`    [${v.code}]${mark} line ${v.lineNumber} ${v.stamp} ${v.agent}: ${v.detail}`);
     }
   }

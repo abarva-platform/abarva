@@ -56,13 +56,55 @@ as data. `--authority <file>` injects the authoritative instants from JSON
 instead of calling `gh`, which is how the behavioural suite proves the control
 without a network. `--strict` promotes the advisory verdicts to failing.
 
+A verdict discharged by an appended correction is counted as **corrected** and
+is neither failing nor advisory — see *Corrections* below.
+
 | code | severity | meaning |
 |---|---|---|
 | `future_stamp` | **fails** | stamped after the clock that read the file — always wrong, needs no network |
-| `unsourced_elapsed` | **fails** | quotes an elapsed duration while naming fewer than two timestamps |
+| `unsourced_elapsed` | **fails**, unless corrected | quotes an elapsed duration while naming fewer than two timestamps. The only code an appended correction can discharge (item C-579) |
 | `announced_before_event` | advisory | announces a merge more than 60s before GitHub's `mergedAt` (60s of slack covers a minute-precision stamp rounding down through the event) |
 | `drifted_without_authority` | advisory | stamped more than the tolerance after the event **and** does not quote the authoritative instant |
 | `authority_missing` | advisory | announces a merge the control could not resolve — reported rather than skipped, because a lookup that quietly finds nothing must not read as a pass |
+
+### Corrections — how a line gets repaired without being restamped
+
+The rule says never restamp a line; append a correction. Until item C-579 the
+control judged every line in isolation, so it had no notion of a later line
+sourcing an earlier one's figures: after a correction was appended exactly as
+prescribed, the original stayed `unsourced_elapsed` with the same count. The
+only way to make the control read clean was the one thing the rule forbids,
+which meant the number it printed was not a measure of whether the register had
+been maintained.
+
+A violation is now reported as **corrected** when a line *below* it discharges
+it. The violation stays in `violations` and in the printed output, annotated
+with the line that corrected it — it is moved out of `failing`, never hidden,
+because the readable pair is the point of an append-only register.
+
+All four conditions are required, and each one is load-bearing:
+
+1. the correcting line is **below** the line it corrects — the register is
+   append-only, so an earlier line naming a later stamp is not a correction of
+   it, and honouring one would let a lane pre-authorise its next violation;
+2. it quotes that line's **stamp verbatim**, so the reader can find the pair —
+   without this, one well-formed correction would discharge every flagged line
+   above it;
+3. it **says** it is a correction (the `CORRECT*` family, which is the word the
+   rule itself uses); and
+4. it **satisfies the code it discharges** — for `unsourced_elapsed`, it names
+   at least two instants, *not counting the stamp it quoted to identify the
+   line it is correcting*. That stamp is a reference, not a figure. Counting it
+   would let `CORRECTION: my 16:04Z line was wrong, it started at 09:30:00Z`
+   read as two timestamps, and condition 4 is the one that keeps the whole
+   mechanism from being a gate satisfiable by prose.
+
+**The correctable-code table fails closed: a code absent from it is never
+correctable, however the later line is worded.** That is the semantics, not an
+omission — no sentence appended later can un-future a stamp or un-share a
+checkout, so `future_stamp` and `worktree_shared` have no entry and must not
+acquire one. Only a defect that is *a figure missing from the line* can be
+repaired by a later line supplying the figure.
 
 ### Why two severities
 
