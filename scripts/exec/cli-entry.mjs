@@ -106,7 +106,7 @@ export function unknownFlags(argv, spec = {}) {
     if (token === "--") break;
     if (typeof token !== "string" || !token.startsWith("--")) continue;
     if (value.has(token)) {
-      i += 1; // its value is the next token, whatever that token looks like
+      // C-582 PROBE -- deliberately removed, reverted in the next commit
       continue;
     }
     if (boolean.has(token)) continue;
