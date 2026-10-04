@@ -1,6 +1,9 @@
 import {
+  createP1CharterBasisRecord,
   missingP1CaptureSections,
+  parseP1CharterBasisInput,
   P1_CHARTER_EVIDENCE_FAMILIES,
+  readP1CharterBasisRecord,
   resolveMoveUploadEvidenceFamily,
 } from "../p1-charter-evidence";
 
@@ -45,7 +48,7 @@ describe("P1 charter evidence families", () => {
     ).toBe(P1_CHARTER_EVIDENCE_FAMILIES.length);
   });
 
-  it("requires a saved field and a same-family approved source", () => {
+  it("requires a saved field and an explicit basis, not an upload for every field", () => {
     const sections = [
       {
         key: "scope_boundary",
@@ -54,7 +57,11 @@ describe("P1 charter evidence families", () => {
       },
     ];
     const modules = [
-      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+      {
+        moduleKey: "phase_1_scope_boundary",
+        status: "completed",
+        state: { value: "Scope for the discovery hypothesis." },
+      },
     ];
 
     expect(missingP1CaptureSections(sections, modules, [])).toEqual([
@@ -62,13 +69,128 @@ describe("P1 charter evidence families", () => {
     ]);
     expect(
       missingP1CaptureSections(sections, modules, [
-        { familyKey: "charter_sponsor" },
+        { evidenceId: "evidence-other", familyKey: "charter_sponsor" },
+        { evidenceId: "evidence-scope", familyKey: "charter_scope" },
       ]),
     ).toEqual(["Scope boundary"]);
     expect(
       missingP1CaptureSections(sections, modules, [
-        { familyKey: "charter_scope" },
+        { evidenceId: "evidence-scope", familyKey: "charter_scope" },
+      ]),
+    ).toEqual(["Scope boundary"]);
+  });
+
+  it("accepts an authorized-user assertion without misclassifying it as evidence", () => {
+    const value = "Scope for the discovery hypothesis.";
+    const sections = [
+      { key: "scope_boundary", label: "Scope boundary", evidenceFamily: "charter_scope" },
+    ];
+    const basis = createP1CharterBasisRecord({
+      input: { kind: "workspace_assertion" },
+      sectionKey: "scope_boundary",
+      value,
+      userId: "user-1",
+      email: "reviewer@example.test",
+      recordedAt: "2026-10-04T12:00:00.000Z",
+    });
+    const modules = [
+      {
+        moduleKey: "phase_1_scope_boundary",
+        status: "completed",
+        state: { value, p1_charter_basis: basis },
+      },
+    ];
+
+    expect(missingP1CaptureSections(sections, modules, [])).toEqual([]);
+    expect(readP1CharterBasisRecord(modules[0].state, "scope_boundary", value))
+      .toMatchObject({ kind: "workspace_assertion", recordedByUserId: "user-1" });
+  });
+
+  it("requires an assumption owner and a P2 validation plan", () => {
+    expect(
+      parseP1CharterBasisInput({
+        kind: "assumption",
+        owner: "",
+        p2ValidationPlan: "Review in P2",
+      }),
+    ).toBeNull();
+    expect(
+      parseP1CharterBasisInput({
+        kind: "assumption",
+        owner: "Operations lead",
+        p2ValidationPlan: "",
+      }),
+    ).toBeNull();
+    expect(
+      parseP1CharterBasisInput({
+        kind: "assumption",
+        owner: "Operations lead",
+        p2ValidationPlan: "Validate through the P2 workshop.",
+      }),
+    ).toEqual({
+      kind: "assumption",
+      owner: "Operations lead",
+      p2ValidationPlan: "Validate through the P2 workshop.",
+    });
+  });
+
+  it("binds a selected approved source to its exact family and saved value", () => {
+    const value = "Scope for the discovery hypothesis.";
+    const basis = createP1CharterBasisRecord({
+      input: { kind: "approved_evidence", evidenceId: "evidence-scope" },
+      sectionKey: "scope_boundary",
+      value,
+      userId: "user-1",
+      recordedAt: "2026-10-04T12:00:00.000Z",
+    });
+    const sections = [
+      { key: "scope_boundary", label: "Scope boundary", evidenceFamily: "charter_scope" },
+    ];
+    const modules = [
+      {
+        moduleKey: "phase_1_scope_boundary",
+        status: "completed",
+        state: { value, p1_charter_basis: basis },
+      },
+    ];
+
+    expect(
+      missingP1CaptureSections(sections, modules, [
+        { evidenceId: "evidence-scope", familyKey: "charter_scope" },
       ]),
     ).toEqual([]);
+    expect(
+      missingP1CaptureSections(sections, modules, [
+        { evidenceId: "evidence-scope", familyKey: "charter_sponsor" },
+      ]),
+    ).toEqual(["Scope boundary"]);
+    expect(readP1CharterBasisRecord({ p1_charter_basis: basis }, "scope_boundary", "Changed scope"))
+      .toBeNull();
+  });
+
+  it("does not let skipped or empty required capture pass", () => {
+    const sections = [
+      { key: "scope_boundary", label: "Scope boundary", evidenceFamily: "charter_scope" },
+    ];
+    const basis = createP1CharterBasisRecord({
+      input: { kind: "workspace_assertion" },
+      sectionKey: "scope_boundary",
+      value: "Scope for the discovery hypothesis.",
+      userId: "user-1",
+      recordedAt: "2026-10-04T12:00:00.000Z",
+    });
+    expect(
+      missingP1CaptureSections(
+        sections,
+        [
+          {
+            moduleKey: "phase_1_scope_boundary",
+            status: "skipped",
+            state: { value: "Scope for the discovery hypothesis.", p1_charter_basis: basis },
+          },
+        ],
+        [],
+      ),
+    ).toEqual(["Scope boundary"]);
   });
 });

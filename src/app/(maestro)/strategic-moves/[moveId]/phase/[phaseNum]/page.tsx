@@ -66,6 +66,11 @@ import { loadApprovedSolutionApproach } from "@/lib/programs/approved-solution-a
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
+import {
+  p1CharterBasisInputFromRecord,
+  readP1CharterBasisRecord,
+  type P1CharterBasisInput,
+} from "@/lib/programs/p1-charter-evidence";
 
 export const dynamic = "force-dynamic";
 
@@ -810,6 +815,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     ),
   });
   const initialPhaseCaptureValues: Record<string, string> = {};
+  const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> = {};
   const initialReferenceDraftValues: Record<string, string> = {};
   for (const section of getPhaseCaptureSections(
     parsedPhase,
@@ -822,11 +828,30 @@ export default async function StrategicMovePhaseWorkspacePage({
     const value = moduleRow?.state?.value;
     initialPhaseCaptureValues[section.key] =
       typeof value === "string" ? value : "";
+    if (parsedPhase === 1 && section.evidenceFamily) {
+      const basisRecord = readP1CharterBasisRecord(
+        moduleRow?.state,
+        section.key,
+        initialPhaseCaptureValues[section.key],
+      );
+      const basisInput = p1CharterBasisInputFromRecord(basisRecord);
+      const sourceStillApproved =
+        basisInput?.kind !== "approved_evidence" ||
+        initialApprovedP1CaptureEvidenceReferences.some(
+          (reference) =>
+            reference.evidenceId === basisInput.evidenceId &&
+            reference.familyKey === section.evidenceFamily,
+        );
+      if (basisInput && sourceStillApproved) {
+        initialP1CharterBasisBySection[section.key] = basisInput;
+      }
+    }
     const referenceDraft = readSyntheticReferenceDraft(moduleRow);
     if (referenceDraft) initialReferenceDraftValues[section.key] = referenceDraft;
   }
   const initialPhaseCaptureRevision = computeCaptureRevision(
     initialPhaseCaptureValues,
+    parsedPhase === 1 ? initialP1CharterBasisBySection : undefined,
   );
 
   return (
@@ -854,6 +879,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         initialReferenceDraftValues={initialReferenceDraftValues}
         initialBusinessChangeAssessment={initialBusinessChangeAssessment}
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}

@@ -60,6 +60,16 @@ import {
   resolveConfirmedSolutionRoute,
   stampSolutionRouteReviewer,
 } from "@/lib/programs/solution-route-assessment";
+import {
+  createP1CharterBasisRecord,
+  isP1CharterEvidenceFamily,
+  missingP1CaptureSections,
+  parseP1CharterBasisInput,
+  p1CharterBasisInputFromRecord,
+  p1CharterEvidenceFamilyForSection,
+  readP1CharterBasisRecord,
+  type P1CharterBasisInput,
+} from "@/lib/programs/p1-charter-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,10 +93,13 @@ async function loadCaptureSnapshot(
   programId: string,
   phase: number,
 ): Promise<{
+  modules: Awaited<ReturnType<typeof getModuleState>>;
   values: Record<string, string>;
+  p1BasisBySection: Record<string, P1CharterBasisInput>;
   businessChangeAssessment: string;
   routeValidation: string;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  approvedP1EvidenceReferences: ApprovedPhaseEvidenceReference[];
   confirmedSolutionRoute: ReturnType<typeof resolveConfirmedSolutionRoute>;
 }> {
   const modules = await getModuleState(ctx, programId);
@@ -98,11 +111,11 @@ async function loadCaptureSnapshot(
   };
   const businessChangeAssessment = moduleValue(1, "business_change_assessment");
   const routeValidation = moduleValue(2, "solution_route_validation");
-  const approvedEvidenceReferences = await listApprovedPhaseEvidence(
-    ctx,
-    programId,
-    2,
-  );
+  const [approvedEvidenceReferences, approvedP1EvidenceReferences] =
+    await Promise.all([
+      listApprovedPhaseEvidence(ctx, programId, 2),
+      listApprovedPhaseEvidence(ctx, programId, 1),
+    ]);
   const confirmedSolutionRoute = resolveConfirmedSolutionRoute({
     businessChangeAssessment,
     routeValidation,
@@ -111,17 +124,40 @@ async function loadCaptureSnapshot(
     ),
   });
   const values: Record<string, string> = {};
+  const p1BasisBySection: Record<string, P1CharterBasisInput> = {};
   for (const section of getPhaseCaptureSections(
     phase,
     confirmedSolutionRoute,
   )) {
     values[section.key] = moduleValue(phase, section.key);
+    if (phase === 1 && isP1CharterEvidenceFamily(section.evidenceFamily)) {
+      const row = modules.find(
+        (entry) => entry.moduleKey === phaseCaptureModuleKey(1, section.key),
+      );
+      const record = readP1CharterBasisRecord(
+        row?.state,
+        section.key,
+        values[section.key],
+      );
+      const input = p1CharterBasisInputFromRecord(record);
+      const sourceStillApproved =
+        input?.kind !== "approved_evidence" ||
+        approvedP1EvidenceReferences.some(
+          (reference) =>
+            reference.evidenceId === input.evidenceId &&
+            reference.familyKey === section.evidenceFamily,
+        );
+      if (input && sourceStillApproved) p1BasisBySection[section.key] = input;
+    }
   }
   return {
+    modules,
     values,
+    p1BasisBySection,
     businessChangeAssessment,
     routeValidation,
     approvedEvidenceReferences,
+    approvedP1EvidenceReferences,
     confirmedSolutionRoute,
   };
 }
@@ -162,11 +198,18 @@ export async function GET(
       // back on write. Surfaced so a page can render persisted state directly
       // instead of synthesizing it — the defect this route now guards against.
       values: snapshot.values,
-      revision: computeCaptureRevision(snapshot.values),
+      revision: computeCaptureRevision(
+        snapshot.values,
+        phase === 1 ? snapshot.p1BasisBySection : undefined,
+      ),
       ...(snapshot.confirmedSolutionRoute
         ? { confirmedSolutionRoute: snapshot.confirmedSolutionRoute }
         : {}),
+      ...(phase === 1
+        ? { p1BasisBySection: snapshot.p1BasisBySection }
+        : {}),
       approvedEvidenceReferences: snapshot.approvedEvidenceReferences,
+      approvedP1EvidenceReferences: snapshot.approvedP1EvidenceReferences,
       savePath: `/api/v1/programs/${programId}/phase-capture`,
       approvalPath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
@@ -198,6 +241,7 @@ export async function POST(
       complete?: boolean;
       /** Revision the client loaded. A mismatch means the write is stale. */
       expectedRevision?: string;
+      p1BasisBySection?: Record<string, unknown>;
     };
     const phase = parsePhase(
       body.phase === undefined
@@ -225,14 +269,20 @@ export async function POST(
       programId,
       phase,
     ).catch(() => ({
+      modules: [],
       values: {},
+      p1BasisBySection: {},
       businessChangeAssessment: "",
       routeValidation: "",
       approvedEvidenceReferences: [],
+      approvedP1EvidenceReferences: [],
       confirmedSolutionRoute: null,
     }));
     const currentValues = currentSnapshot.values;
-    const currentRevision = computeCaptureRevision(currentValues);
+    const currentRevision = computeCaptureRevision(
+      currentValues,
+      phase === 1 ? currentSnapshot.p1BasisBySection : undefined,
+    );
 
     // GUARD 1 — revision fence. A client that loaded revision R may only write
     // against revision R. If the persisted state has moved on, the write is
@@ -251,6 +301,9 @@ export async function POST(
           currentRevision,
           revision: currentRevision,
           values: currentValues,
+          ...(phase === 1
+            ? { p1BasisBySection: currentSnapshot.p1BasisBySection }
+            : {}),
           capture: evaluatePhaseCapture(phase, currentValues, {
             businessChangeAssessment: currentSnapshot.businessChangeAssessment,
             approvedEvidenceReferences:
@@ -320,6 +373,115 @@ export async function POST(
     const storedValues: Record<string, string> = Object.fromEntries(
       evaluation.sections.map((section) => [section.key, section.value]),
     );
+    const incomingP1Basis = body.p1BasisBySection ?? {};
+    const p1BasisInputs: Record<string, P1CharterBasisInput | null> = {};
+    const basisKeys = new Set<string>();
+    if (phase === 1) {
+      const p1SectionKeys = new Set(
+        evaluation.sections
+          .filter((section) => isP1CharterEvidenceFamily(section.evidenceFamily))
+          .map((section) => section.key),
+      );
+      if (Object.keys(incomingP1Basis).some((key) => !p1SectionKeys.has(key))) {
+        return Response.json(
+          {
+            error: "invalid_p1_basis_field",
+            detail: "Basis was supplied for an unknown P1 field.",
+          },
+          { status: 400 },
+        );
+      }
+      for (const section of evaluation.sections) {
+        if (!isP1CharterEvidenceFamily(section.evidenceFamily)) continue;
+        const key = section.key;
+        const hasIncomingBasis = Object.prototype.hasOwnProperty.call(
+          incomingP1Basis,
+          key,
+        );
+        const valueChanged = changedSections.some((item) => item.key === key);
+        if (hasIncomingBasis) {
+          basisKeys.add(key);
+          const parsed =
+            incomingP1Basis[key] === null
+              ? null
+              : parseP1CharterBasisInput(incomingP1Basis[key]);
+          if (incomingP1Basis[key] !== null && !parsed) {
+            return Response.json(
+              {
+                error: "invalid_p1_basis",
+                field: key,
+                detail:
+                  "Choose an approved source, a workspace-user statement, or an assumption with an owner and P2 validation plan.",
+              },
+              { status: 422 },
+            );
+          }
+          p1BasisInputs[key] = parsed;
+        } else if (valueChanged) {
+          p1BasisInputs[key] = null;
+        } else {
+          p1BasisInputs[key] = currentSnapshot.p1BasisBySection[key] ?? null;
+        }
+      }
+    }
+    const nextBasisRecords: Record<string, Record<string, unknown> | null> = {};
+    const priorByModuleKey = new Map(
+      currentSnapshot.modules.map((module) => [module.moduleKey, module]),
+    );
+    if (phase === 1) {
+      const now = new Date().toISOString();
+      for (const section of evaluation.sections) {
+        if (!isP1CharterEvidenceFamily(section.evidenceFamily)) continue;
+        const key = section.key;
+        const input = p1BasisInputs[key] ?? null;
+        const prior = priorByModuleKey.get(phaseCaptureModuleKey(1, key));
+        const priorRecord = readP1CharterBasisRecord(
+          prior?.state,
+          key,
+          storedValues[key] ?? "",
+        );
+        if (!input) {
+          nextBasisRecords[key] = null;
+          continue;
+        }
+        if (input.kind === "approved_evidence") {
+          const family = p1CharterEvidenceFamilyForSection(key);
+          const approved = currentSnapshot.approvedP1EvidenceReferences.some(
+            (reference) =>
+              reference.evidenceId === input.evidenceId &&
+              reference.familyKey === family?.id,
+          );
+          if (!approved) {
+            return Response.json(
+              {
+                error: "invalid_p1_basis_source",
+                field: key,
+                detail:
+                  "Select an approved P1 source linked to this field, or classify the entry as a workspace statement or assumption.",
+              },
+              { status: 422 },
+            );
+          }
+        }
+        const sameBasis =
+          !basisKeys.has(key) &&
+          priorRecord &&
+          JSON.stringify(p1CharterBasisInputFromRecord(priorRecord)) ===
+            JSON.stringify(input);
+        nextBasisRecords[key] = sameBasis
+          ? {
+              ...(prior?.state?.p1_charter_basis as Record<string, unknown>),
+            }
+          : createP1CharterBasisRecord({
+              input,
+              sectionKey: key,
+              value: storedValues[key] ?? "",
+              userId: ctx.userId,
+              email: ctx.email,
+              recordedAt: now,
+            });
+      }
+    }
     const markComplete = body.complete === true;
 
     if (markComplete && !evaluation.complete) {
@@ -336,6 +498,61 @@ export async function POST(
       );
     }
 
+    if (markComplete && phase === 1) {
+      const candidateModules = currentSnapshot.modules.map((module) => {
+        const section = evaluation.sections.find(
+          (item) =>
+            phaseCaptureModuleKey(1, item.key) === module.moduleKey,
+        );
+        if (!section) return module;
+        const basisRecord = nextBasisRecords[section.key];
+        const state: Record<string, unknown> = {
+          ...(module.state ?? {}),
+          value: storedValues[section.key] ?? "",
+        };
+        if (basisRecord) state.p1_charter_basis = basisRecord;
+        else delete state.p1_charter_basis;
+        return {
+          ...module,
+          status: "completed",
+          state,
+        };
+      });
+      for (const section of evaluation.sections) {
+        const moduleKey = phaseCaptureModuleKey(1, section.key);
+        if (candidateModules.some((module) => module.moduleKey === moduleKey)) {
+          continue;
+        }
+        candidateModules.push({
+          moduleKey,
+          status: "completed",
+          state: {
+            value: storedValues[section.key] ?? "",
+            ...(nextBasisRecords[section.key]
+              ? { p1_charter_basis: nextBasisRecords[section.key] }
+              : {}),
+          },
+        } as (typeof candidateModules)[number]);
+      }
+      const missingBasis = missingP1CaptureSections(
+        evaluation.sections,
+        candidateModules,
+        currentSnapshot.approvedP1EvidenceReferences,
+      );
+      if (missingBasis.length > 0) {
+        return Response.json(
+          {
+            error: "p1_basis_incomplete",
+            phase,
+            missing: missingBasis,
+            detail:
+              "Classify every Charter entry as an approved source, a workspace-user statement, or an assumption with an owner and P2 validation plan.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const sb = getAzureWriteFluentClient();
     const nowIso = new Date().toISOString();
     const moduleKeys = evaluation.sections.map((section) =>
@@ -343,7 +560,7 @@ export async function POST(
     );
     const { data: existingRows, error: existingError } = await sb
       .from("program_modules")
-      .select("id, module_key, status")
+      .select("id, module_key, status, state_jsonb")
       .eq("engagement_id", programId)
       .in("module_key", moduleKeys);
     if (existingError) throw existingError;
@@ -353,15 +570,19 @@ export async function POST(
           id: string;
           module_key: string;
           status: string;
+          state_jsonb: Record<string, unknown> | null;
         }> | null) ?? []
       ).map((row) => [row.module_key, row]),
     );
 
     const changedKeys = new Set(changedSections.map((c) => c.key));
+    const hasBasisEdits = basisKeys.size > 0;
     for (const [order, section] of evaluation.sections.entries()) {
+      const existing = existingByKey.get(phaseCaptureModuleKey(phase, section.key));
+      const basisChanged = basisKeys.has(section.key);
       // Untouched sections are skipped entirely unless this call is also
       // marking the phase complete, which legitimately changes their status.
-      if (!changedKeys.has(section.key) && !markComplete) continue;
+      if (!changedKeys.has(section.key) && !basisChanged && !markComplete) continue;
       const moduleKey = phaseCaptureModuleKey(phase, section.key);
       const status =
         markComplete && section.complete
@@ -369,7 +590,8 @@ export async function POST(
           : section.complete
             ? "in_progress"
             : "not_started";
-      const state = {
+      const state: Record<string, unknown> = {
+        ...(existing?.state_jsonb ?? {}),
         capture_section_key: section.key,
         label: section.label,
         description: section.description,
@@ -377,7 +599,13 @@ export async function POST(
         completed_from_phase_capture_path: markComplete && section.complete,
         updated_at: nowIso,
       };
-      const existing = existingByKey.get(moduleKey);
+      if (phase === 1 && isP1CharterEvidenceFamily(section.evidenceFamily)) {
+        if (nextBasisRecords[section.key]) {
+          state.p1_charter_basis = nextBasisRecords[section.key];
+        } else {
+          delete state.p1_charter_basis;
+        }
+      }
       if (existing) {
         const update: Record<string, unknown> = {
           module_name: section.label,
@@ -468,15 +696,15 @@ export async function POST(
       engagementId: programId,
       action: markComplete
         ? "phase_capture_completed"
-        : hasEdits
+        : hasEdits || hasBasisEdits
           ? "phase_capture_saved"
           : "phase_capture_validated_no_change",
       fromState: null,
       toState: `P${phase}`,
       rationale: markComplete
         ? `Phase ${phase} capture completed through signed-in capture path.`
-        : hasEdits
-          ? `Phase ${phase} capture saved (${changedSections.length} field(s) changed) through signed-in capture path.`
+        : hasEdits || hasBasisEdits
+          ? `Phase ${phase} capture saved (${changedSections.length} field value(s) changed; ${basisKeys.size} basis classification(s) submitted) through signed-in capture path.`
           : `Phase ${phase} capture validated with no changes; no values written.`,
       evidenceRefs: moduleKeys,
     });
@@ -490,7 +718,7 @@ export async function POST(
       ok: true,
       programId,
       phase,
-      persisted: hasEdits || markComplete,
+      persisted: hasEdits || hasBasisEdits || markComplete,
       changedFields: changedSections.map((c) => c.key),
       // Report what was STORED, not what was sent.
       //
@@ -508,8 +736,40 @@ export async function POST(
       //      nobody else had touched the row.
       //
       // Both disappear once the response is derived from the evaluation.
-      revision: computeCaptureRevision(storedValues),
+      revision: computeCaptureRevision(
+        storedValues,
+        phase === 1
+          ? Object.fromEntries(
+              Object.entries(nextBasisRecords).flatMap(([key, record]) => {
+                if (!record) return [];
+                const parsed = readP1CharterBasisRecord(
+                  { p1_charter_basis: record },
+                  key,
+                  storedValues[key] ?? "",
+                );
+                const input = p1CharterBasisInputFromRecord(parsed);
+                return input ? [[key, input]] : [];
+              }),
+            )
+          : undefined,
+      ),
       values: storedValues,
+      ...(phase === 1
+        ? {
+            p1BasisBySection: Object.fromEntries(
+              Object.entries(nextBasisRecords).flatMap(([key, record]) => {
+                if (!record) return [];
+                const parsed = readP1CharterBasisRecord(
+                  { p1_charter_basis: record },
+                  key,
+                  storedValues[key] ?? "",
+                );
+                const input = p1CharterBasisInputFromRecord(parsed);
+                return input ? [[key, input]] : [];
+              }),
+            ),
+          }
+        : {}),
       savedFields: evaluation.sections
         .filter((section) => section.complete)
         .map((section) => section.key),
