@@ -284,8 +284,8 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
       status: 'captured',
       parseMethod: 'pdf-parse',
       warnings: [],
-      whatFound: ['uploaded evidence captured'],
-      whereUsed: ['Move workspace'],
+      whatFound: ['P1 working evidence captured; content requires human review'],
+      whereUsed: ['P1 Charter review'],
     });
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
     expect(recordAttachmentUploadMock).toHaveBeenCalledTimes(1);
@@ -333,8 +333,8 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
       status: 'captured',
       parseMethod: 'text-line-parser',
       warnings: [],
-      whatFound: ['uploaded evidence captured'],
-      whereUsed: ['Move workspace'],
+      whatFound: ['stakeholder input for charter shaping'],
+      whereUsed: ['P1 Charter review'],
     });
     expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
       scanStatus: 'skipped',
