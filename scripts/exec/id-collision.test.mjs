@@ -753,13 +753,62 @@ if (!fs.existsSync(realBacklog)) {
       "this reader and by neither of the sibling reader's two parsers",
   );
 
+  /*
+   * RESTATED 2026-10-04 (item C-585), from an aggregate ratio to a per-channel
+   * one. The old case asserted `update > filing` over the whole corpus, for the
+   * right reason — "a log this size is mostly progress notes; a reader that
+   * thought otherwise would be counting them as findings" — and it was true
+   * when it was written on 2026-09-23.
+   *
+   * It is now false, and the corpus moved rather than the reader. Two controls,
+   * both run on `origin/main` `aa23d2c31f`:
+   *
+   *   - Hold the corpus fixed, vary the reader. The 2026-09-23 reader
+   *     (`abdc6e43a7`), the exact revision that was green when this case was
+   *     written, scores today's backlog at filings=835 updates=653 — identical
+   *     to today's reader, to the occurrence. The classifier has not changed
+   *     its answer about this corpus at all.
+   *   - Hold the reader fixed, vary the corpus. On prefixes of the live backlog
+   *     today's reader gives 437/497 at 40%, 604/618 at 70%, 673/624 at 80%,
+   *     835/653 at 100% — one monotone crossover inside the newest third. A
+   *     regressed classifier would have moved the early prefixes too; they
+   *     still satisfy the old assertion.
+   *
+   * Later sections file many new ids per section and narrate comparatively
+   * little, so the aggregate tipped. What did NOT tip, at any prefix from 20%
+   * to 100%, is WHERE each kind lives: narration is written as headings, and
+   * new items arrive as rows of a filing table. Measured per channel —
+   * heading upd/fil 131/15, 254/48, 301/88, 322/100, 324/105, 325/109 and
+   * table fil/upd 229/99, 389/243, 444/261, 504/296, 568/300, 726/328 — with
+   * no flip in either channel anywhere in the corpus's history.
+   *
+   * So this asserts the structural fact the old sentence was reaching for,
+   * which the aggregate was only ever a proxy for. It keeps the same teeth: a
+   * reader that counted filing-table rows as progress notes, or narrative
+   * headings as findings, flips one of the two.
+   */
   const occurrences = backlogOccurrences(backlog);
+  const channel = (via, kind) =>
+    occurrences.filter((o) => o.via === via && o.kind === kind).length;
+  const headingUpdates = channel("heading", "update");
+  const headingFilings = channel("heading", "filing");
+  const tableFilings = channel("table", "filing");
+  const tableUpdates = channel("table", "update");
+
   check(
-    "the reader classifies far more of the corpus as updates than as filings",
-    occurrences.filter((o) => o.kind === "update").length >
-      occurrences.filter((o) => o.kind === "filing").length,
-    "a log this size is mostly progress notes; a reader that thought otherwise " +
-      "would be counting them as findings",
+    "in the heading channel the reader classifies more of the corpus as updates than as filings",
+    headingUpdates > headingFilings,
+    `headings: ${headingUpdates} updates / ${headingFilings} filings — narration ` +
+      "is written as headings; a reader that thought otherwise would be " +
+      "counting progress notes as findings",
+  );
+
+  check(
+    "and in the table channel more as filings than as updates",
+    tableFilings > tableUpdates,
+    `table rows: ${tableFilings} filings / ${tableUpdates} updates — new items ` +
+      "arrive as rows of a filing table; a reader that thought otherwise " +
+      "would be counting findings as progress notes",
   );
 
   if (!fs.existsSync(realRegister)) {
