@@ -2604,6 +2604,9 @@ export function MovesPhaseStandaloneClient({
                           evidenceCount={evidenceCount}
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
+                          declarableEvidenceFamilies={
+                            declarableEvidenceFamilies
+                          }
                           phaseEvidencePassed={phaseEvidencePassed}
                           phaseHardGatesPassed={phaseHardGatesPassed}
                           evidenceReadinessAvailable={
@@ -2694,6 +2697,9 @@ export function MovesPhaseStandaloneClient({
                           evidenceCount={evidenceCount}
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
+                          declarableEvidenceFamilies={
+                            declarableEvidenceFamilies
+                          }
                           phaseEvidencePassed={phaseEvidencePassed}
                           phaseHardGatesPassed={phaseHardGatesPassed}
                           evidenceReadinessAvailable={
@@ -4578,6 +4584,7 @@ function PhaseBody({
   evidenceCount,
   findingsEvidenceLabel,
   evidenceNeedPackets,
+  declarableEvidenceFamilies,
   phaseEvidencePassed,
   phaseHardGatesPassed,
   evidenceReadinessAvailable,
@@ -4621,6 +4628,7 @@ function PhaseBody({
   evidenceCount: number;
   findingsEvidenceLabel: string;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
+  declarableEvidenceFamilies: Array<{ id: string; label: string }>;
   phaseEvidencePassed: boolean;
   phaseHardGatesPassed: boolean;
   evidenceReadinessAvailable: boolean;
@@ -4833,6 +4841,7 @@ function PhaseBody({
         <>
           <DecisionEvidenceActionPanel
             buttonLabel="Upload decision files"
+            evidenceFamilies={declarableEvidenceFamilies}
             heading="Upload evidence for P1"
             moveId={move.id}
             onOpenFiles={onOpenFiles}
@@ -6175,6 +6184,7 @@ function DecisionOptionsActionPanel({
 
 function DecisionEvidenceActionPanel({
   buttonLabel,
+  evidenceFamilies,
   heading,
   onOpenFiles,
   moveId,
@@ -6183,6 +6193,7 @@ function DecisionEvidenceActionPanel({
   title,
 }: {
   buttonLabel: string;
+  evidenceFamilies?: Array<{ id: string; label: string }>;
   heading: string;
   onOpenFiles?: () => void;
   moveId: string;
@@ -6205,6 +6216,7 @@ function DecisionEvidenceActionPanel({
       </div>
       <EvidenceUploadControl
         buttonLabel={buttonLabel}
+        evidenceFamilies={evidenceFamilies}
         moveId={moveId}
         onOpenFiles={onOpenFiles}
         phase={phase}
@@ -6758,6 +6770,7 @@ function CurrentStateFamilyUploadPanel({
 
 function EvidenceUploadControl({
   buttonLabel,
+  evidenceFamilies = [],
   moveId,
   onOpenFiles,
   phase,
@@ -6765,6 +6778,7 @@ function EvidenceUploadControl({
   title,
 }: {
   buttonLabel: string;
+  evidenceFamilies?: Array<{ id: string; label: string }>;
   moveId: string;
   onOpenFiles?: () => void;
   phase: number;
@@ -6776,6 +6790,7 @@ function EvidenceUploadControl({
   const [uploadFamily, setUploadFamily] = useState<
     "uploaded_evidence" | "session_artifact"
   >("uploaded_evidence");
+  const [declaredEvidenceFamily, setDeclaredEvidenceFamily] = useState("");
   const [message, setMessage] = useState("");
   const [phaseArtifacts, setPhaseArtifacts] = useState<PhaseEvidenceArtifact[]>(
     [],
@@ -6823,6 +6838,9 @@ function EvidenceUploadControl({
     form.append("phase", String(phase));
     form.append("family", uploadFamily);
     form.append("title", uploadTitle);
+    if (uploadFamily === "uploaded_evidence" && declaredEvidenceFamily) {
+      form.append("evidenceFamily", declaredEvidenceFamily);
+    }
     const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
       method: "POST",
       credentials: "include",
@@ -6878,10 +6896,16 @@ function EvidenceUploadControl({
         await uploadOne(file, selectedFiles.length);
       }
       setStatus("uploaded");
+      const selectedEvidenceFamily = evidenceFamilies.find(
+        (family) => family.id === declaredEvidenceFamily,
+      );
+      const routingNote = selectedEvidenceFamily
+        ? `; routed to ${selectedEvidenceFamily.label} for review`
+        : "; not assigned to a required evidence family";
       setMessage(
         selectedFiles.length === 1
-          ? `Uploaded ${selectedFiles[0]?.name ?? "file"} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}; parsed and awaiting human review before generation.`
-          : `Uploaded ${selectedFiles.length} files as ${uploadFamily === "session_artifact" ? "session files" : "evidence"}; parsed and awaiting human review before generation.`,
+          ? `Uploaded ${selectedFiles[0]?.name ?? "file"} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${uploadFamily === "uploaded_evidence" && phase === 1 ? routingNote : ""}; parsed and awaiting human review before generation.`
+          : `Uploaded ${selectedFiles.length} files as ${uploadFamily === "session_artifact" ? "session files" : "evidence"}${uploadFamily === "uploaded_evidence" && phase === 1 ? routingNote : ""}; parsed and awaiting human review before generation.`,
       );
       await loadPhaseArtifacts();
     } catch (err) {
@@ -6899,15 +6923,45 @@ function EvidenceUploadControl({
           <span>File type</span>
           <select
             aria-label="Evidence file type"
-            onChange={(event) =>
-              setUploadFamily(event.target.value as typeof uploadFamily)
-            }
+            onChange={(event) => {
+              const nextFamily = event.target.value as typeof uploadFamily;
+              setUploadFamily(nextFamily);
+              if (nextFamily === "session_artifact") {
+                setDeclaredEvidenceFamily("");
+              }
+            }}
             value={uploadFamily}
           >
             <option value="uploaded_evidence">Evidence</option>
             <option value="session_artifact">Workshop / session notes</option>
           </select>
         </label>
+        {phase === 1 &&
+        uploadFamily === "uploaded_evidence" &&
+        evidenceFamilies.length > 0 ? (
+          <label className="mxw-upload-family">
+            <span>Required evidence family (optional)</span>
+            <select
+              aria-label="Required evidence family (optional)"
+              onChange={(event) =>
+                setDeclaredEvidenceFamily(event.target.value)
+              }
+              value={declaredEvidenceFamily}
+            >
+              <option value="">
+                Not specified (unassigned to a required family)
+              </option>
+              {evidenceFamilies.map((family) => (
+                <option key={family.id} value={family.id}>
+                  {family.label}
+                </option>
+              ))}
+            </select>
+            <small>
+              Routes review only; it does not approve or clear evidence.
+            </small>
+          </label>
+        ) : null}
         <input
           aria-label={buttonLabel}
           className="mxw-hidden-file"
