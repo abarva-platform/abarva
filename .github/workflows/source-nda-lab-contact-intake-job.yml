@@ -57,6 +57,7 @@ jobs:
       PROOF_CONTAINER: ${{ vars.SOURCE_NDA_CONTACT_PROOF_CONTAINER }}
       PROOF_PREFIX: ${{ vars.SOURCE_NDA_CONTACT_PROOF_PREFIX }}
       PROOF_IDENTITY_CLIENT_ID: ${{ vars.SOURCE_NDA_CONTACT_PROOF_IDENTITY_CLIENT_ID }}
+      PROOF_OUTPUT_DIR: ${{ inputs.mode == 'dry_run' && 'live-dry-run' || 'live-apply' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -127,7 +128,7 @@ jobs:
             --env SOURCE_NDA_CONTACT_OPERATOR="$GITHUB_ACTOR" \
             --env SOURCE_NDA_CONTACT_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
             --env SOURCE_NDA_CONTACT_EMIT_PROOF_BUNDLE=true \
-            --out-dir audit-artifacts/source-nda-lab-contact-intake-job/live-dry-run \
+            --out-dir audit-artifacts/source-nda-lab-contact-intake-job/$PROOF_OUTPUT_DIR \
             --poll-seconds 15 --idle-verify-wait-seconds 300
 
       - name: Run separately approved apply through private ACA operator
@@ -156,7 +157,7 @@ jobs:
             --env SOURCE_NDA_CONTACT_PROOF_PREFIX="$PROOF_PREFIX" \
             --env SOURCE_NDA_CONTACT_PROOF_IDENTITY_CLIENT_ID="$PROOF_IDENTITY_CLIENT_ID" \
             --env SOURCE_NDA_CONTACT_EMIT_PROOF_BUNDLE=true \
-            --out-dir audit-artifacts/source-nda-lab-contact-intake-job/live-apply \
+            --out-dir audit-artifacts/source-nda-lab-contact-intake-job/$PROOF_OUTPUT_DIR \
             --poll-seconds 15 --idle-verify-wait-seconds 300
 
       - name: Validate operator quality proof
@@ -164,7 +165,7 @@ jobs:
         run: |
           node scripts/source/validate-nda-lab-contact-proof.mjs \
             audit-artifacts/source-nda-lab-contact-intake-job/contract.json \
-            audit-artifacts/source-nda-lab-contact-intake-job/live-${{ inputs.mode }}/summary.json
+            audit-artifacts/source-nda-lab-contact-intake-job/$PROOF_OUTPUT_DIR/summary.json
 
       - name: Upload job evidence
         if: always()
