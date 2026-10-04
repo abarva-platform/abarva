@@ -839,6 +839,60 @@ describe("full multi-pass orchestration (injected stub model)", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("retries a substantive but incomplete Charter repair once before the prose gate", async () => {
+    const repairPrompts: string[] = [];
+    const charterStub: ModelCaller = async (prompt) => {
+      if (prompt.pass === "architect") {
+        return { text: JSON.stringify(charterPlan()) };
+      }
+      if (prompt.pass === "section_draft") {
+        return {
+          text: JSON.stringify({
+            key: "section",
+            title: "Section",
+            bodyMarkdown: "We recommend discovery.",
+            groundingMode: "expert_template",
+            citationsUsed: [],
+          }),
+        };
+      }
+      if (prompt.pass === "section_repair") {
+        repairPrompts.push(prompt.user);
+        const target = Number(
+          prompt.user.match(/at least (\d+) prose words/)?.[1],
+        );
+        const current = Number(
+          prompt.user.match(/existing draft has (\d+) prose words/)?.[1],
+        );
+        return {
+          text: JSON.stringify({
+            key: "repaired",
+            title: "Repaired Section",
+            bodyMarkdown: substantiveCharterRepair(
+              current < 10 ? target - 25 : target,
+            ),
+            groundingMode: "expert_template",
+            citationsUsed: [],
+          }),
+        };
+      }
+      if (prompt.pass === "synthesis") {
+        return { text: JSON.stringify(charterSynthesis) };
+      }
+      return { text: "{}" };
+    };
+
+    const result = await runDeliverableOrchestration(charterReq, charterStub);
+
+    expect(repairPrompts).toHaveLength(CHARTER_CONTRACT.sections.length * 2);
+    expect(repairPrompts[CHARTER_CONTRACT.sections.length]).toContain(
+      "existing draft has",
+    );
+    expect(result.quality?.metrics.bodyWordCount).toBeGreaterThanOrEqual(700);
+    expect(result.quality?.blockers).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
   it("does not repair a charter that already clears the document prose floor", async () => {
     let repairCalls = 0;
     const enoughWords =
@@ -882,7 +936,7 @@ describe("full multi-pass orchestration (injected stub model)", () => {
     ).toBe(false);
   });
 
-  it("keeps the charter blocked when targeted repairs still miss the prose floor", async () => {
+  it("keeps the charter blocked when both bounded repair rounds miss the prose floor", async () => {
     const charterStub: ModelCaller = async (prompt) => {
       if (prompt.pass === "architect") {
         return { text: JSON.stringify(charterPlan()) };
@@ -908,7 +962,7 @@ describe("full multi-pass orchestration (injected stub model)", () => {
 
     expect(
       result.passTrace.filter((entry) => entry.pass === "section_repair"),
-    ).toHaveLength(CHARTER_CONTRACT.sections.length);
+    ).toHaveLength(CHARTER_CONTRACT.sections.length * 2);
     expect(result.quality?.metrics.bodyWordCount).toBeLessThan(700);
     expect(result.quality?.pass).toBe(false);
     expect(result.ok).toBe(false);

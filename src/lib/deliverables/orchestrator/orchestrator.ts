@@ -226,13 +226,12 @@ export async function runDeliverableOrchestration(
   const outlineSummary = plan.sectionPlan
     .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ""}`)
     .join("\n");
-  // Reserve one targeted repair call per canonical section when a charter is short.
+  // Reserve bounded repair calls per planned section so progress reflects retries.
   const isMovesCharter =
     req.module === "moves" && req.deliverableType === "charter";
+  const maxRepairRounds = isMovesCharter ? 2 : 1;
   const expectedTotal =
-    plan.sectionPlan.length +
-    2 +
-    (isMovesCharter ? plan.sectionPlan.length : 0);
+    plan.sectionPlan.length + 2 + plan.sectionPlan.length * maxRepairRounds;
   const concurrency = (() => {
     const v = Number(process.env.ABARVA_DOCGEN_SECTION_CONCURRENCY);
     return Number.isFinite(v) && v > 0 ? v : 5;
@@ -300,19 +299,22 @@ export async function runDeliverableOrchestration(
     },
   );
 
-  // A document under its length floor is repaired before it is judged, by the
-  // same counting rule the quality gate uses. This was a charter-only step.
-  // Every other deliverable was drafted with no per-section target, judged
-  // against a floor its section writers were never given, and blocked when
-  // the sections happened to total less — with no attempt to close the gap.
-  // The floor itself is untouched; a document still under it after repair is
-  // still blocked.
+  // Repair below-floor sections with the same counting rule the quality gate
+  // uses. Charters get one bounded follow-up because a partial first repair
+  // must not leave a known, fixable shortfall for the user to rediscover by
+  // rerunning the entire build. The floor itself is unchanged and remains a
+  // hard blocker if evidence cannot support a complete document.
   const excludeNonProse = isMovesCharter
     ? true
     : req.qualityBar.excludeNonProseFromBody === true;
-  if (
-    countBodyWords(sections, { excludeNonProse }) < req.qualityBar.minBodyWords
-  ) {
+  for (let repairRound = 0; repairRound < maxRepairRounds; repairRound++) {
+    if (
+      countBodyWords(sections, { excludeNonProse }) >=
+      req.qualityBar.minBodyWords
+    ) {
+      break;
+    }
+
     const targetByKey = isMovesCharter
       ? new Map(
           CHARTER_CONTRACT.sections
@@ -339,6 +341,8 @@ export async function runDeliverableOrchestration(
         ? [{ section, plannedSection, currentWordCount, targetProseWords }]
         : [];
     });
+
+    if (repairs.length === 0) break;
 
     const repaired = await mapWithConcurrency(
       repairs,
@@ -430,15 +434,9 @@ export async function runDeliverableOrchestration(
     sections = sections.map(
       (section) => repairedByKey.get(section.key) ?? section,
     );
-    if (repairs.length > 0) {
-      opts.onProgress?.(
-        buildGenerationProgress(
-          "section_repair",
-          trace.length,
-          trace.length + 1,
-        ),
-      );
-    }
+    opts.onProgress?.(
+      buildGenerationProgress("section_repair", trace.length, trace.length + 1),
+    );
   }
 
   // Synthesis — the doc-level structured fields the quality gate checks (recommendation,
