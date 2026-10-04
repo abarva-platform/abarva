@@ -31,6 +31,9 @@ failing quietly. The seventh one will be caught the day it starts.
 
 ## Layer Impact
 
+Release lane: `internal-admin`. This is AbarVa-only repository and CI health
+capability; no client receives it and no product surface changes.
+
 - **Repository tooling / CI (no product layer).** This touches no tenant data,
   no canonical model, no product surface and no runtime. It adds a script, its
   test suite, a policy file, one step in an existing pull-request job and one
