@@ -2234,7 +2234,7 @@ export function MovesPhaseStandaloneClient({
           >
             <aside
               className={`mxw-side${collapsedRail ? " mxw-side-collapsed" : ""}`}
-              aria-label="Move phases"
+              aria-label="Move workspace"
             >
               <button
                 type="button"
@@ -2242,7 +2242,9 @@ export function MovesPhaseStandaloneClient({
                 onClick={() => setRailCollapsed((prev) => !prev)}
                 aria-expanded={!railCollapsed}
                 aria-label={
-                  railCollapsed ? "Expand phase rail" : "Collapse phase rail"
+                  railCollapsed
+                    ? "Expand workspace rail"
+                    : "Collapse workspace rail"
                 }
                 title={railCollapsed ? "Expand" : "Collapse"}
               >
@@ -2257,72 +2259,6 @@ export function MovesPhaseStandaloneClient({
                   <p>{supportLine}</p>
                 </div>
               )}
-              {!collapsedRail && <div className="mxw-side-label">Phases</div>}
-              <nav className="mxw-phase-list">
-                {PHASES.map((item) => {
-                  const tally = phaseTallies.find(
-                    (row) => row.phase === item.phase,
-                  );
-                  const state =
-                    tally?.state === "done"
-                      ? "done"
-                      : item.phase < move.currentPhase
-                        ? "done"
-                        : item.phase === move.currentPhase
-                          ? "current"
-                          : "up";
-                  const viewing = item.phase === phase.phase;
-                  const stateLabel = tally
-                    ? `${tally.met} of ${tally.total}`
-                    : state === "done"
-                      ? "Complete"
-                      : state === "current"
-                        ? "In progress"
-                        : "Upcoming";
-                  const phaseBody = (
-                    <>
-                      <span className="mxw-phase-dot">
-                        {state === "done" ? "✓" : item.code}
-                      </span>
-                      {!collapsedRail && (
-                        <span className="mxw-phase-name">{item.navLabel}</span>
-                      )}
-                      {!collapsedRail && (
-                        <span className="mxw-phase-state">{stateLabel}</span>
-                      )}
-                    </>
-                  );
-                  const rowTitle = collapsedRail
-                    ? `${item.navLabel} · ${stateLabel}`
-                    : tally
-                      ? `${tally.met} of ${tally.total} gate criteria met`
-                      : undefined;
-                  return (
-                    <div className="mxw-phase-row" key={item.code}>
-                      {item.phase <= move.currentPhase ? (
-                        <Link
-                          className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
-                          href={`/strategic-moves/${move.id}/phase/${item.phase}`}
-                          title={rowTitle}
-                        >
-                          {phaseBody}
-                        </Link>
-                      ) : (
-                        <button
-                          className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
-                          disabled
-                          title={rowTitle}
-                        >
-                          {phaseBody}
-                        </button>
-                      )}
-                      {item.phase < 5 && !collapsedRail ? (
-                        <span className="mxw-connector" />
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </nav>
               {!collapsedRail && (
                 <div className="mxw-side-label mxw-workspace-label">
                   Workspace
@@ -2435,6 +2371,12 @@ export function MovesPhaseStandaloneClient({
               className="mxw-shell"
               aria-label={`${phase.code} phase workspace`}
             >
+              <MovePhaseTopStepper
+                currentPhase={move.currentPhase}
+                moveId={move.id}
+                phaseTallies={phaseTallies}
+                viewingPhase={phase.phase}
+              />
               {workspaceView === "files" ? (
                 <>
                   <div className="mxw-crumb">
@@ -3158,6 +3100,81 @@ function AvaDraftSummary({
         </>
       ) : null}
     </div>
+  );
+}
+
+// Horizontal phase stepper across the top of the phase workspace, mirroring the
+// Source New event workflow (SourceNewWorkspace's `snw-phases`): the six Move
+// phases as top tabs with done/current/upcoming state, the viewed one
+// underlined, each a link to that phase (future phases are disabled until the
+// Move reaches them). Same state logic as the left rail's `mxw-phase-list`.
+function MovePhaseTopStepper({
+  moveId,
+  currentPhase,
+  viewingPhase,
+  phaseTallies,
+}: {
+  moveId: string;
+  currentPhase: number;
+  viewingPhase: number;
+  phaseTallies: PhaseTallyRow[];
+}) {
+  return (
+    <nav className="mxw-phase-stepper" aria-label="Phase steps">
+      {PHASES.map((item) => {
+        const tally = phaseTallies.find((row) => row.phase === item.phase);
+        const state =
+          tally?.state === "done"
+            ? "done"
+            : item.phase < currentPhase
+              ? "done"
+              : item.phase === currentPhase
+                ? "current"
+                : "up";
+        const viewing = item.phase === viewingPhase;
+        const stateLabel = tally
+          ? `${tally.met} of ${tally.total}`
+          : state === "done"
+            ? "Complete"
+            : state === "current"
+              ? "In progress"
+              : "Upcoming";
+        const reachable = item.phase <= currentPhase;
+        const inner = (
+          <>
+            <span className="mxw-phase-stepper-num" aria-hidden>
+              {state === "done" ? "✓" : item.code}
+            </span>
+            <span className="mxw-phase-stepper-copy">
+              <strong>{item.navLabel}</strong>
+              <small>{stateLabel}</small>
+            </span>
+          </>
+        );
+        const className = `mxw-phase-stepper-step ${state}${viewing ? " viewing" : ""}`;
+        return reachable ? (
+          <Link
+            aria-current={viewing ? "step" : undefined}
+            className={className}
+            href={`/strategic-moves/${moveId}/phase/${item.phase}`}
+            key={item.code}
+            title={`${item.navLabel} · ${stateLabel}`}
+          >
+            {inner}
+          </Link>
+        ) : (
+          <button
+            className={className}
+            disabled
+            key={item.code}
+            title={`${item.navLabel} · ${stateLabel}`}
+            type="button"
+          >
+            {inner}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -8137,6 +8154,18 @@ function MovesStandaloneStyles() {
 .mxw-move p{font-size:11.5px;color:var(--muted);margin:4px 0 0;line-height:1.4}
 .mxw-side-label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);font-weight:600;padding:0 8px;margin-bottom:6px}
 .mxw-phase-list{display:flex;flex-direction:column}
+.mxw-phase-stepper{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;border-bottom:1px solid rgba(12,26,58,.12);margin:0 0 18px}
+.mxw-phase-stepper-step{appearance:none;background:none;border:0;border-bottom:2px solid transparent;padding:12px 8px;display:flex;align-items:center;gap:9px;min-width:0;text-align:left;color:#5b6c8a;cursor:pointer;text-decoration:none}
+.mxw-phase-stepper-step:hover:not(:disabled){background:#f1f3f8}
+.mxw-phase-stepper-step:disabled{color:#9aa4b5;cursor:not-allowed}
+.mxw-phase-stepper-step.viewing{color:#0c1a3a;border-bottom-color:#0c1a3a}
+.mxw-phase-stepper-num{flex:0 0 auto;width:22px;height:22px;border-radius:999px;border:1px solid rgba(12,26,58,.18);display:inline-flex;align-items:center;justify-content:center;font:700 10px "JetBrains Mono",ui-monospace,monospace}
+.mxw-phase-stepper-step.done .mxw-phase-stepper-num{background:var(--green);color:#fff;border-color:var(--green)}
+.mxw-phase-stepper-step.current .mxw-phase-stepper-num{background:#e4ecf9;color:#2a5aa8;border-color:rgba(42,90,168,.3)}
+.mxw-phase-stepper-copy{min-width:0;display:flex;flex-direction:column;gap:2px}
+.mxw-phase-stepper-copy strong{font-size:12.5px;font-weight:700;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxw-phase-stepper-copy small{font-size:10px;color:#8b95a8}
+@media (max-width:900px){.mxw-phase-stepper{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .mxw-phase-row{display:flex;flex-direction:column}
 .mxw-phase{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;text-align:left;background:none;border:0;width:100%;position:relative;color:inherit;cursor:pointer}
 .mxw-phase:hover{background:rgba(20,20,19,.04)}
