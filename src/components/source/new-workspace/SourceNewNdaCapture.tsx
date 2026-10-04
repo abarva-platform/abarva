@@ -30,13 +30,18 @@ export function SourceNewNdaCapture({
   const executedFiles = files.filter((file) =>
     file.artifactGroup === "upload" && file.artifactType === "nda_executed" &&
     file.lifecycleState === "current" && Boolean(file.blobSha256));
+  const templateManagement = syntheticLab ?
+    <details className="snw-nda-capture">
+      <summary>Add another synthetic NDA template</summary>
+      <SyntheticTemplatePublication eventId={eventId} files={files} />
+    </details> : null;
   const sendControl = syntheticLab ?
     <SyntheticNdaSendControl eventId={eventId} uncovered={uncovered} templates={templates} /> : null;
   if (executedFiles.length === 0) {
-    return <>{sendControl}<p className="snw-note">Upload the executed NDA through this event&apos;s File Cabinet before recording its signature evidence.</p></>;
+    return <>{templateManagement}{sendControl}<p className="snw-note">Upload the executed NDA through this event&apos;s File Cabinet before recording its signature evidence.</p></>;
   }
 
-  return <>{sendControl}<ReadyNdaForm eventId={eventId} uncovered={uncovered} templates={templates} executedFiles={executedFiles} /></>;
+  return <>{templateManagement}{sendControl}<ReadyNdaForm eventId={eventId} uncovered={uncovered} templates={templates} executedFiles={executedFiles} /></>;
 }
 
 type OperatorSupplier = {
@@ -195,9 +200,9 @@ function SyntheticTemplatePublication({ eventId, files }: {
     if (busy) return;
     const form = new FormData(event.currentTarget);
     if (action === "upload") {
-      form.set("stageKey", "suppliers");
+      form.set("stageKey", "rfp");
       form.set("artifactKind", "nda_template");
-      form.set("artifactFamily", "legal");
+      form.set("artifactFamily", "other");
       form.set("dataClassification", "Internal");
     }
     setBusy(true);
