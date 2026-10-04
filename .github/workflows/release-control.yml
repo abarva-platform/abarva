@@ -41,6 +41,14 @@ jobs:
       - name: Prove the release check runs every gate it lists
         run: npm run check:release-check-runs-every-gate
 
+      # The ACA runtime invariant is stated over "all required worker job
+      # images". This proves the set it enforces is DERIVED from the deploy
+      # script that re-images them, not restated in a second hand-typed list
+      # that can quietly stop matching (item C-589). `--print-worker-jobs`
+      # resolves and exits before any az or curl call, so this touches nothing.
+      - name: Prove the enforced worker-job set is derived from the deploy script
+        run: npm run check:aca-worker-job-set-derived
+
       - name: Check release record
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}
