@@ -378,6 +378,10 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_solution_pattern_gate_v1",
   );
+  const captureV2Enabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_capture_v2",
+  );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -874,6 +878,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         pricingEngineEnabled={pricingEngineEnabled}
         riskAssessmentEnabled={riskAssessmentEnabled}
         solutionPatternGateEnabled={solutionPatternGateEnabled}
+        captureV2Enabled={captureV2Enabled}
       />
     </AppShell>
   );
