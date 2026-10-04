@@ -104,10 +104,19 @@ recorded because the second one is the more interesting:**
    fixture. The branch now states the event's declared lever count and its computed target range,
    both of which are real whether or not anything has realized.
 2. The un-observed beat built its per-lever rows and **never returned them** — the object literal
-   simply did not mention the local. Nothing else noticed: the value was assigned, so no lint rule
-   fired, and the beat still rendered. The harness saw it as `tasks` moving with the archetype but
-   not with the facts, which is precisely what a beat that names the levers and drops their numbers
-   looks like.
+   simply did not mention the local. The harness saw it as `tasks` moving with the archetype but not
+   with the facts, which is precisely what a beat that names the levers and drops their numbers looks
+   like.
+
+   **Corrected after this record was first written, because the first version asserted something
+   that had not been checked.** It said "no lint rule fired". That is wrong, and the correction is
+   worth more than the original claim: ESLint *does* report it —
+   `'rows' is assigned a value but never used  @typescript-eslint/no-unused-vars` — as a **warning**,
+   and the ESLint gate runs `npm run lint`, which is a bare `eslint` with no `--max-warnings`, so the
+   run exits 0 and the gate stays green. Measured by reinstating the defect on the merged file and
+   re-running: one warning, zero errors, exit 0. So the accurate statement is not that nothing saw
+   it, but that **the one thing that saw it could not fail the build** — which is the more useful
+   fact, and a standing gap rather than a fact about this change.
 
 **One assertion in the new suite was wrong and was corrected, with the reason stated in the file.**
 It forbade `$0` anywhere on the gate in the *measured-and-empty* state. That is wrong: once
