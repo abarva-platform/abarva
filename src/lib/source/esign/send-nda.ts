@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import type { SourceNdaEsignConfig } from "./config";
-import type { EsignEnvelope, EsignProvider } from "./provider";
+import type { EsignEnvelope, EsignProvider, EsignSigner } from "./provider";
 
 export type NdaSendIdentity = {
   clientKey: string;
@@ -12,6 +12,7 @@ export type NdaSendIdentity = {
   actorUserId: string;
   actorName: string;
   acknowledged: boolean;
+  deliveryMode?: "email" | "embedded";
 };
 
 export type NdaSigningAuthority = {
@@ -49,6 +50,27 @@ export type NdaSendDependencies = {
 export type NdaSendResult =
   | { ok: true; envelopeId: string }
   | { ok: false; code: "provider_unavailable" | "authority_not_ready" | "document_mismatch" | "draft_not_recorded" | "send_not_confirmed" };
+
+export function buildSyntheticNdaSigner(
+  input: Pick<NdaSendIdentity, "eventId" | "vendorId" | "contactAuthorityId" | "actorUserId" | "actorName" | "deliveryMode">,
+  authority: NdaSigningAuthority,
+  testInbox: string,
+  role: "supplier" | "buyer",
+): EsignSigner {
+  const embedded = input.deliveryMode === "embedded";
+  const identity = role === "supplier" ? input.contactAuthorityId : input.actorUserId;
+  return {
+    recipientId: role === "supplier" ? "1" : "2",
+    role,
+    name: role === "supplier" ? authority.contactName : input.actorName,
+    email: testInbox,
+    signatureAnchor: role === "supplier" ? "SUPPLIER_SIGNATURE_HERE" : "BUYER_SIGNATURE_HERE",
+    delivery: embedded ? "embedded" : "email",
+    clientUserId: embedded
+      ? `nda-${createHash("sha256").update(`${input.eventId}:${input.vendorId}:${role}:${identity}`).digest("hex").slice(0, 32)}`
+      : null,
+  };
+}
 
 type AuthorityRow = {
   candidate_id: string;
@@ -157,7 +179,8 @@ export async function sendSyntheticNdaForSignature(
   const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
   if (!uuid.test(input.eventId) || !input.vendorId.trim() ||
       !input.contactAuthorityId.trim() || !input.templateVersion.trim() ||
-      !input.actorUserId.trim() || !input.actorName.trim() || !input.acknowledged) {
+      !input.actorUserId.trim() || !input.actorName.trim() || !input.acknowledged ||
+      (input.deliveryMode !== undefined && input.deliveryMode !== "email" && input.deliveryMode !== "embedded")) {
     return { ok: false, code: "authority_not_ready" };
   }
 
@@ -211,12 +234,8 @@ export async function sendSyntheticNdaForSignature(
       documentPdf,
       documentSha256: authority.documentSha256,
       signers: [
-        { recipientId: "1", role: "supplier", name: authority.contactName,
-          email: config.testInbox, signatureAnchor: "SUPPLIER_SIGNATURE_HERE",
-          delivery: "email", clientUserId: null },
-        { recipientId: "2", role: "buyer", name: input.actorName,
-          email: config.testInbox, signatureAnchor: "BUYER_SIGNATURE_HERE",
-          delivery: "email", clientUserId: null },
+        buildSyntheticNdaSigner(input, authority, config.testInbox, "supplier"),
+        buildSyntheticNdaSigner(input, authority, config.testInbox, "buyer"),
       ],
     });
   } catch {

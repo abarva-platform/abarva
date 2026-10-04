@@ -143,6 +143,27 @@ describe("synthetic NDA send boundary", () => {
     expect(draftInput.signers.map((signer) => signer.role)).toEqual(["supplier", "buyer"]);
   });
 
+  it("creates a separately selected embedded envelope with stable lab signer identities", async () => {
+    const { deps } = harness();
+    expect(await sendSyntheticNdaForSignature({ ...input, deliveryMode: "embedded" }, deps))
+      .toEqual({ ok: true, envelopeId });
+    const signers = deps.provider.createDraftEnvelope.mock.calls[0]![0].signers;
+    expect(signers.map((signer) => signer.delivery)).toEqual(["embedded", "embedded"]);
+    expect(signers.map((signer) => signer.clientUserId)).toEqual([
+      expect.stringMatching(/^nda-[a-f0-9]{32}$/),
+      expect.stringMatching(/^nda-[a-f0-9]{32}$/),
+    ]);
+    expect(signers.map((signer) => signer.email)).toEqual(["test@abarva.ai", "test@abarva.ai"]);
+  });
+
+  it("refuses an unrecognized delivery mode rather than falling back to email", async () => {
+    const { deps } = harness();
+    const invalid = { ...input, deliveryMode: "unknown" } as unknown as typeof input & { deliveryMode: "email" };
+    expect(await sendSyntheticNdaForSignature(invalid, deps))
+      .toEqual({ ok: false, code: "authority_not_ready" });
+    expect(deps.provider.createDraftEnvelope).not.toHaveBeenCalled();
+  });
+
   it("does not send if the durable draft write fails", async () => {
     const { deps } = harness();
     deps.recordDraft.mockRejectedValueOnce(new Error("db unavailable"));
