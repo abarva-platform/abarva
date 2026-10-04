@@ -209,8 +209,8 @@ function InventoryTableBody({
         <InventoryChart config={config} rows={filtered} />
       ) : null}
 
-      <div className="overflow-x-auto rounded-md border border-[rgba(10,10,11,0.1)]">
-        <table className="w-full min-w-[560px] border-collapse text-sm">
+      <div className="max-w-full overflow-x-auto rounded-md border border-[rgba(10,10,11,0.1)]">
+        <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
           <thead>
             <tr className="border-b border-[rgba(10,10,11,0.1)] bg-[rgba(10,10,11,0.02)]">
               {visibleColumns.map((col) => (
@@ -225,6 +225,7 @@ function InventoryTableBody({
                   className={`cursor-pointer whitespace-nowrap px-3 py-2 text-xs font-medium uppercase tracking-wide text-[#888780] ${
                     col.align === "right" ? "text-right" : "text-left"
                   }`}
+                  style={{ width: `${100 / visibleColumns.length}%` }}
                 >
                   {col.label}
                 </th>
@@ -241,7 +242,7 @@ function InventoryTableBody({
                 {visibleColumns.map((col) => (
                   <td
                     key={col.key}
-                    className={`px-3 py-2 ${col.align === "right" ? "text-right" : "text-left"}`}
+                    className={`px-3 py-2 align-top ${col.align === "right" ? "text-right" : "text-left"}`}
                   >
                     {col.key === config.readinessKey ? (
                       <StateBadge
@@ -249,7 +250,7 @@ function InventoryTableBody({
                         label={cellPresentation(row[col.key]).title}
                       />
                     ) : (
-                      <span className="text-[#2c2c2a]">
+                      <span className="block whitespace-normal break-words text-[#2c2c2a]">
                         {row[col.key] === null ? "-" : String(row[col.key])}
                       </span>
                     )}
