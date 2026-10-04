@@ -44,6 +44,7 @@ import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
 } from "@/components/strategic-moves/MovesCaptureFlow";
+import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -2382,6 +2383,7 @@ export function MovesPhaseStandaloneClient({
       className="mxw mxw-finder-on"
       data-testid="moves-phase-standalone"
       data-finder-shell="on"
+      data-capture-v2={captureV2Enabled ? "on" : "off"}
     >
       <MovesStandaloneStyles />
       <div className="mxw-contextbar" aria-label="Move context">
@@ -2727,31 +2729,50 @@ export function MovesPhaseStandaloneClient({
                   {captureV2Enabled &&
                   phase.phase >= 1 &&
                   phase.phase <= 5 ? (
-                    <MovesCaptureFlow
-                      phases={capturePhases}
+                    <MovesCaptureWorkspace
+                      moveId={move.id}
+                      moveName={displayMoveName}
                       phase={phase.phase}
-                      sections={phaseCaptureSections}
-                      isSectionComplete={isCaptureSectionComplete}
-                      renderSectionInput={captureSectionInput}
-                      sectionRecap={(s) =>
-                        displayPhaseCaptureValues[s.key] ?? ""
-                      }
-                      onSelectPhase={(p) =>
-                        router.push(`/strategic-moves/${move.id}/phase/${p}`)
-                      }
-                      onSubmitPhase={() => {
-                        /* S5: wire to gate approval + next-phase generation */
+                      avaRole={phase.avaRole}
+                      avaThread={avaThread}
+                      avaQuestions={visibleAvaQuestions}
+                      avaLeadingActions={[
+                        {
+                          id: "draft-inputs",
+                          label: "Draft proposed inputs",
+                          body: "",
+                          onClick: () => {
+                            void requestAvaPhaseInputDrafts();
+                          },
+                        },
+                      ]}
+                      onAvaMessage={(text) => {
+                        void sendAvaMessage(text);
                       }}
-                      onAdvanceToNextPhase={continueToCurrentPhase}
-                      nextPhase={
-                        nextCapturePhase
+                      captureProps={{
+                        phases: capturePhases,
+                        phase: phase.phase,
+                        sections: phaseCaptureSections,
+                        isSectionComplete: isCaptureSectionComplete,
+                        renderSectionInput: captureSectionInput,
+                        sectionRecap: (s) =>
+                          displayPhaseCaptureValues[s.key] ?? "",
+                        onSelectPhase: (p) =>
+                          router.push(
+                            `/strategic-moves/${move.id}/phase/${p}`,
+                          ),
+                        onSubmitPhase: () => {
+                          /* S5: wire to gate approval + next-phase generation */
+                        },
+                        onAdvanceToNextPhase: continueToCurrentPhase,
+                        nextPhase: nextCapturePhase
                           ? {
                               code: nextCapturePhase.code,
                               name: nextCapturePhase.navLabel,
                             }
-                          : null
-                      }
-                      initialStep={Math.min(substepIndex, 2) as 0 | 1 | 2}
+                          : null,
+                        initialStep: Math.min(substepIndex, 2) as 0 | 1 | 2,
+                      }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
@@ -8915,6 +8936,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-fab{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
 .mxw-ava-pop{position:fixed;right:24px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
 .mxw-ava-pop.open{display:block}
+.mxw[data-capture-v2="on"] .mxw-ava-fab,.mxw[data-capture-v2="on"] .mxw-ava-pop{display:none!important}
 .mxw-ava-head{display:flex;align-items:center;gap:10px;padding:15px 17px;border-bottom:1px solid var(--line)}
 .mxw-ava-head strong{display:block;font-size:14.5px}
 .mxw-ava-head small{display:block;font-size:11px;color:var(--muted)}

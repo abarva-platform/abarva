@@ -3,6 +3,20 @@
  */
 
 import "@testing-library/jest-dom";
+import { createElement as mockCreateElement } from "react";
+
+// The moves_capture_v2 path wraps the capture flow in the shared AgentDock;
+// mock it so these tests assert the composition (the workspace renders)
+// without AgentDock's runtime. AgentDock + the composition are covered by
+// their own tests (MovesCaptureWorkspace.test.tsx, ava-dock-adapter.test.ts).
+jest.mock("@/components/agent/AgentDock", () => ({
+  AgentDock: ({ workspace }: { workspace?: unknown }) =>
+    mockCreateElement(
+      "div",
+      { "data-testid": "agent-dock" },
+      workspace as never,
+    ),
+}));
 import {
   act,
   fireEvent,
