@@ -145,9 +145,15 @@ is involved, so the revert is complete on merge. No migration constraint.
 
 ## Audit Evidence
 
-- The pull request and its CI run, including the
+- The pull request and its CI run. The suite runs as the
   `Run the register time-authority contract` step in
-  `.github/workflows/execution-queue-toolchain.yml`.
+  `.github/workflows/execution-queue-toolchain.yml`, whose context is
+  **`Execution queue behavioral contract`** — and read by name against the
+  rulesets API, that context is **not one of the 19 required status checks on
+  `main`**. So the suite proving this change executes on the pull request but
+  **cannot fail a merge**. Stated plainly rather than left to read as
+  enforcement; filed as its own item (see Known Gaps). The local run, the
+  mutation batch and the live read-only runs above are the actual proof.
 - The before/after read-only runs over the live register quoted above, and the
   md5 pair proving the register was not written.
 - The 11-mutation batch with its green control.
@@ -155,11 +161,21 @@ is involved, so the revert is complete on merge. No migration constraint.
 
 ## Known Gaps
 
-- Only `unsourced_elapsed` is declared correctable. `drifted_without_authority`
-  is arguably correctable on the same principle — a later line that quotes the
+- Only `unsourced_elapsed` is declared correctable. Filed as `C-583`:
+  `drifted_without_authority` is arguably correctable on the same principle — a later line that quotes the
   authoritative `mergedAt` sources what the original left out — but that needs
   the authority set threaded into the discharge, which is a second change and is
   not folded in here. Filed rather than folded.
+- **The suite that proves this change runs in a non-required job.** Filed as
+  `C-582`: `Execution queue behavioral contract` is absent from the 19 required
+  contexts, so every behavioural contract under `scripts/exec/` — not only this
+  change's — is advisory at merge time. Wiring it into a blocking job means
+  editing a required workflow, which is a wider change than this one and is not
+  folded in.
+- Filed as `C-584`: the generated execution queue offers `C-634` as claimable in
+  lane C although the backlog withdrew it as a false positive, because two
+  definitions share that number and the generator reads the live one. That sends
+  an agent at closed work.
 - `order regressions: 2228` on the live register is untouched and unrelated:
   append order disagreeing with stamp order is reported, not corrected, and no
   claim is made about it here.
