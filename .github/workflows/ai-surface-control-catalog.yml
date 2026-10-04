@@ -262,6 +262,9 @@ jobs:
           src/components/strategic-moves/__tests__/MovesCaptureFlow.test.tsx
           src/components/strategic-moves/__tests__/MovesCaptureWorkspace.test.tsx
           src/components/strategic-moves/__tests__/ava-dock-adapter.test.ts
+          src/components/strategic-moves/__tests__/MovesHome.test.tsx
+          src/components/strategic-moves/__tests__/moves-home-adapter.test.ts
+          src/components/strategic-moves/__tests__/moves-home-mapper.test.ts
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
