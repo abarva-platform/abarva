@@ -70,6 +70,16 @@ export type SourceAuthorityVersionPlanInput = {
   currentVersion: SourceAuthorityCurrentVersion | null;
 };
 
+/**
+ * No `invalidatedApprovalVersionIds`. The plan used to return the prior current
+ * version's id as a list of approvals to invalidate, and nothing ever read it:
+ * the invariant it described is held at READ time, by the approvals query's own
+ * `version_id` predicate in `authority-version-store.ts`, which never asks for a
+ * superseded version's approvals at all. Two writers of one rule is two things
+ * to keep honest, so the unread one is gone rather than given a consumer;
+ * `authority-version-store.test.ts` pins both halves of that — the fence, and
+ * that the write path still touches only the versions table.
+ */
 export type SourceAuthorityVersionPlan =
   | {
       action: "reuse_current";
@@ -79,7 +89,6 @@ export type SourceAuthorityVersionPlan =
       versionId: string;
       versionNumber: number;
       contentHash: string;
-      invalidatedApprovalVersionIds: [];
     }
   | {
       action: "create_version";
@@ -91,7 +100,6 @@ export type SourceAuthorityVersionPlan =
       contentJson: unknown;
       createdByUserId: string;
       supersedesVersionId: string | null;
-      invalidatedApprovalVersionIds: string[];
     };
 
 export type RequestVersionApprovalState =
@@ -149,7 +157,6 @@ export function planSourceAuthorityVersion(
       versionId: input.currentVersion.id,
       versionNumber: input.currentVersion.versionNumber,
       contentHash,
-      invalidatedApprovalVersionIds: [],
     };
   }
 
@@ -165,9 +172,6 @@ export function planSourceAuthorityVersion(
     contentJson,
     createdByUserId: input.createdByUserId,
     supersedesVersionId: input.currentVersion?.id ?? null,
-    invalidatedApprovalVersionIds: input.currentVersion
-      ? [input.currentVersion.id]
-      : [],
   };
 }
 
