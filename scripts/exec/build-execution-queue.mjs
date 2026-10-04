@@ -807,6 +807,31 @@ const CLAIMABLE_STAGES = [
   { label: "already has proof (not at rung 0)", keep: (i) => i.rung === 0 },
   // Closed is rung 0 because it proves nothing, but it is not work.
   { label: "closed", keep: (i) => i.rungLabel !== "Closed" },
+  /*
+   * ITEM C-584. An id with more than one substantive definition, one of which
+   * says it is withdrawn or closed.
+   *
+   * The row above cannot catch this, because the rung is derived for the id
+   * and a withdrawal written in one of two competing definitions does not
+   * close the other. `C-634` was the live instance: rung 0, `Open`, flagged
+   * `AMBIGUOUS` by this generator's own row renderer, and OFFERED in the Lane
+   * C table at 2026-10-04T00:05Z and again at 00:57Z. One of its two
+   * definitions reads `WITHDRAWN — false positive` and records the
+   * measurement that withdrew it.
+   *
+   * So the ambiguity warning was present, correct, and not enough. This file
+   * tells an agent "Do not ask which item is next — this file answers that",
+   * and an agent that does as it is told is sent at closed work. A warning the
+   * reader must override is not a control.
+   *
+   * It is NOT a blanket suppression of ambiguous ids: two live definitions of
+   * one number are a real, takeable choice and stay offered. The suite holds
+   * both halves, and the second is what stops this becoming one.
+   */
+  {
+    label: "a definition of it is withdrawn or closed, so which one a claim would take is undecidable",
+    keep: (i) => !(i.ambiguous && (i.retiredDefinitions ?? []).length > 0),
+  },
   { label: "blocked on Anand", keep: (i) => !userBlockerText(i) },
   // An entry with no acceptance criterion states no demonstrable outcome, so
   // there is nothing for an agent to finish or for anyone to check. Item 49 was
@@ -1133,7 +1158,28 @@ function renderClaimableFunnel() {
     ? "No id is being offered from the unplaced track: every id this file offers is placed on the structure map."
     : `**${unplacedOffered.length} id${unplacedOffered.length === 1 ? " is" : "s are"} not on the structure map and ${unplacedOffered.length === 1 ? "is" : "are"} offered anyway, from the board's unplaced track:** ${unplacedOffered.map((id) => `\`${id}\``).join(" ")}. They are filed in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned. They appear in the buckets below on the same terms as every other row, so the work is takeable now — **and the map entry is still owed**: the board exits non-zero while any of them is unplaced, and placing them on the stage or track they belong to is a pull request someone still has to open.`;
 
-  const named = `${namedDropped}\n\n${namedOffered}`;
+  /*
+   * ITEM C-584. Name the ids the withdrawn-definition rule removed.
+   *
+   * The funnel row above gives the COUNT, and a count is enough for the
+   * arithmetic to close and not enough for the reader: the whole defect was an
+   * agent being sent at `C-634` without being told the id was contested. An id
+   * suppressed here is still filed, and whoever maintains the backlog has to
+   * settle it — pin the live definition with `definedIn`, or record the
+   * withdrawal on the id itself — so it is named rather than quietly dropped.
+   *
+   * Written on every run including at zero, the rule item T-746 set: a line
+   * that appears only when the count is non-zero cannot be distinguished from
+   * a generator that stopped emitting it.
+   */
+  const withdrawnSuppressed = claimableFunnel
+    .find((f) => f.label.startsWith("a definition of it is withdrawn"))
+    ?.removed ?? [];
+  const namedWithdrawn = withdrawnSuppressed.length === 0
+    ? "No id was suppressed for a withdrawn definition: every ambiguous id this file offers has two live definitions, and choosing between them is the claimant's call."
+    : `**${withdrawnSuppressed.length} id${withdrawnSuppressed.length === 1 ? " was" : "s were"} suppressed because one of ${withdrawnSuppressed.length === 1 ? "its" : "their"} competing definitions is withdrawn or closed:** ${withdrawnSuppressed.map((i) => `\`${displayId(i.num)}\` (${(i.retiredDefinitions ?? []).map((sec) => `"${String(sec).slice(0, 60)}"`).join(", ")})`).join("; ")}. The id is still filed and the collision is still unsettled — pin the live definition with \`definedIn\` on the structure map, or record the withdrawal against the number itself. Until then no agent is offered the row, because which of the two definitions a claim would take is undecidable.`;
+
+  const named = `${namedDropped}\n\n${namedOffered}\n\n${namedWithdrawn}`;
 
   return `## Why that number
 

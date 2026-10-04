@@ -570,6 +570,43 @@ function latestClaimByStampThenAppend(entries) {
 
 const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shipped\b|(?:squash-)?merged\b|pr(?:\s*\/\s*ci)?\b|pr\s*#?\d+\b|live-proven\b|signed-in\b|re-?verified\b|verified\b|misdescribed\b|resolved\b|superseded\b|[-\u2014\s]*closed\b)/i;
 
+/*
+ * ITEM C-584. A definition that retires ITSELF.
+ *
+ * This is deliberately NOT a widening of `UPDATE_TITLE`, and the reason is
+ * measured rather than cautious. `UPDATE_TITLE` decides what is an update
+ * NOTE, which decides what is SUBSTANTIVE, which decides `ambiguous`, which
+ * decides which stage and capability an id may promote. Adding a verb there
+ * moves all four for every id that carries it. This regex decides one thing —
+ * whether a definition says it is dead — and only an id with more than one
+ * substantive definition is asked.
+ *
+ * `withdrawn` is the verb `UPDATE_TITLE` lacks and the one the live corpus
+ * used: `C-634` carries two substantive definitions, the second reading
+ * `WITHDRAWN — false positive`, and because no reader recognised that word the
+ * id stayed at rung 0, stayed ambiguous, and was OFFERED as claimable work in
+ * the generated queue at 2026-10-04T00:05Z and again at 00:57Z. The closure
+ * verbs are here too because a competing definition that closed is the same
+ * hazard by a different word.
+ *
+ * Anchored at the head, after optional bold markup, for the reason every other
+ * rule in this file is anchored: a problem statement that MENTIONS a withdrawal
+ * is not one.
+ */
+const RETIRED_DEFINITION =
+  /^(?:withdrawn|retracted|rescinded|closed|closed-false|superseded|obsolete)\b/i;
+
+/**
+ * Does this definition declare itself withdrawn or closed?
+ *
+ * Read from the definition's own title and the head of its acceptance — the
+ * two cells the backlog's convention puts a verdict in — never from the body,
+ * which routinely narrates the withdrawal of something else.
+ */
+const isRetiredDefinition = (d) =>
+  RETIRED_DEFINITION.test(stripMd(d.title ?? "")) ||
+  RETIRED_DEFINITION.test(stripMd(d.acceptance ?? ""));
+
 /**
  * Every `Item <id> — title` prose item in the backlog, at any heading depth.
  *
@@ -1890,6 +1927,21 @@ function buildItem(ref) {
     num,
     definedIn,
     ambiguous: collisionNums.has(num) && !pinnedCleanly,
+    /*
+     * ITEM C-584. The sections of the SUBSTANTIVE definitions that retired
+     * themselves.
+     *
+     * Substantive only, and that is the whole scope of the rule. An item's
+     * ordinary shape in this backlog is one live definition followed by its
+     * own `CLOSED — deployed` progress notes; those are update notes, they are
+     * not substantive, and counting them here would suppress most of the
+     * claimable queue on the strength of a note about one shipped slice.
+     *
+     * What this names is the other shape: two different items competing for
+     * one number, one of them dead. An agent taking that row cannot tell which
+     * definition it just claimed, and one of the two answers is closed work.
+     */
+    retiredDefinitions: substantive.filter(isRetiredDefinition).map((d) => d.section),
     sections: defs.map((d) => d.section),
     // Only the substantive definitions disambiguate. `sections` carries the
     // verdict notes too, and listing those in a queue row would name four
@@ -2851,6 +2903,9 @@ if (process.argv.includes("--json")) {
         blocker: i.blocker?.say ?? null, partialGate: i.partialGate ?? null, lane: i.lane || null,
         title: i.title, acceptance: i.acceptance || null, ambiguous: i.ambiguous,
         substantiveSections: i.ambiguous ? i.substantiveSections : undefined,
+        // Item C-584. Written whenever it is non-empty, on both item shapes,
+        // because the queue filters on it and a missing field is not a zero.
+        retiredDefinitions: i.retiredDefinitions?.length ? i.retiredDefinitions : undefined,
       })),
     })),
     tracks: tracks.map((t) => ({
@@ -2875,6 +2930,8 @@ if (process.argv.includes("--json")) {
         acceptance: i.acceptance || null,
         ambiguous: i.ambiguous,
         substantiveSections: i.ambiguous ? i.substantiveSections : undefined,
+        // Item C-584. See the note on the stage-item shape above.
+        retiredDefinitions: i.retiredDefinitions?.length ? i.retiredDefinitions : undefined,
       })),
     })),
     allItemsByRung: [...stages.flatMap((s) => s.items), ...tracks.flatMap((t) => t.built)]
