@@ -34,6 +34,173 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-04 ninth wave — walked on serving SHA `a756bfc0ef`
+
+**Item:** C-595.
+**Walked:** 2026-10-04, between 14:53:16Z and 15:00:24Z, by
+`source-backlog-executor#20261004T144934Z`.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why it is not pinned.** C-595 forbids pinning a literal SHA,
+for the reason C-635 demonstrated by becoming unexecutable when the runtime
+moved past the one it named. This walk resolved what was serving, stamped it,
+and asserts ancestry. The serving SHA was
+`a756bfc0efb4cdb6ab1108edda60debe183bd83a` (#8968), which was also `origin/main`
+at walk start and still was at walk end.
+
+**Runtime invariant, read with read-only `az` before the walk and again after
+it, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App | `ca-abarva-web-lab-eastus` |
+| Template image | `sha256:ca854803a00764918314befae9ace1e847e7e2f0a4682f7f6a6fb830219f7a2f` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--ma756bfc0` — sole entry, weight 100 |
+| Revision image | identical to the template image |
+| Revision state | `active: true`, `Healthy`, `Running`, created 14:41:37Z |
+
+Read at 14:53:16Z and again at 15:00:24Z; both reads returned the same digest
+and the same sole revision, so no deploy landed inside the walk.
+
+### The ancestor sweep — re-derived, not inherited
+
+C-595's acceptance says to run the sweep again rather than trust its own list,
+and that instruction earned its keep: the sweep now returns **54** first-parent
+merges against the 51 C-592 swept. Every merge that is an ancestor of the walked
+SHA and newer than the oldest wave SHA this file records (`e085442776`) was
+enumerated with `git rev-list --first-parent` and each checked with
+`git merge-base --is-ancestor`. **54 merges; all 54 are ancestors.**
+
+**The three that are new since C-592's sweep add no residue, and that was
+checked rather than assumed:** #8966 `071d8cd34e`, #8967 `a09b88dbbb` and #8968
+`a756bfc0ef` each touch **zero** non-test files under `src/app`,
+`src/components` or `src/lib`, so `deployed` is their own ceiling. The residue
+is therefore still exactly the nine C-595 names, each re-confirmed to touch
+product files, and none of the nine had gained a verdict row — before this block
+all nine appeared in this file only inside C-592's disposition table.
+
+**#8963 is still open** (`MERGEABLE`, `CLEAN`, `mergedAt` null, re-read at walk
+time), so the six merges whose verdicts sit in it stay excluded on exactly the
+ground C-592 excluded them, and do not fall back to this item.
+
+| Disposition | Count | Merges |
+|---|---|---|
+| Carried a verdict row in this file before this walk | 17 | #8918 #8922 #8923 #8925 #8927 #8931 #8932 #8934 #8936 #8937 #8949 #8950 #8952 #8953 #8955 #8958 #8964 |
+| No product surface — nothing under `src/app`, `src/components` or `src/lib` outside tests, so `deployed` is the ceiling | 20 | #8916 #8919 #8928 #8929 #8933 #8943 #8945 #8946 #8947 #8951 #8954 #8956 #8957 #8959 #8960 #8961 #8962 #8966 #8967 #8968 |
+| Verdicts exist only in **unmerged** PR #8963 (C-586, sixth wave). Not re-walked and not claimed as covered | 6 | #8915 #8917 #8939 #8940 #8942 #8944 |
+| Named by open item C-638, whose acceptance owns them | 2 | #8913 #8914 |
+| **Walked here** | 7 | #8891 #8920 #8921 #8924 #8926 #8938 #8941 |
+| **Blocked by construction — the crawl auth lane, see row 6** | 2 | #8930 #8935 |
+
+### Results
+
+| # | Surface | Proving | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Home v4 enterprise-context panel | #8891 | **blocked** — the data precondition is unmet on every tenant this surface serves | #8891's client-visible half is `EnterpriseContextPanel`, mounted from `HomeV4App` behind `contextHeading && enterpriseContext`, with the `technology_data` heading additionally gated on `enterpriseContext.dependencyProof`. **It renders on no chapter of either preview tenant, and that was established from both sides rather than from one empty page.** On the tenant `/home` serves by default the record source reads `Reviewed stored record`, which is the reviewed-snapshot fallback and carries no context by design. On the other preview tenant the page reaches the live path — record source `Live governed rows`, `Source-linked: 2,910 of 2,938 record rows` — and **still** renders no panel: all seven context headings were probed by selecting each chapter in turn, **0 of 7** rendered, while the frame around them *was* mounted on all seven (`[data-home-reviewed-interpretation]` present each time), so the absence is the context and not the frame. The server payload settles it: `homeEnterpriseContext` is serialized exactly once and its value is `null`, and `dependencyProof`, `riskPaths`, `programPaths` and `projectedLinks` appear **zero** times in a 3.0 MB payload. **Why `blocked` and not `fail`:** `buildHomeEnterpriseContext` returns `null` unless it finds exactly one *cited* enterprise-profile row, at least one cited business segment, at least one cited business function, a declared business model on a synthetic-reference basis, and unique non-empty segment keys. Which of those is unmet is a projection-row question, not a surface question — a walk cannot see it. **Precondition, and who may clear it:** the data plane (lane D) must establish a source-linked enterprise context for a preview tenant; until then this panel is unreachable and no walk can promote it. Filed as residue below. |
+| 2 | Home walkthrough export — the absence declaration | #8926 | **blocked** — the declaration exists only inside a generated document | #8926's change is a branch ladder that makes the export *say which absence it is* rather than silently omitting the section. The affordance is present and was read: the Home surface carries a `HOME EXPORT` block reading "Walkthrough export: chapters, tables, exhibits, evidence labels and record-source state." with `HTML` and `PDF` controls. **The declaration text itself is emitted only into the exported document**, and C-595's acceptance requires this row be taken "read-only, without performing an export", so the sentence was not observed. **Stated as a prediction, not an observation:** given row 1's finding that a serving projection *is* read on the live tenant and `homeEnterpriseContext` is `null`, the branch that tenant's export would take is `context_not_established`. Nothing here claims that was seen. Clearing this row needs either permission to generate one export, or a read-only surface that renders the declaration outside the document. |
+| 3 | Source New — synthetic NDA template publication | #8921 | **pass** | Read on the one event whose `03 Suppliers & NDA` stage is `Recorded`. Opening that already-passed stage declared its own harmlessness — "This phase holds recorded work. Viewing it does not mark it complete, approve any gate, or change the current stage" — re-confirming item 20 again on a later SHA. Both halves #8921 names are present under `STAGE 05 · NDA READINESS`. **Upload:** a `TEMPLATE PDF` block with a `file` input and an `Upload PDF` submit. **Publication:** an `UPLOADED PDF` select carrying one already-uploaded option, plus `TEMPLATE VERSION`, `DISPLAY NAME`, `DECISION RATIONALE`, a `required` acknowledgement checkbox read from the DOM as `checked: false`, and a `Publish synthetic template` submit. The submit is **not** disabled — the gate is the required acknowledgement, which is a different mechanism from a disabled control and is recorded as what it is. **Lab-fenced in the product's own words:** "Lab event only. Admin publication is recorded as a synthetic test decision, not Legal approval or an executed NDA", and the readiness block states "A completed signing envelope does not grant coverage; a named reviewer must record the executed document or Legal waiver." Posture `Blocked before supplier work`, `Accepted suppliers 4 · Covered 0 · Blocked or unknown 4`, with the NDA-authority line `Not recorded` on all four. **No file was selected, nothing was uploaded and no template was published.** |
+| 4 | Source New — market-package label on the phase rail | #8941 | **pass** on the unaccepted half; the accepted half is **blocked** | #8941 makes `sourceNewMarketPackageLabel` check *acceptance* rather than branch on a bare motion, returning the neutral `Market package` unless both `solicitationMotionAcceptedAt` and `solicitationMotionAcceptedByUserId` are recorded. **All four events in the walked tenant were read, not one**, because a single neutral label cannot distinguish a working guard from an absence of motions: all four serialize `solicitationMotionAcceptedAt: null` and all four render the neutral label. The strongest reading is the event sitting *at* that stage — its rail reads `04 Market package · Current` and its section heading `MARKET PACKAGE`, with **zero** visible occurrences of `RFP` anywhere on the rendered page although the server HTML for that same event contains 47, which places them in serialized data and narrative rather than in the label. **The accepted half could not be reached:** no event in this tenant has an accepted motion, and recording one is a write. The refusal state was observed; the acceptance was not performed. |
+| 5 | Moves board — run-stamp stripping on client-visible labels | #8938 | **pass**, and the count is unchanged across two SHAs | A re-read of `U-553`, which C-592 measured as **0 of 8** on `031eec1f24`. On `a756bfc0ef` the board carries **8** move links and **0** of their names match #8938's own stamp pattern `\b(?:19\|20)\d{6}T?\d{6}Z?\b`; the pattern also matches **0** times anywhere in the rendered page, so no derived display code carries one either. The harness token `E2E` appears **0** times on the board, and `smoke` **0** times. The count is reproduced unchanged, which is the finding C-592's row asked for; a changed count would itself have been the finding. |
+| 6 | Crawl auth lane | #8930 · #8935 | **blocked** by construction | Both merges change only `src/lib/crawl`, whose sole exercise is the crawl lane itself. That lane's Clerk secret is the dev-instance mismatch filed as `C-581` and owed as an operator secret, so no walk can exercise either merge. Recorded as blocked against `C-581` rather than omitted, exactly as C-595's acceptance requires. **Who may clear it:** the operator, by provisioning a matching Clerk secret. |
+| 7 | No rendered surface | #8920 · #8924 | **not a row** — `deployed` is the ceiling | #8920 changes `src/lib/security/rls-precondition-classification.ts` and #8924 changes `src/lib/programs/types.db.ts`. Neither reaches a rendered surface, so each is disposed of with that reason stated rather than given an invented row. |
+
+### The walk lane's own tool censors the walk's own verdict — a controlled finding
+
+C-592 recorded that the browser tool's output redaction can manufacture a
+defect, having watched a PDF filename read back as `[BLOCKED: JWT token]`
+through three separate reads. **That same string reproduced here** — the
+`UPLOADED PDF` option still reads back as a redaction placeholder, is 55
+characters long, and recovers as an ordinary filename when the dots are
+substituted. So that half is confirmed on a later SHA.
+
+What is new, and is worse, is that the redaction keys on **the name the walker
+gave the variable** and censors whatever is under it, including values that
+never came from the page:
+
+| Probe | Value returned |
+|---|---|
+| `authorityPresent: t.includes(<phrase>)` | `[BLOCKED: Sensitive key]` |
+| `a: t.includes(<same phrase>)` | `true` |
+| `harnessTokenCount: (t.split('smoke').length-1)` | `[BLOCKED: Sensitive key]` |
+| `n1: (t.split('E2E').length-1)` | `0` |
+| **`authorityPresent: 42`** — a literal the walker wrote, with no page input at all | `[BLOCKED: Sensitive key]` |
+| **`plainNumber: 7`** — the negative control | `7` |
+
+Same page, same expressions, different key names, different answers. The last
+two rows are the control: a literal `42` is censored under a key named
+`authorityPresent` while a literal `7` passes under `plainNumber`, so the
+scrubber is not simply always-on and the redaction is attributable to the key
+name rather than to the content. Key names containing `authority` or `token`
+were the triggers observed here.
+
+**Why this is more expensive than C-592's instance.** There the tool rewrote
+what the *page* said, and a careful walker re-reading the string recovers the
+truth. Here the tool rewrites what the *walker concluded*. A row written as
+`authorityRecorded: false` reads back as `[BLOCKED]` and invites a `blocked`
+verdict where the truth was a `fail`; the inversion runs the other way just as
+easily. **Any walk that keys a result object on a page phrase should re-run the
+same probe under a neutral key before writing the verdict down** — which is what
+was done for every affected reading in this block.
+
+### Stated limits of this walk
+
+- **Rows 1 and 2 are the substance of #8891 and #8926 and neither was proven.**
+  Row 1 is blocked on a data condition that no walk can clear, and row 2 is
+  blocked on an action this acceptance forbids. Nothing here should be read as
+  evidence that the Home enterprise-context work is live-proven; it is not.
+- **Row 3 observed client affordances only.** Whether the server refuses an
+  unauthorised publish was not tested, because testing it means performing the
+  publish, and for a gate the failure mode under test *is* the action
+  succeeding.
+- **Row 4's accepted half and row 6 are blocked by a write and by an operator
+  secret respectively.** Neither is a quiet pass.
+- **No phone-width reading.** This walk ran at `innerWidth` 1512 throughout and
+  made no attempt to resize; the 375 px row C-592 left owed is still owed and is
+  not claimed here.
+- **The six merges whose verdicts sit in open PR #8963 are not covered here.**
+  If that PR is closed without merging, those six return to residue.
+
+No write was performed on any surface. No upload, no template published, no
+motion accepted, no NDA sent, no approval submitted, no stage advanced, no
+export generated and no file downloaded. The only interactions were navigation,
+chapter selection and stage selection — all client-side view state — plus
+read-only DOM inspection and same-origin `GET` reads of pages already reachable
+by navigation. Two gated surfaces were opened for reading and one declared that
+reading it changes nothing.
+
+### Residue — filed, not absorbed
+
+- **The Home enterprise context is `null` on every tenant the surface serves**,
+  including the one that reaches the live ECL serving projection, so #8891's
+  panel and #8926's dependency-proof branch are both unreachable from any
+  product surface today. This is a data-plane condition in lane D, not a UI
+  defect, and it is upstream of any future attempt to live-prove either merge.
+  **Filed as `D-517`**, and the id was the part that nearly went wrong. Three
+  claim lines today reported that a successor could not be filed at all, because
+  the regenerated queue reports the `C-500`–`C-599` **and** `T-500`–`T-599`
+  bands exhausted at 0 of 100 free. That is true, and it is not the whole table:
+  the `X-600` band showing 57 free C ids is **Codex's** band, not an unallocated
+  one, so taking from it would re-create the precise collision the disjoint-range
+  rule exists to prevent — two agents applying the same correct rule to the same
+  range at the same moment. The finding is a data-plane condition and therefore a
+  **lane D** item, and Claude's own `D-500`–`D-599` band reports **83 free**. The
+  band table answers per lane *and* per agent; reading only its exhausted rows is
+  what kept two earlier findings from being filed.
+
+### Noted, not filed
+
+- The default preview tenant serves the reviewed snapshot while the other serves
+  live governed rows. Both are legitimate states and the surface labels each
+  one, but a reader moving between them has no indication that the enterprise
+  context is absent for *different reasons* in each.
+- The live tenant's chapter 05 reads `Source-file quality: 0 of 14 accepted; 14
+  partial` beside `Source-linked: 2,910 of 2,938 record rows`. A record that is
+  97% source-linked out of files that are 0% accepted is either correct and
+  uninteresting or two counters measuring different things under similar names.
+
+---
+
 ## 2026-10-04 seventh wave — walked on serving SHA `031eec1f24`
 
 **Item:** C-592.
