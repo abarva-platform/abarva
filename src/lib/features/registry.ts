@@ -100,7 +100,8 @@ export type FeatureFlagKey =
   | "moves_extended_intake_fields_v1"
   | "moves_classify_fast_lane_v1"
   | "moves_risk_tier_scoring_v1"
-  | "moves_solution_pattern_gate_v1";
+  | "moves_solution_pattern_gate_v1"
+  | "moves_home_v2";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -390,6 +391,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // (Platform policy means default ON; we need the opposite.) Flip on
     // per tenant via `includeTenants` only when a controlled lab decides
     // to re-introduce Neo4j; in production the flag stays empty.
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_home_v2",
+    summary:
+      "2026-10-04: Renders the redesigned Moves Home portfolio landing (MovesHome) - human headline, a 'Waiting on you' triage (the specific ask per move, oldest first), an all-moves table with a six-dot phase rail, and the reconciled-with-client-inventory panel. Presentation only; reads the same portfolio + reconciliation, with value numbers from governed facts. Off by default; enable per tenant via includeTenants.",
     policy: "tenant",
     includeTenants: [],
   },
