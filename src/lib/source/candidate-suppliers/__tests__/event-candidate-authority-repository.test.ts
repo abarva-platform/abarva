@@ -31,20 +31,14 @@ describe("event candidate authority repository", () => {
           vendor_source_record_id: "supplier-master-template.xlsx#row-2",
           vendor_as_of_date: "2026-09-19",
           vendor_evidence_reference: "EVID-SUPPLIER-1",
+          active_contact_count: 1,
           vendor_raw_payload: {
             candidate_supplier_registry: {
               categoryKeys: ["managed-services"],
               functionKeys: ["technology"],
               archetypeKeys: ["application-managed-services"],
               contactPolicy: "contact_allowed",
-              contacts: [
-                {
-                  contactId: "contact-1",
-                  role: "account_executive",
-                  email: "contact@example.invalid",
-                  state: "active",
-                },
-              ],
+              contacts: [],
               selectionAuthority: {
                 selectedByName: "Named Sourcing Lead",
                 selectedAt: "2026-09-20T03:00:00.000Z",
@@ -104,6 +98,7 @@ describe("event candidate authority repository", () => {
       "INNER JOIN source.vendor vendor",
     );
     expect(runMock.mock.calls[1]?.[0]).toContain("vendor.raw_payload");
+    expect(runMock.mock.calls[1]?.[0]).toContain("FROM source.vendor_contact contact");
     expect(runMock.mock.calls[1]?.[0]).toContain(
       "authority.authority_state = 'accepted'",
     );
@@ -113,6 +108,35 @@ describe("event candidate authority repository", () => {
       "tenant-alpha",
       "11111111-1111-4111-8111-111111111111",
     ]);
+  });
+
+  it("counts canonical contacts rather than stale registry payload contacts", async () => {
+    runMock.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        authority_id: "authority-1",
+        vendor_id: "vendor-1",
+        legal_name: "Example Services LLC",
+        supplier_category: null,
+        vendor_source_system: null,
+        vendor_source_record_id: null,
+        vendor_as_of_date: null,
+        vendor_evidence_reference: null,
+        vendor_raw_payload: { candidate_supplier_registry: { contacts: [
+          { contactId: "stale-contact", role: "signer", state: "active" },
+        ] } },
+        active_contact_count: 0,
+        accepted_by_name: "Reviewer",
+        accepted_at: "2026-10-04T00:00:00Z",
+        acceptance_rationale: "Reviewed",
+        evidence_reference: "candidate-evidence",
+      },
+    ]);
+
+    const result = await readAcceptedCandidatesForEvent({
+      clientKey: "tenant-alpha",
+      eventId: "11111111-1111-4111-8111-111111111111",
+    });
+    expect(result.acceptedCandidates[0]?.activeContactCount).toBe(0);
   });
 
   it("does not mark a respondent selected unless human selection authority is complete", async () => {

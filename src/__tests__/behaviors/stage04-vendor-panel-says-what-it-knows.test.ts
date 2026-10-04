@@ -319,6 +319,15 @@ describe("the stage 04 panel says what it knows and what it does not", () => {
     );
   });
 
+  it("does not call a candidate contact-ready from a stale payload alone", async () => {
+    authorityReturns([{ ...GOVERNED_REGISTRY, activeContactCount: 0 }]);
+    contractsReturn("available", []);
+
+    const panel = await readSourceNewStage04VendorPanel(INPUT);
+    expect(panel.rows[0]?.activeContactCount).toBe(0);
+    expect(panel.rows[0]?.contactBlocker).toContain("No active contact record");
+  });
+
   it("says the selected group is empty by evidence, not by outcome", async () => {
     // Respondent selection requires named selection authority. An empty group
     // that looks like "nobody was selected" is a different claim.

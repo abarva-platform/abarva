@@ -122,9 +122,7 @@ function contactReadiness(
   if (!candidate.contactPolicy) return "review_required";
   if (candidate.contactPolicy === "do_not_contact") return "prohibited";
   if (candidate.contactPolicy === "review_required") return "review_required";
-  return activeContacts(candidate.contacts ?? []).some((contact) =>
-    Boolean(contact.email?.trim()),
-  )
+  return (candidate.activeContactCount ?? 0) > 0
     ? "ready"
     : "missing_contact";
 }

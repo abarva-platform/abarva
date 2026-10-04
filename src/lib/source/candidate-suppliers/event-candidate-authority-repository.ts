@@ -15,6 +15,7 @@ type CandidateAuthorityRow = {
   vendor_as_of_date: string | Date | null;
   vendor_evidence_reference: string | null;
   vendor_raw_payload: unknown;
+  active_contact_count: number;
   accepted_by_name: string;
   accepted_at: string | Date;
   acceptance_rationale: string;
@@ -215,6 +216,11 @@ export async function readAcceptedCandidatesForEvent(input: {
                 vendor.as_of_date AS vendor_as_of_date,
                 vendor.evidence_reference AS vendor_evidence_reference,
                 vendor.raw_payload AS vendor_raw_payload,
+                (SELECT count(*)::int
+                   FROM source.vendor_contact contact
+                  WHERE contact.tenant_key = authority.client_key
+                    AND contact.vendor_id = authority.vendor_id
+                    AND contact.contact_state = 'active') AS active_contact_count,
                 authority.accepted_by_name,
                 authority.accepted_at,
                 authority.acceptance_rationale,
@@ -246,9 +252,9 @@ export async function readAcceptedCandidatesForEvent(input: {
             registryPayload(row).contact_policy,
         ),
         contacts: contacts(registryPayload(row).contacts),
-        activeContactCount: contacts(registryPayload(row).contacts).filter(
-          (contact) => contact.state === "active",
-        ).length,
+        activeContactCount: Number.isInteger(row.active_contact_count)
+          ? row.active_contact_count
+          : 0,
         selectionAuthority: selectionAuthority(row),
         registrySource: registrySource(row),
       }));
