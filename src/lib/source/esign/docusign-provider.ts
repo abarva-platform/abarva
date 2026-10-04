@@ -77,6 +77,7 @@ function mapEvent(event: string): EsignEnvelopeStatus | null {
     case "envelope-delivered": return "viewed";
     case "envelope-completed": return "completed";
     case "envelope-declined": return "declined";
+    case "envelope-voided": return "voided";
     default: return null;
   }
 }

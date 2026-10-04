@@ -20,6 +20,7 @@ export type WebhookEnvelopeStore = {
   read(envelopeId: string): Promise<WebhookEnvelope | null>;
   markViewed(envelopeId: string): Promise<boolean>;
   markDeclined(envelopeId: string): Promise<boolean>;
+  markVoided(envelopeId: string): Promise<boolean>;
   markCompleted(envelope: WebhookEnvelope, evidence: CompletedEnvelopeEvidence): Promise<boolean>;
 };
 
@@ -54,12 +55,17 @@ export async function processVerifiedEsignEvent(
   }
   if (event.status === "declined") {
     if (envelope.status === "declined") return { state: "duplicate" };
-    if (envelope.status === "completed") return { state: "conflict" };
+    if (envelope.status === "completed" || envelope.status === "voided") return { state: "conflict" };
     return { state: (await deps.store.markDeclined(event.envelopeId)) ? "processed" : "conflict" };
+  }
+  if (event.status === "voided") {
+    if (envelope.status === "voided") return { state: "duplicate" };
+    if (envelope.status === "completed" || envelope.status === "declined") return { state: "conflict" };
+    return { state: (await deps.store.markVoided(event.envelopeId)) ? "processed" : "conflict" };
   }
 
   if (envelope.status === "completed") return { state: "duplicate" };
-  if (envelope.status === "declined") return { state: "conflict" };
+  if (envelope.status === "declined" || envelope.status === "voided") return { state: "conflict" };
   const documents = await deps.provider.fetchCompletedDocuments(event.envelopeId);
   const validPdf = (bytes: Uint8Array) =>
     bytes.length >= 5 && bytes.length <= 20_000_000 &&
