@@ -24,11 +24,9 @@ import {
   ingestUploadedMoveEvidence,
 } from "@/lib/programs/current-state-doc-ingest";
 import { sensitiveUploadRejectedResponse } from "@/lib/security/sensitive-upload-guard";
-import {
-  buildDiscoveryBlueprintInputFromProgram,
-  resolveDeclaredEvidenceFamily,
-} from "@/lib/programs/discovery/evidence-readiness";
+import { buildDiscoveryBlueprintInputFromProgram } from "@/lib/programs/discovery/evidence-readiness";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import { resolveMoveUploadEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,13 +91,24 @@ export async function POST(
     // refused rather than silently falling back to inference.
     let declaredFamilyKey: string | null = null;
     if (String(form.get("evidenceFamily") ?? "").trim()) {
-      const declared = resolveDeclaredEvidenceFamily(
-        form.get("evidenceFamily"),
-        getDiscoveryBlueprint(
-          buildDiscoveryBlueprintInputFromProgram(
-            await getProgramById(ctx, programId),
-          ),
+      if (family !== "uploaded_evidence") {
+        return Response.json(
+          {
+            error: "evidence_family_requires_evidence_upload",
+            detail: "A required evidence family can only be declared for evidence uploads.",
+          },
+          { status: 400 },
+        );
+      }
+      const discoveryFamilyIds = getDiscoveryBlueprint(
+        buildDiscoveryBlueprintInputFromProgram(
+          await getProgramById(ctx, programId),
         ),
+      ).evidenceFamilies.map((evidenceFamily) => evidenceFamily.id);
+      const declared = resolveMoveUploadEvidenceFamily(
+        form.get("evidenceFamily"),
+        phase,
+        discoveryFamilyIds,
       );
       if (!declared.ok) {
         return Response.json(

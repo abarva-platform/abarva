@@ -63,11 +63,18 @@ const SENSITIVE =
 const CLEAN =
   "Routine status inquiries follow five agent steps across four systems.";
 
-function upload(text: string, family: string) {
+function upload(
+  text: string,
+  family: string,
+  options: { phase?: number; evidenceFamily?: string } = {},
+) {
   const form = new FormData();
   form.append("file", new File([text], "note.md", { type: "text/markdown" }));
-  form.append("phase", "2");
+  form.append("phase", String(options.phase ?? 2));
   form.append("family", family);
+  if (options.evidenceFamily) {
+    form.append("evidenceFamily", options.evidenceFamily);
+  }
   const req = new NextRequest(
     "http://localhost/api/v1/programs/move-1/artifacts/upload",
     { method: "POST", body: form },
@@ -112,5 +119,32 @@ describe("Move artifact upload — sensitive-data guard", () => {
     expect((ingestedEvidenceArguments[0]?.[1] as { phase: number }).phase).toBe(
       2,
     );
+  });
+
+  it("stores a P1 charter declaration on the human-review evidence record", async () => {
+    const res = await upload(CLEAN, "uploaded_evidence", {
+      phase: 1,
+      evidenceFamily: "charter_sponsor",
+    });
+
+    expect(res.status).toBe(200);
+    expect(ingestedEvidenceArguments[0]?.[1]).toEqual(
+      expect.objectContaining({
+        phase: 1,
+        declaredFamilyKey: "charter_sponsor",
+      }),
+    );
+  });
+
+  it("rejects a P1 charter family declared against a later-phase upload", async () => {
+    const res = await upload(CLEAN, "uploaded_evidence", {
+      phase: 2,
+      evidenceFamily: "charter_sponsor",
+    });
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "unknown_evidence_family" });
+    expect(saveMoveArtifactMock).not.toHaveBeenCalled();
+    expect(ingestMock).not.toHaveBeenCalled();
   });
 });

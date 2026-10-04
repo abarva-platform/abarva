@@ -45,6 +45,7 @@ import {
   phaseApprovalMatchesEvidence,
   type PhaseGateEvidenceState,
 } from "@/lib/programs/phase-gate-evidence-binding";
+import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -170,18 +171,25 @@ async function captureCompletion(
         })
       : null;
   const missing: string[] = [];
-  for (const section of getPhaseCaptureSections(
-    phase,
-    confirmedSolutionRoute,
-  )) {
-    const capturedModule = modules.find(
-      (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+  const sections = getPhaseCaptureSections(phase, confirmedSolutionRoute);
+  const approvedP1Evidence =
+    phase === 1 ? await listApprovedPhaseEvidence(ctx, programId, 1) : [];
+  if (phase === 1) {
+    missing.push(
+      ...missingP1CaptureSections(sections, modules, approvedP1Evidence),
     );
-    if (
-      !capturedModule ||
-      !["completed", "skipped"].includes(capturedModule.status)
-    ) {
-      missing.push(section.label);
+  } else {
+    for (const section of sections) {
+      const capturedModule = modules.find(
+        (entry) =>
+          entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+      );
+      if (
+        !capturedModule ||
+        !["completed", "skipped"].includes(capturedModule.status)
+      ) {
+        missing.push(section.label);
+      }
     }
   }
   if (missing.length === 0) return { complete: true, missing: [] };
@@ -507,7 +515,7 @@ export async function POST(
     }
 
     const capture = await captureCompletion(ctx, programId, phase, program);
-    if (phase === 0 && !capture.complete) {
+    if ((phase === 0 || phase === 1) && !capture.complete) {
       return Response.json(
         {
           error: "capture_incomplete",

@@ -762,6 +762,10 @@ export default async function StrategicMovePhaseWorkspacePage({
     move.id,
     2,
   );
+  const initialApprovedP1CaptureEvidenceReferences =
+    parsedPhase === 1
+      ? await listApprovedPhaseEvidence(ctx, move.id, 1)
+      : [];
   // The design phase decides between options. When the Move's approved
   // evidence declares its own option set, that set — not a template one — is
   // what is offered and what gets recorded as approved.
@@ -849,6 +853,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         initialReferenceDraftValues={initialReferenceDraftValues}
         initialBusinessChangeAssessment={initialBusinessChangeAssessment}
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}
+        initialApprovedP1CaptureEvidenceReferences={
+          initialApprovedP1CaptureEvidenceReferences
+        }
         initialConfirmedSolutionRoute={initialConfirmedSolutionRoute}
         uploadedSolutionOptionSet={uploadedSolutionOptionSet}
         approvedSolutionOption={approvedSolutionOption}

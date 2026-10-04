@@ -328,6 +328,28 @@ describe("declared evidence family outranks keyword inference", () => {
     }
   });
 
+  it("does not infer P1 charter evidence into a P2 discovery family", () => {
+    const charterMetrics = {
+      ...item(
+        "charter-metrics",
+        "Charter success criteria",
+        "Contact center AHT, first contact resolution, baseline KPI targets and CSAT measures.",
+      ),
+      phase: 1,
+      declaredFamilyKey: "charter_success_metrics",
+    };
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [charterMetrics],
+    });
+
+    expect(
+      readiness.families.find(
+        (family) => family.familyId === "contact_center_kpis",
+      )?.status,
+    ).toBe("missing");
+  });
+
   it("ignores a crosswalk target the blueprint does not contain", () => {
     const foreign = {
       ...item("wf", "workflow.csv", "workflow"),

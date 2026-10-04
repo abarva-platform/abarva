@@ -53,6 +53,7 @@ import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
+import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
 import {
   SOLUTION_OUTPUT_TYPES,
   SOLUTION_ROUTE_LABELS,
@@ -161,6 +162,7 @@ interface MovesPhaseStandaloneClientProps {
   initialPhaseCaptureRevision?: string;
   initialBusinessChangeAssessment?: string;
   initialApprovedEvidenceReferences?: ApprovedPhaseEvidenceReference[];
+  initialApprovedP1CaptureEvidenceReferences?: ApprovedPhaseEvidenceReference[];
   initialConfirmedSolutionRoute?: ConfirmedSolutionRoute | null;
   /** The option set declared in the Move's approved design-phase evidence. */
   uploadedSolutionOptionSet?: UploadedSolutionOptionSet | null;
@@ -233,6 +235,71 @@ interface PhaseEvidenceArtifact {
   createdAt: string;
   downloadUrl: string;
 }
+
+function P1CaptureEvidenceStep({
+  approvedEvidenceReferences,
+  moveId,
+  onOpenFiles,
+  section,
+}: {
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  moveId: string;
+  onOpenFiles: () => void;
+  section: PhaseCaptureSection;
+}) {
+  const router = useRouter();
+  const family = p1CharterEvidenceFamilyForSection(section.key);
+  if (!family || family.id !== section.evidenceFamily) return null;
+
+  const approvedSources = approvedEvidenceReferences.filter(
+    (reference) => reference.familyKey === family.id,
+  );
+
+  return (
+    <section
+      aria-label={`${family.label} evidence`}
+      className="mxw-capture-evidence"
+      data-testid={`p1-evidence-${family.id}`}
+    >
+      <header>
+        <div>
+          <span>Required source</span>
+          <h3>Evidence for this step</h3>
+        </div>
+        <strong>{approvedSources.length > 0 ? "Approved" : "Open"}</strong>
+      </header>
+      {approvedSources.length > 0 ? (
+        <ul>
+          {approvedSources.map((source) => (
+            <li key={source.evidenceId}>{source.title}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>
+          Add a source and have a reviewer approve it in Files &amp; Evidence.
+          This step stays locked until that evidence is approved.
+        </p>
+      )}
+      <EvidenceUploadControl
+        buttonLabel="Add evidence for this step"
+        evidenceFamilies={[family]}
+        fixedEvidenceFamily={family}
+        moveId={moveId}
+        onOpenFiles={onOpenFiles}
+        phase={1}
+        title={`${family.label} source`}
+      />
+      <button
+        className="mxw-capture-evidence-refresh"
+        onClick={() => router.refresh()}
+        type="button"
+      >
+        Refresh approved evidence
+      </button>
+    </section>
+  );
+}
+
 type PhaseCaptureValues = Record<string, string>;
 type AvaDraftRequestStatus = "idle" | "loading" | "ready" | "error";
 type AvaDraftSaveStatus = "editing" | "saving" | "saved" | "error";
@@ -712,6 +779,7 @@ export function MovesPhaseStandaloneClient({
   initialPhaseCaptureRevision,
   initialBusinessChangeAssessment = "",
   initialApprovedEvidenceReferences = [],
+  initialApprovedP1CaptureEvidenceReferences = [],
   initialConfirmedSolutionRoute = null,
   uploadedSolutionOptionSet = null,
   approvedSolutionOption = null,
@@ -1193,14 +1261,20 @@ export function MovesPhaseStandaloneClient({
             phaseCaptureSaveStatus,
             businessChangeAssessment,
             initialApprovedEvidenceReferences.map((item) => item.evidenceId),
+            phaseEvidencePassed,
+            evidenceReadinessAvailable,
+            initialApprovedP1CaptureEvidenceReferences,
           ).complete,
       ).length,
     [
       businessChangeAssessment,
       initialApprovedEvidenceReferences,
+      initialApprovedP1CaptureEvidenceReferences,
       phaseCaptureSections,
       persistedPhaseCaptureValues,
       phaseCaptureSaveStatus,
+      phaseEvidencePassed,
+      evidenceReadinessAvailable,
     ],
   );
   const phaseCaptureDirtyKeys = useMemo(
@@ -2585,6 +2659,10 @@ export function MovesPhaseStandaloneClient({
                       approvedEvidenceReferences={
                         initialApprovedEvidenceReferences
                       }
+                      approvedCaptureEvidenceReferences={
+                        initialApprovedP1CaptureEvidenceReferences
+                      }
+                      moveId={move.id}
                       reviewerIdentity={
                         currentUser?.email ?? "signed-in reviewer"
                       }
@@ -2626,6 +2704,9 @@ export function MovesPhaseStandaloneClient({
                           confirmedSolutionRoute={confirmedSolutionRoute}
                           approvedEvidenceReferences={
                             initialApprovedEvidenceReferences
+                          }
+                          approvedCaptureEvidenceReferences={
+                            initialApprovedP1CaptureEvidenceReferences
                           }
                           reviewerIdentity={
                             currentUser?.email ?? "signed-in reviewer"
@@ -2678,6 +2759,10 @@ export function MovesPhaseStandaloneClient({
                       approvedEvidenceReferences={
                         initialApprovedEvidenceReferences
                       }
+                      approvedCaptureEvidenceReferences={
+                        initialApprovedP1CaptureEvidenceReferences
+                      }
+                      moveId={move.id}
                       reviewerIdentity={
                         currentUser?.email ?? "signed-in reviewer"
                       }
@@ -2719,6 +2804,9 @@ export function MovesPhaseStandaloneClient({
                           confirmedSolutionRoute={confirmedSolutionRoute}
                           approvedEvidenceReferences={
                             initialApprovedEvidenceReferences
+                          }
+                          approvedCaptureEvidenceReferences={
+                            initialApprovedP1CaptureEvidenceReferences
                           }
                           reviewerIdentity={
                             currentUser?.email ?? "signed-in reviewer"
@@ -3325,6 +3413,7 @@ function phaseCaptureStatusForSection(
   approvedEvidenceReferences: readonly string[] = [],
   evidencePassed = true,
   evidenceReadinessAvailable = true,
+  approvedCaptureEvidenceReferences: readonly ApprovedPhaseEvidenceReference[] = [],
 ): PhaseCaptureStatusView {
   // Delegates to the shared, unit-tested state machine so the badge's meaning
   // is asserted somewhere other than a browser run. See phase-capture-status.ts
@@ -3367,7 +3456,15 @@ function phaseCaptureStatusForSection(
       tone: "open",
     };
   }
-  if (!evidencePassed) {
+  if (
+    section.evidenceFamily &&
+    !approvedCaptureEvidenceReferences.some(
+      (reference) => reference.familyKey === section.evidenceFamily,
+    )
+  ) {
+    return { label: "Evidence open", complete: false, tone: "open" };
+  }
+  if (!section.evidenceFamily && !evidencePassed) {
     return { label: "Evidence open", complete: false, tone: "open" };
   }
   return status;
@@ -3500,6 +3597,8 @@ function PhaseContractStepsCanvas({
   onOpenFiles,
   businessChangeAssessment,
   approvedEvidenceReferences,
+  approvedCaptureEvidenceReferences,
+  moveId,
   reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
@@ -3533,6 +3632,8 @@ function PhaseContractStepsCanvas({
   onOpenFiles: () => void;
   businessChangeAssessment: string;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  approvedCaptureEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  moveId: string;
   reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
@@ -3577,6 +3678,7 @@ function PhaseContractStepsCanvas({
           approvedEvidenceReferences.map((item) => item.evidenceId),
           phaseEvidencePassed,
           evidenceReadinessAvailable,
+          approvedCaptureEvidenceReferences,
         ),
         phase.phase,
         phaseHardGatesPassed,
@@ -3657,6 +3759,7 @@ function PhaseContractStepsCanvas({
         approvedEvidenceReferences.map((item) => item.evidenceId),
         phaseEvidencePassed,
         evidenceReadinessAvailable,
+        approvedCaptureEvidenceReferences,
       )
     : null;
   const canAdvanceFromSection = selectedSection
@@ -3736,6 +3839,7 @@ function PhaseContractStepsCanvas({
               approvedEvidenceReferences.map((item) => item.evidenceId),
               phaseEvidencePassed,
               evidenceReadinessAvailable,
+              approvedCaptureEvidenceReferences,
             );
             const status = phaseCaptureStatusForDisplay(
               captureStatus,
@@ -3889,6 +3993,16 @@ function PhaseContractStepsCanvas({
         {selectedSection ? (
           <div className="mxw-contract-form">
             <p>{selectedSection.description}</p>
+            {selectedSection.evidenceFamily ? (
+              <P1CaptureEvidenceStep
+                approvedEvidenceReferences={
+                  approvedCaptureEvidenceReferences
+                }
+                moveId={moveId}
+                onOpenFiles={onOpenFiles}
+                section={selectedSection}
+              />
+            ) : null}
             <ReferenceDraftCallout
               value={referenceDraftValues[selectedSection.key]}
             />
@@ -4067,6 +4181,8 @@ function FinderStepsColumns({
   evidenceReadinessAvailable,
   businessChangeAssessment,
   approvedEvidenceReferences,
+  approvedCaptureEvidenceReferences,
+  moveId,
   reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
@@ -4093,6 +4209,8 @@ function FinderStepsColumns({
   evidenceReadinessAvailable: boolean;
   businessChangeAssessment: string;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  approvedCaptureEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  moveId: string;
   reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
@@ -4128,6 +4246,7 @@ function FinderStepsColumns({
           approvedEvidenceReferences.map((item) => item.evidenceId),
           phaseEvidencePassed,
           evidenceReadinessAvailable,
+          approvedCaptureEvidenceReferences,
         ),
         phase.phase,
         phaseHardGatesPassed,
@@ -4185,6 +4304,7 @@ function FinderStepsColumns({
                 approvedEvidenceReferences.map((item) => item.evidenceId),
                 phaseEvidencePassed,
                 evidenceReadinessAvailable,
+                approvedCaptureEvidenceReferences,
               );
               const status = phaseCaptureStatusForDisplay(
                 captureStatus,
@@ -4375,6 +4495,16 @@ function FinderStepsColumns({
             <header>
               <p>{selectedSection.description}</p>
             </header>
+            {selectedSection.evidenceFamily ? (
+              <P1CaptureEvidenceStep
+                approvedEvidenceReferences={
+                  approvedCaptureEvidenceReferences
+                }
+                moveId={moveId}
+                onOpenFiles={onOpenFiles}
+                section={selectedSection}
+              />
+            ) : null}
             <ReferenceDraftCallout
               value={referenceDraftValues[selectedSection.key]}
             />
@@ -4600,6 +4730,7 @@ function PhaseBody({
   businessChangeAssessment,
   confirmedSolutionRoute,
   approvedEvidenceReferences,
+  approvedCaptureEvidenceReferences,
   reviewerIdentity,
   onFinalizePhaseCapture,
   onOpenFiles,
@@ -4648,6 +4779,7 @@ function PhaseBody({
   businessChangeAssessment: string;
   confirmedSolutionRoute: ConfirmedSolutionRoute | null;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  approvedCaptureEvidenceReferences: ApprovedPhaseEvidenceReference[];
   reviewerIdentity: string;
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
@@ -4688,6 +4820,9 @@ function PhaseBody({
             evidenceReadinessAvailable={evidenceReadinessAvailable}
             businessChangeAssessment={businessChangeAssessment}
             approvedEvidenceReferences={approvedEvidenceReferences}
+            approvedCaptureEvidenceReferences={
+              approvedCaptureEvidenceReferences
+            }
             reviewerIdentity={reviewerIdentity}
             onChange={onPhaseCaptureValueChange}
             phase={phase}
@@ -5202,6 +5337,9 @@ function PhaseBody({
           evidenceReadinessAvailable={evidenceReadinessAvailable}
           businessChangeAssessment={businessChangeAssessment}
           approvedEvidenceReferences={approvedEvidenceReferences}
+          approvedCaptureEvidenceReferences={
+            approvedCaptureEvidenceReferences
+          }
           reviewerIdentity={reviewerIdentity}
           onChange={onPhaseCaptureValueChange}
           phase={phase}
@@ -6771,6 +6909,7 @@ function CurrentStateFamilyUploadPanel({
 function EvidenceUploadControl({
   buttonLabel,
   evidenceFamilies = [],
+  fixedEvidenceFamily,
   moveId,
   onOpenFiles,
   phase,
@@ -6779,6 +6918,7 @@ function EvidenceUploadControl({
 }: {
   buttonLabel: string;
   evidenceFamilies?: Array<{ id: string; label: string }>;
+  fixedEvidenceFamily?: { id: string; label: string };
   moveId: string;
   onOpenFiles?: () => void;
   phase: number;
@@ -6838,8 +6978,9 @@ function EvidenceUploadControl({
     form.append("phase", String(phase));
     form.append("family", uploadFamily);
     form.append("title", uploadTitle);
-    if (uploadFamily === "uploaded_evidence" && declaredEvidenceFamily) {
-      form.append("evidenceFamily", declaredEvidenceFamily);
+    const selectedFamilyKey = fixedEvidenceFamily?.id ?? declaredEvidenceFamily;
+    if (uploadFamily === "uploaded_evidence" && selectedFamilyKey) {
+      form.append("evidenceFamily", selectedFamilyKey);
     }
     const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
       method: "POST",
@@ -6896,9 +7037,9 @@ function EvidenceUploadControl({
         await uploadOne(file, selectedFiles.length);
       }
       setStatus("uploaded");
-      const selectedEvidenceFamily = evidenceFamilies.find(
-        (family) => family.id === declaredEvidenceFamily,
-      );
+      const selectedEvidenceFamily =
+        fixedEvidenceFamily ??
+        evidenceFamilies.find((family) => family.id === declaredEvidenceFamily);
       const routingNote = selectedEvidenceFamily
         ? `; routed to ${selectedEvidenceFamily.label} for review`
         : "; not assigned to a required evidence family";
@@ -6919,26 +7060,29 @@ function EvidenceUploadControl({
   return (
     <div className="mxw-upload-stack">
       <div className="mxw-upload-control">
-        <label className="mxw-upload-family">
-          <span>File type</span>
-          <select
-            aria-label="Evidence file type"
-            onChange={(event) => {
-              const nextFamily = event.target.value as typeof uploadFamily;
-              setUploadFamily(nextFamily);
-              if (nextFamily === "session_artifact") {
-                setDeclaredEvidenceFamily("");
-              }
-            }}
-            value={uploadFamily}
-          >
-            <option value="uploaded_evidence">Evidence</option>
-            <option value="session_artifact">Workshop / session notes</option>
-          </select>
-        </label>
-        {phase === 1 &&
-        uploadFamily === "uploaded_evidence" &&
-        evidenceFamilies.length > 0 ? (
+        {!fixedEvidenceFamily ? (
+          <label className="mxw-upload-family">
+            <span>File type</span>
+            <select
+              aria-label="Evidence file type"
+              onChange={(event) => {
+                const nextFamily = event.target.value as typeof uploadFamily;
+                setUploadFamily(nextFamily);
+                if (nextFamily === "session_artifact") {
+                  setDeclaredEvidenceFamily("");
+                }
+              }}
+              value={uploadFamily}
+            >
+              <option value="uploaded_evidence">Evidence</option>
+              <option value="session_artifact">Workshop / session notes</option>
+            </select>
+          </label>
+        ) : null}
+      {!fixedEvidenceFamily &&
+      phase === 1 &&
+      uploadFamily === "uploaded_evidence" &&
+      evidenceFamilies.length > 0 ? (
           <label className="mxw-upload-family">
             <span>Required evidence family (optional)</span>
             <select
@@ -7785,6 +7929,7 @@ function PhaseCaptureEditor({
   evidenceReadinessAvailable,
   businessChangeAssessment,
   approvedEvidenceReferences,
+  approvedCaptureEvidenceReferences,
   reviewerIdentity,
   onChange,
   phase,
@@ -7801,6 +7946,7 @@ function PhaseCaptureEditor({
   evidenceReadinessAvailable: boolean;
   businessChangeAssessment: string;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  approvedCaptureEvidenceReferences: ApprovedPhaseEvidenceReference[];
   reviewerIdentity: string;
   onChange: (key: string, value: string) => void;
   phase: PhaseContract;
@@ -7842,6 +7988,7 @@ function PhaseCaptureEditor({
             approvedEvidenceReferences.map((item) => item.evidenceId),
             evidencePassed,
             evidenceReadinessAvailable,
+            approvedCaptureEvidenceReferences,
           );
           const status = phaseCaptureStatusForDisplay(
             captureStatus,
@@ -8820,6 +8967,15 @@ button.mxw-step-progress-status{cursor:pointer}
 .mxw-phase-progress-button:focus-visible,.mxw-step-gate-button:focus-visible{outline:3px solid rgba(42,90,168,.35);outline-offset:2px}
 .mxw-contract-form{display:grid;gap:13px}
 .mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
+.mxw-capture-evidence{display:grid;gap:10px;border:1px solid var(--line-2);border-left:3px solid var(--green);border-radius:8px;background:var(--soft);padding:12px 14px}
+.mxw-capture-evidence header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.mxw-capture-evidence header span{color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase}
+.mxw-capture-evidence h3{margin:2px 0 0;color:var(--ink);font-size:14px}
+.mxw-capture-evidence header strong{color:var(--ink-2);font-size:12px}
+.mxw-capture-evidence p{margin:0;color:var(--ink-2);font-size:12.5px;line-height:1.45}
+.mxw-capture-evidence ul{display:grid;gap:4px;margin:0;padding-left:18px;color:var(--ink);font-size:12.5px}
+.mxw-capture-evidence .mxw-upload-stack{justify-items:start;min-width:0}
+.mxw-capture-evidence-refresh{justify-self:start;border:0;background:transparent;color:var(--ink-2);font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer}
 .mxw-reference-draft{display:grid;gap:8px;border:1px solid #d8e0e8;border-left:3px solid #587a9f;border-radius:8px;background:#f7f9fb;padding:12px}
 .mxw-reference-draft-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .mxw-reference-draft-head strong{color:#263b52;font-size:12px}

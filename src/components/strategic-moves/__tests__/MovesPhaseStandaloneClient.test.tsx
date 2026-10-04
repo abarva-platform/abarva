@@ -23,6 +23,7 @@ import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/m
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
+import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
 // jsdom's test environment doesn't provide these globally; the component
@@ -268,6 +269,18 @@ const completeP1CaptureValues = {
     validatedBy: "Executive sponsor",
   }),
 };
+
+function approvedP1CaptureEvidence(
+  ...familyIds: string[]
+): Array<{ evidenceId: string; title: string; familyKey: string }> {
+  return P1_CHARTER_EVIDENCE_FAMILIES.filter((family) =>
+    familyIds.includes(family.id),
+  ).map((family) => ({
+    evidenceId: `approved-${family.id}`,
+    title: `Approved ${family.label} source`,
+    familyKey: family.id,
+  }));
+}
 
 const completeSolutionRouteValue = JSON.stringify({
   businessChangeAssessmentSnapshot: JSON.parse(
@@ -2239,7 +2252,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("marks a P1 field captured after save and keeps it neutral while the phase gate is open", async () => {
+  it("keeps a saved P1 field evidence-open until its source is approved", async () => {
     const savedText =
       "Jordan Lee, COO | jordan@example.com | phase-progress emails enabled.";
     const { unmount } = render(
@@ -2271,7 +2284,7 @@ describe("MovesPhaseStandaloneClient", () => {
     await waitFor(
       () => {
         expect(
-          screen.getAllByText("Captured · gate open").length,
+          screen.getAllByText("Evidence open").length,
         ).toBeGreaterThan(0);
       },
       { timeout: 2_000 },
@@ -2318,9 +2331,122 @@ describe("MovesPhaseStandaloneClient", () => {
         )[0] as HTMLTextAreaElement
       ).value,
     ).toBe(savedText);
-    expect(screen.getAllByText("Captured · gate open").length).toBeGreaterThan(
+    expect(screen.getAllByText("Evidence open").length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("keeps a saved P1 input blocked until its matching evidence is approved", () => {
+    const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={{
+          sponsor_commitment:
+            "Elena Park, VP Member Services | elena@example.test | weekly updates.",
+        }}
+        move={move}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Sponsor contact and progress updates/i));
+    expect(screen.getByText("Evidence for this step")).toBeInTheDocument();
+    expect(
+      screen.getByText(/step stays locked until that evidence is approved/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save & continue" }),
+    ).toBeDisabled();
+  });
+
+  it("routes an in-step P1 upload to that input and keeps it pending human review", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={{
+          sponsor_commitment:
+            "Elena Park, VP Member Services | elena@example.test | weekly updates.",
+        }}
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Sponsor contact and progress updates/i));
+    fireEvent.change(screen.getByLabelText("Add evidence for this step"), {
+      target: {
+        files: [
+          new File(["synthetic sponsor contact source"], "contact.csv", {
+            type: "text/csv",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(uploadedEvidenceRoutes).toContainEqual({
+        fileName: "contact.csv",
+        phase: 1,
+        evidenceFamily: "charter_sponsor",
+      });
+    });
+    expect(
+      screen.getByText(/awaiting human review before generation/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save & continue" }),
+    ).toBeDisabled();
+  });
+
+  it("advances a P1 input with its approved family while the transition workbook remains open", () => {
+    const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+    const [basePacket] = coveredEvidencePacketsForPhase(1);
+    const openWorkbookPacket = {
+      ...basePacket!,
+      evidenceSlot: "P1 to P2 readiness workbook",
+      familyId: "p1_to_p2_readiness_workbook",
+      status: "missing" as const,
+    };
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[openWorkbookPacket]}
+        initialPhaseCaptureValues={{
+          sponsor_commitment:
+            "Elena Park, VP Member Services | elena@example.test | weekly updates.",
+        }}
+        initialApprovedP1CaptureEvidenceReferences={[
+          {
+            evidenceId: "p1-sponsor-evidence",
+            title: "Progress contact source",
+            familyKey: "charter_sponsor",
+          },
+        ]}
+        move={move}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Sponsor contact and progress updates/i));
+    expect(
+      screen.getByRole("button", { name: "Save & continue" }),
+    ).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Save & continue" }));
+    expect(
+      screen.getByRole("heading", { name: "Scope boundary" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save & continue" }),
+    ).toBeDisabled();
   });
 
   it("uses P1 step 2 for uploading evidence, with multiple files enabled", async () => {
@@ -4999,6 +5125,9 @@ describe("MovesPhaseStandaloneClient", () => {
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP1CaptureValues}
+        initialApprovedP1CaptureEvidenceReferences={
+          approvedP1CaptureEvidence(...P1_CHARTER_EVIDENCE_FAMILIES.map((family) => family.id))
+        }
         move={makeMove({
           currentPhase: 1,
           phaseLabel: "P1 Charter",
@@ -5969,6 +6098,9 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialApprovedP1CaptureEvidenceReferences={
+            approvedP1CaptureEvidence("charter_business_change")
+          }
           initialSubstepKey="prepare"
           move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
           phaseNum={1}
@@ -6138,6 +6270,9 @@ describe("MovesPhaseStandaloneClient", () => {
             sponsor_commitment:
               "Priya Nair, Chief Data & Analytics Officer — priya.nair@company.example",
           }}
+          initialApprovedP1CaptureEvidenceReferences={
+            approvedP1CaptureEvidence("charter_sponsor")
+          }
           move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
           phaseNum={1}
           phaseTallies={[...phaseTallies]}
