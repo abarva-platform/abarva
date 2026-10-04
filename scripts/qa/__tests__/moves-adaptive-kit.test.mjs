@@ -81,6 +81,15 @@ test("rejects sponsor approval authority in the P1 decision record", () => {
   });
 });
 
+test("P1 sponsor contact is synthetic, non-deliverable, and progress-only", () => {
+  const file = path.join(FIXTURE, "01_p1_charter/charter_decisions.md");
+  const contents = fs.readFileSync(file, "utf8");
+  assert.match(contents, /Synthetic Member Services Sponsor \(role alias; not a real person\)/);
+  assert.match(contents, /member\.services\.sponsor@example\.invalid/);
+  assert.match(contents, /no external email delivery in this smoke/i);
+  assert.match(contents, /no in-product approval action is assigned to this contact/i);
+});
+
 test("rejects sponsor approval authority in the P5 handoff RACI", () => {
   withMutablePackage((root, governancePath) => {
     const file = path.join(root, "05_p5_mobilize/raci.csv");

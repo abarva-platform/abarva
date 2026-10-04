@@ -12,5 +12,10 @@ Average handle time (including/excluding hold and after-call work, definition un
 ## Decision rights
 The listed sponsor is an informational contact for progress and does not approve Move actions in-product. Operations validates workflow and adoption. Data/platform validates interface assumptions and effort. Privacy/security reviews permitted data and controls. Finance validates baseline and value claims. An authorized workspace user records Move decisions and phase approvals after the required reviewers provide input. Any funding commitment remains outside this synthetic smoke.
 
+## Synthetic sponsor contact
+Contact: Synthetic Member Services Sponsor (role alias; not a real person).
+Email: member.services.sponsor@example.invalid (reserved non-deliverable address; do not send email).
+Progress preference: no external email delivery in this smoke. The sponsor is listed for reference only; no in-product approval action is assigned to this contact.
+
 ## Evidence and caveats
 Use only synthetic package files. No PHI. Resolve KPI definitions and source conflicts before calculating benefits. P2 validates workflow impact and P3 depth.
