@@ -12,6 +12,7 @@ import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-authority";
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
 import { evaluateRequestVersionApproval } from "@/lib/source/new-workspace/source-version-authority";
+import { readinessForEvent } from "@/lib/source/new-workspace/step-readiness-adapter";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
 import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/stage-plan-snapshot";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
@@ -128,13 +129,14 @@ export default async function SourceNewEventPage({
   // apply gate — and is deliberately NOT the same value as "no acceptance
   // recorded". A surface that cannot read the authority must say so, not
   // report the request as unaccepted.
-  const requestVersionApproval =
+  const requestVersionApprovalState =
     requestVersion.kind === "available" && requestVersion.currentVersion
       ? evaluateRequestVersionApproval({
           currentVersionId: requestVersion.currentVersion.id,
           approvals: requestVersion.approvals,
-        }).status
+        })
       : null;
+  const requestVersionApproval = requestVersionApprovalState?.status ?? null;
 
   const files: SourceNewFileRow[] = artifacts.flatMap((artifact) => {
     // Tenancy is the only reason to drop an artifact here. A stage this
@@ -300,6 +302,23 @@ export default async function SourceNewEventPage({
       scorecardAuthority={scorecardAuthority}
       responseIntake={responseIntake}
       historicalRequestSummary={historicalRequestSummary}
+      stepReadiness={readinessForEvent({
+        currentStage: projectedCurrentStage,
+        lifecycle: event.status,
+        requestAuthorityVersionId:
+          requestVersion.kind === "available"
+            ? (requestVersion.currentVersion?.id ?? null)
+            : null,
+        // The projection carries no separate requester field. `owner` is the
+        // person who holds the event record, which at intake is the closest
+        // true reading — not a second name for the decision owner.
+        requesterId: event.owner ?? null,
+        decisionOwner: event.decisionOwner ?? null,
+        trigger: event.triggerDescription ?? null,
+        category: event.classifiedCategory ?? null,
+        asOfDate,
+        requestVersionApproval: requestVersionApprovalState,
+      })}
     />
   );
 }
