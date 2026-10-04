@@ -34,6 +34,148 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-04 seventh wave — walked on serving SHA `031eec1f24`
+
+**Item:** C-592.
+**Walked:** 2026-10-04, between 13:36:58Z and 13:50:56Z, by
+`source-backlog-executor#20261004T133344Z`.
+**Signed in as:** the platform-admin session, tenant context resolved to the
+governed healthcare reference tenant used for these walks. The tenant is named
+nowhere in this block on purpose: this repository is public, and the habit of
+not writing a tenant name into a public artifact is worth having before there is
+a real one to protect.
+
+**Which SHA, and why it is not pinned.** C-592 forbids pinning a literal SHA,
+because C-635 pinned one and became unexecutable when the runtime moved past it.
+This walk resolved what was serving, stamped it, and asserts ancestry. The
+serving SHA was `031eec1f24a8daa3ae3b260a803e459a9afc5b26` (#8964), which was
+also `origin/main` at walk start and still was at walk end.
+
+| Merge | SHA | Ancestor of `031eec1f24` |
+|---|---|---|
+| #8949 Moves horizontal phase stepper | `f431ae90c7` | yes |
+| #8950 Moves aVa docked left on desktop | `d9e927f3c8` | yes |
+| #8952 Moves P3–P5 workflow actions simplified | `b4b97d79a6` | yes |
+| #8953 Moves phase workspace navigation consolidated | `9f5702fe23` | yes |
+| #8955 Source lab NDA upload and repeat template publication | `373a0b93a5` | yes |
+| #8958 Moves P1 uploads kept out of inferred gate families | `731187eab0` | yes |
+| #8964 Moves P1 capture bound to approved evidence | `031eec1f24` | yes |
+
+**Runtime invariant, read independently with read-only `az` before the walk and
+again after it, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App | `ca-abarva-web-lab-eastus` |
+| Template image | `sha256:1ddf77fd5d941e3186078a93efbf9453e1388363b899175d8c8eaccb5a8e37b7` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--m031eec1f` — sole entry, weight 100 |
+| Revision image | identical to the template image |
+| Revision state | `active: true`, `Healthy`, `Running` |
+
+Read at 13:36:58Z and again at 13:50:56Z; both reads returned the same digest
+and the same sole revision, so no deploy landed inside the walk.
+
+### The ancestor sweep — the mechanism, not the list
+
+C-592's acceptance asks for this and it is the reason the item exists: a wave
+record that names merges as a hand-built list has left residue three times
+running. So before any verdict was written, **every** merge that is an ancestor
+of the walked SHA and newer than the oldest wave SHA this file records
+(`e085442776`) was enumerated with `git rev-list`, and each one checked with
+`git merge-base --is-ancestor`. **51 merges; all 51 are ancestors.** Every one
+is accounted for below — as a row here, or as a named exclusion with its reason.
+
+| Disposition | Count | Merges |
+|---|---|---|
+| Already carries a verdict row in this file | 10 | #8918 #8922 #8923 #8925 #8927 #8931 #8932 #8934 #8936 #8937 |
+| No product surface — nothing under `src/app`, `src/components` or `src/lib` outside tests, so `deployed` is the ceiling | 17 | #8916 #8919 #8928 #8929 #8933 #8943 #8945 #8946 #8947 #8951 #8954 #8956 #8957 #8959 #8960 #8961 #8962 |
+| **Verdicts exist only in an unmerged pull request** — #8963 (C-586, sixth wave) walked these on `de09c6b806` and is open, mergeable and green, so this file does not yet hold them. Not re-walked, and not claimed as covered | 6 | #8915 #8917 #8939 #8940 #8942 #8944 |
+| Named by open item C-638, whose acceptance owns them | 2 | #8913 #8914 |
+| **Walked here** | 7 | #8949 #8950 #8952 #8953 #8955 #8958 #8964 |
+| **Residue — a product surface, no verdict, and no item that owns it.** Filed as **C-595** so it is not discovered a fourth time | 9 | #8891 #8920 #8921 #8924 #8926 #8930 #8935 #8938 #8941 |
+
+The residue row is the sweep earning its keep: C-592 named four merges, and the
+sweep found nine more client-visible merges that no acceptance covers at all.
+
+**#8949 merged empty, and the sweep is how that surfaced.** `f431ae90c7` has one
+parent and a zero-file diff against it — the stepper change and *both* release
+records landed inside #8950's squash (`d9e927f3c8`) 21 seconds earlier. So
+#8949's content is live and #8949's own commit proves nothing; row 1 settles it
+from the surface instead.
+
+### Results
+
+| # | Surface | Proving | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves phase surface — layout, at desktop width | #8949 · #8950 · #8953 | **pass** | Measured from the live DOM at `window.innerWidth` **1180**, `matchMedia('(min-width: 1024px)')` true. **#8953:** the collapsible left rail is gone — `document.querySelectorAll('.mxw-side')` returns **zero** elements — and the consolidated horizontal tab set renders with the four base labels `Steps`, `Files & Evidence`, `Intelligence`, `Approvals`, all four visible at y=260. The conditional half of `workspaceTabs` is real too — a flag-gated fifth tab `Risk Assessment` renders on the P2 phase and on no other — though that observation was made in the narrow window of row 2, not at this width, and is recorded here only because it belongs to the same merge. **#8949:** `.mxw-phase-stepper` is present and horizontal — 1121 px wide, 64 px tall, at y=63 — carrying six steps with state classes `done` and `current viewing`, reading `Originate 3 of 3 · Charter 1 of 7 · Discover & Diagnose 0 of 8 · Design Future State 0 of 8 · Roadmap & Business Case · Mobilize & Handoff 0 of 4`. **#8950:** `.mxw-ava-pop` is docked to the **left** edge — `x = 0`, `y = 44`, 312 × 727 — not a floating bottom-right bubble; `.mxw-ava-fab` has zero size at this width. The same left dock renders on the Source New event canvas. |
+| 2 | Moves phase surface — layout, at narrow width | #8949 · #8950 · #8953 | **pass**, with the width stated | Read in a browser window whose viewport measured `innerWidth` **606**, below both the `md` (768) and `lg` (1024) breakpoints. The narrow tab bar renders instead, with the shortened labels `Stage`, `Files`, `Intel`, `Approvals`; at 1180 px that same bar is in the DOM with `visibility` false and the full-label bar is the visible one. So the responsive switch is real and was observed from both sides rather than inferred. aVa renders as the bottom-right floating control at this width, which is the complement of row 1's left dock. **Not a phone-width reading:** 606 px is the same Tailwind band as 375 px but is not 375 px — see the stated limit below. |
+| 3 | Moves phase workflow actions, P1 and P2 | #8952 | **pass** on the reachable half; the P3–P5 half is **blocked** | #8952's change is `phase.phase >= 1` → `phase.phase >= 1 && phase.phase <= 2` on the capture editor, plus removing a duplicate upload panel and an evidence-count link from the later phases. The `>= 1 && <= 2` half is directly observable and holds: the capture editor renders at **P1** (`Charter Inputs → Upload Evidence → Approve & Build`, `Step 1 of 10`) and at **P2** (`Prepare → Upload & Review → Review Findings → Approve & Build`, `Step 1 of 12`). The `<= 2` half could not be reached: **no Move in the walked tenant has cleared the P1 gate** — all eight active Moves sit at P1 Charter except one at P0 Originate — and `phase/3`, `phase/4` and `phase/5` each redirect to `phase/1?blockedPhase=N` and render a stated refusal: "P3 cannot begin yet · Finish the required P1 gate before opening P3", with `REQUIRED · P1 gate approval`. Clearing that gate is a write. The refusal was observed as a refusal and the gate was not cleared. |
+| 4 | Moves P1 capture bound to approved evidence | #8964 | **pass** | The newest merge on the serving SHA, found by the sweep rather than named by C-592. All seven P1 inputs render `Needs approved evidence`. Step 1 carries `EVIDENCE OPEN`, a `REQUIRED SOURCE · Evidence for this step · Open` block, and the governing sentence "Add a source and have a reviewer approve it in Files & Evidence. This step stays locked until that evidence is approved." The binding is enforced on the control, not only in prose: `Save & continue` has `disabled === true`, while `Add evidence for this step`, `Open Files & Evidence` and `Refresh approved evidence` are all enabled. Nothing was typed and nothing was saved; the disabled state was read from the DOM. |
+| 5 | Moves P1 upload gate-family routing | #8958 | **pass** on the declared-family affordance; the classifier itself is **blocked** | #8958 gives a P1 upload `reviewFamilyKey: 'p1_uploaded_evidence'` and `evidenceType: 'other'` by default rather than inferring a gate family. What a walk can see is the *declared, not inferred* shape, and it is there: the Files & Evidence upload form carries `Evidence applies to phase` (P0–P5, defaulting to the current phase) and a separate `Covers required evidence` whose **selected value is the empty string, rendering as `Not stated`** — the gate family is a human statement, not a guess. The existing corpus is consistent with it: `Evidence family coverage — cost baseline: 4 · current state process: 7 · it systems landscape: 3 · kpi baseline: 8 · org workforce: 2 · other: 1`, an `other` bucket that exists and is populated. **What is not proven:** the classifier's routing of a *new* P1 upload. Establishing that needs an upload, which is a write. No file was selected and no upload was submitted. |
+| 6 | Source NDA capture, Stage 05 | #8955 | **pass** | Read on the one event that has `03 Suppliers & NDA` recorded; opening that already-passed stage declared its own harmlessness — "This phase holds recorded work. Viewing it does not mark it complete, approve any gate, or change the current stage" — which re-confirms item 20 again on a later SHA. Both halves #8955 names are present. **Upload:** `TEMPLATE PDF` with a `file` input and an `Upload PDF` submit. **Repeat template publication:** an `artifactId` select listing the already-uploaded PDF, plus `Template version`, `Display name`, `Decision rationale`, and a required acknowledgement checkbox reading "I authorize this PDF as a synthetic template for this event only", ahead of a `Publish synthetic template` submit. **Lab-fenced, in the product's own words:** "Lab event only. Admin publication is recorded as a synthetic test decision, not Legal approval or an executed NDA", and the readiness block states "A completed signing envelope does not grant coverage; a named reviewer must record the executed document or Legal waiver." Posture `Blocked before supplier work`, `Accepted suppliers 4 · Covered 0 · Blocked or unknown 4`, `NDA AUTHORITY` unrecorded on all four. **No file was uploaded and no template was published.** |
+
+### A near-miss worth recording: the walk lane's own tool can manufacture a defect
+
+On the Stage 05 NDA capture surface the `artifactId` option read back as the
+literal string `[BLOCKED: JWT token]` through three separate reads — the page
+text, the control dump and the option list — which looks exactly like a
+redaction placeholder leaking into a client-visible control on a governed
+publish path, and would have been filed as a `fail`.
+
+It is not a product defect. `[BLOCKED: JWT token]` is the **browser tool's own
+output redaction**, applied to what it returns, not to what the page renders.
+The option's real text is an ordinary 55-character PDF filename, ending
+`…_v1.0.pdf` — three dot-separated segments (`…_v1` · `0` · `pdf`), which is
+JWT-shaped enough to trip a secret scanner. The filename itself carries a tenant
+legal-entity code and so is not reproduced here; the shape is the whole finding. It was recovered by reading the same
+string with the dots substituted, which the scrubber does not match; the
+substituted read and `.length` agree, and `option.text === option.textContent`.
+
+Recorded because the failure mode is general and expensive in both directions: a
+reading lane that silently rewrites what it returns can manufacture a leak that
+does not exist, and can equally hide one that does. **Any walk row resting on a
+read-back string should be re-read in a form the scrubber cannot match before it
+is written down as a verdict.**
+
+### Stated limits of this walk
+
+- **No phone-width row.** C-592 asks for the Moves phase surface at a phone
+  width. Row 2 was read at 606 px, which is in the same Tailwind band as 375 px
+  and is not 375 px. The walk lane could not set a viewport: `resize_window`
+  returned success for 1280×800, 1600×1000 and 1800×1050 and `window.innerWidth`
+  stayed 606 through all three. The 1180 px reading in row 1 came from a
+  different browser window, not from a successful resize. A true 375 px row is
+  owed and is **not** claimed here.
+- **Row 3's P3–P5 half and row 5's classifier are blocked by a write**, each
+  named above. Neither is a quiet pass.
+- **The walk was interrupted.** The browser extension disconnected between the
+  606 px reading and the 1180 px reading, and the second half ran in a new tab.
+  No surface was reloaded to turn a failing reading into a passing one; rows 1
+  and 2 are different widths read in different windows, and both are stated as
+  such.
+- **The six merges whose verdicts sit in open PR #8963 are not covered here.**
+  If that PR is closed without merging, those six return to residue.
+
+No write was performed on any surface. No upload, no template published, no
+candidate accepted, no NDA sent, no approval submitted, no phase advanced, no
+step saved, no file downloaded. The only interactions were navigation, stage
+selection and workspace-tab selection — all client-side view state — plus
+read-only DOM inspection. Two gated surfaces were opened for reading and both
+declared that reading them changes nothing.
+
+### Noted, not filed
+
+- The P1 stepper reads `Charter 1 of 7` while the status card on the same screen
+  reads `INPUTS 0/7`. Both are defensible readings of a seven-input phase; they
+  are not the same number on the same screen, and a reader comparing them has no
+  way to tell which counts what.
+- One Moves evidence item renders `Session file · v13 · needs review` beside
+  twenty-one items reading `Evidence · vN · aligned`. A v13 session file still
+  needing review is either correct and uninteresting or a stuck review; the
+  surface does not say which.
+
+---
+
 ## 2026-10-03 fifth wave — walked on deployed SHA `aa23d2c31f`
 
 **Item:** C-641.
