@@ -27,3 +27,22 @@ test("lab contact workflow has a manual, hash-pinned, separately approved apply 
   assert.equal(job.steps.find((step) => step.name === "Validate operator quality proof").run.includes(
     "validate-nda-lab-contact-proof.mjs"), true);
 });
+
+test("contact operator and validator read the same mode-specific proof directory", () => {
+  const workflow = yaml.load(readFileSync(
+    ".github/workflows/source-nda-lab-contact-intake-job.yml", "utf8"));
+  const job = workflow.jobs["lab-contact-intake"];
+  const proofDir = job.env.PROOF_OUTPUT_DIR;
+  assert.match(proofDir, /inputs\.mode == 'dry_run'/);
+  assert.match(proofDir, /live-dry-run/);
+  assert.match(proofDir, /live-apply/);
+  for (const name of [
+    "Run dry-run through private ACA operator",
+    "Run separately approved apply through private ACA operator",
+  ]) {
+    assert.match(job.steps.find((step) => step.name === name).run,
+      /--out-dir audit-artifacts\/source-nda-lab-contact-intake-job\/\$PROOF_OUTPUT_DIR/);
+  }
+  assert.match(job.steps.find((step) => step.name === "Validate operator quality proof").run,
+    /audit-artifacts\/source-nda-lab-contact-intake-job\/\$PROOF_OUTPUT_DIR\/summary\.json/);
+});
