@@ -191,10 +191,36 @@ file lands in `src/__tests__/behaviors`, which the floor sweeps, and it imports
 only `node:fs`, `node:os`, `node:path` and `js-yaml` — no module under `src/` —
 so it adds no application lines to the measured set.
 
-**The acceptance's own CI proof** — break one `scripts/exec/` contract on the
-branch, show the pull request is blocked quoting the blocking context by name
-from the rulesets API, then restore it and show the block clears — is recorded
-in Audit Evidence against the run ids and conclusions it produced.
+**The acceptance's own CI proof, performed and read rather than reasoned
+about.** One line was removed from `unknownFlags` in `scripts/exec/cli-entry.mjs`
+— the skip that lets a value flag consume its own argument, the regression item
+T-748 was filed against — pushed as commit `f01c55b367`, and reverted in the
+commit after it.
+
+| reading | value |
+|---|---|
+| job | `Run hygiene_gate.sh`, run `37166231486`, **completed / failure**, 01:04:53Z → 01:07:09Z |
+| failing step | 6. `Prove the execution-queue toolchain contracts can fail a merge` — **failure**; steps 7–9 skipped behind it |
+| is that context required? | **yes** — `Run hygiene_gate.sh` is present in `GET /repos/abarva-platform/abarva/rulesets/17227397`, read by name, not taken from the job's own title |
+| pull request | `mergeStateStatus=BLOCKED` at head `f01c55b367` |
+
+**On the strength of that last row, stated precisely rather than leaned on:**
+`BLOCKED` also covers *pending* required checks, so it is not by itself the
+proof. The decisive reading is the one above it — a required context reached a
+**failure** conclusion, and a failed required check cannot be satisfied while
+the head stands. The `BLOCKED` row corroborates; it does not carry the claim.
+
+**The blocking run's own log, which is the part that matters for T-595:** all
+fifteen suites ran and each is named in it, with per-suite counts. 1,170 passed,
+5 failed, 14 skipped — and the five failures fall in **three** contracts, not
+one: `append-claim.test.mjs` 92/2, `cli-entry.test.mjs` 32/2,
+`toolchain-manifest.test.mjs` 16/1. A `set -e` sweep would have reported only
+the first. The run also confirms the C-585 prediction on a real runner:
+`id-collision.test.mjs` 60/0/3 and `register-merge-coverage.test.mjs` 47/0/3,
+those cases skipping exactly as expected where no operator corpus exists.
+
+The clearing half — the same job green on the reverted head — is recorded in
+Audit Evidence.
 
 ## Rollout Plan
 
@@ -276,6 +302,14 @@ left with a quietly weakened gate.
   workflow now says at the top that it cannot gate anything. Deleting the
   fifteen steps would remove the only written record of what several of those
   controls measured, which is not a trade this change makes unasked.
+- **The sweep is the job's first step, so a toolchain red hides a hygiene red
+  and not the reverse.** That is ordinary GitHub step semantics and it is a
+  diagnostic cost, not a gating one: the job is red either way, so the merge is
+  blocked either way. First position was chosen because the sweep is 68 seconds
+  against the hygiene gate's ~5 minutes and the faster signal arrives sooner.
+  The suites also import nothing but Node builtins and their own siblings, so
+  the step cannot be broken by a dependency change and does not depend on the
+  `npm ci` above it.
 - **Only this directory is covered.** The contract asks its question about
   `scripts/exec/` alone. Whether other test directories in the repository run
   only in advisory jobs is a separate census, not answered here.
