@@ -61,7 +61,7 @@ Revert the release commit through a follow-up PR and deploy it through the repo-
 
 ## Audit Evidence
 
-- PR: Pending.
+- PR: https://github.com/abarva-platform/abarva/pull/8952
 - Focused Jest output: 120/120 passed.
 - CI, deployment, runtime invariant, and signed-in walk: Pending.
 
