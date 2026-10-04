@@ -4055,5 +4055,140 @@ function unplacedSplit(dir) {
   }
 }
 
+/* ------------------------------------------------------------------------ */
+/* C-584. AN ID WHOSE COMPETING DEFINITION IS WITHDRAWN IS NOT OFFERED.      */
+/*                                                                          */
+/* Observed on the live corpus at 2026-10-04T00:05Z and again at 00:57Z:    */
+/* `C-634` was rendered in the queue's Lane C claimable table carrying the  */
+/* queue's own `AMBIGUOUS — 2 definitions share this number` flag, and one  */
+/* of those two definitions reads `WITHDRAWN — false positive`. The warning */
+/* was present and correct and was not enough: the row was still OFFERED,   */
+/* and this file's instructions tell an agent not to ask which item is next.*/
+/*                                                                          */
+/* The withdrawal is legible text, not a parse failure — `isUpdateNote`     */
+/* does not recognise `WITHDRAWN`, so the dead definition is counted as a   */
+/* second SUBSTANTIVE one, which is what makes the id ambiguous in the      */
+/* first place and simultaneously keeps its rung at 0.                      */
+/*                                                                          */
+/* (b) is the negative control and it is the half that makes (a) mean       */
+/* something: two LIVE definitions of one id must still be offered, so this */
+/* is not a blanket suppression of every ambiguous id.                      */
+/* ------------------------------------------------------------------------ */
+{
+  /** Two substantive definitions of one id; `withdraw` kills the second. */
+  function twoDefinitionFixture(id, secondTitle, secondAcceptance) {
+    const dir = freshFixture();
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `
+## C-584 live definition fixture
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| ${id} | **Write the behavioural test the catalog declares.** | T | One suite drives the real handler. |
+
+## C-584 second definition fixture
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| ${id} | **${secondTitle}** | T | ${secondAcceptance} |
+`,
+    );
+    // Mapped as a BARE id, not pinned with `definedIn`. A pin resolves the
+    // collision, and an id the map resolves is not the shape this item is
+    // about: `C-634` is unplaced, reaches the queue through the board's
+    // unplaced track with both definitions merged, and is therefore
+    // `ambiguous`. A pinned fixture would be green before the fix.
+    mapFixtureId(dir, id);
+    return dir;
+  }
+
+  /** Every id rendered in a `### Lane ... claimable` table. */
+  function claimableRowIds(rendered) {
+    const ids = new Set();
+    let inLane = false;
+    for (const line of rendered.split("\n")) {
+      if (/^### Lane /.test(line)) inLane = true;
+      else if (/^## /.test(line)) inLane = false;
+      if (!inLane) continue;
+      const m = line.match(/^\| (#?[A-Z]-?\d+) \|/);
+      if (m) ids.add(m[1]);
+    }
+    return ids;
+  }
+
+  /* --- (a) THE DEFECT. One definition withdrawn: offered to nobody, and
+   * still accounted for, so the census arithmetic closes.                  */
+  {
+    const dir = twoDefinitionFixture(
+      "T-907",
+      "WITHDRAWN — false positive, not \\\"declared, written, unwired\\\".",
+      "The measurement says withdraw: the suite exists and a required job runs it.",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const offered = claimableRowIds(rendered).has("T-907");
+    const censusRow = /\| a definition of it is withdrawn or closed, so which one a claim would take is undecidable \| (\d+) \|/.exec(rendered);
+    check(
+      "C-584 (a) an id with a WITHDRAWN competing definition is in no claimable lane table",
+      q.status === 0 && !offered,
+      `exit=${q.status}\noffered=${offered}\nstderr=${q.stderr.trim()}`,
+    );
+    check(
+      "C-584 (a) and the census says it was removed for that reason, so the arithmetic closes",
+      q.status === 0 && Boolean(censusRow) && Number(censusRow[1]) >= 1 &&
+        /\*\*Reconciled\*\*/.test(rendered),
+      `exit=${q.status}\ncensusRow=${censusRow && censusRow[0]}\n` +
+        `reconciled=${/\*\*Reconciled\*\*/.test(rendered)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) The withdrawal written where this backlog has long written its
+   * verdicts: at the head of the ACCEPTANCE cell, with an ordinary problem
+   * statement still in the title. `attributableStatusText` already names that
+   * convention ("many older table rows were updated in place by putting the
+   * verdict at the start of the Acceptance cell"), so a detector that reads
+   * the title alone misses the older half of the corpus. Mutation M4 — reading
+   * the title only — survives every other case in this block and is caught
+   * here, which is why the case exists rather than the branch being dropped. */
+  {
+    const dir = twoDefinitionFixture(
+      "T-909",
+      "The phase-advance route's approval gate is unproven.",
+      "WITHDRAWN — false positive. The cited suite exists and a required job runs it.",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const offered = claimableRowIds(rendered).has("T-909");
+    check(
+      "C-584 (c) a withdrawal in the ACCEPTANCE cell suppresses the id too",
+      q.status === 0 && !offered && /suppressed because one of its competing definitions/.test(rendered),
+      `exit=${q.status}\noffered=${offered}\nstderr=${q.stderr.trim()}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) THE NEGATIVE CONTROL. Two LIVE definitions: still offered.
+   * Without this, suppressing every ambiguous id would pass (a).           */
+  {
+    const dir = twoDefinitionFixture(
+      "T-908",
+      "Wire the second half of the same control.",
+      "The second suite drives the real handler too.",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const offered = claimableRowIds(rendered).has("T-908");
+    check(
+      "C-584 (b) an ambiguous id whose definitions are BOTH live is still offered",
+      q.status === 0 && offered && rendered.includes("AMBIGUOUS"),
+      `exit=${q.status}\noffered=${offered}\nambiguousFlag=${rendered.includes("AMBIGUOUS")}\n` +
+        `stderr=${q.stderr.trim()}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);
