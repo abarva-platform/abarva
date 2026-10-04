@@ -97,6 +97,15 @@ Findings worth naming outside the rows:
   wrong verdict. Every affected reading in this block was re-run under a neutral
   key before being written down.
 
+- **The residue is filed as `D-517`, and the id nearly was not.** Three claim
+  lines today reported that no successor could be filed, reading the queue's
+  exhausted `C-500`–`C-599` and `T-500`–`T-599` rows. Those rows are correct;
+  the inference was not. The `X-600` band holding 57 free C ids belongs to
+  Codex, so taking one would re-create the collision the disjoint-range rule
+  exists to prevent. The finding is a data-plane condition, so it is a lane D
+  item, and Claude's own `D-500`–`D-599` band has 83 free. The band table
+  answers per lane *and* per agent.
+
 Repository validation on the branch:
 
 - `node scripts/release-check.mjs --base origin/main --head HEAD`

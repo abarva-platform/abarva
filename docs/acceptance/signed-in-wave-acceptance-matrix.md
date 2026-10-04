@@ -176,12 +176,17 @@ reading it changes nothing.
   panel and #8926's dependency-proof branch are both unreachable from any
   product surface today. This is a data-plane condition in lane D, not a UI
   defect, and it is upstream of any future attempt to live-prove either merge.
-  It could not be filed under a new id: the regenerated queue reports the
-  `C-500`–`C-599` **and** `T-500`–`T-599` bands exhausted at 0 of 100 free,
-  which the generator itself calls a range decision rather than a careful
-  reading. The `C-600`–`C-699` band reports 57 free and `T-600`–`T-699` 79, so a
-  successor id exists in the next band if that is the intended reading — stated
-  as a question rather than answered by taking one.
+  **Filed as `D-517`**, and the id was the part that nearly went wrong. Three
+  claim lines today reported that a successor could not be filed at all, because
+  the regenerated queue reports the `C-500`–`C-599` **and** `T-500`–`T-599`
+  bands exhausted at 0 of 100 free. That is true, and it is not the whole table:
+  the `X-600` band showing 57 free C ids is **Codex's** band, not an unallocated
+  one, so taking from it would re-create the precise collision the disjoint-range
+  rule exists to prevent — two agents applying the same correct rule to the same
+  range at the same moment. The finding is a data-plane condition and therefore a
+  **lane D** item, and Claude's own `D-500`–`D-599` band reports **83 free**. The
+  band table answers per lane *and* per agent; reading only its exhausted rows is
+  what kept two earlier findings from being filed.
 
 ### Noted, not filed
 
