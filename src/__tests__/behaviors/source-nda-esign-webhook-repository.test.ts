@@ -23,13 +23,14 @@ describe("Source NDA webhook envelope store", () => {
     await store.read(envelopeId);
     await store.markViewed(envelopeId);
     await store.markDeclined(envelopeId);
+    await store.markVoided(envelopeId);
     await store.markCompleted(envelope, {
       signedDocumentRef: ref(`signed-${hash}.pdf`),
       signedDocumentSha256: hash,
       certificateRef: ref(`certificate-${hash}.pdf`),
       certificateSha256: hash,
     });
-    expect(calls.filter((call) => call.sql.includes("set_config"))).toHaveLength(4);
+    expect(calls.filter((call) => call.sql.includes("set_config"))).toHaveLength(5);
     for (const call of calls.filter((entry) => entry.sql.includes("source_nda_esign_envelopes"))) {
       expect(call.sql).toContain("client_key = $1");
       expect(call.sql).toContain("provider = $2");
@@ -38,6 +39,7 @@ describe("Source NDA webhook envelope store", () => {
       expect(call.params.slice(0, 4)).toEqual(["meridian-health", "docusign", "demo", envelopeId]);
       if (call.sql.includes("UPDATE")) {
         expect(call.sql).toMatch(/AND status (?:= 'sent'|IN \('sent', 'viewed'\))/);
+        if (call.sql.includes("status = 'voided'")) expect(call.sql).toContain("voided_at = now()");
         if (call.sql.includes("status = 'completed'")) {
           expect(call.sql).toContain("source_event_id = $9 AND vendor_id = $10");
           expect(call.params.slice(8)).toEqual([eventId, "VEN-TEST-1"]);
