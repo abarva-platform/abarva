@@ -66,8 +66,11 @@ product rather than against tests.
   with the route's own value for the same artifact.
 - **Row 2 — NDA envelope draft state: blocked**, on two independent
   preconditions. Measured across all 5 of the tenant's source events: every
-  status read returned HTTP 200 with the provider undispatched and zero
-  envelopes, so there is no draft state to assert. The migration is named in the
+  status read returned HTTP 200 with the provider undispatched and zero supplier
+  rows, so no envelope state is reachable to assert. The record states that
+  narrowly rather than as "zero envelopes exist" — the loader joins the envelope
+  onto accepted vendor candidates, so an empty result does not distinguish the
+  two, and the walk does not claim to. The migration is named in the
   record; its applied state is reported as **unestablished** rather than
   inferred, because the loader does not select the column the migration adds.
 - **Row 3 — build/run identifiers on client-visible move labels: pass**, third
@@ -116,7 +119,8 @@ Revert the commit. No migration, no runtime state, no data to unwind.
 
 - **Row 2 is unproven, not passing.** The NDA draft-state path cannot be
   exercised by any read-only signed-in walk: its subject is a provider webhook,
-  the provider is undispatched on this runtime, and no envelope exists. Closing
+  the provider is undispatched on this runtime, and no envelope state is
+  reachable. Closing
   it needs a dispatched lab provider and at least one drafted envelope, which is
   a write and is out of scope for a walk.
 - The applied state of the migration named in row 2 is not established here.
