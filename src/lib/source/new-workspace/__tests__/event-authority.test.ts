@@ -81,6 +81,58 @@ describe("Source event authority read", () => {
     });
   });
 
+  // The case above blanks BOTH acceptance fields, so it is satisfied by either
+  // half of the acceptance branch on its own: relaxing only the accepting-user
+  // half, or only the acceptance-time half, leaves it green. These two cases
+  // pin each half separately, so the gate cannot be half-removed unnoticed.
+  it("fails closed when a motion records an acceptance time but no accepting user", async () => {
+    serve({
+      id: "event-3a",
+      client_key: "tenant-1",
+      activation_state: "active_event",
+      solicitation_motion: "rfp",
+      solicitation_motion_accepted_by_user_id: null,
+      solicitation_motion_accepted_at: "2026-09-18T18:00:00Z",
+    });
+
+    await expect(readSourceEventAuthority("event-3a", "tenant-1")).resolves.toEqual({
+      kind: "unavailable",
+    });
+  });
+
+  it("fails closed when a motion records an accepting user but no acceptance time", async () => {
+    serve({
+      id: "event-3b",
+      client_key: "tenant-1",
+      activation_state: "active_event",
+      solicitation_motion: "rfi",
+      solicitation_motion_accepted_by_user_id: "reviewer-1",
+      solicitation_motion_accepted_at: null,
+    });
+
+    await expect(readSourceEventAuthority("event-3b", "tenant-1")).resolves.toEqual({
+      kind: "unavailable",
+    });
+  });
+
+  // Whitespace is not acceptance. Without this, a row whose acceptance columns
+  // hold a blank string reads as accepted by any check that tests presence
+  // rather than content.
+  it("does not accept a whitespace-only acceptance field as acceptance", async () => {
+    serve({
+      id: "event-3c",
+      client_key: "tenant-1",
+      activation_state: "active_event",
+      solicitation_motion: "rfp",
+      solicitation_motion_accepted_by_user_id: "   ",
+      solicitation_motion_accepted_at: "2026-09-18T18:00:00Z",
+    });
+
+    await expect(readSourceEventAuthority("event-3c", "tenant-1")).resolves.toEqual({
+      kind: "unavailable",
+    });
+  });
+
   it("distinguishes a successful empty read from an unavailable schema", async () => {
     serve(null);
     await expect(readSourceEventAuthority("missing", "tenant-1")).resolves.toEqual({
