@@ -158,6 +158,52 @@ describe("Source New synthetic NDA send control", () => {
     expect(await screen.findByText(/Completed envelope; executed NDA review is still required/)).toBeTruthy();
   });
 
+  it.each(["declined", "voided"])("permits a new confirmed send after a %s envelope", async (terminal) => {
+    fetchMock.mockResolvedValueOnce(response(status("SYN-CONTACT-001", terminal)));
+    render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian-health" files={[]} coverage={coverage} />);
+    const button = await screen.findByRole("button", { name: `Resend NDA for ${supplierName}` });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    const form = button.closest("form")!;
+    fireEvent.change(within(form).getByRole("combobox", { name: "Supplier-specific template" }), {
+      target: { value: "synthetic-1.0" },
+    });
+    fireEvent.click(within(form).getByRole("checkbox", { name: /test inbox/ }));
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it.each(["created", "sent", "viewed", "completed"])("refuses another send while the envelope is %s", async (state) => {
+    fetchMock.mockResolvedValueOnce(response(status("SYN-CONTACT-001", state)));
+    render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian-health" files={[]} coverage={coverage} />);
+    const button = await screen.findByRole("button", { name: `Send NDA for ${supplierName}` });
+    const form = button.closest("form")!;
+    fireEvent.change(within(form).getByRole("combobox", { name: "Supplier-specific template" }), {
+      target: { value: "synthetic-1.0" },
+    });
+    fireEvent.click(within(form).getByRole("checkbox", { name: /test inbox/ }));
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not allow a second retry while the new envelope readback is stale", async () => {
+    fetchMock.mockResolvedValueOnce(response(status("SYN-CONTACT-001", "declined")));
+    fetchMock.mockResolvedValueOnce(response({ ok: true, envelopeId: "44444444-4444-4444-8444-444444444444" }, 201));
+    fetchMock.mockResolvedValueOnce(response(status("SYN-CONTACT-001", "declined")));
+    render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian-health" files={[]} coverage={coverage} />);
+    const button = await screen.findByRole("button", { name: `Resend NDA for ${supplierName}` });
+    const form = button.closest("form")!;
+    fireEvent.change(within(form).getByRole("combobox", { name: "Supplier-specific template" }), {
+      target: { value: "synthetic-1.0" },
+    });
+    fireEvent.click(within(form).getByRole("checkbox", { name: /test inbox/ }));
+    fireEvent.click(button);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect((within(form).getByRole("checkbox", { name: /test inbox/ }) as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(within(form).getByRole("checkbox", { name: /test inbox/ }));
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it("disables retry when a provider send is not confirmed", async () => {
     fetchMock.mockResolvedValueOnce(response(status("SYN-CONTACT-001")));
     fetchMock.mockResolvedValueOnce(response({ ok: false, error: "provider_unavailable" }, 503));

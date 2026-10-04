@@ -52,4 +52,16 @@ describe("synthetic NDA operator status", () => {
       ] : [])));
     expect(await readSyntheticNdaOperatorStatus(input)).toBeNull();
   });
+
+  it("reads a provider-voided envelope as terminal rather than dropping the supplier panel", async () => {
+    withSessionMock.mockImplementationOnce(async (fn: (run: jest.Mock) => Promise<unknown>) => fn(jest.fn(async (sql: string) =>
+      sql.includes("WITH accepted AS") ? [{
+        vendor_id: "SYN-VENDOR-001", contact_authority_id: "SYN-CONTACT-001",
+        contact_name: "Fictional Contact", envelope_id: "33333333-3333-4333-8333-333333333333",
+        envelope_status: "voided", envelope_template_version: "synthetic-1.0",
+      }] : [])));
+    expect(await readSyntheticNdaOperatorStatus(input)).toEqual([expect.objectContaining({
+      vendorId: "SYN-VENDOR-001", envelopeStatus: "voided",
+    })]);
+  });
 });

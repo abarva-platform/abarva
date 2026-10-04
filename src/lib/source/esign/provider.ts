@@ -1,5 +1,5 @@
 export type EsignEnvironment = "demo" | "production";
-export type EsignEnvelopeStatus = "sent" | "viewed" | "completed" | "declined";
+export type EsignEnvelopeStatus = "sent" | "viewed" | "completed" | "declined" | "voided";
 
 export type EsignSigner = {
   recipientId: string;

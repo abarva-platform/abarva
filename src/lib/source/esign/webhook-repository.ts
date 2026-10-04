@@ -67,6 +67,17 @@ export function createWebhookEnvelopeStore(
       );
       return rows.length === 1;
     }),
+    markVoided: (envelopeId) => withTenant<boolean>(async (run) => {
+      const rows = await run<{ id: string }>(
+        `UPDATE source_nda_esign_envelopes
+         SET status = 'voided', voided_at = now()
+         WHERE client_key = $1 AND provider = $2 AND provider_environment = $3
+           AND provider_envelope_id = $4 AND status IN ('sent', 'viewed')
+         RETURNING id`,
+        identity(envelopeId),
+      );
+      return rows.length === 1;
+    }),
     markCompleted: (envelope, evidence: CompletedEnvelopeEvidence) => withTenant<boolean>(async (run) => {
       const expectedRef = (fileName: string) => {
         const location = uploadArtifactPath({
