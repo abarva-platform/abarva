@@ -14,6 +14,30 @@
 
 jest.mock("@/lib/programs/queries", () => ({
   getProgramById: jest.fn(async () => ({ id: "program-1", currentPhase: 1 })),
+  getModuleState: jest.fn(async () => [
+    { moduleKey: "phase_1_sponsor_commitment", status: "completed" },
+    { moduleKey: "phase_1_scope_boundary", status: "completed" },
+    { moduleKey: "phase_1_success_criteria", status: "completed" },
+    { moduleKey: "phase_1_stakeholder_map", status: "completed" },
+    { moduleKey: "phase_1_decision_rights", status: "completed" },
+    { moduleKey: "phase_1_evidence_plan", status: "completed" },
+    {
+      moduleKey: "phase_1_business_change_assessment",
+      status: "completed",
+    },
+  ]),
+}));
+
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  listApprovedPhaseEvidence: jest.fn(async () => [
+    { evidenceId: "source-sponsor", familyKey: "charter_sponsor" },
+    { evidenceId: "source-scope", familyKey: "charter_scope" },
+    { evidenceId: "source-success", familyKey: "charter_success_metrics" },
+    { evidenceId: "source-stakeholders", familyKey: "charter_stakeholders" },
+    { evidenceId: "source-rights", familyKey: "charter_decision_rights" },
+    { evidenceId: "source-plan", familyKey: "charter_evidence_plan" },
+    { evidenceId: "source-change", familyKey: "charter_business_change" },
+  ]),
 }));
 
 jest.mock("@/lib/programs/mutations", () => ({

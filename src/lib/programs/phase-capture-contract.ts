@@ -4,12 +4,14 @@ import {
   type ConfirmedSolutionRoute,
 } from "@/lib/programs/solution-route-assessment";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
+import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
 
 export interface PhaseCaptureSection {
   key: string;
   label: string;
   description: string;
   required: boolean;
+  evidenceFamily?: string;
   /**
    * A short worked example of a good answer, shown as the input placeholder so
    * an empty field reads as empty-with-guidance ("e.g. …") instead of echoing
@@ -124,6 +126,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
     // Keep the legacy storage key so existing phase-capture records remain
     // readable; its governed content is now contact data, never approval.
     key: "sponsor_commitment",
+    evidenceFamily: p1CharterEvidenceFamilyForSection("sponsor_commitment")!.id,
     label: "Sponsor contact and progress updates",
     description:
       "The sponsor's name, role, and email. We only record them for progress updates — sponsor sign-off is not required to complete the charter.",
@@ -133,6 +136,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "scope_boundary",
+    evidenceFamily: p1CharterEvidenceFamilyForSection("scope_boundary")!.id,
     label: "Scope boundary",
     description:
       "The process, users, functions, systems, or cohorts this move will — and won't — touch.",
@@ -142,6 +146,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "success_criteria",
+    evidenceFamily: p1CharterEvidenceFamilyForSection("success_criteria")!.id,
     label: "Success criteria",
     description:
       "The outcomes and directional targets Discovery will validate. Rough is fine at this stage.",
@@ -151,6 +156,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "stakeholder_map",
+    evidenceFamily: p1CharterEvidenceFamilyForSection("stakeholder_map")!.id,
     label: "Stakeholder map",
     description:
       "The business, IT, finance, risk, and operational stakeholders Discovery will need.",
@@ -160,6 +166,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "decision_rights",
+    evidenceFamily: p1CharterEvidenceFamilyForSection("decision_rights")!.id,
     label: "Decision rights",
     description:
       "Who can approve scope, investment, design decisions, and advancing to the next phase.",
@@ -169,6 +176,7 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "evidence_plan",
+    evidenceFamily: p1CharterEvidenceFamilyForSection("evidence_plan")!.id,
     label: "Evidence plan",
     description:
       "The evidence, interviews, workshops, or data extracts to gather next.",
@@ -178,6 +186,9 @@ const P1_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "business_change_assessment",
+    evidenceFamily: p1CharterEvidenceFamilyForSection(
+      "business_change_assessment",
+    )!.id,
     label: "Business change & adoption owner",
     description:
       "Record the expected workflow and role impact from approved evidence or accountable business-owner input, who owns adoption, and who validates the assessment. This is a P1 hypothesis to test in P2, not the final route decision.",

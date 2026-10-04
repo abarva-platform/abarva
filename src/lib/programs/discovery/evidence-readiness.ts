@@ -8,6 +8,7 @@ import {
 } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { getProgramById } from "@/lib/programs/queries";
+import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 
 export interface DiscoveryEvidenceReadinessItem {
   id: string;
@@ -486,7 +487,8 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
     // overrides, and never adds to, a declaration.
     const declared = declaredDiscoveryFamilies(item, args.blueprint);
     const inferred =
-      declared.length > 0
+      declared.length > 0 ||
+      isP1CharterEvidenceFamily(item.declaredFamilyKey)
         ? null
         : mapEvidenceToDiscoveryFamily(item, args.blueprint);
     const familyIds = declared.length > 0 ? declared : inferred ? [inferred] : [];

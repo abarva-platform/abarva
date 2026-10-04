@@ -1,7 +1,9 @@
 const mockRequireTenancy = jest.fn();
 const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockGetProgramById = jest.fn();
+const mockGetModuleState = jest.fn();
 const mockEvaluateGate = jest.fn();
+const mockListApprovedPhaseEvidence = jest.fn();
 const mockDecideApproval = jest.fn();
 const mockAdvancePhase = jest.fn();
 const mockResolvePhaseGateActorPersonId = jest.fn();
@@ -21,6 +23,13 @@ jest.mock("@/lib/auth/program-access-policy", () => ({
 jest.mock("@/lib/programs/queries", () => ({
   getProgramById: (ctx: unknown, programId: string, opts: unknown) =>
     mockGetProgramById(ctx, programId, opts),
+  getModuleState: (ctx: unknown, programId: string) =>
+    mockGetModuleState(ctx, programId),
+}));
+
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  listApprovedPhaseEvidence: (ctx: unknown, programId: string, phase: number) =>
+    mockListApprovedPhaseEvidence(ctx, programId, phase),
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
@@ -99,6 +108,8 @@ beforeEach(() => {
     email: "maya@example.com",
   });
   mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 0 });
+  mockGetModuleState.mockResolvedValue([]);
+  mockListApprovedPhaseEvidence.mockResolvedValue([]);
   mockEvaluateGate.mockResolvedValue({
     failedChecks: [],
     requiresApproval: true,
@@ -116,6 +127,48 @@ beforeEach(() => {
 });
 
 describe("POST /api/v1/programs/[programId]/advance", () => {
+  it("blocks direct P1 advancement when capture evidence is not approved", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 1 });
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_sponsor_commitment", status: "completed" },
+      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+      { moduleKey: "phase_1_success_criteria", status: "completed" },
+      { moduleKey: "phase_1_stakeholder_map", status: "completed" },
+      { moduleKey: "phase_1_decision_rights", status: "completed" },
+      { moduleKey: "phase_1_evidence_plan", status: "completed" },
+      {
+        moduleKey: "phase_1_business_change_assessment",
+        status: "completed",
+      },
+    ]);
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 2,
+        selfApproveIfAuthorized: true,
+        humanRationale: "P1 fields were reviewed before advancing.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "capture_incomplete",
+      phase: 1,
+      missing: expect.arrayContaining([
+        "Sponsor contact and progress updates",
+        "Scope boundary",
+      ]),
+    });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
   it("self-approves phase advancement for callers with gate approval rights", async () => {
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
       programIdsAllowed: null,

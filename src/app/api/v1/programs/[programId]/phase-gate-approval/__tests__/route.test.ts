@@ -437,6 +437,19 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       currentPhase: 2,
       gatesPassed: [1],
     });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      {
+        key: "scope_boundary",
+        label: "Scope boundary",
+        evidenceFamily: "charter_scope",
+      },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+    ]);
+    mockListApprovedPhaseEvidence.mockResolvedValue([
+      { evidenceId: "evidence-scope", familyKey: "charter_scope" },
+    ]);
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "evidence-revision-2",
       latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
@@ -623,6 +636,19 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       currentPhase: 2,
       gatesPassed: [1],
     });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      {
+        key: "scope_boundary",
+        label: "Scope boundary",
+        evidenceFamily: "charter_scope",
+      },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+    ]);
+    mockListApprovedPhaseEvidence.mockResolvedValue([
+      { evidenceId: "evidence-scope", familyKey: "charter_scope" },
+    ]);
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "evidence-revision-2",
       latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
@@ -1079,6 +1105,82 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
     expect(mockEvaluateGate).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("blocks P1 approval when a completed capture lacks matching approved evidence", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 1,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      {
+        key: "scope_boundary",
+        label: "Scope boundary",
+        evidenceFamily: "charter_scope",
+      },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+    ]);
+    mockListApprovedPhaseEvidence.mockResolvedValue([
+      { evidenceId: "evidence-wrong-family", familyKey: "charter_sponsor" },
+    ]);
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 1 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "capture_incomplete",
+      phase: 1,
+      missing: ["Scope boundary"],
+    });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("counts approved P1 evidence only for its matching capture family", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 1,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      {
+        key: "sponsor_commitment",
+        label: "Sponsor contact",
+        evidenceFamily: "charter_sponsor",
+      },
+      {
+        key: "scope_boundary",
+        label: "Scope boundary",
+        evidenceFamily: "charter_scope",
+      },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_sponsor_commitment", status: "completed" },
+      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+    ]);
+    mockListApprovedPhaseEvidence.mockResolvedValue([
+      { evidenceId: "evidence-sponsor", familyKey: "charter_sponsor" },
+    ]);
+
+    const { GET } = await import("../route");
+    const incomplete = await GET(getReq(1) as never, { params });
+    await expect(incomplete.json()).resolves.toMatchObject({
+      capture: { complete: false, missing: ["Scope boundary"] },
+      canApprove: false,
+    });
+
+    mockListApprovedPhaseEvidence.mockResolvedValue([
+      { evidenceId: "evidence-sponsor", familyKey: "charter_sponsor" },
+      { evidenceId: "evidence-scope", familyKey: "charter_scope" },
+    ]);
+    const complete = await GET(getReq(1) as never, { params });
+    await expect(complete.json()).resolves.toMatchObject({
+      capture: { complete: true, missing: [] },
+    });
   });
 
   it("blocks P0 approval until one uploaded source file has approved review", async () => {

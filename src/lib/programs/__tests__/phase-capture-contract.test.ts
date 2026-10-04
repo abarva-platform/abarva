@@ -103,6 +103,14 @@ describe("phase-capture-contract", () => {
     expect(result.sections.every((section) => section.complete)).toBe(true);
   });
 
+  it("assigns a distinct required evidence family to every P1 charter input", () => {
+    const sections = getPhaseCaptureSections(1);
+    expect(sections.every((section) => section.evidenceFamily)).toBe(true);
+    expect(new Set(sections.map((section) => section.evidenceFamily)).size).toBe(
+      sections.length,
+    );
+  });
+
   it("uses stable module keys that the generation guard can read", () => {
     expect(phaseCaptureModuleKey(0, "business_trigger")).toBe(
       "phase_0_business_trigger",

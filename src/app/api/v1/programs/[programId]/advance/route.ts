@@ -1,12 +1,15 @@
 // POST /api/v1/programs/:programId/advance · advance one phase
 // Body: { toPhase: number, snapshot?: object, bypassGate?: boolean }
-// Runs evaluateGate first; hard-fails (severity='hard') block advance.
-// Soft-fails allowed with bypassGate=true (lead override).
+// P1 capture evidence and evaluateGate must both pass before advance.
+// Soft gate failures may be carried only by an explicit authorized action.
 
 import { NextRequest } from "next/server";
-import { getProgramById } from "@/lib/programs/queries";
+import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { advancePhase } from "@/lib/programs/mutations";
 import { evaluateGate } from "@/lib/programs/governance";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
@@ -86,6 +89,30 @@ export async function POST(
         { error: "human_rationale_required", detail: rationaleError },
         { status: 400 },
       );
+    }
+
+    if (fromPhase === 1) {
+      const [modules, approvedEvidence] = await Promise.all([
+        getModuleState(ctx, programId),
+        listApprovedPhaseEvidence(ctx, programId, 1),
+      ]);
+      const missing = missingP1CaptureSections(
+        getPhaseCaptureSections(1),
+        modules,
+        approvedEvidence,
+      );
+      if (missing.length > 0) {
+        return Response.json(
+          {
+            error: "capture_incomplete",
+            phase: 1,
+            missing,
+            detail:
+              "P1 capture requires saved fields and matching approved evidence.",
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const gate = await evaluateGate(ctx, programId, fromPhase, body.toPhase, {
