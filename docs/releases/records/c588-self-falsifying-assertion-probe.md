@@ -154,7 +154,7 @@ stops buying signal. Each row is a full scan of all 16 suites, baseline and pert
 | `none` | 18 KiB | **0** | **0** | no — it is the floor, by construction |
 | `case-names` | 273 KiB | **0** | **0** | **no** |
 | `source-literals` (default) | 2,523 KiB | **0** | **0** | **yes** |
-| `whole-source` | PENDING | PENDING | PENDING | yes |
+| `whole-source` | 2,909 KiB | **0** | **0** | yes |
 
 **The floor is clean**: the probe's own prose, appended to all three documents, moves nothing. Any
 non-zero result at a wider source is therefore attributable to the quoted literals, not to the act of
@@ -178,7 +178,9 @@ needs a heading in item position, which is a second *filing* of that id, so the 
 distinguish "the assertion is self-falsifying" from "the reader correctly reported a duplicate
 somebody really made". It is offered because it is the only thing that rediscovers the second known
 positive, and withheld from the default because on any wider source it files every id a suite
-mentions. On current `main` it moves exactly PENDING.
+mentions. On current `main` it moves exactly one suite — `id-collision`, 2 cases pass → fail, the
+`T-721` and `T-727` count assertions discussed above — and the four rule-outs stay green under it
+too, so its over-perturbation is bounded rather than merely asserted.
 
 **Every vehicle was proved to land, because a negative result needs independent truth.** Calibration
 (a) proves the `register` vehicle lands, since it flips a real case; the backlog note and the pulse
