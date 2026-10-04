@@ -792,11 +792,92 @@ if (!fs.existsSync(LIVE_REGISTER)) {
     `reported unnamed: ${stillUnnamed.map((m) => m.sha.slice(0, 10)).join(" ")}`,
   );
 
+  /*
+   * RESTATED 2026-10-04 (item C-585). The old case asserted that a fixed
+   * ten-character probe finds NO handle on this merge while the grammar still
+   * resolves it to NAMED — `!raw.includes(sha.slice(0, 10)) && verdict ===
+   * NAMED`. It was true when written, and it recorded why the item had listed
+   * this merge as unnamed in the first place: the original investigation
+   * grepped a short prefix and found nothing.
+   *
+   * It is now permanently false, and the half that broke was measured rather
+   * than guessed. The grammar half still holds exactly — the verdict is NAMED.
+   * The substring half does not: `7f0056d1e8` is present, and every occurrence
+   * of it is PROSE ABOUT THIS CALIBRATION rather than anybody naming the merge.
+   * At the moment C-585 was taken the register held it once, in a line reading
+   * "7f0056d1e8 IS named -- the register says RELEASED item C-605 ... PR #8520
+   * merged"; appending the claim line that recorded this very verdict took it
+   * to three. At twelve characters the register still holds none, so no line
+   * has ever quoted this SHA as a handle.
+   *
+   * That makes the old assertion self-falsifying: its corpus is the register,
+   * agents narrate findings INTO the register, and narrating this case writes
+   * its own needle into its own haystack. No threshold repairs that, and
+   * picking a longer prefix because today it happens to be absent is the
+   * rubber stamp this directory exists against.
+   *
+   * So this asserts the mechanism instead, which is what the absence was only
+   * ever a proxy for. Commentary lines now match as naming roles for this
+   * merge — my own claim line does, with `reportsMerged: false` — and the
+   * reader is nonetheless right because `nameMerge` PREFERS a naming line that
+   * announces the merge. That preference used to be unexercised here; the
+   * decoys the old case guaranteed could not exist are what now exercise it.
+   * The case keeps its teeth: a reader that stopped preferring the announcement
+   * would settle this merge on a line that announces nothing.
+   */
   const raw = fs.readFileSync(LIVE_REGISTER, "utf8");
+
+  /*
+   * Provenance is derived through `provenanceOf`, from the same `pulls` shape
+   * the verdict above is built from, rather than named by a constant here. A
+   * literal would be this case asserting its own premise.
+   */
+  const livePulls = [{ number: LIVE_NAMED.pr, merged_at: "2026-09-26T00:00:00Z" }];
+  const liveMerge = {
+    sha: LIVE_NAMED.sha,
+    subject: null,
+    committedAt: null,
+    pulls: livePulls,
+  };
+  const { provenance: liveProvenance } = provenanceOf(livePulls);
+
+  const namingRoles = entries
+    .map((entry) =>
+      entryRole({
+        entry,
+        sha: LIVE_NAMED.sha,
+        pullRequest: LIVE_NAMED.pr,
+        provenance: liveProvenance,
+      }),
+    )
+    .filter((role) => role && role.role === NAMED);
+  const announcing = namingRoles.filter((r) => r.reportsMerged);
+  const decoys = namingRoles.filter((r) => !r.reportsMerged);
+
   check(
-    "a fixed ten-character probe finds neither handle on that named merge — which is how the item came to list it",
-    !raw.includes(LIVE_NAMED.sha.slice(0, 10)) && verdict(LIVE_NAMED) === NAMED,
-    "if the ten-character string is now present the calibration has moved and this case should be re-read",
+    "later commentary now matches as a naming role for that merge without announcing it",
+    decoys.length > 0,
+    "the old ten-character absence guaranteed these could not exist; they do, " +
+      "because narrating this calibration writes the SHA into the register — " +
+      `naming roles: ${namingRoles.length}, of which ${decoys.length} announce no merge`,
+  );
+
+  check(
+    "and the reader still settles it on the line that announces the merge, not on a decoy",
+    verdict(LIVE_NAMED) === NAMED &&
+      announcing.length > 0 &&
+      nameMerge({ merge: liveMerge, entries }).namingLine?.reportsMerged === true,
+    `verdict ${verdict(LIVE_NAMED)}; announcing lines ${announcing.length}; ` +
+      "if the chosen line no longer reports the merge, the preference in " +
+      "nameMerge has stopped doing the work this case exists to prove",
+  );
+
+  check(
+    "no register line quotes that SHA as a full forty-character handle",
+    !raw.includes(LIVE_NAMED.sha),
+    "the NAMED verdict is earned through the pull-request channel; the day a " +
+      "line quotes the full SHA it is earned differently and this case should " +
+      "be re-read rather than widened",
   );
 }
 
