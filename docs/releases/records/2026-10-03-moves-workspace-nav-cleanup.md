@@ -60,7 +60,7 @@ Revert this PR through the main deploy lane. No data or migration rollback is in
 
 ## Audit Evidence
 
-- PR URL: added when opened.
+- PR URL: https://github.com/abarva-platform/abarva/pull/8953.
 - Local validation: commands and outcomes above.
 - CI and signed-in deployment proof: to be recorded when available.
 
