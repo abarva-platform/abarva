@@ -5790,6 +5790,13 @@ describe("MovesPhaseStandaloneClient", () => {
             }),
           ).toBeInTheDocument();
         }
+        if (phase === 4 && substep === "value") {
+          expect(
+            document.querySelector(
+              ".mxw-contract-legacy-body .mxw-evidence-count-link",
+            ),
+          ).toBeNull();
+        }
         if (phase === 5 && substep === "workstreams") {
           expect(
             screen.getByRole("heading", { name: "Handoff readiness" }),
