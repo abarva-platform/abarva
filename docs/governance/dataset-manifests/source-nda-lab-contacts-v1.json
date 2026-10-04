@@ -12,7 +12,14 @@
   "retrieval_proof_required": true,
   "pii_phi_handling": null,
   "expected_object_count": 4,
-  "approved_by": "Pending named-person declaration review",
+  "approved_by": "ANAND SUNDARAM",
   "approved_at": "2026-10-04",
-  "notes": "Declaration draft only; the approved_by field is a placeholder, not approval to load. Only four explicitly declared fictional lab contacts with reserved .example addresses. Named-person manifest review, a hash-pinned dry run and separate exact-scope apply authorization are prerequisites to any load. This dataset grants no event-specific contact approval, supplier outreach, NDA execution, signature or award. The DocuSign demo adapter must route actual messages only to the separately approved internal test inbox. Never load for another tenant or use as a real client contact register."
+  "load_approval": {
+    "approved_by": "ANAND SUNDARAM",
+    "approved_at": "2026-10-04",
+    "assessment_id": "SOURCE-NDA-LAB-CONTACTS-20261004",
+    "source_set_hash": "269f6b7c6224737a9007d51032c77d1ea1bb115331ae4b8db65387266b87b06a",
+    "release_record": "docs/releases/records/2026-10-04-source-nda-lab-contact-intake.md"
+  },
+  "notes": "Only four explicitly declared fictional lab contacts with reserved .example addresses are approved for this exact source hash. This load approval grants no event-specific contact approval, supplier outreach, NDA execution, signature or award. The DocuSign demo adapter must route actual messages only to the separately approved internal test inbox. Never load for another tenant or use as a real client contact register."
 }
