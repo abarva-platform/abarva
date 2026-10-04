@@ -183,11 +183,11 @@ interface MovesPhaseStandaloneClientProps {
   syntheticEvidencePackHref?: string | null;
   currentStateReadiness?: ReadinessReport | null;
   initialSubstepKey?: SubstepKey;
-  /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
+  /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" workspace tab entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
-  /** `moves_risk_tier_scoring_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Risk Assessment" rail entry point on P2 AND P3 (starts at P2, finalized at P3); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
+  /** `moves_risk_tier_scoring_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Risk Assessment" workspace tab on P2 AND P3 (starts at P2, finalized at P3); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
   riskAssessmentEnabled?: boolean;
-  /** `moves_solution_pattern_gate_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Solutioning" rail entry point entirely (P3 only); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
+  /** `moves_solution_pattern_gate_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Solutioning" workspace tab entirely (P3 only); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
   solutionPatternGateEnabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
@@ -762,9 +762,7 @@ export function MovesPhaseStandaloneClient({
   );
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
   const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
-  // Rail collapse/expand is part of the universal Moves shell.
-  const [railCollapsed, setRailCollapsed] = useState(false);
-  // Which left-menu row is showing in the right detail pane: a real
+  // Which step is showing in the detail pane: a real
   // phase-capture section key, or null for the current workflow step.
   // Independent of substepIndex so browsing a capture section never disturbs
   // the real substep/gate state.
@@ -885,6 +883,21 @@ export function MovesPhaseStandaloneClient({
               : workspaceView === "solutioning"
                 ? "Solutioning"
                 : "Phase Intelligence";
+  const workspaceTabs: Array<{ label: string; view: WorkspaceView }> = [
+    { label: "Steps", view: "phase" },
+    { label: "Files & Evidence", view: "files" },
+    { label: "Intelligence", view: "intelligence" },
+    { label: "Approvals", view: "approvals" },
+    ...(phase.phase === 4 && pricingEngineEnabled
+      ? [{ label: "Cost & Effort", view: "pricing" as const }]
+      : []),
+    ...((phase.phase === 2 || phase.phase === 3) && riskAssessmentEnabled
+      ? [{ label: "Risk Assessment", view: "risk" as const }]
+      : []),
+    ...(phase.phase === 3 && solutionPatternGateEnabled
+      ? [{ label: "Solutioning", view: "solutioning" as const }]
+      : []),
+  ];
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -1361,10 +1374,10 @@ export function MovesPhaseStandaloneClient({
                     openEvidenceCount: 0,
                   }
       : null;
-  // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
+  // MOVES-UI-001 Steps "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
   // for its "Next phase readiness" section below — computed once here so the
-  // two-column view (which renders outside that substep) can show it without
+  // steps view (which renders outside that substep) can show it without
   // a second data source. Pure/sync, no new fetch.
   const finderNextPhaseContract = nextPhaseFor(phase);
   const finderReadinessPack: NextPhaseReadinessPack = useMemo(
@@ -2225,157 +2238,28 @@ export function MovesPhaseStandaloneClient({
         onSelectWorkspaceView={setWorkspaceView}
         viewingPhase={phase.phase}
         workspaceView={workspaceView}
+        tabs={workspaceTabs}
       />
       {(() => {
-        const collapsedRail = railCollapsed;
         return (
-          <div
-            className={`mxw-surface${collapsedRail ? " mxw-surface-rail-collapsed" : ""}`}
-          >
-            <aside
-              className={`mxw-side${collapsedRail ? " mxw-side-collapsed" : ""}`}
-              aria-label="Move workspace"
-            >
-              <button
-                type="button"
-                className="mxw-rail-toggle"
-                onClick={() => setRailCollapsed((prev) => !prev)}
-                aria-expanded={!railCollapsed}
-                aria-label={
-                  railCollapsed
-                    ? "Expand workspace rail"
-                    : "Collapse workspace rail"
-                }
-                title={railCollapsed ? "Expand" : "Collapse"}
-              >
-                {railCollapsed ? "»" : "«"}
-              </button>
-              {!collapsedRail && (
-                <div className="mxw-move">
-                  <Link className="mxw-back" href="/strategic-moves">
-                    ← All Moves
-                  </Link>
-                  <h2>{displayMoveName}</h2>
-                  <p>{supportLine}</p>
-                </div>
-              )}
-              {!collapsedRail && (
-                <div className="mxw-side-label mxw-workspace-label">
-                  Workspace
-                </div>
-              )}
-              <div className="mxw-rail-extra">
-                <button
-                  className={`mxw-lib-link ${workspaceView === "phase" ? "viewing" : ""}`}
-                  onClick={() => {
-                    setWorkspaceView("phase");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  title={collapsedRail ? "Stage workspace" : undefined}
-                  type="button"
-                >
-                  <span>▦</span>
-                  {!collapsedRail && "Stage workspace"}
-                </button>
-                <button
-                  className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
-                  onClick={() => {
-                    setWorkspaceView("files");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  title={collapsedRail ? "Files & Evidence" : undefined}
-                  type="button"
-                >
-                  <span>▣</span>
-                  {!collapsedRail && "Files & Evidence"}
-                </button>
-                <button
-                  className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
-                  onClick={() => {
-                    setWorkspaceView("intelligence");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  title={collapsedRail ? "Phase Intelligence" : undefined}
-                  type="button"
-                >
-                  <span>◈</span>
-                  {!collapsedRail && "Phase Intelligence"}
-                </button>
-                <button
-                  className={`mxw-lib-link ${
-                    workspaceView === "approvals" ? "viewing" : ""
-                  }`}
-                  onClick={() => {
-                    setWorkspaceView("approvals");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  title={collapsedRail ? "Approvals" : undefined}
-                  type="button"
-                >
-                  <span>✓</span>
-                  {!collapsedRail && "Approvals"}
-                </button>
-                {phase.phase === 4 && pricingEngineEnabled ? (
-                  <button
-                    className={`mxw-lib-link ${workspaceView === "pricing" ? "viewing" : ""}`}
-                    onClick={() => {
-                      setWorkspaceView("pricing");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    title={collapsedRail ? "Cost & Effort" : undefined}
-                    type="button"
-                  >
-                    <span>$</span>
-                    {!collapsedRail && "Cost & Effort"}
-                  </button>
-                ) : null}
-                {(phase.phase === 2 || phase.phase === 3) &&
-                riskAssessmentEnabled ? (
-                  <button
-                    className={`mxw-lib-link ${workspaceView === "risk" ? "viewing" : ""}`}
-                    onClick={() => {
-                      setWorkspaceView("risk");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    title={collapsedRail ? "Risk Assessment" : undefined}
-                    type="button"
-                  >
-                    <span>!</span>
-                    {!collapsedRail && "Risk Assessment"}
-                  </button>
-                ) : null}
-                {phase.phase === 3 && solutionPatternGateEnabled ? (
-                  <button
-                    className={`mxw-lib-link ${workspaceView === "solutioning" ? "viewing" : ""}`}
-                    onClick={() => {
-                      setWorkspaceView("solutioning");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    title={collapsedRail ? "Solutioning" : undefined}
-                    type="button"
-                  >
-                    <span>◆</span>
-                    {!collapsedRail && "Solutioning"}
-                  </button>
-                ) : null}
-              </div>
-              {!collapsedRail && (
-                <p className="mxw-foot">
-                  <b>aVa</b> guides P0-P5 · Tower tracks execution after
-                  handoff.
-                </p>
-              )}
-            </aside>
-
+          <div className="mxw-surface">
             <section
               className="mxw-shell"
               aria-label={`${phase.code} phase workspace`}
             >
+              <Link className="mxw-back" href="/strategic-moves">
+                ← All Moves
+              </Link>
               <MovePhaseTopStepper
                 currentPhase={move.currentPhase}
                 moveId={move.id}
                 phaseTallies={phaseTallies}
                 viewingPhase={phase.phase}
+              />
+              <WorkspaceSurfaceTabs
+                activeView={workspaceView}
+                onSelect={setWorkspaceView}
+                tabs={workspaceTabs}
               />
               {workspaceView === "files" ? (
                 <>
@@ -2401,10 +2285,6 @@ export function MovesPhaseStandaloneClient({
                       this Move, not a preview.
                     </p>
                   </div>
-                  <WorkspaceSurfaceTabs
-                    activeView={workspaceView}
-                    onSelect={setWorkspaceView}
-                  />
                   <FileCabinetPanel
                     moveId={move.id}
                     phase={phase.phase}
@@ -2436,10 +2316,6 @@ export function MovesPhaseStandaloneClient({
                       function-pack signal, and governed gate/evidence truth.
                     </p>
                   </div>
-                  <WorkspaceSurfaceTabs
-                    activeView={workspaceView}
-                    onSelect={setWorkspaceView}
-                  />
                   <PhaseIntelligencePanel
                     moveId={move.id}
                     phase={phase.phase}
@@ -2680,11 +2556,6 @@ export function MovesPhaseStandaloneClient({
                       </em>
                     </div>
                   </div>
-
-                  <WorkspaceSurfaceTabs
-                    activeView={workspaceView}
-                    onSelect={setWorkspaceView}
-                  />
 
                   {phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
@@ -3107,7 +2978,7 @@ function AvaDraftSummary({
 // Source New event workflow (SourceNewWorkspace's `snw-phases`): the six Move
 // phases as top tabs with done/current/upcoming state, the viewed one
 // underlined, each a link to that phase (future phases are disabled until the
-// Move reaches them). Same state logic as the left rail's `mxw-phase-list`.
+// Move reaches them). The top stepper keeps the existing reachability logic.
 function MovePhaseTopStepper({
   moveId,
   currentPhase,
@@ -3181,16 +3052,12 @@ function MovePhaseTopStepper({
 function WorkspaceSurfaceTabs({
   activeView,
   onSelect,
+  tabs,
 }: {
   activeView: WorkspaceView;
   onSelect: (view: WorkspaceView) => void;
+  tabs: Array<{ label: string; view: WorkspaceView }>;
 }) {
-  const tabs: Array<{ label: string; view: WorkspaceView }> = [
-    { label: "Steps", view: "phase" },
-    { label: "Files", view: "files" },
-    { label: "Intelligence", view: "intelligence" },
-  ];
-
   return (
     <div
       className="mxw-surface-tabs"
@@ -3330,20 +3197,16 @@ function MobileMovesRailControls({
   onSelectWorkspaceView,
   viewingPhase,
   workspaceView,
+  tabs,
 }: {
   currentMoveId: string;
   maxReachablePhase: number;
   onSelectWorkspaceView: (view: WorkspaceView) => void;
   viewingPhase: number;
   workspaceView: WorkspaceView;
+  tabs: Array<{ label: string; view: WorkspaceView }>;
 }) {
   const router = useRouter();
-  const views: Array<{ label: string; value: WorkspaceView }> = [
-    { label: "Stage", value: "phase" },
-    { label: "Files", value: "files" },
-    { label: "Intel", value: "intelligence" },
-    { label: "Approvals", value: "approvals" },
-  ];
 
   return (
     <div className="mxw-mobile-rail" aria-label="Compact move navigation">
@@ -3369,19 +3232,25 @@ function MobileMovesRailControls({
         </select>
       </label>
       <div role="tablist" aria-label="Compact workspace views">
-        {views.map((view) => (
+        {tabs.map((view) => (
           <button
-            aria-selected={workspaceView === view.value}
-            className={workspaceView === view.value ? "viewing" : ""}
-            key={view.value}
+            aria-selected={workspaceView === view.view}
+            className={workspaceView === view.view ? "viewing" : ""}
+            key={view.view}
             onClick={() => {
-              onSelectWorkspaceView(view.value);
+              onSelectWorkspaceView(view.view);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             role="tab"
             type="button"
           >
-            {view.label}
+            {view.view === "phase"
+              ? "Stage"
+              : view.view === "files"
+                ? "Files"
+                : view.view === "intelligence"
+                  ? "Intel"
+                  : view.label}
           </button>
         ))}
       </div>
@@ -3392,8 +3261,8 @@ function MobileMovesRailControls({
 // ---------------------------------------------------------------------------
 // Moves universal Steps view.
 //
-// Replaces the horizontal substep tab strip with a macOS-Finder-style
-// left sub-menu + right detail pane, per the owner-approved reference. Real
+// Keeps the original phase inputs and workflow controls in a horizontal step
+// selector above the detail pane. Real
 // data only:
 //   - "{phase.code} inputs" rows = `getPhaseCaptureSections(phase.phase)`,
 //     the SAME contract the legacy PhaseCaptureEditor already renders — no
@@ -3746,7 +3615,7 @@ function PhaseContractStepsCanvas({
   // Progressive step flow. On an input step, one primary "Continue" advances to
   // the next input, or — after the last input — into the first workflow substep
   // after Charter capture. The user stays on a single step with a single clear
-  // next action instead of having to discover the left-nav order themselves.
+  // next action.
   const selectedSectionIndex = selectedSection
     ? phaseCaptureSections.findIndex(
         (section) => section.key === selectedSection.key,
@@ -3812,7 +3681,43 @@ function PhaseContractStepsCanvas({
       aria-label={`${phase.code} phase shell`}
       data-testid="mxw-contract-card"
     >
-      <aside className="mxw-contract-nav" aria-label={`${phase.code} steps`}>
+      <label className="mxw-compact-steps">
+        <span>Step</span>
+        <select
+          aria-label={`${phase.code} step`}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            if (value.startsWith("input:")) {
+              onSelectSection(value.slice("input:".length));
+            } else {
+              onSelectSubstep(Number(value.slice("workflow:".length)));
+              onSelectSection(null);
+            }
+            scrollContractDetailIntoView();
+          }}
+          value={
+            selectedSection
+              ? `input:${selectedSection.key}`
+              : `workflow:${substepIndex}`
+          }
+        >
+          <optgroup label="Inputs">
+            {phaseCaptureSections.map((section) => (
+              <option key={section.key} value={`input:${section.key}`}>
+                {section.label}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Workflow">
+            {phase.substeps.map((step, index) => (
+              <option key={step.key} value={`workflow:${index}`}>
+                {step.label}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </label>
+      <nav className="mxw-contract-nav" aria-label={`${phase.code} steps`}>
         <div className="mxw-contract-group">
           <div className="mxw-contract-group-label">Inputs</div>
           {phaseCaptureSections.map((section) => {
@@ -3894,41 +3799,7 @@ function PhaseContractStepsCanvas({
             );
           })}
         </div>
-        {onApproveStep ? (
-          <div
-            className="mxw-contract-comingup"
-            data-testid="mxw-contract-comingup"
-          >
-            <button
-              aria-expanded={comingUpExpanded}
-              onClick={onToggleComingUp}
-              type="button"
-            >
-              What {readinessPack.nextPhaseLabel} will need
-            </button>
-            {comingUpExpanded ? (
-              readinessPack.openNeeds.length > 0 ? (
-                <div data-testid="mxw-contract-comingup-chips">
-                  {readinessPack.openNeeds.slice(0, 6).map((need) => (
-                    <span
-                      className={need.priority === "required" ? "req" : ""}
-                      key={need.evidenceSlot}
-                    >
-                      {need.evidenceSlot}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p>No open evidence needs for the next phase yet.</p>
-              )
-            ) : null}
-          </div>
-        ) : null}
-        <div className="mxw-contract-nav-foot">
-          Use the left steps in order. Approve &amp; Build remains the governed
-          close; it is not a visual-only button.
-        </div>
-      </aside>
+      </nav>
 
       <section
         className="mxw-contract-detail"
@@ -3979,6 +3850,36 @@ function PhaseContractStepsCanvas({
           substepIndex={substepIndex}
         />
 
+        {onApproveStep ? (
+          <div
+            className="mxw-contract-comingup"
+            data-testid="mxw-contract-comingup"
+          >
+            <button
+              aria-expanded={comingUpExpanded}
+              onClick={onToggleComingUp}
+              type="button"
+            >
+              What {readinessPack.nextPhaseLabel} will need
+            </button>
+            {comingUpExpanded ? (
+              readinessPack.openNeeds.length > 0 ? (
+                <div data-testid="mxw-contract-comingup-chips">
+                  {readinessPack.openNeeds.slice(0, 6).map((need) => (
+                    <span
+                      className={need.priority === "required" ? "req" : ""}
+                      key={need.evidenceSlot}
+                    >
+                      {need.evidenceSlot}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p>No open evidence needs for the next phase yet.</p>
+              )
+            ) : null}
+          </div>
+        ) : null}
         {selectedSection ? (
           <div className="mxw-contract-form">
             <p>{selectedSection.description}</p>
@@ -4229,6 +4130,41 @@ function FinderStepsColumns({
 
   return (
     <div className="mxw-finder-steps" data-testid="mxw-finder-steps">
+      <label className="mxw-compact-steps">
+        <span>Step</span>
+        <select
+          aria-label={`${phase.code} step`}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            if (value.startsWith("input:")) {
+              onSelectSection(value.slice("input:".length));
+            } else {
+              onSelectSubstep(Number(value.slice("workflow:".length)));
+              onSelectSection(null);
+            }
+          }}
+          value={
+            selectedSection
+              ? `input:${selectedSection.key}`
+              : `workflow:${substepIndex}`
+          }
+        >
+          <optgroup label="Inputs">
+            {phaseCaptureSections.map((section) => (
+              <option key={section.key} value={`input:${section.key}`}>
+                {section.label}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Workflow">
+            {phase.substeps.map((step, index) => (
+              <option key={step.key} value={`workflow:${index}`}>
+                {step.label}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </label>
       <nav aria-label="Phase steps" className="mxw-finder-steps-menu">
         <div className="mxw-finder-step-group">
           <h3>{phase.code} inputs</h3>
@@ -4335,45 +4271,6 @@ function FinderStepsColumns({
             })}
           </ul>
         </div>
-        {selectedSectionKey === null &&
-        phase.substeps[substepIndex]?.key === "approve" ? (
-          <div
-            className="mxw-finder-comingup"
-            data-testid="mxw-finder-comingup"
-          >
-            <button
-              aria-expanded={comingUpExpanded}
-              className="mxw-finder-comingup-toggle"
-              onClick={onToggleComingUp}
-              type="button"
-            >
-              What {readinessPack.nextPhaseLabel} will need
-            </button>
-            {comingUpExpanded ? (
-              readinessPack.openNeeds.length > 0 ? (
-                <div
-                  className="mxw-finder-comingup-chips"
-                  data-testid="mxw-finder-comingup-chips"
-                >
-                  {readinessPack.openNeeds.map((need) => (
-                    <span
-                      className={`mxw-finder-chip ${
-                        need.priority === "required" ? "req" : "opt"
-                      }`}
-                      key={need.evidenceSlot}
-                    >
-                      {need.evidenceSlot}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="mxw-finder-comingup-empty">
-                  No open evidence needs for {readinessPack.nextPhaseLabel} yet.
-                </p>
-              )
-            ) : null}
-          </div>
-        ) : null}
       </nav>
       <div
         aria-label={
@@ -4428,6 +4325,45 @@ function FinderStepsColumns({
           selectedWorkflow={selectedSectionKey === null}
           substepIndex={substepIndex}
         />
+        {selectedSectionKey === null &&
+        phase.substeps[substepIndex]?.key === "approve" ? (
+          <div
+            className="mxw-finder-comingup"
+            data-testid="mxw-finder-comingup"
+          >
+            <button
+              aria-expanded={comingUpExpanded}
+              className="mxw-finder-comingup-toggle"
+              onClick={onToggleComingUp}
+              type="button"
+            >
+              What {readinessPack.nextPhaseLabel} will need
+            </button>
+            {comingUpExpanded ? (
+              readinessPack.openNeeds.length > 0 ? (
+                <div
+                  className="mxw-finder-comingup-chips"
+                  data-testid="mxw-finder-comingup-chips"
+                >
+                  {readinessPack.openNeeds.map((need) => (
+                    <span
+                      className={`mxw-finder-chip ${
+                        need.priority === "required" ? "req" : "opt"
+                      }`}
+                      key={need.evidenceSlot}
+                    >
+                      {need.evidenceSlot}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mxw-finder-comingup-empty">
+                  No open evidence needs for {readinessPack.nextPhaseLabel} yet.
+                </p>
+              )
+            ) : null}
+          </div>
+        ) : null}
         {selectedSection ? (
           <section className="mxw-finder-detail-panel">
             <header>
@@ -8135,15 +8071,9 @@ function MovesStandaloneStyles() {
 .mxw-mobile-rail [role="tablist"]{display:flex;align-items:center;gap:4px;overflow-x:auto}
 .mxw-mobile-rail [role="tab"]{border:1px solid transparent;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:800;border-radius:8px;padding:7px 9px;white-space:nowrap;cursor:pointer}
 .mxw-mobile-rail [role="tab"].viewing{background:#e4ecf9;border-color:rgba(42,90,168,.24);color:var(--blue)}
-.mxw-surface{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100% - 44px)}
-.mxw-side{border-right:1px solid var(--line);background:#faf9f7;padding:20px 16px 28px;position:sticky;top:44px;height:calc(100vh - 108px);overflow-y:auto;display:flex;flex-direction:column}
-.mxw-move{padding:0 8px 15px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.mxw-surface{display:block;min-height:calc(100% - 44px)}
 .mxw-back{font-size:12px;color:var(--muted);display:inline-flex;margin-bottom:12px}
 .mxw-back:hover{color:var(--ink)}
-.mxw-move h2{font-family:Fraunces, Georgia, serif;font-size:16px;font-weight:650;letter-spacing:-.3px;line-height:1.18;margin:0;color:var(--ink)}
-.mxw-move p{font-size:11.5px;color:var(--muted);margin:4px 0 0;line-height:1.4}
-.mxw-side-label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);font-weight:600;padding:0 8px;margin-bottom:6px}
-.mxw-phase-list{display:flex;flex-direction:column}
 .mxw-phase-stepper{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;border-bottom:1px solid rgba(12,26,58,.12);margin:0 0 18px}
 .mxw-phase-stepper-step{appearance:none;background:none;border:0;border-bottom:2px solid transparent;padding:12px 8px;display:flex;align-items:center;gap:9px;min-width:0;text-align:left;color:#5b6c8a;cursor:pointer;text-decoration:none}
 .mxw-phase-stepper-step:hover:not(:disabled){background:#f1f3f8}
@@ -8155,31 +8085,7 @@ function MovesStandaloneStyles() {
 .mxw-phase-stepper-copy{min-width:0;display:flex;flex-direction:column;gap:2px}
 .mxw-phase-stepper-copy strong{font-size:12.5px;font-weight:700;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-phase-stepper-copy small{font-size:10px;color:#8b95a8}
-@media (max-width:900px){.mxw-phase-stepper{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.mxw-phase-row{display:flex;flex-direction:column}
-.mxw-phase{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;text-align:left;background:none;border:0;width:100%;position:relative;color:inherit;cursor:pointer}
-.mxw-phase:hover{background:rgba(20,20,19,.04)}
-.mxw-phase.viewing{background:var(--card);box-shadow:0 1px 2px rgba(20,20,19,.05)}
-.mxw-phase.viewing:before{content:"";position:absolute;left:-16px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--blue)}
-.mxw-phase-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:9px;font-weight:700}
-.mxw-phase.done .mxw-phase-dot{background:var(--ink);color:#fff}
-.mxw-phase.current .mxw-phase-dot{background:var(--blue);color:#fff}
-.mxw-phase.up .mxw-phase-dot{background:var(--card);border:1.5px solid var(--line-2);color:var(--faint)}
-.mxw-phase-name{font-size:13px;font-weight:500;color:var(--ink-2);flex:1;line-height:1.3}
-.mxw-phase.current .mxw-phase-name{font-weight:600;color:var(--ink)}
-.mxw-phase.up .mxw-phase-name{color:var(--muted)}
-.mxw-phase-state{font-size:10.5px;color:var(--faint);font-weight:500}
-.mxw-phase.current .mxw-phase-state{color:var(--blue);font-weight:600}
-.mxw-phase.done .mxw-phase-state{color:var(--green)}
-.mxw-connector{width:1.5px;height:7px;background:var(--line-2);margin-left:18px}
-.mxw-rail-extra{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-.mxw-workspace-label{margin-top:14px}
-.mxw-lib-link{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;color:var(--ink-2);font-size:13px;font-weight:500;background:none;border:0;width:100%;text-align:left;cursor:pointer}
-.mxw-lib-link:hover{background:rgba(20,20,19,.04)}
-.mxw-lib-link.viewing{background:var(--card);box-shadow:0 1px 2px rgba(20,20,19,.05)}
-.mxw-lib-link span{width:22px;height:22px;border-radius:6px;background:var(--card);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
-.mxw-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.6}
-.mxw-foot b{color:var(--muted);font-weight:600}
+@media (max-width:900px){.mxw-phase-stepper{display:none}}
 .mxw-shell{width:100%;max-width:none;margin:0;padding:24px clamp(24px,2.6vw,44px) max(128px,calc(96px + env(safe-area-inset-bottom)))}
 .mxw-crumb{font-size:12px;color:var(--muted);margin-bottom:14px}
 .mxw-crumb a,.mxw-crumb button{color:var(--muted);background:none;border:0;font:inherit;cursor:pointer}
@@ -8737,8 +8643,7 @@ function MovesStandaloneStyles() {
 @media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-gate-why-panel,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}.mxw-gate-why-proof{justify-content:flex-start;max-width:none}}
 @media (max-width:900px){
   .mxw-mobile-rail{position:sticky;top:44px;z-index:55;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(12,26,58,.10);background:#fff;padding:10px 14px;box-shadow:0 6px 14px rgba(12,26,58,.06)}
-  .mxw-surface{grid-template-columns:1fr}
-  .mxw-side{display:none}
+  .mxw-surface-tabs{display:none}
   .mxw-shell{width:100%;max-width:none}
   .mxw-shell{padding:30px 18px max(128px,calc(96px + env(safe-area-inset-bottom)))}
   .mxw-guide-head{align-items:flex-start;flex-direction:column}
@@ -8771,36 +8676,24 @@ function MovesStandaloneStyles() {
  * Finder-shell visual polish. Tokens match the merged
  * MovePhaseExplorer.module.css palette (navy/blue/teal/amber).
  */
-.mxw-finder-on .mxw-phase-name{color:#0c1a3a}
-.mxw-finder-on .mxw-phase.up .mxw-phase-name{color:#0c1a3a}
-.mxw-finder-on .mxw-phase.viewing{background:#e4ecf9}
-.mxw-finder-on .mxw-phase.viewing:before{content:none}
 .mxw-finder-on .mxw-surface-tabs button.active::before{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:999px;background:#2a5aa8}
 /*
- * Rail collapse/expand. Width/padding reuse the reference collapsed-state
- * values from MovePhaseExplorer.module.css's .finderShellCollapsed
- * (58px / 6px) and .finderCollapseToggle (22x22).
- */
-.mxw-surface-rail-collapsed{grid-template-columns:58px minmax(0,1fr)}
-.mxw-side-collapsed{padding:20px 6px 28px;align-items:center}
-.mxw-rail-toggle{display:flex;align-items:center;justify-content:center;width:22px;height:22px;margin:0 0 10px auto;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-size:11px;cursor:pointer}
-.mxw-rail-toggle:hover{border-color:var(--blue);color:var(--blue)}
-.mxw-side-collapsed .mxw-rail-toggle{margin:0 0 10px}
-.mxw-side-collapsed .mxw-phase-list{align-items:center}
-.mxw-side-collapsed .mxw-phase-row{align-items:center}
-.mxw-side-collapsed .mxw-phase{justify-content:center;padding:7px;width:auto}
-.mxw-side-collapsed .mxw-connector{display:none}
-.mxw-side-collapsed .mxw-rail-extra{width:100%;display:flex;flex-direction:column;align-items:center}
-.mxw-side-collapsed .mxw-lib-link{justify-content:center;padding:8px;width:auto}
-/*
- * Steps two-column view. Same token set as the finder-shell polish rules above
+ * Steps selector. Same token set as the finder-shell polish rules above
  * (navy/blue/teal/amber); no new colors introduced.
  */
-.mxw-finder-steps{display:flex;gap:24px;align-items:flex-start}
-.mxw-finder-steps-menu{width:280px;flex:0 0 280px;display:flex;flex-direction:column;gap:18px}
-.mxw-finder-step-group h3{margin:0 0 8px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:#5b6c8a;font-weight:800}
-.mxw-finder-step-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.mxw-finder-step-row{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:none;border-radius:8px;padding:7px 8px;cursor:pointer;font-size:13px;color:#28364f}
+.mxw-compact-steps{display:none;gap:6px;padding:12px 16px;border-bottom:1px solid rgba(12,26,58,.10);background:#fbfbfc}
+.mxw-compact-steps span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5b6c8a;font-weight:800}
+.mxw-compact-steps select{width:100%;min-width:0;border:1px solid rgba(12,26,58,.16);border-radius:8px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;font-weight:700;padding:9px 10px}
+@media (max-width:600px){
+  .mxw .mxw-compact-steps{display:grid}
+  .mxw .mxw-contract-nav,.mxw .mxw-finder-steps-menu{display:none}
+}
+.mxw-finder-steps{display:block}
+.mxw-finder-steps-menu{display:grid;gap:10px;width:100%;padding:10px 2px 14px;margin-bottom:18px;border-bottom:1px solid rgba(12,26,58,.10)}
+.mxw-finder-step-group{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.mxw-finder-step-group h3{margin:0 4px 0 0;white-space:nowrap;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:#5b6c8a;font-weight:800}
+.mxw-finder-step-group ul{list-style:none;margin:0;padding:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0}
+.mxw-finder-step-row{width:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:none;border-radius:8px;padding:7px 9px;cursor:pointer;font-size:13px;color:#28364f;white-space:nowrap}
 .mxw-finder-step-row:hover{background:#f1f3f8}
 .mxw-finder-step-row.selected{background:#e4ecf9;color:#0c1a3a}
 .mxw-finder-step-dot{width:7px;height:7px;border-radius:999px;background:#8b95a8;flex:0 0 auto}
@@ -8812,7 +8705,7 @@ function MovesStandaloneStyles() {
 .mxw-finder-step-state{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#2a5aa8;background:#e4ecf9;border:1px solid rgba(42,90,168,.16);border-radius:999px;padding:2px 7px}
 .mxw-finder-step-row.visited .mxw-finder-step-state{color:#5b6c8a;background:#f1f3f8;border-color:rgba(12,26,58,.1)}
 .mxw-finder-step-now{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.4px;color:#2a5aa8;background:#e4ecf9;border-radius:999px;padding:2px 7px}
-.mxw-finder-comingup{border-top:1px solid rgba(12,26,58,.10);padding-top:12px}
+.mxw-finder-comingup{border:1px solid rgba(12,26,58,.10);border-radius:10px;background:#fbfbfc;padding:12px;margin:0 0 18px}
 .mxw-finder-comingup-toggle{width:100%;text-align:left;background:none;border:none;padding:0;font-size:12px;font-weight:700;color:#0c1a3a;cursor:pointer}
 .mxw-finder-comingup-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .mxw-finder-chip{font-size:11px;border-radius:999px;padding:4px 10px;background:#e4ecf9;color:#2a5aa8}
@@ -8828,26 +8721,25 @@ function MovesStandaloneStyles() {
 .mxw-finder-fact-value{margin-right:6px}
 .mxw-finder-citation-toggle{border:none;background:#e4ecf9;color:#2a5aa8;border-radius:999px;width:20px;height:20px;line-height:20px;font-size:11px;cursor:pointer;padding:0}
 .mxw-finder-citation-caption{display:block;margin-top:4px;font-size:11.5px;color:#5b6c8a}
-.mxw-contract-card{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:visible;box-shadow:0 12px 32px rgba(12,26,58,.05)}
-.mxw-contract-nav{border-right:1px solid rgba(12,26,58,.09);background:#fbfbfc;padding:24px 12px 16px;display:flex;flex-direction:column;gap:16px}
-.mxw-contract-group{display:grid;gap:5px}
-.mxw-contract-group-label{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#a7adb8;padding:0 8px 5px}
-.mxw-contract-step{appearance:none;border:1px solid transparent;border-radius:8px;background:transparent;color:#7b8aa5;cursor:pointer;display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:10px;min-height:34px;padding:7px 8px;text-align:left;width:100%}
+.mxw-contract-card{display:block;min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:visible;box-shadow:0 12px 32px rgba(12,26,58,.05)}
+.mxw-contract-nav{border-bottom:1px solid rgba(12,26,58,.09);border-radius:14px 14px 0 0;background:#fbfbfc;padding:12px 16px;display:grid;gap:8px}
+.mxw-contract-group{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
+.mxw-contract-group-label{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#7b8798;padding:0 7px;white-space:nowrap}
+.mxw-contract-step{appearance:none;border:1px solid transparent;border-radius:8px;background:transparent;color:#7b8aa5;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:36px;padding:7px 9px;text-align:left;width:auto;white-space:nowrap;flex:none}
 .mxw-contract-step:hover{background:rgba(42,90,168,.06)}
-.mxw-contract-step.active{border-color:rgba(42,90,168,.14);background:#fff;color:#0c1a3a;box-shadow:inset 3px 0 0 #2a5aa8}
+.mxw-contract-step.active{border-color:rgba(42,90,168,.14);background:#fff;color:#0c1a3a;box-shadow:inset 0 -3px 0 #2a5aa8}
 .mxw-contract-step>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-step>span.done{border-color:#1d9e75;background:#1d9e75}
 .mxw-contract-step.visited{color:#8b95a8}
 .mxw-contract-step>span.visited{border-color:#d8dde5;background:#f1f3f6;color:#8b95a8}
 .mxw-contract-step strong{min-width:0;font-size:13px;font-weight:700;line-height:1.2;color:inherit}
 .mxw-contract-step small{color:#8b95a8;font-size:10px;font-weight:650}
-.mxw-contract-comingup{border-top:1px solid rgba(12,26,58,.12);padding:16px 8px 2px}
+.mxw-contract-comingup{border:1px solid rgba(12,26,58,.12);border-radius:10px;background:#fbfbfc;padding:12px;margin:0 0 18px}
 .mxw-contract-comingup button{appearance:none;border:1px solid rgba(42,90,168,.14);border-radius:8px;background:#fff;color:#0c1a3a;cursor:pointer;font-size:12px;font-weight:850;line-height:1.35;padding:8px 10px;text-align:left;width:100%;box-shadow:0 1px 2px rgba(12,26,58,.04)}
 .mxw-contract-comingup div{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .mxw-contract-comingup span{border:1px solid rgba(42,90,168,.14);border-radius:999px;background:#e4ecf9;color:#2a5aa8;font-size:10.5px;font-weight:800;line-height:1.2;padding:5px 8px}
 .mxw-contract-comingup span.req{border-color:rgba(186,117,23,.18);background:#fbf1df;color:#8a5a12}
 .mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
-.mxw-contract-nav-foot{margin-top:4px;border-top:1px solid rgba(12,26,58,.14);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
 .mxw-contract-advance{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(12,26,58,.10)}
 .mxw-contract-continue{appearance:none;border:0;border-radius:9px;background:var(--green);color:#fff;font-size:13px;font-weight:800;padding:10px 18px;cursor:pointer}
 .mxw-contract-continue:hover:not(:disabled){background:#176f51}
@@ -8900,13 +8792,17 @@ button.mxw-step-progress-status{cursor:pointer}
 .mxw-contract-legacy-body>.mxw-zone:first-child,.mxw-contract-legacy-body>.mxw-review:first-child,.mxw-contract-legacy-body>.mxw-action-panel:first-child{margin-top:0}
 .mxw-contract-legacy-body .mxw-capture.compact{display:none}
 @media (max-width:960px){
-  .mxw-finder-steps{flex-direction:column}
-  .mxw-finder-steps-menu{width:100%;flex-basis:auto}
-  .mxw-contract-card{grid-template-columns:1fr}
-  .mxw-contract-nav{border-right:0;border-bottom:1px solid rgba(12,26,58,.09)}
   .mxw-contract-detail-top{top:60px;grid-template-columns:22px auto minmax(0,1fr)}
   .mxw-contract-detail-top b{grid-column:2;justify-self:start}
   .mxw-step-progress-actions{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}
+}
+@media (max-width:900px){.mxw-contract-detail-top{top:100px}}
+@media (max-width:600px){
+  .mxw-stage-head{grid-template-columns:minmax(0,1fr);gap:10px}
+  .mxw-stage-head .mxw-agent-chip,.mxw-stage-head h1,.mxw-stage-head p{grid-column:1}
+  .mxw-stage-head .mxw-progress-card{grid-column:1;grid-row:auto;justify-self:stretch;width:100%}
+  .mxw-contract-detail-top{top:144px;grid-template-columns:22px minmax(0,1fr)}
+  .mxw-contract-detail-top h2,.mxw-contract-detail-top b{grid-column:1/-1;justify-self:start}
 }
 /*
  * Approvals overview. Rendered only when workspaceView === "approvals".

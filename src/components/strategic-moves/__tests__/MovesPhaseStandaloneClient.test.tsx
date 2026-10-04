@@ -41,6 +41,18 @@ if (typeof global.ReadableStream === "undefined") {
   ).ReadableStream = ReadableStream;
 }
 
+function workspaceTab(name: RegExp | string): HTMLElement {
+  return within(
+    screen.getByRole("tablist", { name: "Move workspace views" }),
+  ).getByRole("tab", { name });
+}
+
+function queryWorkspaceTab(name: RegExp | string): HTMLElement | null {
+  return within(
+    screen.getByRole("tablist", { name: "Move workspace views" }),
+  ).queryByRole("tab", { name });
+}
+
 function contractStepButton(name: RegExp | string): HTMLElement {
   const matches = within(screen.getByTestId("mxw-contract-card")).getAllByRole(
     "button",
@@ -1009,7 +1021,10 @@ describe("MovesPhaseStandaloneClient", () => {
           canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
-          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover & Diagnose" })}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
         />,
@@ -1091,8 +1106,12 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByRole("tablist", { name: "Move workspace views" }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("complementary", { name: "Move workspace" }),
-      ).toBeInTheDocument();
+        screen.queryByRole("complementary", { name: "Move workspace" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /All Moves/i })).toHaveAttribute(
+        "href",
+        "/strategic-moves",
+      );
     });
 
     it("P1 renders the contract canvas while preserving real workflow controls", async () => {
@@ -1455,8 +1474,8 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
-  describe("MOVES-UI-003 rail collapse/expand toggle", () => {
-    it("keeps compact phase and workspace controls reachable when the desktop rail is hidden", () => {
+  describe("Moves workspace navigation", () => {
+    it("keeps compact phase and workspace controls reachable on narrow screens", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -1472,6 +1491,7 @@ describe("MovesPhaseStandaloneClient", () => {
       const phaseSelect =
         within(compactNav).getByLabelText("Switch move phase");
       expect(phaseSelect).toBeInTheDocument();
+      expect(phaseSelect).toHaveValue("3");
       expect(
         within(compactNav).getByRole("tab", { hidden: true, name: "Stage" }),
       ).toHaveAttribute("aria-selected", "true");
@@ -1489,7 +1509,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
     });
 
-    it("keeps the collapse toggle available even when the old feature flag mock is false", () => {
+    it("the compact step picker opens an existing workflow step and returns to an input", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -1501,67 +1521,46 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const rail = screen.getByRole("complementary", { name: "Move workspace" });
-      expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(
-        screen.getByRole("button", { name: /collapse workspace rail/i }),
-      ).toBeInTheDocument();
-      // Phases live in the top stepper now; the rail holds the workspace nav.
-      expect(
-        screen.getByRole("navigation", { name: "Phase steps" }),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Stage workspace")).toBeInTheDocument();
+      const picker = screen.getByLabelText("P3 step") as HTMLSelectElement;
+      const firstInput = picker.querySelector<HTMLOptionElement>(
+        'option[value^="input:"]',
+      );
+      expect(firstInput).not.toBeNull();
+      fireEvent.change(picker, { target: { value: "workflow:2" } });
+      expect(contractStepButton(/Record Decision/i)).toHaveClass("active");
+      fireEvent.change(picker, { target: { value: firstInput!.value } });
+      expect(contractStepButton(firstInput!.textContent ?? "")).toHaveClass(
+        "active",
+      );
     });
 
-    it("renders a collapse toggle; clicking it collapses the rail to an icon-only strip (real DOM/class change), and clicking again expands it back", () => {
+    it("the compact P0 picker changes the rendered step detail", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
-          move={makeMove()}
-          phaseNum={3}
+          move={makeMove({ currentPhase: 0 })}
+          phaseNum={0}
           phaseTallies={[...phaseTallies]}
         />,
       );
 
-      const rail = screen.getByRole("complementary", { name: "Move workspace" });
-      expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(screen.getByText("Stage workspace")).toBeInTheDocument();
-
-      const toggle = screen.getByRole("button", {
-        name: "Collapse workspace rail",
-      });
-      expect(toggle).toHaveAttribute("aria-expanded", "true");
-      expect(toggle).toHaveTextContent("«");
-
-      fireEvent.click(toggle);
-
-      // Real DOM/class change, not just an internal state flip: the rail
-      // picks up the collapsed modifier class and its group/phase labels
-      // stop rendering entirely.
-      expect(rail).toHaveClass("mxw-side-collapsed");
-      // The rail's own labels stop rendering; the top stepper is unaffected.
-      expect(screen.queryByText("Stage workspace")).not.toBeInTheDocument();
+      const picker = screen.getByLabelText("P0 step") as HTMLSelectElement;
+      const secondWorkflow = picker.querySelector<HTMLOptionElement>(
+        'option[value="workflow:1"]',
+      );
+      expect(secondWorkflow).not.toBeNull();
+      fireEvent.change(picker, { target: { value: secondWorkflow!.value } });
+      expect(picker).toHaveValue("workflow:1");
       expect(
-        screen.getByRole("navigation", { name: "Phase steps" }),
-      ).toBeInTheDocument();
-      const expandToggle = screen.getByRole("button", {
-        name: "Expand workspace rail",
-      });
-      expect(expandToggle).toHaveAttribute("aria-expanded", "false");
-      expect(expandToggle).toHaveTextContent("»");
-
-      fireEvent.click(expandToggle);
-
-      expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(screen.getByText("Stage workspace")).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "Collapse workspace rail" }),
+        within(screen.getByTestId("mxw-finder-steps")).getByRole("heading", {
+          name: secondWorkflow!.textContent ?? "",
+        }),
       ).toBeInTheDocument();
     });
 
-    it("the top phase stepper links a reachable phase to its route, independent of the rail collapse state", () => {
+    it("uses one desktop workspace tab row without a second left rail", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -1573,11 +1572,58 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      // Collapsing the workspace rail must not affect phase navigation, which
-      // now lives in the always-visible top stepper. Phase 2 is <= currentPhase
-      // (3), so it renders there as a real Link to its phase route.
-      fireEvent.click(
-        screen.getByRole("button", { name: "Collapse workspace rail" }),
+      expect(screen.queryByLabelText("Move workspace")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /workspace rail/i }),
+      ).not.toBeInTheDocument();
+      expect(workspaceTab("Steps")).toHaveAttribute("aria-selected", "true");
+      expect(workspaceTab("Files & Evidence")).toBeInTheDocument();
+      expect(workspaceTab("Intelligence")).toBeInTheDocument();
+      expect(workspaceTab("Approvals")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /All Moves/i })).toHaveAttribute(
+        "href",
+        "/strategic-moves",
+      );
+      expect(
+        screen.getByRole("navigation", { name: "P3 steps" }),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps workspace tabs available when switching from steps to another view", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(workspaceTab("Approvals"));
+      expect(
+        screen.getByRole("heading", { name: "Approvals overview" }),
+      ).toBeInTheDocument();
+      expect(workspaceTab("Approvals")).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      fireEvent.click(workspaceTab("Steps"));
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(workspaceTab("Steps")).toHaveAttribute("aria-selected", "true");
+    });
+
+    it("the top phase stepper links a reachable phase to its route", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
       );
 
       const stepper = screen.getByRole("navigation", { name: "Phase steps" });
@@ -1587,7 +1633,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(phaseLink.tagName).toBe("A");
       expect(phaseLink).toHaveAttribute(
         "href",
-        `/strategic-moves/${"37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4"}/phase/2`,
+        "/strategic-moves/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase/2",
       );
     });
   });
@@ -1605,9 +1651,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      fireEvent.click(
-        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
-      );
+      fireEvent.click(workspaceTab("Approvals"));
 
       expect(
         screen.getByRole("heading", { name: "Approvals overview" }),
@@ -1627,9 +1671,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      fireEvent.click(
-        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
-      );
+      fireEvent.click(workspaceTab("Approvals"));
 
       expect(
         screen.getByRole("heading", { name: "Approvals overview" }),
@@ -1664,9 +1706,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      fireEvent.click(
-        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
-      );
+      fireEvent.click(workspaceTab("Approvals"));
       const overview = screen.getByLabelText("Approvals overview");
       fireEvent.click(
         within(overview).getByRole("button", { name: /Review & approve/i }),
@@ -1691,9 +1731,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      fireEvent.click(
-        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
-      );
+      fireEvent.click(workspaceTab("Approvals"));
       const overview = screen.getByLabelText("Approvals overview");
 
       const links = within(overview).getAllByRole("link", {
@@ -3373,7 +3411,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("hides the Cost & Effort rail entry point when moves_pricing_engine is off (the default)", () => {
+  it("hides the Cost & Effort workspace tab when moves_pricing_engine is off (the default)", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3387,12 +3425,10 @@ describe("MovesPhaseStandaloneClient", () => {
         phaseTallies={[...phaseTallies]}
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /Cost & Effort/i }),
-    ).not.toBeInTheDocument();
+    expect(queryWorkspaceTab(/Cost & Effort/i)).not.toBeInTheDocument();
   });
 
-  it("shows the Cost & Effort rail entry point only on P4 when the flag is on, and opens the wizard", () => {
+  it("shows the Cost & Effort workspace tab only on P4 when the flag is on, and opens the wizard", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3407,9 +3443,7 @@ describe("MovesPhaseStandaloneClient", () => {
         pricingEngineEnabled
       />,
     );
-    const costEffortButton = screen.getByRole("button", {
-      name: /Cost & Effort/i,
-    });
+    const costEffortButton = workspaceTab(/Cost & Effort/i);
     expect(costEffortButton).toBeInTheDocument();
     fireEvent.click(costEffortButton);
     expect(
@@ -3417,7 +3451,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not show the Cost & Effort rail entry point on a non-P4 phase, even with the flag on", () => {
+  it("does not show the Cost & Effort workspace tab on a non-P4 phase, even with the flag on", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3432,12 +3466,10 @@ describe("MovesPhaseStandaloneClient", () => {
         pricingEngineEnabled
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /Cost & Effort/i }),
-    ).not.toBeInTheDocument();
+    expect(queryWorkspaceTab(/Cost & Effort/i)).not.toBeInTheDocument();
   });
 
-  it("hides the Risk Assessment rail entry point when moves_risk_tier_scoring_v1 is off (the default)", () => {
+  it("hides the Risk Assessment workspace tab when moves_risk_tier_scoring_v1 is off (the default)", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3451,12 +3483,10 @@ describe("MovesPhaseStandaloneClient", () => {
         phaseTallies={[...phaseTallies]}
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /Risk Assessment/i }),
-    ).not.toBeInTheDocument();
+    expect(queryWorkspaceTab(/Risk Assessment/i)).not.toBeInTheDocument();
   });
 
-  it("shows the Risk Assessment rail entry point only on P2 when the flag is on, and opens the panel", () => {
+  it("shows the Risk Assessment workspace tab only on P2 when the flag is on, and opens the panel", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3471,7 +3501,7 @@ describe("MovesPhaseStandaloneClient", () => {
         riskAssessmentEnabled
       />,
     );
-    const riskButton = screen.getByRole("button", { name: /Risk Assessment/i });
+    const riskButton = workspaceTab(/Risk Assessment/i);
     expect(riskButton).toBeInTheDocument();
     fireEvent.click(riskButton);
     expect(
@@ -3479,7 +3509,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
-  it("also shows the Risk Assessment rail entry point on P3 when the flag is on — starts at P2, finalizes at P3", () => {
+  it("also shows the Risk Assessment workspace tab on P3 when the flag is on — starts at P2, finalizes at P3", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3494,12 +3524,10 @@ describe("MovesPhaseStandaloneClient", () => {
         riskAssessmentEnabled
       />,
     );
-    expect(
-      screen.getByRole("button", { name: /Risk Assessment/i }),
-    ).toBeInTheDocument();
+    expect(workspaceTab(/Risk Assessment/i)).toBeInTheDocument();
   });
 
-  it("does not show the Risk Assessment rail entry point on P4 (or any phase other than P2/P3), even with the flag on", () => {
+  it("does not show the Risk Assessment workspace tab on P4 (or any phase other than P2/P3), even with the flag on", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3514,12 +3542,10 @@ describe("MovesPhaseStandaloneClient", () => {
         riskAssessmentEnabled
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /Risk Assessment/i }),
-    ).not.toBeInTheDocument();
+    expect(queryWorkspaceTab(/Risk Assessment/i)).not.toBeInTheDocument();
   });
 
-  it("hides the Solutioning rail entry point when moves_solution_pattern_gate_v1 is off (the default)", () => {
+  it("hides the Solutioning workspace tab when moves_solution_pattern_gate_v1 is off (the default)", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3533,12 +3559,10 @@ describe("MovesPhaseStandaloneClient", () => {
         phaseTallies={[...phaseTallies]}
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /Solutioning/i }),
-    ).not.toBeInTheDocument();
+    expect(queryWorkspaceTab(/Solutioning/i)).not.toBeInTheDocument();
   });
 
-  it("shows the Solutioning rail entry point only on P3 when the flag is on, and opens the panel", () => {
+  it("shows the Solutioning workspace tab only on P3 when the flag is on, and opens the panel", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3553,9 +3577,7 @@ describe("MovesPhaseStandaloneClient", () => {
         solutionPatternGateEnabled
       />,
     );
-    const solutioningButton = screen.getByRole("button", {
-      name: /Solutioning/i,
-    });
+    const solutioningButton = workspaceTab(/Solutioning/i);
     expect(solutioningButton).toBeInTheDocument();
     fireEvent.click(solutioningButton);
     expect(
@@ -3563,7 +3585,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not show the Solutioning rail entry point on a non-P3 phase, even with the flag on", () => {
+  it("does not show the Solutioning workspace tab on a non-P3 phase, even with the flag on", () => {
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
@@ -3578,9 +3600,7 @@ describe("MovesPhaseStandaloneClient", () => {
         solutionPatternGateEnabled
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /Solutioning/i }),
-    ).not.toBeInTheDocument();
+    expect(queryWorkspaceTab(/Solutioning/i)).not.toBeInTheDocument();
   });
 
   it("renders P5 in the contract shell instead of the older prepare wall", () => {
@@ -4171,9 +4191,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect.anything(),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Phase Intelligence/i }),
-    );
+    fireEvent.click(workspaceTab("Intelligence"));
     expect(
       screen.getByRole("heading", { name: "Phase Intelligence" }),
     ).toBeInTheDocument();
@@ -4317,7 +4335,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Files & Evidence/i }));
+    fireEvent.click(workspaceTab("Files & Evidence"));
 
     await waitFor(() => {
       expect(
@@ -4352,7 +4370,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Files & Evidence/i }));
+    fireEvent.click(workspaceTab("Files & Evidence"));
     expect(
       screen.getByRole("heading", { name: "Files & Evidence" }),
     ).toBeInTheDocument();
@@ -4371,7 +4389,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ),
     ).toBe(false);
 
-    fireEvent.click(screen.getByRole("button", { name: /Stage workspace/i }));
+    fireEvent.click(workspaceTab("Steps"));
     selectP3Option(/Operational playbook and metric discipline/i);
     fireEvent.click(workflowStepButton(/Record Decision/i));
     fireEvent.click(contractStepButton(/Approve & Build/i));
@@ -5539,7 +5557,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("upload-type workflow step: the real file input reachable from the two-column detail pane invokes the same existing upload wiring (no new handler built)", async () => {
+    it("upload-type workflow step: the real file input reachable from the step detail pane invokes the same existing upload wiring (no new handler built)", async () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -5710,7 +5728,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
         fireEvent.click(workflowStepButton("Approve & Build"));
 
-        expect(screen.getByRole("link", { name: workbook })).toBeInTheDocument();
+        expect(
+          screen.getByRole("link", { name: workbook }),
+        ).toBeInTheDocument();
         expect(
           screen.getByLabelText("Upload completed readiness workbook"),
         ).toBeInTheDocument();
