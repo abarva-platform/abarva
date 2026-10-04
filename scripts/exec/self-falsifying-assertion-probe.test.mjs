@@ -144,6 +144,33 @@ check(
   parseSuiteOutput({ stdout: "nothing here" }).totals === null,
 );
 
+/*
+ * A repeated label collapses to one verdict, which is a blind spot in the
+ * per-case channel. It must be REPORTED, not merely survived: 32 labels in this
+ * directory are printed more than once.
+ */
+const collapsed = parseSuiteOutput({
+  stdout: ["  PASS  same label", "  FAIL  same label", "  PASS  unique", "", "2 passed, 1 failed"].join("\n"),
+});
+check(
+  "a label printed twice collapses to the last verdict",
+  collapsed.cases.get("same label") === "fail" && collapsed.cases.size === 2,
+  JSON.stringify([...collapsed.cases]),
+);
+check(
+  "and the collapse is reported once, by name, rather than silently survived",
+  collapsed.duplicateNames.join(",") === "same label",
+  JSON.stringify(collapsed.duplicateNames),
+);
+check(
+  "a label printed twice with the SAME verdict is still reported — the collapse is what matters, not the disagreement",
+  parseSuiteOutput({ stdout: ["  PASS  twice", "  PASS  twice"].join("\n") }).duplicateNames.join(",") === "twice",
+);
+check(
+  "no collapse is reported when every label is distinct",
+  parseSuiteOutput({ stdout: ["  PASS  a", "  PASS  b"].join("\n") }).duplicateNames.length === 0,
+);
+
 // ---------------------------------------------------------------------------
 console.log("\nwhat moved between two runs");
 
@@ -327,10 +354,18 @@ check(
     .split("\n")
     .filter((line) => HEADING_RE.test(line)).length === 0,
 );
+/*
+ * The fixture carries a THREE-DIGIT bare number on purpose. An earlier version
+ * used `42` and `8520`, and a mutation widening the pattern to `\b\d{3}\b`
+ * survived it: two digits and four digits both fall outside that pattern, so
+ * the case could not tell the two readers apart. A lane id's number is three
+ * digits, so three digits is the only width that discriminates.
+ */
+const ID_FIXTURE = ["T-720 and 142 and 8520 and 42"];
 check(
-  "a lane id is read from a literal; a bare number is not, because every assertion count would become one",
-  mentionedItemIds(["T-720 and 42 and 8520"]).join(",") === "T-720",
-  mentionedItemIds(["T-720 and 42 and 8520"]).join(","),
+  "a lane id is read from a literal; a bare THREE-DIGIT number is not, because every assertion count would become one",
+  mentionedItemIds(ID_FIXTURE).join(",") === "T-720",
+  mentionedItemIds(ID_FIXTURE).join(","),
 );
 
 const pulse = renderPulsePerturbation({ now: NOW, identity: IDENTITY, item: ITEM, literals });
@@ -467,15 +502,48 @@ fs.writeFileSync(
   ].join("\n"),
 );
 
-const e2e = cli([
-  "--suite-dir",
-  fixtureSuites,
-  "--operator-root",
-  fixtureCorpus,
-  "--source",
-  "source-literals",
-  "--json",
-]);
+/*
+ * A third fixture suite guards the env contract, which is the defect this probe
+ * shipped in its own first form: it set `SOURCE_EXECUTION_HOME` and
+ * `EXEC_OPERATOR_ROOT` as well as `HOME`, and those two are how a suite points
+ * its OWN fixture at a controlled corpus. That took `id-collision` from 71/0 to
+ * 70/1 in the baseline run, before any perturbation. `HOME` must be the only
+ * substitution, and the other two must be DELETED rather than left alone — so
+ * the probe is invoked below with both already set to a decoy path.
+ */
+fs.writeFileSync(
+  path.join(fixtureSuites, "env.test.mjs"),
+  [
+    'let p = 0, f = 0;',
+    'function check(n, c) { if (c) { p += 1; console.log(`  PASS  ${n}`); } else { f += 1; console.log(`  FAIL  ${n}`); } }',
+    'check("the probe left EXEC_OPERATOR_ROOT unset, so a suite can still point its own fixture", process.env.EXEC_OPERATOR_ROOT === undefined);',
+    'check("the probe left SOURCE_EXECUTION_HOME unset for the same reason", process.env.SOURCE_EXECUTION_HOME === undefined);',
+    'check("and HOME was substituted, so the sandbox is what gets read", (process.env.HOME || "").includes("baseline") || (process.env.HOME || "").includes("perturbed"));',
+    'console.log(`\\n${p} passed, ${f} failed`);',
+    'process.exitCode = f > 0 ? 1 : 0;',
+  ].join("\n"),
+);
+
+/*
+ * A fourth prints one label twice, so the collapsed-label report has a subject.
+ * Without it a mutation that returns an empty collapsed list survives, which it
+ * did: the only case standing there was a type check, and `0` is a number.
+ */
+fs.writeFileSync(
+  path.join(fixtureSuites, "collapse.test.mjs"),
+  [
+    'console.log("  PASS  a label printed twice");',
+    'console.log("  PASS  a label printed twice");',
+    'console.log("  PASS  a label printed once");',
+    'console.log("\\n3 passed, 0 failed");',
+  ].join("\n"),
+);
+
+const DECOY_ROOT = path.join(os.tmpdir(), "c588-decoy-operator-root");
+const e2e = cli(
+  ["--suite-dir", fixtureSuites, "--operator-root", fixtureCorpus, "--source", "source-literals", "--json"],
+  { env: { ...process.env, EXEC_OPERATOR_ROOT: DECOY_ROOT, SOURCE_EXECUTION_HOME: DECOY_ROOT } },
+);
 let report = null;
 try {
   report = JSON.parse(e2e.stdout);
@@ -511,7 +579,89 @@ if (!report) {
     typeof report.sandboxRoot === "string" && report.sandboxRoot.length > 0,
     report.sandboxRoot,
   );
+  /*
+   * The env contract, asserted where it bit: the probe was invoked with both
+   * variables already set to a decoy, so a green baseline here means they were
+   * DELETED, not merely left unset. A broken probe makes these cases red in
+   * BOTH runs, which is a baseline failure rather than a flip — so the
+   * assertion is on the baseline, which is the only channel that can see it.
+   */
+  const envRow = report.results.find((row) => row.suite === "env.test.mjs");
+  check(
+    "HOME is the probe's only substitution: a suite still sees EXEC_OPERATOR_ROOT and SOURCE_EXECUTION_HOME unset, even when the caller had them set",
+    envRow?.baseline.totals?.failed === 0 && envRow?.baseline.totals?.passed === 3,
+    JSON.stringify(envRow?.baseline.totals),
+  );
+  check(
+    "  and that holds in the perturbed run too, not just the baseline",
+    envRow?.perturbed.totals?.failed === 0,
+    JSON.stringify(envRow?.perturbed.totals),
+  );
+
+  const collapseRow = report.results.find((row) => row.suite === "collapse.test.mjs");
+  check(
+    "a collapsed label reaches the report BY NAME, rather than being computed and dropped",
+    collapseRow?.collapsedLabels.join(",") === "a label printed twice",
+    JSON.stringify(collapseRow?.collapsedLabels),
+  );
+  check(
+    "and the report's collapsed-label count is that blind spot as a number, not zero",
+    report.collapsedLabelCount >= 1,
+    String(report.collapsedLabelCount),
+  );
+  check(
+    "  while a suite with no repeated label contributes none",
+    report.results.find((row) => row.suite === "mechanism.test.mjs")?.collapsedLabels.length === 0,
+    JSON.stringify(report.results.find((row) => row.suite === "mechanism.test.mjs")?.collapsedLabels),
+  );
 }
+
+/*
+ * EVERY VEHICLE MUST LAND. A clean result is worthless if a vehicle silently
+ * wrote nothing — a negative needs independent truth. Calibration (a) proves
+ * the register vehicle lands, because it flips a real case; the backlog NOTE
+ * and the pulse entry flip nothing by design, so nothing else would catch them
+ * going quiet. This reads the sandbox instead.
+ */
+const landRoot = fs.mkdtempSync(path.join(os.tmpdir(), "c588-land-"));
+fs.rmSync(landRoot, { recursive: true, force: true });
+const landed = cli([
+  "--suite-dir",
+  fixtureSuites,
+  "--operator-root",
+  fixtureCorpus,
+  "--source",
+  "source-literals",
+  "--sandbox",
+  landRoot,
+  "--keep-sandbox",
+  "--json",
+]);
+const VEHICLE_FILES = {
+  register: "EXECUTION_CLAIMS.md",
+  backlog: "EXECUTION_BACKLOG_20260918.md",
+  pulse: "EXECUTION_PULSE_20260918.md",
+};
+if (!fs.existsSync(path.join(landRoot, "perturbed", "Downloads"))) {
+  check("the probe kept the sandbox it was given", false, `exit ${landed.status}; stderr ${landed.stderr.slice(0, 300)}`);
+} else {
+  for (const [vehicle, file] of Object.entries(VEHICLE_FILES)) {
+    const base = fs.readFileSync(path.join(landRoot, "baseline", "Downloads", file), "utf8");
+    const pert = fs.readFileSync(path.join(landRoot, "perturbed", "Downloads", file), "utf8");
+    check(
+      `the ${vehicle} vehicle lands: its document grows and the baseline copy is untouched`,
+      pert.length > base.length && base === fs.readFileSync(path.join(fixtureCorpus, file), "utf8"),
+      `baseline ${base.length}B, perturbed ${pert.length}B`,
+    );
+    check(
+      `  and the ${vehicle} document carries exactly one probe line, with zero in the baseline`,
+      (pert.match(/self-falsifying-assertion-probe#local/g) ?? []).length === 1 &&
+        (base.match(/self-falsifying-assertion-probe#local/g) ?? []).length === 0,
+      `perturbed ${(pert.match(/self-falsifying-assertion-probe#local/g) ?? []).length}`,
+    );
+  }
+}
+fs.rmSync(landRoot, { recursive: true, force: true });
 
 /*
  * The noise floor, asserted as a property rather than as a number: with no

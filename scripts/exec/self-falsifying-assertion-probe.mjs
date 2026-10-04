@@ -130,9 +130,27 @@ const TOTALS = /^\s*(\d+)\s+passed,\s+(\d+)\s+failed(?:,\s+(\d+)\s+skipped)?\s*$
 /**
  * Per-case verdicts and totals from one suite run.
  *
- * Case names are the key, so a suite that prints the same label twice collapses
- * them; `duplicateNames` reports that rather than hiding it, because a collapsed
- * pair could mask a flip.
+ * **The case NAME is the key, and that is a real blind spot, measured rather
+ * than waved at.** A suite that prints the same label twice collapses to one
+ * entry holding the LAST verdict, so a flip on an earlier occurrence is
+ * invisible to the per-case channel. Counted over this directory on
+ * `origin/main` with the operator corpus present, so no case was skipped: **7
+ * labels** are printed more than once — 5 in `register-time-authority.test.mjs`
+ * (16 printed lines) and 2 in `append-claim.test.mjs` (4) — 20 printed lines in
+ * all. This suite contributes none of them.
+ *
+ * That figure was first measured by hand as **32 across 4 suites and it was
+ * wrong**, which is why it is reported from here rather than written down
+ * somewhere: the hand method stripped a trailing `" — …"` from every printed
+ * line in order to drop a SKIP's reason, and so truncated every LABEL that
+ * contains an em-dash — collapsing distinct cases into one and inventing
+ * duplicates. The reason is part of a SKIP line and of nothing else, so it is
+ * stripped only there.
+ *
+ * `duplicateNames` therefore reaches the report, and the CLI prints it. A blind
+ * spot a tool computes and then discards is the same as one it never had.
+ * The totals channel still covers these: a flip on a collapsed label moves
+ * `passed`/`failed` even when no per-case line changes.
  */
 export function parseSuiteOutput({ stdout = "", stderr = "", status = 0 } = {}) {
   const cases = new Map();
@@ -140,8 +158,7 @@ export function parseSuiteOutput({ stdout = "", stderr = "", status = 0 } = {}) 
   const record = (name, verdict) => {
     const key = name.trim();
     if (!key) return;
-    if (cases.has(key) && cases.get(key) !== verdict) duplicateNames.push(key);
-    else if (cases.has(key)) duplicateNames.push(key);
+    if (cases.has(key) && !duplicateNames.includes(key)) duplicateNames.push(key);
     cases.set(key, verdict);
   };
 
@@ -680,6 +697,7 @@ function runCli() {
       suite: suiteFile,
       reportedDialect: baseline.dialect,
       visiblePasses: baseline.visiblePasses,
+      collapsedLabels: baseline.duplicateNames,
       literalCount: literals.length,
       appendedBytes,
       baseline: { totals: baseline.totals, status: baseline.status, cases: baseline.cases.size },
@@ -692,7 +710,8 @@ function runCli() {
       `  ${mark.padEnd(7)} ${suiteFile.padEnd(38)} ${literals.length} literal(s), +${appendedBytes}B  ` +
         `${baseline.totals ? `${baseline.totals.passed}/${baseline.totals.failed}` : "?"} -> ` +
         `${perturbed.totals ? `${perturbed.totals.passed}/${perturbed.totals.failed}` : "?"}` +
-        `${baseline.visiblePasses ? "" : "  [no per-case pass lines]"}`,
+        `${baseline.visiblePasses ? "" : "  [no per-case pass lines]"}` +
+        `${baseline.duplicateNames.length ? `  [${baseline.duplicateNames.length} collapsed label(s)]` : ""}`,
     );
     for (const flip of diff.flips) log(`          FLIP ${flip.from} -> ${flip.to}: ${flip.name}`);
     for (const row of diff.appeared) log(`          APPEARED (${row.verdict}): ${row.name}`);
@@ -719,6 +738,7 @@ function runCli() {
     movedCount: moved.length,
     falsifiable,
     blindSuites: results.filter((row) => !row.visiblePasses).map((row) => row.suite),
+    collapsedLabelCount: results.reduce((total, row) => total + row.collapsedLabels.length, 0),
     results: results.map((row) => ({ ...row, flips: row.flips, appeared: row.appeared, vanished: row.vanished })),
   };
 
@@ -740,6 +760,15 @@ function runCli() {
     if (report.blindSuites.length) {
       console.log(
         `\n${report.blindSuites.length} suite(s) print nothing on a pass, so a pass -> fail there is visible only as a FAIL line and a moved total: ${report.blindSuites.join(", ")}`,
+      );
+    }
+    if (report.collapsedLabelCount > 0) {
+      const bySuite = results
+        .filter((row) => row.collapsedLabels.length)
+        .map((row) => `${row.suite}:${row.collapsedLabels.length}`)
+        .join(", ");
+      console.log(
+        `\n${report.collapsedLabelCount} case label(s) are printed more than once and collapse to one verdict, so a flip on an earlier occurrence shows only in the totals: ${bySuite}`,
       );
     }
     console.log(`\nsandbox ${sandboxRoot}${has("--keep-sandbox") ? " (kept)" : " (removed)"}`);
