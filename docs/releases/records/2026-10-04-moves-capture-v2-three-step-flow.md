@@ -63,14 +63,14 @@ Release lane: `experimental` — feature-flagged, non-default capability
 
 ## QA / Validation
 
-- `jest` — 145/145 across the five new/affected suites
+- `jest` — **PASS**: 145/145 across the five new/affected suites
   (`MovesPhaseStandaloneClient`, `MovesCaptureFlow`, `MovesCaptureWorkspace`,
   `ava-dock-adapter`, `moves-phase-step-groups`), including flag-on/off
   integration.
-- `eslint` — 0 errors (2 pre-existing unused-var warnings, unrelated).
-- `tsc --noEmit` — no type errors in the changed files.
-- Visual: NOT verified locally (no signed-in data-backed render off the private
-  data plane). Owed a live signed-in walk once enabled for a tenant.
+- `eslint` — **PASS**: 0 errors (2 pre-existing unused-var warnings, unrelated).
+- `tsc --noEmit` — **PASS**: no type errors in the changed files.
+- Visual signed-in walk — **NOT RUN**: no signed-in data-backed render off the
+  private data plane from a dev box. Owed once enabled for a tenant.
 
 ## Rollout Plan
 
