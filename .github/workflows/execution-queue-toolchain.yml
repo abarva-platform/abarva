@@ -1,3 +1,25 @@
+# Execution queue toolchain
+#
+# THIS JOB CANNOT BLOCK A MERGE, and nothing about a green run here says so.
+# `Execution queue behavioral contract` is required by no ruleset: read by name
+# against the rulesets API on 2026-10-04, `main` carried 19 required status
+# contexts and this was not one of them. It triggers on `scripts/exec/**` and it
+# is advisory when it goes red (item C-582).
+#
+# The run that DOES gate these suites is the step `Prove the execution-queue
+# toolchain contracts can fail a merge`, inside `Behavior coverage floor` in
+# `.github/workflows/coverage-threshold.yml`. That is the required context, and
+# that is the run a closure note must quote. Quoting a step below instead is a
+# true sentence about a run that gates nothing -- item T-595's defect exactly,
+# which is why the required sweep echoes each suite path as it goes.
+#
+# The fifteen individually titled steps here are kept deliberately: their
+# comments are the only written record of what each control measured and why it
+# exists, and the required sweep is a glob so a sixteenth suite is gated the day
+# it lands whether or not it is ever named below. The contract that the required
+# sweep still covers this whole directory is
+# `src/__tests__/behaviors/exec-toolchain-requiredness.test.ts`.
+
 name: Execution queue toolchain
 
 on:
