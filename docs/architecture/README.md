@@ -6,19 +6,21 @@ Read these documents as the product contract for how tenant evidence becomes fac
 
 ## Reading Order
 
-1. `enterprise-data-layer.md` - the architecture spine and target layers.
-2. `module-data-layer-serving-map.md` - current vs target data source by module.
-3. `module-context-serving-contract.md` - generic read-only context packet contract.
-4. `naming-conventions.md` - approved language and legacy-name boundaries.
-5. `tenant-packet-contract.md` - the new-client input contract.
-6. `canonical-ingestion-contract.md` - source/data-layer decoupling contract.
-7. `source-adapter-framework.md` - parser/adapter responsibilities.
-8. `mapping-registry.md` - source-to-canonical mapping governance.
-9. `schema-contract-registry.md` - version compatibility rules.
-10. `target-data-layer-writer.md` - persistence responsibilities.
-11. `module-context-apis.md` - module read/write contracts.
-12. `module-memory.md` and `outcome-ledger.md` - write-back and value proof.
-13. `proof-harness.md` - how a load becomes proven, not merely present.
+1. `ENTERPRISE_INFORMATION_ARCHITECTURE.md` - the constitution for the four layers.
+2. `integrated-data-engineering-design.md` - the detailed medallion, operational, and aVa/RAG data engineering design. Review HTML: `integrated-data-engineering-design.html`.
+3. `enterprise-data-layer.md` - the architecture spine and target layers.
+4. `module-data-layer-serving-map.md` - current vs target data source by module.
+5. `module-context-serving-contract.md` - generic read-only context packet contract.
+6. `naming-conventions.md` - approved language and legacy-name boundaries.
+7. `tenant-packet-contract.md` - the new-client input contract.
+8. `canonical-ingestion-contract.md` - source/data-layer decoupling contract.
+9. `source-adapter-framework.md` - parser/adapter responsibilities.
+10. `mapping-registry.md` - source-to-canonical mapping governance.
+11. `schema-contract-registry.md` - version compatibility rules.
+12. `target-data-layer-writer.md` - persistence responsibilities.
+13. `module-context-apis.md` - module read/write contracts.
+14. `module-memory.md` and `outcome-ledger.md` - write-back and value proof.
+15. `proof-harness.md` - how a load becomes proven, not merely present.
 
 ## Enforcement
 
