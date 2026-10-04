@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { SourceNewFileRow } from "./SourceNewFiles";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 export function SourceNewNdaCapture({
   eventId,
@@ -20,19 +21,162 @@ export function SourceNewNdaCapture({
   if (uncovered.length === 0) return null;
 
   const templates = coverage.publishedTemplateVersions ?? [];
+  const syntheticLab = canonicalTenantKey(clientKey) === "meridian-health";
   if (templates.length === 0) {
-    return clientKey === "meridian-health"
+    return syntheticLab
       ? <SyntheticTemplatePublication eventId={eventId} files={files} />
       : <p className="snw-note">Legal must publish an NDA template version before an executed document can be recorded.</p>;
   }
   const executedFiles = files.filter((file) =>
     file.artifactGroup === "upload" && file.artifactType === "nda_executed" &&
     file.lifecycleState === "current" && Boolean(file.blobSha256));
+  const sendControl = syntheticLab ?
+    <SyntheticNdaSendControl eventId={eventId} uncovered={uncovered} templates={templates} /> : null;
   if (executedFiles.length === 0) {
-    return <p className="snw-note">Upload the executed NDA through this event&apos;s File Cabinet before recording its signature evidence.</p>;
+    return <>{sendControl}<p className="snw-note">Upload the executed NDA through this event&apos;s File Cabinet before recording its signature evidence.</p></>;
   }
 
-  return <ReadyNdaForm eventId={eventId} uncovered={uncovered} templates={templates} executedFiles={executedFiles} />;
+  return <>{sendControl}<ReadyNdaForm eventId={eventId} uncovered={uncovered} templates={templates} executedFiles={executedFiles} /></>;
+}
+
+type OperatorSupplier = {
+  vendorId: string;
+  contactAuthorityId: string | null;
+  contactName: string | null;
+  envelopeId: string | null;
+  envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | null;
+  envelopeTemplateVersion: string | null;
+};
+
+type OperatorStatus = { available: boolean; fallback: "upload"; suppliers: OperatorSupplier[] };
+
+function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
+  eventId: string;
+  uncovered: SourceNewStage05NdaCoverage["suppliers"];
+  templates: readonly string[];
+}) {
+  const router = useRouter();
+  const [status, setStatus] = useState<OperatorStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busyVendor, setBusyVendor] = useState<string | null>(null);
+  const [selectedVersions, setSelectedVersions] = useState<Record<string, string>>({});
+  const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
+  const [sentVendors, setSentVendors] = useState<Set<string>>(() => new Set());
+  const [message, setMessage] = useState<string | null>(null);
+
+  const refreshStatus = useCallback(async (signal?: AbortSignal) => {
+    const response = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/nda/esign/status`, {
+      cache: "no-store", signal,
+    });
+    if (!response.ok) throw new Error("status_unavailable");
+    const next = await response.json() as OperatorStatus;
+    if (typeof next.available !== "boolean" || !Array.isArray(next.suppliers)) {
+      throw new Error("status_unavailable");
+    }
+    setStatus(next);
+    setError(null);
+  }, [eventId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void refreshStatus(controller.signal).catch(() => {
+      if (!controller.signal.aborted) {
+        setStatus(null);
+        setError("NDA signing status is unavailable. No send can proceed.");
+      }
+    });
+    return () => controller.abort();
+  }, [refreshStatus]);
+
+  async function send(event: FormEvent<HTMLFormElement>, supplier: SourceNewStage05NdaCoverage["suppliers"][number]) {
+    event.preventDefault();
+    const current = status?.suppliers.find((row) => row.vendorId === supplier.legalEntityId);
+    const templateVersion = selectedVersions[supplier.legalEntityId];
+    if (!status?.available || !current?.contactAuthorityId || current.envelopeStatus ||
+        !templateVersion || !confirmed[supplier.legalEntityId] ||
+        busyVendor || sentVendors.has(supplier.legalEntityId)) return;
+
+    const body = new FormData();
+    body.set("vendorId", supplier.legalEntityId);
+    body.set("contactAuthorityId", current.contactAuthorityId);
+    body.set("templateVersion", templateVersion);
+    body.set("deliveryMode", "email");
+    body.set("acknowledged", "on");
+    setBusyVendor(supplier.legalEntityId);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/nda/esign/send`, {
+        method: "POST", body,
+      });
+      const result = await response.json() as { ok?: boolean; error?: string };
+      if (!response.ok || !result.ok) {
+        setStatus(null);
+        setError(`Send was not confirmed (${result.error ?? "authority unavailable"}). Reconcile the provider envelope before trying again.`);
+        return;
+      }
+      setSentVendors((previous) => new Set(previous).add(supplier.legalEntityId));
+      setMessage("Sent to the internal test inbox. Executed NDA review is still required.");
+      try {
+        await refreshStatus();
+      } catch {
+        setStatus(null);
+        setError("The send succeeded, but envelope status readback is unavailable. Do not retry until it is reconciled.");
+      }
+      router.refresh();
+    } catch {
+      setStatus(null);
+      setError("The send outcome is uncertain. Reconcile the provider envelope before trying again.");
+    } finally {
+      setBusyVendor(null);
+    }
+  }
+
+  return <div className="snw-nda-capture" aria-label="Synthetic NDA signing">
+    <h4>Synthetic NDA signing</h4>
+    {error && <p role="alert">{error}</p>}
+    {status && !status.available && <p className="snw-note">Demo signing is unavailable; use the upload path.</p>}
+    <div className="snw-nda-suppliers" role="list">
+      {uncovered.map((supplier) => {
+        const current = status?.suppliers.find((row) => row.vendorId === supplier.legalEntityId);
+        const sent = sentVendors.has(supplier.legalEntityId);
+        const ready = Boolean(status?.available && current?.contactAuthorityId &&
+          !current.envelopeStatus && selectedVersions[supplier.legalEntityId] &&
+          confirmed[supplier.legalEntityId] && !busyVendor && !sent);
+        const stateNote = !status ? "Checking signing authority" :
+          !status.available ? "Demo signing is unavailable" :
+          !current?.contactAuthorityId ? "Approved active contact required" :
+          current.envelopeStatus === "completed" ? "Completed envelope; executed NDA review is still required" :
+          current.envelopeStatus === "declined" ? "Declined envelope; not covered, review before retry" :
+          current.envelopeStatus === "created" ? "Draft envelope needs reconciliation before another send" :
+          current.envelopeStatus ? "Sent for signature; not NDA-covered" :
+          "Ready to send to the internal test inbox";
+        return <article key={supplier.legalEntityId} role="listitem">
+          <strong>{supplier.legalName}</strong>
+          <p>{stateNote}</p>
+          <form onSubmit={(event) => send(event, supplier)}>
+            <label>Supplier-specific template
+              <select value={selectedVersions[supplier.legalEntityId] ?? ""}
+                onChange={(event) => setSelectedVersions((previous) => ({
+                  ...previous, [supplier.legalEntityId]: event.target.value,
+                }))}>
+                <option value="">Select a version</option>
+                {templates.map((version) => <option key={version} value={version}>{version}</option>)}
+              </select>
+            </label>
+            <label><input type="checkbox" checked={confirmed[supplier.legalEntityId] ?? false}
+              onChange={(event) => setConfirmed((previous) => ({
+                ...previous, [supplier.legalEntityId]: event.target.checked,
+              }))} /> I confirm this synthetic NDA goes only to the internal test inbox.</label>
+            <button className="snw-primary" type="submit" disabled={!ready}
+              aria-label={`Send NDA for ${supplier.legalName}`}>
+              {busyVendor === supplier.legalEntityId ? "Sending..." : "Send for demo signature"}
+            </button>
+          </form>
+        </article>;
+      })}
+    </div>
+    {message && <p role="status">{message}</p>}
+  </div>;
 }
 
 function SyntheticTemplatePublication({ eventId, files }: {
