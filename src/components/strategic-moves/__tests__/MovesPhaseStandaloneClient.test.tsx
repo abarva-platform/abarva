@@ -4489,6 +4489,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(styleText).toContain(
       ".mxw .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;line-height:0;color:transparent;justify-content:center}",
     );
+    // Desktop (>=1281px): aVa is docked to the left and the surface shifts to
+    // clear it; below that width it stays the floating FAB + popover above.
+    expect(styleText).toContain("@media (min-width:1281px)");
+    expect(styleText).toContain(".mxw .mxw-surface{margin-left:312px}");
     expect(screen.getByRole("button", { name: "Ask aVa" })).toHaveClass(
       "mxw-ava-fab",
     );

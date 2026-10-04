@@ -8730,6 +8730,20 @@ function MovesStandaloneStyles() {
 @media (max-width:1280px){
   .mxw .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;line-height:0;color:transparent;justify-content:center}
 }
+/*
+ * Desktop: aVa is a persistent panel docked to the left edge (mirrors the
+ * Source new-event workflow, where aVa is always on the left), instead of a
+ * click-to-open floating bubble. The surface shifts right to clear it. Below
+ * 1281px it reverts to the floating FAB + popover above.
+ */
+@media (min-width:1281px){
+  .mxw .mxw-ava-fab{display:none}
+  .mxw .mxw-ava-pop,
+  .mxw .mxw-ava-pop.open{position:fixed;left:0;right:auto;top:44px;bottom:0;width:312px;max-width:312px;height:auto;display:flex;flex-direction:column;border:0;border-right:1px solid var(--line-2);border-radius:0;box-shadow:none;overflow:hidden;z-index:45}
+  .mxw .mxw-ava-pop .mxw-ava-head button{display:none}
+  .mxw .mxw-ava-body{max-height:none;flex:1 1 auto;min-height:0}
+  .mxw .mxw-surface{margin-left:312px}
+}
 @media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-gate-why-panel,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}.mxw-gate-why-proof{justify-content:flex-start;max-width:none}}
 @media (max-width:900px){
   .mxw-mobile-rail{position:sticky;top:44px;z-index:55;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(12,26,58,.10);background:#fff;padding:10px 14px;box-shadow:0 6px 14px rgba(12,26,58,.06)}
