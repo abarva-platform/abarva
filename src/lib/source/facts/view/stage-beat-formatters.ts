@@ -23,6 +23,10 @@
 // that gains a branch during an extraction is not an extraction, and none did.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type {
+  SourceEventArchetype,
+  ValueLeverRule,
+} from '@/lib/source/archetypes/types';
 import type { ValueLeverResult } from '@/lib/source/facts/evaluators/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 
@@ -74,4 +78,37 @@ export function targetBandFor(
 
 export function targetLabel(band: { low: number; high: number } | null): string {
   return band ? `${usd(band.low)}–${usd(band.high)}` : 'Not yet quantified';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Item U-547 — the fifth helper, and why it arrived separately.
+//
+// `bafo-` and `evaluation-fact-beats.ts` each held a module-private, BYTE-
+// IDENTICAL `ruleIndex`. The other four beat modules resolve rules from the
+// array or with `.find()` and build no map, so the population is two, not six —
+// which is why `U-546` did not name it among the four formatters, and why
+// folding it in would have widened a diff whose whole value was a checkable
+// scope. It was filed rather than absorbed.
+//
+// NOTHING GAINED A BRANCH IN THE MOVE. Unlike the four, there was no signature
+// to reconcile: both copies took `SourceEventArchetype`, returned
+// `Map<string, ValueLeverRule>`, and had the same one-expression body including
+// the `?? []` arm. This is that body verbatim.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The rule a lever result came from, by key.
+ *
+ * Both callers resolve per result with `.get(result.key)` and both tolerate a
+ * miss, falling back to guide text that names no rule. So a wrong index does not
+ * throw — it silently renders the generic sentence in place of the archetype's
+ * own, which is why the suite asserts the rule-derived text per rule per stage
+ * rather than asserting this function against itself.
+ */
+export function ruleIndex(
+  archetype: SourceEventArchetype,
+): Map<string, ValueLeverRule> {
+  return new Map(
+    (archetype.valueLeverRules ?? []).map((rule) => [rule.key, rule]),
+  );
 }
