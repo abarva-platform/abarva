@@ -7,8 +7,8 @@
 # is advisory when it goes red (item C-582).
 #
 # The run that DOES gate these suites is the step `Prove the execution-queue
-# toolchain contracts can fail a merge`, inside `Behavior coverage floor` in
-# `.github/workflows/coverage-threshold.yml`. That is the required context, and
+# toolchain contracts can fail a merge`, inside `Run hygiene_gate.sh` in
+# `.github/workflows/hygiene-gate.yml`. That is the required context, and
 # that is the run a closure note must quote. Quoting a step below instead is a
 # true sentence about a run that gates nothing -- item T-595's defect exactly,
 # which is why the required sweep echoes each suite path as it goes.

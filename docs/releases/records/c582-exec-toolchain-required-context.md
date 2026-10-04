@@ -70,11 +70,15 @@ route or artifact is involved.
   are expanded against the filesystem rather than matched as text; shell comment
   lines are stripped before any command is read. Four cases run over the real
   repository, six over fixtures built in a temp directory.
-- `.github/workflows/coverage-threshold.yml` — adds one step,
+- `.github/workflows/hygiene-gate.yml` — adds one step,
   `Prove the execution-queue toolchain contracts can fail a merge`, to the
-  `Behavior coverage floor` job. It sweeps `scripts/exec/*.test.mjs` with plain
+  `Run hygiene_gate.sh` job. It sweeps `scripts/exec/*.test.mjs` with plain
   `node`, echoes each suite path before running it, runs every suite even after
   one fails, and exits non-zero at the end if any failed.
+- `.github/workflows/coverage-threshold.yml` — **not modified.** The
+  `Behavior coverage floor` job was the first choice of host and was rejected on
+  a measured ground; see *Which required job hosts it* below. It is left byte for
+  byte as it was.
 - `.github/workflows/execution-queue-toolchain.yml` — comment only. Records at
   the top of the file that this job cannot block a merge, and names the required
   step that now does. No job, step, trigger, or command changed.
@@ -82,6 +86,43 @@ route or artifact is involved.
   contexts is unchanged by this release, and the mirror describes the ruleset
   rather than this repository's wiring. Named here because it was claimed and a
   reader should know it was deliberately left alone.
+
+### Which required job hosts it, and why the first answer was wrong
+
+The step was first written into `Behavior coverage floor`, on the reasoning that
+that job is the declared home for controls which must be able to fail a merge —
+five such steps already live there. The reasoning was sound and the choice was
+still wrong, on a ground that only measurement shows.
+
+Read from the Actions API as real job `started_at`/`completed_at` instants,
+rather than from the `timeout-minutes` written in the YAML:
+
+| required job | observed duration | its timeout | margin |
+|---|---|---|---|
+| `Behavior coverage floor` | 20m07s (00:22:35Z → 00:42:42Z) | 25 min | ~5 min |
+| `Run hygiene_gate.sh` | 4m59s (00:39:35Z → 00:44:34Z) | 15 min | ~10 min |
+| `Typecheck + reasoning-layer tests` | 3m24s (00:42:08Z → 00:45:32Z) | 20 min | ~16 min |
+
+A 68-second sweep added to the floor would have consumed roughly a quarter of
+the thinnest remaining margin in the repository. That matters more than the
+arithmetic suggests: a `timeout-minutes` kill reports **cancelled**, not failed.
+The failure mode introduced would therefore have been a *false state* on a
+required check rather than an honest red — an intermittently unreadable gate,
+which is the opposite of what this item asks for.
+
+`Run hygiene_gate.sh` is the better host on its subject too, not only on
+headroom: it already owns the repository's own tooling under `scripts/`, since
+it shellchecks that tree and runs a script out of `scripts/integration/`. The
+`scripts/exec/` contracts sit with their own kind there, where pairing them with
+a job that measures `src/` was the unrelated coupling the acceptance warned
+about. It also disposes of the coverage question entirely instead of arguing it
+away: the floor job is untouched, so no argument about `node` versus jest in the
+denominator is needed.
+
+The contract needed **no change** for the move. It reads requiredness from the
+mirror and expands the pattern against the directory, so relocating the step
+between two required jobs is invisible to it — the property that was designed
+in, and the move is the first evidence it holds.
 
 ## QA / Validation
 
@@ -141,13 +182,14 @@ with the fake home outside `/tmp` the suite is 38 / 0.
 (`npx jest src/__tests__/behaviors --no-coverage --ci`): see the Audit Evidence
 section — before and after are recorded there with the suite and test counts.
 
-**Coverage floor.** The new step is plain `node`, not jest, so it contributes
-nothing to the coverage denominator and cannot move the floor. This matters
-concretely: the floor observed 90.05 against a threshold of 90 on the previous
-merge, a 0.05-point margin, and a step that enlarged the measured set could have
-failed the gate it was being added to. The new test file imports only
-`node:fs`, `node:os`, `node:path` and `js-yaml` — no module under `src/` — so it
-adds no application lines to the set either.
+All four wiring mutations were re-run after the host moved from
+`Behavior coverage floor` to `Run hygiene_gate.sh`, and all four are still
+caught: 2F/8P, 2F/8P, 1F/9P, 2F/8P, with 10/0 unmutated on either side.
+
+**Coverage floor.** The floor job is not modified by this release. The new test
+file lands in `src/__tests__/behaviors`, which the floor sweeps, and it imports
+only `node:fs`, `node:os`, `node:path` and `js-yaml` — no module under `src/` —
+so it adds no application lines to the measured set.
 
 **The acceptance's own CI proof** — break one `scripts/exec/` contract on the
 branch, show the pull request is blocked quoting the blocking context by name
@@ -191,7 +233,7 @@ advisory job, which is where they ran before. No data, migration or runtime
 state is involved, so there is nothing to unwind and no ordering constraint.
 
 A narrower rollback, if the sweep proves slow or flaky on a runner rather than
-wrong: delete the step from `coverage-threshold.yml`. The contract then fails,
+wrong: delete the step from `hygiene-gate.yml`. The contract then fails,
 which is correct — it is the thing that reports the suites are ungated — so the
 contract must be removed in the same commit, and the item reopened rather than
 left with a quietly weakened gate.
@@ -202,8 +244,11 @@ left with a quietly weakened gate.
   `GET /repos/abarva-platform/abarva/rulesets/17227397`: recorded in the
   execution register entry releasing item C-582.
 - The before/after pull-request block for the deliberately broken contract: two
-  commits on this branch, with the `Behavior coverage floor` conclusion and the
-  pull request's mergeability for each, recorded in the same register entry.
+  commits on this branch, with the `Run hygiene_gate.sh` conclusion and the
+  pull request's mergeability for each, recorded in the same register entry. An
+  earlier probe commit was run against the superseded `Behavior coverage floor`
+  host and is explicitly **not** the evidence: a block proof must name the job
+  that actually gates.
 - Local measurements: the red-first pair, the eight mutations, the verbatim step
   run, and the wider behaviours baseline, all reproducible from the commands
   quoted in QA / Validation.
