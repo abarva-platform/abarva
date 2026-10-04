@@ -1003,6 +1003,36 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    it("renders a horizontal phase stepper: reached phases are links, the viewed phase is current, future phases are disabled", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover & Diagnose" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const stepper = screen.getByRole("navigation", { name: "Phase steps" });
+      const links = within(stepper).getAllByRole("link");
+      const futureButtons = within(stepper).getAllByRole("button");
+
+      // All six phases present; P0–P2 navigable, P3–P5 disabled.
+      expect(links.length + futureButtons.length).toBe(6);
+      expect(links).toHaveLength(3);
+      expect(futureButtons).toHaveLength(3);
+      futureButtons.forEach((button) => expect(button).toBeDisabled());
+
+      // Exactly the viewed phase (P2) is marked as the current step.
+      const current = within(stepper).getByRole("link", { current: "step" });
+      expect(current).toHaveAttribute(
+        "href",
+        expect.stringContaining("/phase/2"),
+      );
+    });
+
     it("renders the new shell without any feature-flag fallback dependency", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -1061,7 +1091,7 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByRole("tablist", { name: "Move workspace views" }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("complementary", { name: "Move phases" }),
+        screen.getByRole("complementary", { name: "Move workspace" }),
       ).toBeInTheDocument();
     });
 
@@ -1471,12 +1501,15 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const rail = screen.getByRole("complementary", { name: "Move phases" });
+      const rail = screen.getByRole("complementary", { name: "Move workspace" });
       expect(rail).not.toHaveClass("mxw-side-collapsed");
       expect(
-        screen.getByRole("button", { name: /collapse phase rail/i }),
+        screen.getByRole("button", { name: /collapse workspace rail/i }),
       ).toBeInTheDocument();
-      expect(screen.getByText("Discover & Diagnose")).toBeInTheDocument();
+      // Phases live in the top stepper now; the rail holds the workspace nav.
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
       expect(screen.getByText("Stage workspace")).toBeInTheDocument();
     });
 
@@ -1492,12 +1525,12 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const rail = screen.getByRole("complementary", { name: "Move phases" });
+      const rail = screen.getByRole("complementary", { name: "Move workspace" });
       expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(screen.getByText("Discover & Diagnose")).toBeInTheDocument();
+      expect(screen.getByText("Stage workspace")).toBeInTheDocument();
 
       const toggle = screen.getByRole("button", {
-        name: "Collapse phase rail",
+        name: "Collapse workspace rail",
       });
       expect(toggle).toHaveAttribute("aria-expanded", "true");
       expect(toggle).toHaveTextContent("«");
@@ -1508,10 +1541,13 @@ describe("MovesPhaseStandaloneClient", () => {
       // picks up the collapsed modifier class and its group/phase labels
       // stop rendering entirely.
       expect(rail).toHaveClass("mxw-side-collapsed");
-      expect(screen.queryByText("Discover & Diagnose")).not.toBeInTheDocument();
+      // The rail's own labels stop rendering; the top stepper is unaffected.
       expect(screen.queryByText("Stage workspace")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
       const expandToggle = screen.getByRole("button", {
-        name: "Expand phase rail",
+        name: "Expand workspace rail",
       });
       expect(expandToggle).toHaveAttribute("aria-expanded", "false");
       expect(expandToggle).toHaveTextContent("»");
@@ -1519,13 +1555,13 @@ describe("MovesPhaseStandaloneClient", () => {
       fireEvent.click(expandToggle);
 
       expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(screen.getByText("Discover & Diagnose")).toBeInTheDocument();
+      expect(screen.getByText("Stage workspace")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Collapse phase rail" }),
+        screen.getByRole("button", { name: "Collapse workspace rail" }),
       ).toBeInTheDocument();
     });
 
-    it("collapsed: a reachable phase's icon is still a real link to its phase route (navigation survives collapse)", () => {
+    it("the top phase stepper links a reachable phase to its route, independent of the rail collapse state", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -1537,21 +1573,22 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
+      // Collapsing the workspace rail must not affect phase navigation, which
+      // now lives in the always-visible top stepper. Phase 2 is <= currentPhase
+      // (3), so it renders there as a real Link to its phase route.
       fireEvent.click(
-        screen.getByRole("button", { name: "Collapse phase rail" }),
+        screen.getByRole("button", { name: "Collapse workspace rail" }),
       );
 
-      // Phase 2 ("Discover & Diagnose") is <= currentPhase (3), so it
-      // renders as a Link both expanded and collapsed — reuses the same
-      // click/navigation handler, just hides the text label.
-      const rail = screen.getByRole("complementary", { name: "Move phases" });
-      const phaseLink = within(rail).getByTitle("Discover & Diagnose · 2 of 2");
+      const stepper = screen.getByRole("navigation", { name: "Phase steps" });
+      const phaseLink = within(stepper).getByTitle(
+        "Discover & Diagnose · 2 of 2",
+      );
       expect(phaseLink.tagName).toBe("A");
       expect(phaseLink).toHaveAttribute(
         "href",
         `/strategic-moves/${"37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4"}/phase/2`,
       );
-      expect(within(phaseLink).queryByText("Discover & Diagnose")).toBeNull();
     });
   });
 
@@ -4452,6 +4489,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(styleText).toContain(
       ".mxw .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;line-height:0;color:transparent;justify-content:center}",
     );
+    // Desktop (>=1281px): aVa is docked to the left and the surface shifts to
+    // clear it; below that width it stays the floating FAB + popover above.
+    expect(styleText).toContain("@media (min-width:1281px)");
+    expect(styleText).toContain(".mxw .mxw-surface{margin-left:312px}");
     expect(screen.getByRole("button", { name: "Ask aVa" })).toHaveClass(
       "mxw-ava-fab",
     );
