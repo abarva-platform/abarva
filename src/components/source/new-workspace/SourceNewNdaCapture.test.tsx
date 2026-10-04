@@ -70,6 +70,20 @@ describe("Source New synthetic NDA send control", () => {
     expect(screen.getByRole("button", { name: "Upload PDF" })).toBeTruthy();
   });
 
+  it("keeps supplier-specific template management available after the first publication", () => {
+    fetchMock.mockResolvedValueOnce(response(status(null)));
+    render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian" files={[]}
+      coverage={coverage} />);
+    const summary = screen.getByText("Add another synthetic NDA template");
+    const details = summary.closest("details")!;
+    expect(details).toBeTruthy();
+    expect(details.open).toBe(false);
+    fireEvent.click(summary);
+    expect(details.open).toBe(true);
+    expect(within(details).getByRole("form", { name: "Upload synthetic NDA template" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `Send NDA for ${supplierName}` })).toBeTruthy();
+  });
+
   it("shows the guarded send control for the event page's app client key", async () => {
     fetchMock.mockResolvedValueOnce(response(status(null)));
     render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian" files={[]} coverage={coverage} />);

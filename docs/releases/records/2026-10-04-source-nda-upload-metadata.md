@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The synthetic NDA template upload control now sends stage and document-family values that the governed artifact registry accepts. The upload remains a receipt, not template publication, Legal approval, or NDA coverage.
+The synthetic NDA template upload control now sends stage and document-family values that the governed artifact registry accepts. Once a first template is published, a collapsed management control remains available so the operator can add supplier-specific versions without crowding the signing view. An upload remains a receipt, not template publication, Legal approval, or NDA coverage.
 
 ## Layer Impact
 
@@ -28,11 +28,11 @@ Layer 4 Source form metadata only. Layer 3 artifact registry validation and tena
 
 ## Changes Included
 
-The Stage 05 upload form uses canonical `rfp` stage and non-deliverable `other` artifact family for an `nda_template` PDF. No route, schema, provider, approval, or contact policy change.
+The Stage 05 upload form uses canonical `rfp` stage and non-deliverable `other` artifact family for an `nda_template` PDF. A collapsed template-management section remains available after the first version. No route, schema, provider, approval, or contact policy change.
 
 ## QA / Validation
 
-A signed-in upload returned `invalid_metadata` before the change, with no template published. A red-first mounted form test reproduced the unsupported stage key. A deliberate family regression to `legal` also failed the test and was restored. Focused tests, typecheck, scoped lint, and release checks are required before merge.
+A signed-in upload returned `invalid_metadata` before the change, with no template published. A red-first mounted form test reproduced the unsupported stage key. A deliberate family regression to `legal` also failed the test and was restored. A separate red-first mounted test proved template management disappeared after the first publication. Focused tests, typecheck, scoped lint, and release checks are required before merge.
 
 ## Rollout Plan
 
@@ -58,4 +58,4 @@ The PR, hosted checks, ACA run, digest readback, and signed-in replay will be re
 
 ## Known Gaps
 
-The existing test PDF lacks distinct provider signing anchors. Uploading or publishing it does not make it sendable through the e-signature route. Provider configuration, contact authority, signatures, and four-of-four NDA coverage remain separate gates.
+The originally approved generic test PDF lacks distinct provider signing anchors. Uploading or publishing it does not make it sendable through the e-signature route. Supplier-specific unsigned lab PDFs have been prepared privately but not uploaded or published. Provider configuration, contact authority, signatures, and four-of-four NDA coverage remain separate gates.
