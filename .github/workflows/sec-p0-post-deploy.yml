@@ -30,11 +30,16 @@ name: SEC-P0 cross-tenant probes (post-deploy)
 #   AZURE_LAB_MERIDIAN_CLIENT_KEY      defaults to meridian-health
 #   AZURE_LAB_KNOWN_MERIDIAN_TURN_ID   optional known Meridian turn for SEC-P0-7
 #
-# Exit code:
-#   0  all 8 SEC-P0 probes returned 403/400/404 (success)
-#   1  one or more probes returned anything else (P0 incident → page founder)
+# Verdicts (item C-628). Every outcome is emitted by
+# `scripts/security/sec-p0-probe-verdict.mjs` as one `SEC-P0 VERDICT:` line,
+# a distinct annotation title, and a job-summary block, so a run that could
+# not reach its targets is not read as a run that found a leak:
+#   PROBES_CLEAN               exit 0  all 8 probes ran and were refused
+#   CROSS_TENANT_LEAK          exit 1  a probe reached another tenant → P0
+#   NOT_RUN_CONFIG_UNRESOLVED  exit 2  nothing probed; evidence of nothing
+#   NOT_RUN_HARNESS_ERROR      other   outside the suite's contract
 #
-# Backlog: A1 expansion · post-deploy regression gate.
+# Backlog: A1 expansion · post-deploy regression gate · C-628 verdict split.
 
 on:
   workflow_dispatch:
@@ -93,16 +98,22 @@ jobs:
               known_turn="${{ secrets.STAGING_KNOWN_MERIDIAN_TURN_ID }}"
               ;;
             *)
-              echo "Unknown probe environment: $target" >&2
-              exit 2
+              # Not a bare `exit 2`: an unresolvable target is a NOT_RUN
+              # verdict, and the emitter is the only thing that may say so.
+              node scripts/security/sec-p0-probe-verdict.mjs --from-exit 2 \
+                --detail "Unknown probe environment: $target"
               ;;
           esac
 
           other_key="${other_key:-meridian-health}"
 
+          # The suite applies this same required-env rule itself and exits 2,
+          # which the emitter turns into NOT_RUN_CONFIG_UNRESOLVED. Checking it
+          # a second time here only moved the failure to a step that cannot
+          # emit a verdict, which is how an unresolved-config run came to read
+          # as the same red as a probe finding.
           if [[ -z "$base_url" || -z "$other_id" || ( -z "$session" && -z "$cookie_header" ) ]]; then
-            echo "Missing SEC-P0 probe secrets for $target. Required: BASE_URL, MERIDIAN_CLIENT_ID, and one of APEX_SESSION or APEX_COOKIE_HEADER." >&2
-            exit 2
+            echo "SEC-P0 probe secrets for $target are incomplete; the suite will refuse and the verdict step will report NOT_RUN_CONFIG_UNRESOLVED." >&2
           fi
 
           echo "::add-mask::$session"
@@ -114,7 +125,8 @@ jobs:
           echo "OTHER_KEY=$other_key" >> "$GITHUB_OUTPUT"
           echo "KNOWN_TURN=$known_turn" >> "$GITHUB_OUTPUT"
 
-      - name: Run SEC-P0 probe suite
+      - name: Run SEC-P0 probe suite and emit its verdict
+        id: probe
         env:
           ABARVA_PROBE_BASE_URL: ${{ steps.env.outputs.BASE_URL }}
           ABARVA_PROBE_SESSION: ${{ steps.env.outputs.SESSION }}
@@ -122,4 +134,26 @@ jobs:
           ABARVA_PROBE_OTHER_TENANT_ID: ${{ steps.env.outputs.OTHER_ID }}
           ABARVA_PROBE_OTHER_TENANT_KEY: ${{ steps.env.outputs.OTHER_KEY }}
           ABARVA_PROBE_KNOWN_OTHER_TURN: ${{ steps.env.outputs.KNOWN_TURN }}
-        run: bash tests/security/sec-p0-cross-tenant-probes.sh
+        # `--run` spawns tests/security/sec-p0-cross-tenant-probes.sh and
+        # re-exits with its code, so the job is red for a leak AND for a
+        # misconfiguration — but the two now carry different verdicts.
+        run: node scripts/security/sec-p0-probe-verdict.mjs --run
+
+      - name: Name the verdict on the run page
+        if: always()
+        # The artifact name is visible on the run page without opening a log,
+        # which is the one place the two reds used to be indistinguishable.
+        run: |
+          mkdir -p sec-p0-verdict
+          printf '%s\n' "${{ steps.probe.outputs.verdict || 'NOT_RUN_HARNESS_ERROR' }}" \
+            > sec-p0-verdict/verdict.txt
+          printf '%s\n' "${{ steps.probe.outputs.severity || 'not_run' }}" \
+            > sec-p0-verdict/severity.txt
+
+      - name: Upload the verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-p0-verdict-${{ steps.probe.outputs.verdict || 'NOT_RUN_HARNESS_ERROR' }}
+          path: sec-p0-verdict/
+          retention-days: 30
