@@ -34,6 +34,130 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-03 fifth wave — walked on deployed SHA `aa23d2c31f`
+
+**Item:** C-641.
+**Walked:** 2026-10-04, between 02:00:16Z and 02:07:45Z, by
+`source-backlog-executor#20261004T015700Z`.
+**Signed in as:** the platform-admin session, tenant context resolved to the
+composite reference tenant, labelled on the surface `COMPOSITE REFERENCE TENANT
+· DEMO · CANDIDATE · UNREVIEWED · Synthetic portfolio. Not a customer, not a
+case study.`
+
+**Which SHA, and why it is not pinned.** C-641 deliberately does not name a SHA,
+because C-635 did and its acceptance became unexecutable when the runtime moved
+on. This walk stamps what was serving and proves ancestry instead. The serving
+SHA was `aa23d2c31fcfd494bc834ee771762578757a480c` (#8945), and **every one of
+the ten merges C-641 names is an ancestor of it**, by
+`git merge-base --is-ancestor`:
+
+| Merge | SHA | Ancestor of `aa23d2c31f` |
+|---|---|---|
+| #8923 Home leadership-voice spread | `698b83d830` | yes |
+| #8932 Moves charter input guidance | `80fb04f4fe` | yes |
+| #8934 Moves one next action | `b6bcb12977` | yes |
+| #8937 Moves step clarity | `bf47142a79` | yes |
+| #8922 Home narrative decimal guard | `3d919c674c` | yes |
+| #8925 Moves run-stamp rendering | `3dc2d655b1` | yes |
+| #8918 Moves regenerated-title suffix | `ae095e2dd3` | yes |
+| #8936 Source NDA send authority | `6c1e71fa24` | yes |
+| #8931 Moves synthetic reference drafts | `32d6e6f624` | yes |
+| #8927 Canonical tenant alias resolution | `30e0d29d18` | yes |
+
+Ancestry is the assertion this walk makes about the merges. It cannot be
+invalidated by the next deploy, which is the whole point of the unpinned form.
+
+**Runtime invariant, read independently with read-only `az` before the walk and
+again after it, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App | `ca-abarva-web-lab-eastus` (`rg-abarva-controlplane-lab-eastus`) |
+| Template image | `sha256:1b909a50bed3385ed898dd7d5c56b849b3a98e2f26c1015f94a0fe04b365c7dc` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--maa23d2c3` — sole entry, weight 100, Healthy / Running, created 2026-10-04T01:21:50Z |
+| Revision image | identical to the template image |
+| `latestReadyRevisionName` | `ca-abarva-web-lab-eastus--maa23d2c3` — the same revision that carries the traffic |
+| `job-abarva-deliv-worker` | identical to the template image |
+| `job-abarva-deliv-worker-event` | identical to the template image |
+
+Read at 02:00:16Z and again at 02:07:45Z; both reads returned the same digest,
+the same sole revision and the same two worker images, so no deploy landed
+inside the walk and no surface was reloaded onto a different build.
+
+**Three merges were ahead of the serving SHA and are NOT proven here.** At walk
+time `origin/main` was `f431ae90c7`, three merges beyond what was serving:
+#8947 `4f29addd31`, #8949 `f431ae90c7` and #8950 `d9e927f3c8`. Two of the three
+are client surfaces (a horizontal phase stepper, and docking aVa to the left),
+so a sixth wave is already forming. Nothing in this block should be read as
+acceptance of them — and the phase rail observed in row 2 is the **vertical**
+one, which is the independent confirmation that #8949 had not reached the
+runtime.
+
+### Results
+
+| # | Surface | Proving | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Home leadership-voice spread, chapter 07 | #8923 | **pass** | Full-width spread below the readout card, not in the narrow column. **The ranking is real, not decorative:** the fourteen consensus rows under "Where the interviews converged … strongest agreement first" descend monotonically — 44, 44, 44, 41, 38, 38, 36, 36, 34, 29, 23, 23, 23, 22 of 44 — matching `LeadershipVoiceFull`'s sort by proportion. **The quotes resolve from governed signals, not a placeholder:** the chapter's selector takes `signal.domains.includes("ai_value_interview_evidence")` off the `EnterpriseSignalPacket` (`ChapterPage.tsx:1724`), and what renders is tenant-specific rather than plausible prose — quotes naming `Actuarial & Underwriting Analytics Modernization`, `Epic Resolute Professional Billing` and `STARS/HEDIS Quality Mart (SQL Server On-Prem)`, each tagged with the theme it was raised under. **Every office renders, not just the most-quoted:** the metric reads `5 OFFICES QUOTED` and exactly five office blocks are present — President & CEO, CFO, Chief Data & Analytics Officer, CIO, VP Finance Operations. The counterpoints the merge added are both shown: `RAISED BY A SINGLE LEADER` with two dissent themes, and `TESTIMONY AGAINST THE RECORD · 127 of 996 responses`. No raw machine token reaches the surface — themes render as words (`Value realisation`, `Estate fragmentation`), which is the half #8923 called out. |
+| 2 | Moves phase-flow surface, read as one composite | #8932 · #8934 · #8937 | **pass** | Read as one surface rather than three merges, on a P1 Charter move. **Exactly one next action exists on the page** — a single `NEXT` field reading `Complete 7 required inputs`. Measured, not eyeballed: scanning the rendered text for every next-action shape (`next`, `next step`, `next action`, `do this next`, `recommended next`) returns **one** match on the whole surface. The three same-surface changes have not produced two competing next actions. **The charter inputs say what to write** (#8932): step 1 of 10 carries "The sponsor's name, role, and email. We only record them for progress updates — sponsor sign-off is not required to complete the charter", and the control reads `Fill this in to continue.` **Step clarity holds** (#8937): the workflow strip `Charter Inputs → Upload Evidence → Approve & Build` states its own ordering rule and disclaims a visual-only affordance — "Use the left steps in order. Approve & Build remains the governed close; it is not a visual-only button." Status card is internally consistent: `INPUTS 0/7`, `EVIDENCE 1 open`, `GATE 1/2 hard met`, seven named inputs in the rail. |
+| 3 | Home narrative surface, cross-cutting | #8922 | **pass** — and **C-637 moves from 4 to 0** | The whole Home body was scanned for the broken shape rather than spot-checked: **zero** matches for `/\d\. \d/` across 1,112,296 characters, which covers the embedded server payload as well as the visible text — and C-637 established the broken form was present in the raw server response, so this is the same measurement surface, not an easier one. All five figures C-637 named render **correctly and in the exact context it named them**: exhibit 01's key message reads `"Epic (17.4%) and Microsoft (9.1%) together represent more than a quarter of the $496.4M vendor spend base."`, the chapter-01 synthesis reads `MA Star Rating to 4.5+`, and the chapter-08 synthesis reads `a 6.4% error rate at 36% automation`. Probed both ways: `17.4%`, `9.1%`, `$496.4M`, `4.5+` and `6.4%` all present; `17. 4`, `9. 1`, `496. 4`, `4. 5+` and `6. 4%` all absent. C-637's acceptance says a changed count is itself the finding; the count is **0**. |
+| 4 | Moves labels on the board | #8925 · #8918 | **pass**, with the limit stated | **U-553 re-read: 0 of 8 move names carry a build or run identifier**, down from 5 on each of the two previous walks. The walk separates sanitizer from corpus instead of reporting the count alone, by reading the raw record beside the rendered one. `GET /api/v1/programs` returns eight programmes, one of which is raw `"Synthetic Meridian E2E Smoke - 20260923T161431Z"` — U-553's shape (a), verbatim — and the board renders that row as `"Synthetic Meridian Health"`. So shape (a) **is genuinely sanitized on the client surface, proven against the raw record on the same row**, and no bare stamp survives it, which is the one place U-556 / U-558's question becomes observable rather than theoretical. The other seven raw names are ordinary business names. |
+| 5 | Source NDA send surface | #8936 | **blocked** — undispatched, with the path named | No send was attempted and none could have been. The gate is visible and reads as an authority gate, which is what #8936 claims: on the event that has recorded Suppliers & NDA, `NDA AUTHORITY — Not recorded` on **all four** accepted suppliers, readiness posture `Blocked before supplier work`, `Accepted suppliers 4 · Covered 0 · Blocked or unknown 4`, and the governing sentence "A completed signing envelope does not grant coverage; a named reviewer must record the executed document or Legal waiver." Four concrete preconditions block the send, each stated by the product rather than inferred: (a) "No published NDA template version is available for this event, so no executed document can be checked against one"; (b) NDA authority not recorded for any supplier; (c) `Active contacts: 0` on every accepted supplier, with one carrying `Contact policy: do not contact · Contact readiness: prohibited`; (d) on the second event walked, stage 03 is not open at all — "This phase is not yet open … Before this phase can open: scope and strategy must advance, then supplier eligibility and required NDA coverage must be recorded." The surface also declares its own limit rather than overclaiming: "The published template versions were supplied by the caller, not verified against the authority register here. A wrong list changes this answer." |
+| 6a | Moves synthetic phase reference drafts | #8931 | **pass** | The reference draft renders on the charter step, headed `AbarVa reference draft · Synthetic · review before use`, with a substantive body ("Listed sponsor contact: VP of Payment Integrity; CFO is an escalation contact. Sponsors are informational contacts, not approvers…"). The fence the merge needs is present and unambiguous: "Not client-provided, captured, approved, or evidence. This does not complete the input or clear a gate." So the draft is shown **and** is prevented from reading as client evidence or as gate progress — which is the whole difficulty of showing a synthetic draft on a governed surface. |
+| 6b | Canonical tenant alias resolution | #8927 | **blocked** — not reachable from any signed-in surface | C-641 pairs this with #8931 in one minimum row, and the pairing does not hold. #8927 changes `scripts/demo/clean-demo-moves-aca-job.ts`, its test and its docs — **no route, component or API response**. Its code path is an ACA job, which an unattended walk must not run. What a walk *can* say is weaker and is said as such: the tenant alias resolves consistently to one canonical display name across the board header, the move header, the left rail and the breadcrumb (`Meridian Health · WORKFLOW AUTOMATION · HEALTHCARE_IDN`), with no raw alias leaking, and the tenant-scoped programmes API answered 200. That is a surface consistent with the job having run correctly; it is not proof the job's resolution logic changed, and the row is `blocked` rather than a quiet pass. |
+
+### The part of row 4 that is NOT proven, stated rather than implied
+
+U-553 named two shapes and this walk only exercised one. Shape (b) —
+`<tenant> Synthetic Rich Evidence-<MM>-<DD>T<HH>-<MM>`, the **four** rows of the
+original five — does not appear in the raw API response at all, so those rows
+left the corpus rather than being sanitized. The rule's sufficiency against
+shape (b) is therefore **unproven, not met**: the rows that would test it no
+longer render. U-553's own acceptance asks for the rule set to be derived from
+the live corpus rather than from an example, and a corpus that no longer
+contains the example cannot answer that. **0 of 8 must not be read as U-553
+closed.**
+
+### Stated limits of this walk
+
+Rows 5 and 6b are `blocked` and each names what would unblock it; neither is a
+quiet pass. Row 4 is split between what was proven against the raw record and
+what the corpus can no longer test.
+
+No write was performed on any surface. No approval was submitted, no phase
+advanced, no step saved, no envelope drafted or sent, no file downloaded. The
+only interactions were navigation, chapter selection, stage selection and tab
+selection — all client-side view state — plus two read-only `GET` requests
+issued with the signed-in session. Two already-passed or not-yet-open stages
+were opened for reading; both declared that doing so changes nothing
+("Browsing here does not advance the event", "Viewing it does not mark it
+complete, approve any gate, or change the current stage"), which is itself an
+independent re-confirmation of item 20 on a much later SHA.
+
+### Noted, not filed
+
+Each needs a product call rather than a guess, and is recorded so a later reader
+does not re-discover it as new:
+
+- The phase status card reads "1 required evidence item still **need** approval
+  or coverage" — a subject–verb disagreement on a client surface, in the same
+  card as the single next action.
+- On the Source New board one event's title is a truncated scope sentence used
+  as a name: "Meridian Health In scope for workflow testing: L1/L2 service desk,
+  endpoint management, patch orchestration, device life" — cut mid-word. This is
+  the Source analogue of U-553's question about what belongs in a client-visible
+  name, on a different surface and under no existing item.
+- Three of the eight Moves rows share one programme code
+  (`HEALTHCARE_IDN-MEMBER-2026`) across the names "Member Service Agent Assist"
+  (twice, identical) and "Member Service Agent Assist Transformation". Whether
+  the duplication is intended seeding or drift is not established here.
+- The leadership-voice band reads `16 THEMES COUNTED` against fourteen rendered
+  consensus rows. It is **not** a defect: `themeCount = consensus.length +
+  dissent.length`, and two dissent themes render in the counterpoint card
+  (`AI governance`, `Finance evidence`). Recorded because the arithmetic is not
+  visible from the surface and a later reader would reasonably file it.
+
+---
+
 ## 2026-10-03 wave — deployed SHA `44b50dcd3d`
 
 **Item:** C-633.
