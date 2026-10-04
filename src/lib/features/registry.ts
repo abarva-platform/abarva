@@ -398,16 +398,16 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_capture_v2",
     summary:
-      "2026-10-04: Renders the redesigned 3-step phase capture (MovesCaptureFlow) for phases 1-5 in place of the contract-steps canvas — a journey strip, a 3-step bar, two to three questions per step, and a hand-off screen. Same canonical sections/keys, saves, structured editors, and gate; only the capture presentation changes. Off by default; enable per tenant via includeTenants.",
+      "2026-10-04: Renders the redesigned 3-step phase capture (MovesCaptureFlow) for phases 1-5 in place of the contract-steps canvas — a journey strip, a 3-step bar, two to three questions per step, and a hand-off screen. Same canonical sections/keys, saves, structured editors, and gate; only the capture presentation changes. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_home_v2",
     summary:
-      "2026-10-04: Renders the redesigned Moves Home portfolio landing (MovesHome) - human headline, a 'Waiting on you' triage (the specific ask per move, oldest first), an all-moves table with a six-dot phase rail, and the reconciled-with-client-inventory panel. Presentation only; reads the same portfolio + reconciliation, with value numbers from governed facts. Off by default; enable per tenant via includeTenants.",
+      "2026-10-04: Renders the redesigned Moves Home portfolio landing (MovesHome) - human headline, a 'Waiting on you' triage (the specific ask per move, oldest first), an all-moves table with a six-dot phase rail, and the reconciled-with-client-inventory panel. Presentation only; reads the same portfolio + reconciliation, with value numbers from governed facts. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
 ];
 
