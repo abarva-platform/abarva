@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import Papa from "papaparse";
+import { resolveTenantAlias } from "../../src/lib/tenant/aliases";
 
 const LAB_TENANT = "meridian-health";
 const CONFIRMATION = "APPLY_NDA_LAB_CONTACTS";
@@ -118,16 +119,19 @@ export async function applyNdaLabContactPlan(plan: NdaLabContactPlan, input: {
   if (JSON.stringify(verifiedPlan) !== JSON.stringify(plan)) {
     throw new Error("plan_changed_after_validation");
   }
+  const tenantProfile = resolveTenantAlias(plan.tenantKey);
+  if (tenantProfile?.canonicalKey !== LAB_TENANT) throw new Error("lab_tenant_only");
+  const sourceTenantKey = tenantProfile.appClientKey;
   const { db } = input;
   await db.query("BEGIN");
   try {
-    await db.query("SELECT set_config('app.tenant_key', $1, true)", [plan.tenantKey]);
+    await db.query("SELECT set_config('app.tenant_key', $1, true)", [sourceTenantKey]);
     let inserted = 0;
     for (const contact of plan.contacts) {
       const vendor = await db.query(
         `SELECT legal_name, active_state FROM source.vendor
          WHERE tenant_key = $1 AND vendor_id = $2 FOR SHARE`,
-        [plan.tenantKey, contact.vendorId],
+        [sourceTenantKey, contact.vendorId],
       );
       const canonical = vendor.rows[0] as { legal_name?: string; active_state?: string } | undefined;
       if (vendor.rows.length !== 1 || canonical?.legal_name !== contact.legalName ||
@@ -138,7 +142,7 @@ export async function applyNdaLabContactPlan(plan: NdaLabContactPlan, input: {
             contact_state, source_system, source_record_id, evidence_reference, as_of_date)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date)
          ON CONFLICT (tenant_key, vendor_id, contact_id) DO NOTHING RETURNING id`,
-        [plan.tenantKey, contact.vendorId, contact.contactId, contact.displayName,
+        [sourceTenantKey, contact.vendorId, contact.contactId, contact.displayName,
           contact.email, contact.contactPolicy, contact.contactState, contact.sourceSystem,
           contact.sourceRecordId, contact.evidenceReference, contact.asOfDate],
       );
@@ -151,7 +155,7 @@ export async function applyNdaLabContactPlan(plan: NdaLabContactPlan, input: {
                 source_record_id, evidence_reference, as_of_date::text AS as_of_date
          FROM source.vendor_contact
          WHERE tenant_key = $1 AND vendor_id = $2 AND contact_id = $3 FOR UPDATE`,
-        [plan.tenantKey, contact.vendorId, contact.contactId],
+        [sourceTenantKey, contact.vendorId, contact.contactId],
       );
       const row = existing.rows[0] as Record<string, string> | undefined;
       if (existing.rows.length !== 1 || !row ||

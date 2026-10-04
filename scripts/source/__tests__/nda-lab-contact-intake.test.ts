@@ -71,6 +71,7 @@ describe("synthetic NDA contact intake", () => {
     let insertCount = 0;
     const query = jest.fn(async (sql: string, values?: unknown[]) => {
       if (sql.includes("FROM source.vendor\n")) {
+        if (values?.[0] !== "meridian") return { rows: [] };
         const row = build().contacts.find((contact) => contact.vendorId === values?.[1]);
         return { rows: row ? [{ legal_name: row.legalName, active_state: "active" }] : [] };
       }
@@ -93,6 +94,10 @@ describe("synthetic NDA contact intake", () => {
     await expect(applyNdaLabContactPlan(build(), args)).resolves.toEqual({ inserted: 4 });
     await expect(applyNdaLabContactPlan(build(), args)).resolves.toEqual({ inserted: 0 });
     expect(query.mock.calls.filter(([sql]) => sql === "COMMIT")).toHaveLength(2);
+    expect(query.mock.calls.filter(([sql]) => sql.includes("set_config('app.tenant_key'"))
+      .every(([, values]) => values?.[0] === "meridian")).toBe(true);
+    expect(query.mock.calls.filter(([sql]) => sql.includes("source.vendor_contact"))
+      .every(([, values]) => values?.[0] === "meridian")).toBe(true);
   });
 
   it("requires an exact operator contract and extra proof target for apply", () => {
