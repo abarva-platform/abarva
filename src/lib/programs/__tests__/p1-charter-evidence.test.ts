@@ -64,20 +64,71 @@ describe("P1 charter evidence families", () => {
       },
     ];
 
+    expect(
+      missingP1CaptureSections(sections, modules, [], { requireBasis: true }),
+    ).toEqual(["Scope boundary"]);
+    expect(
+      missingP1CaptureSections(
+        sections,
+        modules,
+        [
+          { evidenceId: "evidence-other", familyKey: "charter_sponsor" },
+          { evidenceId: "evidence-scope", familyKey: "charter_scope" },
+        ],
+        { requireBasis: true },
+      ),
+    ).toEqual(["Scope boundary"]);
+    expect(
+      missingP1CaptureSections(
+        sections,
+        modules,
+        [{ evidenceId: "evidence-scope", familyKey: "charter_scope" }],
+        { requireBasis: true },
+      ),
+    ).toEqual(["Scope boundary"]);
+  });
+
+  it("falls back to the legacy approved-evidence lock when the basis flag is off", () => {
+    const sections = [
+      {
+        key: "scope_boundary",
+        label: "Scope boundary",
+        evidenceFamily: "charter_scope",
+      },
+    ];
+    const modules = [
+      {
+        moduleKey: "phase_1_scope_boundary",
+        status: "completed",
+        state: { value: "Scope for the discovery hypothesis." },
+      },
+    ];
+
+    // No approved upload for the family -> legacy lock blocks advance, with no
+    // basis consulted (the field has no p1_charter_basis record at all).
     expect(missingP1CaptureSections(sections, modules, [])).toEqual([
       "Scope boundary",
     ]);
-    expect(
-      missingP1CaptureSections(sections, modules, [
-        { evidenceId: "evidence-other", familyKey: "charter_sponsor" },
-        { evidenceId: "evidence-scope", familyKey: "charter_scope" },
-      ]),
-    ).toEqual(["Scope boundary"]);
+    // An approved upload for the family satisfies the legacy lock on its own.
     expect(
       missingP1CaptureSections(sections, modules, [
         { evidenceId: "evidence-scope", familyKey: "charter_scope" },
       ]),
-    ).toEqual(["Scope boundary"]);
+    ).toEqual([]);
+    // A skipped field is accepted by the legacy gate (unlike the basis gate).
+    expect(
+      missingP1CaptureSections(
+        sections,
+        [
+          {
+            moduleKey: "phase_1_scope_boundary",
+            status: "skipped",
+            state: {},
+          },
+        ],
+        [{ evidenceId: "evidence-scope", familyKey: "charter_scope" }],
+      ),
+    ).toEqual([]);
   });
 
   it("accepts an authorized-user assertion without misclassifying it as evidence", () => {
@@ -101,7 +152,9 @@ describe("P1 charter evidence families", () => {
       },
     ];
 
-    expect(missingP1CaptureSections(sections, modules, [])).toEqual([]);
+    expect(
+      missingP1CaptureSections(sections, modules, [], { requireBasis: true }),
+    ).toEqual([]);
     expect(readP1CharterBasisRecord(modules[0].state, "scope_boundary", value))
       .toMatchObject({ kind: "workspace_assertion", recordedByUserId: "user-1" });
   });
@@ -155,14 +208,20 @@ describe("P1 charter evidence families", () => {
     ];
 
     expect(
-      missingP1CaptureSections(sections, modules, [
-        { evidenceId: "evidence-scope", familyKey: "charter_scope" },
-      ]),
+      missingP1CaptureSections(
+        sections,
+        modules,
+        [{ evidenceId: "evidence-scope", familyKey: "charter_scope" }],
+        { requireBasis: true },
+      ),
     ).toEqual([]);
     expect(
-      missingP1CaptureSections(sections, modules, [
-        { evidenceId: "evidence-scope", familyKey: "charter_sponsor" },
-      ]),
+      missingP1CaptureSections(
+        sections,
+        modules,
+        [{ evidenceId: "evidence-scope", familyKey: "charter_sponsor" }],
+        { requireBasis: true },
+      ),
     ).toEqual(["Scope boundary"]);
     expect(readP1CharterBasisRecord({ p1_charter_basis: basis }, "scope_boundary", "Changed scope"))
       .toBeNull();
@@ -190,6 +249,7 @@ describe("P1 charter evidence families", () => {
           },
         ],
         [],
+        { requireBasis: true },
       ),
     ).toEqual(["Scope boundary"]);
   });

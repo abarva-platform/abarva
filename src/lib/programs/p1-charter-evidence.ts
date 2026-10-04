@@ -74,15 +74,47 @@ interface P1ApprovedEvidenceReference {
   familyKey: string;
 }
 
+export interface MissingP1CaptureSectionsOptions {
+  /**
+   * When true, advance requires a per-field BASIS (approved evidence, a
+   * workspace assertion, or an owned assumption) rather than an approved
+   * evidence upload for every field. Gated by the `moves_charter_basis_v1`
+   * feature flag; defaults to false so the live P1 gate (approved-evidence
+   * lock) is preserved exactly when the flag is off.
+   */
+  requireBasis?: boolean;
+}
+
 export function missingP1CaptureSections(
   sections: readonly P1CaptureSectionRequirement[],
   modules: readonly P1CaptureModuleState[],
   approvedEvidence: readonly P1ApprovedEvidenceReference[],
+  options?: MissingP1CaptureSectionsOptions,
 ): string[] {
+  const requireBasis = options?.requireBasis ?? false;
   return sections.flatMap((section) => {
     const captureState = modules.find(
       (entry) => entry.moduleKey === `phase_1_${section.key}`,
     );
+
+    if (!requireBasis) {
+      // Legacy gate (live on main; flag OFF): capture saved + an approved
+      // evidence upload for the field's family. Preserved byte-for-byte so
+      // the flag-off path never changes behavior.
+      const captureSaved =
+        !!captureState &&
+        ["completed", "skipped"].includes(captureState.status);
+      const sourceApproved =
+        !section.evidenceFamily ||
+        approvedEvidence.some(
+          (reference) => reference.familyKey === section.evidenceFamily,
+        );
+      return captureSaved && sourceApproved ? [] : [section.label];
+    }
+
+    // Minimum-viable-evidence gate (flag ON): capture saved + a recorded
+    // basis. A workspace assertion or an owned assumption is sufficient; only
+    // an `approved_evidence` basis still requires a matching approved upload.
     const value = captureState?.state?.value;
     const captureSaved =
       captureState?.status === "completed" &&
@@ -207,12 +239,13 @@ export function isP1CharterBasisValidForSection(args: {
 }): boolean {
   if (!args.basis) return false;
   if (args.basis.kind !== "approved_evidence") return true;
+  const { evidenceId } = args.basis;
   const family = p1CharterEvidenceFamilyForSection(args.sectionKey);
   return Boolean(
     family &&
       args.approvedEvidence.some(
         (reference) =>
-          reference.evidenceId === args.basis?.evidenceId &&
+          reference.evidenceId === evidenceId &&
           reference.familyKey === family.id,
       ),
   );

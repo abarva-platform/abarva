@@ -879,7 +879,6 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
-        initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         initialReferenceDraftValues={initialReferenceDraftValues}
         initialBusinessChangeAssessment={initialBusinessChangeAssessment}
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}

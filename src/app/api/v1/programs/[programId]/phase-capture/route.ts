@@ -60,6 +60,7 @@ import {
   resolveConfirmedSolutionRoute,
   stampSolutionRouteReviewer,
 } from "@/lib/programs/solution-route-assessment";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import {
   createP1CharterBasisRecord,
   isP1CharterEvidenceFamily,
@@ -271,7 +272,7 @@ export async function POST(
     ).catch(() => ({
       modules: [],
       values: {},
-      p1BasisBySection: {},
+      p1BasisBySection: {} as Record<string, P1CharterBasisInput>,
       businessChangeAssessment: "",
       routeValidation: "",
       approvedEvidenceReferences: [],
@@ -373,7 +374,8 @@ export async function POST(
     const storedValues: Record<string, string> = Object.fromEntries(
       evaluation.sections.map((section) => [section.key, section.value]),
     );
-    const incomingP1Basis = body.p1BasisBySection ?? {};
+    const incomingP1Basis: Record<string, unknown> =
+      body.p1BasisBySection ?? {};
     const p1BasisInputs: Record<string, P1CharterBasisInput | null> = {};
     const basisKeys = new Set<string>();
     if (phase === 1) {
@@ -498,26 +500,43 @@ export async function POST(
       );
     }
 
-    if (markComplete && phase === 1) {
-      const candidateModules = currentSnapshot.modules.map((module) => {
-        const section = evaluation.sections.find(
-          (item) =>
-            phaseCaptureModuleKey(1, item.key) === module.moduleKey,
-        );
-        if (!section) return module;
-        const basisRecord = nextBasisRecords[section.key];
-        const state: Record<string, unknown> = {
-          ...(module.state ?? {}),
-          value: storedValues[section.key] ?? "",
-        };
-        if (basisRecord) state.p1_charter_basis = basisRecord;
-        else delete state.p1_charter_basis;
-        return {
-          ...module,
-          status: "completed",
-          state,
-        };
-      });
+    const requireCharterBasis = isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_charter_basis_v1",
+    );
+    if (markComplete && phase === 1 && requireCharterBasis) {
+      type CandidateModule = {
+        moduleKey: string;
+        status: string;
+        state: Record<string, unknown> | null;
+      };
+      const candidateModules: CandidateModule[] = currentSnapshot.modules.map(
+        (module) => {
+          const section = evaluation.sections.find(
+            (item) =>
+              phaseCaptureModuleKey(1, item.key) === module.moduleKey,
+          );
+          if (!section) {
+            return {
+              moduleKey: module.moduleKey,
+              status: module.status,
+              state: module.state ?? null,
+            };
+          }
+          const basisRecord = nextBasisRecords[section.key];
+          const state: Record<string, unknown> = {
+            ...(module.state ?? {}),
+            value: storedValues[section.key] ?? "",
+          };
+          if (basisRecord) state.p1_charter_basis = basisRecord;
+          else delete state.p1_charter_basis;
+          return {
+            moduleKey: module.moduleKey,
+            status: "completed",
+            state,
+          };
+        },
+      );
       for (const section of evaluation.sections) {
         const moduleKey = phaseCaptureModuleKey(1, section.key);
         if (candidateModules.some((module) => module.moduleKey === moduleKey)) {
@@ -532,12 +551,13 @@ export async function POST(
               ? { p1_charter_basis: nextBasisRecords[section.key] }
               : {}),
           },
-        } as (typeof candidateModules)[number]);
+        });
       }
       const missingBasis = missingP1CaptureSections(
         evaluation.sections,
         candidateModules,
         currentSnapshot.approvedP1EvidenceReferences,
+        { requireBasis: true },
       );
       if (missingBasis.length > 0) {
         return Response.json(
