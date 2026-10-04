@@ -5,7 +5,7 @@ export type NdaOperatorSupplierStatus = {
   contactAuthorityId: string | null;
   contactName: string | null;
   envelopeId: string | null;
-  envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | null;
+  envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | "voided" | null;
   envelopeTemplateVersion: string | null;
 };
 
@@ -19,7 +19,7 @@ type StatusRow = {
 };
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
-const statuses = new Set(["created", "sent", "viewed", "completed", "declined"]);
+const statuses = new Set(["created", "sent", "viewed", "completed", "declined", "voided"]);
 
 export async function readSyntheticNdaOperatorStatus(input: {
   clientKey: string;

@@ -31,11 +31,15 @@ The demo NDA workflow records a provider-voided envelope as a distinct terminal 
 - Accept only signed, account-matched provider void callbacks.
 - Persist a terminal, immutable voided state with a separate timestamp and no completion artifacts.
 - Preserve idempotency on duplicate terminal callbacks and refuse late completion after void/decline.
+- Show a per-supplier retry only after a declined or voided envelope is read back; require fresh
+  confirmation and keep an uncertain or stale new-envelope readback locked.
 - Leave completed-envelope authority unchanged: signed files require separate review.
 
 ## QA / Validation
 
-- Red-first adapter, processor, repository and migration tests; a removed void branch was mutation-tested and failed the completion-path assertion.
+- Red-first adapter, processor, repository, migration, operator-readback and mounted UI tests.
+  A removed void branch failed the completion-path assertion; removing the active-envelope
+  lock or stale-readback lock separately failed the mounted retry tests.
 - Focused tests, typecheck, lint, release gates and applicable hosted migration replay must pass before merge.
 - The migration is authored only. Shared database apply needs separate authorization for this exact filename.
 - No provider send, signature or live NDA coverage follows from these tests.
