@@ -681,6 +681,10 @@
     "check:release-record-tenant-narrative-guard": {
       "kind": "pr-gate"
     },
+    "check:scheduled-workflow-streak": {
+      "kind": "pr-gate",
+      "reason": "The OFFLINE half of the scheduled-workflow failure-streak control: the mechanism's own 50-case suite, and the validity of docs/ci/scheduled-workflow-streak-policy.json -- a well-formed ceiling, every declared exception naming a workflow that really is scheduled, no duplicate, and no exception past its expiry date. It needs no network and so is safe on every pull request, which is the point: AGENTS.md requires CI to fail on an expired exception, and an exception's expiry cannot be enforced by the monitor that the exception silences. The LIVE half -- reading event=schedule runs from the Actions API and failing on a streak above the ceiling -- runs on its own schedule in scheduled-workflow-streak.yml, because the condition it reports (a workflow red 142 times in a row with nothing saying so) is a property of the repository over time, not of a diff. Invoked by hygiene-gate.yml, inside the job that produces the required Run hygiene_gate.sh check."
+    },
     "check:source-integration-quarantine": {
       "kind": "pr-gate",
       "reason": "Refuses a stale or growing Source integration quarantine list. The list is what keeps 24 red suites out of the Source integration workflow while the other 68 run; without this, an entry naming a deleted suite would keep excluding nothing and the list could grow by quiet append until the carve-out became the standard. Invoked by source-integration.yml alongside the run it protects."
