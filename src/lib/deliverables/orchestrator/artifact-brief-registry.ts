@@ -618,9 +618,19 @@ function composeBrief(
   if (!structure) return null;
   const pack = getArchetypePack(req.useCaseArchetype);
 
-  // enrich current-state/baseline sections with the archetype's key evidence families
+  // Enrich the sections that assert client facts with the archetype's key
+  // evidence families. Two ways in, and the declared one is why: the inferred
+  // rule below only matches a key spelled current_state / baseline / signal /
+  // findings / environment, and eight of the shipped structures have no such
+  // key — so for those the archetype's families reached nothing, silently.
+  // `archetypeEvidenceSectionKeys` names the landing sites instead of guessing
+  // them from the spelling. It is ADDITIVE: a structure that already had an
+  // inferred landing site keeps it.
+  const declaredSites = new Set(structure.archetypeEvidenceSectionKeys ?? []);
   const sections: BriefSection[] = structure.sections.map((sec) =>
-    pack && /current_state|baseline|signal|findings|environment/.test(sec.key)
+    pack &&
+    (declaredSites.has(sec.key) ||
+      /current_state|baseline|signal|findings|environment/.test(sec.key))
       ? {
           ...sec,
           expectedEvidenceFamilies: [

@@ -56,6 +56,24 @@ export interface DeliverableStructure {
    * use-case-specific exhibits (a dependency map, a rollout-wave timeline, etc.).
    */
   expectedExhibits?: ExpectedExhibit[];
+  /**
+   * Section keys that carry the archetype pack's `keyEvidenceFamilies`, in
+   * ADDITION to the ones `composeBrief` infers from the key's spelling.
+   *
+   * The inferred rule only matches keys containing current_state / baseline /
+   * signal / findings / environment, which was written for the P2 diagnostic
+   * deliverables and never revisited. Eight of the shipped structures have no
+   * such key, so for those a declared archetype contributed no evidence
+   * grounding at all — four of them (solution design, operating model,
+   * sourcing strategy, readiness and change plan) declare no families on any
+   * section either, so they were generating with none.
+   *
+   * Name the sections that assert CLIENT facts here — not the executive
+   * decision, recommendation, or forward plan sections, which are judgment and
+   * should not pull a use case's baseline evidence. Every key listed must be a
+   * section key this structure actually declares.
+   */
+  archetypeEvidenceSectionKeys?: string[];
 }
 
 const s = (
@@ -535,6 +553,12 @@ const MOVES_DESIGN_WORKSHOP_GUIDE: DeliverableStructure = {
 const MOVES_ROOT_CAUSE_WORKSHEET: DeliverableStructure = {
   module: "moves",
   deliverableType: "root_cause_worksheet",
+  // The two sections that map the client's observed symptoms to causes; the
+  // thesis, the gap list and the P3 implications are judgment over them.
+  archetypeEvidenceSectionKeys: [
+    "symptom_cause_table",
+    "root_cause_tree",
+  ],
   purpose:
     "Explain the small set of evidence-backed root causes behind the current-state symptoms and what they imply for P3 design.",
   decisionToSupport:
@@ -826,6 +850,13 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
 const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
   module: "moves",
   deliverableType: "solution_design",
+  // The client's actual workflow, systems and controls — not the decision or
+  // the acceptance/recommendation sections.
+  archetypeEvidenceSectionKeys: [
+    "journey_workflow",
+    "solution_components",
+    "controls_operability",
+  ],
   purpose:
     "Translate the accepted Target Architecture into an implementable solution design without reopening the approved solution approach.",
   decisionToSupport:
@@ -952,6 +983,12 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
   // contract on the canonical key so the live worker cannot fall through to a
   // generic operating-model binder.
   deliverableType: "operating_model",
+  // Who does the work today and which roles and forums exist; adoption and the
+  // recommendation are forward-looking.
+  archetypeEvidenceSectionKeys: [
+    "work_split_controls",
+    "roles_cadence",
+  ],
   purpose:
     "Define the human, AI, governance, and service-management model required to operate the accepted solution safely.",
   decisionToSupport:
@@ -1121,6 +1158,12 @@ const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
 const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   module: "moves",
   deliverableType: "sourcing_strategy",
+  // The scope inherited from the estate and the retained ownership it implies;
+  // the guardrails and the recommendation are judgment.
+  archetypeEvidenceSectionKeys: [
+    "scope_options",
+    "delivery_risks",
+  ],
   purpose:
     "Decide how the capabilities in the accepted architecture and operating model should be built, bought, configured, or partnered.",
   decisionToSupport:
@@ -1347,6 +1390,12 @@ const MOVES_VALUE: DeliverableStructure = {
 const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
   module: "moves",
   deliverableType: "readiness_and_change_plan",
+  // Who actually owns the seats and what the estate depends on; the verdict,
+  // the workplan and the cadence are judgment.
+  archetypeEvidenceSectionKeys: [
+    "stakeholders_decision_rights",
+    "dependencies_risks",
+  ],
   purpose:
     "Confirm organizational readiness, adoption path, governance cadence, and mobilization conditions before the move advances into execution.",
   decisionToSupport:
