@@ -239,6 +239,16 @@ failing**, and the real gate `npm run coverage:behavior-gate` **exits 0**:
 lines 90.08 and statements 90.08 against a floor of 90, functions 70.54 against
 60, branches 71.89 against 50.
 
+**Headroom on lines is 0.08, so it was measured rather than shrugged at**: the
+same gate run at the merge-base gives **the identical figures** — lines 90.08,
+statements 90.08, functions 70.54, branches 71.89, and the same 197 suites /
+2050 tests. **This change consumes none of that 0.08.** It is worth stating as a
+measurement and not an assumption: a new suite that pulls a module into the
+behaviours coverage set adds *all* of that module's lines to the denominator,
+which is how a 90.15 became an 89.92 against this same floor once before. That
+did not happen here, because the new suite is not in the behaviours directory
+and nothing there newly imports the new module.
+
 **Governance gate.** `npm run validate:context-corpus` → **passed**, all five
 checks (`exceptions`, `tenant-coverage`, `agent-readiness`, `duplicates`,
 `manifests`). It failed first, with `Unrecognized key: "derived_text_declarations"`,
