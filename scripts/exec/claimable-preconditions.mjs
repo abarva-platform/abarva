@@ -58,15 +58,29 @@ export const REPO_PATH_ROOTS = Object.freeze([
 ]);
 
 /**
- * Extensions, LONGEST FIRST — the ordering is load-bearing.
+ * Extensions, longest first. **Redundant, and declared as redundant.**
  *
- * JavaScript alternation is first-match, not longest-match. The first draft
- * read `ts|tsx|json|js`, so `HomeSurface.tsx` matched as `HomeSurface.ts` and
- * `source-stage-map.json` as `source-stage-map.js`; both then resolved to
- * nothing on disk and were reported ABSENT. That is the tool manufacturing a
- * defect out of two files that are present, and it is the failure mode a
- * trailing-character lookahead alone does not catch, because the regex simply
- * backtracks into the shorter alternative.
+ * The defect is real and was hit during calibration: JavaScript alternation is
+ * first-match, not longest-match, so an order of `ts|tsx|json|js` matches
+ * `HomeSurface.tsx` as `HomeSurface.ts` and `source-stage-map.json` as
+ * `source-stage-map.js` — both then resolve to nothing on disk and are
+ * reported ABSENT, the tool manufacturing a defect out of two files that are
+ * present.
+ *
+ * **But the trailing lookahead in PATH_PATTERN already closes it, and this
+ * ordering is not what closes it.** Measured by mutation: reordering this list
+ * shortest-first with the lookahead in place leaves the suites at 23/0 and
+ * 222/0 — the mutation SURVIVES. Removing the lookahead with this order intact
+ * also survives. Only removing both fails. Either guard alone is sufficient
+ * for the truncation case, so no behavioural case can distinguish them: that
+ * case pins the conjunction and nothing smaller.
+ *
+ * Both are kept because the lookahead IS individually necessary — it refuses
+ * `foo.tsxyz`, which ordering alone would match as `foo.tsx`, and case 4b of
+ * the suite holds that — and because longest-first is the clearer way to read
+ * the alternation. The point of this note is that a reader must not infer from
+ * a green suite that this ordering is load-bearing. It is not, and a change
+ * that only reorders this list will not be caught here.
  */
 const PATH_EXTENSIONS = [
   "tsx",
@@ -83,14 +97,18 @@ const PATH_EXTENSIONS = [
 ];
 
 /*
+ * The trailing lookahead is the guard that is individually PROVED: it forbids
+ * a word character after the extension, so `foo.tsxyz` and `a.jsonx` match
+ * nothing rather than yielding `foo.tsx` and `a.json`. Forbidding only word
+ * characters is what lets a path written last in a sentence —
+ * `…/stale-claim-guard.ts.` — keep its extension; forbidding any following
+ * character at all drops most paths in the corpus.
+ *
  * The body allows `[` and `]` because a Next.js dynamic segment is a literal
  * directory name on disk, so `src/app/api/v1/programs/[programId]/route.ts`
  * is checkable exactly as a row writes it.
  *
  * The leading lookbehind stops `vendor/src/lib/foo.ts` matching from `src/`.
- * The trailing lookahead forbids only word characters, so a path written last
- * in a sentence — `…/stale-claim-guard.ts.` — keeps its extension; forbidding
- * any following character at all would drop most paths in the corpus.
  */
 const PATH_PATTERN = new RegExp(
   "(?<![A-Za-z0-9_./-])" +

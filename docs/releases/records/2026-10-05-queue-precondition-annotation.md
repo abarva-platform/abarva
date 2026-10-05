@@ -65,7 +65,7 @@ flag-gated.
 - `scripts/exec/claimable-preconditions.mjs` — new module. Extracts
   repo-root-anchored paths from a row's prose, walks up to the repository root,
   reports which named paths are absent, and formats the marker.
-- `scripts/exec/claimable-preconditions.test.mjs` — new behavioural suite, 21
+- `scripts/exec/claimable-preconditions.test.mjs` — new behavioural suite, 23
   cases. Picked up automatically by the required `scripts/exec/*.test.mjs` sweep
   in `.github/workflows/hygiene-gate.yml`; no workflow change was needed, and
   `src/__tests__/behaviors/exec-toolchain-requiredness.test.ts` is the contract
@@ -90,11 +90,12 @@ says "measure before gating" and the same hazard applies to the measurement:
   true positive. **0 false positives on the claimable set.**
 - Two rules earned their place by measurement, each recorded in the module
   beside the false positive it refuses:
-  - **Extension alternation must be longest-first.** JavaScript alternation is
-    first-match. A draft ordered `ts|tsx|json|js` matched `HomeSurface.tsx` as
+  - **Extension handling must not truncate.** JavaScript alternation is
+    first-match, so an order of `ts|tsx|json|js` matched `HomeSurface.tsx` as
     `HomeSurface.ts` and `source-stage-map.json` as `source-stage-map.js`, then
     reported both ABSENT — the tool manufacturing two defects out of two files
-    that are present.
+    that are present. Shipped with two guards; see the mutation table for which
+    one actually closes it.
   - **The roots are an allowlist, not the directory listing.** This repository
     has a top-level `intelligence/`, and rows write relative fragments like
     `intelligence/query/route.ts` meaning `src/app/api/...`. Deriving roots from
@@ -107,11 +108,41 @@ was wired.
 
 **Baseline over the same scope, clean checkout of the same base** (`3ee3df21e8`,
 a separate detached worktree): **16 suites, 0 failing before → 17 suites, 0
-failing after**. New totals: `claimable-preconditions` 21/0,
+failing after**. New totals: `claimable-preconditions` **23/0**,
 `build-execution-queue` 214/0 → **222/0**.
 
-**Necessity proved by mutation — 5 mutations, 5 caught.** Numbers in
-*Audit Evidence* below.
+**Necessity by mutation — 7 applied, 5 caught, 2 SURVIVED and are reported
+rather than rounded up.** Each mutation was applied to the branch, both suites
+re-run, then reverted.
+
+| # | Mutation | Result | Cases that failed |
+|---|---|---|---|
+| M1 | `PATH_EXTENSIONS` reordered shortest-first, lookahead intact | **SURVIVED** | none — 23/0 and 222/0 |
+| M1b | lookahead removed **and** order shortest-first | caught | 4 unit + 1 generator |
+| M1c | lookahead removed, order left longest-first | **SURVIVED** | none — 23/0 and 222/0 |
+| M1d | lookahead removed only, after case 4b was added | caught | `an extension that is only a prefix of a longer word matches nothing` |
+| M2 | marker emitted unconditionally | caught | 1 unit + 5 generator |
+| M3 | roots unanchored — any first segment accepted | caught | 2 unit + 1 generator |
+| M4 | a null repo root reports every named path instead of none | caught | 1 unit + 1 generator |
+| M5 | the scan FILTERS — a marked row dropped from its lane table | caught | 2 generator |
+
+**What M1 and M1c mean, stated plainly.** The truncation defect is closed by two
+mechanisms that are each sufficient on their own — the trailing lookahead and
+the longest-first ordering — so the case that covers it pins the *conjunction*
+and nothing smaller, and the suite cannot fail a change that removes either one
+alone. That is a weak spot in my own test design, not a strength, and it is
+exactly the shape that lets a control quietly die. Two things were done about
+it rather than leaving the table to imply a clean sweep:
+
+1. **Case 4b was added**, covering what the lookahead can do that ordering
+   cannot: refuse `foo.tsxyz`, which ordering alone matches as `foo.tsx`. M1d
+   then fails, so the lookahead is now individually necessary and provable.
+2. **The ordering is documented as redundant** in `PATH_EXTENSIONS`, with the
+   surviving mutation quoted, so a future reader does not infer from a green
+   suite that reordering the list is guarded. It is not.
+
+No behavioural case can separate two guards that produce identical output, so
+the ordering stays as declared belt-and-braces rather than as a contract.
 
 **One assertion of my own was wrong and is recorded rather than quietly
 fixed.** The no-repo-root case first asserted `!rendered.includes("⚠
@@ -160,8 +191,8 @@ touched. No data or state is written anywhere, so a revert needs no cleanup.
 - PR: see the pull request this record ships in.
 - Suite sweep on the branch, all 17 green; baseline sweep on `3ee3df21e8`, 16
   green. Both commands and outputs are in the PR body.
-- Mutation table (each mutation applied to the branch, the suites re-run, then
-  reverted): in the PR body, with the named case that failed for each.
+- Mutation table above: 7 applied, 5 caught, 2 survived and named. The two
+  survivors are the finding, not a footnote.
 - The live corpus run: regenerating the board and queue over a **copy** of the
   operator root prints `7 claimable (6 partly gated, 1 naming an absent path)`
   and marks exactly one row — the counts otherwise identical to the run before
@@ -179,6 +210,9 @@ touched. No data or state is written anywhere, so a revert needs no cleanup.
   deliverable the row asks you to create is a judgement the reader makes — this
   generator deliberately does not read GitHub, following the same split as
   `fossil-claims.mjs`.
+- **A green suite does not guard the extension ordering.** M1 and M1c survived;
+  case 4b pins the lookahead, nothing pins the ordering, and the module says so
+  at the point a reader would change it.
 - **No new backlog id was filed for this work.** The queue's own count reports
   the `C-500`–`C-599`, `T-500`–`T-599` and `T-400`–`T-499` bands as **exhausted**,
   so there is no free number for it under the id-band rule. That is a range

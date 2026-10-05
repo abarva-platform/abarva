@@ -142,6 +142,35 @@ console.log("claimable-preconditions — precondition scan over claimable rows\n
 }
 
 /* ---------------------------------------------------------------------- */
+/* 4b. THE GUARD THAT IS INDIVIDUALLY NECESSARY.                           */
+/*                                                                         */
+/*   Case 4 above does NOT pin the extension ordering, and the mutation     */
+/*   table says so: reordering PATH_EXTENSIONS shortest-first leaves this   */
+/*   suite 21/0, because the trailing lookahead closes the same defect on   */
+/*   its own, and removing the lookahead with the ordering intact also      */
+/*   survives. Either guard alone is sufficient, so no behavioural case can */
+/*   tell them apart — case 4 pins the CONJUNCTION and nothing smaller.     */
+/*                                                                         */
+/*   This case is what the lookahead can do that ordering cannot: refuse an */
+/*   extension-shaped prefix of a longer word. With the lookahead gone,     */
+/*   `foo.tsxyz` matches as `foo.tsx` however the list is ordered, and the  */
+/*   queue would then report a path that was never written.                 */
+/* ---------------------------------------------------------------------- */
+{
+  check(
+    "an extension that is only a prefix of a longer word matches nothing",
+    namedRepoPaths("src/lib/foo.tsxyz and src/lib/a.jsonx").length === 0,
+    namedRepoPaths("src/lib/foo.tsxyz and src/lib/a.jsonx"),
+  );
+  check(
+    "and the same tokens cut short at a real extension still match",
+    JSON.stringify(namedRepoPaths("src/lib/foo.tsx and src/lib/a.json")) ===
+      JSON.stringify(["src/lib/a.json", "src/lib/foo.tsx"]),
+    namedRepoPaths("src/lib/foo.tsx and src/lib/a.json"),
+  );
+}
+
+/* ---------------------------------------------------------------------- */
 /* 5. A relative fragment is NOT a repo path.                             */
 /*    `intelligence/` is a real top-level directory here, so a rule that   */
 /*    derives roots from the directory listing would accept the fragment   */
