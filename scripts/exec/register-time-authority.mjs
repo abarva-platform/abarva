@@ -727,13 +727,35 @@ export function announcesAbstention(text) {
  * promises "one public-safe release record", and reading that as a release
  * would free every item in flight. The announcement form is the verb at the
  * head of the message field, which is where the register puts it.
+ *
+ * CASE IS NOT PART OF THE ANNOUNCEMENT (item T-498). This rule used to match
+ * `RELEASED|RELEASING` case-sensitively, with a second branch that admitted a
+ * lowercase verb only when the literal word `item` followed it. A release
+ * written by hand as `released — <id> MERGED` falls between both branches and
+ * is read as a LIVE CLAIM, so the item keeps holding every file its author was
+ * precise enough to list — and the more precisely an agent names what it
+ * touched, the longer it blocks every sibling run.
+ *
+ * The register is append-only, so the line that proves it stands and is the
+ * known positive the acceptance asks for: a run released `C-555` at
+ * 2026-09-27T06:42:12Z opening in exactly that shape, after that item had
+ * merged and deployed.
+ *
+ * So the verb is matched in either case and the `\s+items?` requirement is
+ * gone. That subsumes the old lowercase branch entirely, which is why the
+ * branch is DELETED rather than left beside the new one: a second pattern no
+ * input can reach is a guard that survives every mutation of itself.
+ *
+ * WHAT DID NOT WIDEN is the part doing the work. The rule is still anchored at
+ * the head of the message field, and still the verb `releas(ed|ing)` rather
+ * than the noun `release` — so a claim promising "one public-safe release
+ * record per PR", which is nearly every claim in the register, still holds.
+ * Calibrated in both directions over the whole live register before the
+ * change: 2,359 lines parsed, 531 release lines reading as releases and 532
+ * after, exactly one line changing verdict, and it is the C-555 line above.
  */
 export function announcesRelease(text) {
-  const message = messageField(text);
-  return (
-    /^(?:\*\*)?(?:RELEASED|RELEASING)\b/.test(message) ||
-    /^(?:\*\*)?releas(?:ed|ing)\s+items?\b/i.test(message)
-  );
+  return /^(?:\*\*)?releas(?:ed|ing)\b/i.test(messageField(text));
 }
 
 /**

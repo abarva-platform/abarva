@@ -1981,6 +1981,136 @@ function preclaimFiles(file, item, identity, files, extra = []) {
 }
 
 // ---------------------------------------------------------------------------
+// Item T-498 — case is not part of the announcement.
+//
+// T-707 put the announcement verb at the HEAD of the message field and T-712
+// taught the reader past the one generated prefix. The grammar those two agree
+// on was still narrower than the register: `RELEASED|RELEASING` matched
+// case-sensitively, and a lowercase verb matched only when the literal word
+// `item` followed it. A hand-written release opening `released — <id> MERGED`
+// falls between both branches and is read as a LIVE CLAIM, so a finished item
+// keeps holding every file its author was precise enough to list, for three
+// hours, against every sibling run.
+//
+// The register is append-only, so the line that proves this cannot be
+// restamped. Its SHAPE is the known positive the acceptance names and is what
+// is quoted below: a run released `C-555` at 2026-09-27T06:42:12Z opening
+// exactly this way, after that item had merged and deployed. The run identity
+// is an internal operator detail and is neutralised here; the stamps move into
+// the window the gate helper fixes (see the note at the movement case).
+//
+// `announcesRelease` is the reader the FILE half consults, which is why the
+// movement below is asserted through the gate and not only on the predicate:
+// a widened predicate that the overlap resolver did not consult would prove
+// nothing about whether the files came back.
+// ---------------------------------------------------------------------------
+{
+  const HAND_WRITTEN_LOWERCASE =
+    "2026-09-27T06:42:12Z | prior-run#20260927T054817Z | " +
+    "item C-555 claimed on branch `claude/c555-ranking-admission` — released — C-555 MERGED. " +
+    "PR #8550 squash `fb52509568f58b3a5961e2f3777affc288715222`, all files free. " +
+    "files: docs/architecture/test-ci-coverage-census.json";
+  check(
+    "a hand-written lowercase release reads as a release",
+    announcesRelease(HAND_WRITTEN_LOWERCASE) === true,
+    HAND_WRITTEN_LOWERCASE,
+  );
+  check(
+    "the present participle reads the same way in lower case",
+    announcesRelease(
+      "2026-09-27T06:42:12Z | a#b | item C-555 claimed on branch `x` — releasing — C-555 MERGED",
+    ) === true,
+  );
+  check(
+    "a mixed-case verb reads as a release too — no case spelling is privileged",
+    announcesRelease("2026-09-27T06:42:12Z | a#b | item C-555 claimed — Released — C-555 MERGED") === true,
+  );
+
+  // The two shapes the old rule DID admit. Widening must not cost either, and
+  // one of them is what the sanctioned helper writes today
+  // (`announcementHead`), so losing it would silence every tool-written
+  // release at once.
+  check(
+    "REGRESSION GUARD — the helper's own uppercase `RELEASED item <id>` still reads as a release",
+    announcesRelease(
+      "2026-09-22T18:08:45Z | a#b | item T-708 claimed on branch `x` — RELEASED item T-708 — merged, all files free",
+    ) === true,
+  );
+  check(
+    "REGRESSION GUARD — a lowercase verb followed by `item` still reads as a release",
+    announcesRelease("2026-09-22T18:08:45Z | a#b | item T-708 claimed — released item T-708, all files free") === true,
+  );
+
+  // Negative controls. These are the lines the head-of-message rule exists to
+  // protect, re-asserted in LOWER CASE because that is the half the widening
+  // touched: if case-insensitivity leaked past the anchor or past the verb,
+  // these are what it would free.
+  check(
+    "NEGATIVE CONTROL — a lowercase claim promising a release record still HOLDS",
+    announcesRelease(
+      "2026-09-27T06:42:12Z | a#b | item T-498 claimed on branch `x` — taking it; " +
+        "one public-safe release record per PR, released to CI when green",
+    ) === false,
+  );
+  check(
+    "NEGATIVE CONTROL — the noun `release` at the head is not the verb",
+    announcesRelease("2026-09-27T06:42:12Z | a#b | item T-498 claimed — release owed once CI is green") === false,
+  );
+  check(
+    "NEGATIVE CONTROL — a lowercase verb reached only mid-sentence does not free the line",
+    announcesRelease(
+      "2026-09-27T06:42:12Z | a#b | item T-498 claimed on branch `x` — taking it, I released T-497 earlier",
+    ) === false,
+  );
+
+  // THE MOVEMENT, through the gate the agents actually run. Same register,
+  // same request, one release line between them.
+  // Stamped inside `PRECLAIM_NOW`'s window on purpose. `preclaim()` passes its
+  // own `--now` ahead of anything here and `flag()` takes the FIRST match, so a
+  // fixture carrying the real 2026-09-27 stamps is outside the 3-hour window
+  // whatever the grammar says — and this case would pass before the fix for a
+  // reason that has nothing to do with the fix. The SHAPE is the subject, so
+  // the shape is what is quoted from the live line; only the stamp moves.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | prior-run#20260927T054817Z | item C-555 claimed — taking it | " +
+      "files: docs/architecture/test-ci-coverage-census.json",
+    HAND_WRITTEN_LOWERCASE.replace("2026-09-27T06:42:12Z", "2026-09-22T18:10:00Z"),
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-498",
+    "sibling#run-2",
+    "docs/architecture/test-ci-coverage-census.json",
+  );
+  check(
+    "THE MOVEMENT — a hand-written lowercase release hands its files back to the next run",
+    r.status === 0 && r.report.fileOverlap?.conflicts?.length === 0,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+
+  // And the half that must NOT move: a line that holds work still refuses,
+  // measured through the same gate rather than inferred from the predicate.
+  const held = fixture([
+    "2026-09-22T18:10:00Z | prior-run#20260927T054817Z | item C-556 claimed on branch `x` — " +
+      "taking it; one public-safe release record per PR | " +
+      "files: docs/architecture/test-ci-coverage-census.json",
+  ]);
+  const refused = preclaimFiles(
+    held.file,
+    "T-498",
+    "sibling#run-2",
+    "docs/architecture/test-ci-coverage-census.json",
+  );
+  check(
+    "NEGATIVE CONTROL THROUGH THE GATE — a live claim that merely promises a release record still refuses",
+    refused.status !== 0 && refused.report.fileOverlap?.conflicts?.length === 1,
+    `status=${refused.status} overlap=${JSON.stringify(refused.report.fileOverlap)}`,
+  );
+  fs.rmSync(held.dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
 // Item T-712 — an abstention is transparent to the item half, not authoritative.
 //
 // The file half has skipped abstentions since T-707; this half never did, so
