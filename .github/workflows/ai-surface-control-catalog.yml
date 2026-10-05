@@ -270,6 +270,7 @@ jobs:
           src/components/strategic-moves/__tests__/capture-notes-basis-link.test.ts
           src/components/strategic-moves/__tests__/charter-gate-assumption-disclosure.test.ts
           src/components/strategic-moves/__tests__/CharterGateAssumptionNotice.test.tsx
+          src/components/strategic-moves/__tests__/charter-basis-edit-notice.test.ts
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the

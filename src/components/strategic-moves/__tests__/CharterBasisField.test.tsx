@@ -387,3 +387,103 @@ describe("MovesCaptureFlow hand-off basis slots", () => {
     expect(screen.getByText("answer for scope_boundary")).toBeInTheDocument();
   });
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * The field explains the basis-to-answer tie.
+ *
+ * The decision itself is pinned in `charter-basis-edit-notice.test.ts`. These
+ * cases pin only what the control DOES with it: renders the sentence, carries
+ * the amber class on the warning case, and renders nothing extra when the
+ * notice is absent — the pre-notice behaviour the flag-off path keeps.
+ * ────────────────────────────────────────────────────────────────────────── */
+describe("CharterBasisField — the edit notice", () => {
+  const PENDING = {
+    state: "pending_clear" as const,
+    message: "Saving the answer clears the basis — record it again afterwards.",
+    warn: true,
+  };
+  const MATCHES = {
+    state: "basis_matches_answer" as const,
+    message: "Recorded against this answer as saved.",
+    warn: false,
+  };
+
+  it("renders the warning sentence and marks it amber", () => {
+    render(
+      <CharterBasisField
+        sectionKey="success_criteria"
+        value={{ kind: "workspace_assertion" }}
+        onChange={() => {}}
+        editNotice={PENDING}
+      />,
+    );
+    const notice = screen.getByTestId("charter-basis-edit-notice-success_criteria");
+    expect(notice).toHaveTextContent("clears the basis");
+    expect(notice).toHaveAttribute("data-notice-state", "pending_clear");
+    expect(notice.className).toContain("cbf-note-amber");
+  });
+
+  it("renders the standing explanation WITHOUT the amber class", () => {
+    render(
+      <CharterBasisField
+        sectionKey="success_criteria"
+        value={{ kind: "workspace_assertion" }}
+        onChange={() => {}}
+        editNotice={MATCHES}
+      />,
+    );
+    const notice = screen.getByTestId("charter-basis-edit-notice-success_criteria");
+    expect(notice).toHaveTextContent("as saved");
+    // Amber is reserved for what the person is about to lose. A standing
+    // explanation painted amber would read as a problem where there is none.
+    expect(notice.className).not.toContain("cbf-note-amber");
+  });
+
+  it("renders nothing extra with no notice, or a notice carrying no message", () => {
+    const { rerender } = render(
+      <CharterBasisField
+        sectionKey="success_criteria"
+        value={{ kind: "workspace_assertion" }}
+        onChange={() => {}}
+      />,
+    );
+    expect(
+      screen.queryByTestId("charter-basis-edit-notice-success_criteria"),
+    ).toBeNull();
+    rerender(
+      <CharterBasisField
+        sectionKey="success_criteria"
+        value={{ kind: "workspace_assertion" }}
+        onChange={() => {}}
+        editNotice={{ state: "no_basis_recorded", message: null, warn: false }}
+      />,
+    );
+    expect(
+      screen.queryByTestId("charter-basis-edit-notice-success_criteria"),
+    ).toBeNull();
+    // The control itself still renders its options, so an absent notice is not
+    // mistaken for an absent control.
+    expect(screen.getByText("I'm asserting this")).toBeInTheDocument();
+  });
+
+  it("keeps the notice beside an assumption's own amber wording", () => {
+    render(
+      <CharterBasisField
+        sectionKey="success_criteria"
+        value={{
+          kind: "assumption",
+          owner: "Workspace user",
+          p2ValidationPlan: "Confirm in Discover",
+        }}
+        onChange={() => {}}
+        editNotice={PENDING}
+      />,
+    );
+    // Both read: the assumption note says what the basis IS, the notice says
+    // it is about to be cleared. Suppressing either loses half the state.
+    expect(screen.getByText(/stays an assumption/i)).toBeInTheDocument();
+    expect(
+      screen.getByTestId("charter-basis-edit-notice-success_criteria"),
+    ).toHaveTextContent("record it again");
+  });
+});

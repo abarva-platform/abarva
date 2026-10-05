@@ -62,6 +62,7 @@ import {
   basisForNotesInsert,
   notesInsertBasisRecordingKeys,
 } from "@/lib/programs/capture-notes-basis-link";
+import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -2516,6 +2517,19 @@ export function MovesPhaseStandaloneClient({
         approvedSources={approvedSources}
         emptyValue={!(displayPhaseCaptureValues[section.key] ?? "").trim()}
         saveError={charterBasisSaveError[section.key] ?? null}
+        // Why the basis is tied to the answer as SAVED, and — once the answer
+        // has been edited away from it — that saving will clear it. The route
+        // already behaves this way for both an edit and a notes insert (which
+        // stamps a basis before the answer is saved); this is the field
+        // finally saying so.
+        editNotice={charterBasisEditNotice({
+          sectionKey: section.key,
+          basisSurfaceActive: charterBasisActive,
+          charterBasisSectionKeys,
+          recordedBasis: charterBasisBySection[section.key] ?? null,
+          persistedAnswer: persistedPhaseCaptureValues[section.key] ?? "",
+          visibleAnswer: displayPhaseCaptureValues[section.key] ?? "",
+        })}
         onChange={(next) => {
           setCharterBasisBySection((prev) => {
             if (!next) {

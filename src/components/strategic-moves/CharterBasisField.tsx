@@ -3,6 +3,8 @@
 import { useId } from "react";
 import type { CharterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-assumption-disclosure";
 
+import type { CharterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
+
 /**
  * The visible half of the P1 Charter minimum-viable-evidence gate: a per-field
  * "How do you know this?" control.
@@ -42,6 +44,14 @@ export interface CharterBasisFieldProps {
   emptyValue?: boolean;
   disabled?: boolean;
   saveError?: string | null;
+  /**
+   * What this field says about the relationship between its answer and the
+   * basis recorded against it — decided by
+   * `charterBasisEditNotice` in `@/lib/programs/charter-basis-edit-notice`.
+   * Omitted, or a notice with no message, and the field says nothing extra,
+   * exactly as it did before the notice existed.
+   */
+  editNotice?: CharterBasisEditNotice | null;
 }
 
 const BASIS_OPTIONS = [
@@ -89,6 +99,7 @@ export function CharterBasisField({
   emptyValue = false,
   disabled = false,
   saveError = null,
+  editNotice = null,
 }: CharterBasisFieldProps) {
   const groupId = useId();
   const selected = value?.kind ?? null;
@@ -239,6 +250,16 @@ export function CharterBasisField({
         <p className="cbf-note">
           No approved evidence for this field yet — an assertion or an owned
           assumption is enough to move on.
+        </p>
+      ) : null}
+
+      {editNotice?.message ? (
+        <p
+          className={`cbf-note${editNotice.warn ? " cbf-note-amber" : ""}`}
+          data-testid={`charter-basis-edit-notice-${sectionKey}`}
+          data-notice-state={editNotice.state}
+        >
+          {editNotice.message}
         </p>
       ) : null}
 
