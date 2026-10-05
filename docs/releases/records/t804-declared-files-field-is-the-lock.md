@@ -31,9 +31,12 @@ the surrounding sentence any more. A line that declares no list is left exactly 
 
 ## Layer Impact
 
-Not a product data layer. This is platform/execution tooling (lane T): the pre-claim ownership
-gate under `scripts/exec/`, which coordinates agent runs. No tenant data, no canonical model, no
-product surface, no runtime code path, no migration.
+Release lane: `internal-admin`. This is AbarVa-only execution tooling — the pre-claim ownership
+gate under `scripts/exec/`, which coordinates agent runs against the operator register.
+
+It touches no layer of the data operating model: not client intake, not a source adapter, not the
+canonical model, not a product. No tenant data, no product surface, no runtime code path, no
+migration, and nothing here is imported by the application or shipped in the container image.
 
 ## Client Applicability
 
