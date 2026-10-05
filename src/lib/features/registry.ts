@@ -107,7 +107,8 @@ export type FeatureFlagKey =
   | "moves_charter_assumptions_discover_v1"
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
-  | "moves_capture_notes_v1";
+  | "moves_capture_notes_v1"
+  | "moves_capture_handoff_recap_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -427,6 +428,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "2026-10-04: Extends the redesigned 3-step phase capture (moves_capture_v2) to P0 Originate, which was mounted for phases 1-5 only and so stayed on the legacy finder-columns canvas. P0's eleven canonical inputs are already grouped into its three steps (Why now / The bet / Readiness) by the shared step-group contract, so this changes only which phases render that flow. The hand-off step carries P0's own gate control inline, using the same authorization check and the same required-evidence gate as the legacy canvas - P0 still cannot advance on intake answers alone. Requires moves_capture_v2 to also be enabled for the tenant; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
     policy: "tenant",
     includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_capture_handoff_recap_v1",
+    summary:
+      "2026-10-05: Makes the redesigned phase capture's hand-off recap reachable. The flow keeps the recap as view 3, but its footer spends its one forward control on the host's governed approve slot and nothing else calls into view 3, so the recap \u2014 which hosts the charter-basis rollup and the per-question basis marks \u2014 is deployed and renders nowhere. When on, the last step offers \"Review what you captured\", which opens the recap WITHOUT submitting; opened that way the recap does not claim the phase was submitted, and the governed approve control travels onto it so the decision still runs through the existing gate pipeline. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; off for every tenant. Env: ABARVA_FEATURE_MOVES_CAPTURE_HANDOFF_RECAP_V1_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "moves_capture_composition_v1",

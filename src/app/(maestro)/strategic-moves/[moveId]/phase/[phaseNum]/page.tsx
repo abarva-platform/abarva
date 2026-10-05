@@ -429,6 +429,15 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_notes_v1",
   );
+  // Reachability-only polish of the redesigned capture, so it is the
+  // CONJUNCTION with `moves_capture_v2`: there is no hand-off recap to reach
+  // unless the redesigned flow is what rendered.
+  const captureHandoffRecapEnabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_capture_handoff_recap_v1",
+    );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -965,6 +974,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureCompositionEnabled={captureCompositionEnabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         captureNotesEnabled={captureNotesEnabled}
+        captureHandoffRecapEnabled={captureHandoffRecapEnabled}
         carriedCharterAssumptions={carriedCharterAssumptionRows}
       />
     </AppShell>
