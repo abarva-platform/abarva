@@ -7,7 +7,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { useState } from "react";
 import {
   CharterBasisField,
+  CharterBasisMark,
+  CharterBasisRollup,
   isCharterAssumption,
+  summarizeCharterBasis,
   type CharterBasisValue,
 } from "../CharterBasisField";
 import { MovesCaptureFlow } from "../MovesCaptureFlow";
@@ -182,5 +185,205 @@ describe("MovesCaptureFlow basis slots", () => {
     });
     expect(screen.getByTestId("badge-scope_boundary")).toBeInTheDocument();
     expect(screen.queryByTestId("badge-sponsor_commitment")).toBeNull();
+  });
+});
+
+// ─── the charter-level rollup on the hand-off screen ───
+const EV: CharterBasisValue = { kind: "approved_evidence", evidenceId: "ev-1" };
+const ASSERTED: CharterBasisValue = { kind: "workspace_assertion" };
+const ASSUMED: CharterBasisValue = {
+  kind: "assumption",
+  owner: "Member Experience lead",
+  p2ValidationPlan: "Baseline the resolution numbers",
+};
+
+const answerAll = () => true;
+
+describe("summarizeCharterBasis", () => {
+  it("counts each basis kind and collects the open assumptions", () => {
+    const summary = summarizeCharterBasis(
+      SECTIONS,
+      { sponsor_commitment: EV, scope_boundary: ASSUMED },
+      answerAll,
+    );
+    expect(summary).toMatchObject({
+      total: 2,
+      answered: 2,
+      evidence: 1,
+      asserted: 0,
+      assumptions: 1,
+      unrecorded: 0,
+    });
+    expect(summary.openAssumptions).toEqual([
+      {
+        sectionKey: "scope_boundary",
+        label: "Scope boundary",
+        owner: "Member Experience lead",
+        p2ValidationPlan: "Baseline the resolution numbers",
+      },
+    ]);
+  });
+
+  it("counts an answered field with no basis as unrecorded, not as covered", () => {
+    const summary = summarizeCharterBasis(
+      SECTIONS,
+      { sponsor_commitment: ASSERTED },
+      answerAll,
+    );
+    expect(summary.unrecorded).toBe(1);
+    expect(summary.evidence).toBe(0);
+    expect(summary.asserted).toBe(1);
+  });
+
+  it("does not call an unanswered field unrecorded — there is nothing to record yet", () => {
+    // No basis AND no answer. `unrecorded` must stay 0: it means "you answered
+    // this but did not say how you know it", which is a prompt to the user. An
+    // unanswered field is already counted by `answered`, and double-reporting
+    // it would make a blank charter read as seven open problems.
+    const summary = summarizeCharterBasis(SECTIONS, {}, () => false);
+    expect(summary.unrecorded).toBe(0);
+    expect(summary.answered).toBe(0);
+    expect(summary.total).toBe(2);
+  });
+
+  it("tallies answered independently of basis, so a basis cannot answer a field", () => {
+    // Every field carries a basis, none is answered. `answered` must stay 0 —
+    // a declared basis is not an answer. Pinned separately from `unrecorded`,
+    // which only counts ANSWERED fields lacking a basis.
+    const summary = summarizeCharterBasis(
+      SECTIONS,
+      { sponsor_commitment: ASSUMED, scope_boundary: EV },
+      () => false,
+    );
+    expect(summary.answered).toBe(0);
+    expect(summary.assumptions).toBe(1);
+    expect(summary.evidence).toBe(1);
+    expect(summary.unrecorded).toBe(0);
+  });
+
+  it("is empty for an empty section list", () => {
+    expect(summarizeCharterBasis([], {}, answerAll)).toMatchObject({
+      total: 0,
+      answered: 0,
+      openAssumptions: [],
+    });
+  });
+});
+
+describe("CharterBasisRollup", () => {
+  const summaryOf = (
+    basis: Record<string, CharterBasisValue>,
+    isAnswered: (key: string) => boolean = answerAll,
+  ) => summarizeCharterBasis(SECTIONS, basis, isAnswered);
+
+  it("names the open assumptions with owner and validation step", () => {
+    render(
+      <CharterBasisRollup summary={summaryOf({ scope_boundary: ASSUMED })} />,
+    );
+    const rollup = screen.getByTestId("charter-basis-rollup");
+    expect(rollup).toHaveAttribute("data-assumptions", "1");
+    expect(screen.getByText(/1 assumption carries into Discover/i)).toBeInTheDocument();
+    expect(screen.getByText("Scope boundary")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Member Experience lead — Baseline the resolution numbers/),
+    ).toBeInTheDocument();
+    // An assumption is never described as covered.
+    expect(screen.getByText(/It is not evidence/i)).toBeInTheDocument();
+  });
+
+  it("drops the amber clause and the footnote when nothing is assumed", () => {
+    render(
+      <CharterBasisRollup
+        summary={summaryOf({
+          scope_boundary: ASSERTED,
+          sponsor_commitment: EV,
+        })}
+      />,
+    );
+    expect(screen.getByTestId("charter-basis-rollup")).toHaveAttribute(
+      "data-assumptions",
+      "0",
+    );
+    // Matches the plural wording too: a `0 assumptions carry into Discover`
+    // clause is exactly the regression this guards, and /carries/ misses it.
+    expect(screen.queryByText(/into Discover/i)).toBeNull();
+    expect(screen.queryByText(/It is not evidence/i)).toBeNull();
+    expect(screen.getByText("1 backed by evidence")).toBeInTheDocument();
+    expect(screen.getByText("1 asserted")).toBeInTheDocument();
+  });
+
+  it("reports an answered field with no basis rather than hiding it", () => {
+    render(<CharterBasisRollup summary={summaryOf({})} />);
+    expect(screen.getByText("2 without a basis yet")).toBeInTheDocument();
+    expect(screen.getByText(/2 of 2 answered/)).toBeInTheDocument();
+  });
+
+  it("renders nothing when no section is basis-eligible", () => {
+    render(<CharterBasisRollup summary={summarizeCharterBasis([], {}, answerAll)} />);
+    expect(screen.queryByTestId("charter-basis-rollup")).toBeNull();
+  });
+});
+
+describe("CharterBasisMark", () => {
+  it("marks an assumption with the same amber badge as the live question", () => {
+    render(<CharterBasisMark value={ASSUMED} />);
+    expect(screen.getByTestId("charter-assumption-badge")).toBeInTheDocument();
+    expect(screen.queryByTestId("charter-basis-mark")).toBeNull();
+  });
+
+  it("distinguishes evidence from an assertion", () => {
+    const { unmount } = render(<CharterBasisMark value={EV} />);
+    expect(screen.getByTestId("charter-basis-mark")).toHaveTextContent("Evidence");
+    unmount();
+    render(<CharterBasisMark value={ASSERTED} />);
+    expect(screen.getByTestId("charter-basis-mark")).toHaveTextContent("Asserted");
+  });
+
+  it("renders nothing without a declared basis", () => {
+    render(<CharterBasisMark value={null} />);
+    expect(screen.queryByTestId("charter-basis-mark")).toBeNull();
+    expect(screen.queryByTestId("charter-assumption-badge")).toBeNull();
+  });
+});
+
+describe("MovesCaptureFlow hand-off basis slots", () => {
+  /** Step 3 → Submit lands on the hand-off screen. */
+  const submitToHandoff = () => {
+    fireEvent.click(screen.getByRole("button", { name: /^Submit/ }));
+    expect(screen.getByTestId("mcf-handoff")).toBeInTheDocument();
+  };
+
+  it("renders the rollup band above the recap when supplied", () => {
+    renderFlow({
+      initialStep: 2,
+      handoffSummary: <div data-testid="rollup-slot">rollup</div>,
+    });
+    submitToHandoff();
+    expect(screen.getByTestId("rollup-slot")).toBeInTheDocument();
+  });
+
+  it("marks every recap row's basis, not only the amber one", () => {
+    renderFlow({
+      initialStep: 2,
+      sectionRecap: (section) => `answer for ${section.key}`,
+      renderSectionRecapMark: (section) => (
+        <span data-testid={`mark-${section.key}`}>
+          {section.key === "scope_boundary" ? "Assumption" : "Asserted"}
+        </span>
+      ),
+    });
+    submitToHandoff();
+    expect(screen.getByTestId("mark-scope_boundary")).toHaveTextContent("Assumption");
+    expect(screen.getByTestId("mark-sponsor_commitment")).toHaveTextContent("Asserted");
+  });
+
+  it("leaves the hand-off unchanged when both slots are absent (flag off)", () => {
+    renderFlow({ initialStep: 2, sectionRecap: (s) => `answer for ${s.key}` });
+    submitToHandoff();
+    expect(screen.queryByTestId("charter-basis-rollup")).toBeNull();
+    expect(screen.queryByTestId("charter-basis-mark")).toBeNull();
+    // The recap itself still reads back every question.
+    expect(screen.getByText("Scope boundary")).toBeInTheDocument();
+    expect(screen.getByText("answer for scope_boundary")).toBeInTheDocument();
   });
 });

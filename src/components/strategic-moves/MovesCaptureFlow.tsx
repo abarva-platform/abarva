@@ -60,6 +60,21 @@ export interface MovesCaptureFlowProps {
   renderSectionBadge?: (section: PhaseCaptureSection) => ReactNode;
   /** Short recap value shown on the hand-off screen for a section. */
   sectionRecap: (section: PhaseCaptureSection) => string;
+  /**
+   * Optional mark rendered beside a question's label IN THE HAND-OFF RECAP —
+   * today the P1 Charter basis mark. Distinct from `renderSectionBadge`, which
+   * marks only the amber assumption case at the live question: in a read-back
+   * list an unmarked row is indistinguishable from a backed one, so the recap
+   * marks every declared basis. Null (the default) leaves the recap unchanged.
+   */
+  renderSectionRecapMark?: (section: PhaseCaptureSection) => ReactNode;
+  /**
+   * Optional band rendered at the top of the hand-off screen, above the recap —
+   * today the charter-level basis rollup. Null (the default, and whenever
+   * `moves_charter_basis_v1` is off) leaves the hand-off exactly as it reads
+   * without it.
+   */
+  handoffSummary?: ReactNode;
   /** Navigate to another (reachable) phase; opens it at step 1. */
   onSelectPhase: (phase: number) => void;
   /** Governed submit of this phase (maps to the gate/approval flow). */
@@ -94,6 +109,8 @@ export function MovesCaptureFlow({
   renderSectionBasis,
   renderSectionBadge,
   sectionRecap,
+  renderSectionRecapMark,
+  handoffSummary = null,
   onSelectPhase,
   onSubmitPhase,
   onAdvanceToNextPhase,
@@ -278,6 +295,7 @@ export function MovesCaptureFlow({
                     : `${phaseName} is complete. This Move is ready for delivery.`}
                 </h1>
               </div>
+              {handoffSummary}
               <div className="mcf-recap" aria-label="What you captured">
                 {groups.map((group, gi) => (
                   <div key={group.title}>
@@ -289,7 +307,10 @@ export function MovesCaptureFlow({
                         const recap = sectionRecap(section).trim();
                         return (
                           <div key={section.key}>
-                            <dt>{section.label}</dt>
+                            <dt>
+                              {section.label}
+                              {renderSectionRecapMark?.(section) ?? null}
+                            </dt>
                             <dd className={recap ? "" : "mcf-empty"}>
                               {recap || "Not answered"}
                             </dd>
@@ -381,7 +402,7 @@ const MCF_CSS = `
 .mcf-done-eyebrow{display:inline-flex;align-items:center;gap:6px;color:var(--mcf-accent)}
 .mcf-recap{display:flex;flex-direction:column;gap:22px;margin:24px 0 34px}
 .mcf-recap dl{margin:8px 0 0;display:flex;flex-direction:column;gap:10px}
-.mcf-recap dt{font-size:14px;font-weight:600}
+.mcf-recap dt{font-size:14px;font-weight:600;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .mcf-recap dd{margin:0;font-size:14px;color:var(--mcf-muted);line-height:1.5}
 .mcf-empty{font-style:italic;color:var(--mcf-faint)}
 .mcf-next{background:var(--mcf-surface);border:1px solid var(--mcf-line);border-radius:14px;padding:32px}
