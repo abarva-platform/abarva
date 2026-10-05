@@ -105,6 +105,17 @@ Baseline and result over the same scope, measured on `main` `ead3fcec28`:
 - `npx eslint` on the changed file — exit 0, no findings.
 - `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` —
   **exit 0**, zero diagnostics (exit code judged, not grepped).
+- **The pin can actually fail a merge, which is checked rather than assumed.**
+  A test that only turns red in a job nothing requires is decorative.
+  `MovesCaptureFlow.test.tsx` is named by exact path in the *Exercise Moves
+  visible AI liability controls* step of the `ai-surface-control-catalog` job,
+  whose `name:` is `AI surface control catalog` — one of the 19 contexts in
+  `docs/ci/required-status-checks.json`. So when a remedy makes the hand-off
+  reachable and leaves `.failing` in place, the merge is blocked, which is the
+  whole mechanism this release depends on. That directory is not swept by
+  pattern, so a suite runs there only by being named: a future suite added
+  beside this one must be named in that step deliberately, as the step's own
+  comment says.
 
 ## Rollout Plan
 
