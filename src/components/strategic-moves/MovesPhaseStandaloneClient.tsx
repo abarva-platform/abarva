@@ -48,7 +48,10 @@ import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCapture
 import {
   CharterAssumptionBadge,
   CharterBasisField,
+  CharterBasisMark,
+  CharterBasisRollup,
   isCharterAssumption,
+  summarizeCharterBasis,
   type CharterBasisValue,
 } from "@/components/strategic-moves/CharterBasisField";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
@@ -2529,6 +2532,14 @@ export function MovesPhaseStandaloneClient({
     ) : null;
   };
 
+  // The recap marks EVERY declared basis, not just the amber case: in the
+  // hand-off read-back an unmarked row is indistinguishable from a backed one,
+  // which is the failure the basis control exists to prevent.
+  const captureSectionRecapMark = (section: PhaseCaptureSection): ReactNode => {
+    if (!charterBasisSectionKeys.has(section.key)) return null;
+    return <CharterBasisMark value={charterBasisBySection[section.key]} />;
+  };
+
   const isCaptureSectionComplete = (sectionKey: string): boolean => {
     const section = phaseCaptureSections.find((s) => s.key === sectionKey);
     if (!section) return false;
@@ -2543,6 +2554,23 @@ export function MovesPhaseStandaloneClient({
       phaseEvidenceCheckAvailable,
     ).complete;
   };
+
+  // The charter-level rollup on the hand-off screen. Counts only — the gate
+  // (`src/lib/programs/p1-charter-evidence.ts`) reads the persisted basis and
+  // is unaffected by anything here. Empty set (flag off, or any phase but P1)
+  // ⇒ null, and the hand-off reads exactly as it does without it.
+  const charterBasisRollup: ReactNode =
+    charterBasisSectionKeys.size === 0 ? null : (
+      <CharterBasisRollup
+        summary={summarizeCharterBasis(
+          phaseCaptureSections
+            .filter((section) => charterBasisSectionKeys.has(section.key))
+            .map((section) => ({ key: section.key, label: section.label })),
+          charterBasisBySection,
+          isCaptureSectionComplete,
+        )}
+      />
+    );
 
   const capturePhases: MovesCaptureFlowPhase[] = PHASES.map((p) => {
     const total = getPhaseCaptureSections(p.phase).length;
@@ -3085,6 +3113,8 @@ export function MovesPhaseStandaloneClient({
                         renderSectionInput: captureSectionInput,
                         renderSectionBasis: captureSectionBasis,
                         renderSectionBadge: captureSectionBadge,
+                        renderSectionRecapMark: captureSectionRecapMark,
+                        handoffSummary: charterBasisRollup,
                         sectionRecap: (s) =>
                           displayPhaseCaptureValues[s.key] ?? "",
                         onSelectPhase: (p) =>

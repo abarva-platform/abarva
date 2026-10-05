@@ -271,4 +271,221 @@ const CBF_CSS = `
 .cbf-note-amber{color:var(--cbf-amber)}
 .cbf-error{font-size:12px;color:#8c2f22;margin:9px 0 0}
 .cbf-badge{font-family:var(--cbf-mono,'JetBrains Mono',ui-monospace,monospace);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#ba7517;background:#faeeda;border:1px solid rgba(186,117,23,.3);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.cbf-mark{font-family:var(--cbf-mono,'JetBrains Mono',ui-monospace,monospace);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#2c2c2a;background:#f5f1eb;border:1px solid rgba(10,10,11,.24);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.cbf-mark-evidence{color:#0f6e56;background:#e8f4ef;border-color:rgba(15,110,86,.26)}
+.cbr{--cbf-mono:'JetBrains Mono',ui-monospace,monospace;--cbf-faint:#6f6e68;font-family:Inter,system-ui,sans-serif;color:#2c2c2a;border:1px solid rgba(10,10,11,.12);border-radius:12px;background:#fff;padding:18px 20px;margin-bottom:28px}
+.cbr-has-assumptions{border-color:rgba(186,117,23,.3)}
+.cbr-headline{font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:500;line-height:1.4;margin:10px 0 14px}
+.cbr-amber{color:#ba7517}
+.cbr-chips{display:flex;gap:8px;flex-wrap:wrap}
+.cbr-chip{font-family:var(--cbf-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;color:#2c2c2a;background:#f5f1eb;border:1px solid rgba(10,10,11,.24);border-radius:5px;padding:4px 9px}
+.cbr-chip-evidence{color:#0f6e56;background:#e8f4ef;border-color:rgba(15,110,86,.26)}
+.cbr-chip-amber{color:#ba7517;background:#faeeda;border-color:rgba(186,117,23,.3)}
+.cbr-open{border-top:1px solid rgba(10,10,11,.12);margin-top:16px;padding-top:14px}
+.cbr-open ul{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-direction:column;gap:11px}
+.cbr-open-label{font-size:14px;font-weight:600}
+.cbr-open-plan{font-size:13px;color:#5f5e5a}
+.cbr-foot{font-size:12.5px;color:#5f5e5a;margin:14px 0 0}
 `;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * The charter-level rollup.
+ *
+ * The per-field control above classifies one answer. This reads the whole
+ * charter back on the hand-off screen, and exists because of a specific failure
+ * mode: in a plain recap list, an assumption renders exactly like a backed
+ * fact. The rollup says, in one line, how much of the charter is actually
+ * known — and the per-row mark means no recap row can read as evidence when it
+ * is not.
+ *
+ * Counts only. The gate (`src/lib/programs/p1-charter-evidence.ts`) is
+ * unaffected by anything here, and so is the legacy approved-evidence lock.
+ * ───────────────────────────────────────────────────────────────────────────*/
+
+export interface CharterBasisOpenAssumption {
+  sectionKey: string;
+  label: string;
+  owner: string;
+  p2ValidationPlan: string;
+}
+
+export interface CharterBasisSummary {
+  /** Basis-eligible sections in this charter. */
+  total: number;
+  /** Of those, how many carry an answer. */
+  answered: number;
+  evidence: number;
+  asserted: number;
+  assumptions: number;
+  /** Answered, but no basis declared yet. */
+  unrecorded: number;
+  openAssumptions: readonly CharterBasisOpenAssumption[];
+}
+
+export interface CharterBasisSummarySection {
+  key: string;
+  label: string;
+}
+
+/**
+ * Fold the recorded bases into the counts the rollup renders.
+ *
+ * `isAnswered` is the host's own completeness predicate rather than a value
+ * check here, so "answered" means the same thing in the rollup as it does in
+ * the step strip. A basis on an unanswered field is counted by kind but cannot
+ * make the field answered — the two are tallied independently on purpose.
+ */
+export function summarizeCharterBasis(
+  sections: readonly CharterBasisSummarySection[],
+  basisBySection: Readonly<Record<string, CharterBasisValue>>,
+  isAnswered: (sectionKey: string) => boolean,
+): CharterBasisSummary {
+  let answered = 0;
+  let evidence = 0;
+  let asserted = 0;
+  let assumptions = 0;
+  let unrecorded = 0;
+  const openAssumptions: CharterBasisOpenAssumption[] = [];
+
+  for (const section of sections) {
+    const isSectionAnswered = isAnswered(section.key);
+    if (isSectionAnswered) answered += 1;
+    const basis = basisBySection[section.key];
+    if (!basis) {
+      if (isSectionAnswered) unrecorded += 1;
+      continue;
+    }
+    if (basis.kind === "approved_evidence") {
+      evidence += 1;
+    } else if (basis.kind === "workspace_assertion") {
+      asserted += 1;
+    } else {
+      assumptions += 1;
+      openAssumptions.push({
+        sectionKey: section.key,
+        label: section.label,
+        owner: basis.owner,
+        p2ValidationPlan: basis.p2ValidationPlan,
+      });
+    }
+  }
+
+  return {
+    total: sections.length,
+    answered,
+    evidence,
+    asserted,
+    assumptions,
+    unrecorded,
+    openAssumptions,
+  };
+}
+
+/**
+ * The mark shown beside a question in the hand-off recap. Unlike
+ * `CharterAssumptionBadge` — which marks only the amber case at the live
+ * question — the recap marks EVERY basis, because a row with no mark at all in
+ * a read-back list is indistinguishable from a backed one.
+ */
+export function CharterBasisMark({
+  value,
+}: {
+  value: CharterBasisValue | null | undefined;
+}) {
+  if (!value) return null;
+  if (value.kind === "assumption") return <CharterAssumptionBadge />;
+  const evidence = value.kind === "approved_evidence";
+  return (
+    <span
+      className={`cbf-mark${evidence ? " cbf-mark-evidence" : ""}`}
+      data-testid="charter-basis-mark"
+      data-basis={value.kind}
+    >
+      {evidence ? "Evidence" : "Asserted"}
+    </span>
+  );
+}
+
+export function CharterBasisRollup({
+  summary,
+}: {
+  summary: CharterBasisSummary;
+}) {
+  if (summary.total === 0) return null;
+  const { assumptions, unrecorded } = summary;
+
+  return (
+    <section
+      className={`cbr${assumptions > 0 ? " cbr-has-assumptions" : ""}`}
+      aria-label="Charter basis"
+      data-testid="charter-basis-rollup"
+      data-assumptions={assumptions}
+      data-unrecorded={unrecorded}
+    >
+      <style>{CBF_CSS}</style>
+      <div className="cbf-eyebrow">How this charter is known</div>
+
+      <p className="cbr-headline">
+        {summary.answered} of {summary.total} answered
+        {assumptions > 0 ? (
+          <>
+            {" · "}
+            <span className="cbr-amber">
+              {assumptions} assumption{assumptions === 1 ? "" : "s"} carr
+              {assumptions === 1 ? "ies" : "y"} into Discover
+            </span>
+          </>
+        ) : null}
+      </p>
+
+      <div className="cbr-chips">
+        {summary.evidence > 0 ? (
+          <span className="cbr-chip cbr-chip-evidence">
+            {summary.evidence} backed by evidence
+          </span>
+        ) : null}
+        {summary.asserted > 0 ? (
+          <span className="cbr-chip">{summary.asserted} asserted</span>
+        ) : null}
+        {assumptions > 0 ? (
+          <span className="cbr-chip cbr-chip-amber">
+            {assumptions} assumption{assumptions === 1 ? "" : "s"} open
+          </span>
+        ) : null}
+        {unrecorded > 0 ? (
+          <span className="cbr-chip">
+            {unrecorded} without a basis yet
+          </span>
+        ) : null}
+      </div>
+
+      {summary.openAssumptions.length > 0 ? (
+        <div className="cbr-open">
+          <div className="cbf-eyebrow">
+            Open assumptions · owner and how Discover validates
+          </div>
+          <ul>
+            {summary.openAssumptions.map((assumption) => (
+              <li key={assumption.sectionKey}>
+                <div className="cbr-open-label">{assumption.label}</div>
+                <div className="cbr-open-plan">
+                  {assumption.owner || "Owner not named"}
+                  {" — "}
+                  {assumption.p2ValidationPlan ||
+                    "no validation step recorded yet"}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {assumptions > 0 ? (
+        <p className="cbr-foot">
+          An assumption completes the charter. It is not evidence, and it is not
+          counted as covered — Discover carries it forward to confirm or correct.
+        </p>
+      ) : null}
+    </section>
+  );
+}
