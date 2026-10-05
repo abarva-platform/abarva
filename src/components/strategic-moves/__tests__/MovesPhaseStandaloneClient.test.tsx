@@ -3329,7 +3329,19 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getAllByText(/already approved/i).length).toBeGreaterThan(0);
+    // A phase the Move has only ADVANCED PAST is read-only on a passed gate,
+    // not on a read approval: nothing on this screen fetches an approval
+    // record. Assert the new claim, and that the old one is gone — over the
+    // joined text of each node, because the tick and the sentence are separate
+    // nodes inside one element.
+    expect(screen.getAllByText(/gate has passed/i).length).toBeGreaterThan(0);
+    expect(
+      screen
+        .queryAllByText(
+          /\bis already approved\b|\bthe approved (output|record)\b/i,
+        )
+        .map((n) => n.textContent),
+    ).toEqual([]);
     expect(
       screen.getAllByRole("button", { name: /Continue to P1 Charter/i }).length,
     ).toBeGreaterThan(0);
@@ -3375,8 +3387,15 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Open Tower →")).toBeInTheDocument();
     expect(
-      screen.getByText(/P5 is already approved and handed off to Tower/i),
+      screen.getByText(/P5's gate has passed and the Move handed off to Tower/i),
     ).toBeInTheDocument();
+    expect(
+      screen
+        .queryAllByText(
+          /\bis already approved\b|\bthe approved (output|record)\b/i,
+        )
+        .map((n) => n.textContent),
+    ).toEqual([]);
     expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
       "Open Tower",
     );

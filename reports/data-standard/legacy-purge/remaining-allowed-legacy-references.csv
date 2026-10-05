@@ -525,6 +525,7 @@ synthetic-v-folder-reference,scripts/verify/meridian-context-showcase.mjs,non-lo
 synthetic-v-folder-reference,scripts/verify/meridian-data-pack-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/northstar-context-layer-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/behaviors/source-servicenow-request-acceptance-harness.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-import-workflow.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-loader.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/integration/source/source-servicenow-request-loader.test.ts,non-loader historical reference
 old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,non-loader historical reference
