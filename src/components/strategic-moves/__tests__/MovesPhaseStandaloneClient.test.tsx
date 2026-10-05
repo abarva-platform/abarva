@@ -2791,6 +2791,150 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  // ─── the capture phase strip's SAVED counts, AT THE HOST ─────────────────
+  // `moves_capture_phase_rollup_v1`. The strip can measure exactly one row —
+  // the phase on screen — so the other five state a bare question count. The
+  // rollup lets those five say how much of the phase holds a SAVED answer,
+  // from capture-module rows the route already loaded.
+  //
+  // The derivation and the row's rendering each have their own suite, so what
+  // is untested is the wiring in this component: whether the counts reach the
+  // strip, whether each lands on its OWN row, and whether the two nouns stay
+  // apart. A saved answer is only a persisted non-empty value, while the
+  // viewed row's "answered" additionally requires structured validity,
+  // evidence readiness and a satisfied charter basis — so a host that passed
+  // the rollup where the measured count belongs, or spread one phase's count
+  // across the strip, would report work nobody did under the stronger word.
+  describe("capture phase strip saved counts (moves_capture_phase_rollup_v1)", () => {
+    const P0_TOTAL = getPhaseCaptureSections(0, null).length;
+    const P1_TOTAL = getPhaseCaptureSections(1, null).length;
+    const P2_TOTAL = getPhaseCaptureSections(2, null).length;
+    const P5_TOTAL = getPhaseCaptureSections(5, null).length;
+
+    const renderStrip = (args: {
+      savedAnswerCounts?: Readonly<Record<number, number>>;
+      confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+      viewedPhase?: number;
+    }) => {
+      const viewedPhase = args.viewedPhase ?? 1;
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          capturePhaseSavedAnswerCounts={args.savedAnswerCounts}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialConfirmedSolutionRoute={args.confirmedSolutionRoute ?? null}
+          move={makeMove({ currentPhase: 5, phaseLabel: "P1 Charter" })}
+          phaseNum={viewedPhase}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const bar = screen.getByRole("navigation", { name: "Phases" });
+      return {
+        bar,
+        row: (code: string) =>
+          within(bar).getByRole("button", { name: new RegExp(`^${code}`) }),
+      };
+    };
+
+    it("an unmeasured row states the saved count the host was handed, under that word", () => {
+      const { row } = renderStrip({ savedAnswerCounts: { 0: 4, 2: 6 } });
+
+      // Each count lands on its own phase's row — not one figure repeated, and
+      // not another phase's figure, which is the attribution a host assembling
+      // the strip can get wrong without changing anything else on screen.
+      expect(row("P0")).toHaveTextContent(`4 of ${P0_TOTAL} saved`);
+      expect(row("P2")).toHaveTextContent(`6 of ${P2_TOTAL} saved`);
+      // and never under the stronger noun
+      expect(row("P0")).not.toHaveTextContent("answered");
+      expect(row("P2")).not.toHaveTextContent("answered");
+    });
+
+    it("a row the rollup says nothing about keeps its bare question count", () => {
+      // The vacuity guard for the case above: the counts are read per phase,
+      // so a phase with no entry is unchanged rather than borrowing one.
+      const { row } = renderStrip({ savedAnswerCounts: { 0: 4, 2: 6 } });
+
+      expect(row("P5")).toHaveTextContent(`${P5_TOTAL} questions`);
+      expect(row("P5")).not.toHaveTextContent("saved");
+    });
+
+    it("the viewed row keeps its measured count even when the rollup names it", () => {
+      // One figure per row, and on the row the screen CAN measure it must be
+      // the measured one. Nothing here has been answered, so the live count is
+      // 0 — strictly below the 6 the rollup offers, which is what makes a host
+      // that preferred the rollup visible.
+      const { row } = renderStrip({ savedAnswerCounts: { 1: 6 } });
+
+      expect(row("P1")).toHaveTextContent(`0 of ${P1_TOTAL} answered`);
+      expect(row("P1")).not.toHaveTextContent("saved");
+    });
+
+    it("no rollup supplied (flag off): no row claims a saved count", () => {
+      const { bar, row } = renderStrip({});
+
+      expect(row("P0")).toHaveTextContent(`${P0_TOTAL} questions`);
+      expect(bar).not.toHaveTextContent("saved");
+    });
+
+    it("a fully saved unmeasured row still earns no completion tick", () => {
+      // The invariant that must survive the rollup: a tick is a claim that the
+      // phase is complete, and saved answers are not measured ones. This is the
+      // ticked-but-blank row's defect arriving from the other direction.
+      const { row } = renderStrip({ savedAnswerCounts: { 0: P0_TOTAL } });
+
+      expect(row("P0")).toHaveTextContent(`${P0_TOTAL} of ${P0_TOTAL} saved`);
+      expect(within(row("P0")).queryByLabelText("complete")).toBeNull();
+    });
+
+    it("a saved count is stated against the same route-aware total as its row", () => {
+      // P3 Design is the only phase whose question set depends on the Move's
+      // confirmed route, and the count was derived against that route-aware
+      // set server-side. If the host states the row's total without the route,
+      // the pair disagrees about which questions the phase even asks — the
+      // same dropped argument the totals above guard, now on the weaker noun.
+      const narrower = getPhaseCaptureSections(3, {
+        route: "technical_product",
+        recommendation: "technical_product",
+        solutionOutput: "data_product",
+        workflowChange: "limited",
+        roleAccountabilityChange: "none",
+        adoptionOwner: "Named business owner",
+        adoptionResponsibility: "business",
+        decision: "confirm",
+        evidenceReference: "evidence-ref",
+        validatedBy: "Validator",
+        rationale: "Route confirmed against the evidence reviewed at the gate.",
+      }).length;
+      const defaultTotal = getPhaseCaptureSections(3, null).length;
+      expect(narrower).not.toBe(defaultTotal);
+
+      const { row } = renderStrip({
+        savedAnswerCounts: { 3: narrower - 1 },
+        confirmedSolutionRoute: {
+          route: "technical_product",
+          recommendation: "technical_product",
+          solutionOutput: "data_product",
+          workflowChange: "limited",
+          roleAccountabilityChange: "none",
+          adoptionOwner: "Named business owner",
+          adoptionResponsibility: "business",
+          decision: "confirm",
+          evidenceReference: "evidence-ref",
+          validatedBy: "Validator",
+          rationale:
+            "Route confirmed against the evidence reviewed at the gate.",
+        },
+      });
+
+      expect(row("P3")).toHaveTextContent(
+        `${narrower - 1} of ${narrower} saved`,
+      );
+      expect(row("P3")).not.toHaveTextContent(`of ${defaultTotal} saved`);
+    });
+  });
+
   describe("Moves workspace navigation", () => {
     it("keeps compact phase and workspace controls reachable on narrow screens", () => {
       render(
