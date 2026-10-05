@@ -16,8 +16,12 @@ import {
   agreeNoun,
   buildOriginateRailRows,
   formatAnswersCaptured,
+  formatAnswersCapturedNoun,
   formatOriginateDiscardProgress,
+  formatOriginateNavFootProgress,
   formatOriginateRailTally,
+  formatOriginateStepPosition,
+  originateStepCount,
 } from "../originate-figure-labels";
 
 const mockPush = jest.fn();
@@ -215,7 +219,9 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText(/4 of 10 complete/i)[0]).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/4 of 10 answers captured/i)[0],
+      ).toBeInTheDocument();
     });
 
     expect(approveButton).toBeDisabled();
@@ -607,7 +613,9 @@ describe("StrategicMoveOriginateClient", () => {
       );
 
       expect(approveButton).toBeDisabled();
-      expect(screen.getAllByText(/1 of 10 complete/i)[0]).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/1 of 10 answers captured/i)[0],
+      ).toBeInTheDocument();
     });
   });
 
@@ -992,6 +1000,67 @@ describe("StrategicMoveOriginateClient", () => {
         }),
       ).toBe("You\u2019ve captured 0 of 1 required answer.");
     });
+
+    it("counts the step position and its total over the SAME step list — the submit step is one past the last field, not a repeat of it", () => {
+      // The nav's step list is the scaffold fields plus the submit step.
+      expect(originateStepCount(10)).toBe(11);
+
+      const lastField = formatOriginateStepPosition({
+        fieldStep: 10,
+        fieldCount: 10,
+      });
+      const submit = formatOriginateStepPosition({
+        fieldStep: null,
+        fieldCount: 10,
+      });
+      expect(lastField).toBe("Step 10 of 11");
+      expect(submit).toBe("Step 11 of 11");
+      // The defect: both used to render "Step 10 of 10", so two distinct nav
+      // steps reported one position and the last position was unreachable.
+      expect(submit).not.toBe(lastField);
+    });
+
+    it("tracks the extended scaffold, so the submit step is never pinned to a constant", () => {
+      expect(
+        formatOriginateStepPosition({ fieldStep: null, fieldCount: 17 }),
+      ).toBe("Step 18 of 18");
+      expect(
+        formatOriginateStepPosition({ fieldStep: 1, fieldCount: 17 }),
+      ).toBe("Step 1 of 18");
+    });
+
+    it("states what the nav foot's figure counts, instead of a bare N of M beside a clause that counts a larger set", () => {
+      expect(
+        formatOriginateNavFootProgress({
+          requiredFilled: 4,
+          requiredFieldCount: 10,
+        }),
+      ).toBe("4 of 10 answers captured · finish the required steps");
+      // The old copy was `4 of 10 complete`: no noun, and the clause beside it
+      // named "required steps", a set that includes the submit step the figure
+      // does not measure.
+      expect(
+        formatOriginateNavFootProgress({
+          requiredFilled: 4,
+          requiredFieldCount: 10,
+        }),
+      ).toMatch(/4 of 10 answers/);
+    });
+
+    it("agrees the nav foot's noun to its own denominator", () => {
+      expect(
+        formatOriginateNavFootProgress({
+          requiredFilled: 0,
+          requiredFieldCount: 1,
+        }),
+      ).toBe("0 of 1 answer captured · finish the required steps");
+    });
+
+    it("agrees the progress pill's noun to the total its figure is bounded by", () => {
+      expect(formatAnswersCapturedNoun(1)).toBe("answer captured");
+      expect(formatAnswersCapturedNoun(0)).toBe("answers captured");
+      expect(formatAnswersCapturedNoun(10)).toBe("answers captured");
+    });
   });
 
   describe("the Originate rail's figures at the host call site", () => {
@@ -1021,6 +1090,51 @@ describe("StrategicMoveOriginateClient", () => {
       // one of them cannot be a constant.
       expect(screen.queryByText("0 of 10 answers")).not.toBeInTheDocument();
       expect(screen.getByText("0 of 17 answers")).toBeInTheDocument();
+    });
+  });
+
+  describe("the step position and nav foot at the host call site", () => {
+    it("renders a position bounded by the nav's step list, not by the field count", () => {
+      const { unmount } = render(
+        <StrategicMoveOriginateClient tenantName="Apex Retail" />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+      // "Review P0 intake" lands on the submit step, which is the 11th of the
+      // nav's 11 steps (10 scaffold fields + submit). It used to render
+      // "Step 10 of 10" — the last field's own position.
+      expect(screen.getByText("Step 11 of 11")).toBeInTheDocument();
+      expect(screen.queryByText("Step 10 of 10")).not.toBeInTheDocument();
+      unmount();
+
+      render(
+        <StrategicMoveOriginateClient
+          tenantName="Apex Retail"
+          extendedIntakeFieldsEnabled
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+      // Vacuity guard: the two scaffolds differ in size, so the total cannot
+      // be a constant.
+      expect(screen.getByText("Step 18 of 18")).toBeInTheDocument();
+      expect(screen.queryByText("Step 17 of 17")).not.toBeInTheDocument();
+      expect(screen.queryByText("Step 11 of 11")).not.toBeInTheDocument();
+    });
+
+    it("renders the nav foot's nouned figure, and no nounless one", () => {
+      render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+      expect(
+        screen.getAllByText(
+          /0 of 10 answers captured · finish the required steps/,
+        )[0],
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/0 of 10 complete/)).not.toBeInTheDocument();
     });
   });
 });
