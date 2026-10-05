@@ -29,9 +29,15 @@ module does not export.
 
 ## Layer Impact
 
-- **Tests, validators, CI and platform tooling (lane T).** A new check, a new
-  pull-request invocation of an existing suite, and a refresh of the committed census
-  artifact.
+Release lane: `global-control-lane` — shared CI and test-control behaviour for all
+clients, with no feature gate. No client data, schema, tenant scope or product surface is
+touched.
+
+- **Test and CI control plane** — a new check and its own behaviour suite, one exact test
+  path added to an existing pull-request job, two steps added to an existing
+  pull-request-triggered workflow, and the committed coverage census refreshed. This is
+  backlog lane T (tests, validators, CI and platform tooling).
+- **Layer 4 (products)** — no product behaviour changes.
 
 No product layer changes. No canonical model, adapter, intake, or product surface is
 touched. No runtime code is modified: the only source file involved is read by the test,
