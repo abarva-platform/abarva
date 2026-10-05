@@ -109,7 +109,8 @@ export type FeatureFlagKey =
   | "moves_capture_composition_v1"
   | "moves_capture_notes_v1"
   | "moves_capture_handoff_recap_v1"
-  | "moves_charter_assumption_resolution_v1";
+  | "moves_charter_assumption_resolution_v1"
+  | "moves_capture_phase_rollup_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -462,6 +463,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_charter_assumption_resolution_v1",
     summary:
       "2026-10-05: Lets P2 Discover close a charter assumption it has validated. The phase already inherits the charter answers P1 left standing on an assumption (moves_charter_assumptions_discover_v1), each with an owner and the plan for validating it, but a person looking at one could not record what Discover found, so an assumption stayed open forever once declared. This adds the resolution data model and the resolution-aware read: an assumption resolved as confirmed, corrected, or superseded by approved evidence stops being listed as open and owed. A resolution is stored on the same capture-module row as the recorded basis under its own key, never nested inside it, and is pinned to the revision of the answer it was written about - edit the answer and the resolution no longer applies, the same rule the basis itself follows. A resolution is never rendered as approved evidence. The write path and its control are a later slice; with nothing writing one yet, on and off read identically today. Deliberately separate from moves_charter_assumptions_discover_v1 so a tenant can inherit the assumptions read-only without the resolve path. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_phase_rollup_v1",
+    summary:
+      "2026-10-05: Lets the capture flow's phase strip say how much of a phase has been saved, for the five rows the screen cannot measure. The strip shows one row per phase, but the host holds live capture values only for the phase on screen, so every other row states a bare question count and a person stepping through the flow sees none of the work behind them. The rows needed to fix that are already loaded - the phase route reads every capture-module row for the Move and then discards all but the viewed phase - so this adds no read. An unmeasured row now states how many of its questions hold a SAVED ANSWER, under that word and no other. A saved answer is a persisted non-empty value; the viewed row's answered count additionally requires structured validity, evidence readiness, and on Charter a satisfied basis, so the saved count is strictly weaker and routinely larger. The two therefore never share a row and never share a noun, and a saved count never earns the completion tick - only a live measurement does, which is the invariant that removed an earlier row's claim to be fully answered when all of its questions were blank. Route-aware, because Design is the only phase whose question set depends on the confirmed solution route. Requires the redesigned capture flow to be on to render at all. Default OFF for every tenant.",
     policy: "tenant",
     includeTenants: [],
   },
