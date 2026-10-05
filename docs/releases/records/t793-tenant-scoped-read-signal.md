@@ -32,6 +32,11 @@ committed census artifact is refreshed in the same change.
 
 ## Layer Impact
 
+**Release lane: `internal-admin`.** This is AbarVa-only repository tooling — a measurement
+of our own test-coverage shape and the committed artifact recording it. No client receives
+it, no product surface reads it, and it is not feature-gated because there is nothing
+runtime to gate.
+
 - **Layer 4 — products:** none. This is a measurement of the repository's own test
   coverage shape. No tenant data, no product surface, no answer path, no prompt and no
   read model is touched.
