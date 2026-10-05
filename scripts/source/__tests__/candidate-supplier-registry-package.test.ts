@@ -20,6 +20,26 @@ function validate(csvText: string): CandidateSupplierRegistryValidation {
 }
 
 describe("synthetic candidate-supplier registry package", () => {
+  it("scales the fictional panel to five candidates per routed archetype without changing v1 identities", () => {
+    const v1 = fs.readFileSync(csvPath, "utf8");
+    const v2Path = path.join(
+      process.cwd(),
+      "datasets/source/candidate-supplier-registry-synthetic-v2/candidate_supplier_registry.csv",
+    );
+    const v2 = fs.readFileSync(v2Path, "utf8");
+    const result = validate(v2);
+    const v1Rows = v1.trimEnd().split(/\r?\n/u);
+    const v2Rows = v2.trimEnd().split(/\r?\n/u);
+
+    expect(result.status).toBe("pass");
+    expect(result.summary.eligibleCandidateRows).toBe(50);
+    expect(result.summary.negativeControlRows).toBe(5);
+    expect(result.coverageMatrix).toHaveLength(10);
+    expect(result.coverageMatrix.every((item) => item.eligibleRows.length === 5)).toBe(true);
+    expect(v2Rows.slice(0, v1Rows.length)).toEqual(v1Rows);
+    expect(v2).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/iu);
+  });
+
   it("proves five AMS candidates and at least two for every other archetype", () => {
     const result = validate(fs.readFileSync(csvPath, "utf8"));
 
