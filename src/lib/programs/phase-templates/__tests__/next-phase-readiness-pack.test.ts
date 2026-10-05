@@ -14,6 +14,7 @@ function packet(overrides: Partial<MoveEvidenceNeedPacket>): MoveEvidenceNeedPac
     exampleTemplate: 'Application and integration landscape',
     exampleContent: ['System inventory'],
     whyItMatters: 'Architecture artifacts need the real systems and owners.',
+    guidanceBasis: 'generic',
     blockedArtifacts: [
       { artifactType: 'target_state_architecture', title: 'Target-State Architecture', phase: 3, reason: 'needed' },
     ],
