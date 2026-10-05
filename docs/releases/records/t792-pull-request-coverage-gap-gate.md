@@ -56,8 +56,8 @@ not changed.
 - `scripts/quality/check-pull-request-coverage-gap.mjs` (new) — fails when any test file
   is reached by a workflow and by no `pull_request` or `merge_group` workflow. Exports the
   predicate so it is testable without a census run.
-- `scripts/quality/check-pull-request-coverage-gap.test.mjs` (new) — nine cases over the
-  predicate and its verdict text.
+- `scripts/quality/check-pull-request-coverage-gap.test.mjs` (new) — twelve cases over the
+  predicate, its verdict text, and the resolver caveat.
 - `.github/workflows/unit-suites.yml` — adds a step running
   `src/lib/ecl/__tests__/product-provider.test.ts` by exact path. The pre-deploy gate
   keeps its own invocation; this adds the merge-blocking one it never had.
@@ -97,8 +97,8 @@ base, before wiring:   exit 1, names the file
 after wiring:          exit 0, "pull-request coverage gap: none"
 ```
 
-**The gate can fail — five mutations of its predicate and verdict, all killed.**
-Baseline 9 of 9 passing; each mutation run as its own command:
+**The gate can fail — eight mutations of its predicate, verdict and caveat, all killed.**
+Each mutation run as its own command, against its own baseline:
 
 | mutation | result |
 |---|---|
@@ -107,8 +107,11 @@ Baseline 9 of 9 passing; each mutation run as its own command:
 | truthy `file.covered` instead of `=== true` | 1 of 9 failed |
 | drop `via` from the reported row | 1 of 9 failed |
 | verdict always reports "none" | 2 of 9 failed |
+| caveat printed unconditionally | 2 of 12 failed |
+| caveat never printed | 1 of 12 failed |
+| caveat default flipped on | 1 of 12 failed |
 
-Restored baseline: 9 of 9 passing. The first mutation is the one worth stating — without
+Restored baseline: 12 of 12 passing. The first mutation is the one worth stating — without
 the `covered` conjunct the check sweeps in all 164 files that run nowhere at all, under a
 message saying they run green after a deploy, which they do not. That population is a
 different defect with a different remedy and is already reported as `uncoveredTestFiles`.
@@ -155,6 +158,16 @@ So +5/+5/+5 is pre-existing lag that this refresh discharges, and +1 on
 `pullRequestCoveredTestFiles` is this change. The committed artifact's diff is three lines,
 all counts; the coverage shape did not change. `audit:test-ci-coverage:check` exits 0.
 
+**The resolver caveat.** The census credits coverage only through commands it could resolve
+and publishes `indeterminateInvocations` for the rest; its own method note says coverage is
+an upper bound while that set is non-empty. The same caveat reaches this gate, so an
+unresolved invocation could make a genuinely reached file look like a wiring gap. The gate
+still fails rather than abstaining — the census fails its own run rather than skipping a
+list it cannot resolve, and a gate that goes quiet on an input it cannot read is the shape
+this backlog exists against — but it prints the unresolved count beside the finding so a
+resolver gap cannot be booked as a wiring gap. The set is 0 on this commit, so the branch
+is exercised by its test and not by the repository.
+
 **Other checks.** `npx eslint` on both new files: exit 0, no findings. Both modified
 workflows parse as YAML. Typecheck run over the repository; no TypeScript file is modified
 by this change.
@@ -192,7 +205,7 @@ the repository, so there is no state to unwind and no migration constraint.
   new step in `Unit suites`.
 - `node scripts/quality/check-pull-request-coverage-gap.mjs --json` — prints both census
   counts and the gap, so the assertion is checkable in one command.
-- `node --test scripts/quality/check-pull-request-coverage-gap.test.mjs` — 9 of 9.
+- `node --test scripts/quality/check-pull-request-coverage-gap.test.mjs` — 12 of 12.
 - `npm run audit:test-ci-coverage:check` — exit 0 against the refreshed artifact.
 
 ## Known Gaps
