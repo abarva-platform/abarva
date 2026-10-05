@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><title>dock polish</title>
+<style>
+body{margin:0;background:#efeae1;font-family:Inter,system-ui,sans-serif;color:#2c2c2a;padding:28px;display:flex;gap:28px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.cap{font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase}
+.bad{color:#ba1b1b}.good{color:#147c5b}
+/* a 320px dock */
+.dock{width:320px;background:#fff;border:1px solid rgba(10,10,11,.12);border-radius:12px;overflow:hidden}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px 12px;border-bottom:1px solid rgba(10,10,11,.12)}
+.row{display:inline-flex;align-items:center;gap:12px;min-width:0}
+.mark{font:700 20px/1 Georgia,serif;color:#2c2c2a;flex-shrink:0}.mark b{color:#1d9e75}
+.rolewrap{display:grid;gap:2px;min-width:0}
+.role{font-size:12px;color:#5f5e5a;line-height:1.3}
+.role.fixed{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acts{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid rgba(10,10,11,.12);border-radius:6px;flex-shrink:0}
+.ic{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px}
+/* workspace notes + tabs */
+.ws{width:560px;background:#fff;border:1px solid rgba(10,10,11,.12);border-radius:12px;padding:18px}
+.cnf-pill{border:1px dashed rgba(44,44,42,.14);background:#fff;border-radius:10px;padding:9px 14px;font:600 12.5px Inter;color:#2c2c2a;cursor:pointer;margin:0 0 14px}
+.cnf-band{display:block;width:100%;box-sizing:border-box;text-align:left;border:1px dashed rgba(44,44,42,.14);background:#fff;border-radius:10px;padding:11px 16px;font:600 12.5px Inter;color:#2c2c2a;cursor:pointer;margin:0 0 14px}
+.tabs{display:flex;gap:18px;border-bottom:1px solid rgba(10,10,11,.12);padding-bottom:0}
+.tab{padding:8px 0;font:600 13px Inter;color:#888}.tab.on{color:#1d4ed8;border-bottom:2px solid #1d4ed8}
+</style></head><body>
+<div class="col">
+  <div class="cap bad">Before — role wraps, crowds icons</div>
+  <div class="dock"><div class="hdr">
+    <div class="row"><span class="mark">a<b>V</b>a</span><div class="rolewrap"><span class="role">Charter partner</span></div></div>
+    <div class="acts"><span class="ic">▢</span><span class="ic">◧</span><span class="ic">⤢</span><span class="ic">✕</span></div>
+  </div></div>
+  <div class="cap good">After — role on one line (ellipsis only if too long)</div>
+  <div class="dock"><div class="hdr">
+    <div class="row"><span class="mark">a<b>V</b>a</span><div class="rolewrap"><span class="role fixed">Charter partner</span></div></div>
+    <div class="acts"><span class="ic">▢</span><span class="ic">◧</span><span class="ic">⤢</span><span class="ic">✕</span></div>
+  </div></div>
+</div>
+<div class="col">
+  <div class="cap bad">Before — orphaned pill above tabs</div>
+  <div class="ws"><button class="cnf-pill">Paste client notes</button>
+    <div class="tabs"><span class="tab on">Steps</span><span class="tab">Files &amp; Evidence</span><span class="tab">Intelligence</span><span class="tab">Approvals</span></div>
+  </div>
+  <div class="cap good">After — full-width affordance band</div>
+  <div class="ws"><button class="cnf-band">Paste client notes</button>
+    <div class="tabs"><span class="tab on">Steps</span><span class="tab">Files &amp; Evidence</span><span class="tab">Intelligence</span><span class="tab">Approvals</span></div>
+  </div>
+</div>
+</body></html>

@@ -2276,6 +2276,12 @@ const AGENT_ROLE_STYLE: CSSProperties = {
   fontSize: 12,
   color: CANVAS.INK_SOFT,
   lineHeight: 1.3,
+  // Keep the eyebrow on one line in a narrow dock: truncate rather than wrap
+  // under the wordmark and crowd the mode controls. The grid parent already
+  // sets min-width:0 so this can shrink and ellipsize.
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
 const MODE_PICKER_STYLE: CSSProperties = {
