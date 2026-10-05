@@ -12,6 +12,13 @@ import {
 } from "@testing-library/react";
 import { TextDecoder } from "util";
 import { StrategicMoveOriginateClient } from "../StrategicMoveOriginateClient";
+import {
+  agreeNoun,
+  buildOriginateRailRows,
+  formatAnswersCaptured,
+  formatOriginateDiscardProgress,
+  formatOriginateRailTally,
+} from "../originate-figure-labels";
 
 const mockPush = jest.fn();
 
@@ -197,7 +204,7 @@ describe("StrategicMoveOriginateClient", () => {
       name: /^submit p0 for review$/i,
     });
     expect(approveButton).toBeDisabled();
-    expect(screen.getAllByText("0 of 10")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("0 of 10 answers")[0]).toBeInTheDocument();
     expect(
       screen.getByText(/Describe the business problem or opportunity/i),
     ).toBeInTheDocument();
@@ -900,6 +907,120 @@ describe("StrategicMoveOriginateClient", () => {
       );
       const body = JSON.parse((submitCall![1] as { body: string }).body);
       expect(body.extendedIntake).toBeNull();
+    });
+  });
+
+  describe("the screen's figures say what they count (originate-figure-labels)", () => {
+    it('agrees a noun to its denominator, so a single-answer scaffold never reads "1 answers"', () => {
+      expect(agreeNoun(1, "answer", "answers")).toBe("answer");
+      expect(agreeNoun(0, "answer", "answers")).toBe("answers");
+      expect(agreeNoun(2, "answer", "answers")).toBe("answers");
+    });
+
+    it("measures only P0 — every later rail row carries no figure at all, not a zero", () => {
+      const rows = buildOriginateRailRows({
+        requiredFilled: 3,
+        requiredFieldCount: 10,
+        laterPhases: [
+          { phase: 1, label: "P1 Charter" },
+          { phase: 2, label: "P2 Discover" },
+          { phase: 3, label: "P3 Design" },
+          { phase: 4, label: "P4 Plan" },
+          { phase: 5, label: "P5 Mobilize" },
+        ],
+      });
+
+      expect(rows).toHaveLength(6);
+      expect(rows[0].measured).toEqual({ met: 3, total: 10 });
+      const later = rows.slice(1);
+      expect(later.map((r) => r.measured)).toEqual([
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]);
+      // No number may reach a later row by any route: the whole row, serialized,
+      // must contain no digit but its own phase number.
+      for (const row of later) {
+        expect(JSON.stringify(row.measured)).toBe("null");
+      }
+    });
+
+    it("states the noun on a measured row and claims nothing on an unmeasured one", () => {
+      const rows = buildOriginateRailRows({
+        requiredFilled: 3,
+        requiredFieldCount: 10,
+        laterPhases: [{ phase: 1, label: "P1 Charter" }],
+      });
+      expect(formatOriginateRailTally(rows[0])).toBe("3 of 10 answers");
+      expect(formatOriginateRailTally(rows[1])).toBe("Not started");
+      expect(formatOriginateRailTally(rows[1])).not.toMatch(/\d/);
+    });
+
+    it("agrees the rail's own noun to a one-answer scaffold", () => {
+      const [p0] = buildOriginateRailRows({
+        requiredFilled: 0,
+        requiredFieldCount: 1,
+        laterPhases: [],
+      });
+      expect(formatOriginateRailTally(p0)).toBe("0 of 1 answer");
+    });
+
+    it("agrees the promote bar's noun to its denominator", () => {
+      expect(formatAnswersCaptured({ filled: 0, total: 10 })).toMatch(
+        /^0 of 10 answers captured/,
+      );
+      expect(formatAnswersCaptured({ filled: 0, total: 1 })).toMatch(
+        /^0 of 1 answer captured/,
+      );
+    });
+
+    it("counts the discard sentence's two sides over the SAME set, so it carries one figure that cannot exceed its own total", () => {
+      const line = formatOriginateDiscardProgress({
+        requiredFilled: 3,
+        requiredFieldCount: 10,
+      });
+      expect(line).toBe("You\u2019ve captured 3 of 10 required answers.");
+      // Exactly one N-of-M pair: the old copy carried two numerators over one
+      // denominator, counting every brief field against the required-only total.
+      expect(line.match(/\d+ of \d+/g)).toHaveLength(1);
+      expect(
+        formatOriginateDiscardProgress({
+          requiredFilled: 0,
+          requiredFieldCount: 1,
+        }),
+      ).toBe("You\u2019ve captured 0 of 1 required answer.");
+    });
+  });
+
+  describe("the Originate rail's figures at the host call site", () => {
+    it("renders no invented total for P1-P5 — five rows say they have not started", () => {
+      render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
+
+      // The five hard-coded literals this screen used to render.
+      expect(screen.queryByText("0 of 5")).not.toBeInTheDocument();
+      expect(screen.queryByText("0 of 4")).not.toBeInTheDocument();
+      expect(screen.getAllByText("Not started")).toHaveLength(5);
+    });
+
+    it("states what the measured P0 row counts, and tracks the active scaffold size", () => {
+      const { unmount } = render(
+        <StrategicMoveOriginateClient tenantName="Apex Retail" />,
+      );
+      expect(screen.getByText("0 of 10 answers")).toBeInTheDocument();
+      unmount();
+
+      render(
+        <StrategicMoveOriginateClient
+          tenantName="Apex Retail"
+          extendedIntakeFieldsEnabled
+        />,
+      );
+      // Vacuity guard: the two scaffolds differ in size, so a figure pinned to
+      // one of them cannot be a constant.
+      expect(screen.queryByText("0 of 10 answers")).not.toBeInTheDocument();
+      expect(screen.getByText("0 of 17 answers")).toBeInTheDocument();
     });
   });
 });

@@ -33,7 +33,13 @@ import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import styles from "./StrategicMoves.module.css";
 import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscoveryShape";
 import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
-import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import {
+  buildOriginateRailRows,
+  formatAnswersCaptured,
+  formatOriginateDiscardProgress,
+  formatOriginateRailTally,
+  type OriginateRailRow,
+} from "./originate-figure-labels";
 import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
@@ -995,26 +1001,20 @@ export function StrategicMoveOriginateClient({
   const completionPercent = Math.round(
     (requiredFilled / activeRequiredFieldCount) * 100,
   );
-  const originateTallies: PhaseTallyRow[] = [
-    {
-      phase: 0,
-      label: "P0 Originate",
-      met: requiredFilled,
-      total: activeRequiredFieldCount,
-      state: "current",
-    },
-    { phase: 1, label: "P1 Charter", met: 0, total: 5, state: "upcoming" },
-    {
-      phase: 2,
-      label: getPhaseLabel(2),
-      met: 0,
-      total: 5,
-      state: "upcoming",
-    },
-    { phase: 3, label: getPhaseLabel(3), met: 0, total: 4, state: "upcoming" },
-    { phase: 4, label: getPhaseLabel(4), met: 0, total: 4, state: "upcoming" },
-    { phase: 5, label: getPhaseLabel(5), met: 0, total: 4, state: "upcoming" },
-  ];
+  // The P1-P5 rows carry no measurement: this screen holds the P0 brief and
+  // no capture, gate or evidence state for any later phase. They used to carry
+  // hard-coded totals (5/5/4/4/4) matching no contract.
+  const originateRailRows: readonly OriginateRailRow[] = buildOriginateRailRows({
+    requiredFilled,
+    requiredFieldCount: activeRequiredFieldCount,
+    laterPhases: [
+      { phase: 1, label: "P1 Charter" },
+      { phase: 2, label: getPhaseLabel(2) },
+      { phase: 3, label: getPhaseLabel(3) },
+      { phase: 4, label: getPhaseLabel(4) },
+      { phase: 5, label: getPhaseLabel(5) },
+    ],
+  });
   const dockThread: ChatMessage[] = turns.map((turn) => ({
     id: turn.id,
     role: turn.role === "assistant" ? "agent" : "user",
@@ -1171,7 +1171,7 @@ export function StrategicMoveOriginateClient({
             setActiveP0Step("approve-build");
           }}
           onTabChange={setCanvasTab}
-          tallies={originateTallies}
+          rows={originateRailRows}
           tenantName={tenantName}
         />
         <div className={styles.phaseBodyMain}>
@@ -1252,10 +1252,11 @@ export function StrategicMoveOriginateClient({
               Discard this move?
             </h3>
             <p className={styles.confirmDialogBody}>
-              You&rsquo;ve captured {filledCount} of {activeRequiredFieldCount}{" "}
-              sections ({requiredFilled} of {activeRequiredFieldCount}{" "}
-              required). Save as a draft to come back, or discard and start
-              fresh.
+              {formatOriginateDiscardProgress({
+                requiredFilled,
+                requiredFieldCount: activeRequiredFieldCount,
+              })}{" "}
+              Save as a draft to come back, or discard and start fresh.
             </p>
             <div className={styles.confirmActions}>
               <button
@@ -1303,7 +1304,7 @@ function P0OriginationRail({
   onBack,
   onApprovals,
   onTabChange,
-  tallies,
+  rows,
   tenantName,
 }: {
   activeTab: P0WorkspaceTab;
@@ -1311,13 +1312,13 @@ function P0OriginationRail({
   onBack: () => void;
   onApprovals: () => void;
   onTabChange: (tab: P0WorkspaceTab) => void;
-  tallies: PhaseTallyRow[];
+  rows: readonly OriginateRailRow[];
   tenantName: string;
 }) {
   return (
     <aside
       className={styles.p0ShellRail}
-      aria-label={`Move journey: phase 0 of ${tallies.length - 1}`}
+      aria-label={`Move journey: phase 0 of ${rows.length - 1}`}
     >
       <button type="button" className={styles.p0RailBack} onClick={onBack}>
         &larr; All Moves
@@ -1330,7 +1331,7 @@ function P0OriginationRail({
       <div className={styles.p0RailSection}>
         <div className={styles.p0RailSectionLabel}>Phases</div>
         <div className={styles.p0RailRows}>
-          {tallies.map((row) => {
+          {rows.map((row) => {
             const isCurrent = row.state === "current";
             const isDone = row.state === "done";
             return (
@@ -1349,7 +1350,7 @@ function P0OriginationRail({
                 </span>
                 <span className={styles.p0RailPhaseLabel}>{row.label}</span>
                 <span className={styles.p0RailPhaseTally}>
-                  {row.total > 0 ? `${row.met} of ${row.total}` : "—"}
+                  {formatOriginateRailTally(row)}
                 </span>
               </div>
             );
@@ -1865,7 +1866,10 @@ function P0ApproveDetail({
         <span>
           {canPromote
             ? "P0 remains open for evidence upload and approval by an authorized workspace user."
-            : `${requiredFilled} of ${requiredFieldCount} answers captured — finish the remaining P0 answers.`}
+            : formatAnswersCaptured({
+                filled: requiredFilled,
+                total: requiredFieldCount,
+              })}
         </span>
       </div>
       {submitError ? (
