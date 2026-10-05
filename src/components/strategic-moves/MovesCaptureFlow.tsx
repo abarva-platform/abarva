@@ -424,6 +424,11 @@ const MCF_CSS = `
 .mcf-q-labelrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px}
 .mcf-q-label{display:block;font-size:16px;font-weight:600}
 .mcf-q-help{font-size:14px;line-height:1.5;color:var(--mcf-muted);margin:0 0 6px}
+.mcf-question{min-width:0}
+.mcf-question>*{max-width:100%}
+.mcf-input{display:block;width:100%;box-sizing:border-box;font-family:var(--mcf-sans);font-size:15px;line-height:1.55;color:var(--mcf-ink);background:var(--mcf-surface);border:1px solid var(--mcf-line-strong);border-radius:10px;padding:12px 14px;resize:vertical;min-height:96px}
+.mcf-input:focus{outline:none;border-color:var(--mcf-accent);box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.mcf-input::placeholder{color:var(--mcf-faint)}
 .mcf-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px;padding-top:24px;border-top:1px solid var(--mcf-line)}
 .mcf-footer-count{font-size:14px;color:var(--mcf-faint)}
 .mcf-footer-actions{display:flex;align-items:center;gap:8px}
