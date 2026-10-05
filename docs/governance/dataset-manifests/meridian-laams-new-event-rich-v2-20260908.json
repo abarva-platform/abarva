@@ -13,5 +13,16 @@
   "expected_object_count": 622,
   "approved_by": "active-task-operator-approval",
   "approved_at": "2026-09-08",
-  "notes": "Manifest gates the synthetic source-file and document package under datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908. It authorizes only an explicitly approved operator ACA data-build job with Layer 2, Layer 3, Layer 4, Tower bridge, row-count reconciliation, quality-gate output, proof bundle, and signed-in product/aVa proof before product or aVa claims rely on the package. The current contract-depth loader consumes the canonical source-files; raw New Event, RFP, supplier-response, cloud, and extended invoice evidence files are preserved for the next dedicated Source Event loader extension and must not be treated as loaded until that extension has its own proof."
+  "notes": "Manifest gates the synthetic source-file and document package under datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908. It authorizes only an explicitly approved operator ACA data-build job with Layer 2, Layer 3, Layer 4, Tower bridge, row-count reconciliation, quality-gate output, proof bundle, and signed-in product/aVa proof before product or aVa claims rely on the package. The current contract-depth loader consumes the canonical source-files; raw New Event, RFP, supplier-response, cloud, and extended invoice evidence files are preserved for the next dedicated Source Event loader extension and must not be treated as loaded until that extension has its own proof. Clause value_text in this package is generator-composed, declared under derived_text_declarations, and must load unreviewed with no page citation and no confidence score; a change to that column changes this manifest in the same commit.",
+  "derived_text_declarations": {
+    "source_files/contract_clauses.csv": {
+      "column": "value_text",
+      "basis": "derived_not_extracted",
+      "row_count": 56,
+      "review_state": "synthetic_demo_derived_text_not_extracted",
+      "confidence": "absent",
+      "source_page": "absent",
+      "reason": "Every value_text in this file is composed by the package generator and states the row's own provenance, not what the clause says. No extractor read it off a document, so no page citation, confidence score, excerpt or extractor version may be asserted for it. Clause prose is an owner call and is deliberately NOT authored here: authoring it would make the metadata true-looking rather than true. Enforced in code by src/lib/source/contract-depth-package/clause-text-basis.ts at both sinks (the contract-term load and the clause projection), because each manufactured these assertions when the row was silent."
+    }
+  }
 }

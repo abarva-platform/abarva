@@ -110,6 +110,39 @@ export const DatasetManifestSchema = z
     load_approval: LoadApprovalSchema.nullable().optional(),
     /** Absent until a named person approves serving that loaded version on a surface. */
     serving_approval: ServingApprovalSchema.nullable().optional(),
+    /**
+     * Columns in this dataset whose text is generated rather than read off a
+     * source document, keyed by the file path inside the package.
+     *
+     * A generated value must not present itself as an extraction. One governed
+     * package held 56 clause rows whose text stated only the row's own
+     * provenance while every row also carried a reviewed state, a confidence
+     * score and a page number — so each row looked like a page-cited
+     * extraction and was not one. Declaring the column here is what makes the
+     * source file's correction governed rather than a silent hand edit: the
+     * rows are rewritten FROM this declaration, and the loader and projection
+     * enforce the same absence in code.
+     *
+     * `confidence` and `source_page` are the literal string `"absent"`,
+     * because absent is the assertion — never a placeholder value.
+     */
+    derived_text_declarations: z
+      .record(
+        z.string().min(1),
+        z
+          .object({
+            column: z.string().min(1),
+            basis: z.literal("derived_not_extracted"),
+            row_count: z.number().int().nonnegative(),
+            review_state: z.string().min(1),
+            confidence: z.literal("absent"),
+            source_page: z.literal("absent"),
+            reason: z.string().min(40),
+          })
+          .strict(),
+      )
+      .nullable()
+      .optional(),
     notes: z.string().nullable().optional(),
   })
   .strict();
