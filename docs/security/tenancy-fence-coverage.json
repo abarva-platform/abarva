@@ -17,8 +17,8 @@
     "unfenced": 176,
     "unfencedButReachesFenceModule": 95,
     "behavioral": 80,
-    "byteScannerOnly": 6,
-    "none": 139
+    "byteScannerOnly": 7,
+    "none": 138
   },
   "ranking": [
     {
@@ -469,14 +469,6 @@
     },
     {
       "route": "src/app/api/v1/source/[eventId]/door1/diagnose/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/source/queries.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
       "coverage": "none",
       "fence": "indirect",
       "fenceVia": [
@@ -1065,6 +1057,14 @@
     },
     {
       "route": "src/app/api/v1/source/[eventId]/evidence-requests/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
       "coverage": "byte-scanner",
       "fence": "indirect",
       "fenceVia": [
@@ -6297,10 +6297,12 @@
         "src/lib/source/queries.ts"
       ],
       "reachesFenceModule": true,
-      "coverage": "none",
+      "coverage": "byte-scanner",
       "suites": {
         "behavioral": [],
-        "byteScanner": []
+        "byteScanner": [
+          "src/__tests__/integration/source/source-evidence-acceptance-actor-migration.test.ts"
+        ]
       }
     },
     {
