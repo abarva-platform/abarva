@@ -49,6 +49,16 @@ jobs:
       - name: Prove the enforced worker-job set is derived from the deploy script
         run: npm run check:aca-worker-job-set-derived
 
+      # A triage verdict is written at a base commit and addresses a future
+      # reader. When its subject file is later deleted the row keeps giving an
+      # instruction about a path that cannot be opened, and nothing expires it:
+      # the reconciliation that counts these rows is a report by design, because
+      # the rows it prints under an OPEN verdict are work that is owed. This is
+      # scoped to the disjoint case where the SUBJECT is gone, which is not owed
+      # work, and the only repair is to record where it went (item 26).
+      - name: Prove no triage verdict addresses a file that is gone
+        run: npm run check:triage-verdict-discharge
+
       - name: Check release record
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}

@@ -688,6 +688,10 @@
     "check:tenant-narrative-term-drift": {
       "kind": "pr-gate"
     },
+    "check:triage-verdict-discharge": {
+      "kind": "pr-gate",
+      "reason": "Refuses a triage verdict that addresses a test file no longer in the tree without saying where the subject went. docs/architecture/*triage*.json rows carry a verdict, an owner item and a currentAction written at a base commit; when the subject is later deleted the row keeps instructing a future reader about a path that cannot be opened, and no amount of executing closes it. The sibling report audit:triage-record-reconciliation already counts these rows and is deliberately classified report, because the rows it prints under an OPEN verdict are work that is owed and failing on owed work turns a queue into a red build. That reasoning is untouched: this gate is scoped to the disjoint sub-case where the subject itself is absent, which is not owed work because there is nothing left to execute. The other gate on this subject, check-source-workspace-quarantine.mjs, reaches only held_unwired verdicts carrying a quarantine entry, so it never sees these rows. Measured when this was added: five rows of t509-stale-suite-triage.json read Leave untouched for T-513 for five files that T-513 itself deleted in the same change that replaced each with a rendering suite, and the instruction outlived its subject by two weeks with nothing able to say so. A discharge must also RESOLVE, meaning movedTo or replacedBy has to name a file that exists, or a dead row is dischargeable by pointing it at another dead row. Runs the suite that proves both branches fail independently over fixtures, then the real audit. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
+    },
     "validate:context-corpus": {
       "kind": "pr-gate"
     },
