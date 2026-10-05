@@ -27,7 +27,11 @@ export type CapturePhaseProgressContext = {
    * rather than inferred.
    */
   viewedPhase: number;
-  /** How far the Move has advanced (`move.currentPhase`). */
+  /**
+   * How far the Move has advanced (`move.currentPhase`). Retained because the
+   * strip still uses it for reachability; it is deliberately NOT used to infer
+   * an answered count, because advancing past a phase does not answer it.
+   */
   currentPhase: number;
   /**
    * The live answered count for `viewedPhase` — never for `currentPhase`.
@@ -39,41 +43,44 @@ export type CapturePhaseProgressContext = {
 };
 
 /**
- * The answered count for one row.
+ * The answered count for one row, or `null` when this screen cannot measure it.
  *
- * Three rules, in this order:
+ * Only ONE phase can be counted: the one on screen, whose live capture values
+ * the host holds. Every other row is UNMEASURED, and says so by returning
+ * `null` rather than a number.
  *
- * 1. The row on screen is the one we can actually measure, so it reports the
- *    live count. This deliberately wins over rule 2: revisiting a phase the
- *    Move has already advanced past shows what that phase holds NOW, not a
- *    blanket "complete" that a later edit may have invalidated.
- * 2. A phase the Move has advanced past is complete — it could not have been
- *    left behind otherwise.
- * 3. Anything else has no live values and has not been passed, so it is 0.
+ * An earlier rule inferred that a phase the Move had advanced past must be
+ * complete, and filled the row with its own total. That inference is unsound.
+ * A Move can advance for reasons that never touch the structured capture
+ * questions — it predates the capture flow, or its gate was approved from
+ * evidence held elsewhere — and the questions are then still blank. The strip
+ * nonetheless reported the phase fully answered, and the flow drew a
+ * completion tick beside it, on every screen except that phase's own. Viewing
+ * the phase itself showed the true count, so one row read two different values
+ * depending on where you stood.
  *
- * The result is clamped to `[0, total]` only as a floor/ceiling of last resort;
- * the attribution above is what has to be right. A clamp alone would turn the
+ * Claiming coverage that was never measured is the failure mode this product
+ * treats as most serious, so an unmeasured row now claims nothing. The caller
+ * renders the question count alone and no tick.
+ *
+ * A measured count is still clamped to `[0, total]` as a floor/ceiling of last
+ * resort; the attribution is what has to be right. A clamp alone would turn an
  * impossible "11 of 7" into a believable but still-wrong "7 of 7".
  */
 export function capturePhaseAnsweredCount(
   row: CapturePhaseProgressRow,
   context: CapturePhaseProgressContext,
-): number {
+): number | null {
+  if (row.phase !== context.viewedPhase) return null;
   const total = Math.max(0, row.total);
-  const answered =
-    row.phase === context.viewedPhase
-      ? context.viewedAnsweredCount
-      : row.phase < context.currentPhase
-        ? total
-        : 0;
-  return Math.min(Math.max(0, answered), total);
+  return Math.min(Math.max(0, context.viewedAnsweredCount), total);
 }
 
 /** `capturePhaseAnsweredCount` over every row of the strip. */
 export function capturePhaseProgress<Row extends CapturePhaseProgressRow>(
   rows: readonly Row[],
   context: CapturePhaseProgressContext,
-): Array<Row & { answered: number }> {
+): Array<Row & { answered: number | null }> {
   return rows.map((row) => ({
     ...row,
     answered: capturePhaseAnsweredCount(row, context),
