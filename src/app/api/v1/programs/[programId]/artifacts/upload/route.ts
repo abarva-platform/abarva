@@ -24,7 +24,10 @@ import {
   ingestUploadedMoveEvidence,
 } from "@/lib/programs/current-state-doc-ingest";
 import { sensitiveUploadRejectedResponse } from "@/lib/security/sensitive-upload-guard";
-import { buildDiscoveryBlueprintInputFromProgram } from "@/lib/programs/discovery/evidence-readiness";
+import {
+  buildDiscoveryBlueprintInputFromProgram,
+  resolveDeclaredProgramArchetypeId,
+} from "@/lib/programs/discovery/evidence-readiness";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import { resolveMoveUploadEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 
@@ -100,10 +103,10 @@ export async function POST(
           { status: 400 },
         );
       }
+      const uploadProgram = await getProgramById(ctx, programId);
       const discoveryFamilyIds = getDiscoveryBlueprint(
-        buildDiscoveryBlueprintInputFromProgram(
-          await getProgramById(ctx, programId),
-        ),
+        buildDiscoveryBlueprintInputFromProgram(uploadProgram),
+        resolveDeclaredProgramArchetypeId(uploadProgram),
       ).evidenceFamilies.map((evidenceFamily) => evidenceFamily.id);
       const declared = resolveMoveUploadEvidenceFamily(
         form.get("evidenceFamily"),
