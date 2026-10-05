@@ -205,6 +205,8 @@ interface MovesPhaseStandaloneClientProps {
   solutionPatternGateEnabled?: boolean;
   /** `moves_capture_v2` feature flag, resolved server-side (tenant-gated, default OFF). When true, phases 1–5 render the redesigned 3-step capture flow (`MovesCaptureFlow`) in place of the contract-steps canvas. Same canonical sections/keys, saves, and structured inputs; only the capture presentation changes. */
   captureV2Enabled?: boolean;
+  /** `moves_capture_p0_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true AND `captureV2Enabled` is true, P0 Originate also renders the redesigned 3-step capture flow instead of the legacy finder-columns canvas. P0's eleven canonical sections/keys, saves, structured inputs, authorization check and required-evidence gate are unchanged; only which phases render the flow differs. */
+  captureP0Enabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
   charterBasisEnabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
@@ -818,6 +820,7 @@ export function MovesPhaseStandaloneClient({
   riskAssessmentEnabled = false,
   solutionPatternGateEnabled = false,
   captureV2Enabled = false,
+  captureP0Enabled = false,
   charterBasisEnabled = false,
   initialP1CharterBasisBySection = {},
   currentUser = null,
@@ -902,6 +905,11 @@ export function MovesPhaseStandaloneClient({
   const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(
     null,
   );
+  // Confirmation state for the P0 gate control rendered INLINE in the capture
+  // flow's hand-off step. The legacy canvas puts its P0 button through
+  // `StepHeaderActionPortal`, whose target (`#mxw-step-progress-action`) does
+  // not exist in the capture flow, so the capture flow needs its own trigger.
+  const [captureP0ConfirmOpen, setCaptureP0ConfirmOpen] = useState(false);
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
   const topLevelRequiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(
     evidenceNeedPackets,
@@ -2356,7 +2364,9 @@ export function MovesPhaseStandaloneClient({
         <div className="mcf-ava-draft" data-testid={`ava-draft-${section.key}`}>
           <div className="mcf-ava-draft-head">
             <span className="mcf-ava-badge">aVa draft · review</span>
-            <span className="mcf-ava-conf">{proposal.confidence} confidence</span>
+            <span className="mcf-ava-conf">
+              {proposal.confidence} confidence
+            </span>
           </div>
           <blockquote className="mcf-ava-proposed">
             {proposal.proposedValue}
@@ -2429,7 +2439,9 @@ export function MovesPhaseStandaloneClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             phase: phase.phase,
-            sections: { [sectionKey]: persistedPhaseCaptureValues[sectionKey] ?? "" },
+            sections: {
+              [sectionKey]: persistedPhaseCaptureValues[sectionKey] ?? "",
+            },
             p1BasisBySection: { [sectionKey]: next },
             ...(phaseCaptureRevision
               ? { expectedRevision: phaseCaptureRevision }
@@ -2445,7 +2457,9 @@ export function MovesPhaseStandaloneClient({
         };
         if (!res.ok || !body.ok) {
           throw new Error(
-            body.detail || body.error || `Basis save failed (HTTP ${res.status})`,
+            body.detail ||
+              body.error ||
+              `Basis save failed (HTTP ${res.status})`,
           );
         }
         if (body.revision) setPhaseCaptureRevision(body.revision);
@@ -2468,12 +2482,7 @@ export function MovesPhaseStandaloneClient({
         }));
       }
     },
-    [
-      move.id,
-      phase.phase,
-      persistedPhaseCaptureValues,
-      phaseCaptureRevision,
-    ],
+    [move.id, phase.phase, persistedPhaseCaptureValues, phaseCaptureRevision],
   );
 
   const captureSectionBasis = (section: PhaseCaptureSection): ReactNode => {
@@ -2548,38 +2557,87 @@ export function MovesPhaseStandaloneClient({
 
   const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
 
+  // P0 Originate renders the redesigned capture flow only when BOTH flags are
+  // on: the flow itself (`moves_capture_v2`) and the P0 extension
+  // (`moves_capture_p0_v1`). Either off ⇒ P0 keeps the legacy canvas exactly.
+  const captureP0Active =
+    captureV2Enabled && captureP0Enabled && phase.phase === 0;
+
   // The governed submit control for the capture flow's final step: the SAME
   // PhaseApproveAndBuild the canvas uses, so generation + the gate run through
   // the existing pipeline (rendered inline — no portal target in this flow).
-  const captureApproveSlot: ReactNode =
-    phase.phase >= 1 && phase.phase <= 5 ? (
-      canApproveGates ? (
-        <PhaseApproveAndBuild
-          archetype={move.archetype}
+  //
+  // P0 is the exception: it has no deliverable build: its gate is approval of
+  // the origination brief. So the P0 arm renders P0's own gate control, using
+  // the SAME authorization check (`canApproveGates`) and the SAME required-
+  // evidence gate (`topLevelRequiredEvidenceGaps`, identical to the legacy
+  // canvas's `openRequiredEvidence`) and the same `approveP0Gate` action. P0
+  // still cannot advance on intake answers alone.
+  const captureApproveSlot: ReactNode = captureP0Active ? (
+    !canApproveGates ? (
+      <span className="mcf-gate-note">
+        Approval is available to an authorized workspace user.
+      </span>
+    ) : topLevelRequiredEvidenceGaps.length > 0 ? (
+      <span className="mcf-gate-note">
+        P0 cannot advance on these answers alone. Upload one source file for
+        this Move in Files &amp; Evidence and review its extracted content, then
+        return here to approve.
+      </span>
+    ) : (
+      <>
+        <button
+          className="mxw-gate-button"
+          disabled={gateApprovalStatus === "approving"}
+          onClick={() => setCaptureP0ConfirmOpen(true)}
+          type="button"
+        >
+          {gateApprovalStatus === "approving"
+            ? "Approving..."
+            : "Approve gate →"}
+        </button>
+        <GateApprovalConfirmDialog
+          open={captureP0ConfirmOpen}
+          title="Approve the P0 gate?"
+          summary="This records your approval of the origination brief and unlocks P1 Charter. Your signed-in account must have Move approval permission. At least one uploaded P0 source file must already have a human-approved extraction."
           approverLabel={approverLabel}
-          clientDisplayName={move.tenant.name}
-          disabledReason={phaseCaptureBlocker}
-          deliverableKeys={phaseCanonicalKeysForRoute(
-            phase.phase,
-            confirmedSolutionRoute,
-          )}
-          evidenceNeedPackets={evidenceNeedPackets}
-          inputCount={phaseCaptureCompleteCount}
-          initialArtifacts={visiblePhaseBuildArtifacts}
-          moveId={move.id}
-          moveName={displayMoveName}
-          onBeforeBuild={finalizePhaseCapture}
-          onBuildSettled={approvePhaseGateAfterBuild}
-          blockOnEvidenceGaps
-          phaseLabel={`${phase.code} ${phase.title}`}
-          phaseNum={phase.phase}
+          confirmLabel="Approve gate"
+          onCancel={() => setCaptureP0ConfirmOpen(false)}
+          onConfirm={() => {
+            setCaptureP0ConfirmOpen(false);
+            void approveP0Gate();
+          }}
         />
-      ) : (
-        <span className="mcf-gate-note">
-          Approval is available to an authorized workspace user.
-        </span>
-      )
-    ) : null;
+      </>
+    )
+  ) : phase.phase >= 1 && phase.phase <= 5 ? (
+    canApproveGates ? (
+      <PhaseApproveAndBuild
+        archetype={move.archetype}
+        approverLabel={approverLabel}
+        clientDisplayName={move.tenant.name}
+        disabledReason={phaseCaptureBlocker}
+        deliverableKeys={phaseCanonicalKeysForRoute(
+          phase.phase,
+          confirmedSolutionRoute,
+        )}
+        evidenceNeedPackets={evidenceNeedPackets}
+        inputCount={phaseCaptureCompleteCount}
+        initialArtifacts={visiblePhaseBuildArtifacts}
+        moveId={move.id}
+        moveName={displayMoveName}
+        onBeforeBuild={finalizePhaseCapture}
+        onBuildSettled={approvePhaseGateAfterBuild}
+        blockOnEvidenceGaps
+        phaseLabel={`${phase.code} ${phase.title}`}
+        phaseNum={phase.phase}
+      />
+    ) : (
+      <span className="mcf-gate-note">
+        Approval is available to an authorized workspace user.
+      </span>
+    )
+  ) : null;
 
   return (
     <main
@@ -2587,6 +2645,7 @@ export function MovesPhaseStandaloneClient({
       data-testid="moves-phase-standalone"
       data-finder-shell="on"
       data-capture-v2={captureV2Enabled ? "on" : "off"}
+      data-capture-p0={captureP0Active ? "on" : "off"}
     >
       <MovesStandaloneStyles />
       <div className="mxw-contextbar" aria-label="Move context">
@@ -2929,9 +2988,8 @@ export function MovesPhaseStandaloneClient({
                     </div>
                   </div>
 
-                  {captureV2Enabled &&
-                  phase.phase >= 1 &&
-                  phase.phase <= 5 ? (
+                  {(captureV2Enabled && phase.phase >= 1 && phase.phase <= 5) ||
+                  captureP0Active ? (
                     <MovesCaptureWorkspace
                       moveId={move.id}
                       moveName={displayMoveName}
@@ -2963,9 +3021,7 @@ export function MovesPhaseStandaloneClient({
                         sectionRecap: (s) =>
                           displayPhaseCaptureValues[s.key] ?? "",
                         onSelectPhase: (p) =>
-                          router.push(
-                            `/strategic-moves/${move.id}/phase/${p}`,
-                          ),
+                          router.push(`/strategic-moves/${move.id}/phase/${p}`),
                         onSubmitPhase: () => {
                           /* S5: wire to gate approval + next-phase generation */
                         },
@@ -4344,9 +4400,7 @@ function PhaseContractStepsCanvas({
             <p>{selectedSection.description}</p>
             {selectedSection.evidenceFamily ? (
               <P1CaptureEvidenceStep
-                approvedEvidenceReferences={
-                  approvedCaptureEvidenceReferences
-                }
+                approvedEvidenceReferences={approvedCaptureEvidenceReferences}
                 moveId={moveId}
                 onOpenFiles={onOpenFiles}
                 section={selectedSection}
@@ -4846,9 +4900,7 @@ function FinderStepsColumns({
             </header>
             {selectedSection.evidenceFamily ? (
               <P1CaptureEvidenceStep
-                approvedEvidenceReferences={
-                  approvedCaptureEvidenceReferences
-                }
+                approvedEvidenceReferences={approvedCaptureEvidenceReferences}
                 moveId={moveId}
                 onOpenFiles={onOpenFiles}
                 section={selectedSection}
@@ -5686,9 +5738,7 @@ function PhaseBody({
           evidenceReadinessAvailable={evidenceReadinessAvailable}
           businessChangeAssessment={businessChangeAssessment}
           approvedEvidenceReferences={approvedEvidenceReferences}
-          approvedCaptureEvidenceReferences={
-            approvedCaptureEvidenceReferences
-          }
+          approvedCaptureEvidenceReferences={approvedCaptureEvidenceReferences}
           reviewerIdentity={reviewerIdentity}
           onChange={onPhaseCaptureValueChange}
           phase={phase}
@@ -7428,10 +7478,10 @@ function EvidenceUploadControl({
             </select>
           </label>
         ) : null}
-      {!fixedEvidenceFamily &&
-      phase === 1 &&
-      uploadFamily === "uploaded_evidence" &&
-      evidenceFamilies.length > 0 ? (
+        {!fixedEvidenceFamily &&
+        phase === 1 &&
+        uploadFamily === "uploaded_evidence" &&
+        evidenceFamilies.length > 0 ? (
           <label className="mxw-upload-family">
             <span>Required evidence family (optional)</span>
             <select
