@@ -210,6 +210,8 @@ interface MovesPhaseStandaloneClientProps {
   captureP0Enabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
   charterBasisEnabled?: boolean;
+  /** `moves_capture_composition_v1` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). When true the workspace surface tabs render inside the agent dock's workspace column instead of above it, and the legacy stage head drops the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. Blocked-phase notice and readiness-workbook actions are unaffected, and no capture field, save, gate or evidence behaviour changes. */
+  captureCompositionEnabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
   /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
@@ -825,6 +827,7 @@ export function MovesPhaseStandaloneClient({
   captureV2Enabled = false,
   captureP0Enabled = false,
   charterBasisEnabled = false,
+  captureCompositionEnabled = false,
   initialP1CharterBasisBySection = {},
   captureNotesEnabled = false,
   currentUser = null,
@@ -2567,6 +2570,32 @@ export function MovesPhaseStandaloneClient({
   const captureP0Active =
     captureV2Enabled && captureP0Enabled && phase.phase === 0;
 
+  // Whether the redesigned 3-step capture — rather than the legacy
+  // contract-steps canvas — is what this phase renders. Named once because the
+  // composition polish has to agree with the mount: a polish that assumed the
+  // flow was present on a phase where it is not would, for instance, move the
+  // surface tabs into a dock that never renders and lose them. Reading the one
+  // constant is also why the polish follows P0 for free now that P0 mounts.
+  const captureFlowMounted =
+    (captureV2Enabled && phase.phase >= 1 && phase.phase <= 5) ||
+    captureP0Active;
+
+  // `moves_capture_composition_v1` (flag, default OFF, already conjoined with
+  // moves_capture_v2 server-side). Composition only: where the surface tabs sit
+  // and what the stage head stops repeating. It applies only on the phase view
+  // and only where the redesigned capture is what renders — the other surface
+  // views keep their own heads and their tab row exactly as they are.
+  const captureCompositionActive =
+    captureCompositionEnabled && captureFlowMounted;
+
+  const surfaceTabRow: ReactNode = (
+    <WorkspaceSurfaceTabs
+      activeView={workspaceView}
+      onSelect={setWorkspaceView}
+      tabs={workspaceTabs}
+    />
+  );
+
   // The governed submit control for the capture flow's final step: the SAME
   // PhaseApproveAndBuild the canvas uses, so generation + the gate run through
   // the existing pipeline (rendered inline — no portal target in this flow).
@@ -2691,11 +2720,13 @@ export function MovesPhaseStandaloneClient({
                 phaseTallies={phaseTallies}
                 viewingPhase={phase.phase}
               />
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={setWorkspaceView}
-                tabs={workspaceTabs}
-              />
+              {/* The same tab row either way. With the composition polish on
+                  and the redesigned capture mounted on this view it is handed
+                  to the dock instead, so it sits in the workspace column with
+                  the content it switches rather than above the whole dock. */}
+              {captureCompositionActive && workspaceView === "phase"
+                ? null
+                : surfaceTabRow}
               {workspaceView === "files" ? (
                 <>
                   <div className="mxw-crumb">
@@ -2888,14 +2919,30 @@ export function MovesPhaseStandaloneClient({
                     {phase.code} · {phase.title}
                   </div>
 
-                  <div className="mxw-stage-head">
-                    <div className="mxw-agent-chip">
-                      <span />
-                      AVA · MOVES
-                    </div>
-                    <h1>{phase.title}</h1>
-                    <div className="mxw-question">{phase.question}</div>
-                    <p>{phase.lede}</p>
+                  {/* With the composition polish on, the capture flow's own
+                      phase strip and step bar already name the phase, its
+                      question and how many of its inputs are answered, and the
+                      dock carries the aVa identity — so the head keeps only
+                      what the flow does NOT state: a blocked-phase notice and
+                      the readiness-workbook actions. */}
+                  <div
+                    className={
+                      captureCompositionActive
+                        ? "mxw-stage-head mxw-stage-head-compact"
+                        : "mxw-stage-head"
+                    }
+                  >
+                    {captureCompositionActive ? null : (
+                      <>
+                        <div className="mxw-agent-chip">
+                          <span />
+                          AVA · MOVES
+                        </div>
+                        <h1>{phase.title}</h1>
+                        <div className="mxw-question">{phase.question}</div>
+                        <p>{phase.lede}</p>
+                      </>
+                    )}
                     {blockedPhaseRequest ? (
                       <div
                         className="mxw-phase-blocker"
@@ -2967,33 +3014,34 @@ export function MovesPhaseStandaloneClient({
                         </div>
                       </div>
                     ) : null}
-                    <div
-                      className="mxw-progress-card"
-                      aria-label="Phase progress"
-                    >
-                      <strong>{phase.code}</strong>
-                      <span className="mxw-track">
-                        <span style={{ width: `${progressPct}%` }} />
-                      </span>
-                      <div className="mxw-progress-meta">
-                        {phaseProgressSignals.map((item) => (
-                          <span
-                            className={`mxw-progress-signal ${item.tone}`}
-                            key={item.label}
-                          >
-                            <b>{item.label}</b>
-                            {item.value}
-                          </span>
-                        ))}
+                    {captureCompositionActive ? null : (
+                      <div
+                        className="mxw-progress-card"
+                        aria-label="Phase progress"
+                      >
+                        <strong>{phase.code}</strong>
+                        <span className="mxw-track">
+                          <span style={{ width: `${progressPct}%` }} />
+                        </span>
+                        <div className="mxw-progress-meta">
+                          {phaseProgressSignals.map((item) => (
+                            <span
+                              className={`mxw-progress-signal ${item.tone}`}
+                              key={item.label}
+                            >
+                              <b>{item.label}</b>
+                              {item.value}
+                            </span>
+                          ))}
+                        </div>
+                        <em>
+                          {phaseStoryRemaining} {phaseStoryArtifactStatus}
+                        </em>
                       </div>
-                      <em>
-                        {phaseStoryRemaining} {phaseStoryArtifactStatus}
-                      </em>
-                    </div>
+                    )}
                   </div>
 
-                  {(captureV2Enabled && phase.phase >= 1 && phase.phase <= 5) ||
-                  captureP0Active ? (
+                  {captureFlowMounted ? (
                     <MovesCaptureWorkspace
                       moveId={move.id}
                       moveName={displayMoveName}
@@ -3026,6 +3074,9 @@ export function MovesPhaseStandaloneClient({
                       onAvaMessage={(text) => {
                         void sendAvaMessage(text);
                       }}
+                      tabs={
+                        captureCompositionActive ? surfaceTabRow : undefined
+                      }
                       captureProps={{
                         phases: capturePhases,
                         phase: phase.phase,
@@ -8714,6 +8765,9 @@ function MovesStandaloneStyles() {
 .mxw-question{grid-column:1;font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:2px}
 .mxw-stage-head p{grid-column:1;font-size:14.5px;color:var(--muted);line-height:1.5;max-width:82ch;margin:0}
 .mxw-stage-actions{grid-column:1;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.mxw-stage-head-compact{grid-template-columns:minmax(0,1fr);gap:0}
+.mxw-stage-head-compact:empty{display:none;margin-bottom:0}
+.mxw-stage-head-compact .mxw-stage-actions{margin-top:0}
 .mxw-stage-download{display:inline-flex;align-items:center;min-height:34px;border:1px solid var(--line-2);border-radius:9px;background:#fff;color:#2a5aa8;padding:8px 12px;font-size:12.5px;font-weight:850;text-decoration:none;box-shadow:0 1px 2px rgba(12,26,58,.04)}
 .mxw-stage-download:hover{border-color:rgba(42,90,168,.35);background:#f8fbff;color:#173f7a}
 .mxw-stage-download:disabled{opacity:.55;cursor:default}
