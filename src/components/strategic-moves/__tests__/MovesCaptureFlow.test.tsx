@@ -141,6 +141,64 @@ describe("MovesCaptureFlow", () => {
     ).not.toBeInTheDocument();
   });
 
+  // U-564. `it.failing` on purpose, and the assertion below is the CORRECT
+  // one, not the current behaviour: the hand-off view SHOULD be reachable from
+  // the last step in the configuration the product actually serves. Today it is
+  // not, so this case throws and `it.failing` records that as the pinned
+  // defect; the moment a remedy makes the hand-off reachable, the case starts
+  // passing and `it.failing` turns the suite RED, which is what forces whoever
+  // lands the remedy to promote it to a plain `it`.
+  //
+  // What makes the hand-off dead is a configuration no other case in this file
+  // exercises. `MovesPhaseStandaloneClient` passes a non-null `approveSlot` on
+  // every path that mounts this flow, and the footer spends its one forward
+  // control on it: `{view === 2 && approveSlot ? <approve slot> : <primary>}`.
+  // `go(3)` has exactly one caller — that primary's `onClick` — so with an
+  // `approveSlot` present nothing reaches view 3. The other ways in are closed
+  // too: `initialStep` is typed `0 | 1 | 2`, and the step bar only goes
+  // backwards (`if (i < view) go(i)`). The two cases above that do reach the
+  // hand-off pass no `approveSlot`, so they walk a footer the product never
+  // renders; the case that does pass one asserts only that the slot replaces
+  // the Submit, never that the hand-off survives it. No module-graph audit can
+  // see this either — the hand-off's contents are imported and referenced, so
+  // only the never-executed branch makes them dead.
+  it.failing(
+    "reaches the hand-off from the last step when the host supplies an approveSlot",
+    () => {
+      renderFlow({
+        approveSlot: <button type="button">Approve &amp; Build</button>,
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+      // Pin the configuration first, so a failure below cannot be a failure to
+      // arrive: we are on the last step, with the host's governed slot in the
+      // footer, exactly as every mounting path passes it.
+      expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId("mcf-handoff")).not.toBeInTheDocument();
+
+      // Press every forward affordance the last step offers, rather than one
+      // button by name — the claim is about reachability, and a remedy is free
+      // to label its control however it likes. "Back" is excluded because it
+      // leaves the last step.
+      const footer = document.querySelector(".mcf-footer");
+      expect(footer).not.toBeNull();
+      const forward = Array.from(
+        (footer as HTMLElement).querySelectorAll("button"),
+      ).filter((button) => button.textContent?.trim() !== "Back");
+      expect(forward.length).toBeGreaterThan(0);
+      for (const button of forward) {
+        fireEvent.click(button);
+        if (screen.queryByTestId("mcf-handoff")) break;
+      }
+
+      expect(screen.queryByTestId("mcf-handoff")).toBeInTheDocument();
+    },
+  );
+
   it("states a question count, and no completion tick, for a phase it cannot measure", () => {
     // `answered: null` is what `capturePhaseAnsweredCount` returns for every
     // row but the one on screen. Such a row must not read "N of M answered"
