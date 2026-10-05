@@ -3348,10 +3348,14 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
+    // Conformed: the header used to assert the BARE figure "7 of 7" and a
+    // heading that hard-coded the row count as a word. Both were copies of a
+    // fact the row set already states.
     expect(
-      screen.getByText("Review your seven Originate answers"),
+      screen.getByText("Review the Originate answers saved here"),
     ).toBeInTheDocument();
-    expect(screen.getByText("7 of 7")).toBeInTheDocument();
+    expect(screen.getByText("7 of 7 answers captured")).toBeInTheDocument();
+    expect(screen.queryByText("7 of 7")).not.toBeInTheDocument();
     expect(screen.getByText("Move name")).toBeInTheDocument();
     expect(
       screen.getAllByText("Member Service Agent Assist").length,
@@ -3372,6 +3376,72 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Gate criteria" }),
     ).toBeInTheDocument();
+  });
+
+  // The captured-brief review's figure. It rendered a bare `{capturedCount} of
+  // 7` — no noun in the visible element and no `title` attribute — on a screen
+  // that also carries the capture strip's "N questions" / "N of M answered"
+  // and the stepper's "N of M gate criteria". The denominator was a literal,
+  // a third copy of a count the row set and the heading each stated too.
+  it("renders the brief-review tally from the row set, nouned, with no bare figure", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          name: "Member Service Agent Assist",
+          archetype: "",
+          charter: {
+            scaffold: {
+              problem_statement: "Members wait on hold while agents search.",
+              sponsor_candidate: "Chief Digital and Information Officer",
+              scope_boundary: "In: claims status. Out: clinical decisions.",
+            },
+          },
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    // Three of the seven rows hold a saved value, so the numerator is not the
+    // denominator and the figure cannot be a constant.
+    expect(screen.getByText("3 of 7 answers captured")).toBeInTheDocument();
+    expect(screen.queryByText("3 of 7")).not.toBeInTheDocument();
+    expect(screen.queryByText("7 of 7")).not.toBeInTheDocument();
+  });
+
+  it("states the brief-review row count once, in the figure, never in the heading", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          name: "Member Service Agent Assist",
+          charter: { scaffold: { problem_statement: "Members wait on hold." } },
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const heading = screen.getByRole("heading", {
+      name: /Review the Originate answers/i,
+    });
+    // A numeral or a number word in the heading is a second copy of the row
+    // count, free to disagree with the figure the moment a row moves.
+    expect(heading.textContent ?? "").not.toMatch(/\d/);
+    expect(heading.textContent ?? "").not.toMatch(
+      /\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/i,
+    );
   });
 
   it("frames P1 as a posture hypothesis, not a solution approach recommendation", () => {
