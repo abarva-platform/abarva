@@ -34,6 +34,158 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-04 twelfth wave — walked on serving SHA `15de62ec41`
+
+**Item:** U-559.
+**Walked:** 2026-10-04, between 23:26:07Z and 23:30:26Z, by
+`source-backlog-executor#20261004T2325Z`.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why it is not pinned.** U-559 says to resolve the serving SHA at
+walk time, unpinned, because `C-635` became unexecutable by naming a literal the
+runtime then moved past. The serving SHA was `15de62ec41` (#8976), which was also
+`origin/main` at walk start and still was at walk end.
+
+**The serving SHA is established from two independent sources.** A revision
+suffix is a label a deploy wrote, and an overtaken run can leave one that is not
+the build's; so the registry was asked first. `az acr manifest show-metadata` on
+the serving digest returns exactly one tag, `main-15de62ec`. The revision name
+`--m15de62ec` agrees with it. Two sources, one answer.
+
+**Runtime invariant, read with read-only `az` before the walk and again at
+23:30:26Z, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App | `ca-abarva-web-lab-eastus` |
+| Template image | `sha256:c7487b6f5a9bf1022caf75c8051a058a3a30ad867c7bc2241564ef7b88a2a48b` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--m15de62ec` — sole entry, weight 100 |
+| Revision image | identical to the template image |
+| Revision state | `active: true`, `Healthy`, `Running`, created 23:23:29Z |
+| Registry tag on that digest | `main-15de62ec`, sole tag, pushed 23:21:38Z |
+
+Both reads returned the same digest and the same sole revision, so no deploy
+landed inside the walk.
+
+### The ancestor sweep — re-derived, and the population is not the item's three
+
+U-559 names three merges. The sweep was re-derived anyway, because a wave that
+trusts its predecessor's list is the failure this row family exists against.
+Every first-parent commit between the eleventh wave's walked SHA (`6b6b2af358`)
+and this one was enumerated and each checked with
+`git merge-base --is-ancestor`. **The repository squash-merges, so a merge is a
+first-parent commit and not a merge commit** — `--merges` over the same range
+returns 0, which is why the sweep is taken over `--first-parent` instead.
+
+**3 commits are new since the eleventh wave's build; all 3 are ancestors.** The
+fourth row below is not new — it is a row the eleventh wave swept and
+dispositioned, re-opened here because its disposition's ground has been
+withdrawn. So this wave's population is **4**, not 3, and not the eleventh
+wave's 60.
+
+| Disposition | Count | Merges |
+|---|---|---|
+| **Walked here** | 3 | #8975 #8973 #8976 |
+| No product surface — nothing under `src/app`, `src/components` or `src/lib` outside tests, so `deployed` is the ceiling | 1 | #8977 |
+
+All three of `e08beb6ab5` `a45468a6de` `15de62ec41` were asserted ancestors of
+the walked build, as U-559 requires. `e08beb6ab5` was separately asserted **not**
+an ancestor of `6b6b2af358`, which confirms U-559's reading that it fell outside
+the eleventh wave's sweep on the clock rather than through an omission in it:
+it merged at 22:42:28Z and that walk ended at 22:39:49Z.
+
+**#8977's exclusion was measured, not assumed:** it touches 2 files, this matrix
+file and a release record, and no non-test file under `src/app`,
+`src/components` or `src/lib`.
+
+### Both flags were observed on the runtime, not read off `registry.ts`
+
+This is the thing U-559 says not to get wrong, so it is recorded per flag with
+the discriminator named. A merged source default is not a serving state.
+
+| Flag | Observed | Discriminator used, and why it discriminates |
+|---|---|---|
+| `moves_home_v2` | **ON** | 34 distinct `mh-*` classes in the hydrated DOM, `.mh-table` ×1, `.mh-recon` ×1, `[aria-label="All moves"]` ×1, `[aria-label="Reconciliation with client inventory"]` ×1, the `mh-rail`/`mh-rail-dot` phase rail, and the *"Waiting on you"* triage. The OFF path's own discriminator is **absent**: the predecessor client's view switcher (*"View: Kanban"*) is gone. |
+| `moves_capture_v2` | **ON** | `[data-testid="moves-capture-flow"]` ×1, `.mcf-phasebar` ×1, `.mcf-stepbar` ×1, the three step titles *"Scope the bet"* / *"People & decisions"* / *"Plan the proof"*, the footer *"Step 1 of 3"*, and 3 question labels on step 1. Confirmed on **three** separate moves' phase-1 pages from the server HTML before the hydrated read, so the observation is not one page's accident. |
+
+**Two strings were rejected as discriminators rather than used.**
+*"Reconciled, not merged"* is present on **both** paths — it is in
+`strategic-moves/page.tsx` as well as in `MovesHome.tsx` — so it cannot
+distinguish them, and it was the string the first (wrong) reading had in hand.
+*"Waiting on you"* is also in `AgentRail.tsx`, so it is corroboration and not
+proof; the `mh-*` classes exist in no other component and carry the verdict.
+
+### A stale document inverted this verdict once, and the cause is datable
+
+The first read of the Moves surface, taken at the pre-claim session check,
+returned **zero** `mh-*` elements and would have been recorded as
+`moves_home_v2` **off**. It was wrong, and not by a flaky render: deploy run
+`37242940382` for `15de62ec41` completed at **23:26:07Z**, and that read was
+taken before it. The document in the tab had been served by the predecessor
+revision, so what looked like a flag state was the age of a document. A
+same-origin `fetch(…, {cache:'reload'})` of the identical URL immediately
+afterwards returned HTML containing `mh-table` ×2 and `mh-recon` ×8; the tab was
+then reloaded and the hydrated DOM agreed with the server. **Every observation
+this block's verdicts rest on was taken after 23:26:07Z**; the pre-claim check
+at roughly 23:24Z is named here as the thing that was discarded, and is not
+evidence for anything.
+
+Recorded because the mechanism is general and this file has recorded its mirror
+before: a reading taken across a traffic shift reports the build it was served
+by, not the build the registry names, and nothing in the reading says so. The
+walk window in this block's header starts at the traffic shift for that reason.
+
+### Results
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves Home — the redesigned portfolio landing (`MovesHome`) | #8975 | **pass**, on the **ON** path | The flag-on landing renders: a *"Waiting on you"* triage ordered oldest-first with the specific ask per move, an all-moves table (`.mh-table`, `[aria-label="All moves"]`) with the six-dot phase rail, the reconciled-with-client-inventory panel (`.mh-recon`), and the headline value line *"39 of 52 moves have declared value; the rest declare in Charter."* — a sentence whose two counts come from the governed portfolio and reconciliation totals the adapter reads, not from anything the surface invents. 0 console errors across the load. |
+| 2 | Moves phase capture — the 3-step capture flow (`MovesCaptureFlow`) | #8973 | **pass**, on the **ON** path — and this row's eleventh-wave exclusion is now withdrawn | The eleventh wave excluded this merge as *"flag off, and observed off rather than read off the registry"*. That ground was correct at 22:39:49Z and #8976 withdrew it at 23:12:50Z. Observed on: the 3-step bar with its three titles, the phase bar, step 1 titled *"Scope the bet"* carrying 3 questions, and the footer *"Step 1 of 3"* — on three moves, not one. 0 console errors across the load. |
+| 3 | The flag enablement itself | #8976 | **pass** | #8976's only non-test product file is `src/lib/features/registry.ts`, where both flags move from `includeTenants: []` to the synthetic demo tenant. Its claimed effect is that exactly those two surfaces become reachable on exactly that tenant, and rows 1 and 2 are that effect observed on the runtime. This row is the merge's verdict; it is not independent evidence of rows 1 and 2. |
+
+### Which path was produced, and which is owed
+
+U-559 asks for this explicitly, because a single-sided observation of a flag
+branch is how a disjunction goes half-asserted.
+
+**Produced: the ON path of both flags**, walked on the synthetic demo tenant —
+the one tenant both flags' `includeTenants` name, so it is the only tenant on
+which the ON branch is observable at all.
+
+**Owed: the OFF path of both flags**, which is the default every other tenant
+gets. It was not walked, and it is not inferred from `isFeatureEnabled`'s
+fail-closed shape — that would be reading the source, which is what this row
+forbids. Proving it needs a signed-in session on a second tenant, and no flag
+was changed to manufacture one: U-559 forbids an executor mutating tenant flag
+state to create its own evidence, and #8976 already made that change the right
+way, as a reviewed pull request.
+
+### Stated limits of this walk
+
+The eleventh wave's 52-merge inherited disposition was **not** re-verified here.
+This wave re-derived its own population over `6b6b2af358..15de62ec41` and
+re-opened one row by name; it does not re-assert the dispositions of merges below
+its lower bound. #8963 remains open, so the six merges whose verdicts sit only in
+it stay excluded on the ninth wave's ground, unchanged by this block.
+
+Row 1's value line was read as rendered. The two counts in it were not traced to
+the governed facts they are sourced from, so the row says the sentence rendered
+with the counts the adapter produced, and does not assert those counts are
+right.
+
+No write was performed on any surface. No approval was submitted, no candidate
+accepted, no phase advanced, no capture step saved, no move created. The
+interactions were navigation and same-origin `GET` reads issued with the session
+already in the browser. No Azure mutation; every `az` call is a read.
+
+### Noted, not filed
+
+The tenant's display name renders on the Moves surface, and it is the synthetic
+fixture tenant. It is not carried into this block or into the release record,
+per the public-repo discipline U-559 names; the flags, the components and the
+merges are named instead, which is what a later reader needs.
+
 ## 2026-10-04 eleventh wave — walked on serving SHA `6b6b2af358`
 
 **Item:** C-596.

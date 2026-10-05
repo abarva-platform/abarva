@@ -387,6 +387,13 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_v2",
   );
+  // The same tenant gate the phase-capture route applies to the P1 basis gate,
+  // resolved here so the per-field basis control renders only where the relaxed
+  // gate is actually in force. Off ⇒ the control does not render at all.
+  const charterBasisEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_basis_v1",
+  );
   // Governed fill-from-notes in the capture dock. Gated separately from the
   // capture redesign itself so the dock affordance can be reviewed on its own.
   const captureNotesEnabled = isFeatureEnabled(
@@ -911,6 +918,8 @@ export default async function StrategicMovePhaseWorkspacePage({
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
         captureNotesEnabled={captureNotesEnabled}
+        charterBasisEnabled={charterBasisEnabled}
+        initialP1CharterBasisBySection={initialP1CharterBasisBySection}
       />
     </AppShell>
   );

@@ -46,6 +46,13 @@ import {
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
+import {
+  CharterAssumptionBadge,
+  CharterBasisField,
+  isCharterAssumption,
+  type CharterBasisValue,
+} from "@/components/strategic-moves/CharterBasisField";
+import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -201,6 +208,10 @@ interface MovesPhaseStandaloneClientProps {
   captureV2Enabled?: boolean;
   /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
   captureNotesEnabled?: boolean;
+  /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
+  charterBasisEnabled?: boolean;
+  /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
+  initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -811,6 +822,8 @@ export function MovesPhaseStandaloneClient({
   solutionPatternGateEnabled = false,
   captureV2Enabled = false,
   captureNotesEnabled = false,
+  charterBasisEnabled = false,
+  initialP1CharterBasisBySection = {},
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -2377,6 +2390,133 @@ export function MovesPhaseStandaloneClient({
     );
   };
 
+  // ─── moves_charter_basis_v1 (flag, default OFF): the per-field basis ───
+  // The visible half of the P1 Charter minimum-viable-evidence gate. The gate
+  // and the persistence already exist server-side (`p1BasisBySection` on the
+  // phase-capture route); this is the only surface that lets a workspace user
+  // DECLARE the basis. Flag off ⇒ none of it renders and the legacy
+  // approved-evidence lock is untouched.
+  const charterBasisActive = charterBasisEnabled && phase.phase === 1;
+
+  const charterBasisSectionKeys = useMemo(() => {
+    if (!charterBasisActive) return new Set<string>();
+    return new Set(
+      phaseCaptureSections
+        .filter((section) => isP1CharterEvidenceFamily(section.evidenceFamily))
+        .map((section) => section.key),
+    );
+  }, [charterBasisActive, phaseCaptureSections]);
+
+  const [charterBasisBySection, setCharterBasisBySection] = useState<
+    Record<string, CharterBasisValue>
+  >(() => ({ ...initialP1CharterBasisBySection }));
+  const [charterBasisSaveError, setCharterBasisSaveError] = useState<
+    Record<string, string>
+  >({});
+
+  const saveCharterBasis = useCallback(
+    async (sectionKey: string, next: CharterBasisValue | null) => {
+      // An assumption is only a recordable basis once it names an owner AND how
+      // Discover validates it. Until both are typed we keep the choice in local
+      // state (so the inputs stay usable) and send nothing — the server would
+      // 422 a half-filled assumption, and a save-per-keystroke would thrash.
+      if (
+        next?.kind === "assumption" &&
+        (!next.owner.trim() || !next.p2ValidationPlan.trim())
+      ) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phase.phase,
+            sections: { [sectionKey]: persistedPhaseCaptureValues[sectionKey] ?? "" },
+            p1BasisBySection: { [sectionKey]: next },
+            ...(phaseCaptureRevision
+              ? { expectedRevision: phaseCaptureRevision }
+              : {}),
+          }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          revision?: string;
+          detail?: string;
+          error?: string;
+          p1BasisBySection?: Record<string, CharterBasisValue>;
+        };
+        if (!res.ok || !body.ok) {
+          throw new Error(
+            body.detail || body.error || `Basis save failed (HTTP ${res.status})`,
+          );
+        }
+        if (body.revision) setPhaseCaptureRevision(body.revision);
+        if (body.p1BasisBySection) {
+          setCharterBasisBySection({ ...body.p1BasisBySection });
+        }
+        setCharterBasisSaveError((prev) => {
+          if (!(sectionKey in prev)) return prev;
+          const rest = { ...prev };
+          delete rest[sectionKey];
+          return rest;
+        });
+      } catch (error) {
+        setCharterBasisSaveError((prev) => ({
+          ...prev,
+          [sectionKey]:
+            error instanceof Error
+              ? error.message
+              : "Could not record how you know this. Try again.",
+        }));
+      }
+    },
+    [
+      move.id,
+      phase.phase,
+      persistedPhaseCaptureValues,
+      phaseCaptureRevision,
+    ],
+  );
+
+  const captureSectionBasis = (section: PhaseCaptureSection): ReactNode => {
+    if (!charterBasisSectionKeys.has(section.key)) return null;
+    const approvedSources = initialApprovedP1CaptureEvidenceReferences
+      .filter((reference) => reference.familyKey === section.evidenceFamily)
+      .map((reference) => ({
+        evidenceId: reference.evidenceId,
+        label: reference.title,
+      }));
+    return (
+      <CharterBasisField
+        sectionKey={section.key}
+        value={charterBasisBySection[section.key] ?? null}
+        approvedSources={approvedSources}
+        emptyValue={!(displayPhaseCaptureValues[section.key] ?? "").trim()}
+        saveError={charterBasisSaveError[section.key] ?? null}
+        onChange={(next) => {
+          setCharterBasisBySection((prev) => {
+            if (!next) {
+              const rest = { ...prev };
+              delete rest[section.key];
+              return rest;
+            }
+            return { ...prev, [section.key]: next };
+          });
+          void saveCharterBasis(section.key, next);
+        }}
+      />
+    );
+  };
+
+  const captureSectionBadge = (section: PhaseCaptureSection): ReactNode => {
+    if (!charterBasisSectionKeys.has(section.key)) return null;
+    return isCharterAssumption(charterBasisBySection[section.key]) ? (
+      <CharterAssumptionBadge />
+    ) : null;
+  };
+
   const isCaptureSectionComplete = (sectionKey: string): boolean => {
     const section = phaseCaptureSections.find((s) => s.key === sectionKey);
     if (!section) return false;
@@ -2834,6 +2974,8 @@ export function MovesPhaseStandaloneClient({
                         sections: phaseCaptureSections,
                         isSectionComplete: isCaptureSectionComplete,
                         renderSectionInput: captureSectionInput,
+                        renderSectionBasis: captureSectionBasis,
+                        renderSectionBadge: captureSectionBadge,
                         sectionRecap: (s) =>
                           displayPhaseCaptureValues[s.key] ?? "",
                         onSelectPhase: (p) =>
