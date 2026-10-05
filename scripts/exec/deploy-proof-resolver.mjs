@@ -176,10 +176,10 @@ export function resolveDeployProof({ mergeSha, runs = [], isAncestor, mergedAt =
     return {
       verdict: UNRESOLVED,
       run: inFlight,
-      reason:
-        `run ${inFlight.databaseId} is still ${inFlight.status}` +
-        (onExact ? "" : ` on descendant ${String(inFlight.headSha).slice(0, 9)}`) +
-        "; no descendant has carried the SHA",
+      reason: onExact
+        ? `run ${inFlight.databaseId} is still ${inFlight.status}; no descendant has carried the SHA`
+        : `run ${inFlight.databaseId} is still ${inFlight.status} on descendant ` +
+          `${String(inFlight.headSha).slice(0, 9)}; no run has carried the SHA to a success yet`,
       candidates: [...exact, ...inFlightCarriers.filter((run) => run.headSha !== mergeSha)],
     };
   }
