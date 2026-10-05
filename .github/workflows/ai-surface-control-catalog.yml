@@ -698,6 +698,12 @@ jobs:
       - name: Exercise the Source New workspace, including the decision trail
         run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand
 
+      # The supplier panels appeared at four call sites, each with its own
+      # phase guard. They now share one guard, so one edit can leak supplier
+      # data into every phase; this is the suite that refuses that.
+      - name: Keep the supplier panels inside the supplier phase
+        run: npx jest --runTestsByPath src/components/source/new-workspace/SupplierPhasePanels.test.tsx --runInBand
+
       # The file cabinet is where the workspace's motion labels are actually
       # read: the folder rail carries the accepted motion, and the artifact
       # opened inside it carries a reused stage key that must not contradict
