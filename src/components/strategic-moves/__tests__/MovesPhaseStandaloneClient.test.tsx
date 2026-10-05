@@ -1116,7 +1116,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
-      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
     });
 
     it("moves_capture_v2 flag ON: renders the redesigned 3-step capture flow in place of the canvas", () => {
@@ -1138,6 +1140,190 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("heading", { name: "Scope the bet" }),
       ).toBeInTheDocument();
+    });
+
+    // ─── moves_capture_p0_v1: P0 Originate on the redesigned 3-step flow ───
+    // The flow shipped mounted for phases 1-5 only, so P0 stayed on the legacy
+    // finder-columns canvas. These cases pin BOTH halves of the two-flag gate
+    // independently (each conjunct removed while the other is satisfied), so
+    // dropping either flag from the condition fails a test.
+    const p0Move = () =>
+      makeMove({ currentPhase: 0, phaseLabel: "P0 Originate" });
+
+    it("P0 with both capture flags OFF (default): keeps the legacy canvas", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("moves-phase-standalone")).toHaveAttribute(
+        "data-capture-p0",
+        "off",
+      );
+    });
+
+    it("P0 with moves_capture_v2 ON but moves_capture_p0_v1 OFF: still the legacy canvas", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("moves-phase-standalone")).toHaveAttribute(
+        "data-capture-p0",
+        "off",
+      );
+    });
+
+    it("P0 with moves_capture_p0_v1 ON but moves_capture_v2 OFF: still the legacy canvas", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureP0Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("moves-phase-standalone")).toHaveAttribute(
+        "data-capture-p0",
+        "off",
+      );
+    });
+
+    it("P0 with BOTH flags ON: renders the 3-step capture flow opening on P0's first step", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureP0Enabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(screen.getByTestId("moves-phase-standalone")).toHaveAttribute(
+        "data-capture-p0",
+        "on",
+      );
+      // P0's own step grouping, not a phase-1 heading.
+      expect(
+        screen.getByRole("heading", { name: "Why now" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "Scope the bet" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("P0 capture flow offers the gate control inline once required evidence is covered", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureP0Enabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(0)}
+          initialSubstepKey="approve"
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Rendered inline, NOT through StepHeaderActionPortal (whose target does
+      // not exist in the capture flow), so the button is in the document.
+      expect(
+        screen.getByRole("button", { name: /Approve gate/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("P0 capture flow refuses the gate control while a required evidence item is open", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureP0Enabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(0).map(
+            (packet) => ({ ...packet, status: "missing" as const }),
+          )}
+          initialSubstepKey="approve"
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("button", { name: /Approve gate/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/P0 cannot advance on these answers alone/i),
+      ).toBeInTheDocument();
+    });
+
+    it("P0 capture flow withholds the gate control from an unauthorized user", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates={false}
+          captureP0Enabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(0)}
+          initialSubstepKey="approve"
+          move={p0Move()}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("button", { name: /Approve gate/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Approval is available to an authorized workspace user.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("the P0 flag alone does not change phases 1-5", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureP0Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
     });
 
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
@@ -2333,9 +2519,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     await waitFor(
       () => {
-        expect(
-          screen.getAllByText("Evidence open").length,
-        ).toBeGreaterThan(0);
+        expect(screen.getAllByText("Evidence open").length).toBeGreaterThan(0);
       },
       { timeout: 2_000 },
     );
@@ -2381,9 +2565,7 @@ describe("MovesPhaseStandaloneClient", () => {
         )[0] as HTMLTextAreaElement
       ).value,
     ).toBe(savedText);
-    expect(screen.getAllByText("Evidence open").length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.getAllByText("Evidence open").length).toBeGreaterThan(0);
   });
 
   it("keeps a saved P1 input blocked until its matching evidence is approved", () => {
@@ -2403,7 +2585,9 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Sponsor contact and progress updates/i));
+    fireEvent.click(
+      contractStepButton(/Sponsor contact and progress updates/i),
+    );
     expect(screen.getByText("Evidence for this step")).toBeInTheDocument();
     expect(
       screen.getByText(/step stays locked until that evidence is approved/i),
@@ -2429,7 +2613,9 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Sponsor contact and progress updates/i));
+    fireEvent.click(
+      contractStepButton(/Sponsor contact and progress updates/i),
+    );
     fireEvent.change(screen.getByLabelText("Add evidence for this step"), {
       target: {
         files: [
@@ -2486,7 +2672,9 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(contractStepButton(/Sponsor contact and progress updates/i));
+    fireEvent.click(
+      contractStepButton(/Sponsor contact and progress updates/i),
+    );
     expect(
       screen.getByRole("button", { name: "Save & continue" }),
     ).toBeEnabled();
@@ -5175,9 +5363,9 @@ describe("MovesPhaseStandaloneClient", () => {
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialPhaseCaptureValues={completeP1CaptureValues}
-        initialApprovedP1CaptureEvidenceReferences={
-          approvedP1CaptureEvidence(...P1_CHARTER_EVIDENCE_FAMILIES.map((family) => family.id))
-        }
+        initialApprovedP1CaptureEvidenceReferences={approvedP1CaptureEvidence(
+          ...P1_CHARTER_EVIDENCE_FAMILIES.map((family) => family.id),
+        )}
         move={makeMove({
           currentPhase: 1,
           phaseLabel: "P1 Charter",
@@ -6148,9 +6336,9 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
-          initialApprovedP1CaptureEvidenceReferences={
-            approvedP1CaptureEvidence("charter_business_change")
-          }
+          initialApprovedP1CaptureEvidenceReferences={approvedP1CaptureEvidence(
+            "charter_business_change",
+          )}
           initialSubstepKey="prepare"
           move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
           phaseNum={1}
@@ -6214,7 +6402,9 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       fireEvent.click(contractStepButton(/Baseline metrics/i));
-      expect(screen.getByText("No baseline metrics captured yet.")).toBeInTheDocument();
+      expect(
+        screen.getByText("No baseline metrics captured yet."),
+      ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Save & continue" }),
       ).toBeDisabled();
@@ -6320,9 +6510,9 @@ describe("MovesPhaseStandaloneClient", () => {
             sponsor_commitment:
               "Priya Nair, Chief Data & Analytics Officer — priya.nair@company.example",
           }}
-          initialApprovedP1CaptureEvidenceReferences={
-            approvedP1CaptureEvidence("charter_sponsor")
-          }
+          initialApprovedP1CaptureEvidenceReferences={approvedP1CaptureEvidence(
+            "charter_sponsor",
+          )}
           move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
           phaseNum={1}
           phaseTallies={[...phaseTallies]}
