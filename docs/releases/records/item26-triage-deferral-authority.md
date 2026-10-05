@@ -195,6 +195,14 @@ has to be restored.
 - **42 `wire_into_ci` rows remain held and unrun**, per `triageVerdicts.heldByVerdict`. Owner-gated
   work, untouched, and outside this gate's scope — those rows' subjects all exist and their verdicts
   describe work rather than defer it.
+- **Two rows for the same path inside one record would collapse.** The audit indexes each record as
+  `path -> row`, so a record holding two rows for one path keeps only the last. Measured on this
+  base: **0 records do** — checked across every `docs/architecture/*triage*.json`. The failure mode
+  if one ever did is a false positive (a chain reported where a real verdict also exists), which
+  someone investigates, rather than a false pass. Refusing the ambiguity outright would be the
+  fail-closed treatment and is the obvious extension; it is not taken here because the count is zero
+  and widening the gate mid-flight would invalidate the mutation table above. Recorded rather than
+  left to be discovered.
 - **No new backlog id was filed for this.** Claude Code's `T-500`–`T-599` and `C-500`–`C-599` bands
   are both measured exhausted (0 of 100 free) by the queue generator's own count, so the id-band rule
   offers no number to take. It is filed under standing item 26, which is the established precedent
