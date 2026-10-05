@@ -24,7 +24,24 @@ const OWNED_DIRECTORIES = [
   },
   {
     directory: "src/lib/source/contract-depth-package/__tests__",
-    suites: ["adapter.test.ts", "projection.test.ts"],
+    // `clause-text-basis.test.ts` added with item D-402. It is named by the
+    // required `Routes and disclaimers` job in `integrity.yml` as well as by
+    // the directory sweep in `unit-suites.yml`, so the ownership assertions
+    // below hold for it unchanged: the directory is still named by a workflow
+    // jest command, and the census still reports it neither partially covered
+    // nor uncovered (coveredTestFiles 2546 -> 2547, uncoveredTestFiles
+    // unchanged at 164).
+    //
+    // This list is a DECLARATION of the directory's contents, and the case
+    // that reads it is the reason a new suite here cannot arrive unowned. It
+    // failed on the branch that added the file, which is the gate working;
+    // declaring the suite is the sanctioned update, and no assertion is
+    // loosened to do it.
+    suites: [
+      "adapter.test.ts",
+      "clause-text-basis.test.ts",
+      "projection.test.ts",
+    ],
   },
   {
     directory: "src/lib/source/file-cabinet/__tests__",
@@ -74,12 +91,12 @@ const census = runCensus();
 const jestCommands = workflowJestCommands();
 
 describe("T-451 Source and Programs suite ownership", () => {
-  it("measures exactly the eight named suites", () => {
+  it("measures exactly the nine named suites", () => {
     expect(
       OWNED_DIRECTORIES.flatMap(({ directory, suites }) =>
         suites.map((suite) => `${directory}/${suite}`),
       ),
-    ).toHaveLength(8);
+    ).toHaveLength(9);
 
     for (const { directory, suites } of OWNED_DIRECTORIES) {
       expect(
