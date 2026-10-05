@@ -70,6 +70,7 @@ import {
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
+import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import {
   currentPhaseRequiredEvidenceGaps,
@@ -2668,8 +2669,14 @@ export function MovesPhaseStandaloneClient({
     />
   );
 
+  // Every row states its own phase's total, and P3's question set depends on
+  // the Move's confirmed solution route — so the total has to be derived with
+  // the route, exactly as the capture surface derives its own sections. Omitting
+  // it reported the default set's size for a Move whose P3 asks a narrower or a
+  // wider set, which both misstates a completed phase and lets the viewed row's
+  // answered count sit above or permanently below its total.
   const capturePhases: MovesCaptureFlowPhase[] = PHASES.map((p) => {
-    const total = getPhaseCaptureSections(p.phase).length;
+    const total = capturePhaseSectionTotal(p.phase, confirmedSolutionRoute);
     const answered =
       p.phase < currentPhase
         ? total
