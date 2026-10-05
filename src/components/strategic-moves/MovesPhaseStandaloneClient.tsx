@@ -37,6 +37,7 @@ import {
   type PhaseBuildArtifact,
 } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
+import { charterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-assumption-disclosure";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
@@ -50,6 +51,7 @@ import {
   CharterBasisField,
   CharterBasisMark,
   CharterBasisRollup,
+  CharterGateAssumptionNotice,
   isCharterAssumption,
   summarizeCharterBasis,
   type CharterBasisValue,
@@ -2605,18 +2607,38 @@ export function MovesPhaseStandaloneClient({
   // (`src/lib/programs/p1-charter-evidence.ts`) reads the persisted basis and
   // is unaffected by anything here. Empty set (flag off, or any phase but P1)
   // ⇒ null, and the hand-off reads exactly as it does without it.
-  const charterBasisRollup: ReactNode =
-    charterBasisSectionKeys.size === 0 ? null : (
-      <CharterBasisRollup
-        summary={summarizeCharterBasis(
+  // One computation, two surfaces. The hand-off rollup and the gate dialog's
+  // disclosure have to agree — two independent folds of the same bases would be
+  // free to drift, and a gate that disagreed with the read-back the author just
+  // saw is worse than a gate that says nothing.
+  const charterBasisSummary =
+    charterBasisSectionKeys.size === 0
+      ? null
+      : summarizeCharterBasis(
           phaseCaptureSections
             .filter((section) => charterBasisSectionKeys.has(section.key))
             .map((section) => ({ key: section.key, label: section.label })),
           charterBasisBySection,
           isCaptureSectionComplete,
-        )}
-      />
+        );
+
+  const charterBasisRollup: ReactNode =
+    charterBasisSummary === null ? null : (
+      <CharterBasisRollup summary={charterBasisSummary} />
     );
+
+  // The gate is the consequential surface: the rollup informs the author, this
+  // informs the approver inside the confirm dialog. `charterBasisActive` is
+  // already the resolved conjunction of the `moves_charter_basis_v1` flag and
+  // P1, so with the flag off this is null and the dialog is untouched.
+  const charterGateDisclosure: ReactNode = (
+    <CharterGateAssumptionNotice
+      disclosure={charterGateAssumptionDisclosure({
+        active: charterBasisActive,
+        counts: charterBasisSummary,
+      })}
+    />
+  );
 
   const capturePhases: MovesCaptureFlowPhase[] = PHASES.map((p) => {
     const total = getPhaseCaptureSections(p.phase).length;
@@ -3225,6 +3247,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          charterGateDisclosure={charterGateDisclosure}
                           canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
                           currentStateReadiness={currentStateReadiness}
@@ -3325,6 +3348,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          charterGateDisclosure={charterGateDisclosure}
                           canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
                           currentStateReadiness={currentStateReadiness}
@@ -5253,6 +5277,7 @@ function FinderFactsTable({ rawValue }: { rawValue: string }) {
 
 function PhaseBody({
   canApproveGates,
+  charterGateDisclosure,
   carriesForwardContent,
   currentStateReadiness,
   displayMoveName,
@@ -5298,6 +5323,8 @@ function PhaseBody({
   terminalComplete,
 }: {
   canApproveGates: boolean;
+  /** Advisory basis disclosure for the gate confirm dialog; null-rendering when the basis surface is inactive. */
+  charterGateDisclosure: ReactNode;
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
   displayMoveName: string;
@@ -6059,6 +6086,7 @@ function PhaseBody({
                 open={p0ConfirmOpen}
                 title={gateOnlyConfirmTitle}
                 summary={gateOnlyConfirmSummary}
+                disclosure={charterGateDisclosure}
                 approverLabel={approverLabel}
                 confirmLabel={
                   phase.phase >= 5 ? "Complete and hand off" : "Approve gate"
