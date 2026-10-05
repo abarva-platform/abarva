@@ -1326,6 +1326,111 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    // ─── moves_capture_composition_v1 ───────────────────────────────────────
+    // Composition only. Each case pins ONE half of the polish with the other
+    // inputs satisfied, so removing either half fails a case of its own.
+
+    it("moves_capture_composition_v1 OFF: the tab row stays above the dock and the stage head still states the phase", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(dock).not.toContainElement(tablist);
+      // the legacy head still carries the phase title, question and progress
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Charter" }),
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Phase progress")).toBeInTheDocument();
+    });
+
+    it("moves_capture_composition_v1 ON: the SAME tab row moves inside the dock, rendered once", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureCompositionEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      // exactly one tab row, and it is inside the dock's workspace column
+      const tablists = screen.getAllByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablists).toHaveLength(1);
+      expect(dock).toContainElement(tablists[0]);
+      // and it still switches surfaces from there
+      expect(
+        within(tablists[0]).getByRole("tab", { name: /Files/ }),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_capture_composition_v1 ON: the stage head stops repeating what the capture flow already states", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureCompositionEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the duplicated head is gone
+      expect(
+        screen.queryByRole("heading", { level: 1, name: "Charter" }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Phase progress")).not.toBeInTheDocument();
+      // but the flow still states the phase and the step, so nothing is lost
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByTestId("moves-capture-flow"),
+      ).toBeInTheDocument();
+      expect(
+        within(dock).getByRole("heading", { name: "Scope the bet" }),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_capture_composition_v1 ON without moves_capture_v2: changes nothing", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureCompositionEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the legacy canvas, its head and its tab row are all untouched
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Charter" }),
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Phase progress")).toBeInTheDocument();
+      expect(
+        screen.getByRole("tablist", { name: "Move workspace views" }),
+      ).toBeInTheDocument();
+    });
+
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient
