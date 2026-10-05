@@ -1638,6 +1638,277 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toHaveAttribute("data-basis", "none");
     });
 
+    // ─── moves_capture_notes_v1: the HOST call site ─────────────────────────
+    // The proposal matcher is pure and pinned (capture-notes-proposal.test.ts),
+    // the panel has its own suite, and the notes→basis decision is pinned in
+    // capture-notes-basis-link.test.ts. What nothing pinned is the FOUR inputs
+    // this component feeds that call site:
+    //
+    //   1. the flag (and the `moves_capture_v2` conjunct — the panel lives in
+    //      the capture dock, so with v2 off there is nowhere to put it),
+    //   2. `targets` — the VIEWED phase's capture sections and their values,
+    //      which is what makes the panel refuse to propose a question that is
+    //      not on the screen,
+    //   3. `onInsert` — the write back into the capture field, and
+    //   4. `recordsBasisFor` — the conjunction with `moves_charter_basis_v1`,
+    //      which is what makes the panel's "inserting records your assertion"
+    //      wording true of the field in front of the person rather than true
+    //      in general.
+    //
+    // Each case removes ONE of those with the others satisfied. Measured, not
+    // asserted: dropping the flag conjunct, pointing `targets` at the Move's
+    // progress instead of the viewed phase, stubbing `onInsert`, and emptying
+    // `recordsBasisFor` each failed 1, 1, 2 and 1 of this suite's cases — all
+    // of them new here. The other 146 render this component and none of them
+    // noticed the notes call site break.
+    //
+    // The `moves_capture_v2` half is structural rather than a droppable
+    // conditional: `notesFill` is a slot on `MovesCaptureWorkspace`, which only
+    // exists once the capture flow is mounted. The third case pins that the
+    // legacy canvas therefore grows no notes affordance of its own.
+    const notesMove = () =>
+      makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+
+    // Two blocks, each matching one P1 step-1 question on ≥2 of that section's
+    // own label/description terms. Written as prose a consultant would actually
+    // leave a conversation with, not as the field labels.
+    const CLIENT_NOTES = [
+      "Scope boundary: the member-services queue is in scope; the billing systems stay out.",
+      "",
+      "Success criteria are rough for now — directional targets Discovery can validate.",
+    ].join("\n");
+
+    const pasteAndPropose = (notes: string = CLIENT_NOTES) => {
+      fireEvent.click(screen.getByTestId("capture-notes-open"));
+      fireEvent.change(screen.getByTestId("capture-notes-input"), {
+        target: { value: notes },
+      });
+      fireEvent.click(screen.getByTestId("capture-notes-propose"));
+    };
+
+    it("moves_capture_notes_v1 OFF (default) on P1: the capture dock offers no fill-from-notes", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the dock and the flow are both up, so this is the flag's absence and
+      // not an unmounted surface
+      expect(screen.getByTestId("agent-dock")).toBeInTheDocument();
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-notes-open"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Paste client notes")).not.toBeInTheDocument();
+    });
+
+    it("moves_capture_notes_v1 ON on P1: the dock offers fill-from-notes, inside the capture dock", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureNotesEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByTestId("capture-notes-open"),
+      ).toHaveTextContent("Paste client notes");
+    });
+
+    it("moves_capture_notes_v1 ON without moves_capture_v2: the legacy canvas offers no fill-from-notes", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureNotesEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-notes-open"),
+      ).not.toBeInTheDocument();
+    });
+
+    // ── `targets` is the VIEWED phase's questions ──
+    // The same paste, on two screens. A proposal for a P1 question can only
+    // appear where P1's sections are the targets, so handing the panel any
+    // other section list (a constant, or the Move's current phase on a screen
+    // that is not it) loses one of these two assertions.
+    it("moves_capture_notes_v1 ON on P1: a pasted note proposes into a P1 charter question", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureNotesEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      pasteAndPropose();
+
+      const proposal = screen.getByTestId(
+        "capture-notes-proposal-scope_boundary",
+      );
+      // the verbatim span, not a paraphrase, and its provenance
+      expect(proposal).toHaveTextContent(
+        "the member-services queue is in scope",
+      );
+      expect(proposal).toHaveTextContent("line 1");
+      // and the paste is never dressed up as approved evidence
+      expect(
+        screen.getByTestId("capture-notes-basis-warning"),
+      ).toHaveTextContent("your assertion");
+    });
+
+    it("moves_capture_notes_v1 ON viewing P2: the same paste proposes nothing, because no P1 question is on screen", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureNotesEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      pasteAndPropose();
+
+      expect(
+        screen.queryByTestId("capture-notes-proposal-scope_boundary"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("capture-notes-empty")).toBeInTheDocument();
+    });
+
+    // ── `onInsert` writes into the capture field ──
+    // Dropping the handler leaves the panel's Insert a no-op that still looks
+    // like it worked (the proposal disappears either way, because the panel
+    // tracks what it has inserted itself), so assert the FIELD.
+    it("moves_capture_notes_v1 ON on P1: inserting a proposal writes the verbatim passage into that question", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureNotesEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const field = screen.getByLabelText("Scope boundary");
+      expect(field).toHaveValue("");
+
+      pasteAndPropose();
+      fireEvent.click(
+        screen.getByTestId("capture-notes-insert-scope_boundary"),
+      );
+
+      expect(screen.getByLabelText("Scope boundary")).toHaveValue(
+        "Scope boundary: the member-services queue is in scope; the billing systems stay out.",
+      );
+      // the sibling question is untouched — an insert is per field
+      expect(screen.getByLabelText("Success criteria")).toHaveValue("");
+    });
+
+    // ── `recordsBasisFor`: the conjunction with moves_charter_basis_v1 ──
+    // With the basis control off the person still declares the basis by hand,
+    // so the panel must not claim the insert records it. Two renders of the
+    // same paste, one flag apart.
+    it("moves_capture_notes_v1 ON with moves_charter_basis_v1 OFF: the panel does not claim an insert records the basis", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureNotesEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      pasteAndPropose();
+
+      expect(
+        screen.getByTestId("capture-notes-proposal-scope_boundary"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-notes-records-basis-scope_boundary"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-notes-basis-recorded-note"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_capture_notes_v1 ON with moves_charter_basis_v1 ON: inserting from notes stamps the field's basis as an assertion", async () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          captureNotesEnabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={notesMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("charter-basis-scope_boundary"),
+      ).toHaveAttribute("data-basis", "none");
+
+      pasteAndPropose();
+      // the panel says what the insert will do, for this field
+      expect(
+        screen.getByTestId("capture-notes-records-basis-scope_boundary"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("capture-notes-basis-recorded-note"),
+      ).toBeInTheDocument();
+
+      // the insert also PERSISTS the basis, so flush that write rather than
+      // leaving its state update to land after the test
+      await act(async () => {
+        fireEvent.click(
+          screen.getByTestId("capture-notes-insert-scope_boundary"),
+        );
+      });
+
+      // ...and the field agrees: an assertion, never "backed by evidence"
+      const basis = screen.getByTestId("charter-basis-scope_boundary");
+      expect(basis).toHaveAttribute("data-basis", "workspace_assertion");
+      expect(
+        within(basis).getByRole("radio", { name: "I'm asserting this" }),
+      ).toHaveAttribute("aria-checked", "true");
+      // and a paste never produces the amber assumption badge
+      expect(
+        screen.queryByTestId("charter-assumption-badge"),
+      ).not.toBeInTheDocument();
+    });
+
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient
