@@ -2168,7 +2168,12 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 04 vendor readiness",
     });
-    expect(within(readiness).getByText("Not recorded")).toBeTruthy();
+    // Scoped to the Request row: the Strategy authority renders the same
+    // "Not recorded" when it too is unread, and this case is about Request.
+    expect(
+      within(readiness).getByText("Request authority").nextElementSibling
+        ?.textContent,
+    ).toBe("Not recorded");
     // The negative half, and the point of the case: absence is not a blocker.
     expect(document.body.textContent ?? "").not.toMatch(
       /Changes are requested on the current Request version/,

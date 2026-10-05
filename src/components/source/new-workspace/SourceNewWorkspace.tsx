@@ -115,6 +115,17 @@ export interface SourceNewEventView {
    * render differently and only one of them is a blocker.
    */
   requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
+  /**
+   * Strategy-version authority, read the same way and meaning the same thing:
+   * `null`/absent is unread, not unapproved. The Strategy needs two distinct
+   * named approvers, so "approved" here means both, never one.
+   */
+  strategyVersionApproval?:
+    | "approved"
+    | "pending"
+    | "blocked"
+    | "changes_requested"
+    | null;
   /** Current immutable Request authority version used to fence Stage 04 writes. */
   requestAuthorityVersionId?: string | null;
 }
@@ -994,7 +1005,7 @@ export function SupplierPhasePanels({
   );
 }
 
-function SourceNewStage04VendorReadiness({
+export function SourceNewStage04VendorReadiness({
   event,
   responseRows,
 }: {
@@ -1023,6 +1034,17 @@ function SourceNewStage04VendorReadiness({
       ? "Changes are requested on the current Request version."
       : null,
   ].filter((item): item is string => Boolean(item));
+
+  const strategyAuthorityLabel =
+    event.strategyVersionApproval === "approved"
+      ? "Strategy version approved"
+      : event.strategyVersionApproval === "pending"
+        ? "Strategy approval pending"
+        : event.strategyVersionApproval === "changes_requested"
+          ? "Changes requested on the Strategy version"
+          : event.strategyVersionApproval === "blocked"
+            ? "Strategy approval blocked"
+            : "Not recorded";
 
   const requestAuthorityLabel =
     event.requestVersionApproval === "accepted"
@@ -1053,6 +1075,10 @@ function SourceNewStage04VendorReadiness({
         <div>
           <dt>Request authority</dt>
           <dd>{requestAuthorityLabel}</dd>
+        </div>
+        <div>
+          <dt>Strategy authority</dt>
+          <dd>{strategyAuthorityLabel}</dd>
         </div>
         <div>
           <dt>Solicitation motion</dt>
