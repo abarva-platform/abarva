@@ -146,14 +146,41 @@ export function resolveDeployProof({ mergeSha, runs = [], isAncestor, mergedAt =
     };
   }
 
-  // 3. Nothing carried it. An in-flight run means come back, not a verdict.
-  const inFlight = exact.find(isInFlight);
+  // 3. Nothing has carried it YET. An in-flight run means come back, not a
+  //    verdict — and the refusal is keyed by ancestry exactly as the proof in
+  //    step 2 is (item T-802). Until T-802 this read `exact.find(isInFlight)`,
+  //    which sees only a run on the merge SHA itself; concurrency cancels that
+  //    run on most merges, so the usual shape — exact run `cancelled`, the
+  //    deploy actually carrying the commit still running on a descendant —
+  //    matched nothing here and fell through to `not_deployed`. That is a
+  //    finding written about a commit whose deploy is mid-air, which is the
+  //    false state this module exists against, reached from the far side.
+  //
+  //    The set is deliberately NOT "any in-flight run": by timestamp alone the
+  //    newest run between two concurrently-merging branches is routinely not a
+  //    descendant of this commit, and waiting on it would be this SHA's
+  //    verdict decided by whichever branch merged next. So the same two
+  //    filters the descendants set uses apply — `notBeforeTheMerge`, because a
+  //    run that started before the merge existed cannot be carrying it, and
+  //    `isAncestor(mergeSha, run.headSha)`, which is an identity for `exact`
+  //    and therefore keeps case 10 intact.
+  const inFlightCarriers = runs
+    .filter(isInFlight)
+    .filter(notBeforeTheMerge)
+    .filter((run) => isAncestor(mergeSha, run.headSha))
+    .sort(byCreatedAt);
+
+  const inFlight = inFlightCarriers[0];
   if (inFlight) {
+    const onExact = inFlight.headSha === mergeSha;
     return {
       verdict: UNRESOLVED,
       run: inFlight,
-      reason: `run ${inFlight.databaseId} is still ${inFlight.status}; no descendant has carried the SHA`,
-      candidates: exact,
+      reason: onExact
+        ? `run ${inFlight.databaseId} is still ${inFlight.status}; no descendant has carried the SHA`
+        : `run ${inFlight.databaseId} is still ${inFlight.status} on descendant ` +
+          `${String(inFlight.headSha).slice(0, 9)}; no run has carried the SHA to a success yet`,
+      candidates: [...exact, ...inFlightCarriers.filter((run) => run.headSha !== mergeSha)],
     };
   }
 

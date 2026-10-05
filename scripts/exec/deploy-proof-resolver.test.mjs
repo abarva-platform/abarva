@@ -259,6 +259,95 @@ const D = "d".repeat(40); // a descendant of A, later than B
 }
 
 /* ------------------------------------------------------------------------ */
+/* 11a-11d (item T-802). THE IN-FLIGHT REFUSAL IS KEYED BY ANCESTRY TOO.    */
+/*                                                                          */
+/*     Case 10 covers an in-flight run on the exact SHA, and until T-802     */
+/*     that was the whole of step 3: `exact.find(isInFlight)`. Concurrency   */
+/*     cancels a merge's own run on most merges, so the common shape is the   */
+/*     one case 10 cannot see — the exact run `cancelled` by the next push    */
+/*     and the deploy that is actually carrying the commit still running on   */
+/*     a DESCENDANT. Nothing is then in flight on the exact SHA and nothing   */
+/*     among the descendants has succeeded yet, so the function fell through  */
+/*     to `not_deployed`: a finding, about a commit whose deploy is mid-air.  */
+/*                                                                           */
+/*     Reproduced 2026-10-05T15:37Z on this repository — a cancelled run on   */
+/*     the merge SHA, an `in_progress` run on a commit `git merge-base        */
+/*     --is-ancestor` confirmed a descendant, and the answer was              */
+/*     `NOT_DEPLOYED — every run on the exact SHA failed or was cancelled`.   */
+/*                                                                           */
+/*     11c and 11d are the pair that keeps the widening honest: the set is    */
+/*     the in-flight runs that pass the SAME ancestry and not-before-the-     */
+/*     merge tests the descendants filter uses, never "any in-flight run",    */
+/*     which would hand this commit's verdict to whichever branch merged      */
+/*     next — the second trap the module header names.                       */
+/* ------------------------------------------------------------------------ */
+{
+  const result = resolveDeployProof({
+    mergeSha: A,
+    runs: [
+      runRecord(1, A, "cancelled", "2026-09-20T10:00:00Z"),
+      runRecord(2, B, null, "2026-09-20T10:03:00Z", "in_progress"),
+    ],
+    isAncestor: ancestryFrom({ [A]: [B] }),
+    mergedAt: "2026-09-20T09:59:00Z",
+  });
+  check(
+    "11a: a cancelled exact run with the deploy still in flight on a descendant is `unresolved`",
+    result.verdict === UNRESOLVED,
+    `${result.verdict} — ${result.reason}`,
+  );
+  check(
+    "11a: and is NOT reported as `not_deployed`, which is a finding a ledger line records",
+    result.verdict !== NOT_DEPLOYED,
+    `${result.verdict} — ${result.reason}`,
+  );
+  check(
+    "11b: the refusal names the in-flight DESCENDANT run to come back to",
+    result.run?.databaseId === 2,
+    JSON.stringify(result.run),
+  );
+}
+
+{
+  const result = resolveDeployProof({
+    mergeSha: A,
+    runs: [
+      runRecord(1, A, "cancelled", "2026-09-20T10:00:00Z"),
+      runRecord(3, C, null, "2026-09-20T10:03:00Z", "in_progress"),
+    ],
+    isAncestor: ancestryFrom({}), // C is NOT a descendant of A
+    mergedAt: "2026-09-20T09:59:00Z",
+  });
+  check(
+    "11c: an in-flight run on a SHA that is not a descendant resolves nothing",
+    result.verdict === NOT_DEPLOYED,
+    `${result.verdict} — ${result.reason}`,
+  );
+  check(
+    "11c: and that run is not named as anything to wait for",
+    result.run === null || result.run === undefined,
+    JSON.stringify(result.run),
+  );
+}
+
+{
+  const result = resolveDeployProof({
+    mergeSha: A,
+    runs: [
+      runRecord(1, A, "cancelled", "2026-09-20T10:00:00Z"),
+      runRecord(9, B, null, "2026-09-19T10:00:00Z", "in_progress"),
+    ],
+    isAncestor: ancestryFrom({ [A]: [B] }),
+    mergedAt: "2026-09-20T09:59:00Z",
+  });
+  check(
+    "11d: an in-flight descendant run that started BEFORE the merge is not carrying it",
+    result.verdict === NOT_DEPLOYED,
+    `${result.verdict} — ${result.reason}`,
+  );
+}
+
+/* ------------------------------------------------------------------------ */
 /* 12. A success on the exact SHA wins over everything — no ancestry needed. */
 /* ------------------------------------------------------------------------ */
 {
