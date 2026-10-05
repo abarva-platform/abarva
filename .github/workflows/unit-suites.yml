@@ -1313,6 +1313,51 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts"
           --no-coverage --ci --runInBand
 
+      # T-792 — the THIRD file of the same `COMMAND_CHECKS` entry, and the last
+      # file in the tree in this state.
+      #
+      # `source_provider_alias_unit` in `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
+      # names three test files. T-478 wired the first and T-764 the second; this
+      # is the third, and nothing had looked at it, because both of those were
+      # found by DRAWING a governed-risk directory and this one does not live in
+      # a directory a draw reaches. `src/lib/ecl/__tests__` is fully covered, so
+      # it is absent from the census ranking, from `uncoveredTestFiles` and from
+      # the untriaged pool. It was invisible to all eleven triage rounds since.
+      #
+      # Measured on `474d3aab33`: `covered: true, pullRequestCovered: false`,
+      # `via: ["script-file"]` — the same signature the step above records, and
+      # on that commit the ONLY remaining instance of it in 2,707 test files
+      # (`coveredTestFiles` 2543, `pullRequestCoveredTestFiles` 2542).
+      #
+      # It is a behavioural suite, not a scanner: 0 `readFileSync` and 0
+      # `toContain` in 47 lines, 4 cases that call `resolveEclProductProvider`
+      # and assert what it returns. That is why it is wired rather than
+      # rewritten first, which is the test T-764 had to pass before it could be.
+      #
+      # Not vacuous, proved by inverting the fence three ways rather than by its
+      # green run — 4 of 4 passing in each baseline, 1 of 4 failing in each:
+      #   allowLegacyQuery hard-coded true (legacy reachable with no override)
+      #   the explicit-ECL-request branch removed
+      #   the env rollback to legacy disabled
+      # The first is the governed one: it is what keeps `?provider=legacy` from
+      # routing product reads off the ECL serving provider without the named
+      # diagnostic override.
+      #
+      # Its own step rather than appended to the T-478 one above, for two
+      # reasons: that step's name says "Source workspace" and this file is not
+      # one, and a step carrying exactly one file makes the wiring mutation
+      # attributable — replacing this step with `echo skipped` moves
+      # `pullRequestCoveredTestFiles` by exactly one and `coveredTestFiles` by
+      # zero, which is the whole of what was wrong with this file.
+      #
+      # The pre-deploy gate keeps its own invocation; this adds the
+      # merge-blocking one it never had.
+      - name: Run the T-792 pre-deploy-only ECL product provider suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/ecl/__tests__/product-provider.test.ts
+          --no-coverage --ci --runInBand
+
       # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
       # When it does not, the V6 builders return null and every caller
       # degrades silently — which is how two dataset roots stayed missing
