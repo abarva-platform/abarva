@@ -1392,7 +1392,76 @@ function pathOccurrences(line) {
  * and hold the other two — a reading nobody chose, produced by a character
  * bound that cannot cross the full stop inside a filename.
  */
+/**
+ * The `files:` label that introduces a line's DECLARED list, if it has one.
+ *
+ * The LAST occurrence is the declaration, and that is a measured choice rather
+ * than a tidy one: 22 lines of the live register write `files:` more than
+ * once, and on every one of them the earlier occurrences are prose ABOUT the
+ * field — including, exactly once, a run arguing that this very rule should
+ * not be adopted. Anchoring on the first would read that argument as the
+ * declaration and lock whatever it happened to cite.
+ */
+const DECLARED_FILE_LIST_LABEL = /\bfiles:\s*/gi;
+
+/**
+ * The paths a line DECLARES, or `null` when it declares none.
+ *
+ * `null` and `[]` are different answers and the caller depends on it: `null`
+ * means there is no declaration to be authoritative, and `[]` means the line
+ * declared a list that names no path — a declaration of nothing, which holds
+ * nothing and does not fall back to the sentence around it.
+ */
+export function declaredFileList(text) {
+  const line = String(text ?? "");
+  DECLARED_FILE_LIST_LABEL.lastIndex = 0;
+  const labels = [...line.matchAll(DECLARED_FILE_LIST_LABEL)];
+  if (labels.length === 0) return null;
+  const last = labels[labels.length - 1];
+  // The same reader, over the declared tail alone. Running it rather than
+  // splitting on commas keeps one normaliser, one notion of `file` versus
+  // `scope`, and one dedupe — and measured over every line of the register it
+  // frees 278 holds and creates ZERO, so no veto fires inside a bare list.
+  return pathsNamedAnywhere(line.slice(last.index + last[0].length));
+}
+
+/**
+ * Every repo path this line HOLDS.
+ *
+ * THE DECLARATION IS THE LOCK (item T-804). Every veto below reads the
+ * sentence AROUND a path and decides from it, and each was added because a
+ * correctly-written claim line was refused on a file nobody claimed. That is
+ * a ratchet rather than a bug list: the more carefully a run records why it
+ * passed an item over, the more of the tree it freezes, and the next shape of
+ * sentence is only ever discovered by the refusal it causes. On 2026-10-05
+ * three accidental holds were created that way, two of them refusing a
+ * correct claim; one was not a disclaimer at all but a plain explanation of
+ * why a measurement read zero, which no reader of prose can be taught to let
+ * through without also letting through a real claim.
+ *
+ * So when a line declares a `files:` list, that list is the whole of its lock
+ * and nothing reads its prose. The protocol already requires the field — a
+ * claim is appended "with the exact files you intend to touch" — and 697 of
+ * the 709 claim lines that hold a path carry one.
+ *
+ * A line that declares NO list is unchanged, and that residual is deliberate:
+ * 170 path-holding lines are `AMEND`-shaped, extending an earlier claim by
+ * naming a file in a sentence, and they mean to hold what they name. Freeing
+ * those would put two runs on one file. A wrong free costs another lane its
+ * work silently; a wrong hold costs one refusal that names itself.
+ */
 export function claimedPaths(text) {
+  const line = String(text ?? "");
+  const declared = declaredFileList(line);
+  return declared === null ? pathsNamedAnywhere(line) : declared;
+}
+
+/**
+ * Every repo path NAMED anywhere on the text, with mere mentions dropped.
+ *
+ * Reached only when no list is declared. Unchanged below this line.
+ */
+function pathsNamedAnywhere(text) {
   const line = String(text ?? "");
   const out = new Map();
   const occurrences = pathOccurrences(line);
