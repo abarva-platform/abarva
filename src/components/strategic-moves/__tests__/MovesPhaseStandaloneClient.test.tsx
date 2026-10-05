@@ -2995,20 +2995,113 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
       const overview = screen.getByLabelText("Approvals overview");
 
-      // P0-P2 are "done" in the mocked tallies (met === total) -> Approved.
-      expect(screen.getAllByText("Approved").length).toBe(3);
-      // P3 is "current" with met=0/total=2 -> not yet submitted, exact tally
-      // text sourced only from the mocked row's met/total fields.
-      expect(
-        screen.getByText("0/2 met — not yet submitted"),
-      ).toBeInTheDocument();
+      // P0-P2 are "done" in the mocked tallies. The row states the gate
+      // passed, which advancement does evidence; it does not state an
+      // approval, which nothing on this surface read. Conformed from
+      // "Approved" when the claim was removed.
+      expect(screen.getAllByText("Gate passed").length).toBe(3);
+      expect(within(overview).queryByText("Approved")).not.toBeInTheDocument();
+      // P3 is "current" with met=0/total=2. The status states only the status
+      // now; the quantity lives once, in the tally column, sourced only from
+      // the mocked row's met/total fields.
+      expect(screen.getByText("Not yet submitted")).toBeInTheDocument();
       expect(screen.getAllByText("0 of 2 met").length).toBeGreaterThan(0);
+      expect(
+        within(overview).queryByText(/0\/2 met/),
+      ).not.toBeInTheDocument();
       // P4/P5 are "upcoming" -> Not reached.
       expect(screen.getAllByText("Not reached").length).toBe(2);
       expect(within(overview).queryByText("Sponsor")).not.toBeInTheDocument();
+      // The approver column no longer names a party. Conformed from six rows
+      // of a constant string that no approval record backed.
+      expect(within(overview).getAllByText("Not recorded")).toHaveLength(6);
       expect(
-        within(overview).getAllByText("Authorized workspace user"),
-      ).toHaveLength(6);
+        within(overview).queryByText("Authorized workspace user"),
+      ).not.toBeInTheDocument();
+    });
+
+    // The host's own call sites into `approvals-overview-labels`. Each of the
+    // three cells below was previously decided inside this component, so a
+    // host that re-inlines its own text would pass the pure module's suite and
+    // still render the claim. These cases pin the wiring, not the decision.
+    it("the host builds the approver cell from a record, so it cannot name one it was not given", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(workspaceTab("Approvals"));
+      const overview = screen.getByLabelText("Approvals overview");
+
+      // Six rows, six absences, and every one styled as an absence rather
+      // than as a name. The `unassigned` class was dead code before: the old
+      // constant could never equal the string the class was gated on.
+      const absences = within(overview).getAllByText("Not recorded");
+      expect(absences).toHaveLength(6);
+      for (const cell of absences) {
+        expect(cell.className).toContain("unassigned");
+      }
+    });
+
+    it("the host carries each row's tally noun and each status's basis in a title", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(workspaceTab("Approvals"));
+      const overview = screen.getByLabelText("Approvals overview");
+
+      // The tally cell is bare in its text; the set it counts is named on
+      // hover, so the figure is labelled somewhere even when the column head
+      // has scrolled away.
+      const tally = within(overview).getAllByText("0 of 2 met")[0];
+      expect(tally.getAttribute("title")).toBe("0 of 2 gate criteria met");
+
+      // A passed gate says, on hover, that its reading is inferred from
+      // advancement and that no approval record was read.
+      const passed = within(overview).getAllByText("Gate passed")[0];
+      expect(passed.getAttribute("title")).toMatch(/advanced past/i);
+      expect(passed.getAttribute("title")).toMatch(/no approval record/i);
+    });
+
+    it("no row of the overview states the same quantity twice", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(workspaceTab("Approvals"));
+      const overview = screen.getByLabelText("Approvals overview");
+
+      // One quantity per row, in the tally column only. Asserted over the
+      // status cells' own text nodes: a container-wide assertion here would
+      // be satisfied by the tally sibling in the same row.
+      const statuses = Array.from(
+        overview.querySelectorAll(".mxw-approvals-status"),
+      );
+      expect(statuses).toHaveLength(6);
+      for (const status of statuses) {
+        expect(status.textContent ?? "").not.toMatch(/\d/);
+      }
     });
 
     it("current-phase row: Review & approve returns to the phase workspace at the approve substep", () => {

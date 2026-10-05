@@ -71,6 +71,14 @@ import {
 } from "@/lib/programs/capture-notes-basis-link";
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
+import {
+  approvalsRowStatusBasis,
+  approvalsRowStatusClass,
+  approvalsRowStatusText,
+  formatApproverCell,
+  formatGateCriteriaCell,
+  formatGateCriteriaTitle,
+} from "@/lib/programs/approvals-overview-labels";
 import { phaseStepperStateLabel } from "@/lib/programs/phase-stepper-state-label";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
@@ -3865,27 +3873,13 @@ function WorkspaceSurfaceTabs({
 // already used before this flag existed).
 // ---------------------------------------------------------------------------
 
-function approvalStatusText(row: PhaseTallyRow): string {
-  if (row.state === "done") return "Approved";
-  if (row.state === "current") {
-    return row.met === row.total
-      ? "Ready to submit"
-      : `${row.met}/${row.total} met — not yet submitted`;
-  }
-  return "Not reached";
-}
-
-function approvalStatusClass(row: PhaseTallyRow): string {
-  if (row.state === "done") return "approved";
-  if (row.state === "current") {
-    return row.met === row.total ? "ready" : "pending";
-  }
-  return "upcoming";
-}
-
-function approvalRoleLabelForPhase(_phase: number): string {
-  return "Authorized workspace user";
-}
+// The status, tally and approver cells are decided in
+// `@/lib/programs/approvals-overview-labels` so that no cell of this table can
+// state more than something on the screen measured. In particular there is no
+// `approvalRoleLabelForPhase` any more: the approver column used to be a
+// constant string returned for every phase, and the replacement takes the
+// recorded approver as its argument, so this host cannot name one while no
+// approval record reaches it.
 
 function ApprovalsOverview({
   currentMoveId,
@@ -3914,24 +3908,30 @@ function ApprovalsOverview({
       {phaseTallies.map((row) => {
         const isViewingRow = row.phase === viewingPhase;
         const isReachable = row.phase <= reachablePhase;
-        const approverLabel = approvalRoleLabelForPhase(row.phase);
+        // No gate-approval record reaches this client surface, so the cell
+        // is built from `null` and renders an explicit absence.
+        const approver = formatApproverCell(null);
         return (
           <div className="mxw-approvals-row" key={row.phase}>
             <span className="mxw-approvals-phase">{row.label}</span>
-            <span className="mxw-approvals-tally">
-              {row.met} of {row.total} met
+            <span
+              className="mxw-approvals-tally"
+              title={formatGateCriteriaTitle(row)}
+            >
+              {formatGateCriteriaCell(row)}
             </span>
             <span
-              className={`mxw-approvals-status ${approvalStatusClass(row)}`}
+              className={`mxw-approvals-status ${approvalsRowStatusClass(row)}`}
+              title={approvalsRowStatusBasis(row)}
             >
-              {approvalStatusText(row)}
+              {approvalsRowStatusText(row)}
             </span>
             <span
               className={`mxw-approvals-approver ${
-                approverLabel === "Not yet assigned" ? "unassigned" : ""
+                approver.recorded ? "" : "unassigned"
               }`}
             >
-              {approverLabel}
+              {approver.text}
             </span>
             <span className="mxw-approvals-action">
               {isViewingRow ? (
@@ -9726,7 +9726,7 @@ button.mxw-step-progress-status{cursor:pointer}
 .mxw-approvals-phase{font-size:13.5px;font-weight:700;color:#0c1a3a}
 .mxw-approvals-tally{font-size:13px;color:#28364f}
 .mxw-approvals-status{justify-self:start;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:800}
-.mxw-approvals-status.approved{background:#e1f5ec;color:#1f7a55}
+.mxw-approvals-status.passed{background:#e1f5ec;color:#1f7a55}
 .mxw-approvals-status.ready{background:#e4ecf9;color:#2a5aa8}
 .mxw-approvals-status.pending{background:#fbf1df;color:#ba7517}
 .mxw-approvals-status.upcoming{background:rgba(12,26,58,.06);color:#5b6c8a}
