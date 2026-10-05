@@ -39,7 +39,7 @@ Release lane: `client-data-lane`.
 - Focused unit tests: `PASS` — conditional writer tests verify tenant/id scoping, legacy-field guards, JSONB merge semantics, and fail-closed behavior when the target row does not match; the resolver test pins the declared blueprint and required family keys.
 - ESLint: `PASS` — changed TypeScript files.
 - Typecheck: `PASS` — repository typecheck wrapper.
-- Release check: `NOT RUN` — pending final candidate commit.
+- Release check: `PASS` — `npm run release:check -- --base origin/main --head HEAD` (11/11 gates).
 - Remote CI: `NOT RUN` — pending PR creation.
 - Governed ACA declaration job and signed-in readback: `NOT RUN` — must occur only after merge and verified deployment.
 
