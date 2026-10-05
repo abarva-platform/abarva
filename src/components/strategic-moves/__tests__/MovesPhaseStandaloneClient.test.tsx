@@ -7781,4 +7781,179 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(longSentences).toEqual([]);
     });
   });
+
+  // ─── moves_capture_handoff_recap_v1: the recap's reachability AT THE HOST ───
+  // `captureHandoffAccess` and the recap's copy are pinned as a pure module and
+  // on the component (MovesCaptureFlow.test.tsx), where the approve slot is a
+  // stub `<button>`. What only the host can answer is whether the flag is wired
+  // to the real surface: the host supplies a NON-NULL governed slot on every
+  // path that mounts the flow — for an approver it is `PhaseApproveAndBuild`
+  // (`button.mxw-phase-progress-button`), for everyone else an authorization
+  // note — so the footer's one forward control is always spent and the flag is
+  // the only thing that can open the recap. These cases pin that call site.
+  describe("hand-off recap reachability at the host (moves_capture_handoff_recap_v1)", () => {
+    // P1's substeps are prepare · decide · approve, so `initialSubstepKey`
+    // "approve" lands the 3-step flow on its last step (`initialStep` is
+    // `min(substepIndex, 2)`) without walking Continue through saved answers.
+    const renderLastCaptureStep = (overrides: Record<string, unknown> = {}) =>
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="approve"
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+          {...overrides}
+        />,
+      );
+
+    const openReview = () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Review what you captured" }),
+      );
+
+    it("flag OFF (default): the host's governed control holds the last step's one forward control, so nothing opens the recap", () => {
+      renderLastCaptureStep();
+
+      expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
+      // The real governed control is what occupies the slot — not a stub.
+      expect(
+        document.querySelector(".mcf-approve-slot .mxw-phase-progress-button"),
+      ).not.toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Review what you captured" }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("mcf-handoff")).not.toBeInTheDocument();
+    });
+
+    it("flag ON: the review control opens a recap built from the host's own captured answers", () => {
+      renderLastCaptureStep({ captureHandoffRecapEnabled: true });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      // `sectionRecap` reads the host's phase-capture values, so a real saved
+      // answer — not a label or a placeholder — has to be what the recap shows.
+      expect(within(handoff).getByText(/Jordan Lee, COO/)).toBeInTheDocument();
+      expect(
+        within(handoff).getByText(/In scope: Airport turnaround operations/),
+      ).toBeInTheDocument();
+    });
+
+    it("flag ON: the real governed control travels onto the recap and the recap claims no submission", () => {
+      renderLastCaptureStep({ captureHandoffRecapEnabled: true });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      // The decision still runs through the gate pipeline: it is the host's
+      // own PhaseApproveAndBuild on the recap, not a second submit path.
+      expect(
+        handoff.querySelectorAll(".mxw-phase-progress-button"),
+      ).toHaveLength(1);
+      // Nothing was submitted, so the next phase cannot be begun from here...
+      expect(
+        within(handoff).queryByRole("button", { name: /^Begin / }),
+      ).not.toBeInTheDocument();
+      // ...and no heading may say it was. Assert over text NODES: sibling
+      // spans join with no separator, so a container-wide negative assertion
+      // can be satisfied by a neighbouring string.
+      const claims = Array.from(
+        handoff.querySelectorAll("span, h1, h2, h3"),
+      ).map((node) => node.textContent?.trim() ?? "");
+      expect(claims).not.toContain("Charter submitted");
+      expect(claims.some((text) => /Charter is complete/.test(text))).toBe(
+        false,
+      );
+      expect(handoff.querySelector(".mcf-tick")).toBeNull();
+    });
+
+    it("flag ON for a user who cannot approve: the recap is still reachable, and the authorization note travels in place of the control", () => {
+      // The host's slot is non-null in BOTH authorization states. That is why
+      // the flag — not the viewer's permission — is what makes the recap
+      // reachable, and it is also why the recap must not offer a way around the
+      // gate to someone who cannot approve.
+      renderLastCaptureStep({
+        canApproveGates: false,
+        captureHandoffRecapEnabled: true,
+      });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(
+        within(handoff).getByText(
+          "Approval is available to an authorized workspace user.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        handoff.querySelectorAll(".mxw-phase-progress-button"),
+      ).toHaveLength(0);
+      expect(
+        within(handoff).queryByRole("button", { name: /^Begin / }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("the flag cannot manufacture a surface: with moves_capture_v2 off there is no flow to review", () => {
+      // The route conjoins the two flags server-side; this pins that the host
+      // arm agrees, so a tenant enrolled in the recap flag alone sees exactly
+      // today's product.
+      renderLastCaptureStep({
+        captureV2Enabled: false,
+        captureHandoffRecapEnabled: true,
+      });
+
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Review what you captured" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+    });
+
+    it("flag ON with the charter basis recorded: the review carries the host's basis rollup, not only the post-submit recap", () => {
+      // `handoffSummary` is the host's one fold of the declared bases — the
+      // same computation the gate dialog discloses. Reaching the recap as a
+      // review has to carry it, or the person reviews the answers without the
+      // one thing that says how they are known.
+      renderLastCaptureStep({
+        captureHandoffRecapEnabled: true,
+        charterBasisEnabled: true,
+        initialP1CharterBasisBySection: Object.fromEntries(
+          Object.keys(completeP1CaptureValues).map((sectionKey) => [
+            sectionKey,
+            { kind: "workspace_assertion" as const },
+          ]),
+        ),
+      });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(
+        within(handoff).getByTestId("charter-basis-rollup"),
+      ).toBeInTheDocument();
+      // And the per-question marks the host supplies through
+      // `renderSectionRecapMark`: every question row the review lists states
+      // its own basis, so no answer reads back without one.
+      const marks = Array.from(
+        handoff.querySelectorAll('[data-testid="charter-basis-mark"]'),
+      );
+      const questionRows = handoff.querySelectorAll(".mcf-recap dl dt");
+      expect(questionRows.length).toBeGreaterThan(0);
+      expect(marks).toHaveLength(questionRows.length);
+      // Each mark belongs to a question row, not to the rollup above it...
+      expect(marks.filter((mark) => mark.closest("dt"))).toHaveLength(
+        questionRows.length,
+      );
+      // ...and it states the basis that was recorded, not a generic badge.
+      expect(
+        new Set(marks.map((mark) => mark.getAttribute("data-basis"))),
+      ).toEqual(new Set(["workspace_assertion"]));
+      expect(new Set(marks.map((mark) => mark.textContent))).toEqual(
+        new Set(["Asserted"]),
+      );
+    });
+  });
 });
