@@ -614,21 +614,14 @@ export function SourceNewWorkspace({
                     Before this phase can open in a real event:{" "}
                     {PREVIEW_UNMET_CONDITIONS[phase]}
                   </p>
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      clientKey={event.clientKey}
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                      eventId={event.id}
-                      files={files}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                 </>
               ) : stateOf(phase) === "not_open" ? (
                 <>
@@ -652,21 +645,14 @@ export function SourceNewWorkspace({
                     before treating this history as complete.
                   </p>
                   <p className="snw-note">{completedNote}</p>
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      clientKey={event.clientKey}
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                      eventId={event.id}
-                      files={files}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                 </>
               ) : stateOf(phase) === "no_record" ? (
                 <>
@@ -691,21 +677,14 @@ export function SourceNewWorkspace({
                       />
                     )
                   )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      clientKey={event.clientKey}
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                      eventId={event.id}
-                      files={files}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
                       authority={displayedScorecardAuthority}
@@ -742,21 +721,14 @@ export function SourceNewWorkspace({
                       />
                     )
                   )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      clientKey={event.clientKey}
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                      eventId={event.id}
-                      files={files}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
                       authority={displayedScorecardAuthority}
@@ -978,6 +950,49 @@ const STEP_READINESS_STATUS_LABELS: Record<StepReadiness["status"], string> = {
   complete: "Done",
   blocked: "Blocked",
 };
+
+/**
+ * The supplier-phase pair, rendered wherever the supplier phase has something
+ * to show.
+ *
+ * These two panels appeared at four call sites with identical props, each
+ * wrapped in its own `phase === "suppliers"` guard. Four copies of a guard is
+ * four chances for one of them to drift. Holding the guard inside the component
+ * makes "render this once, and only in the supplier phase" structural rather
+ * than a convention every branch has to remember.
+ *
+ * The `not_open` branch deliberately renders nothing and still does: it never
+ * contained this pair.
+ */
+export function SupplierPhasePanels({
+  phase,
+  event,
+  panel,
+  coverage,
+  eventHref,
+  files,
+}: {
+  phase: Phase;
+  event: SourceNewEventView;
+  panel: SourceNewStage04VendorPanel;
+  coverage: SourceNewStage05NdaCoverage;
+  eventHref: string;
+  files: readonly SourceNewFileRow[];
+}) {
+  if (phase !== "suppliers") return null;
+  return (
+    <>
+      <SourceNewStage04VendorPanelView event={event} panel={panel} />
+      <SourceNewStage05NdaReadiness
+        clientKey={event.clientKey}
+        coverage={coverage}
+        eventHref={eventHref}
+        eventId={event.id}
+        files={files}
+      />
+    </>
+  );
+}
 
 function SourceNewStage04VendorReadiness({
   event,
