@@ -37,6 +37,13 @@ export interface MovesCaptureFlowPhase {
    * unmeasured and must not claim a count. See `capturePhaseAnsweredCount`.
    */
   answered: number | null;
+  /**
+   * For an UNMEASURED row only: how many of the phase's questions hold a saved
+   * answer, or `null` when nothing says. Strictly weaker than `answered` — a
+   * saved answer need not be complete — so it renders under its own noun and
+   * never earns the completion tick. See `capturePhaseSavedAnswers`.
+   */
+  savedAnswers?: number | null;
   total: number;
   /** Whether this phase can be navigated to (<= the Move's current phase). */
   reachable: boolean;
@@ -207,6 +214,21 @@ export function MovesCaptureFlow({
             // actually earns the tick is the equality.
             const measured = p.answered !== null;
             const complete = measured && p.total > 0 && p.answered === p.total;
+            // A row this screen cannot measure may still say how much of the
+            // phase has been SAVED, when the host supplies that rollup. It is
+            // a weaker fact than `answered` and says so in its own words:
+            // never "answered", and never a tick, because a saved answer can
+            // still be incomplete. `complete` above is deliberately not
+            // widened to consider it.
+            //
+            // The `!measured` conjunct is redundant, like `measured &&` above:
+            // the count below reads this branch only when `measured` is false,
+            // so removing it changes nothing a test can see (mutation-checked).
+            // Kept because it states the rule the field encodes at the field.
+            const saved =
+              !measured && typeof p.savedAnswers === "number"
+                ? p.savedAnswers
+                : null;
             return (
               <li key={p.code}>
                 <button
@@ -228,7 +250,9 @@ export function MovesCaptureFlow({
                   <span className="mcf-phase-count">
                     {measured
                       ? `${p.answered} of ${p.total} answered`
-                      : `${p.total} question${p.total === 1 ? "" : "s"}`}
+                      : saved !== null
+                        ? `${saved} of ${p.total} saved`
+                        : `${p.total} question${p.total === 1 ? "" : "s"}`}
                   </span>
                 </button>
               </li>

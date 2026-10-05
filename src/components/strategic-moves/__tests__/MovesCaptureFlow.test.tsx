@@ -399,6 +399,72 @@ describe("MovesCaptureFlow", () => {
     expect(within(originate).queryByLabelText("complete")).toBeNull();
   });
 
+  it("states a SAVED count, under that word, for an unmeasured row the host can roll up", () => {
+    // `moves_capture_phase_rollup_v1`: a row this screen cannot measure may say
+    // how much of the phase has been saved. It must use its own noun — a saved
+    // answer is a persisted value, while "answered" additionally requires
+    // structured validity, evidence readiness and a satisfied charter basis,
+    // so rendering the weaker count as "answered" would relabel saved work as
+    // finished work.
+    const phases = PHASES.map((p) =>
+      p.phase === 0 ? { ...p, answered: null, savedAnswers: 4 } : p,
+    );
+    renderFlow({ phase: 1, phases });
+
+    const bar = screen.getByRole("navigation", { name: "Phases" });
+    const originate = within(bar).getByRole("button", { name: /Originate/ });
+
+    expect(originate).toHaveTextContent("4 of 11 saved");
+    expect(originate).not.toHaveTextContent("answered");
+  });
+
+  it("does not tick a row whose questions are all SAVED but none measured", () => {
+    // The invariant the rollup must not weaken. A fully-saved phase is still
+    // unmeasured, so it claims no completion — this is the same over-claim as
+    // the ticked-but-blank P0 row, arriving from the other direction.
+    const phases = PHASES.map((p) =>
+      p.phase === 0 ? { ...p, answered: null, savedAnswers: 11 } : p,
+    );
+    renderFlow({ phase: 1, phases });
+
+    const bar = screen.getByRole("navigation", { name: "Phases" });
+    const originate = within(bar).getByRole("button", { name: /Originate/ });
+
+    expect(originate).toHaveTextContent("11 of 11 saved");
+    expect(within(originate).queryByLabelText("complete")).toBeNull();
+    expect(originate).not.toHaveTextContent("answered");
+  });
+
+  it("keeps the bare question count when no rollup is supplied", () => {
+    // Flag-off behaviour: `savedAnswers` absent ⇒ the row reads exactly as it
+    // did before the rollup existed.
+    const phases = PHASES.map((p) =>
+      p.phase === 0 ? { ...p, answered: null } : p,
+    );
+    renderFlow({ phase: 1, phases });
+
+    const bar = screen.getByRole("navigation", { name: "Phases" });
+    const originate = within(bar).getByRole("button", { name: /Originate/ });
+
+    expect(originate).toHaveTextContent("11 questions");
+    expect(originate).not.toHaveTextContent("saved");
+  });
+
+  it("prefers the live answered count over a saved one on the viewed row", () => {
+    // One figure per row. A viewed row handed both must show the measured one;
+    // showing two numbers for one phase is the shape of the original defect.
+    const phases = PHASES.map((p) =>
+      p.phase === 0 ? { ...p, answered: 2, savedAnswers: 9 } : p,
+    );
+    renderFlow({ phase: 0, phases });
+
+    const bar = screen.getByRole("navigation", { name: "Phases" });
+    const originate = within(bar).getByRole("button", { name: /Originate/ });
+
+    expect(originate).toHaveTextContent("2 of 11 answered");
+    expect(originate).not.toHaveTextContent("saved");
+  });
+
   it("still ticks and counts the phase on screen", () => {
     // The vacuity guard for the case above: a measured, complete row keeps
     // both the count and the tick, so "no tick" is a property of being
