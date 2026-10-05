@@ -1322,6 +1322,113 @@ describe("test CI coverage census", () => {
     ]);
   });
 
+  it("reads tenant scope from a module named for tenancy, not only from a read-ish path", () => {
+    // T-793. The tenant half of the heuristic is two-part on purpose: a path
+    // gate AND a tenant key in the executable source. But the path gate's
+    // alternation was `read|query|queries|adapter|route|repository|lookup|
+    // search|fetch` — nine words, none of them `tenant` — so a module that
+    // announces tenant scope in its own filename could not match it. Measured
+    // on the live tree at the time of filing: 22 of 53 unclassified
+    // directories held at least one such source, and the excluded modules
+    // included ones literally named `tenant-scoped-session.ts`,
+    // `tenant-identity-pin.ts` and `tenant-key-resolution.ts`.
+    //
+    // Both halves are still required. The negative control for that is the
+    // `does not promote comments and literals` case above, whose fixture path
+    // DOES match the gate and which stays unsignalled on the source half
+    // alone — so widening the path side cannot be what makes this case pass
+    // unless the source side still holds.
+    const dir = fixture({
+      "src/lib/fenced/tenant-identity-pin.ts": [
+        "export function pin(tenantKey: string) {",
+        "  return { pinned: tenantKey };",
+        "}",
+      ].join("\n"),
+      "src/lib/fenced/__tests__/tenant-identity-pin.test.ts": [
+        'import { pin } from "../tenant-identity-pin";',
+        'it("pins", () => expect(pin("tenant-a").pinned).toBe("tenant-a"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskRanking.find(
+      (candidate) => candidate.directory === "src/lib/fenced/__tests__",
+    );
+    expect(row?.governedRisk.signals).toContain("tenant_scoped_read");
+    expect(row?.governedRisk.band).toBe("high");
+    expect(row?.admittedBy).toBe("governed_risk_signal");
+    // The directory must leave the zero bucket, not merely gain a signal:
+    // `unclassifiedRiskDirectories` is the number four backlog items read.
+    expect(
+      census.unclassifiedRiskDirectories.map((candidate) => candidate.directory),
+    ).not.toContain("src/lib/fenced/__tests__");
+  });
+
+  it("still requires a tenant key in the executable source of a tenancy-named module", () => {
+    // The other side of the two-part test, pinned in its own case so that
+    // widening the path alternation cannot quietly become a one-part rule. The
+    // path here matches the gate by its `tenant-` prefix; the source carries
+    // the key only inside an interface and a comment, both of which
+    // `sourceWithoutNonExecutableSignalText` blanks. Narrowing the alternation
+    // back cannot make this case fail, and dropping the source half cannot
+    // make it pass.
+    const dir = fixture({
+      "src/lib/fenced-type-only/tenant-row-shape.ts": [
+        "export interface TenantRow { tenantKey: string }",
+        "// client_key is the column this used to read",
+        "export function shape(): string { return \"shape\"; }",
+      ].join("\n"),
+      "src/lib/fenced-type-only/__tests__/tenant-row-shape.test.ts": [
+        'import { shape } from "../tenant-row-shape";',
+        'it("shapes", () => expect(shape()).toBe("shape"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskRanking.find(
+      (candidate) => candidate.directory === "src/lib/fenced-type-only/__tests__",
+    );
+    expect(row?.governedRisk.signals ?? []).not.toContain("tenant_scoped_read");
+    expect(row?.governedRisk.band).toBe("unclassified");
+  });
+
+  it("will not signal a tenant key alone — the path half of the gate is load-bearing", () => {
+    // Found by mutation while widening the path alternation for T-793:
+    // deleting the path half outright and keeping only `TENANT_KEY_SOURCE_RE`
+    // left all 58 of this suite's other cases green. Every existing negative
+    // case rests on the SOURCE half — their fixture paths match the gate and
+    // fail on the sanitizer — so nothing here could tell the two-part rule
+    // from a one-part one. That is the shape the census was written against: a
+    // guard you cannot fail. This case fails the one-part reading.
+    //
+    // The fixture's path carries no read-ish word and no tenancy word; its
+    // source carries `tenantKey` in a real, executable signature. The acceptance
+    // for T-793 says in as many words not to drop the path gate, and this is
+    // what makes that cost a red test rather than a code review.
+    const dir = fixture({
+      "src/lib/plain/row-shape.ts": [
+        "export function shape(tenantKey: string) {",
+        "  return { shape: tenantKey };",
+        "}",
+      ].join("\n"),
+      "src/lib/plain/__tests__/row-shape.test.ts": [
+        'import { shape } from "../row-shape";',
+        'it("shapes", () => expect(shape("a").shape).toBe("a"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskRanking.find(
+      (candidate) => candidate.directory === "src/lib/plain/__tests__",
+    );
+    expect(row?.governedRisk.signals ?? []).not.toContain("tenant_scoped_read");
+    expect(row?.governedRisk.band).toBe("unclassified");
+    expect(row?.admittedBy).toBe("untriaged_unrun_work");
+  });
+
   it("subtracts a command's own --testPathIgnorePatterns from what it selects", () => {
     // The census answers "does a workflow reach a command that names this
     // file". A command that names a directory and then excludes a file inside
