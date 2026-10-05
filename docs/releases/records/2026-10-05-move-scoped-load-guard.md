@@ -37,7 +37,7 @@ Adds a regression test proving that a Move-registry manifest cannot use the gene
 - `npx jest src/lib/governance/__tests__/dataset-manifest.test.ts --runInBand` — 61 tests passed.
 - Mutation check: temporarily removing the tenant-equality guard made the new test fail; restoring the guard returned the suite to green.
 - `npx eslint src/lib/governance/__tests__/dataset-manifest.test.ts` — no errors; one pre-existing unused-variable warning remains in the file.
-- `npm run release:check -- --base origin/main --head HEAD` — 10 of 11 gates passed; the release-record gate identified this required record. Re-run after adding the record.
+- `npm run release:check -- --base origin/main --head HEAD` — all 11 gates passed.
 
 ## Rollout Plan
 
@@ -60,7 +60,7 @@ Revert the test and this record together. No database or runtime rollback is req
 ## Audit Evidence
 
 - Focused test output and mutation result are recorded in the PR discussion.
-- PR and CI links will be added when available.
+- [PR #9061](https://github.com/abarva-platform/abarva/pull/9061); CI checks are in progress.
 
 ## Known Gaps
 
