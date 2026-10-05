@@ -416,30 +416,30 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_charter_basis_v1",
     summary:
-      "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Off by default; the legacy approved-evidence lock stays in force until a tenant is enabled via includeTenants.",
+      "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Enabled for the synthetic demo tenant for signed-in review; the legacy approved-evidence lock stays in force elsewhere.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_capture_p0_v1",
     summary:
-      "2026-10-04: Extends the redesigned 3-step phase capture (moves_capture_v2) to P0 Originate, which was mounted for phases 1-5 only and so stayed on the legacy finder-columns canvas. P0's eleven canonical inputs are already grouped into its three steps (Why now / The bet / Readiness) by the shared step-group contract, so this changes only which phases render that flow. The hand-off step carries P0's own gate control inline, using the same authorization check and the same required-evidence gate as the legacy canvas - P0 still cannot advance on intake answers alone. Requires moves_capture_v2 to also be enabled for the tenant; off by default.",
+      "2026-10-04: Extends the redesigned 3-step phase capture (moves_capture_v2) to P0 Originate, which was mounted for phases 1-5 only and so stayed on the legacy finder-columns canvas. P0's eleven canonical inputs are already grouped into its three steps (Why now / The bet / Readiness) by the shared step-group contract, so this changes only which phases render that flow. The hand-off step carries P0's own gate control inline, using the same authorization check and the same required-evidence gate as the legacy canvas - P0 still cannot advance on intake answers alone. Requires moves_capture_v2 to also be enabled for the tenant; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_capture_composition_v1",
     summary:
-      "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; off by default.",
+      "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_capture_notes_v1",
     summary:
-      "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Off by default; the dock renders byte-for-byte as today until a tenant is enabled via includeTenants.",
+      "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Enabled for the synthetic demo tenant for signed-in review; the dock is unchanged elsewhere.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
 ];
 
