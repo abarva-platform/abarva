@@ -140,4 +140,40 @@ describe("MovesCaptureFlow", () => {
       screen.queryByRole("button", { name: "Submit Charter" }),
     ).not.toBeInTheDocument();
   });
+
+  it("states a question count, and no completion tick, for a phase it cannot measure", () => {
+    // `answered: null` is what `capturePhaseAnsweredCount` returns for every
+    // row but the one on screen. Such a row must not read "N of M answered"
+    // and must not be ticked: this screen never saw that phase's answers.
+    // The live defect was a Move originated before the capture flow existed —
+    // all eleven P0 questions blank — whose P0 row was ticked and read
+    // "11 of 11 answered" from every screen except P0's own.
+    const phases = PHASES.map((p) =>
+      p.phase === 0 ? { ...p, answered: null } : p,
+    );
+    renderFlow({ phase: 1, phases });
+
+    const bar = screen.getByRole("navigation", { name: "Phases" });
+    const originate = within(bar).getByRole("button", { name: /Originate/ });
+
+    expect(originate).toHaveTextContent("11 questions");
+    expect(originate).not.toHaveTextContent("answered");
+    expect(within(originate).queryByLabelText("complete")).toBeNull();
+  });
+
+  it("still ticks and counts the phase on screen", () => {
+    // The vacuity guard for the case above: a measured, complete row keeps
+    // both the count and the tick, so "no tick" is a property of being
+    // unmeasured and not of the assertion itself.
+    const phases = PHASES.map((p) =>
+      p.phase === 0 ? { ...p, answered: 11 } : p,
+    );
+    renderFlow({ phase: 0, phases });
+
+    const bar = screen.getByRole("navigation", { name: "Phases" });
+    const originate = within(bar).getByRole("button", { name: /Originate/ });
+
+    expect(originate).toHaveTextContent("11 of 11 answered");
+    expect(within(originate).getByLabelText("complete")).toBeInTheDocument();
+  });
 });

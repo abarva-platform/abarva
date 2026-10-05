@@ -27,8 +27,12 @@ export interface MovesCaptureFlowPhase {
   phase: number;
   code: string;
   name: string;
-  /** Answered/total for the phase, for the "N of M answered" strip. */
-  answered: number;
+  /**
+   * Answered count for the phase, or `null` when this screen cannot measure it.
+   * Only the phase on screen has live capture values; every other row is
+   * unmeasured and must not claim a count. See `capturePhaseAnsweredCount`.
+   */
+  answered: number | null;
   total: number;
   /** Whether this phase can be navigated to (<= the Move's current phase). */
   reachable: boolean;
@@ -166,7 +170,16 @@ export function MovesCaptureFlow({
       <nav className="mcf-phasebar" aria-label="Phases">
         <ol>
           {phases.map((p) => {
-            const complete = p.total > 0 && p.answered === p.total;
+            // An unmeasured row (`answered === null`) is neither complete nor
+            // zero — this screen simply cannot see that phase's answers, so it
+            // states the question count and claims nothing about coverage.
+            //
+            // The `measured` conjunct below is redundant and kept for
+            // legibility only: `null === p.total` is already false for every
+            // total, so no test can distinguish its removal. The guard that
+            // actually earns the tick is the equality.
+            const measured = p.answered !== null;
+            const complete = measured && p.total > 0 && p.answered === p.total;
             return (
               <li key={p.code}>
                 <button
@@ -186,7 +199,9 @@ export function MovesCaptureFlow({
                   </span>
                   <span className="mcf-phase-name">{p.name}</span>
                   <span className="mcf-phase-count">
-                    {p.answered} of {p.total} answered
+                    {measured
+                      ? `${p.answered} of ${p.total} answered`
+                      : `${p.total} question${p.total === 1 ? "" : "s"}`}
                   </span>
                 </button>
               </li>
