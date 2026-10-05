@@ -34,6 +34,222 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-05 sixteenth wave — walked on serving SHA `c166b73790`
+
+**Item:** U-563.
+**Walked:** 2026-10-05, between 06:08:58Z and 06:12:30Z, by
+`source-backlog-executor#20261005T0541Z`. An earlier pass over the same surfaces,
+between 05:44Z and 05:53Z, was **discarded**; why is below.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why the item was right to forbid pinning one.** U-563 was filed
+naming `d4bf30f961` as the serving build, with the caveat that `0b9783eee3`'s
+deploy was in flight. By walk time the build had moved **six** further times.
+The serving SHA is `c166b73790` (#9000), a merge the item does not name.
+
+**The serving SHA is established from two independent sources.**
+`az acr manifest show-metadata` on the serving digest returns exactly one tag,
+`main-c166b737`. The sole 100%-traffic revision is named `--mc166b737`. They agree.
+
+**Runtime invariant, read read-only with `az` at 06:08:17Z and again at
+06:12:37Z, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App template image | `sha256:29878608…e5b1` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--mc166b737`, sole entry, weight 100 |
+| That revision's own image | `sha256:29878608…e5b1` — identical to the template |
+| Revision state | `Healthy` / `Running`, created 06:05:14Z |
+| Deploy run | `37269658565`, `completed` / `success` at 06:08:02Z |
+
+A later deploy (`37270984445`, `b7eaa059b6`) started after the walk ended and had
+taken no traffic at the closing read, so every observation below is attributable
+to `c166b73790`.
+
+### The first pass was discarded, for the same reason the fourteenth wave's was
+
+The first pass resolved `34ecd8132b` from both sources at 05:42Z, with the
+invariant holding on `sha256:638548be…`. Revision `--m590c4af2` was created at
+**05:45:40Z** — inside the observation window, which ran 05:44Z to 05:53Z. The
+closing read found template and 100%-traffic revision on `sha256:37881aee…`, a
+build the pass had never named.
+
+As in the fourteenth wave, **the readings themselves looked clean** and would
+have been reported as a pass. They are not reported, because they cannot be
+attributed to a named build. Three deploys landed between 05:48Z and 06:08Z; the
+walk was re-taken only once `gh run list` showed no run outstanding, which is the
+practical addition this wave makes to the standing rule: **when the queue is
+moving, wait for it to drain before walking, not merely re-read afterwards.**
+
+### The ancestor sweep — re-derived, and it is more than twice the item's floor
+
+- The merges U-563 reasons from are ancestors of the walked build, asserted with
+  `git merge-base --is-ancestor`: `d4bf30f961` (#8992), `6600489253` (#8988),
+  `0b9783eee3` (#8993), `14b8ebe8ba` (#8996).
+- The repository squash-merges, so `--merges` over `786df70f82..c166b73790`
+  returns **0**; the sweep is taken over `--first-parent`, which returns **14**.
+- Client-visibility is decided by **measurement, not by the subject line**: files
+  under `src/app`, `src/components` or `src/lib` excluding tests. Nine merges
+  score ≥ 1 and five score 0.
+- So **nine** client-visible merges are in scope. U-563 measured four to
+  `0b9783eee3` and called that a floor; it was one.
+
+| Merge | PR | Non-test files | In scope |
+|---|---|---|---|
+| `6600489253` | #8988 | 3 | yes |
+| `def2eeecd0` | #8990 | 3 | yes |
+| `5794c7280d` | #8991 | 4 | yes |
+| `d4bf30f961` | #8992 | 1 | yes |
+| `69aacc4fb3` | #8979 | 3 | yes |
+| `650fa9a98d` | #8994 | 3 | yes |
+| `42d5f1fa77` | #8995 | 2 | yes |
+| `307a4a1d60` | #8998 | 2 | yes |
+| `14b8ebe8ba` | #8996 | 2 | yes |
+| `36d7c9b7b7` `0b9783eee3` `34ecd8132b` `590c4af209` `c166b73790` | #8989 #8993 #8997 #8999 #9000 | 0 each | no — excluded by measurement |
+
+### Flag state, read from the serving SHA
+
+| Flag | `includeTenants` | Meaning on this runtime |
+|---|---|---|
+| `moves_capture_v2` | `["meridian"]` | **ON** for the synthetic demo tenant |
+| `moves_charter_basis_v1` | `["meridian"]` | **ON** — first wave on which it is |
+| `moves_capture_p0_v1` | `["meridian"]` | **ON** — first wave on which it is |
+| `moves_capture_composition_v1` | `["meridian"]` | **ON** — first wave on which it is |
+| `moves_capture_notes_v1` | `["meridian"]` | **ON** — first wave on which it is |
+
+**No flag was flipped**, per the twelfth wave's standing rule. The four flags
+that were `includeTenants: []` for the three preceding waves were enabled by
+#8992, a reviewed change through the governed path, not by this walk. (The
+literals above are quoted configuration; everywhere else this block names the
+tenant by its role.)
+
+### What was observed, and the boundary it stayed inside
+
+Subject: `Payment integrity and leakage reduction`
+(`15f3538a-2354-4aae-9320-aa021a92dc55`) — the same Move the fourteenth wave used
+for its ON-path readings — at P1 Charter and at P0 Originate, plus the four
+Source New events the runtime serves.
+
+Stepping 1 → 2 → 3 is a client-side view change. **No write was performed:** no
+basis was selected (`onChange` calls `saveCharterBasis`, a server write), no
+proposal was inserted, no gate or phase control was pressed, no field was typed
+into. The only text typed anywhere was into the fill-from-notes scratch box,
+which the panel discards on close and which writes nothing until an insert.
+
+**The six discriminators the thirteenth and fourteenth waves recorded for the
+`moves_capture_v2` ON path, re-observed at 06:08:58Z:**
+
+| # | Discriminator | Thirteenth | Fourteenth | This walk |
+|---|---|---|---|---|
+| 1 | `[data-testid="moves-capture-flow"]` | 1 | 1 | **1** |
+| 2 | `.mcf-phasebar` | 1 | 1 | **1** |
+| 3 | `.mcf-stepbar` | 1 | 1 | **1** |
+| 4 | step titles *Scope the bet* / *People & decisions* / *Plan the proof* | present | present | **all three present** |
+| 5 | footer *Step 1 of 3* | 1 | 1 | **1** |
+| 6 | `.mcf-question` on step 1 | 3 | 3 | **3** |
+
+Full mount set across the three steps, 06:08:58Z–06:09:25Z: 3 + 2 + 2 = **7** —
+the same total both prior waves measured, with four more flags now ON.
+
+### Results
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves P1 Charter capture — `moves_capture_v2` ON path, regression check | #8988 #8990 #8991 #8992 #8994 #8995 #8998 #8996 | **pass — not regressed** | All six discriminators identical to both prior waves' readings; full mount set 7, also identical. Four flags turned on at once and the served path still renders what it rendered when they were off. |
+| 2 | Moves P1 Charter — a field states its BASIS, and an unsupported field never reads as evidence | #8988 `6600489253` | **pass, in the half that renders without a write** | Every one of the 7 charter fields carries *HOW DO YOU KNOW THIS?* with the three options *Backed by evidence* / *I'm asserting this* / *It's an assumption*, 3 + 2 + 2 across the steps. Each carries *"No approved evidence for this field yet — an assertion or an owned assumption is enough to move on."* The string **"evidence covered" occurs 0 times** on every step. *Backed by evidence* renders unselectable where no approved evidence exists. **The assumption-classification half is `blocked`:** recording a basis calls `saveCharterBasis`, a server write, and no Move the runtime serves carries a recorded basis yet. |
+| 3 | Moves hand-off recap and charter-level basis rollup | #8988 `6600489253` | **fail — U-564** | The rollup renders nowhere. At view 2 the footer shows `.mcf-approve-slot` ×1 and `.mcf-btn-primary` ×0; `[data-testid="mcf-handoff"]`, `.mcf-recap`, `[data-testid="charter-basis-rollup"]` and `[data-testid="charter-basis-mark"]` are **0**, on two separate Moves. The cause is structural and is in the source, not the data — see below. |
+| 4 | Moves capture dock — fill-from-notes, propose before write | #8990 `def2eeecd0`, on the path #8992 `d4bf30f961` opened | **pass (ON path, first observation)** | `capture-notes-open` opens a panel stating *"Nothing is written to a field until you insert it."* A pasted passage produced one proposal, `capture-notes-proposal-scope_boundary`, showing the **verbatim** passage and the words that earned it (*line 1 · matched boundary, scope, touch*), labelled **FROM YOUR NOTES · RECORDS YOUR ASSERTION**, with *Insert into Scope boundary* and *Dismiss* as the only controls. #8990's link is present as `capture-notes-records-basis-scope_boundary`: *"Inserting also records I'm asserting this … and never reads as evidence."* A non-matching paste rendered `capture-notes-empty` — *"No passage matched an unanswered question on this phase"* — rather than a guess. **Insert was not pressed.** |
+| 5 | Moves P0 Originate — `moves_capture_p0_v1` ON path | #8992 `d4bf30f961`, which opened #8984 `8b22aa5a90`'s path | **pass (ON path, first observation)** | P0 now renders the redesigned flow: `data-capture-p0="on"`, capture flow ×1, phasebar ×1, stepbar ×1, 4 `.mcf-question` on step 1, P0's titles *Why now* / *The bet* / *Readiness* all present, footer *Step 1 of 3*. **Step 1 only was read on P0**, so its full mount set is not measured here. The legacy canvas is gone: **1** element carrying a `finder*` class against the fourteenth wave's **60**, and **0** occurrences of `P0 INPUTS`. |
+| 6 | Moves capture phase strip — each row states its own phase's question total | #8998 `307a4a1d60` + #8996 `14b8ebe8ba` | **pass** | The six rows read 11 / 7 / 8 / 7 / 7 / 7 — six distinct totals, not one repeated — and no row's answered count exceeds its own total. The *"11 of 7"* shape both merges were opened against is absent. |
+| 7 | Source New — one status and one next action per step | #8979 `69aacc4fb3` | **blocked — the covered step exists on no served event** | `readinessForEvent` covers the **request step only** and returns `null` otherwise, and `StepReadinessBanner` renders nothing on `null`. All **four** Source New events the runtime serves have step 01 Request at *Recorded*: two at Define, one at Market package, one past it. `.snw-step-readiness` is **0** on all four, fetched directly. The banner is behaving as specified; the merge's claimed behaviour has no subject on this runtime. |
+
+### Row 3 in full — why the rollup renders nowhere
+
+This is the finding of the wave and it is stated at length because it is a
+reachability failure that a module-graph audit cannot see.
+
+`MovesCaptureFlow` keeps `view` in `0..3`, where `3` is the hand-off recap that
+hosts `handoffSummary` (the host passes `charterBasisRollup`) and the
+`renderSectionRecapMark` basis marks. On the serving SHA:
+
+- `go(3)` is called from **exactly one place**, the footer primary's `onClick`
+  at `view === 2`.
+- That primary renders only in the `else` of `{view === 2 && approveSlot ? … : …}`,
+  so it does not render whenever `approveSlot` is truthy.
+- `initialStep` is typed `0 | 1 | 2` and the host clamps it with
+  `Math.min(substepIndex, 2)`, so no route can start at the hand-off.
+- The step bar only moves backwards: `if (i < view) go(i)`.
+- In the host, `captureApproveSlot` is non-null for P0 when `captureP0Active`,
+  and non-null for phases 1–5 — rendering either `PhaseApproveAndBuild` or the
+  *"Approval is available to an authorized workspace user"* note. The flow itself
+  mounts only when `captureFlowMounted = (captureV2Enabled && phase 1–5) || captureP0Active`.
+
+So **whenever the capture flow renders, `approveSlot` is truthy**; the only caller
+of `go(3)` therefore never renders, and view 3 is unreachable by any path. The
+live readings agree: `.mcf-approve-slot` ×1 and `.mcf-btn-primary` ×0 at view 2.
+
+The consequence is that #8988's deliverable — the charter-level rollup, its
+*"N of N answered · K assumptions carry into Discover"* headline, its basis chips
+and its named open-assumption rows — and the recap basis marks are deployed,
+flag-enabled, and reach no user. `docs/architecture/unreachable-components.json`
+does not list them and cannot: `CharterBasisRollup` is imported and referenced,
+so the module graph considers it reachable. Only a branch that never executes
+makes it dead. Filed as **U-564**.
+
+U-562's premise is wrong in the detail that matters here: it reasoned the OFF
+path was *"unusually worth observing because its mount point is real — the
+rollup belongs on the hand-off screen, which is step 3 of the capture flow that
+**is** served."* The hand-off is view **3**, not step 3, and step 3 is *Plan the
+proof*. Had the fifteenth wave been walked as written it would have recorded the
+rollup as correctly absent with the flag off, which was true and would have
+concealed this.
+
+### Stated limits of this walk
+
+- **Rows 2, 4, 5 and 6 are first ON-path observations.** The thirteenth and
+  fourteenth waves verdicted these features `pass` on paths where every
+  charter-basis flag was OFF. Those verdicts stand only for the OFF contract;
+  nothing in them evidenced the behaviour now observed, and an unqualified
+  `pass` carried forward from them would have been the wrong record.
+- **Three claims of U-563 are not proven and are not implied.**
+  - The **P1 advance gate admitting an owned assumption without an upload**
+    (#8991) is `blocked`. `charterGateDisclosure` renders inside
+    `GateApprovalConfirmDialog`, which opens from the gate control; on both
+    Moves walked that control is disabled and reads *"Final build blocked by
+    required evidence"*, with *"Complete 7 phase inputs before Approve & Build"*
+    and *"1 required evidence item open"*. Reaching the dialog needs seven
+    answers saved and an evidence item cleared — writes.
+  - The **edit-clears-its-basis notice** (#8994) is `blocked` for the same
+    reason: it needs a recorded basis and then an edit, two writes.
+  - The **assumption classification** half of row 2, as stated there.
+- **Row 1 is a structural comparison**: same markers, same counts, same tenant,
+  same phase. It does not assert the capture *behaves* identically.
+- **Row 7 is `blocked`, not `fail`.** The banner's `null` path is correct; the
+  absence is of a subject, not of the behaviour.
+- **Enforcement is server-side and was not exercised anywhere.** Every refusal
+  recorded here — the disabled gate, the unselectable *Backed by evidence* —
+  was observed as a client affordance.
+
+### Residue — filed, not absorbed
+
+- **U-564** — the capture flow's hand-off view is unreachable, so #8988's rollup
+  and the recap basis marks render nowhere. Filed from row 3.
+
+### Noted, not filed
+
+- The phase strip reports a phase the Move has advanced past as complete when
+  viewed from a later phase, and reports its measured count when viewed from its
+  own route: P0 reads *11 of 11 answered* from the P1 route and *0 of 11
+  answered* from the P0 route, for the same Move minutes apart. This is declared
+  behaviour — `capturePhaseAnsweredCount` documents that the viewed row "wins
+  over" the advanced-past inference, deliberately — and it is recorded only so
+  that a later reader does not discover the disagreement and take it for a
+  regression. The inferred reading is an inference; only the viewed row is
+  measured.
+
+---
+
 ## 2026-10-05 fourteenth wave — walked on serving SHA `786df70f82`
 
 **Item:** U-561.
