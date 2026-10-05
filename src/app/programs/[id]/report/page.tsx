@@ -13,6 +13,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '@/lib/design/design-tokens'
 import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
+import { describeGateSummary } from '@/lib/reasoning/gate-summary-basis';
 import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
 import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
@@ -260,8 +261,11 @@ export default async function ProgramReportPage({
   const missions = getMissionsForProgram(id);
 
   // Health score summary
+  // Says what the pair counted. Without a typed pattern the context reports the
+  // gate's own standing as `total: 1`, which formatted as a ratio would read as
+  // one criterion assessed and failed when none was assessed.
   const healthScore = ctx?.gatesSummary
-    ? `${ctx.gatesSummary.met} / ${ctx.gatesSummary.total} gates met`
+    ? describeGateSummary(ctx.gatesSummary)
     : 'N/A';
 
   const generatedDate = new Date().toLocaleDateString('en-US', {
