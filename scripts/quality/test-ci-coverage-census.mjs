@@ -78,8 +78,31 @@ const TENANT_RESOLVER_SOURCE_RE =
   /\b(?:requireTenancy|resolveTenant|canAccessTenant|getActiveClient|assertTenant)\s*\(/;
 const TENANT_KEY_SOURCE_RE =
   /\b(?:tenantKey|clientKey|requestedClientKey|tenant_key|client_key)\b/;
+// The path half of the tenant heuristic. The nine read-ish words name the
+// shape of a tenant-scoped READ; `tenant` and `client[-_]?key` name the shape
+// of a module that announces tenant scope in its own filename, which the nine
+// could not match — so modules literally called `tenant-scoped-session.ts`,
+// `tenant-identity-pin.ts` and `tenant-key-resolution.ts` were excluded from
+// the signal by their names alone (T-793).
+//
+// Both halves of the heuristic remain required: this gate decides nothing on
+// its own, `TENANT_KEY_SOURCE_RE` must also match the file's executable source,
+// and `sourceWithoutNonExecutableSignalText` has already blanked its types,
+// interfaces and comments by then. That is why the gate is widened rather than
+// dropped — a module mentioning `tenantKey` only in an interface is exactly
+// what the two-part test exists to exclude, and removing the gate would move
+// the whole judgment onto the sanitizer.
+//
+// Each added alternative is measured, not guessed. Over `src` at `e2d5096330`,
+// counting only sources that carry a tenant key in executable source, raise no
+// resolver call, and match none of the nine shipped words: `tenant` matches 63,
+// `client[-_]?key` matches 1. `tenancy` matches ZERO and is deliberately NOT
+// here — an alternative that can never fire reads as coverage and is not.
+// `client` on its own was rejected for the opposite reason: it matches 22, but
+// they are React clients (`WorkspaceClient.tsx`, `consent-client-name.ts`),
+// not tenants, and the word would make the gate mean something else.
 const TENANT_READ_PATH_RE =
-  /(?:read|query|queries|adapter|route|repository|lookup|search|fetch)/i;
+  /(?:read|query|queries|adapter|route|repository|lookup|search|fetch|tenant|client[-_]?key)/i;
 
 function scriptKindFor(fileName) {
   const lowerFileName = fileName.toLowerCase();
