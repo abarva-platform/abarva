@@ -52,6 +52,7 @@ import {
   type CharterBasisValue,
 } from "@/components/strategic-moves/CharterBasisField";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
+import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -213,6 +214,8 @@ interface MovesPhaseStandaloneClientProps {
   captureCompositionEnabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
+  /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
+  captureNotesEnabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -826,6 +829,7 @@ export function MovesPhaseStandaloneClient({
   charterBasisEnabled = false,
   captureCompositionEnabled = false,
   initialP1CharterBasisBySection = {},
+  captureNotesEnabled = false,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -3045,6 +3049,18 @@ export function MovesPhaseStandaloneClient({
                       avaRole={phase.avaRole}
                       avaThread={avaThread}
                       avaQuestions={visibleAvaQuestions}
+                      notesFill={
+                        captureNotesEnabled ? (
+                          <CaptureNotesFill
+                            targets={phaseCaptureSections.map((section) => ({
+                              section,
+                              value:
+                                displayPhaseCaptureValues[section.key] ?? "",
+                            }))}
+                            onInsert={setVisiblePhaseCaptureValue}
+                          />
+                        ) : null
+                      }
                       avaLeadingActions={[
                         {
                           id: "draft-inputs",

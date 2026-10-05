@@ -105,7 +105,8 @@ export type FeatureFlagKey =
   | "moves_home_v2"
   | "moves_charter_basis_v1"
   | "moves_capture_p0_v1"
-  | "moves_capture_composition_v1";
+  | "moves_capture_composition_v1"
+  | "moves_capture_notes_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -430,6 +431,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_capture_composition_v1",
     summary:
       "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; off by default.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_notes_v1",
+    summary:
+      "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Off by default; the dock renders byte-for-byte as today until a tenant is enabled via includeTenants.",
     policy: "tenant",
     includeTenants: [],
   },

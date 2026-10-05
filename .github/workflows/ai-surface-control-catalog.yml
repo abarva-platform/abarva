@@ -266,6 +266,7 @@ jobs:
           src/components/strategic-moves/__tests__/MovesHome.test.tsx
           src/components/strategic-moves/__tests__/moves-home-adapter.test.ts
           src/components/strategic-moves/__tests__/moves-home-mapper.test.ts
+          src/components/strategic-moves/__tests__/CaptureNotesFill.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
