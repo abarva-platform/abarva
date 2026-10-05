@@ -18,6 +18,13 @@ import {
   buildScorecardAuthorityView,
   type ScorecardAuthorityView,
 } from "@/lib/source/proposal-intelligence";
+import {
+  SOURCE_NEW_PHASE_STAGE_KEYS,
+  sourceNewJourneyForEvent,
+  sourceNewPhaseIsSkipped,
+  sourceNewSkippedPhases,
+} from "@/lib/source/new-workspace/phase-state";
+import { SOURCE_STAGE_ORDER } from "@/lib/source/constants";
 import type { AtlasPageContextValue } from "@/lib/shell/atlas-page-state";
 import type { AgentDockProps } from "@/components/agent/AgentDock";
 
@@ -2714,4 +2721,124 @@ describe("SourceNewWorkspace", () => {
 
     expect(() => openApprovals()).not.toThrow();
   });
+});
+
+/**
+ * U-568 — the phase rail is journey-blind.
+ *
+ * The contract optimization journey declares `rfp` skipped, and the rail's
+ * fourth phase stands for exactly that stage. So a renegotiation event is
+ * shown a market-package phase labelled `Later` while it is in flight, and
+ * `No record` once it is past — a pending-work claim and a gap claim about
+ * work its governed path will never ask for.
+ *
+ * The read-through that lets this surface tell the two journeys apart is
+ * delivered here. The remedy — whether the rail drops a skipped phase or marks
+ * it skipped in its own words — is a product call and is NOT taken here, so
+ * the two defect cases below are expected failures rather than assertions a
+ * fix has to satisfy today. They flip the moment the rail stops making the
+ * claim, and `it.failing` turns red if that happens without this block being
+ * updated, which is the point.
+ */
+describe("Source New phase rail on a journey that skips a phase", () => {
+  const renegotiation: SourceNewEventView = {
+    ...request,
+    sourcingMotion: "contract_optimization",
+    currentStage: "strategy",
+    lifecycle: "active",
+  };
+
+  function phaseRailEntry(label: string): HTMLElement {
+    const rail = screen.getByRole("navigation", { name: "Event phases" });
+    const entry = within(rail)
+      .getAllByRole("button")
+      .find((button) =>
+        Boolean(
+          Array.from(button.querySelectorAll("strong")).some(
+            (node) => node.textContent?.trim() === label,
+          ),
+        ),
+      );
+    if (!entry) throw new Error(`No phase rail entry labelled ${label}`);
+    return entry;
+  }
+
+  // Read the state line as its own text node. Concatenated button text joins
+  // the phase label to its state with no separator, which has already made a
+  // negative assertion on a rail pass when it should not have.
+  function phaseRailState(label: string): string {
+    const state = phaseRailEntry(label).querySelector("small");
+    if (!state) throw new Error(`Phase rail entry ${label} renders no state`);
+    return state.textContent?.trim() ?? "";
+  }
+
+  it("carries the resolved journey, so the surface can tell the two journeys apart", () => {
+    expect(sourceNewSkippedPhases(renegotiation)).toEqual(["rfi"]);
+    expect(
+      sourceNewSkippedPhases({ ...request, sourcingMotion: "competitive_rfp" }),
+    ).toEqual([]);
+  });
+
+  it("reads an unrecorded motion through the resolver's own inference, not as competitive", () => {
+    // The base fixture records no motion and still lands on the renegotiation
+    // journey, because its trigger says a contract is nearing renewal. A first
+    // draft of this block asserted the opposite — that an unread motion means
+    // competitive — and the resolver corrected it. It matters here: the defect
+    // below is not confined to events that carry the motion explicitly.
+    expect(request.sourcingMotion).toBeUndefined();
+    expect(sourceNewSkippedPhases(request)).toEqual(["rfi"]);
+    expect(
+      sourceNewSkippedPhases({
+        ...request,
+        eventType: "managed_services",
+        name: "Application services sourcing",
+        trigger: null,
+      }),
+    ).toEqual([]);
+  });
+
+  it("does not call a phase skipped when only part of it is off the journey", () => {
+    // `define` stands for two stages. A journey that skips one of them has not
+    // skipped the phase, and no journey defined today distinguishes the two
+    // readings — so this is the case that holds the rule up.
+    expect(sourceNewPhaseIsSkipped("define", ["strategy"])).toBe(false);
+    expect(sourceNewPhaseIsSkipped("define", ["strategy", "scope"])).toBe(true);
+    expect(sourceNewPhaseIsSkipped("rfi", ["rfp"])).toBe(true);
+    // A phase the canonical stage order does not represent is never reported
+    // as skipped, however wide the journey's skipped set is.
+    expect(sourceNewPhaseIsSkipped("request", SOURCE_STAGE_ORDER)).toBe(false);
+    expect(sourceNewPhaseIsSkipped("suppliers", SOURCE_STAGE_ORDER)).toBe(false);
+  });
+
+  it("agrees with the governed journey about which phases the event will visit", () => {
+    const journey = sourceNewJourneyForEvent(renegotiation);
+    expect(journey.id).toBe("contract_optimization");
+    expect(journey.skippedStageKeys).toContain("rfp");
+    for (const phase of sourceNewSkippedPhases(renegotiation)) {
+      for (const stage of SOURCE_NEW_PHASE_STAGE_KEYS[phase]) {
+        expect(journey.skippedStageKeys).toContain(stage);
+      }
+    }
+  });
+
+  it.failing(
+    "does not label a phase the event's journey skips as pending work",
+    () => {
+      render(<SourceNewWorkspace event={renegotiation} files={[]} />);
+      expect(phaseRailState("Market package")).not.toBe("Later");
+    },
+  );
+
+  it.failing(
+    "does not assert a gap in a phase the event's journey skips",
+    () => {
+      render(
+        <SourceNewWorkspace
+          event={{ ...renegotiation, currentStage: "bafo" }}
+          files={[]}
+        />,
+      );
+      expect(phaseRailState("Market package")).not.toBe("No record");
+    },
+  );
 });
