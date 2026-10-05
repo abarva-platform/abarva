@@ -10,11 +10,12 @@ Each row records one possible company/archetype fit based on a provider-owned
 webpage. That evidence establishes a described capability only. It does not
 establish current availability, geography, pricing, suitability, security,
 procurement approval, or a client relationship. A buyer must review identity,
-fit, conflicts, and contact authority before any promotion to canonical
+fit, region, conflicts, and contact authority before any promotion to canonical
 supplier data. No loader or product route consumes this CSV.
 
 The current Source event registry has 11 archetypes. Ten category-routed
-archetypes have five initial research candidates each. `CONTRACT_RENEWAL` is
+archetypes have at least five initial research candidates each: 59
+archetype fits across 50 distinct company labels. `CONTRACT_RENEWAL` is
 incumbent-specific; a generic market longlist would be misleading. Changes to
 the code registry make the validator fail until coverage is re-assessed.
 

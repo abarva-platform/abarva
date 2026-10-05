@@ -30,15 +30,16 @@ this release.
 
 ## Changes Included
 
-- A source-linked CSV with five candidate fits per category-routed Source
-  archetype and a declared incumbent-specific renewal exception.
+- A source-linked CSV with at least five candidate fits per category-routed
+  Source archetype, 50 distinct company labels, and a declared
+  incumbent-specific renewal exception.
 - A fail-closed validator and negative tests run in CI.
 - A README recording the identity, authority, contact, and load boundaries.
 
 ## QA / Validation
 
 - `node --import tsx --test scripts/source/__tests__/market-candidate-research.test.mjs`: 5 tests passed, including mutated approval, contact, evidence, and identity cases.
-- `node --import tsx scripts/source/validate-market-candidate-research.mjs`: pass, 50 fits across 10 category-routed archetypes.
+- `node --import tsx scripts/source/validate-market-candidate-research.mjs`: pass, 59 fits across 10 category-routed archetypes and 50 distinct company labels.
 - `npm run typecheck`: clean.
 - `npm run release:check`: all 11 gates passed.
 - `npx eslint scripts/source/validate-market-candidate-research.mjs scripts/source/__tests__/market-candidate-research.test.mjs`: clean.

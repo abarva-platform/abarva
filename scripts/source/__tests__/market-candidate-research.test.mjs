@@ -75,6 +75,7 @@ test("the committed pack meets the complete Source archetype contract", () => {
   const report = validateMarketCandidateResearch(input);
   assert.deepEqual(report.errors, []);
   assert.equal(report.status, "pass");
-  assert.equal(report.rows, 50);
+  assert.equal(report.rows, 59);
+  assert.equal(report.distinctCompanies, 50);
   assert.equal(report.coveredArchetypes, 10);
 });
