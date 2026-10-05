@@ -4,6 +4,10 @@
 // pattern. The Discovery Plan deliverable (generated at the P1→P2 gate) turns
 // this catalog into a client-facing evidence-request list + interview guide.
 
+import { z } from "zod";
+
+import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+
 export interface EvidenceFamily {
   id: string;
   label: string;
@@ -865,16 +869,6 @@ export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
   [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
 };
 
-/** Normalize a declared archetype token to a catalog key. */
-function normalizeArchetypeId(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[\s./-]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
 /**
  * Resolve a DECLARED archetype to its blueprint — the authoritative path.
  * Returns null when nothing was declared or the declaration does not exactly
@@ -884,8 +878,10 @@ function normalizeArchetypeId(value: string): string {
 export function resolveDeclaredDiscoveryBlueprint(
   declaredArchetypeId: string | null | undefined,
 ): DiscoveryBlueprint | null {
-  if (!declaredArchetypeId || !declaredArchetypeId.trim()) return null;
-  return DISCOVERY_BLUEPRINT_CATALOG[normalizeArchetypeId(declaredArchetypeId)] ?? null;
+  return resolveArchetypeCatalogEntry(
+    DISCOVERY_BLUEPRINT_CATALOG,
+    declaredArchetypeId,
+  );
 }
 
 export interface DiscoveryArchetypeSuggestion {
@@ -988,4 +984,132 @@ export function getDiscoveryBlueprint(
     return AI_OPERATIONS;
   }
   return DEFAULT_BLUEPRINT;
+}
+
+// ── Config contract + loader (Phase 2 of the configurable archetype layer) ──
+// The catalog is data: these schemas define what a configured source — a JSON
+// file today, a DB table or setup UI later — must satisfy, and the loader
+// overlays a validated configured source onto the built-in seed. The seam lets
+// a deploying firm add or override an archetype WITHOUT shipping code, while an
+// invalid source is rejected whole so the catalog can never be partially
+// corrupted. Co-located with the catalog it governs.
+// A configured id becomes a key on the effective catalog. Some snake_case
+// strings are not usable as keys: `__proto__` is a setter on
+// `Object.prototype`, so assigning it changes an object's prototype instead of
+// adding an entry, and `constructor` / `prototype` read back as inherited
+// built-ins rather than as a declared archetype. The id regex admits all three.
+// They are rejected at the contract so a configured source can never name an
+// identity the catalog cannot hold — identity is declared, and a declaration
+// the catalog would silently drop is not a declaration.
+const UNUSABLE_CATALOG_KEYS = ["__proto__", "constructor", "prototype"];
+
+const usableAsCatalogKey = (id: string) => !UNUSABLE_CATALOG_KEYS.includes(id);
+
+const UNUSABLE_KEY_MESSAGE =
+  "id must not be a JavaScript object key (__proto__, constructor, prototype)";
+
+export const EvidenceFamilySchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "family id must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+  label: z.string().min(1),
+  grounds: z.string().min(1),
+  required: z.boolean(),
+  likelySource: z.string().min(1),
+  format: z.string().min(1),
+});
+
+export const InterviewRoleSchema = z.object({
+  role: z.string().min(1),
+  side: z.enum(["business", "it"]),
+  objectives: z.string().min(1),
+  questions: z.array(z.string().min(1)).min(1),
+});
+
+export const DiscoveryBlueprintSchema = z.object({
+  blueprintId: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "blueprintId must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+  blueprintVersion: z.string().min(1),
+  archetypeLabel: z.string().min(1),
+  suggestionKeywords: z.array(z.string().min(1)).optional(),
+  evidenceFamilies: z
+    .array(EvidenceFamilySchema)
+    .min(1)
+    .refine(
+      (families) =>
+        new Set(families.map((family) => family.id)).size === families.length,
+      { message: "evidence family ids must be unique within a blueprint" },
+    ),
+  interviewRoster: z.array(InterviewRoleSchema).min(1),
+});
+
+export const DiscoveryBlueprintCatalogSchema = z.array(DiscoveryBlueprintSchema);
+
+export type DiscoveryBlueprintConfig = z.infer<typeof DiscoveryBlueprintSchema>;
+
+export interface LoadedDiscoveryBlueprintCatalog {
+  catalog: Record<string, DiscoveryBlueprint>;
+  /** Added or overridden archetype ids from the configured source. */
+  applied: string[];
+  /** Validation errors; when non-empty the configured source was rejected. */
+  errors: string[];
+}
+
+/**
+ * Build the effective catalog: the built-in seed, with a validated configured
+ * source overlaid on top (an entry whose `blueprintId` matches a seed id
+ * overrides it; a new id adds an archetype). A configured source that fails
+ * validation is rejected whole — the seed is returned unchanged and the errors
+ * are surfaced — so a malformed config cannot partially corrupt the catalog.
+ */
+export function loadDiscoveryBlueprintCatalog(
+  configuredBlueprints?: unknown,
+): LoadedDiscoveryBlueprintCatalog {
+  // Prototype-free, for two reasons. It answers only ids it was given, so no
+  // caller can reach an inherited member and read it back as an archetype; and
+  // with no `Object.prototype` behind it, writing a key can never invoke an
+  // inherited setter, so every id written becomes an own key and `applied`
+  // cannot name an id the catalog does not hold.
+  const catalog: Record<string, DiscoveryBlueprint> = Object.assign(
+    Object.create(null) as Record<string, DiscoveryBlueprint>,
+    DISCOVERY_BLUEPRINT_CATALOG,
+  );
+  if (configuredBlueprints == null) {
+    return { catalog, applied: [], errors: [] };
+  }
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(configuredBlueprints);
+  if (!parsed.success) {
+    return {
+      catalog,
+      applied: [],
+      errors: parsed.error.issues.map(
+        (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+      ),
+    };
+  }
+  const applied: string[] = [];
+  for (const blueprint of parsed.data) {
+    catalog[blueprint.blueprintId] = blueprint as DiscoveryBlueprint;
+    applied.push(blueprint.blueprintId);
+  }
+  return { catalog, applied, errors: [] };
+}
+
+/**
+ * Validate the built-in seed against the schema. The seam only holds if the
+ * seed itself conforms to the contract a configured source must meet.
+ */
+export function validateBuiltInDiscoveryBlueprintCatalog(): string[] {
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(
+    Object.values(DISCOVERY_BLUEPRINT_CATALOG),
+  );
+  if (parsed.success) return [];
+  return parsed.error.issues.map(
+    (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+  );
 }

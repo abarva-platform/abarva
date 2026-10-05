@@ -336,6 +336,18 @@ describe("resolveLoadApproval", () => {
     ).toBe("manifest client_key is not the tenant being loaded");
   });
 
+  it("does not treat a move_registry manifest as a tenant-pinned load approval", () => {
+    const moveScoped = loadableManifest({
+      client_key: null,
+      tenant_scope: "move_registry",
+    });
+
+    expect(validateManifest(moveScoped).ok).toBe(true);
+    expect(
+      refusal([moveScoped], binding({ tenant_key: "another-tenant" })),
+    ).toBe("manifest client_key is not the tenant being loaded");
+  });
+
   it("refuses when the manifest declares a different way of loading", () => {
     expect(
       refusal([loadableManifest({ ingestion_method: "admin_bulk_loader" })]),
