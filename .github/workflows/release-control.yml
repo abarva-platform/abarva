@@ -59,6 +59,15 @@ jobs:
       - name: Prove no triage verdict addresses a file that is gone
         run: npm run check:triage-verdict-discharge
 
+      # The sibling above covers a row whose SUBJECT is gone. This covers the
+      # disjoint case of a row whose AUTHORITY is gone: already_verdicted_elsewhere
+      # is the one held verdict that describes no work, so the file's hold rests
+      # entirely on another record or item really carrying the verdict. Measured
+      # when this was added: 39 rows defer and hold 36 of the census's 112 held
+      # files, all 39 resolving by luck rather than by a control (item 26).
+      - name: Prove no triage deferral holds a file on an authority that is gone
+        run: npm run check:triage-deferral-authority
+
       - name: Check release record
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}
