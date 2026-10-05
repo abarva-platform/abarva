@@ -4,6 +4,7 @@ import {
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
   resolveDeclaredEvidenceFamily,
+  resolveDeclaredProgramArchetypeId,
   type DiscoveryEvidenceReadinessItem,
 } from "../evidence-readiness";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
@@ -412,5 +413,49 @@ describe("a family declared at upload", () => {
         .filter((family) => family.status === "covered")
         .map((family) => family.familyId),
     ).toEqual(["model_risk_responsible_ai_controls"]);
+  });
+});
+
+describe("resolveDeclaredProgramArchetypeId prefers a known catalog archetype", () => {
+  it("a non-archetype functionPackKey does NOT shadow a charter-declared archetype", () => {
+    const program = {
+      functionPackKey: "some_function_pack", // not a catalog archetype id
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    };
+    expect(resolveDeclaredProgramArchetypeId(program)).toBe(
+      "governed_data_foundation",
+    );
+  });
+
+  it("does not require overloading program.archetype (phase logic) to declare", () => {
+    const program = {
+      archetype: "ai_operations_customer_digital", // phase archetype, kept as-is
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    };
+    // both are catalog ids; the FIRST matching candidate wins by field order
+    // (functionPackKey -> charter.classification -> program.archetype), so the
+    // charter declaration is honored ahead of program.archetype.
+    expect(resolveDeclaredProgramArchetypeId(program)).toBe(
+      "governed_data_foundation",
+    );
+  });
+
+  it("honors a catalog archetype placed in functionPackKey", () => {
+    expect(
+      resolveDeclaredProgramArchetypeId({
+        functionPackKey: "governed_data_foundation",
+      }),
+    ).toBe("governed_data_foundation");
+  });
+
+  it("falls back to the first non-empty value as the inference seed", () => {
+    expect(
+      resolveDeclaredProgramArchetypeId({
+        functionPackKey: "some_function_pack",
+        name: "ignored",
+      }),
+    ).toBe("some_function_pack");
+    expect(resolveDeclaredProgramArchetypeId({})).toBeNull();
+    expect(resolveDeclaredProgramArchetypeId(null)).toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
+  resolveDeclaredDiscoveryBlueprint,
   resolveDiscoveryBlueprintWithBasis,
   type DiscoveryBlueprint,
   type DiscoveryBlueprintBasis,
@@ -292,14 +293,6 @@ function nonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function firstNonEmptyString(...values: unknown[]): string | null {
-  for (const value of values) {
-    const normalized = nonEmptyString(value);
-    if (normalized) return normalized;
-  }
-  return null;
-}
-
 interface DiscoveryBlueprintProgramInput {
   functionPackKey?: string | null;
   archetype?: string | null;
@@ -329,14 +322,25 @@ export function resolveDeclaredProgramArchetypeId(
       : null;
   const charterClassificationText =
     typeof charterClassification === "string" ? charterClassification : null;
-  return (
-    firstNonEmptyString(
-      program?.functionPackKey,
-      charterArchetype,
-      program?.archetype,
-      charterClassificationText,
-    ) ?? null
+  const candidates = [
+    program?.functionPackKey,
+    charterArchetype,
+    program?.archetype,
+    charterClassificationText,
+  ]
+    .map((value) => nonEmptyString(value))
+    .filter((value): value is string => Boolean(value));
+  // Prefer the first candidate that names a KNOWN catalog archetype. A declared
+  // identity then wins regardless of field order, so a `functionPackKey` that is
+  // not an archetype cannot shadow an archetype declared in the charter
+  // classification, and `program.archetype` (which drives phase logic) need not
+  // be overloaded to declare a discovery blueprint. When no candidate matches
+  // the catalog, the first non-empty value is returned as the inference seed —
+  // identical to the prior behavior.
+  const declaredArchetype = candidates.find(
+    (candidate) => resolveDeclaredDiscoveryBlueprint(candidate) != null,
   );
+  return declaredArchetype ?? candidates[0] ?? null;
 }
 
 export function buildDiscoveryBlueprintInputFromProgram(
