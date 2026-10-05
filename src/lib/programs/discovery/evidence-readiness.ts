@@ -296,9 +296,15 @@ interface DiscoveryBlueprintProgramInput {
   charter?: unknown;
 }
 
-export function buildDiscoveryBlueprintInputFromProgram(
+/**
+ * The DECLARED archetype id for a program, if any — functionPackKey or the
+ * charter's declared classification. This is the authoritative identity the
+ * blueprint resolver honors (identity is declared, never inferred). Returns
+ * null when nothing is declared, so resolution falls back to inference.
+ */
+export function resolveDeclaredProgramArchetypeId(
   program: DiscoveryBlueprintProgramInput | null | undefined,
-): string {
+): string | null {
   const charter =
     typeof program?.charter === "object" && program.charter !== null
       ? (program.charter as Record<string, unknown>)
@@ -310,14 +316,26 @@ export function buildDiscoveryBlueprintInputFromProgram(
       : null;
   const charterClassificationText =
     typeof charterClassification === "string" ? charterClassification : null;
-
-  return [
+  return (
     firstNonEmptyString(
       program?.functionPackKey,
       charterArchetype,
       program?.archetype,
       charterClassificationText,
-    ) ?? "STRATEGIC_MOVE",
+    ) ?? null
+  );
+}
+
+export function buildDiscoveryBlueprintInputFromProgram(
+  program: DiscoveryBlueprintProgramInput | null | undefined,
+): string {
+  const charter =
+    typeof program?.charter === "object" && program.charter !== null
+      ? (program.charter as Record<string, unknown>)
+      : {};
+
+  return [
+    resolveDeclaredProgramArchetypeId(program) ?? "STRATEGIC_MOVE",
     program?.name,
     program?.problemStatement,
     program?.targetOutcome,
@@ -554,6 +572,7 @@ export async function loadDiscoveryEvidenceReadiness(
   const program = await getProgramById(ctx, programId);
   const blueprint = getDiscoveryBlueprint(
     buildDiscoveryBlueprintInputFromProgram(program),
+    resolveDeclaredProgramArchetypeId(program),
   );
   const tenantKey = ctx.clientKey ?? "";
   const rows = await azureRead
