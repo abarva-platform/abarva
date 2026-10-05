@@ -45,6 +45,8 @@ import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
 } from "@/components/strategic-moves/MovesCaptureFlow";
+import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
+import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import {
   CharterAssumptionBadge,
@@ -233,6 +235,13 @@ interface MovesPhaseStandaloneClientProps {
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
   /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
   captureNotesEnabled?: boolean;
+  /**
+   * The charter answers P1 left standing on an assumption, folded server-side
+   * by `carriedCharterAssumptions` and already gated there on P2 +
+   * `moves_charter_assumptions_discover_v1`. `null` means the surface is not
+   * active and nothing renders — the client re-checks no flag of its own.
+   */
+  carriedCharterAssumptions?: readonly CarriedCharterAssumption[] | null;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -847,6 +856,7 @@ export function MovesPhaseStandaloneClient({
   captureCompositionEnabled = false,
   initialP1CharterBasisBySection = {},
   captureNotesEnabled = false,
+  carriedCharterAssumptions: carriedCharterAssumptionRows = null,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -3225,6 +3235,11 @@ export function MovesPhaseStandaloneClient({
                         renderSectionBadge: captureSectionBadge,
                         renderSectionRecapMark: captureSectionRecapMark,
                         handoffSummary: charterBasisRollup,
+                        openingBand: (
+                          <CharterAssumptionsCarryForward
+                            assumptions={carriedCharterAssumptionRows}
+                          />
+                        ),
                         sectionRecap: (s) =>
                           displayPhaseCaptureValues[s.key] ?? "",
                         onSelectPhase: (p) =>

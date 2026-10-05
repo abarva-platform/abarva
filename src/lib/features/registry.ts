@@ -104,6 +104,7 @@ export type FeatureFlagKey =
   | "moves_capture_v2"
   | "moves_home_v2"
   | "moves_charter_basis_v1"
+  | "moves_charter_assumptions_discover_v1"
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
   | "moves_capture_notes_v1";
@@ -433,6 +434,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
     policy: "tenant",
     includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_assumptions_discover_v1",
+    summary:
+      "2026-10-05: Keeps the other half of the charter-basis promise. P1 tells the workspace user that a field answered from an assumption carries into Discover to be validated, but the recorded basis was read on phase 1 only, so P2 never showed it and the sentence named a handover the product did not perform. With this on, P2 Discover opens with the charter answers still standing on an assumption - each with the owner and the validation plan the person typed when they declared it. Read-only: it closes, edits and re-classifies nothing, adds no canonical field or key, and never renders a carried row in evidence wording. An answer edited after its basis was declared is excluded, because the stale plan was written about the previous wording. Requires moves_charter_basis_v1 to be meaningful; default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "moves_capture_notes_v1",

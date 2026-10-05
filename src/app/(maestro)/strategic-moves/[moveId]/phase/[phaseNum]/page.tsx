@@ -6,6 +6,10 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import {
+  carriedCharterAssumptions,
+  charterAssumptionCarryForwardActive,
+} from "@/lib/programs/charter-assumptions-carry-forward";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
@@ -401,6 +405,14 @@ export default async function StrategicMovePhaseWorkspacePage({
   const charterBasisEnabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_basis_v1",
+  );
+  // The P2 half of the same promise: P1 tells the person an assumption
+  // "carries into Discover", and this is the read that performs it. Resolved
+  // as its own flag so a tenant on the P1 basis control does not have its
+  // Discover screen change without its own review.
+  const charterAssumptionsInDiscoverEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_assumptions_discover_v1",
   );
   // Composition-only polish for the redesigned capture. It has nothing to show
   // unless the redesigned capture is what renders, so it is resolved as the
@@ -879,6 +891,20 @@ export default async function StrategicMovePhaseWorkspacePage({
     if (referenceDraft)
       initialReferenceDraftValues[section.key] = referenceDraft;
   }
+  // The charter answers P1 left standing on an assumption, read on P2 only.
+  // `captureModules` already holds every module row for the Move (it is not
+  // phase-scoped), so P1's rows are in hand here without a second load.
+  const carriedCharterAssumptionRows = carriedCharterAssumptions({
+    active: charterAssumptionCarryForwardActive({
+      flagEnabled: charterAssumptionsInDiscoverEnabled,
+      phaseNumber: parsedPhase,
+    }),
+    modules: captureModules.map((entry) => ({
+      moduleKey: entry.moduleKey,
+      status: entry.status,
+      state: entry.state ?? null,
+    })),
+  });
   const initialPhaseCaptureRevision = computeCaptureRevision(
     initialPhaseCaptureValues,
     parsedPhase === 1 ? initialP1CharterBasisBySection : undefined,
@@ -939,6 +965,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureCompositionEnabled={captureCompositionEnabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         captureNotesEnabled={captureNotesEnabled}
+        carriedCharterAssumptions={carriedCharterAssumptionRows}
       />
     </AppShell>
   );
