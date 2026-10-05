@@ -7,6 +7,7 @@ import {
   DELIVERABLE_REGISTRY,
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
+import { DISCOVERY_BLUEPRINT_CATALOG } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 
 export type MoveEvidenceNeedStatus =
   | "missing"
@@ -312,16 +313,16 @@ const TREASURY_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
   },
 };
 
-// Healthcare / member-service Contact Center Agent Assist. Family ids here
-// match `HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies` in
-// discovery-blueprint.ts (the catalog that actually feeds `readiness` into
-// this file) — content is adapted from that catalog's real label/grounds/
-// likelySource/format fields, not invented fresh. Note: `archetypes/
-// registry.ts` defines a second, differently-keyed catalog for the same
-// archetype (e.g. `contact_center_transcripts_intents` there vs
+// Guidance for the `healthcare_contact_center_agent_assist` archetype. Family
+// ids here match that blueprint's `evidenceFamilies` in discovery-blueprint.ts
+// (the catalog that feeds `readiness` into this file) — content is adapted from
+// that catalog's real label/grounds/likelySource/format fields, not invented
+// fresh. Registered against the blueprint id in `ARCHETYPE_EXAMPLES`, so it is
+// selected by the archetype the resolver DECLARED, never by the Move's name.
+// Note: `archetypes/registry.ts` defines a second, differently-keyed catalog
+// for the same archetype (e.g. `contact_center_transcripts_intents` there vs
 // `call_recording_transcript_availability` here) — the two are not merged;
-// this table only needs to match the ids this specific pipeline actually
-// receives.
+// this table only needs to match the ids this specific pipeline receives.
 const CONTACT_CENTER_AGENT_ASSIST_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
   current_state_workflow_map: {
     exampleTemplate: "Member-service workflow map",
@@ -469,6 +470,76 @@ const CONTACT_CENTER_AGENT_ASSIST_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
   },
 };
 
+// Five family ids in the discovery catalog belong to more than one archetype
+// (`it_systems_landscape`, which GENERIC_EXAMPLES already covers, plus the four
+// below). An archetype-specific table may word a shared family in its own voice
+// — CONTACT_CENTER_AGENT_ASSIST_EXAMPLES does, in frontline agent-assist terms
+// — and that wording is right for that archetype and wrong for the others that
+// share the id. These entries are the archetype-neutral reading, used when the
+// declared archetype has no wording of its own for a shared family. Keep them
+// free of any one archetype's vocabulary.
+const CROSS_ARCHETYPE_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
+  model_risk_responsible_ai_controls: {
+    exampleTemplate: "Model risk and responsible AI controls",
+    exampleContent: [
+      "Existing model-risk review process and approval guardrails, if any",
+      "Monitoring, drift, and incident-response expectations for this deployment",
+      "Any existing responsible-AI policy this Move must comply with",
+    ],
+    whyItMatters:
+      "AI governance and approval guardrails are a gate, not a checkbox — this needs the real control checklist, not a generic one.",
+    nextAction:
+      "Upload a control checklist or model-risk review artifact from Responsible AI / Model Risk / Compliance.",
+  },
+  measurement_owner_cadence: {
+    exampleTemplate: "Measurement owner and cadence",
+    exampleContent: [
+      "Named owner for each metric this Move intends to move",
+      "Reporting cadence and system of record for each metric",
+      "How this ties to the Tower handoff and value measurement contract",
+    ],
+    whyItMatters:
+      "Tower handoff and the value measurement contract need a named owner and cadence per metric, not an aspiration.",
+    nextAction:
+      "Upload a metric-owner table from the accountable operations, finance, or PMO function.",
+  },
+  finance_baseline_value_plan: {
+    exampleTemplate: "Finance baseline and value measurement plan",
+    exampleContent: [
+      "Current run cost for the functions in scope of the value hypothesis",
+      "Value-driver definitions with finance-validated assumptions",
+      "Validation status: finance-attested vs. planning assumption",
+    ],
+    whyItMatters:
+      "The business case needs traceable, finance-validated cost and value assumptions before it's funding-grade.",
+    nextAction:
+      "Upload a finance baseline or value-measurement worksheet from Finance / FP&A.",
+  },
+  change_adoption_owner: {
+    exampleTemplate: "Operational change and adoption owner",
+    exampleContent: [
+      "Named owner for training, rollout sequencing, and adoption tracking",
+      "Planned adoption measurement approach (usage, override rate, satisfaction)",
+      "Known change-management risks for the people whose work this changes",
+    ],
+    whyItMatters:
+      "Adoption risk is a real failure mode — this needs a named owner before rollout, not after.",
+    nextAction:
+      "Upload a RACI or adoption plan from the training, workforce, or change function.",
+  },
+};
+
+// Guidance tables keyed by the discovery blueprint id the resolver DECLARED,
+// read off `readiness.blueprintId`. This is the path that makes an archetype's
+// own authored guidance reachable: before, the only way to reach a table was
+// for the Move's NAME to trip a keyword list, so an archetype's guidance was
+// unreachable for any Move not named in that archetype's vocabulary — and
+// reachable for Moves declared as a different archetype entirely. Identity is
+// declared, never inferred. Adding an archetype's guidance is an entry here.
+const ARCHETYPE_EXAMPLES: Record<string, Partial<typeof GENERIC_EXAMPLES>> = {
+  healthcare_contact_center_agent_assist: CONTACT_CENTER_AGENT_ASSIST_EXAMPLES,
+};
+
 function lower(value: string): string {
   return value.toLowerCase();
 }
@@ -538,36 +609,62 @@ function artifactsForFamily(familyId: string): DeliverableSpec[] {
     .filter(Boolean) as DeliverableSpec[];
 }
 
+// The reading a family gets when no table in the chain above authored one. It
+// is deliberately neutral: it asks for the source without claiming to know what
+// the evidence is for. Exported so a caller or a guard can tell an authored
+// reading from an unauthored one without matching on display copy.
+export const UNAUTHORED_FAMILY_GUIDANCE: Pick<
+  MoveEvidenceNeedPacket,
+  "exampleTemplate" | "exampleContent" | "whyItMatters" | "nextAction"
+> = {
+  exampleTemplate: "Evidence packet",
+  exampleContent: [
+    "Owner-attested source extract or document",
+    "Period covered, source system, and freshness",
+    "Known caveats, missing fields, and approval status",
+  ],
+  whyItMatters:
+    "This input anchors the artifact in client evidence instead of unsupported assumptions.",
+  nextAction: "Upload the source file or record a human waiver with rationale.",
+};
+
 function familyGuidance(
   familyId: string,
   moveName: string,
+  blueprintId: string,
 ): Pick<
   MoveEvidenceNeedPacket,
   "exampleTemplate" | "exampleContent" | "whyItMatters" | "nextAction"
 > {
-  const treasury = isTreasuryMove(moveName) ? TREASURY_EXAMPLES[familyId] : null;
-  const finance = !treasury && isApInvoiceMove(moveName) ? FINANCE_AP_EXAMPLES[familyId] : null;
+  // Declared archetype first, and only then the Move-name heuristics below.
+  // A declared archetype's own wording for a family always beats a name match.
+  const declared = ARCHETYPE_EXAMPLES[blueprintId]?.[familyId];
+  const shared = !declared ? CROSS_ARCHETYPE_EXAMPLES[familyId] : null;
+  const treasury =
+    !declared && !shared && isTreasuryMove(moveName)
+      ? TREASURY_EXAMPLES[familyId]
+      : null;
+  const finance =
+    !declared && !shared && !treasury && isApInvoiceMove(moveName)
+      ? FINANCE_AP_EXAMPLES[familyId]
+      : null;
   const contactCenter =
-    !treasury && !finance && isContactCenterAgentAssistMove(moveName)
+    !declared &&
+    !shared &&
+    !treasury &&
+    !finance &&
+    isContactCenterAgentAssistMove(moveName)
       ? CONTACT_CENTER_AGENT_ASSIST_EXAMPLES[familyId]
       : null;
   const generic = GENERIC_EXAMPLES[familyId];
   return (
+    declared ??
+    shared ??
     treasury ??
     finance ??
     contactCenter ??
-    generic ?? {
-      exampleTemplate: "Evidence packet",
-      exampleContent: [
-        "Owner-attested source extract or document",
-        "Period covered, source system, and freshness",
-        "Known caveats, missing fields, and approval status",
-      ],
-      whyItMatters:
-        "This input anchors the artifact in client evidence instead of unsupported assumptions.",
-      nextAction:
-        "Upload the source file or record a human waiver with rationale.",
-    }
+    generic ??
+    UNAUTHORED_FAMILY_GUIDANCE
   );
 }
 
@@ -592,7 +689,11 @@ export function buildMoveEvidenceNeedPackets(
 
   return input.readiness.families.map((family) => {
     const gap = gapForFamily(family, input.readiness.gapRegister);
-    const guidance = familyGuidance(family.familyId, input.moveName);
+    const guidance = familyGuidance(
+      family.familyId,
+      input.moveName,
+      input.readiness.blueprintId,
+    );
     const blockedSpecs = artifactsForFamily(family.familyId);
     const status: MoveEvidenceNeedStatus =
       family.status === "covered"
@@ -650,6 +751,46 @@ export function buildMoveEvidenceNeedPackets(
       status,
       evidenceIds: family.evidenceIds,
       evidenceTitles: family.evidenceTitles,
+    };
+  });
+}
+
+export interface ArchetypeGuidanceCoverage {
+  blueprintId: string;
+  archetypeLabel: string;
+  /** Family ids this archetype asks for that have authored guidance. */
+  authored: string[];
+  /** Family ids that fall through to `UNAUTHORED_FAMILY_GUIDANCE`. */
+  unauthored: string[];
+}
+
+/**
+ * Which of each catalog archetype's evidence families have authored guidance on
+ * the DECLARED path — the archetype's own table, the cross-archetype table, or
+ * the generic table — and which fall through to `UNAUTHORED_FAMILY_GUIDANCE`.
+ *
+ * Move-name heuristics are deliberately excluded: they are not reachable from a
+ * declaration, so counting them would report guidance an archetype only gets
+ * when a Move happens to be named a certain way. The unauthored list is the
+ * honest backlog of what still needs writing per archetype.
+ */
+export function archetypeGuidanceCoverage(): ArchetypeGuidanceCoverage[] {
+  return Object.values(DISCOVERY_BLUEPRINT_CATALOG).map((blueprint) => {
+    const authored: string[] = [];
+    const unauthored: string[] = [];
+    for (const family of blueprint.evidenceFamilies) {
+      const hasGuidance = Boolean(
+        ARCHETYPE_EXAMPLES[blueprint.blueprintId]?.[family.id] ??
+          CROSS_ARCHETYPE_EXAMPLES[family.id] ??
+          GENERIC_EXAMPLES[family.id],
+      );
+      (hasGuidance ? authored : unauthored).push(family.id);
+    }
+    return {
+      blueprintId: blueprint.blueprintId,
+      archetypeLabel: blueprint.archetypeLabel,
+      authored,
+      unauthored,
     };
   });
 }

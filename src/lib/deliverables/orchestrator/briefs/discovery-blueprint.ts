@@ -7,6 +7,10 @@
 import { z } from "zod";
 
 import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+import {
+  sharedEvidenceFamilyDrift,
+  type SharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
 
 export interface EvidenceFamily {
   id: string;
@@ -41,6 +45,25 @@ export interface DiscoveryBlueprint {
    */
   suggestionKeywords?: string[];
 }
+
+// The reusable evidence-family library lives in `discovery-evidence-library`;
+// it is re-exported here so a configured source composes against the same
+// module that owns the catalog.
+export {
+  SHARED_EVIDENCE_FAMILIES,
+  composeDiscoveryBlueprint,
+  composeEvidenceFamilies,
+  isEvidenceFamilyRef,
+  sharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
+export type {
+  ComposedDiscoveryBlueprint,
+  ComposedEvidenceFamilies,
+  DiscoveryBlueprintComposition,
+  EvidenceFamilyRef,
+  EvidenceFamilySpec,
+  SharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
 
 // ── AI-Operations / Customer-Digital (IROPS-class) ──────────────────────────
 const AI_OPERATIONS: DiscoveryBlueprint = {
@@ -868,6 +891,15 @@ export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
   [GOVERNED_DATA_FOUNDATION.blueprintId]: GOVERNED_DATA_FOUNDATION,
   [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
 };
+
+/**
+ * How far the built-in seed's shared families have drifted from the library's
+ * canonical wording. Read-only provenance for a setup flow; it changes no
+ * resolution.
+ */
+export function discoveryCatalogSharedFamilyDrift(): SharedEvidenceFamilyDrift[] {
+  return sharedEvidenceFamilyDrift(DISCOVERY_BLUEPRINT_CATALOG);
+}
 
 /**
  * Resolve a DECLARED archetype to its blueprint — the authoritative path.

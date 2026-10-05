@@ -18,9 +18,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2721,
-    "coveredTestFiles": 2557,
-    "pullRequestCoveredTestFiles": 2556,
+    "testFiles": 2724,
+    "coveredTestFiles": 2560,
+    "pullRequestCoveredTestFiles": 2559,
     "uncoveredTestFiles": 164,
     "directoriesWithTests": 504,
     "directoriesFullyCovered": 434,
@@ -34,10 +34,10 @@
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 53,
+    "unclassifiedRiskDirectories": 49,
     "rankedDirectories": 0,
     "rankedUntriagedUnrunTestFiles": 0,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 47,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 43,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -1449,19 +1449,6 @@
       }
     },
     {
-      "directory": "src/lib/enterprise-data/data-quality/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
       "directory": "src/lib/enterprise-data/enterprise-profile/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -1489,19 +1476,6 @@
     },
     {
       "directory": "src/lib/enterprise-data/tower-candidate-load/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-knowledge/tower/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -1852,19 +1826,6 @@
       }
     },
     {
-      "directory": "src/lib/source/vendor-proposals/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4
-      }
-    },
-    {
       "directory": "src/lib/sentinel/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 3,
@@ -1979,19 +1940,6 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 16
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 24,
-      "unrunTestFiles": 19,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 19,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 27
       }
     }
   ],
