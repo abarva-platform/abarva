@@ -11,6 +11,11 @@ import {
   captureHandoffAccess,
   captureHandoffHeading,
 } from "@/lib/programs/capture-handoff-reachability";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import {
+  getPhaseStepGroups,
+  phaseStepQuestionCounts,
+} from "@/lib/programs/moves-phase-step-groups";
 
 const PHASES: MovesCaptureFlowPhase[] = [
   { phase: 0, code: "P0", name: "Originate", answered: 11, total: 11, reachable: true },
@@ -408,5 +413,57 @@ describe("MovesCaptureFlow", () => {
 
     expect(originate).toHaveTextContent("11 of 11 answered");
     expect(within(originate).getByLabelText("complete")).toBeInTheDocument();
+  });
+});
+
+/**
+ * `U-567` — the discriminator that replaces the mount set a walk can no longer
+ * read.
+ *
+ * Three signed-in waves recorded `3 + 2 + 2 = 7` `.mcf-question` mount points
+ * across P1's steps as the structural non-regression figure for the
+ * `moves_capture_v2` path. That figure is now unobtainable unattended: *Continue*
+ * is gated on saved step readiness and the step bar advances only backwards
+ * (`if (i < view) go(i)`), so steps 2 and 3 are unreachable without writing
+ * answers — which a write-free walk does not do.
+ *
+ * So the figure moves here. These cases render the flow against the LIVE capture
+ * contract (not the fixture above) and pin step 1's rendered mount count and
+ * question order to `phaseStepQuestionCounts`, which derives the per-step counts
+ * from that same contract. One reachable step now falsifies a structural change
+ * to the mount set, and steps 2 and 3 are evidenced by the derivation rather
+ * than by an observation nobody can make.
+ */
+describe("MovesCaptureFlow — contract-derived mount set (U-567)", () => {
+  const contractSections = getPhaseCaptureSections(1);
+
+  it("mounts exactly as many questions on step 1 as the capture contract derives for that step", () => {
+    renderFlow({ sections: contractSections });
+
+    const expected = phaseStepQuestionCounts(1)[0];
+    expect(document.querySelectorAll(".mcf-question")).toHaveLength(expected);
+
+    // The footer still says which of the three steps this is, so the count
+    // above is anchored to step 1 and not to some other view of the flow.
+    expect(screen.getByText("Step 1 of 3")).toBeInTheDocument();
+  });
+
+  it("mounts step 1's own questions, in the contract's order — not another step's and not all of them", () => {
+    renderFlow({ sections: contractSections });
+
+    const rendered = Array.from(
+      document.querySelectorAll<HTMLElement>(".mcf-question .mcf-q-label"),
+    ).map((node) => node.textContent);
+
+    const expected = getPhaseStepGroups(1)[0].sectionKeys.map(
+      (key) =>
+        contractSections.find((section) => section.key === key)?.label ?? null,
+    );
+
+    expect(expected).not.toContain(null);
+    expect(rendered).toEqual(expected);
+    // Every question of the phase is NOT on screen — the flow is three steps,
+    // and a change that flattened them would pass a bare count on some phases.
+    expect(rendered.length).toBeLessThan(contractSections.length);
   });
 });
