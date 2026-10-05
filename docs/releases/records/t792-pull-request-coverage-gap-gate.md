@@ -67,18 +67,18 @@ not changed.
 
 ## QA / Validation
 
-Measured against `main` at `ddbd95aabe`, merged into this branch. Every number below is from a
+Measured against `main` at `10fbd48e7d`, merged into this branch. Every number below is from a
 command run in this change, over the same scope before and after, and re-measured on each new
 base rather than carried forward — `main` moved three times while this was open.
 
 **The defect, measured.** A fresh census on the unmodified base:
 
 ```
-testFiles 2713   coveredTestFiles 2549   pullRequestCoveredTestFiles 2548
+testFiles 2714   coveredTestFiles 2550   pullRequestCoveredTestFiles 2549
 ```
 
 One file accounts for that difference, and on this commit it is the only instance in
-2,713 test files:
+2,714 test files:
 
 ```
 src/lib/ecl/__tests__/product-provider.test.ts
@@ -121,8 +121,8 @@ different defect with a different remedy and is already reported as `uncoveredTe
 `echo skipped` and re-measuring:
 
 ```
-step present:  coveredTestFiles 2549   pullRequestCoveredTestFiles 2549   gate exit 0
-echo skipped:  coveredTestFiles 2549   pullRequestCoveredTestFiles 2548   gate exit 1
+step present:  coveredTestFiles 2550   pullRequestCoveredTestFiles 2550   gate exit 0
+echo skipped:  coveredTestFiles 2550   pullRequestCoveredTestFiles 2549   gate exit 1
 ```
 
 `pullRequestCoveredTestFiles` moves by exactly one and `coveredTestFiles` does not move at
@@ -151,15 +151,17 @@ number:
 
 | | testFiles | covered | pullRequestCovered | uncovered |
 |---|---|---|---|---|
-| committed on `main`, before | 2711 | 2547 | 2546 | 164 |
-| measured on `main`, before this change | 2713 | 2549 | 2548 | 164 |
-| committed, after | 2713 | 2549 | 2549 | 164 |
+| committed on `main`, before | 2714 | 2550 | 2549 | 164 |
+| measured on `main`, before this change | 2714 | 2550 | 2549 | 164 |
+| committed, after | 2714 | 2550 | 2550 | 164 |
 
-So +2/+2/+2 is pre-existing lag that this refresh discharges, and a further +1 on
-`pullRequestCoveredTestFiles` is this change. The lag figure has been +5/+5/+5, then +1/+1/+1,
-now +2/+2/+2, because siblings refreshed the artifact twice while this branch was open and then
-added test files after the second refresh. It is restated against the current base every time
-rather than carried forward, which is the whole point of separating it from this change's +1. The committed artifact's diff is three lines,
+**The pre-existing lag is now zero**, so the artifact's diff in this change is a single line and
+that line is this change: `pullRequestCoveredTestFiles` 2549 -> 2550, with `testFiles`,
+`coveredTestFiles` and `uncoveredTestFiles` all unmoved. The lag read +5/+5/+5 when this branch
+opened, then +1/+1/+1, then +2/+2/+2, and is zero now because siblings refreshed the artifact
+three times while this was open and the last refresh caught up with the tree. It was restated
+against the current base each time rather than carried forward — which is what makes it possible
+to say the remaining one-line diff is attributable to this change and nothing else. The committed artifact's diff is three lines,
 all counts; the coverage shape did not change. `audit:test-ci-coverage:check` exits 0.
 
 **The resolver caveat.** The census credits coverage only through commands it could resolve
