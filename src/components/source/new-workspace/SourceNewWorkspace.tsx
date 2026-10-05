@@ -30,6 +30,7 @@ import {
   type SourceNewPhaseState,
 } from "@/lib/source/new-workspace/phase-state";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
+import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
 import {
@@ -110,6 +111,13 @@ export interface SourceNewEventView {
   decisionOwner: string | null;
   /** Persisted event snapshot date used for deterministic readiness checks. */
   asOfDate: string;
+  /**
+   * The governed sourcing motion, carried so this surface can tell the two
+   * journeys apart. Absent means unread, and `sourceNewJourneyForEvent` then
+   * falls back to the resolver's own inference — the same behaviour this
+   * surface had before the field existed.
+   */
+  sourcingMotion?: SourceSourcingMotion | string | null;
   solicitationMotion?: "rfi" | "rfp" | null;
   solicitationMotionAcceptedAt?: string | null;
   solicitationMotionAcceptedByUserId?: string | null;
