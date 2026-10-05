@@ -4396,5 +4396,281 @@ function unplacedSplit(dir) {
   }
 }
 
+
+/* --------------------------------------------------------------------------
+ * The *Partly gated* section referred the reader to a table that did not hold
+ * the row — standing item 26, filed 2026-10-05.
+ *
+ * The section's own prose says the claimable half "is offered in the lane
+ * tables above" and tells the agent to take it. MEASURED on the live documents
+ * at 03:58Z: **0 of its 6 rows appeared in any lane table.** Four of the six
+ * were already delivered (two print `DELIVERED ... NOT to be re-taken` inside
+ * the offered cell itself), one was closed on `main`, and the single live row
+ * was blocked on another item.
+ *
+ * The MECHANISM is why three separate recordings of the symptom did not repair
+ * it. `partlyGated` filters on `!isFinished(i) && i.partialGate` and nothing
+ * else, so the section bypasses the whole claimable funnel: the very first
+ * stage, `already has proof (not at rung 0)`, correctly withholds a shipped
+ * item from the lane tables and never reaches this section. The referral is
+ * therefore not merely wrong on these rows — for any item carrying proof it
+ * CANNOT be true, which is the unfalsifiable shape this directory exists
+ * against.
+ *
+ * So the fix asserted here is not a wording change. The referral must be
+ * DERIVED per row from `CLAIMABLE_STAGES` — the same list the filter reads —
+ * and a row the filter removes must be shown under the rule that removed it.
+ * Case (c) is the one that stops the fix regressing into a second opinion: the
+ * reason printed has to be the stage's own label, so a generator that starts
+ * disagreeing with its filter cannot stay green.
+ * ------------------------------------------------------------------------ */
+{
+  console.log("\nbuild-execution-queue — a partly-gated row the lane tables do not hold (item 26)\n");
+
+  const LIVE_GATE =
+    "The signed-in readback the row also asks for was NOT attempted and remains owed"
+    + " -- it needs a human.";
+
+  const DECLARATION =
+    "**Gate scope — partial.** Gated half: the signed-in readback, which needs a human."
+    + " Claimable half: state the contract in code and test it.";
+
+  /** The section alone, so a match elsewhere in the file cannot pass a case. */
+  function section(rendered) {
+    const start = rendered.search(/^## Partly gated/m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  function laneTables(rendered) {
+    const start = rendered.search(/^### Lane [DCUT?] /m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start);
+    const end = rest.search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end);
+  }
+
+  /**
+   * The two tables, split on their own headers.
+   *
+   * The ids are read STRUCTURALLY rather than by searching the section for a
+   * phrase, and that is derived from what the DEFECT emits, not from the fixed
+   * output: unfixed, the section holds exactly one table, the five-column one,
+   * and every row sits in it under an affirmative referral. A first draft of
+   * case (a) asserted instead that the phrase "offered in the lane tables
+   * above" did not precede the row, and it FAILED ON CORRECT OUTPUT -- the
+   * withheld branch says "**0 of 1 is offered in the lane tables above.**",
+   * which contains that phrase while asserting its negation. A pattern a true
+   * sentence can trip is not a test of the sentence.
+   */
+  const OFFERED_HEADER = "| # | Lane | Gate | The half that is GATED | The half that is CLAIMABLE |";
+  const WITHHELD_HEADER = "| # | Lane | Why it is NOT offered |";
+
+  function tableRowIds(sec, header) {
+    const at = sec.indexOf(header);
+    if (at < 0) return new Set();
+    const rows = [];
+    for (const line of sec.slice(at + header.length).split("\n")) {
+      if (/^\|\s*-/.test(line)) continue;
+      if (!line.startsWith("|")) {
+        if (rows.length) break;
+        continue;
+      }
+      const id = line.split("|")[1]?.trim();
+      if (id) rows.push(id);
+    }
+    return new Set(rows);
+  }
+
+  const offeredIds = (sec) => tableRowIds(sec, OFFERED_HEADER);
+  const withheldIds = (sec) => tableRowIds(sec, WITHHELD_HEADER);
+
+  /**
+   * `shipped` mirrors C-416 and C-589: a partly-gated item whose row records
+   * that the claimable half already merged. That lands it at rung 5, which the
+   * funnel's first stage removes — exactly the live shape.
+   *
+   * The proof sentence deliberately carries NO `#NNNN` token. A first draft
+   * wrote "PR #8607" the way the live rows do, and the item stayed at rung 0
+   * and reached a lane table: `#8607` is an item reference, so the T-704
+   * attribution rule read the sentence as belonging to a neighbouring id and
+   * dropped it from the rung corpus. The precondition case is what caught it.
+   */
+  function addGatedItem(dir, id, { shipped }) {
+    /*
+     * The verdict goes at the HEAD of the acceptance cell, which is the
+     * convention `attributableStatusText` reads for a table row: only a
+     * title or acceptance whose first word is a verdict verb reaches the rung
+     * corpus at all. Written mid-cell -- as two earlier drafts of this fixture
+     * wrote it -- the row stays at rung 0 and lands in a lane table, and the
+     * case under it tests nothing. The precondition case is what caught that
+     * both times.
+     */
+    const acceptance = shipped
+      ? "Shipped — the claimable half squash-merged 2026-09-28."
+      : "State the contract in code and test it, red-first.";
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **Synthetic partly-gated fixture.** ${DECLARATION} | T | ${acceptance} |\n`,
+    );
+    mapFixtureId(dir, id);
+    /*
+     * The gate itself. `scopeBlocker` scopes a blocker that already exists, so
+     * a declaration with nothing to scope produces no `partialGate` at all and
+     * the section renders at zero -- which is how the first draft of this
+     * fixture failed, and the reason the register line is here rather than the
+     * declaration alone.
+     */
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n2026-09-27T03:05:20Z | fixture#abstain | item ${id} NOT TAKEN — ${LIVE_GATE}\n`,
+    );
+  }
+
+  /* --- (a) THE DEFECT: a row the lane tables do not hold is offered as though they do. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-961", { shipped: true });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    const inLane = laneTables(rendered).includes("| T-961 |");
+    /*
+     * The precondition is half the case. If the fixture's item reached a lane
+     * table after all, then this case would be asserting nothing about the
+     * referral and would pass on unfixed code -- the row really would be
+     * offered there. Measured first, then asserted.
+     */
+    check(
+      "item 26 (a) precondition — the shipped partly-gated row is absent from every lane table",
+      q.status === 0 && !inLane,
+      `exit=${q.status}\ninLane=${inLane}`,
+    );
+    check(
+      "item 26 (a) and the section does NOT present it as offered — it is in the withheld table",
+      q.status === 0
+        && !offeredIds(sec).has("T-961")
+        && withheldIds(sec).has("T-961"),
+      `exit=${q.status}\noffered=${[...offeredIds(sec)]}\nwithheld=${[...withheldIds(sec)]}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (b) a row the lane tables DO hold keeps its referral and its gated half. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-962", { shipped: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    check(
+      "item 26 (b) an unshipped partly-gated row is still offered, and the lane tables hold it",
+      q.status === 0
+        && laneTables(rendered).includes("| T-962 |")
+        && offeredIds(sec).has("T-962")
+        && !withheldIds(sec).has("T-962")
+        && sec.includes("signed-in readback"),
+      `exit=${q.status}\ninLane=${laneTables(rendered).includes("| T-962 |")}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (c) the reason is the FILTER's own label, not a second opinion. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-963", { shipped: true });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    const row = sec.split("\n").filter((l) => l.includes("| T-963 |")).join("\n");
+    check(
+      "item 26 (c) the withheld row names the claimable stage that removed it, in the stage's own words",
+      q.status === 0
+        && withheldIds(sec).has("T-963")
+        && row.includes("already has proof (not at rung 0)"),
+      `exit=${q.status}\nrow=${row}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (d) the count sentence is derived, not asserted over the whole bucket. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-964", { shipped: true });
+    addGatedItem(dir, "T-965", { shipped: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    /*
+     * Both counts, as whole sentences. The first draft of this case matched
+     * /\*\*1 of 2 .*?offered/s, and a mutation that made the offered count read
+     * `${n} of ${n}` SURVIVED it: with the `s` flag the lazy gap ran from the
+     * WITHHELD sentence ("**1 of 2 is withheld**") to the word "offered" in the
+     * withheld table's own header, so the case passed on a sentence that was
+     * not the one under test. A count assertion has to name the sentence it
+     * counts.
+     */
+    check(
+      "item 26 (d) with one offered and one withheld, each count sentence states 1 of 2",
+      q.status === 0
+        && sec.includes("**1 of 2 is offered in the lane tables above**")
+        && sec.includes("**1 of 2 is withheld**")
+        && offeredIds(sec).has("T-965")
+        && withheldIds(sec).has("T-964"),
+      `exit=${q.status}\nsection=\n${sec}`,
+    );
+  }
+
+  /* ---
+   * (f) a row withheld by a LATER stage than the first.
+   *
+   * This case exists because a mutation survived without it. Narrowing
+   * `withholdingStage` to consult `CLAIMABLE_STAGES[0]` alone -- `already has
+   * proof (not at rung 0)` -- changed nothing in cases (a)-(e), because every
+   * fixture above is withheld for exactly that reason. Under that narrowing a
+   * row removed by any LATER rule is reported as offered again, which is the
+   * original defect restored for every non-rung reason. The genuine coverage
+   * gap was the mutation's doing, not a false survivor: it is behaviourally
+   * identical on those fixtures and different here.
+   *
+   * A live claim is the cleanest later stage to reach: it leaves the item at
+   * rung 0 with its `partialGate` intact, and a partly-gated item somebody is
+   * already working is precisely one no second agent should be sent at.
+   * --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-967", { shipped: false });
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${NOW} | fixture#holder | item T-967 claimed on branch \`exec/t967-held\` — taken.\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    const row = sec.split("\n").filter((l) => l.includes("| T-967 |")).join("\n");
+    check(
+      "item 26 (f) a partly-gated row held by a live claim is withheld, under the claim stage's own label",
+      q.status === 0
+        && !offeredIds(sec).has("T-967")
+        && withheldIds(sec).has("T-967")
+        && row.includes("held by a live claim"),
+      `exit=${q.status}\nrow=${row}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (e) the withheld table renders at zero too, same discipline as its parent. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-966", { shipped: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    check(
+      "item 26 (e) with nothing withheld the section still states that, rather than omitting the block",
+      q.status === 0 && /0 (?:of \d+ )?(?:is|are) withheld/.test(sec),
+      `exit=${q.status}\nsection=\n${sec}`,
+    );
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);
