@@ -278,6 +278,7 @@ jobs:
           src/components/strategic-moves/__tests__/CharterAssumptionsCarryForward.test.tsx
           src/components/strategic-moves/__tests__/phase-stepper-state-label.test.ts
           src/components/strategic-moves/__tests__/approvals-overview-labels.test.ts
+          src/components/strategic-moves/__tests__/phase-approval-standing.test.ts
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
