@@ -402,6 +402,15 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_basis_v1",
   );
+  // Composition-only polish for the redesigned capture. It has nothing to show
+  // unless the redesigned capture is what renders, so it is resolved as the
+  // conjunction rather than left to the client to remember.
+  const captureCompositionEnabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_capture_composition_v1",
+    );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -921,6 +930,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}
+        captureCompositionEnabled={captureCompositionEnabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
       />
     </AppShell>
