@@ -207,4 +207,91 @@ describe("CaptureNotesFill", () => {
       screen.queryByTestId("capture-notes-basis-warning"),
     ).not.toBeInTheDocument();
   });
+  describe("when the host records the basis on insert", () => {
+    const proposeAll = () => {
+      paste(NOTES);
+      fireEvent.click(screen.getByTestId("capture-notes-propose"));
+    };
+
+    it("says so on the field it is true of, and not on the other", () => {
+      render(
+        <CaptureNotesFill
+          targets={TARGETS}
+          onInsert={jest.fn()}
+          recordsBasisFor={["sponsor_commitment"]}
+        />,
+      );
+      proposeAll();
+
+      expect(
+        screen.getByTestId("capture-notes-records-basis-sponsor_commitment"),
+      ).toHaveTextContent(/records .*asserting this.* as how you know/i);
+      expect(
+        screen.queryByTestId("capture-notes-records-basis-scope_boundary"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByTestId("capture-notes-basis-recorded-note"),
+      ).toBeInTheDocument();
+    });
+
+    it("promises nothing about a recorded basis when the host records none", () => {
+      render(<CaptureNotesFill targets={TARGETS} onInsert={jest.fn()} />);
+      proposeAll();
+
+      expect(
+        screen.queryByTestId("capture-notes-basis-recorded-note"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-notes-records-basis-sponsor_commitment"),
+      ).not.toBeInTheDocument();
+      // The standing warning is unconditional: a paste is never evidence.
+      expect(screen.getByTestId("capture-notes-basis-warning")).toHaveTextContent(
+        /your assertion/i,
+      );
+    });
+
+    it("still refuses to read as evidence, recorded basis or not", () => {
+      render(
+        <CaptureNotesFill
+          targets={TARGETS}
+          onInsert={jest.fn()}
+          recordsBasisFor={["sponsor_commitment", "scope_boundary"]}
+        />,
+      );
+      proposeAll();
+
+      expect(
+        screen.getByTestId("capture-notes-records-basis-sponsor_commitment"),
+      ).toHaveTextContent(/never reads as evidence/i);
+      expect(
+        screen.getByTestId("capture-notes-basis-warning"),
+      ).toHaveTextContent(/not as\s+approved evidence/i);
+    });
+
+    it("drops the summary sentence once the last stamping proposal is gone", () => {
+      render(
+        <CaptureNotesFill
+          targets={TARGETS}
+          onInsert={jest.fn()}
+          recordsBasisFor={["sponsor_commitment"]}
+        />,
+      );
+      proposeAll();
+      expect(
+        screen.getByTestId("capture-notes-basis-recorded-note"),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByTestId("capture-notes-dismiss-sponsor_commitment"),
+      );
+
+      expect(
+        screen.queryByTestId("capture-notes-basis-recorded-note"),
+      ).not.toBeInTheDocument();
+      // The other proposal is untouched — only the sentence about the gone one went.
+      expect(
+        screen.getByTestId("capture-notes-proposal-scope_boundary"),
+      ).toBeInTheDocument();
+    });
+  });
 });

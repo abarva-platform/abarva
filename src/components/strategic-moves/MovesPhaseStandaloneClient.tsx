@@ -56,6 +56,10 @@ import {
 } from "@/components/strategic-moves/CharterBasisField";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
+import {
+  basisForNotesInsert,
+  notesInsertBasisRecordingKeys,
+} from "@/lib/programs/capture-notes-basis-link";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -2540,6 +2544,48 @@ export function MovesPhaseStandaloneClient({
     return <CharterBasisMark value={charterBasisBySection[section.key]} />;
   };
 
+  // ─── the link: an insert from notes records its own basis ───
+  // Reachable only when BOTH `moves_capture_notes_v1` (which renders the panel
+  // at all) and `moves_charter_basis_v1` (which makes the basis declarable) are
+  // on for the tenant, so with either off this is byte-for-byte today's insert.
+  //
+  // The answer itself still follows the ordinary typed-answer path — insert
+  // fills the field and the person saves it. Only the basis is written here,
+  // because where the text came from is known at insert time and is not
+  // recoverable from the text afterwards.
+  const notesBasisRecordingKeys = useMemo(
+    () =>
+      notesInsertBasisRecordingKeys({
+        basisSurfaceActive: charterBasisActive,
+        charterBasisSectionKeys,
+        basisBySection: charterBasisBySection,
+      }),
+    [charterBasisActive, charterBasisSectionKeys, charterBasisBySection],
+  );
+
+  const insertPhaseCaptureValueFromNotes = useCallback(
+    (sectionKey: string, value: string) => {
+      setVisiblePhaseCaptureValue(sectionKey, value);
+      const decision = basisForNotesInsert({
+        sectionKey,
+        basisSurfaceActive: charterBasisActive,
+        charterBasisSectionKeys,
+        existingBasis: charterBasisBySection[sectionKey] ?? null,
+      });
+      if (!decision.basis) return;
+      const basis = decision.basis;
+      setCharterBasisBySection((prev) => ({ ...prev, [sectionKey]: basis }));
+      void saveCharterBasis(sectionKey, basis);
+    },
+    [
+      setVisiblePhaseCaptureValue,
+      charterBasisActive,
+      charterBasisSectionKeys,
+      charterBasisBySection,
+      saveCharterBasis,
+    ],
+  );
+
   const isCaptureSectionComplete = (sectionKey: string): boolean => {
     const section = phaseCaptureSections.find((s) => s.key === sectionKey);
     if (!section) return false;
@@ -3085,7 +3131,8 @@ export function MovesPhaseStandaloneClient({
                               value:
                                 displayPhaseCaptureValues[section.key] ?? "",
                             }))}
-                            onInsert={setVisiblePhaseCaptureValue}
+                            onInsert={insertPhaseCaptureValueFromNotes}
+                            recordsBasisFor={notesBasisRecordingKeys}
                           />
                         ) : null
                       }

@@ -33,6 +33,18 @@ export interface CaptureNotesFillProps {
    * Insert. The host owns persistence, exactly as it does for a typed answer.
    */
   onInsert: (sectionKey: string, value: string) => void;
+  /**
+   * Section keys where inserting ALSO records "I'm asserting this" as the
+   * field's charter basis, because the host has the per-field basis control
+   * active there and the field has not had a basis declared yet.
+   *
+   * Presentational only: the host decides the set and performs the write. The
+   * panel needs it so its wording is true of the field in front of the person
+   * rather than true in general — with the basis control off, the person still
+   * declares the basis by hand, and saying otherwise would be a lie about
+   * where a number came from.
+   */
+  recordsBasisFor?: readonly string[];
 }
 
 const CNF_CSS = `
@@ -61,9 +73,14 @@ const CNF_CSS = `
 .cnf-insert{border:0;background:var(--cnf-teal);color:#fff;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer}
 .cnf-dismiss{border:0;background:none;color:var(--cnf-muted);font-size:12.5px;font-weight:500;padding:7px 8px;cursor:pointer}
 .cnf-skipped{margin:0;font-size:12px;color:var(--cnf-muted);line-height:1.5}
+.cnf-records{margin:0;font-size:12px;color:#8a560f;line-height:1.5}
 `;
 
-export function CaptureNotesFill({ targets, onInsert }: CaptureNotesFillProps) {
+export function CaptureNotesFill({
+  targets,
+  onInsert,
+  recordsBasisFor = [],
+}: CaptureNotesFillProps) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [proposed, setProposed] = useState(false);
@@ -82,6 +99,14 @@ export function CaptureNotesFill({ targets, onInsert }: CaptureNotesFillProps) {
         !dismissed.includes(p.sectionKey) && !inserted.includes(p.sectionKey),
     );
   }, [result, dismissed, inserted]);
+
+  // True when at least one proposal still on screen will record its own basis.
+  // Derived from what is VISIBLE, so the extra sentence disappears with the
+  // last such proposal rather than lingering over a list it no longer describes.
+  const anyRecordsBasis = useMemo(
+    () => visible.some((p) => recordsBasisFor.includes(p.sectionKey)),
+    [visible, recordsBasisFor],
+  );
 
   if (!open) {
     return (
@@ -157,6 +182,14 @@ export function CaptureNotesFill({ targets, onInsert }: CaptureNotesFillProps) {
               you insert is recorded as <strong>your assertion</strong> — not as
               approved evidence. Attach the source document to a field if you
               need it to count as evidence.
+              {anyRecordsBasis ? (
+                <span data-testid="capture-notes-basis-recorded-note">
+                  {" "}
+                  Where a field asks how you know its answer, inserting records
+                  that assertion for you — change it on the field if the answer
+                  is backed by evidence or is really an assumption.
+                </span>
+              ) : null}
             </p>
 
             {visible.length === 0 ? (
@@ -175,7 +208,9 @@ export function CaptureNotesFill({ targets, onInsert }: CaptureNotesFillProps) {
                     <div className="cnf-item-head">
                       <span className="cnf-field">{proposal.sectionLabel}</span>
                       <span className="cnf-assert">
-                        From your notes · your assertion
+                        {recordsBasisFor.includes(proposal.sectionKey)
+                          ? "From your notes · records your assertion"
+                          : "From your notes · your assertion"}
                       </span>
                     </div>
                     <blockquote className="cnf-excerpt">
@@ -185,6 +220,16 @@ export function CaptureNotesFill({ targets, onInsert }: CaptureNotesFillProps) {
                       line {proposal.sourceLine} · matched{" "}
                       {proposal.matchedTerms.join(", ")}
                     </p>
+                    {recordsBasisFor.includes(proposal.sectionKey) ? (
+                      <p
+                        className="cnf-records"
+                        data-testid={`capture-notes-records-basis-${proposal.sectionKey}`}
+                      >
+                        Inserting also records <strong>I&rsquo;m asserting
+                        this</strong> as how you know this answer. It completes
+                        the charter and never reads as evidence.
+                      </p>
+                    ) : null}
                     <div className="cnf-item-actions">
                       <button
                         type="button"
