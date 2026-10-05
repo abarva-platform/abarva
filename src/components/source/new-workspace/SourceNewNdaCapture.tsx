@@ -48,6 +48,7 @@ type OperatorSupplier = {
   vendorId: string;
   contactAuthorityId: string | null;
   contactName: string | null;
+  approvalContacts: { contactId: string; name: string; email: string }[];
   envelopeId: string | null;
   envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | "voided" | null;
   envelopeTemplateVersion: string | null;
@@ -66,6 +67,10 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
   const [busyVendor, setBusyVendor] = useState<string | null>(null);
   const [selectedVersions, setSelectedVersions] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
+  const [approvalContactIds, setApprovalContactIds] = useState<Record<string, string>>({});
+  const [approvalRationales, setApprovalRationales] = useState<Record<string, string>>({});
+  const [approvalConfirmed, setApprovalConfirmed] = useState<Record<string, boolean>>({});
+  const [approvalPending, setApprovalPending] = useState<Record<string, boolean>>({});
   const [sentEnvelopeIds, setSentEnvelopeIds] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
 
@@ -80,6 +85,7 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
     }
     setStatus(next);
     setError(null);
+    return next;
   }, [eventId]);
 
   useEffect(() => {
@@ -92,6 +98,49 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
     });
     return () => controller.abort();
   }, [refreshStatus]);
+
+  async function approveContact(event: FormEvent<HTMLFormElement>, supplier: SourceNewStage05NdaCoverage["suppliers"][number]) {
+    event.preventDefault();
+    const vendorId = supplier.legalEntityId;
+    const current = status?.suppliers.find((row) => row.vendorId === vendorId);
+    const contactId = approvalContactIds[vendorId];
+    const rationale = approvalRationales[vendorId]?.trim();
+    if (!current || current.contactAuthorityId || current.envelopeStatus || !contactId ||
+        !current.approvalContacts.some((contact) => contact.contactId === contactId) ||
+        !rationale || rationale.length < 12 || !approvalConfirmed[vendorId] ||
+        approvalPending[vendorId] || busyVendor) return;
+
+    const body = new FormData();
+    body.set("vendorId", vendorId);
+    body.set("contactId", contactId);
+    body.set("evidenceReference", rationale);
+    setBusyVendor(vendorId);
+    setApprovalPending((previous) => ({ ...previous, [vendorId]: true }));
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/rfx-release/contacts/approve`, {
+        method: "POST", body,
+      });
+      const result = await response.json() as { ok?: boolean; error?: string };
+      if (!response.ok || !result.ok) {
+        setStatus(null);
+        setError(`Contact decision was not confirmed (${result.error ?? "authority unavailable"}). Reconcile before retrying.`);
+        return;
+      }
+      const readback = await refreshStatus();
+      if (readback.suppliers.find((row) => row.vendorId === vendorId)?.contactAuthorityId) {
+        setMessage("Contact approval recorded. No envelope or email was sent.");
+      } else {
+        setMessage("Contact decision recorded, but authority readback is pending. Do not retry yet.");
+      }
+      router.refresh();
+    } catch {
+      setStatus(null);
+      setError("Contact decision outcome is uncertain. Reconcile authority before retrying.");
+    } finally {
+      setBusyVendor(null);
+    }
+  }
 
   async function send(event: FormEvent<HTMLFormElement>, supplier: SourceNewStage05NdaCoverage["suppliers"][number]) {
     event.preventDefault();
@@ -168,8 +217,43 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
         return <article key={supplier.legalEntityId} role="listitem">
           <strong>{supplier.legalName}</strong>
           <p>{stateNote}</p>
-          <form onSubmit={(event) => send(event, supplier)}>
-            <label>Supplier-specific template
+          {!current?.contactAuthorityId && !current?.envelopeStatus &&
+            (current?.approvalContacts.length ?? 0) > 0 && <form
+              aria-label={`Approve NDA contact for ${supplier.legalName}`}
+              onSubmit={(event) => approveContact(event, supplier)}>
+              <p className="snw-note">This records event contact authority for NDA and RFx use. It does not send an email or envelope.</p>
+              <label className="snw-nda-field">Active contact
+                <select value={approvalContactIds[supplier.legalEntityId] ?? ""}
+                  onChange={(event) => setApprovalContactIds((previous) => ({
+                    ...previous, [supplier.legalEntityId]: event.target.value,
+                  }))}>
+                  <option value="">Select a contact</option>
+                  {current?.approvalContacts.map((contact) => <option key={contact.contactId} value={contact.contactId}>
+                    {contact.name} ({contact.email})
+                  </option>)}
+                </select>
+              </label>
+              <label className="snw-nda-field">Decision rationale
+                <input value={approvalRationales[supplier.legalEntityId] ?? ""} minLength={12}
+                  onChange={(event) => setApprovalRationales((previous) => ({
+                    ...previous, [supplier.legalEntityId]: event.target.value,
+                  }))} />
+              </label>
+              <label className="snw-nda-confirmation"><input type="checkbox" checked={approvalConfirmed[supplier.legalEntityId] ?? false}
+                onChange={(event) => setApprovalConfirmed((previous) => ({
+                  ...previous, [supplier.legalEntityId]: event.target.checked,
+                }))} /> I approve this event-specific contact for synthetic NDA and RFx use.</label>
+              <button className="snw-primary" type="submit" disabled={Boolean(
+                !status?.available || !approvalContactIds[supplier.legalEntityId] ||
+                !current?.approvalContacts.some((contact) => contact.contactId === approvalContactIds[supplier.legalEntityId]) ||
+                (approvalRationales[supplier.legalEntityId]?.trim().length ?? 0) < 12 ||
+                !approvalConfirmed[supplier.legalEntityId] || approvalPending[supplier.legalEntityId] || busyVendor
+              )}>Approve contact</button>
+            </form>}
+          {status && current && !current.contactAuthorityId && current.approvalContacts.length === 0 &&
+            <p className="snw-note">No active contact is eligible for approval. Review the governed supplier contact record.</p>}
+          {current?.contactAuthorityId && <form onSubmit={(event) => send(event, supplier)}>
+            <label className="snw-nda-field">Supplier-specific template
               <select value={selectedVersions[supplier.legalEntityId] ?? ""}
                 onChange={(event) => setSelectedVersions((previous) => ({
                   ...previous, [supplier.legalEntityId]: event.target.value,
@@ -178,7 +262,7 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
                 {templates.map((version) => <option key={version} value={version}>{version}</option>)}
               </select>
             </label>
-            <label><input type="checkbox" checked={confirmed[supplier.legalEntityId] ?? false}
+            <label className="snw-nda-confirmation"><input type="checkbox" checked={confirmed[supplier.legalEntityId] ?? false}
               onChange={(event) => setConfirmed((previous) => ({
                 ...previous, [supplier.legalEntityId]: event.target.checked,
               }))} /> I confirm this synthetic NDA goes only to the internal test inbox.</label>
@@ -186,7 +270,7 @@ function SyntheticNdaSendControl({ eventId, uncovered, templates }: {
               aria-label={`${retryable ? "Resend" : "Send"} NDA for ${supplier.legalName}`}>
               {busyVendor === supplier.legalEntityId ? "Sending..." : retryable ? "Resend for demo signature" : "Send for demo signature"}
             </button>
-          </form>
+          </form>}
         </article>;
       })}
     </div>

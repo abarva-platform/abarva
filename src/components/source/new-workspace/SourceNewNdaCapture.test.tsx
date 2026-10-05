@@ -18,13 +18,15 @@ const coverage: SourceNewStage05NdaCoverage = {
   nextAction: { label: "Resolve NDA coverage", detail: "Record executed evidence." },
 };
 
-function status(contactAuthorityId: string | null, envelopeStatus: string | null = null, available = true) {
+function status(contactAuthorityId: string | null, envelopeStatus: string | null = null, available = true,
+  approvalContacts: { contactId: string; name: string; email: string }[] = []) {
   return {
     available, fallback: "upload", suppliers: [{
       vendorId: "SYN-VENDOR-001", contactAuthorityId,
       contactName: contactAuthorityId ? "Fictional Contact" : null,
       envelopeId: envelopeStatus ? "33333333-3333-4333-8333-333333333333" : null,
       envelopeStatus, envelopeTemplateVersion: envelopeStatus ? "synthetic-1.0" : null,
+      approvalContacts,
     }],
   };
 }
@@ -70,7 +72,7 @@ describe("Source New synthetic NDA send control", () => {
     expect(screen.getByRole("button", { name: "Upload PDF" })).toBeTruthy();
   });
 
-  it("keeps supplier-specific template management available after the first publication", () => {
+  it("keeps supplier-specific template management available after the first publication", async () => {
     fetchMock.mockResolvedValueOnce(response(status(null)));
     render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian" files={[]}
       coverage={coverage} />);
@@ -81,11 +83,11 @@ describe("Source New synthetic NDA send control", () => {
     fireEvent.click(summary);
     expect(details.open).toBe(true);
     expect(within(details).getByRole("form", { name: "Upload synthetic NDA template" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: `Send NDA for ${supplierName}` })).toBeTruthy();
+    expect(await screen.findByText("Approved active contact required")).toBeTruthy();
   });
 
   it("shows the guarded send control for the event page's app client key", async () => {
-    fetchMock.mockResolvedValueOnce(response(status(null)));
+    fetchMock.mockResolvedValueOnce(response(status("AUTH-001")));
     render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian" files={[]} coverage={coverage} />);
     expect(await screen.findByRole("button", { name: `Send NDA for ${supplierName}` })).toBeTruthy();
   });
@@ -99,8 +101,7 @@ describe("Source New synthetic NDA send control", () => {
   it("keeps upload fallback and blocks send while provider or contact authority is absent", async () => {
     fetchMock.mockResolvedValueOnce(response(status(null, null, false)));
     render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian-health" files={[]} coverage={coverage} />);
-    const button = await screen.findByRole("button", { name: `Send NDA for ${supplierName}` });
-    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: `Send NDA for ${supplierName}` })).toBeNull();
     expect(await screen.findByText(/Demo signing is unavailable; use the upload path/)).toBeTruthy();
     expect(screen.getByText(/Upload the executed NDA/)).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledWith(
@@ -111,15 +112,45 @@ describe("Source New synthetic NDA send control", () => {
   it("keeps send disabled for a configured provider without an approved active contact", async () => {
     fetchMock.mockResolvedValueOnce(response(status(null)));
     render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian-health" files={[]} coverage={coverage} />);
-    const button = await screen.findByRole("button", { name: `Send NDA for ${supplierName}` });
     expect(await screen.findByText("Approved active contact required")).toBeTruthy();
-    const form = button.closest("form")!;
-    fireEvent.change(within(form).getByRole("combobox", { name: "Supplier-specific template" }), {
-      target: { value: "synthetic-1.0" },
-    });
-    fireEvent.click(within(form).getByRole("checkbox", { name: /test inbox/ }));
-    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/No active contact is eligible for approval/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: `Send NDA for ${supplierName}` })).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("records an explicit contact decision and waits for authority readback before enabling send", async () => {
+    const contact = { contactId: "CONTACT-001", name: "Fictional Contact", email: "synthetic@abarva.ai" };
+    fetchMock.mockResolvedValueOnce(response(status(null, null, true, [contact])));
+    fetchMock.mockResolvedValueOnce(response({ ok: true, authorityId: "AUTH-001" }, 201));
+    fetchMock.mockResolvedValueOnce(response(status("AUTH-001", null, true, [contact])));
+    render(<SourceNewNdaCapture eventId={eventId} clientKey="meridian-health" files={[]} coverage={coverage} />);
+    const approval = await screen.findByRole("form", { name: `Approve NDA contact for ${supplierName}` });
+    const approve = within(approval).getByRole("button", { name: "Approve contact" }) as HTMLButtonElement;
+    expect(screen.queryByRole("button", { name: `Send NDA for ${supplierName}` })).toBeNull();
+    expect(approve.disabled).toBe(true);
+    fireEvent.change(within(approval).getByRole("combobox", { name: "Active contact" }), {
+      target: { value: "CONTACT-001" },
+    });
+    fireEvent.change(within(approval).getByRole("textbox", { name: "Decision rationale" }), {
+      target: { value: "Synthetic event contact authority reviewed" },
+    });
+    expect(approve.disabled).toBe(true);
+    fireEvent.click(within(approval).getByRole("checkbox", { name: /event-specific contact/ }));
+    expect(approve.disabled).toBe(false);
+    fireEvent.click(approve);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    const [url, init] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(url).toBe(`/api/v1/source/${eventId}/rfx-release/contacts/approve`);
+    expect(init.method).toBe("POST");
+    const body = init.body as FormData;
+    expect(body.get("vendorId")).toBe("SYN-VENDOR-001");
+    expect(body.get("contactId")).toBe("CONTACT-001");
+    expect(body.get("evidenceReference")).toBe("Synthetic event contact authority reviewed");
+    expect(await screen.findByText(/Contact approval recorded/)).toBeTruthy();
+    expect(screen.queryByRole("form", { name: `Approve NDA contact for ${supplierName}` })).toBeNull();
+    const send = screen.getByRole("button", { name: `Send NDA for ${supplierName}` }) as HTMLButtonElement;
+    expect(send.disabled).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("requires an approved contact, selected template and explicit confirmation before a demo send", async () => {
