@@ -79,7 +79,24 @@ export function pullRequestCoverageGap(fileStatuses) {
     }));
 }
 
-export function formatVerdict(gap) {
+/**
+ * The census resolves a `$(node scripts/…)` substitution by RUNNING it, and
+ * publishes `indeterminateInvocations` for the commands it could not resolve.
+ * Its own method note says so: "While indeterminateInvocations is non-empty,
+ * uncoveredTestFiles is an upper bound." The same caveat reaches this gate — a
+ * file a pull-request workflow really does reach through an unresolved command
+ * is not credited `pullRequestCovered`, and would be reported below as a wiring
+ * gap it is not.
+ *
+ * It still FAILS rather than abstaining, because the census fails its own run
+ * rather than skipping a list it cannot resolve, and a gate that goes quiet on
+ * an input it cannot read is the shape this backlog exists against. What it must
+ * not do is let the reader mistake a resolver gap for a wiring gap, so the
+ * caveat is printed with the count that produced it. The set is empty on the
+ * commit this gate was written against, so this text is not currently exercised
+ * by the repository — only by its test.
+ */
+export function formatVerdict(gap, indeterminateInvocations = 0) {
   if (gap.length === 0) {
     return [
       "pull-request coverage gap: none.",
@@ -99,6 +116,14 @@ export function formatVerdict(gap) {
     );
   }
   lines.push("");
+  if (indeterminateInvocations > 0) {
+    lines.push(
+      `CAVEAT: the census reports ${indeterminateInvocations} invocation(s) it could not resolve, so`,
+      "coverage is an upper bound and a file above may be reached through one of them. Resolve those",
+      "first: a gap that disappears when they resolve was never a wiring gap.",
+      "",
+    );
+  }
   lines.push(
     "Remedy, as T-478 and T-764 took it: ADD a pull-request-triggered invocation by exact path",
     "(`.github/workflows/unit-suites.yml` holds the precedent steps) and leave the existing",
@@ -114,6 +139,7 @@ function main() {
   const json = process.argv.includes("--json");
   const census = buildCensus(REPO_ROOT, { includeFileStatuses: true });
   const gap = pullRequestCoverageGap(census.fileStatuses);
+  const indeterminate = census.counts.indeterminateInvocations ?? 0;
 
   if (json) {
     process.stdout.write(
@@ -122,6 +148,7 @@ function main() {
           coveredTestFiles: census.counts.coveredTestFiles,
           pullRequestCoveredTestFiles:
             census.counts.pullRequestCoveredTestFiles,
+          indeterminateInvocations: indeterminate,
           gap,
         },
         null,
@@ -129,7 +156,7 @@ function main() {
       )}\n`,
     );
   } else {
-    process.stdout.write(`${formatVerdict(gap)}\n`);
+    process.stdout.write(`${formatVerdict(gap, indeterminate)}\n`);
   }
 
   process.exitCode = gap.length === 0 ? 0 : 1;

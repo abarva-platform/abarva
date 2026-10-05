@@ -122,3 +122,36 @@ test("the failing verdict forbids silencing by deletion", () => {
   assert.match(text, /removing its pre-deploy invocation/);
   assert.match(text, /\(nothing the census could name\)/);
 });
+
+/**
+ * The resolver-gap caveat. The census credits coverage only through commands it
+ * could resolve, so an unresolved invocation can make a genuinely reached file
+ * look unreached. The gate still fails — silence on an unreadable input is the
+ * shape this backlog exists against — but it must not let a reader book a
+ * resolver gap as a wiring gap.
+ */
+test("an unresolved invocation is named as a caveat on the finding", () => {
+  const text = formatVerdict(
+    [{ testPath: "src/g.test.ts", directory: "src", via: ["command"] }],
+    3,
+  );
+  assert.match(text, /CAVEAT: the census reports 3 invocation\(s\) it could not resolve/);
+  assert.match(text, /coverage is an upper bound/);
+  assert.match(text, /was never a wiring gap/);
+});
+
+test("no caveat is printed when every invocation resolved", () => {
+  const text = formatVerdict(
+    [{ testPath: "src/h.test.ts", directory: "src", via: ["command"] }],
+    0,
+  );
+  assert.doesNotMatch(text, /CAVEAT/);
+  assert.doesNotMatch(text, /upper bound/);
+});
+
+test("the caveat defaults off, so an existing caller cannot emit a false one", () => {
+  assert.doesNotMatch(
+    formatVerdict([{ testPath: "src/i.test.ts", directory: "src", via: [] }]),
+    /CAVEAT/,
+  );
+});
