@@ -1431,6 +1431,213 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    // ─── moves_charter_basis_v1: the HOST call site ─────────────────────────
+    // The join itself is pure and pinned (charter-basis-host-join.test.ts), and
+    // every rendering half has its own suite. What nothing pinned is the wiring
+    // in this component that FEEDS the join: which flag it reads, and — the
+    // part a pure test cannot reach — which phase number it hands over. The
+    // surface is reachable only through the capture flow, so the `v2` conjunct
+    // is part of the call site too.
+    //
+    // Each case removes ONE input with the others satisfied, so dropping any
+    // conjunct from the call site fails a case of its own.
+    const charterMove = () =>
+      makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+
+    // P1 step 1 is "Scope the bet" — sponsor_commitment, scope_boundary,
+    // success_criteria — so the opening step is where the controls appear.
+    const SCOPE_THE_BET_SECTIONS = [
+      "sponsor_commitment",
+      "scope_boundary",
+      "success_criteria",
+    ] as const;
+
+    it("moves_charter_basis_v1 OFF (default) on P1: the capture flow renders with no basis control", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the flow is up, so this is the flag's absence and not an unmounted surface
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      for (const sectionKey of SCOPE_THE_BET_SECTIONS) {
+        expect(
+          screen.queryByTestId(`charter-basis-${sectionKey}`),
+        ).not.toBeInTheDocument();
+      }
+      expect(screen.queryByText("How do you know this?")).not.toBeInTheDocument();
+    });
+
+    it("moves_charter_basis_v1 ON on P1: every charter question carries the basis control with all three bases", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      for (const sectionKey of SCOPE_THE_BET_SECTIONS) {
+        const field = screen.getByTestId(`charter-basis-${sectionKey}`);
+        // nothing declared yet, and all three bases offered
+        expect(field).toHaveAttribute("data-basis", "none");
+        expect(
+          within(field).getByRole("radio", { name: "Backed by evidence" }),
+        ).toBeInTheDocument();
+        expect(
+          within(field).getByRole("radio", { name: "I'm asserting this" }),
+        ).toBeInTheDocument();
+        expect(
+          within(field).getByRole("radio", { name: "It's an assumption" }),
+        ).toBeInTheDocument();
+      }
+    });
+
+    it("moves_charter_basis_v1 ON without moves_capture_v2: the legacy canvas carries no basis control", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      for (const sectionKey of SCOPE_THE_BET_SECTIONS) {
+        expect(
+          screen.queryByTestId(`charter-basis-${sectionKey}`),
+        ).not.toBeInTheDocument();
+      }
+    });
+
+    // ── the VIEWED phase, not the Move's progress ──
+    // `charterBasisSurfaceActive` takes a phase number, and the two candidates
+    // in scope here differ on every screen except the Move's own current phase:
+    // `phase.phase` (the phase being viewed) and `move.currentPhase` (how far
+    // the Move has got). Substituting the Move's progress for the viewed phase
+    // is observable in ONE direction only, and the pair below records which:
+    //
+    //  · viewing P1 of a Move already at P2 — the backward look at a completed
+    //    charter, a real path once the Move advances — LOSES the whole surface
+    //    under the substitution. That case is what kills it.
+    //  · viewing P2 of a Move still at P1 does NOT gain the surface, because
+    //    the section filter blocks it independently: only P1's capture sections
+    //    declare a charter evidence family, so there is nothing for the join to
+    //    return on any other phase.
+    //
+    // So the phase conjunct is defence in depth for the per-section surfaces
+    // rather than their only guard — worth keeping, and worth not claiming more
+    // for than it does. Both cases are still real regression cover for the
+    // surface being absent off P1 and present on it.
+    it("moves_charter_basis_v1 ON, viewing P2 of a Move sitting at P1: no basis control, because the basis belongs to the P1 gate", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={charterMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      // P2's own opening step, so the flow really is rendering questions here
+      expect(
+        screen.getByRole("heading", { name: "What we found" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("How do you know this?")).not.toBeInTheDocument();
+      for (const sectionKey of SCOPE_THE_BET_SECTIONS) {
+        expect(
+          screen.queryByTestId(`charter-basis-${sectionKey}`),
+        ).not.toBeInTheDocument();
+      }
+    });
+
+    it("moves_charter_basis_v1 ON, viewing P1 of a Move already at P2: the basis control still renders", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("heading", { name: "Scope the bet" }),
+      ).toBeInTheDocument();
+      for (const sectionKey of SCOPE_THE_BET_SECTIONS) {
+        expect(
+          screen.getByTestId(`charter-basis-${sectionKey}`),
+        ).toBeInTheDocument();
+      }
+    });
+
+    // ── the hydration prop is actually consumed ──
+    // `initialP1CharterBasisBySection` was dropped from this component once
+    // already, which looks like nothing at render time: the control still
+    // appears, it just forgets every basis the Move has recorded. So assert the
+    // recorded basis is READ BACK, not merely that a control exists.
+    it("moves_charter_basis_v1 ON on P1: a recorded assumption is read back and badged, and a recorded assertion is not", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialP1CharterBasisBySection={{
+            scope_boundary: {
+              kind: "assumption",
+              owner: "Ops lead",
+              p2ValidationPlan: "Confirm the boundary against the process walk.",
+            },
+            success_criteria: { kind: "workspace_assertion" },
+          }}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const assumed = screen.getByTestId("charter-basis-scope_boundary");
+      expect(assumed).toHaveAttribute("data-basis", "assumption");
+      expect(
+        within(assumed).getByRole("radio", { name: "It's an assumption" }),
+      ).toHaveAttribute("aria-checked", "true");
+
+      const asserted = screen.getByTestId("charter-basis-success_criteria");
+      expect(asserted).toHaveAttribute("data-basis", "workspace_assertion");
+
+      // the amber badge marks the assumed question only — one badge, not three
+      const badges = screen.getAllByTestId("charter-assumption-badge");
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveTextContent("Assumption · validate in Discover");
+
+      // and the untouched question is still undeclared
+      expect(
+        screen.getByTestId("charter-basis-sponsor_commitment"),
+      ).toHaveAttribute("data-basis", "none");
+    });
+
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient
