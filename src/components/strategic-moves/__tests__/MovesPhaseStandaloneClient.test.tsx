@@ -1088,6 +1088,68 @@ describe("MovesPhaseStandaloneClient", () => {
       );
     });
 
+    it("states what each stepper figure counts, so it cannot be read as capture progress", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const stepper = screen.getByRole("navigation", { name: "Phase steps" });
+      const steps = [
+        ...within(stepper).getAllByRole("link"),
+        ...within(stepper).getAllByRole("button"),
+      ];
+      expect(steps).toHaveLength(6);
+
+      steps.forEach((step) => {
+        // Read the figure's OWN text node. The step renders the phase name and
+        // the figure as adjacent elements with no separator, so the step's
+        // textContent reads "Originate2 of 2 gate criteria" and a regex over it
+        // would pass on a label that had lost its noun.
+        const figure = step.querySelector("small");
+        expect(figure?.textContent).toMatch(/^\d+ of \d+ gate criteri(on|a)$/);
+        // The tooltip carried the same bare figure, and is the only text a
+        // reader gets when the step is too narrow for the label.
+        expect(step.getAttribute("title")).toMatch(/gate criteri(on|a)$/);
+      });
+    });
+
+    it("agrees the stepper noun with the count when a phase has a single criterion", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={phaseTallies.map((row) =>
+            row.phase === 0 ? { ...row, met: 1, total: 1 } : { ...row },
+          )}
+        />,
+      );
+
+      const stepper = screen.getByRole("navigation", { name: "Phase steps" });
+      const figures = [
+        ...within(stepper).getAllByRole("link"),
+        ...within(stepper).getAllByRole("button"),
+      ].map((step) => step.querySelector("small")?.textContent);
+
+      expect(figures).toContain("1 of 1 gate criterion");
+      expect(figures).not.toContain("1 of 1 gate criteria");
+    });
+
     it("renders the new shell without any feature-flag fallback dependency", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -1473,7 +1535,9 @@ describe("MovesPhaseStandaloneClient", () => {
           screen.queryByTestId(`charter-basis-${sectionKey}`),
         ).not.toBeInTheDocument();
       }
-      expect(screen.queryByText("How do you know this?")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("How do you know this?"),
+      ).not.toBeInTheDocument();
     });
 
     it("moves_charter_basis_v1 ON on P1: every charter question carries the basis control with all three bases", () => {
@@ -1562,7 +1626,9 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("heading", { name: "What we found" }),
       ).toBeInTheDocument();
-      expect(screen.queryByText("How do you know this?")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("How do you know this?"),
+      ).not.toBeInTheDocument();
       for (const sectionKey of SCOPE_THE_BET_SECTIONS) {
         expect(
           screen.queryByTestId(`charter-basis-${sectionKey}`),
@@ -1610,7 +1676,8 @@ describe("MovesPhaseStandaloneClient", () => {
             scope_boundary: {
               kind: "assumption",
               owner: "Ops lead",
-              p2ValidationPlan: "Confirm the boundary against the process walk.",
+              p2ValidationPlan:
+                "Confirm the boundary against the process walk.",
             },
             success_criteria: { kind: "workspace_assertion" },
           }}
@@ -1724,9 +1791,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       const dock = screen.getByTestId("agent-dock");
-      expect(
-        within(dock).getByTestId("capture-notes-open"),
-      ).toHaveTextContent("Paste client notes");
+      expect(within(dock).getByTestId("capture-notes-open")).toHaveTextContent(
+        "Paste client notes",
+      );
     });
 
     it("moves_capture_notes_v1 ON without moves_capture_v2: the legacy canvas offers no fill-from-notes", () => {
@@ -2587,7 +2654,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
       const stepper = screen.getByRole("navigation", { name: "Phase steps" });
       const phaseLink = within(stepper).getByTitle(
-        "Discover & Diagnose · 2 of 2",
+        "Discover & Diagnose · 2 of 2 gate criteria",
       );
       expect(phaseLink.tagName).toBe("A");
       expect(phaseLink).toHaveAttribute(
