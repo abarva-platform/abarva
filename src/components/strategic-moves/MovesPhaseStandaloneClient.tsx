@@ -237,6 +237,8 @@ interface MovesPhaseStandaloneClientProps {
   captureCompositionEnabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
+  /** `moves_capture_handoff_recap_v1` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). When true the capture flow's last step offers "Review what you captured", which opens the hand-off recap WITHOUT submitting — the recap carries the charter-basis rollup and the per-question basis marks, and is otherwise unreachable because the footer's one forward control is spent on the governed approve slot. The approve control travels onto the recap, so submission still runs through the existing gate pipeline. When false the flow behaves exactly as today. */
+  captureHandoffRecapEnabled?: boolean;
   /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
   captureNotesEnabled?: boolean;
   /**
@@ -860,6 +862,7 @@ export function MovesPhaseStandaloneClient({
   captureCompositionEnabled = false,
   initialP1CharterBasisBySection = {},
   captureNotesEnabled = false,
+  captureHandoffRecapEnabled = false,
   carriedCharterAssumptions: carriedCharterAssumptionRows = null,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
@@ -3297,6 +3300,7 @@ export function MovesPhaseStandaloneClient({
                           : null,
                         initialStep: Math.min(substepIndex, 2) as 0 | 1 | 2,
                         approveSlot: captureApproveSlot,
+                        allowReviewBeforeSubmit: captureHandoffRecapEnabled,
                       }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (

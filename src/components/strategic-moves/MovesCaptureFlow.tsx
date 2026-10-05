@@ -6,6 +6,10 @@ import {
   type PhaseStepGroup,
 } from "@/lib/programs/moves-phase-step-groups";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
+import {
+  captureHandoffAccess,
+  captureHandoffHeading,
+} from "@/lib/programs/capture-handoff-reachability";
 
 /**
  * The redesigned Moves phase capture: one repeatable 3-step flow for every
@@ -108,6 +112,15 @@ export interface MovesCaptureFlowProps {
    * existing pipeline, not a reimplementation.
    */
   approveSlot?: ReactNode;
+  /**
+   * `moves_capture_handoff_recap_v1`. When true AND the host supplied an
+   * `approveSlot`, the last step offers a control that opens the hand-off recap
+   * WITHOUT submitting, and the governed approve slot travels onto the recap so
+   * the decision still runs through the gate pipeline. Default false, which
+   * leaves the flow byte-for-byte as it reads today — including the fact that
+   * with an `approveSlot` present the recap is then unreachable (U-564).
+   */
+  allowReviewBeforeSubmit?: boolean;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -132,10 +145,18 @@ export function MovesCaptureFlow({
   requireAnswers = false,
   initialStep = 0,
   approveSlot,
+  allowReviewBeforeSubmit = false,
 }: MovesCaptureFlowProps) {
   const groups = getPhaseStepGroups(phase);
   // view: 0..2 = steps, 3 = hand-off.
   const [view, setView] = useState<number>(initialStep);
+  // Whether this phase was submitted FROM this flow. The recap may be opened as
+  // a review before that happens, and must not claim a submission that has not.
+  const [submitted, setSubmitted] = useState(false);
+  const handoffAccess = captureHandoffAccess({
+    reviewEnabled: allowReviewBeforeSubmit,
+    hasApproveSlot: Boolean(approveSlot),
+  });
 
   const sectionByKey = useMemo(() => {
     const map = new Map<string, PhaseCaptureSection>();
@@ -156,6 +177,12 @@ export function MovesCaptureFlow({
 
   const phaseName =
     phases.find((p) => p.phase === phase)?.name ?? groups[0]?.title ?? "";
+
+  const handoffHeading = captureHandoffHeading({
+    phaseName,
+    nextPhaseName: nextPhase ? nextPhase.name : null,
+    submitted,
+  });
 
   const go = (next: number) => {
     setView(next);
@@ -291,7 +318,18 @@ export function MovesCaptureFlow({
                     </button>
                   ) : null}
                   {view === 2 && approveSlot ? (
-                    <div className="mcf-approve-slot">{approveSlot}</div>
+                    <>
+                      {handoffAccess.offerReviewBeforeSubmit ? (
+                        <button
+                          type="button"
+                          className="mcf-btn-quiet"
+                          onClick={() => go(3)}
+                        >
+                          Review what you captured
+                        </button>
+                      ) : null}
+                      <div className="mcf-approve-slot">{approveSlot}</div>
+                    </>
                   ) : (
                     <button
                       type="button"
@@ -302,6 +340,7 @@ export function MovesCaptureFlow({
                           go(view + 1);
                         } else {
                           onSubmitPhase();
+                          setSubmitted(true);
                           go(3);
                         }
                       }}
@@ -315,14 +354,19 @@ export function MovesCaptureFlow({
           ) : (
             <section className="mcf-handoff" data-testid="mcf-handoff">
               <div className="mcf-panel-head">
-                <span className="mcf-eyebrow mcf-done-eyebrow">
-                  <span className="mcf-tick">✓</span> {phaseName} submitted
+                <span
+                  className={
+                    handoffHeading.showTick
+                      ? "mcf-eyebrow mcf-done-eyebrow"
+                      : "mcf-eyebrow"
+                  }
+                >
+                  {handoffHeading.showTick ? (
+                    <span className="mcf-tick">✓</span>
+                  ) : null}{" "}
+                  {handoffHeading.eyebrow}
                 </span>
-                <h1 className="mcf-panel-title">
-                  {nextPhase
-                    ? `${phaseName} is complete. Here's what you captured.`
-                    : `${phaseName} is complete. This Move is ready for delivery.`}
-                </h1>
+                <h1 className="mcf-panel-title">{handoffHeading.title}</h1>
               </div>
               {handoffSummary}
               <div className="mcf-recap" aria-label="What you captured">
@@ -363,19 +407,28 @@ export function MovesCaptureFlow({
                   <button
                     type="button"
                     className="mcf-btn-quiet"
-                    onClick={() => go(0)}
+                    onClick={() => (submitted ? go(0) : go(2))}
                   >
-                    Review answers
+                    {submitted ? "Review answers" : "Back to the last step"}
                   </button>
-                  <button
-                    type="button"
-                    className="mcf-btn-primary"
-                    onClick={onAdvanceToNextPhase}
-                  >
-                    {nextPhase
-                      ? `Begin ${nextPhase.name} →`
-                      : "Hand off to delivery →"}
-                  </button>
+                  {submitted || !approveSlot ? (
+                    <button
+                      type="button"
+                      className="mcf-btn-primary"
+                      onClick={onAdvanceToNextPhase}
+                    >
+                      {nextPhase
+                        ? `Begin ${nextPhase.name} →`
+                        : "Hand off to delivery →"}
+                    </button>
+                  ) : (
+                    /* Opened as a review: nothing is submitted yet, so the next
+                       phase cannot be begun from here. The host's governed
+                       approve control travels onto the recap instead, so the
+                       person decides with the basis rollup in front of them and
+                       the decision still runs through the gate pipeline. */
+                    <div className="mcf-approve-slot">{approveSlot}</div>
+                  )}
                 </div>
               </div>
             </section>

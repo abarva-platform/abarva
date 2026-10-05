@@ -7,6 +7,10 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MovesCaptureFlow } from "../MovesCaptureFlow";
 import type { MovesCaptureFlowPhase } from "../MovesCaptureFlow";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
+import {
+  captureHandoffAccess,
+  captureHandoffHeading,
+} from "@/lib/programs/capture-handoff-reachability";
 
 const PHASES: MovesCaptureFlowPhase[] = [
   { phase: 0, code: "P0", name: "Originate", answered: 11, total: 11, reachable: true },
@@ -198,6 +202,177 @@ describe("MovesCaptureFlow", () => {
       expect(screen.queryByTestId("mcf-handoff")).toBeInTheDocument();
     },
   );
+
+  // U-564's remedy, behind `moves_capture_handoff_recap_v1`. The flag is OFF
+  // for every tenant, so the `it.failing` pin above stays failing (its
+  // `renderFlow` passes no `allowReviewBeforeSubmit`) and these cases carry the
+  // claim that the remedy works when it is turned on.
+  describe("review before submit (moves_capture_handoff_recap_v1)", () => {
+    const APPROVE = <button type="button">Approve &amp; Build</button>;
+
+    function walkToLastStep() {
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
+    }
+
+    it("opens the hand-off recap from the last step without submitting", () => {
+      const { onSubmitPhase } = renderFlow({
+        approveSlot: APPROVE,
+        allowReviewBeforeSubmit: true,
+      });
+      walkToLastStep();
+      // the governed slot is still the step's submit control
+      expect(
+        screen.getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Review what you captured" }),
+      );
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(within(handoff).getByText("Priya Nair")).toBeInTheDocument();
+      expect(onSubmitPhase).not.toHaveBeenCalled();
+    });
+
+    it("does not claim the phase was submitted when the recap is a review", () => {
+      renderFlow({ approveSlot: APPROVE, allowReviewBeforeSubmit: true });
+      walkToLastStep();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Review what you captured" }),
+      );
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      // Assert over text NODES, not the container's concatenated textContent:
+      // sibling spans join with no separator, so a container-wide negative
+      // assertion can be satisfied by a neighbouring string.
+      const claims = Array.from(handoff.querySelectorAll("span, h1, h2")).map(
+        (node) => node.textContent?.trim() ?? "",
+      );
+      expect(claims).not.toContain("Charter submitted");
+      expect(
+        claims.some((text) => /Charter is complete/.test(text)),
+      ).toBe(false);
+      expect(
+        within(handoff).getByText(/before you submit Charter/),
+      ).toBeInTheDocument();
+      expect(handoff.querySelector(".mcf-tick")).toBeNull();
+    });
+
+    it("carries the governed approve control onto the review, and offers no way into the next phase", () => {
+      const { onAdvanceToNextPhase } = renderFlow({
+        approveSlot: APPROVE,
+        allowReviewBeforeSubmit: true,
+      });
+      walkToLastStep();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Review what you captured" }),
+      );
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(
+        within(handoff).getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+      // Nothing is submitted, so the next phase cannot be begun from here.
+      expect(
+        within(handoff).queryByRole("button", { name: "Begin Discover →" }),
+      ).not.toBeInTheDocument();
+      expect(onAdvanceToNextPhase).not.toHaveBeenCalled();
+
+      fireEvent.click(
+        within(handoff).getByRole("button", { name: "Back to the last step" }),
+      );
+      expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
+      expect(screen.queryByTestId("mcf-handoff")).not.toBeInTheDocument();
+    });
+
+    it("offers no review control when the flag is off, even with an approveSlot", () => {
+      renderFlow({ approveSlot: APPROVE });
+      walkToLastStep();
+      expect(
+        screen.queryByRole("button", { name: "Review what you captured" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("offers no review control when there is no approveSlot, since Submit already reaches the recap", () => {
+      // Pins the other conjunct: with the built-in Submit present a review
+      // control would only duplicate a path that already works, and the
+      // post-submit recap must still read as submitted.
+      renderFlow({ allowReviewBeforeSubmit: true });
+      walkToLastStep();
+      expect(
+        screen.queryByRole("button", { name: "Review what you captured" }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Submit Charter" }));
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(within(handoff).getByText(/Charter submitted/)).toBeInTheDocument();
+      expect(
+        within(handoff).getByRole("button", { name: "Begin Discover →" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("captureHandoffAccess / captureHandoffHeading", () => {
+    it("calls the recap unreachable exactly in the configuration the product serves", () => {
+      expect(
+        captureHandoffAccess({ reviewEnabled: false, hasApproveSlot: true }),
+      ).toEqual({ offerReviewBeforeSubmit: false, reachable: false });
+      expect(
+        captureHandoffAccess({ reviewEnabled: true, hasApproveSlot: true }),
+      ).toEqual({ offerReviewBeforeSubmit: true, reachable: true });
+      // No approve slot: the built-in Submit reaches it, so it is reachable and
+      // no review control is owed either way.
+      expect(
+        captureHandoffAccess({ reviewEnabled: false, hasApproveSlot: false }),
+      ).toEqual({ offerReviewBeforeSubmit: false, reachable: true });
+      expect(
+        captureHandoffAccess({ reviewEnabled: true, hasApproveSlot: false }),
+      ).toEqual({ offerReviewBeforeSubmit: false, reachable: true });
+    });
+
+    it("withholds every completion claim until the phase is actually submitted", () => {
+      const review = captureHandoffHeading({
+        phaseName: "Charter",
+        nextPhaseName: "Discover",
+        submitted: false,
+      });
+      expect(review.showTick).toBe(false);
+      expect(`${review.eyebrow} ${review.title}`).not.toMatch(
+        /submitted\b|complete/,
+      );
+      expect(review.title).toMatch(/before you submit Charter/);
+
+      const done = captureHandoffHeading({
+        phaseName: "Charter",
+        nextPhaseName: "Discover",
+        submitted: true,
+      });
+      expect(done.showTick).toBe(true);
+      expect(done.eyebrow).toBe("Charter submitted");
+      expect(done.title).toBe(
+        "Charter is complete. Here's what you captured.",
+      );
+    });
+
+    it("names delivery, not a next phase, on the terminal phase", () => {
+      expect(
+        captureHandoffHeading({
+          phaseName: "Mobilize",
+          nextPhaseName: null,
+          submitted: true,
+        }).title,
+      ).toMatch(/ready for delivery/);
+      expect(
+        captureHandoffHeading({
+          phaseName: "Mobilize",
+          nextPhaseName: null,
+          submitted: false,
+        }).title,
+      ).toMatch(/before you submit Mobilize for delivery/);
+    });
+  });
 
   it("states a question count, and no completion tick, for a phase it cannot measure", () => {
     // `answered: null` is what `capturePhaseAnsweredCount` returns for every
