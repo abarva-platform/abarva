@@ -15,7 +15,10 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { MovesHome } from "@/components/strategic-moves/MovesHome";
 import { buildMovesHomeProps } from "@/components/strategic-moves/moves-home-adapter";
-import { strategicMoveToHomeInput } from "@/components/strategic-moves/moves-home-mapper";
+import {
+  buildPortfolioValueLine,
+  strategicMoveToHomeInput,
+} from "@/components/strategic-moves/moves-home-mapper";
 
 export const dynamic = "force-dynamic";
 
@@ -157,13 +160,13 @@ export default async function StrategicMovesPage() {
 
   if (homeV2Enabled) {
     const moveInputs = portfolio.moves.map((m) => strategicMoveToHomeInput(m));
-    const withValue = moveInputs.filter(
-      (m) => m.value !== "Declares in Charter",
-    ).length;
-    const valueLine =
-      moveInputs.length === 0
-        ? "No moves yet."
-        : `${withValue} of ${moveInputs.length} ${moveInputs.length === 1 ? "move has" : "moves have"} declared value; the rest declare in Charter.`;
+    // Counted from each move's governed valueAtStake, never from the formatted
+    // label: the previous derivation compared the rendered string against the
+    // "Declares in Charter" fallback copy, so changing that copy would have
+    // silently reported every move as having declared a value.
+    const valueLine = buildPortfolioValueLine(
+      portfolio.moves.map((m) => m.valueAtStake),
+    );
     const homeProps = buildMovesHomeProps({
       tenantName,
       moves: moveInputs,
