@@ -183,30 +183,90 @@ function collectUnsupportedClaims(
 }
 
 /**
- * Greedy one-to-one match of expected exhibits against produced ones, by kind.
+ * Greedy one-to-one match of expected exhibits against produced ones.
  *
  * One-to-one and not merely "is a matrix present": a brief that asks for two
  * matrices and receives one would otherwise report both satisfied, and the
  * shortfall would disappear in exactly the case it exists to catch.
+ *
+ * Matched in two passes, because kind alone cannot say WHICH exhibit arrived.
+ * 86 of the 105 structure x pack briefs this registry can compose declare two
+ * or more expected exhibits of the same kind (the AMS pack alone asks for three
+ * matrices), and a single-pass match by kind credits them in declaration order.
+ * It then names the losers of that order as missing — so an exhibit that was
+ * delivered gets reported absent while the one actually absent is counted as
+ * received. The count was right and the diagnosis was wrong, which is worse
+ * than silence: an operator reads a specific title and goes looking for a
+ * visual that is already in the document.
+ *
+ * Pass 1 claims the pairs that identify each other — same kind AND the same
+ * title or key, compared loosely, since the prompt names expected exhibits by
+ * title and the author echoes it. Pass 2 is the original rule over whatever is
+ * left, so no brief loses a match it had before. `received` is unchanged for
+ * every input: within one kind both passes leave a maximal matching, so the
+ * total is still the sum over kinds of min(expected, produced). Only the
+ * attribution moves.
  */
+function exhibitIdentity(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function identifiesSameExhibit(
+  want: ExpectedExhibit,
+  got: RenderableExhibit,
+): boolean {
+  if (want.kind !== got.kind) return false;
+  const wantTitle = exhibitIdentity(want.title);
+  const wantKey = exhibitIdentity(want.key);
+  const gotTitle = exhibitIdentity(got.title);
+  const gotKey = exhibitIdentity(got.key);
+  if (wantTitle && (wantTitle === gotTitle || wantTitle === gotKey)) return true;
+  if (wantKey && (wantKey === gotKey || wantKey === gotTitle)) return true;
+  return false;
+}
+
 function matchExpectedExhibits(
   expected: readonly ExpectedExhibit[],
   produced: readonly RenderableExhibit[],
 ): { received: number; missing: string[] } {
-  const unconsumed = produced.map((e) => e.kind);
-  const missing: string[] = [];
+  const unconsumed: Array<RenderableExhibit | null> = [...produced];
+  const matched = expected.map(() => false);
   let received = 0;
 
-  for (const want of expected) {
-    const at = unconsumed.indexOf(want.kind);
-    if (at === -1) {
-      missing.push(want.title);
-      continue;
-    }
-    unconsumed.splice(at, 1);
+  const claim = (at: number): void => {
+    unconsumed[at] = null;
     received += 1;
-  }
-  return { received, missing };
+  };
+
+  // pass 1 — the pairs that name each other
+  expected.forEach((want, i) => {
+    const at = unconsumed.findIndex(
+      (got) => got !== null && identifiesSameExhibit(want, got),
+    );
+    if (at === -1) return;
+    matched[i] = true;
+    claim(at);
+  });
+
+  // pass 2 — by kind, over what pass 1 did not claim
+  expected.forEach((want, i) => {
+    if (matched[i]) return;
+    const at = unconsumed.findIndex(
+      (got) => got !== null && got.kind === want.kind,
+    );
+    if (at === -1) return;
+    matched[i] = true;
+    claim(at);
+  });
+
+  return {
+    received,
+    missing: expected.filter((_, i) => !matched[i]).map((want) => want.title),
+  };
 }
 
 export function validateDeliverableQuality(
