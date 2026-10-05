@@ -12,6 +12,11 @@ import {
   getPhaseLabel,
 } from '@/lib/programs/gate-ribbon-view';
 import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
+import {
+  gateCriteriaBadgeLabel,
+  gateCriteriaMetSummary,
+} from '@/lib/programs/gate-criteria-figure-labels';
+import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -111,7 +116,7 @@ describe('P-SMOKE-CDP · phase gate ribbon (P3 Design Future State → P4 Roadma
   });
 
   it('badge label is "2 of 5"', () => {
-    expect(getGateBadgeLabel(ribbon!)).toBe('2 of 5');
+    expect(getGateBadgeLabel(ribbon!)).toBe('2 of 5 criteria');
   });
 
   it('approval button label is "Approve with override" (unmet items exist)', () => {
@@ -374,6 +379,99 @@ describe('getPhaseLabel', () => {
 
   it('returns a non-empty fallback for an unknown phase', () => {
     expect(getPhaseLabel(99).length).toBeGreaterThan(0);
+  });
+});
+
+// ─── Gate-criteria figure agreement ──────────────────────────────────────────
+//
+// The noun must agree with the count it is joined to. The plural branch is
+// byte-identical to the pre-fix string, so every multi-criterion assertion
+// above and every multi-criterion live screen is unchanged; only a one-item
+// list changes, and `total === 1` is not reachable from the canonical
+// `GATE_RULES` catalog (see the module header). These cases therefore pin the
+// construction, which is what the fix is.
+
+describe('gate-criteria figure labels · the noun agrees with the count', () => {
+  it('a plural count keeps the existing summary string exactly', () => {
+    expect(gateCriteriaMetSummary(2, 5)).toBe('2 of 5 criteria met');
+  });
+
+  it('a single criterion reads "criterion", not "criteria"', () => {
+    expect(gateCriteriaMetSummary(1, 1)).toBe('1 of 1 criterion met');
+    expect(gateCriteriaMetSummary(0, 1)).toBe('0 of 1 criterion met');
+  });
+
+  it('zero criteria stay plural', () => {
+    expect(gateCriteriaMetSummary(0, 0)).toBe('0 of 0 criteria met');
+  });
+
+  it('the chip label carries a noun at all, agreed to its count', () => {
+    expect(gateCriteriaBadgeLabel(2, 5)).toBe('2 of 5 criteria');
+    expect(gateCriteriaBadgeLabel(1, 1)).toBe('1 of 1 criterion');
+  });
+
+  it('the noun is chosen by the TOTAL, not by the met count', () => {
+    // "1 of 5" must stay plural: it is the denominator that the noun
+    // describes. Agreeing to `met` instead would read "1 of 5 criterion".
+    expect(gateCriteriaMetSummary(1, 5)).toBe('1 of 5 criteria met');
+    expect(gateCriteriaBadgeLabel(1, 5)).toBe('1 of 5 criteria');
+  });
+
+  it('the ribbon builds its summary through the shared helper', () => {
+    const ribbon = buildGateRibbonView(cdpView());
+    expect(ribbon!.gateSummary).toBe(
+      gateCriteriaMetSummary(ribbon!.metCriteria, ribbon!.totalCriteria),
+    );
+  });
+
+  it('the approval drawer builds its summary through the same helper', () => {
+    const drawer = buildGateApprovalDrawerView(cdpView());
+    expect(drawer!.gateSummary).toBe(
+      gateCriteriaMetSummary(
+        drawer!.criteriaRows.filter((r) => r.met).length,
+        drawer!.criteriaRows.length,
+      ),
+    );
+  });
+
+  // The fixtures all carry multi-criterion gates, so for THEM an inlined
+  // `${met} of ${total} criteria met` is indistinguishable from the shared
+  // helper — a mutation that re-inlines the template survives every case
+  // above. Pinning "builds through the helper" therefore needs a view whose
+  // count makes the two forms differ, which is a one-item list. The builders
+  // only refuse an EMPTY list, so a single-criterion view is admitted by both
+  // the type and the guard; it is the canonical catalog, not these builders,
+  // that happens never to produce one.
+  function singleCriterionView() {
+    const base = cdpView();
+    return {
+      ...base,
+      phasePanel: {
+        ...base.phasePanel,
+        gateCriteria: [{ criterion: 'Sole blocking criterion', met: false }],
+      },
+    };
+  }
+
+  it('the ribbon says "criterion" for a one-item gate', () => {
+    expect(buildGateRibbonView(singleCriterionView())!.gateSummary).toBe(
+      '0 of 1 criterion met',
+    );
+  });
+
+  it('the approval drawer says "criterion" for the same one-item gate', () => {
+    expect(
+      buildGateApprovalDrawerView(singleCriterionView())!.gateSummary,
+    ).toBe('0 of 1 criterion met');
+  });
+
+  it('the ribbon and the drawer word the same gate identically', () => {
+    // Two surfaces, one quantity: they disagreed only by accident of having
+    // two copies of the same template literal.
+    const view = cdpView();
+    expect(buildGateApprovalDrawerView(view)!.gateSummary).toBe(
+      buildGateRibbonView(view)!.gateSummary,
+    );
   });
 });
 
