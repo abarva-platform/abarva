@@ -14,7 +14,7 @@ import type {
   DeliverableIntelligenceRequest,
   DeliverableModule,
 } from "./types";
-import { getArchetypePack } from "./briefs/archetype-packs";
+import { resolveConfiguredArchetypePack } from "./briefs/archetype-config-source";
 import { getDeliverableStructure } from "./briefs/deliverable-structures";
 import { resolveConfiguredDiscoveryBlueprint } from "./briefs/archetype-config-source";
 import { getDiscoveryBlueprint } from "./briefs/discovery-blueprint";
@@ -626,7 +626,12 @@ function composeBrief(
 ): DeliverableArtifactBrief | null {
   const structure = getDeliverableStructure(req.module, req.deliverableType);
   if (!structure) return null;
-  const pack = getArchetypePack(req.useCaseArchetype);
+  // Resolved against the EFFECTIVE pack catalog, not the built-in one. With no
+  // configured source declared the effective catalog is a copy of the seed and
+  // this answers exactly what `getArchetypePack` answered; with one declared,
+  // an archetype's configured exhibits and tables reach the composed brief
+  // instead of validating and then being ignored.
+  const pack = resolveConfiguredArchetypePack(req.useCaseArchetype).pack;
 
   // Enrich the sections that assert client facts with the archetype's key
   // evidence families. Two ways in, and the declared one is why: the inferred
