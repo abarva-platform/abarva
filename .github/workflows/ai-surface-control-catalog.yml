@@ -266,6 +266,7 @@ jobs:
           src/components/strategic-moves/__tests__/MovesHome.test.tsx
           src/components/strategic-moves/__tests__/moves-home-adapter.test.ts
           src/components/strategic-moves/__tests__/moves-home-mapper.test.ts
+          src/components/strategic-moves/__tests__/portfolio-reconciliation-summary.test.ts
           src/components/strategic-moves/__tests__/CaptureNotesFill.test.tsx
           src/components/strategic-moves/__tests__/capture-notes-basis-link.test.ts
           src/components/strategic-moves/__tests__/charter-gate-assumption-disclosure.test.ts

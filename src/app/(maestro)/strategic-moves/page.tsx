@@ -19,6 +19,10 @@ import {
   buildPortfolioValueLine,
   strategicMoveToHomeInput,
 } from "@/components/strategic-moves/moves-home-mapper";
+import {
+  buildPortfolioReconciliationSummary,
+  hasDeclaredAmount,
+} from "@/lib/programs/portfolio-reconciliation-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -83,9 +87,9 @@ function PortfolioReconciliationPanel({
             Declared budget
           </p>
           <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
-            {declaredBudgetUsd === null
-              ? "not declared"
-              : money(declaredBudgetUsd)}
+            {hasDeclaredAmount(declaredBudgetUsd)
+              ? money(declaredBudgetUsd)
+              : "not declared"}
           </p>
         </div>
         <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
@@ -93,9 +97,9 @@ function PortfolioReconciliationPanel({
             Declared value
           </p>
           <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
-            {declaredValueUsd === null
-              ? "not declared"
-              : money(declaredValueUsd)}
+            {hasDeclaredAmount(declaredValueUsd)
+              ? money(declaredValueUsd)
+              : "not declared"}
           </p>
         </div>
       </div>
@@ -154,7 +158,10 @@ export default async function StrategicMovesPage() {
   // the SAME portfolio + reconciliation; value numbers come from the governed
   // valueAtStake / reconciliation totals (never invented here).
   const homeV2Enabled = isFeatureEnabled(
-    { clientKey: activeClient?.key ?? null, clientId: activeClient?.id ?? null },
+    {
+      clientKey: activeClient?.key ?? null,
+      clientId: activeClient?.id ?? null,
+    },
     "moves_home_v2",
   );
 
@@ -171,20 +178,12 @@ export default async function StrategicMovesPage() {
       tenantName,
       moves: moveInputs,
       valueLine,
-      reconciliation: reconciliation
-        ? {
-            declaredPrograms: `${reconciliation.declaredCount} programmes`,
-            trackedRecords: `${reconciliation.trackedCount} records`,
-            declaredBudget:
-              reconciliation.declaredBudgetUsd != null
-                ? money(reconciliation.declaredBudgetUsd)
-                : "—",
-            declaredValue:
-              reconciliation.declaredValueUsd != null
-                ? money(reconciliation.declaredValueUsd)
-                : "—",
-          }
-        : null,
+      // The four strings are derived in a pure module so they can be pinned; this
+      // host cannot be rendered in a test (async server component).
+      reconciliation: buildPortfolioReconciliationSummary(
+        reconciliation,
+        money,
+      ),
       newMoveHref: "/strategic-moves/new",
     });
     return (
