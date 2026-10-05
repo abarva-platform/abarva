@@ -34,6 +34,197 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-05 thirteenth wave — walked on serving SHA `8bcfa6fa6f`
+
+**Item:** U-560.
+**Walked:** 2026-10-05, between 00:33:00Z and 00:45:25Z, by
+`source-backlog-executor#20261005T0031Z`.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why it is not pinned.** U-560 says to resolve the serving SHA at
+walk time, unpinned, because `C-635` became unexecutable by naming a literal the
+runtime then moved past. The serving SHA was `8bcfa6fa6f` (#8982). It was also
+`origin/main` at walk start; **it was not at walk end**, and that is recorded
+below rather than smoothed over.
+
+**The serving SHA is established from two independent sources.** A revision
+suffix is a label a deploy wrote, and an overtaken run can leave one that is not
+the build's; so the registry was asked first. `az acr manifest show-metadata` on
+the serving digest returns exactly one tag, `main-8bcfa6fa`. The revision name
+`--m8bcfa6fa` agrees with it. Two sources, one answer.
+
+**Runtime invariant, read with read-only `az` before the walk (00:34:48Z) and
+again at the walk's end (00:43:07Z), unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App template image | `sha256:09e0d5a0…f100` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--m8bcfa6fa`, sole entry, weight 100 |
+| That revision's own image | `sha256:09e0d5a0…f100` — identical to the template |
+| Revision state | `active` / `Healthy` / `Running`, created 00:11:02Z |
+
+**#8982's deploy state was resolved here, not read from the item.** U-560 was
+filed while deploy run `37245988466` was still `in_progress`. At walk time that
+run reads `completed` / `success`, `createdAt` 00:03:41Z → `updatedAt`
+00:13:41Z, and the digest equality above is what proves the build is serving.
+
+### The ancestor sweep — re-derived, not inherited
+
+The item names three merges. A wave that trusts its predecessor's list is how a
+merge goes unseen, so the population was recomputed and then compared with the
+item's.
+
+- All three named merges asserted ancestors of the walked build with
+  `git merge-base --is-ancestor`: `8d31c2ea52`, `3ee3df21e8`, `8bcfa6fa6f`. None
+  had to be dropped.
+- The repository squash-merges, so `--merges` over `15de62ec41..8bcfa6fa6f`
+  returns **0** and the sweep has to be taken over `--first-parent`, which
+  returns **4**.
+- The fourth is `230d13cb13` (#8981), the twelfth wave's own record. It is
+  excluded as docs-only **by measurement, not by its subject line**: 0 files
+  under `src/app`, `src/components` or `src/lib` outside tests.
+- So the item's row list and the re-derived sweep agree exactly, at 3. This is
+  the first wave in this family where they did; it is stated because the check
+  is what makes the agreement worth anything.
+
+**The predecessor's digest is not its walked SHA, and nearly closed this row by
+mistake.** `U-559`'s release line reports deploy proof on build `8bcfa6fa6f` —
+the same build walked here. Read quickly, that says the twelfth wave already
+covered this ground. It did not: the twelfth-wave block in this file records the
+walk itself on serving SHA `15de62ec41`, between 23:26:07Z and 23:30:26Z, and
+the `8bcfa6fa6f` digest in that line is the deploy of U-559's own docs commit,
+which happened *after* its walk and verdicted nothing. A deploy digest in a
+release line is where the record landed, not what the walker looked at.
+
+### `moves_charter_basis_v1` observed on the runtime, not in `registry.ts`
+
+A merged source default is not a serving state, so the flag was read off the
+running surface. The discriminators are `data-testid="charter-basis-<section>"`
+and `data-testid="charter-assumption-badge"`, both of which exist in
+`CharterBasisField.tsx` and in no other component — and that component is
+rendered only through `renderSectionBasis`, which `MovesPhaseStandaloneClient`
+supplies only when `charterBasisEnabled && phase.phase === 1`.
+
+**An absence only means something if the mount point was there to fill**, so
+both sides were measured on the P1 Charter capture of a Move on the synthetic
+demo tenant:
+
+| Step | `.mcf-question` mount points rendered | `charter-basis-*` | `charter-assumption-badge` |
+|---|---|---|---|
+| 1 — Scope the bet | 3 | 0 | 0 |
+| 2 — People & decisions | 2 | 0 | 0 |
+| 3 — Plan the proof | 2 | 0 | 0 |
+| **total** | **7 — the whole P1 Charter input set** | **0** | **0** |
+
+Seven places for the ON-path control to appear, and it appeared in none. The
+redesigned capture itself was confirmed present in the same reads
+(`data-testid="moves-capture-flow"` = 1), so the host that would have mounted it
+was running. **`moves_charter_basis_v1` is OFF on this runtime for this tenant.**
+
+Stepping 1 → 2 → 3 is a client-side view change and no write: `MovesCaptureFlow`'s
+footer button calls `go(view + 1)` for views 0 and 1 and touches no network. The
+step-3 button, which is the one that calls `onSubmitPhase()`, was **not** pressed.
+
+### Results
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves P1 Charter capture — per-field basis control | #8982 `8bcfa6fa6f` | **pass (OFF path only)** | 7 of 7 capture mount points rendered; 0 basis controls and 0 assumption badges. The flag-off contract is "nothing here renders", and nothing did. |
+| 2 | Moves P1 Charter advance gate — minimum-viable evidence | #8980 `8d31c2ea52` | **pass (OFF path only)** | The legacy approved-evidence lock is still what the surface reports: the gate panel reads `INPUTS 0/7`, `GATE 1/2 hard met`, blocker "7 phase inputs still missing from persisted server state", and the phase-build control is `disabled` reading "Complete phase inputs before build". On a second Move the evidence half of the same legacy lock was the reported blocker instead ("1 required evidence item still need approval or coverage"), so both legs of the OFF branch were seen, not one. |
+| 3 | Source New — terminal demo NDA envelopes | #8948 `3ee3df21e8` | **blocked** | The component this merge changes renders on **no event the surface serves**. Measured on all 5 events, not inferred. Reason below; filed as `D-519`. |
+
+### Row 3's reason, stated three ways rather than as "not visible"
+
+`SourceNewNdaCapture` returns `null` when no supplier is `not_covered`, so an
+empty surface has several possible causes and the walk separated them.
+
+1. **The surface is absent from every event.** 0 `snw-nda-suppliers` containers
+   and 0 NDA-capture nodes in the server HTML of all **5** events.
+2. **The demo e-sign provider is unconfigured on this runtime.**
+   `/api/v1/source/<id>/nda/esign/status` returns `200` with
+   `{"available":false,"fallback":"upload","suppliers":[]}` on all 5. Because
+   `suppliers` is present at all, the route took its final branch — so the
+   tenant check passed and `available:false` means `runtime.provider === null`.
+3. **There are zero accepted candidate supplier authorities**, which is a
+   different statement from "zero envelopes". `suppliers: []` comes off a query
+   whose driving CTE is `accepted`, with the envelope joined by `LEFT JOIN
+   LATERAL`; an empty result names the empty *driving* side. The envelope table
+   is not what was measured here and no claim is made about it.
+
+So the `voided` state note, the reworded `declined` note, the awaiting-readback
+guard and the `Resend` label are all unexercised on this runtime. **The merge is
+evidenced by its own tests; it is not evidenced by this walk**, and rounding row
+3 up to a pass on the strength of those tests is the substitution this file
+exists against.
+
+### The ON path is owed, and was not manufactured
+
+`moves_charter_basis_v1` reads `includeTenants: []` — no tenant — and the only
+legitimate route to an ON observation is a reviewed PR through the governed
+path. No flag was changed to create evidence for this walk; a walker mutating
+tenant flag state to produce its own proof is the inverse of proof. The ON path
+of **both** #8980 and #8982 is therefore **owed**, not inferred, and neither row
+above claims it.
+
+### A bundle string was nearly read as a rendered state
+
+Checking whether the three filled Charter textareas were unsaved aVa drafts, the
+server HTML for the page was searched for `ava-draft-` and returned **17**
+occurrences — which looks like seventeen rendered draft markers. The hydrated DOM
+returns **0**. The 17 are the component's own source inside the inlined script
+payload, not nodes. The DOM answer is the one used, and the near-miss is recorded
+because reading a page's bytes for a *rendered* state is the same mechanism that
+produced earlier manufactured findings in this lane.
+
+### Stated limits of this walk
+
+1. **Row 2's refusal was read, not exercised.** The blocker sentence is composed
+   client-side from server-supplied counts. Exercising the server-side refusal in
+   `missingP1CaptureSections` means POSTing an advance, which is a write, and the
+   standing boundary above forbids it: for a gate, the failure mode under test is
+   the action *succeeding*.
+2. **One tenant.** Every observation is on the single synthetic demo tenant the
+   signed-in session reaches. Nothing here speaks for any other tenant.
+3. **`main` moved during the walk.** Two further merges, `8b22aa5a90` and
+   `62b5f135c2`, had deploy runs created at 00:41:42Z and 00:42:22Z — after the
+   walk began. They are outside this wave and a fourteenth is already owed. The
+   runtime invariant was re-read at 00:43:07Z and still showed `8bcfa6fa6f` at
+   100%, so no deploy landed *inside* the walk window.
+4. **No write anywhere.** No product surface was written to and every `az` call
+   was a read. Three textareas held text that the gate reports as unpersisted;
+   settling which side is right needs a read of the server's capture modules that
+   this walk had no read-only route to, so it is reported as unsettled below
+   rather than as a defect.
+5. **0 console errors** on both walked surfaces, on loads taken *after* console
+   tracking was enabled rather than attached afterwards.
+
+### Residue — filed, not absorbed
+
+- **`D-519`** — the Source New NDA e-sign surface is unexercised on every event
+  the runtime serves, for two independent reasons measured above. Adjacent to
+  `D-518`, which names the contactable-policy half of the same precondition; this
+  one sits a layer earlier, at zero accepted candidates and an unconfigured demo
+  provider.
+
+### Noted, not filed
+
+- **Seven P1 Charter answers render in the textareas while the gate reports
+  `INPUTS 0/7` and "7 phase inputs still missing from persisted server state".**
+  The displayed value is `{...phaseCaptureValues, ...avaDraftValues}` while the
+  count comes from capture-module completion, so the two can legitimately
+  disagree when a draft is unsaved — but no aVa draft marker renders on those
+  fields. It is **not** attributable to either walked merge: the flag-off branch
+  of `missingP1CaptureSections` is the legacy gate unchanged, and #8982 renders
+  nothing at all. Settling it needs the server's capture-module rows for the
+  Move, which is a read this walk could not make from the browser.
+- **The rendered event list is a floor, again.** The hydrated page's anchors give
+  **4** Source New events; the same page's server HTML gives **5**. All 5 were
+  walked. This is the third wave in this family to meet the same shape, and it is
+  now cheap to check: take the server list, never the rendered one.
+
+---
+
 ## 2026-10-04 twelfth wave — walked on serving SHA `15de62ec41`
 
 **Item:** U-559.
