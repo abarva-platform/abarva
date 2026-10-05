@@ -36,6 +36,7 @@ import {
   buildHistoricalRequestSummary,
   type HistoricalRequestSummary,
 } from "@/lib/source/new-workspace/historical-request-summary";
+import type { StepReadiness } from "@/lib/source/new-workspace/step-readiness";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import {
@@ -307,6 +308,12 @@ export type SourceNewWorkspaceProps = {
   responseIntake?: SourceNewResponseIntake;
   /** Governed summary for the historical Request phase. */
   historicalRequestSummary?: HistoricalRequestSummary;
+  /**
+   * One status and one next action for the step the event is working in, from
+   * `assessStepReadiness`. Null when the model does not cover the current step,
+   * in which case nothing renders and the existing panels stand alone.
+   */
+  stepReadiness?: StepReadiness | null;
 };
 
 export function SourceNewWorkspace({
@@ -320,6 +327,7 @@ export function SourceNewWorkspace({
   scorecardAuthority,
   responseIntake,
   historicalRequestSummary,
+  stepReadiness = null,
 }: SourceNewWorkspaceProps) {
   const evidence = useMemo(
     () => phaseEvidence(event, files, stage05NdaCoverage),
@@ -483,6 +491,7 @@ export function SourceNewWorkspace({
   const content = (
     <main className="snw" aria-label="Source New event workspace">
       <div className="snw-inner">
+        <StepReadinessBanner readiness={stepReadiness} />
         <div className="snw-crumb">
           <Link href="/source/new">Source New</Link>
           <span>/</span>
@@ -925,6 +934,50 @@ export function SourceNewWorkspace({
     </AppShell>
   );
 }
+
+/**
+ * One status and one next action for the step the operator is working in.
+ *
+ * This is the first product caller of `assessStepReadiness`. The three parallel
+ * counters elsewhere on the page say how much is outstanding; this says what to
+ * do next, and when the action is unavailable it states the reason rather than
+ * presenting a control that silently does nothing.
+ */
+function StepReadinessBanner({ readiness }: { readiness: StepReadiness | null }) {
+  if (!readiness) return null;
+  const { status, nextAction, unmetRequirements } = readiness;
+  return (
+    <section
+      className={`snw-step-readiness is-${status}`}
+      aria-label="What to do next in this step"
+    >
+      <p className="snw-eyebrow">{STEP_READINESS_STATUS_LABELS[status]}</p>
+      <div className="snw-step-readiness-action">
+        <button type="button" className="snw-step-readiness-cta" disabled={nextAction.disabled}>
+          {nextAction.label}
+        </button>
+        {nextAction.disabled && nextAction.disabledReason ? (
+          <p className="snw-step-readiness-reason">{nextAction.disabledReason}</p>
+        ) : null}
+      </div>
+      {nextAction.disabled && unmetRequirements.length ? (
+        <ul className="snw-step-readiness-unmet">
+          {unmetRequirements.map((requirement) => (
+            <li key={requirement}>{requirement}</li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+const STEP_READINESS_STATUS_LABELS: Record<StepReadiness["status"], string> = {
+  needs_work: "Not ready yet",
+  ready_to_submit: "Ready",
+  awaiting_approval: "Waiting on an approval",
+  complete: "Done",
+  blocked: "Blocked",
+};
 
 function SourceNewStage04VendorReadiness({
   event,
