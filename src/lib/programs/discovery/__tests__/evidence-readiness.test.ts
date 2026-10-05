@@ -29,6 +29,43 @@ function item(
 }
 
 describe("discovery evidence readiness", () => {
+  it("honors a declared charter archetype without replacing legacy program fields", () => {
+    const program = {
+      functionPackKey: null,
+      archetype: "ai_product_enablement",
+      name: "Governed data initiative",
+      problemStatement: "Establish a governed data foundation.",
+      charter: {
+        classification: { archetype: "governed_data_foundation" },
+      },
+    };
+    const declaredId = resolveDeclaredProgramArchetypeId(program);
+    const resolved = getDiscoveryBlueprint(
+      buildDiscoveryBlueprintInputFromProgram(program),
+      declaredId,
+    );
+
+    expect(program.archetype).toBe("ai_product_enablement");
+    expect(program.functionPackKey).toBeNull();
+    expect(declaredId).toBe("governed_data_foundation");
+    expect(resolved.blueprintId).toBe("governed_data_foundation");
+    expect(
+      resolved.evidenceFamilies.filter((family) => family.required).map((family) => family.id),
+    ).toEqual([
+      "data_governance_ownership",
+      "semantic_layer_certification",
+      "data_lineage_audit_trail",
+      "data_quality_rules",
+      "source_system_data_access",
+      "platform_architecture_readiness",
+      "master_identity_resolution",
+      "privacy_security_controls",
+      "model_risk_responsible_ai_controls",
+      "measurement_owner_cadence",
+      "finance_baseline_value_plan",
+    ]);
+  });
+
   it("maps uploads to discovery evidence families", () => {
     expect(
       mapEvidenceToDiscoveryFamily(
