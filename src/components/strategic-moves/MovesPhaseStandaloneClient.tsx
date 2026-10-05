@@ -71,6 +71,7 @@ import {
 } from "@/lib/programs/capture-notes-basis-link";
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
+import { phaseStepperStateLabel } from "@/lib/programs/phase-stepper-state-label";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
@@ -3726,13 +3727,10 @@ function MovePhaseTopStepper({
                 ? "current"
                 : "up";
         const viewing = item.phase === viewingPhase;
-        const stateLabel = tally
-          ? `${tally.met} of ${tally.total}`
-          : state === "done"
-            ? "Complete"
-            : state === "current"
-              ? "In progress"
-              : "Upcoming";
+        // The figure states what it counts. A bare "3 of 3" sits ~200px above
+        // the capture strip's "11 questions" for the same phase and cannot be
+        // told apart from it; these are gate criteria, not capture questions.
+        const stateLabel = phaseStepperStateLabel(tally, state);
         const reachable = item.phase <= currentPhase;
         const inner = (
           <>
