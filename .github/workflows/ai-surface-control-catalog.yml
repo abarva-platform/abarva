@@ -709,6 +709,11 @@ jobs:
       - name: Report Strategy authority without inventing a decision
         run: npx jest --runTestsByPath src/components/source/new-workspace/StrategyAuthorityLabel.test.tsx --runInBand
 
+      # An unreadable release store and a package that was never prepared are
+      # different facts. This refuses a surface that collapses them.
+      - name: Keep unread RFx release distinct from none prepared
+        run: npx jest --runTestsByPath src/components/source/new-workspace/ReleaseStateRow.test.tsx --runInBand
+
       # The file cabinet is where the workspace's motion labels are actually
       # read: the folder rail carries the accepted motion, and the artifact
       # opened inside it carries a reused stage key that must not contradict

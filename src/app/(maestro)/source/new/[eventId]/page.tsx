@@ -16,6 +16,8 @@ import {
   evaluateStrategyVersionApprovals,
 } from "@/lib/source/new-workspace/source-version-authority";
 import { readinessForEvent } from "@/lib/source/new-workspace/step-readiness-adapter";
+import { readPreparedRfxPackagesForEvent } from "@/lib/source/rfx-delivery/prepared-package-repository";
+import { describeReleaseState } from "@/lib/source/new-workspace/release-state-view";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
 import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/stage-plan-snapshot";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
@@ -87,6 +89,7 @@ export default async function SourceNewEventPage({
     authority,
     requestVersion,
     strategyVersion,
+    preparedRfxPackages,
     stage04VendorPanel,
     stage05NdaCoverage,
     responseArtifactsResult,
@@ -104,6 +107,10 @@ export default async function SourceNewEventPage({
     readSourceEventAuthority(event.id, activeClient.key),
     readSourceAuthorityVersionState(event.id, activeClient.key, "request"),
     readSourceAuthorityVersionState(event.id, activeClient.key, "strategy"),
+    readPreparedRfxPackagesForEvent({
+      clientKey: activeClient.key,
+      eventId: event.id,
+    }),
     readSourceNewStage04VendorPanel({
       clientKey: activeClient.key,
       eventId: event.id,
@@ -309,6 +316,7 @@ export default async function SourceNewEventPage({
           authority.kind === "available" ? authority.acceptedByUserId : null,
         requestVersionApproval,
         strategyVersionApproval,
+        releaseState: describeReleaseState(preparedRfxPackages),
         requestAuthorityVersionId:
           requestVersion.kind === "available"
             ? (requestVersion.currentVersion?.id ?? null)

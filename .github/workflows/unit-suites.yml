@@ -979,6 +979,7 @@ jobs:
           src/lib/source/new-workspace/phase-state.test.ts
           src/lib/source/new-workspace/step-readiness.test.ts
           src/lib/source/new-workspace/step-readiness-adapter.test.ts
+          src/lib/source/new-workspace/release-state-view.test.ts
           src/lib/source/new-workspace/navigation.test.ts
           src/lib/source/new-workspace/event-intelligence.test.ts
           src/lib/source/new-workspace/__tests__/response-intake.test.ts
