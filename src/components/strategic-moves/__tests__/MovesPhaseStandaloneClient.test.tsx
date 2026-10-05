@@ -38,6 +38,8 @@ import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
 // jsdom's test environment doesn't provide these globally; the component
@@ -1836,6 +1838,120 @@ describe("MovesPhaseStandaloneClient", () => {
         ],
       });
       expect(mockRouterRefresh).toHaveBeenCalled();
+    });
+  });
+
+  // ─── the capture phase strip's totals, AT THE HOST ──────────────────────
+  // The strip's "N of M answered" is assembled in this component from two
+  // helpers. Each helper has its own suite, so what is untested is precisely
+  // the wiring here: whether the host hands them the inputs they need. The
+  // route is the one that can be silently dropped — `capturePhaseSectionTotal`
+  // takes it as an OPTIONAL second argument, so omitting it type-checks and
+  // quietly reports the default question set's size for a Move whose P3 asks a
+  // different one. P3 Design is the only route-dependent phase.
+  describe("capture phase strip totals (moves_capture_v2)", () => {
+    const solutionRoute = (
+      overrides: Partial<ConfirmedSolutionRoute> = {},
+    ): ConfirmedSolutionRoute => ({
+      route: "process_change",
+      recommendation: "process_change",
+      solutionOutput: "workflow_automation",
+      workflowChange: "material",
+      roleAccountabilityChange: "material",
+      adoptionOwner: "Named business owner",
+      adoptionResponsibility: "business",
+      decision: "confirm",
+      evidenceReference: "evidence-ref",
+      validatedBy: "Validator",
+      rationale: "Route confirmed against the evidence reviewed at the gate.",
+      ...overrides,
+    });
+
+    const TECHNICAL_PRODUCT = solutionRoute({
+      route: "technical_product",
+      recommendation: "technical_product",
+      solutionOutput: "data_product",
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+    });
+
+    const LIMITED_PROCESS = solutionRoute({
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+    });
+
+    const DEFAULT_P3_TOTAL = getPhaseCaptureSections(3, null).length;
+
+    const renderP3Strip = (
+      confirmedSolutionRoute: ConfirmedSolutionRoute | null,
+    ) => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialConfirmedSolutionRoute={confirmedSolutionRoute}
+          move={makeMove({ currentPhase: 3, phaseLabel: "P3 Design" })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      return within(
+        screen.getByRole("navigation", { name: "Phases" }),
+      ).getByRole("button", { name: /^P3/ });
+    };
+
+    // Without this the cases below could both pass against a host that ignores
+    // the route entirely, because the two question sets would be the same size.
+    it("the three P3 question sets really do differ in size", () => {
+      expect(getPhaseCaptureSections(3, TECHNICAL_PRODUCT).length).not.toBe(
+        DEFAULT_P3_TOTAL,
+      );
+      expect(getPhaseCaptureSections(3, LIMITED_PROCESS).length).not.toBe(
+        DEFAULT_P3_TOTAL,
+      );
+      expect(getPhaseCaptureSections(3, TECHNICAL_PRODUCT).length).not.toBe(
+        getPhaseCaptureSections(3, LIMITED_PROCESS).length,
+      );
+    });
+
+    it("no confirmed route: the P3 row states the default question total", () => {
+      expect(renderP3Strip(null)).toHaveTextContent(
+        `0 of ${DEFAULT_P3_TOTAL} answered`,
+      );
+    });
+
+    it("a confirmed technical-product route: the P3 row states the narrower total", () => {
+      const narrower = getPhaseCaptureSections(3, TECHNICAL_PRODUCT).length;
+      const tab = renderP3Strip(TECHNICAL_PRODUCT);
+      expect(tab).toHaveTextContent(`0 of ${narrower} answered`);
+      // and specifically NOT the default set's size, which is what a host that
+      // dropped the route would print here.
+      expect(tab).not.toHaveTextContent(`of ${DEFAULT_P3_TOTAL} answered`);
+    });
+
+    it("a confirmed limited process change: the P3 row states the wider total", () => {
+      // This one needs the WHOLE route object to reach the contract, not just
+      // its `route` field: the wider set is selected by `workflowChange` and
+      // `roleAccountabilityChange` both being non-material.
+      const wider = getPhaseCaptureSections(3, LIMITED_PROCESS).length;
+      const tab = renderP3Strip(LIMITED_PROCESS);
+      expect(tab).toHaveTextContent(`0 of ${wider} answered`);
+      expect(tab).not.toHaveTextContent(`of ${DEFAULT_P3_TOTAL} answered`);
+    });
+
+    it("the route is read back from the hydration prop, not refetched", () => {
+      // `initialConfirmedSolutionRoute` seeds component state. It has been
+      // dropped from this component's props before, and that is invisible to
+      // an assertion that the strip merely renders: every row still appears,
+      // the route-dependent one just states the wrong total. Asserting the
+      // narrower figure with no fetch having resolved is what pins the seed.
+      const narrower = getPhaseCaptureSections(3, TECHNICAL_PRODUCT).length;
+      expect(renderP3Strip(TECHNICAL_PRODUCT)).toHaveTextContent(
+        `0 of ${narrower} answered`,
+      );
+      expect(narrower).not.toBe(DEFAULT_P3_TOTAL);
     });
   });
 
