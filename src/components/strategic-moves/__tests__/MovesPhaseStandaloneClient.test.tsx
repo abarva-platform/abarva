@@ -1569,6 +1569,297 @@ describe("MovesPhaseStandaloneClient", () => {
       }
     });
 
+    it("keeps capture Continue disabled until saved answers have a valid basis", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
+    it("does not treat saved P1 answers without a declared basis as complete", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
+    it("blocks Continue when a previously captured answer has unsaved edits", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={Object.fromEntries(
+            SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
+              sectionKey,
+              { kind: "workspace_assertion" as const },
+            ]),
+          )}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.change(
+        screen.getByLabelText("Sponsor contact and progress updates"),
+        { target: { value: "Updated but not yet saved" } },
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
+    it("allows the next P1 step after each saved answer has a recorded workspace assertion", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={Object.fromEntries(
+            SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
+              sectionKey,
+              { kind: "workspace_assertion" as const },
+            ]),
+          )}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const continueButton = screen.getByRole("button", { name: "Continue" });
+      expect(continueButton).toBeEnabled();
+      fireEvent.click(continueButton);
+      expect(
+        screen.getByRole("heading", { name: "People & decisions" }),
+      ).toBeInTheDocument();
+    });
+
+    it("allows an owned assumption with an owner and P2 validation plan", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={{
+            sponsor_commitment: {
+              kind: "assumption",
+              owner: "Operations lead",
+              p2ValidationPlan: "Confirm contact and cadence during Discovery.",
+            },
+            scope_boundary: { kind: "workspace_assertion" },
+            success_criteria: { kind: "workspace_assertion" },
+          }}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    });
+
+    it("requires matching approved evidence when evidence is the declared basis", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialApprovedP1CaptureEvidenceReferences={approvedP1CaptureEvidence(
+            "charter_sponsor",
+          )}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={{
+            sponsor_commitment: {
+              kind: "approved_evidence",
+              evidenceId: "approved-charter_sponsor",
+            },
+            scope_boundary: { kind: "workspace_assertion" },
+            success_criteria: { kind: "workspace_assertion" },
+          }}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    });
+
+    it("keeps the flag-off P1 capture path evidence-backed", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialApprovedP1CaptureEvidenceReferences={approvedP1CaptureEvidence(
+            "charter_sponsor",
+            "charter_scope",
+            "charter_success_metrics",
+          )}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    });
+
+    it("keeps Continue blocked until a newly selected basis is acknowledged by the server", async () => {
+      const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+      let resolveBasisSave: ((response: Response) => void) | undefined;
+      const basisSave = new Promise<Response>((resolve) => {
+        resolveBasisSave = resolve;
+      });
+      (global.fetch as jest.Mock).mockImplementation(
+        (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (
+            url.includes("/phase-capture") &&
+            init?.method === "POST" &&
+            JSON.parse(String(init.body ?? "{}")).p1BasisBySection
+          ) {
+            return basisSave;
+          }
+          return defaultFetch?.(input, init) as Promise<Response>;
+        },
+      );
+
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={{
+            scope_boundary: { kind: "workspace_assertion" },
+            success_criteria: { kind: "workspace_assertion" },
+          }}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        within(screen.getByTestId("charter-basis-sponsor_commitment")).getByRole(
+          "radio",
+          { name: "I'm asserting this" },
+        ),
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+      await act(async () => {
+        resolveBasisSave?.({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            revision: "saved-basis-revision",
+            p1BasisBySection: {
+              sponsor_commitment: { kind: "workspace_assertion" },
+              scope_boundary: { kind: "workspace_assertion" },
+              success_criteria: { kind: "workspace_assertion" },
+            },
+          }),
+        } as Response);
+      });
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+      );
+    });
+
+    it("does not let an owned-assumption choice complete until owner and validation plan are present", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={{
+            sponsor_commitment: {
+              kind: "assumption",
+              owner: "",
+              p2ValidationPlan: "",
+            },
+            scope_boundary: { kind: "workspace_assertion" },
+            success_criteria: { kind: "workspace_assertion" },
+          }}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
+    it("requires an approved source to match the P1 field when evidence is the declared basis", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialP1CharterBasisBySection={{
+            sponsor_commitment: {
+              kind: "approved_evidence",
+              evidenceId: "not-the-sponsor-source",
+            },
+            scope_boundary: { kind: "workspace_assertion" },
+            success_criteria: { kind: "workspace_assertion" },
+          }}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
     it("moves_charter_basis_v1 ON without moves_capture_v2: the legacy canvas carries no basis control", () => {
       render(
         <MovesPhaseStandaloneClient
