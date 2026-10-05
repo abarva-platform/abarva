@@ -80,6 +80,16 @@ import {
   formatGateCriteriaTitle,
 } from "@/lib/programs/approvals-overview-labels";
 import { phaseStepperStateLabel } from "@/lib/programs/phase-stepper-state-label";
+import type { PhaseApprovalStanding } from "@/lib/programs/phase-approval-standing";
+import {
+  phaseApprovalCompletionHeadline,
+  phaseApprovalDecisionText,
+  phaseApprovalDecisionTitle,
+  phaseApprovalGateNote,
+  phaseApprovalHeaderBasis,
+  phaseApprovalHeaderLabel,
+  resolvePhaseApprovalStanding,
+} from "@/lib/programs/phase-approval-standing";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
@@ -174,6 +184,11 @@ interface PhaseProgressHeaderState {
   label: string;
   tone: "ready" | "open" | "complete";
   openEvidenceCount: number;
+  /**
+   * Why the label says what it says, when the label rests on an inference
+   * rather than a read decision. Rendered as the status element's `title`.
+   */
+  basis?: string;
 }
 
 interface PhaseContract {
@@ -960,7 +975,23 @@ export function MovesPhaseStandaloneClient({
   const [selectedOption, setSelectedOption] = useState(
     phase.phase === 3 ? "" : "B",
   );
-  const [gateApproved, setGateApproved] = useState(isHistoricalPhase);
+  // An approval THIS SESSION performed and the server accepted. Seeded false:
+  // it is a record of a decision, and advancing past a phase is not one. The
+  // permissive `gateApproved` below keeps the old seeded meaning so every gate
+  // control behaves exactly as before; only the words the screen renders tell
+  // the two apart. See `phase-approval-standing`.
+  const [gateApprovedThisSession, setGateApproved] = useState(false);
+  const gateApproved = isHistoricalPhase || gateApprovedThisSession;
+  const approvalStanding = resolvePhaseApprovalStanding({
+    terminalComplete,
+    phaseNumber: phase.phase,
+    currentPhase,
+    approvalRecordedThisSession: gateApprovedThisSession,
+  });
+  // Non-null exactly when `isHistoricalPhase || gateApproved` holds, so it is
+  // the header's condition as well as its word — there is no fallback branch
+  // to leave untested.
+  const approvalHeaderLabel = phaseApprovalHeaderLabel(approvalStanding);
   const [gateApprovalStatus, setGateApprovalStatus] = useState<
     "idle" | "approving" | "approved" | "blocked"
   >(isHistoricalPhase ? "approved" : "idle");
@@ -1553,8 +1584,13 @@ export function MovesPhaseStandaloneClient({
   });
   const phaseProgressHeaderState: PhaseProgressHeaderState | null =
     finderSelectedSectionKey === null && substep.key === "approve"
-      ? isHistoricalPhase || gateApproved
-        ? { label: "Approved", tone: "complete", openEvidenceCount: 0 }
+      ? approvalHeaderLabel !== null
+        ? {
+            label: approvalHeaderLabel,
+            tone: "complete",
+            openEvidenceCount: 0,
+            basis: phaseApprovalHeaderBasis(approvalStanding) ?? undefined,
+          }
         : !phaseEvidenceCheckAvailable
           ? {
               label: phaseEvidenceChecklistConfigured
@@ -3373,6 +3409,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          approvalStanding={approvalStanding}
                           charterGateDisclosure={charterGateDisclosure}
                           canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
@@ -3474,6 +3511,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          approvalStanding={approvalStanding}
                           charterGateDisclosure={charterGateDisclosure}
                           canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
@@ -4653,6 +4691,7 @@ function PhaseContractStepsCanvas({
               ) : (
                 <span
                   className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                  title={progressHeaderState.basis}
                 >
                   {progressHeaderState.label}
                 </span>
@@ -5144,6 +5183,7 @@ function FinderStepsColumns({
               ) : (
                 <span
                   className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                  title={progressHeaderState.basis}
                 >
                   {progressHeaderState.label}
                 </span>
@@ -5414,6 +5454,7 @@ function FinderFactsTable({ rawValue }: { rawValue: string }) {
 }
 
 function PhaseBody({
+  approvalStanding,
   canApproveGates,
   charterGateDisclosure,
   carriesForwardContent,
@@ -5460,6 +5501,11 @@ function PhaseBody({
   substep,
   terminalComplete,
 }: {
+  /**
+   * What this screen may claim about the phase's approval — decided once by
+   * the host so the header word and the decision copy cannot disagree.
+   */
+  approvalStanding: PhaseApprovalStanding;
   canApproveGates: boolean;
   /** Advisory basis disclosure for the gate confirm dialog; null-rendering when the basis surface is inactive. */
   charterGateDisclosure: ReactNode;
@@ -5892,29 +5938,24 @@ function PhaseBody({
       openRequiredEvidence.length > 0 ||
       !evidenceReadinessAvailable ||
       Boolean(phaseCaptureBlocker));
-  const approvalDecisionTitle = isHistoricalPhase
-    ? terminalComplete
-      ? "Move handed off to Tower"
-      : `${phase.code} is already approved`
-    : gateApproved
-      ? `${phase.code} approved`
-      : isGateBlocked
-        ? `${phase.code} cannot advance yet`
-        : `${phase.code} is ready for Approve & Build`;
-  const approvalDecisionText = isHistoricalPhase
-    ? terminalComplete
-      ? "Tower is now the execution and value-tracking surface for this Move."
-      : `The approved output is carrying forward into ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}.`
-    : gateApproved
-      ? "The governed build and gate record are on file. Review artifacts in Files & Evidence before using them externally."
-      : isGateBlocked
+  const approvalDecisionTitle =
+    phaseApprovalDecisionTitle(approvalStanding, phase.code) ??
+    (isGateBlocked
+      ? `${phase.code} cannot advance yet`
+      : `${phase.code} is ready for Approve & Build`);
+  const approvalDecisionText =
+    phaseApprovalDecisionText(
+      approvalStanding,
+      `${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}`,
+    ) ??
+    (isGateBlocked
         ? !evidenceReadinessAvailable
           ? "Evidence readiness could not be verified. Refresh this phase before approval."
           : openRequiredEvidence.length > 0
             ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
             : (phaseCaptureBlocker ??
               `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
-        : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
+        : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
       ? "complete"
@@ -6018,8 +6059,13 @@ function PhaseBody({
         ? `Ready with caveat: ${primarySoftCaveat}.`
         : "Ready with caveats."
       : "No hard blockers are open.";
+  // "the approved record" named a decision this screen does not read, on a
+  // line keyed to READINESS — `isFullyReady` is a statement about open prep
+  // items, and says nothing about an approval at all. Say what the branch
+  // measured. Same class as the standing claims above; see
+  // `phase-approval-standing`.
   const nextPhaseSummaryLine = readinessPack.isFullyReady
-    ? `${readinessPack.nextPhaseLabel} can start from the approved record.`
+    ? `${readinessPack.nextPhaseLabel} can start from this phase's record.`
     : `${readinessPack.openNeeds.length} prep item${
         readinessPack.openNeeds.length === 1 ? "" : "s"
       } will carry into ${readinessPack.nextPhaseLabel}.`;
@@ -6061,19 +6107,12 @@ function PhaseBody({
       <section className="mxw-review">
         <h2>{phase.phase === 0 ? "Decision checks" : "Gate approval"}</h2>
         {isHistoricalPhase ? (
-          terminalComplete ? (
-            <p>
-              This Move has completed P5 and handed off to Tower. The approved
-              output is carrying forward into the execution and value-tracking
-              surface.
-            </p>
-          ) : (
-            <p>
-              This phase is already approved and read-only. The approved output
-              is carrying forward into {nextOpenPhaseContract.code}{" "}
-              {nextOpenPhaseContract.title}.
-            </p>
-          )
+          <p>
+            {phaseApprovalGateNote(
+              approvalStanding,
+              `${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}`,
+            )}
+          </p>
         ) : (
           <p>
             Left-side checks mean the step inputs are captured. This gate
@@ -6308,8 +6347,8 @@ function PhaseBody({
         {isHistoricalPhase ? (
           <div className="mxw-approved">
             <strong>
-              ✓ {phase.code} is already approved
-              {terminalComplete ? " and handed off to Tower" : ""}.
+              ✓{" "}
+              {phaseApprovalCompletionHeadline(approvalStanding, phase.code)}
             </strong>
             <span>
               {terminalComplete
