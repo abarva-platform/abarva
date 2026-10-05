@@ -80,6 +80,11 @@ jobs:
       - name: Run the unit suites
         run: npx jest src/__tests__/unit --no-coverage --ci
 
+      - name: Validate Source market candidate research
+        run: >-
+          node --import tsx --test
+          scripts/source/__tests__/market-candidate-research.test.mjs
+
       # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
       # npm script reached. Measured through the census resolver on `b061a6819`,
       # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
