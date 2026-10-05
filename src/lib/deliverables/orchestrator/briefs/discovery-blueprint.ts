@@ -6,6 +6,8 @@
 
 import { z } from "zod";
 
+import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+
 export interface EvidenceFamily {
   id: string;
   label: string;
@@ -867,16 +869,6 @@ export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
   [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
 };
 
-/** Normalize a declared archetype token to a catalog key. */
-function normalizeArchetypeId(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[\s./-]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
 /**
  * Resolve a DECLARED archetype to its blueprint — the authoritative path.
  * Returns null when nothing was declared or the declaration does not exactly
@@ -886,8 +878,10 @@ function normalizeArchetypeId(value: string): string {
 export function resolveDeclaredDiscoveryBlueprint(
   declaredArchetypeId: string | null | undefined,
 ): DiscoveryBlueprint | null {
-  if (!declaredArchetypeId || !declaredArchetypeId.trim()) return null;
-  return DISCOVERY_BLUEPRINT_CATALOG[normalizeArchetypeId(declaredArchetypeId)] ?? null;
+  return resolveArchetypeCatalogEntry(
+    DISCOVERY_BLUEPRINT_CATALOG,
+    declaredArchetypeId,
+  );
 }
 
 export interface DiscoveryArchetypeSuggestion {
@@ -1082,11 +1076,27 @@ export function getDiscoveryBlueprint(
 // a deploying firm add or override an archetype WITHOUT shipping code, while an
 // invalid source is rejected whole so the catalog can never be partially
 // corrupted. Co-located with the catalog it governs.
+// A configured id becomes a key on the effective catalog. Some snake_case
+// strings are not usable as keys: `__proto__` is a setter on
+// `Object.prototype`, so assigning it changes an object's prototype instead of
+// adding an entry, and `constructor` / `prototype` read back as inherited
+// built-ins rather than as a declared archetype. The id regex admits all three.
+// They are rejected at the contract so a configured source can never name an
+// identity the catalog cannot hold — identity is declared, and a declaration
+// the catalog would silently drop is not a declaration.
+const UNUSABLE_CATALOG_KEYS = ["__proto__", "constructor", "prototype"];
+
+const usableAsCatalogKey = (id: string) => !UNUSABLE_CATALOG_KEYS.includes(id);
+
+const UNUSABLE_KEY_MESSAGE =
+  "id must not be a JavaScript object key (__proto__, constructor, prototype)";
+
 export const EvidenceFamilySchema = z.object({
   id: z
     .string()
     .min(1)
-    .regex(/^[a-z0-9_]+$/, "family id must be snake_case [a-z0-9_]"),
+    .regex(/^[a-z0-9_]+$/, "family id must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
   label: z.string().min(1),
   grounds: z.string().min(1),
   required: z.boolean(),
@@ -1105,7 +1115,8 @@ export const DiscoveryBlueprintSchema = z.object({
   blueprintId: z
     .string()
     .min(1)
-    .regex(/^[a-z0-9_]+$/, "blueprintId must be snake_case [a-z0-9_]"),
+    .regex(/^[a-z0-9_]+$/, "blueprintId must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
   blueprintVersion: z.string().min(1),
   archetypeLabel: z.string().min(1),
   suggestionKeywords: z.array(z.string().min(1)).optional(),
@@ -1142,9 +1153,15 @@ export interface LoadedDiscoveryBlueprintCatalog {
 export function loadDiscoveryBlueprintCatalog(
   configuredBlueprints?: unknown,
 ): LoadedDiscoveryBlueprintCatalog {
-  const catalog: Record<string, DiscoveryBlueprint> = {
-    ...DISCOVERY_BLUEPRINT_CATALOG,
-  };
+  // Prototype-free, for two reasons. It answers only ids it was given, so no
+  // caller can reach an inherited member and read it back as an archetype; and
+  // with no `Object.prototype` behind it, writing a key can never invoke an
+  // inherited setter, so every id written becomes an own key and `applied`
+  // cannot name an id the catalog does not hold.
+  const catalog: Record<string, DiscoveryBlueprint> = Object.assign(
+    Object.create(null) as Record<string, DiscoveryBlueprint>,
+    DISCOVERY_BLUEPRINT_CATALOG,
+  );
   if (configuredBlueprints == null) {
     return { catalog, applied: [], errors: [] };
   }

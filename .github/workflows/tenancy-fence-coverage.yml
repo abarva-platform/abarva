@@ -43,6 +43,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        # On a pull_request event the default checkout is the PR MERGED with the
+        # latest base, so this generated-census gate false-fails whenever the
+        # base has churned since the PR was pushed (a route changed on main),
+        # even though the PR itself is internally consistent. Check the PR HEAD
+        # instead, so the gate validates the PR's own code; merge_group/push keep
+        # the default ref, so the merged result is still validated at merge time.
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
