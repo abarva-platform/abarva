@@ -53,18 +53,62 @@ function money(amount: number, currency = "USD"): string {
   }
 }
 
+/**
+ * The copy a move carries when its governed `valueAtStake` declares nothing.
+ * Presentation only — never compare against it to decide whether a value was
+ * declared; use `hasDeclaredValue`.
+ */
+export const DECLARES_IN_CHARTER = "Declares in Charter";
+
+/**
+ * Whether the move's governed `valueAtStake` declares a value at all.
+ *
+ * This is the ONE place that decides it. `formatMoveValue` consults it to pick
+ * its fallback copy, and the portfolio landing's value line counts with it.
+ * Counting instead by comparing the FORMATTED string against the fallback copy
+ * (which the landing host used to do) makes a pure copy change silently
+ * overstate governed coverage — every move would read as having declared a
+ * value. The figure must come from the governed field, not from its label.
+ */
+export function hasDeclaredValue(
+  value: StrategicMoveHomeSource["valueAtStake"],
+): boolean {
+  if (value?.verified && value.verified.amount > 0) return true;
+  return Boolean(value?.projected);
+}
+
 export function formatMoveValue(
   value: StrategicMoveHomeSource["valueAtStake"],
 ): string {
+  if (!hasDeclaredValue(value)) return DECLARES_IN_CHARTER;
   if (value?.verified && value.verified.amount > 0) {
     const label = money(value.verified.amount);
     return value.verified.status === "final" ? label : `${label} tracked`;
   }
-  if (value?.projected) {
-    const currency = value.projected.currency || "USD";
-    return `${money(value.projected.low, currency)}–${money(value.projected.high, currency)} projected`;
-  }
-  return "Declares in Charter";
+  const projected = value!.projected!;
+  const currency = projected.currency || "USD";
+  return `${money(projected.low, currency)}–${money(projected.high, currency)} projected`;
+}
+
+/**
+ * The portfolio landing's one-line value summary, derived from the governed
+ * `valueAtStake` of each move — not from any rendered label.
+ *
+ * Counting here by `formatMoveValue(v) !== DECLARES_IN_CHARTER` instead is a
+ * FALSE-SURVIVOR mutation: it kills no case, because the fallback copy and the
+ * predicate agree by construction and the suite pins that agreement. The guard
+ * against the old derivation is that agreement — the moment the copy drifts
+ * from the predicate, the "renders the fallback copy exactly when nothing is
+ * declared" case fails — plus the signature, which takes the governed field
+ * and so makes a string comparison at the host a type error.
+ */
+export function buildPortfolioValueLine(
+  values: ReadonlyArray<StrategicMoveHomeSource["valueAtStake"]>,
+): string {
+  const total = values.length;
+  if (total === 0) return "No moves yet.";
+  const withValue = values.filter((value) => hasDeclaredValue(value)).length;
+  return `${withValue} of ${total} ${total === 1 ? "move has" : "moves have"} declared value; the rest declare in Charter.`;
 }
 
 function daysSince(iso: string | null, now: Date): number | undefined {
