@@ -5,6 +5,8 @@
 // deliverable structure to produce a full DeliverableArtifactBrief, so deliverables
 // genuinely DIFFER by archetype rather than sharing one generic template.
 
+import { z } from "zod";
+
 import type { ExpectedExhibit, ExpectedTable } from "../types";
 
 export interface ArchetypePack {
@@ -465,4 +467,190 @@ export const ARCHETYPE_PACKS: Record<string, ArchetypePack> = {
 
 export function getArchetypePack(archetype: string): ArchetypePack | undefined {
   return ARCHETYPE_PACKS[archetype];
+}
+
+// ── Config contract + loader (Phase 4 of the configurable archetype layer) ──
+//
+// An archetype is declared in TWO catalogs: the discovery blueprint (evidence
+// families + interview roster) and the pack below (exhibits, tables, governance
+// note). The blueprint half already has a config contract and an overlay
+// loader, so a deploying firm can add or override one WITHOUT shipping code.
+// This half did not — which made "configure an archetype without code" only
+// half true: the configured archetype collected the right evidence and then
+// produced generic exhibits and tables, because the pack it needed could only
+// be added by editing this file.
+//
+// Same contract as the blueprint loader so an operator learns one rule: a
+// configured source is validated and either applied whole or rejected whole,
+// never partially, so the catalog cannot be left half-corrupted.
+//
+// Two deliberate differences from the blueprint loader, both of which answer a
+// question an operator actually asks of a setup screen:
+//
+//   1. The outcome names what each configured entry DID. A flat "applied" list
+//      cannot distinguish adding an archetype from replacing a shipped one, and
+//      those differ by one typo: an id meant to be new that happens to match a
+//      built-in silently REPLACES it and reads as a successful add.
+//   2. A configured source that declares the same id twice is rejected rather
+//      than letting the later entry quietly win, because the operator who
+//      wrote both definitions gets no signal that one was discarded.
+
+const EXHIBIT_KINDS = [
+  "diagram",
+  "matrix",
+  "timeline",
+  "heatmap",
+  "flow",
+  "chart",
+  "conceptual_architecture",
+  "logical_architecture",
+  "physical_architecture",
+  "agent_orchestration",
+  "roadmap",
+] as const;
+
+const OUTPUT_FORMATS = ["docx", "pptx", "xlsx", "html", "pdf"] as const;
+
+const GROUNDING_MODES = [
+  "governed_facts",
+  "expert_template",
+  "assumption_driven",
+  "client_to_complete",
+  "mixed",
+] as const;
+
+export const ExpectedExhibitSchema = z.object({
+  key: z.string().min(1),
+  title: z.string().min(1),
+  kind: z.enum(EXHIBIT_KINDS),
+  purpose: z.string().min(1),
+  preferredFormat: z.enum(OUTPUT_FORMATS),
+  requiredElements: z.array(z.string().min(1)).optional(),
+  legendRequired: z.boolean().optional(),
+});
+
+export const ExpectedTableSchema = z.object({
+  key: z.string().min(1),
+  title: z.string().min(1),
+  columns: z.array(z.string().min(1)).min(1),
+  groundingMode: z.enum(GROUNDING_MODES),
+  moveToExcelIfWide: z.boolean(),
+});
+
+const uniqueBy = <T>(items: T[], key: (item: T) => string): boolean =>
+  new Set(items.map(key)).size === items.length;
+
+export const ArchetypePackSchema = z.object({
+  // UPPER_SNAKE because that is how this catalog keys its own entries. The
+  // blueprint catalog keys lower_snake; they are separate id spaces and a
+  // declaration is matched against each catalog's own declared ids.
+  archetype: z
+    .string()
+    .min(1)
+    .regex(/^[A-Z0-9_]+$/, "archetype must be UPPER_SNAKE [A-Z0-9_]"),
+  label: z.string().min(1),
+  keyEvidenceFamilies: z
+    .array(z.string().min(1))
+    .min(1)
+    .refine((families) => uniqueBy(families, (family) => family), {
+      message: "keyEvidenceFamilies must not repeat a family",
+    }),
+  exhibits: z
+    .array(ExpectedExhibitSchema)
+    .min(1)
+    .refine((exhibits) => uniqueBy(exhibits, (exhibit) => exhibit.key), {
+      message: "exhibit keys must be unique within a pack",
+    }),
+  tables: z
+    .array(ExpectedTableSchema)
+    .min(1)
+    .refine((tables) => uniqueBy(tables, (table) => table.key), {
+      message: "table keys must be unique within a pack",
+    }),
+  governanceNote: z.string().min(1).optional(),
+});
+
+export const ArchetypePackCatalogSchema = z
+  .array(ArchetypePackSchema)
+  .refine((packs) => uniqueBy(packs, (pack) => pack.archetype), {
+    message: "a configured source must not declare the same archetype twice",
+  });
+
+export type ArchetypePackConfig = z.infer<typeof ArchetypePackSchema>;
+
+/** What one configured entry did to the catalog. */
+export interface AppliedArchetypePack {
+  archetype: string;
+  /**
+   * `added` — an archetype the built-in catalog did not declare.
+   * `overrode` — a built-in archetype this entry replaced.
+   */
+  outcome: "added" | "overrode";
+}
+
+export interface LoadedArchetypePackCatalog {
+  catalog: Record<string, ArchetypePack>;
+  /** Per configured entry, in source order, what it did. */
+  applied: AppliedArchetypePack[];
+  /** Validation errors; when non-empty the configured source was rejected. */
+  errors: string[];
+}
+
+/**
+ * Build the effective pack catalog: the built-in seed with a validated
+ * configured source overlaid. An entry whose `archetype` matches a seed id
+ * overrides it; a new id adds an archetype. A configured source that fails
+ * validation is rejected whole — the seed is returned unchanged and the errors
+ * are surfaced — so a malformed config cannot partially corrupt the catalog.
+ *
+ * The returned catalog has a null prototype, so indexing it answers only ids it
+ * actually holds. A plain object copy answers `constructor` and `toString` with
+ * inherited members, which read as truthy entries to any caller that treats a
+ * lookup result as "this archetype is configured".
+ */
+export function loadArchetypePackCatalog(
+  configuredPacks?: unknown,
+): LoadedArchetypePackCatalog {
+  const catalog: Record<string, ArchetypePack> = Object.assign(
+    Object.create(null) as Record<string, ArchetypePack>,
+    ARCHETYPE_PACKS,
+  );
+  if (configuredPacks == null) {
+    return { catalog, applied: [], errors: [] };
+  }
+  const parsed = ArchetypePackCatalogSchema.safeParse(configuredPacks);
+  if (!parsed.success) {
+    return {
+      catalog,
+      applied: [],
+      errors: parsed.error.issues.map(
+        (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+      ),
+    };
+  }
+  const applied: AppliedArchetypePack[] = [];
+  for (const pack of parsed.data) {
+    // Against the SEED, not the catalog being built: "overrode" means this
+    // entry replaced a shipped archetype. Duplicate configured ids are already
+    // rejected above, so there is no earlier configured entry to shadow.
+    const outcome =
+      pack.archetype in ARCHETYPE_PACKS ? "overrode" : ("added" as const);
+    catalog[pack.archetype] = pack as ArchetypePack;
+    applied.push({ archetype: pack.archetype, outcome });
+  }
+  return { catalog, applied, errors: [] };
+}
+
+/**
+ * Validate the built-in seed against the schema. The seam only holds if the
+ * seed itself conforms to the contract a configured source must meet.
+ */
+export function validateBuiltInArchetypePackCatalog(): string[] {
+  const parsed = ArchetypePackCatalogSchema.safeParse(
+    Object.values(ARCHETYPE_PACKS),
+  );
+  if (parsed.success) return [];
+  return parsed.error.issues.map(
+    (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+  );
 }
