@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "generatedAt": "2026-10-05T17:34:59.507Z",
-=======
   "generatedAt": "2026-10-05T17:25:07.105Z",
->>>>>>> 43b4fe93c8b6a6af24b5d8f2f69485c85e3174a5
   "standard": "standard-2026-07-v3",
   "deletedLegacyFileCount": 0,
   "remainingAllowedLegacyReferenceCount": 614,
