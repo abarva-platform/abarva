@@ -39,7 +39,12 @@
         "The current navigation implementation lives in the canonical navigation component, not in the shim."
       ],
       "rationale": "The failing assertions prove strings moved, not that rendered navigation behavior regressed.",
-      "currentAction": "Leave untouched for T-513 to replace or retire as a rendered behavior control."
+      "currentAction": "Discharged by T-513: the subject was replaced at src/__tests__/integration/app-rail-home-nav.test.tsx and this path is no longer in the tree. The instruction this row carried until 2026-10-05 — \"Leave untouched for T-513 to replace or retire as a rendered behavior control.\" — addressed a file that had been deleted two weeks earlier, and is kept here as the record of what was asked rather than as a live instruction. Nothing is owed on this row.",
+      "movedTo": {
+        "path": "src/__tests__/integration/app-rail-home-nav.test.tsx",
+        "byItem": "T-513",
+        "reason": "Rewritten from a source-text scanner into a rendering suite by T-513 in the same change that deleted this path: 0d7327deb1 (PR #8167, 2026-09-21), whose release record is docs/releases/records/2026-09-21-t513-source-text-to-behavior.md. The successor carries the .tsx extension because the new contents render JSX, and it is run by a workflow today. The verdict, counts and execution numbers recorded on this row describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/__tests__/integration/app-topbar-prefetch-guard.test.ts",
@@ -57,7 +62,12 @@
         "A comment or re-export text change could satisfy or break the current assertion without exercising navigation."
       ],
       "rationale": "The suite is a source-text scanner over a shim and cannot prove the prefetch/navigation behavior it names.",
-      "currentAction": "Leave untouched for T-513 to replace with rendered navigation behavior."
+      "currentAction": "Discharged by T-513: the subject was replaced at src/__tests__/integration/app-topbar-prefetch-guard.test.tsx and this path is no longer in the tree. The instruction this row carried until 2026-10-05 — \"Leave untouched for T-513 to replace with rendered navigation behavior.\" — addressed a file that had been deleted two weeks earlier, and is kept here as the record of what was asked rather than as a live instruction. Nothing is owed on this row.",
+      "movedTo": {
+        "path": "src/__tests__/integration/app-topbar-prefetch-guard.test.tsx",
+        "byItem": "T-513",
+        "reason": "Rewritten from a source-text scanner into a rendering suite by T-513 in the same change that deleted this path: 0d7327deb1 (PR #8167, 2026-09-21), whose release record is docs/releases/records/2026-09-21-t513-source-text-to-behavior.md. The successor carries the .tsx extension because the new contents render JSX, and it is run by a workflow today. The verdict, counts and execution numbers recorded on this row describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/__tests__/integration/ask-anything-bar-agent-answer.test.ts",
@@ -75,7 +85,12 @@
         "The rendered component path now uses a different prop shape while still rendering through AgentAnswerRenderer."
       ],
       "rationale": "The test should mount behavior or be retired; literal JSX text is not a durable agent-answer control.",
-      "currentAction": "Leave untouched for T-513 to rewrite as behavior."
+      "currentAction": "Discharged by T-513: the subject was replaced at src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx and this path is no longer in the tree. The instruction this row carried until 2026-10-05 — \"Leave untouched for T-513 to rewrite as behavior.\" — addressed a file that had been deleted two weeks earlier, and is kept here as the record of what was asked rather than as a live instruction. Nothing is owed on this row.",
+      "movedTo": {
+        "path": "src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx",
+        "byItem": "T-513",
+        "reason": "Rewritten from a source-text scanner into a rendering suite by T-513 in the same change that deleted this path: 0d7327deb1 (PR #8167, 2026-09-21), whose release record is docs/releases/records/2026-09-21-t513-source-text-to-behavior.md. The successor carries the .tsx extension because the new contents render JSX, and it is run by a workflow today. The verdict, counts and execution numbers recorded on this row describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/__tests__/integration/atlas-ask-route.test.ts",
@@ -129,7 +144,12 @@
         "The suite names page-level behavior but does not render the page."
       ],
       "rationale": "The current form can be satisfied by source literals and should be replaced by rendered behavior or retired.",
-      "currentAction": "Leave untouched for T-513 to rewrite or retire."
+      "currentAction": "Discharged by T-513: the subject was replaced at src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx and this path is no longer in the tree. The instruction this row carried until 2026-10-05 — \"Leave untouched for T-513 to rewrite or retire.\" — addressed a file that had been deleted two weeks earlier, and is kept here as the record of what was asked rather than as a live instruction. Nothing is owed on this row.",
+      "movedTo": {
+        "path": "src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx",
+        "byItem": "T-513",
+        "reason": "Rewritten from a source-text scanner into a rendering suite by T-513 in the same change that deleted this path: 0d7327deb1 (PR #8167, 2026-09-21), whose release record is docs/releases/records/2026-09-21-t513-source-text-to-behavior.md. The successor carries the .tsx extension because the new contents render JSX, and it is run by a workflow today. The verdict, counts and execution numbers recorded on this row describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/__tests__/integration/marketing-nav-dropdowns.test.tsx",
@@ -165,7 +185,12 @@
         "The sign-out affordance is a real control candidate, but this suite does not render it."
       ],
       "rationale": "The suite names an auth affordance but proves only source substrings.",
-      "currentAction": "Leave untouched for T-513 to mount the canonical navigation and mutation-prove the sign-out behavior."
+      "currentAction": "Discharged by T-513: the subject was replaced at src/__tests__/integration/shell-topbar-auth.test.tsx and this path is no longer in the tree. The instruction this row carried until 2026-10-05 — \"Leave untouched for T-513 to mount the canonical navigation and mutation-prove the sign-out behavior.\" — addressed a file that had been deleted two weeks earlier, and is kept here as the record of what was asked rather than as a live instruction. Nothing is owed on this row.",
+      "movedTo": {
+        "path": "src/__tests__/integration/shell-topbar-auth.test.tsx",
+        "byItem": "T-513",
+        "reason": "Rewritten from a source-text scanner into a rendering suite by T-513 in the same change that deleted this path: 0d7327deb1 (PR #8167, 2026-09-21), whose release record is docs/releases/records/2026-09-21-t513-source-text-to-behavior.md. The successor carries the .tsx extension because the new contents render JSX, and it is run by a workflow today. The verdict, counts and execution numbers recorded on this row describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/__tests__/integration/sign-in-shell.test.tsx",
