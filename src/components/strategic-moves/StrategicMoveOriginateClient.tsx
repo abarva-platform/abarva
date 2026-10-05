@@ -36,8 +36,11 @@ import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRed
 import {
   buildOriginateRailRows,
   formatAnswersCaptured,
+  formatAnswersCapturedNoun,
   formatOriginateDiscardProgress,
+  formatOriginateNavFootProgress,
   formatOriginateRailTally,
+  formatOriginateStepPosition,
   type OriginateRailRow,
 } from "./originate-figure-labels";
 import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
@@ -1462,9 +1465,13 @@ function P0OriginationContractCanvas({
     : canPromote;
   const readinessFilled =
     brief.fields["foundation-readiness"].trim().length > 0;
-  const activeStepNumber = isApproveStep
-    ? requiredFieldCount
-    : (activeP0Def?.step ?? 1);
+  // The nav's step list is the scaffold fields plus the submit step, so the
+  // position and its total must both count that list. The submit step used to
+  // be numbered `requiredFieldCount`, repeating the last field's position.
+  const activeStepPosition = formatOriginateStepPosition({
+    fieldStep: isApproveStep ? null : (activeP0Def?.step ?? 1),
+    fieldCount: requiredFieldCount,
+  });
   const moveName = deriveStrategicMoveName(brief.programName, brief.fields);
 
   return (
@@ -1500,7 +1507,7 @@ function P0OriginationContractCanvas({
               <span>
                 {requiredFilled} / {requiredFieldCount}
               </span>
-              <small>answers captured</small>
+              <small>{formatAnswersCapturedNoun(requiredFieldCount)}</small>
             </div>
             <div className={styles.p0ProgressTrack} aria-hidden>
               <div
@@ -1588,7 +1595,10 @@ function P0OriginationContractCanvas({
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
                   ? "Answers complete · P0 evidence and authorized-user approval remain"
-                  : `${requiredFilled} of ${requiredFieldCount} complete · finish required steps`}
+                  : formatOriginateNavFootProgress({
+                      requiredFilled,
+                      requiredFieldCount,
+                    })}
               </div>
             </aside>
 
@@ -1603,7 +1613,7 @@ function P0OriginationContractCanvas({
                   {activeFilled ? "✓" : ""}
                 </span>
                 <span className={styles.p0ContractStepMeta}>
-                  Step {activeStepNumber} of {requiredFieldCount}
+                  {activeStepPosition}
                 </span>
                 <h2>
                   {isApproveStep ? "Submit P0 for review" : activeP0Def?.label}

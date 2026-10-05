@@ -107,3 +107,62 @@ export function formatOriginateDiscardProgress(input: {
   const noun = agreeNoun(input.requiredFieldCount, "answer", "answers");
   return `You’ve captured ${input.requiredFilled} of ${input.requiredFieldCount} required ${noun}.`;
 }
+
+// ── The three figures #9008 left on this screen ───────────────────────────────
+//
+//   4. The step-position figure counted a DIFFERENT SET on each side. Its
+//      numerator is a position in the nav's step list, which is the scaffold
+//      fields PLUS the submit step; its denominator was the field count alone.
+//      So the submit step was forced to the field count and rendered the exact
+//      position of the last field ("Step 10 of 10" twice, on two distinct nav
+//      steps), and the flow's real last position was unreachable.
+//   5. The nav foot's figure carried no noun at all — `N of M complete` — and
+//      the clause beside it named "required steps", a set one larger than the
+//      answers the figure actually measures.
+//   6. The progress pill's noun is a fixed plural held in a separate element
+//      from its figure, so the two cannot agree by construction.
+
+/**
+ * How many steps the P0 nav renders: every scaffold field, plus the submit
+ * step. The submit step is a real row in the nav's last stage group, so a
+ * step position is bounded by this, never by the field count.
+ */
+export function originateStepCount(fieldCount: number): number {
+  return fieldCount + 1;
+}
+
+/**
+ * The detail pane's step-position figure. Both sides count the nav's step
+ * list, so the submit step reads one past the last field rather than
+ * repeating it.
+ *
+ * `fieldStep` is `null` on the submit step, which has no scaffold field.
+ */
+export function formatOriginateStepPosition(input: {
+  readonly fieldStep: number | null;
+  readonly fieldCount: number;
+}): string {
+  const total = originateStepCount(input.fieldCount);
+  const position = input.fieldStep ?? total;
+  return `Step ${position} of ${total}`;
+}
+
+/**
+ * The nav foot's progress sentence. The figure states the noun it measures —
+ * answers captured — rather than borrowing "required steps" from the clause
+ * beside it, which counts the submit step the figure does not.
+ */
+export function formatOriginateNavFootProgress(input: {
+  readonly requiredFilled: number;
+  readonly requiredFieldCount: number;
+}): string {
+  const noun = agreeNoun(input.requiredFieldCount, "answer", "answers");
+  return `${input.requiredFilled} of ${input.requiredFieldCount} ${noun} captured · finish the required steps`;
+}
+
+/**
+ * The progress pill's noun, agreed to the total its figure is bounded by.
+ */
+export function formatAnswersCapturedNoun(total: number): string {
+  return `${agreeNoun(total, "answer", "answers")} captured`;
+}
