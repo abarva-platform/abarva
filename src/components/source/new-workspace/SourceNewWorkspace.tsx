@@ -37,6 +37,10 @@ import {
   type HistoricalRequestSummary,
 } from "@/lib/source/new-workspace/historical-request-summary";
 import type { StepReadiness } from "@/lib/source/new-workspace/step-readiness";
+import {
+  releaseStateLabel,
+  type ReleaseStateView,
+} from "@/lib/source/new-workspace/release-state-view";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import {
@@ -126,6 +130,12 @@ export interface SourceNewEventView {
     | "blocked"
     | "changes_requested"
     | null;
+  /**
+   * RFx release readback. An unreadable store is `unread`, which renders as
+   * "Not recorded" and is deliberately distinct from `none` — a package that
+   * was never prepared and a store we cannot read are different facts.
+   */
+  releaseState?: ReleaseStateView | null;
   /** Current immutable Request authority version used to fence Stage 04 writes. */
   requestAuthorityVersionId?: string | null;
 }
@@ -1079,6 +1089,14 @@ export function SourceNewStage04VendorReadiness({
         <div>
           <dt>Strategy authority</dt>
           <dd>{strategyAuthorityLabel}</dd>
+        </div>
+        <div>
+          <dt>RFx release</dt>
+          <dd>
+            {event.releaseState
+              ? releaseStateLabel(event.releaseState)
+              : "Not recorded"}
+          </dd>
         </div>
         <div>
           <dt>Solicitation motion</dt>
