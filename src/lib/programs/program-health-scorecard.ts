@@ -14,6 +14,7 @@
 //
 // createdFrom: 'prog9_program_health_scorecard' on every output.
 
+import { formatWorkshopCoverageNote } from './portfolio-figure-labels'
 import {
   buildWorkshopTemplateLibrary,
   listWorkshopTemplateCategories,
@@ -176,7 +177,7 @@ function buildWorkshopCoverageDimension(programId: string): ProgramHealthDimensi
   const status = scoreToStatus(score)
 
   const notes: string[] = [
-    `${cappedCovered} of ${totalCategories} workshop categories covered across ${totalTemplates} library templates.`,
+    formatWorkshopCoverageNote(cappedCovered, totalCategories, totalTemplates),
   ]
   if (status === 'at_risk') {
     notes.push('Consider scheduling discovery or governance workshops to close gaps.')

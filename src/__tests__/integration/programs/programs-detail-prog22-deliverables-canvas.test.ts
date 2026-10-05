@@ -281,3 +281,40 @@ describe('PROG22 · deliverable-canvas-polish-view · runtime contract', () => {
     expect(approveAction.reason.toLowerCase()).toContain('steward');
   });
 });
+
+// ─── Figure/noun agreement ───────────────────────────────────────────────────
+//
+// The summary joined a count to a hard-coded plural, so a single-deliverable
+// canvas rendered "1 of 1 deliverables complete". This case is USER-VISIBLE,
+// not construction-only: the builder refuses an EMPTY deliverable list and
+// admits a list of exactly one, so the singular total is reachable by
+// construction. ProgramDetailPage consumes canvasSummary directly.
+
+describe('PROG22 · canvas summary agrees with its own count', () => {
+  const oneDeliverable: ProgramDetailView = {
+    ...baseView,
+    phasePanel: {
+      ...baseView.phasePanel,
+      deliverables: [{ label: 'Architecture blueprint', status: 'done' }],
+    },
+  };
+
+  it('a one-deliverable canvas is reachable (the builder refuses only an empty list)', () => {
+    expect(buildDeliverablesCanvasView(oneDeliverable)).not.toBeNull();
+    expect(buildDeliverablesCanvasView(oneDeliverable)!.totalCount).toBe(1);
+  });
+
+  it('uses the singular noun when the total is one', () => {
+    const v = buildDeliverablesCanvasView(oneDeliverable)!;
+    expect(v.canvasSummary).toBe('1 of 1 deliverable complete');
+    expect(v.canvasSummary).not.toMatch(/deliverables/);
+  });
+
+  it('agrees the noun to the TOTAL, not to the numerator', () => {
+    // 1 done out of 3 must still read "deliverables" — agreement follows the
+    // total, so a singular numerator must not drag the noun singular.
+    const v = buildDeliverablesCanvasView(baseView)!;
+    expect(v.totalCount).toBe(3);
+    expect(v.canvasSummary).toBe('1 of 3 deliverables complete');
+  });
+});
