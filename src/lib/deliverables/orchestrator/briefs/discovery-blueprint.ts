@@ -4,6 +4,8 @@
 // pattern. The Discovery Plan deliverable (generated at the P1→P2 gate) turns
 // this catalog into a client-facing evidence-request list + interview guide.
 
+import { z } from "zod";
+
 import {
   sharedEvidenceFamilyDrift,
   type SharedEvidenceFamilyDrift,
@@ -1021,4 +1023,109 @@ export function getDiscoveryBlueprint(
     return AI_OPERATIONS;
   }
   return DEFAULT_BLUEPRINT;
+}
+
+// ── Config contract + loader (Phase 2 of the configurable archetype layer) ──
+// The catalog is data: these schemas define what a configured source — a JSON
+// file today, a DB table or setup UI later — must satisfy, and the loader
+// overlays a validated configured source onto the built-in seed. The seam lets
+// a deploying firm add or override an archetype WITHOUT shipping code, while an
+// invalid source is rejected whole so the catalog can never be partially
+// corrupted. Co-located with the catalog it governs.
+export const EvidenceFamilySchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "family id must be snake_case [a-z0-9_]"),
+  label: z.string().min(1),
+  grounds: z.string().min(1),
+  required: z.boolean(),
+  likelySource: z.string().min(1),
+  format: z.string().min(1),
+});
+
+export const InterviewRoleSchema = z.object({
+  role: z.string().min(1),
+  side: z.enum(["business", "it"]),
+  objectives: z.string().min(1),
+  questions: z.array(z.string().min(1)).min(1),
+});
+
+export const DiscoveryBlueprintSchema = z.object({
+  blueprintId: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "blueprintId must be snake_case [a-z0-9_]"),
+  blueprintVersion: z.string().min(1),
+  archetypeLabel: z.string().min(1),
+  suggestionKeywords: z.array(z.string().min(1)).optional(),
+  evidenceFamilies: z
+    .array(EvidenceFamilySchema)
+    .min(1)
+    .refine(
+      (families) =>
+        new Set(families.map((family) => family.id)).size === families.length,
+      { message: "evidence family ids must be unique within a blueprint" },
+    ),
+  interviewRoster: z.array(InterviewRoleSchema).min(1),
+});
+
+export const DiscoveryBlueprintCatalogSchema = z.array(DiscoveryBlueprintSchema);
+
+export type DiscoveryBlueprintConfig = z.infer<typeof DiscoveryBlueprintSchema>;
+
+export interface LoadedDiscoveryBlueprintCatalog {
+  catalog: Record<string, DiscoveryBlueprint>;
+  /** Added or overridden archetype ids from the configured source. */
+  applied: string[];
+  /** Validation errors; when non-empty the configured source was rejected. */
+  errors: string[];
+}
+
+/**
+ * Build the effective catalog: the built-in seed, with a validated configured
+ * source overlaid on top (an entry whose `blueprintId` matches a seed id
+ * overrides it; a new id adds an archetype). A configured source that fails
+ * validation is rejected whole — the seed is returned unchanged and the errors
+ * are surfaced — so a malformed config cannot partially corrupt the catalog.
+ */
+export function loadDiscoveryBlueprintCatalog(
+  configuredBlueprints?: unknown,
+): LoadedDiscoveryBlueprintCatalog {
+  const catalog: Record<string, DiscoveryBlueprint> = {
+    ...DISCOVERY_BLUEPRINT_CATALOG,
+  };
+  if (configuredBlueprints == null) {
+    return { catalog, applied: [], errors: [] };
+  }
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(configuredBlueprints);
+  if (!parsed.success) {
+    return {
+      catalog,
+      applied: [],
+      errors: parsed.error.issues.map(
+        (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+      ),
+    };
+  }
+  const applied: string[] = [];
+  for (const blueprint of parsed.data) {
+    catalog[blueprint.blueprintId] = blueprint as DiscoveryBlueprint;
+    applied.push(blueprint.blueprintId);
+  }
+  return { catalog, applied, errors: [] };
+}
+
+/**
+ * Validate the built-in seed against the schema. The seam only holds if the
+ * seed itself conforms to the contract a configured source must meet.
+ */
+export function validateBuiltInDiscoveryBlueprintCatalog(): string[] {
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(
+    Object.values(DISCOVERY_BLUEPRINT_CATALOG),
+  );
+  if (parsed.success) return [];
+  return parsed.error.issues.map(
+    (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+  );
 }
