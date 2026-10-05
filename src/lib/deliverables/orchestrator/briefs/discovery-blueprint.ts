@@ -28,6 +28,14 @@ export interface DiscoveryBlueprint {
   archetypeLabel: string;
   evidenceFamilies: EvidenceFamily[];
   interviewRoster: InterviewRole[];
+  /**
+   * Setup-time hints only. These help a deployer's setup flow SUGGEST this
+   * archetype for a Move's text ("this looks like Data Foundation — use it?").
+   * They are never runtime authority: identity is declared (see
+   * `resolveDeclaredDiscoveryBlueprint`), and declaration always wins over any
+   * keyword signal. Optional so existing entries need no change.
+   */
+  suggestionKeywords?: string[];
 }
 
 // ── AI-Operations / Customer-Digital (IROPS-class) ──────────────────────────
@@ -627,10 +635,245 @@ const DEFAULT_BLUEPRINT: DiscoveryBlueprint = {
   ],
 };
 
-/** Resolve the discovery blueprint for an archetype (ops tokens → AI-Operations). */
+// ── Governed Data Foundation for AI / LLM Automation ────────────────────────
+// A data-governance / platform-readiness archetype: the bet is a certified,
+// governed data foundation (ownership, semantic layer, lineage/audit, quality,
+// platform) BEFORE any AI/LLM workflow is claimed. Distinct from the
+// contact-center agent-assist archetype, which the keyword matcher wrongly
+// inferred for data-foundation Moves that mention clinical/claims terms.
+const GOVERNED_DATA_FOUNDATION: DiscoveryBlueprint = {
+  blueprintId: "governed_data_foundation",
+  blueprintVersion: "2026-10-05",
+  archetypeLabel: "Governed Data Foundation for AI / LLM Automation",
+  suggestionKeywords: [
+    "data foundation",
+    "data governance",
+    "governed data",
+    "semantic layer",
+    "lineage",
+    "data quality",
+    "medallion",
+    "lakehouse",
+    "data catalog",
+    "master data",
+    "identity spine",
+    "ai audit",
+    "data platform",
+  ],
+  evidenceFamilies: [
+    {
+      id: "data_governance_ownership",
+      label:
+        "Data governance ownership (council, policies, decision rights, stewardship)",
+      grounds: "Current-State Assessment · Operating Model · Gate controls",
+      required: true,
+      likelySource: "Data governance / CDO office",
+      format: "Doc",
+    },
+    {
+      id: "semantic_layer_certification",
+      label:
+        "Semantic layer / certified metric & entity definitions and ownership",
+      grounds: "Target Architecture · Value Model",
+      required: true,
+      likelySource: "Analytics engineering / data platform",
+      format: "Doc",
+    },
+    {
+      id: "data_lineage_audit_trail",
+      label: "Data lineage + AI/model audit trail (source-to-use traceability)",
+      grounds: "Current-State · Responsible-AI controls",
+      required: true,
+      likelySource: "Data platform / governance",
+      format: "Doc",
+    },
+    {
+      id: "data_quality_rules",
+      label: "Data quality rules (defined, loaded, monitored) + exception owners",
+      grounds: "Current-State Assessment · Gate controls",
+      required: true,
+      likelySource: "Data quality / stewardship",
+      format: "CSV",
+    },
+    {
+      id: "source_system_data_access",
+      label:
+        "Source system data access (EMR, claims, pharmacy, marts) + contracts/SLAs",
+      grounds: "Current-State · Target Architecture",
+      required: true,
+      likelySource: "Enterprise Architecture / source owners",
+      format: "CSV",
+    },
+    {
+      id: "platform_architecture_readiness",
+      label:
+        "Platform & architecture readiness (lakehouse/medallion, environments)",
+      grounds: "Target Architecture",
+      required: true,
+      likelySource: "Data platform engineering",
+      format: "Doc",
+    },
+    {
+      id: "master_identity_resolution",
+      label: "Master / entity identity resolution (patient, member, provider spine)",
+      grounds: "Target Architecture · Value Model",
+      required: true,
+      likelySource: "Data governance / MDM",
+      format: "Doc",
+    },
+    {
+      id: "privacy_security_controls",
+      label: "Privacy & security controls for the data foundation (PHI, access)",
+      grounds: "Risk · Gate controls",
+      required: true,
+      likelySource: "Security / privacy office",
+      format: "Doc",
+    },
+    {
+      id: "model_risk_responsible_ai_controls",
+      label: "Responsible-AI / model-risk controls for downstream automation",
+      grounds: "Risk · Responsible-AI controls",
+      required: true,
+      likelySource: "Model risk / responsible AI",
+      format: "Doc",
+    },
+    {
+      id: "measurement_owner_cadence",
+      label: "Measurement owners + cadence for the certified foundation",
+      grounds: "Value Model · Operating Model",
+      required: true,
+      likelySource: "Analytics / finance",
+      format: "Doc",
+    },
+    {
+      id: "finance_baseline_value_plan",
+      label: "Finance baseline + value plan (quantify after baselines sign off)",
+      grounds: "Value Model · Business Case",
+      required: true,
+      likelySource: "Finance",
+      format: "XLSX",
+    },
+    {
+      id: "change_adoption_owner",
+      label: "Change / adoption owner for governed-foundation rollout",
+      grounds: "Operating Model",
+      required: false,
+      likelySource: "Transformation / change",
+      format: "Doc",
+    },
+  ],
+  interviewRoster: [
+    {
+      role: "Chief Data / Analytics Officer (sponsor)",
+      side: "business",
+      objectives: "Outcome, value, governance mandate, success/kill",
+      questions: [
+        "What does a certified, governed foundation unlock?",
+        "What would make this a kill?",
+      ],
+    },
+    {
+      role: "Data governance lead",
+      side: "business",
+      objectives: "Ownership, policies, decision rights, stewardship",
+      questions: [
+        "Who owns governance decisions and stewardship today?",
+        "Which policies and controls are actually enforced?",
+      ],
+    },
+    {
+      role: "Data platform architect",
+      side: "it",
+      objectives: "Semantic layer, lineage, platform readiness",
+      questions: [
+        "What is certified in the semantic layer vs. ad hoc?",
+        "Where does lineage/audit break today?",
+      ],
+    },
+    {
+      role: "Data quality / MDM lead",
+      side: "it",
+      objectives: "Quality rules + identity resolution",
+      questions: [
+        "Which data quality rules are loaded and monitored?",
+        "How is master/entity identity resolved today?",
+      ],
+    },
+    {
+      role: "Finance lead",
+      side: "business",
+      objectives: "Baselines + value plan",
+      questions: [
+        "What baselines must the value model tie to?",
+        "What signoff is required before quantifying value?",
+      ],
+    },
+  ],
+};
+
+/**
+ * The discovery blueprint catalog — the single source of truth, keyed by
+ * `blueprintId` (the archetype id). Adding an industry/client archetype is a
+ * catalog entry, not a new matcher branch. This is the extensibility seam a
+ * deploying firm configures against (today in code; later movable to
+ * DB/config + a setup UI) without touching resolution logic.
+ */
+export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
+  Record<string, DiscoveryBlueprint>
+> = {
+  [AI_OPERATIONS.blueprintId]: AI_OPERATIONS,
+  [HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST.blueprintId]:
+    HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST,
+  [FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST.blueprintId]:
+    FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST,
+  [GOVERNED_DATA_FOUNDATION.blueprintId]: GOVERNED_DATA_FOUNDATION,
+  [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
+};
+
+/** Normalize a declared archetype token to a catalog key. */
+function normalizeArchetypeId(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s./-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+/**
+ * Resolve a DECLARED archetype to its blueprint — the authoritative path.
+ * Returns null when nothing was declared or the declaration does not exactly
+ * match a known catalog archetype (so a stale/garbage value falls through to
+ * inference rather than silently mis-selecting a blueprint).
+ */
+export function resolveDeclaredDiscoveryBlueprint(
+  declaredArchetypeId: string | null | undefined,
+): DiscoveryBlueprint | null {
+  if (!declaredArchetypeId || !declaredArchetypeId.trim()) return null;
+  return DISCOVERY_BLUEPRINT_CATALOG[normalizeArchetypeId(declaredArchetypeId)] ?? null;
+}
+
+/** Resolve the discovery blueprint for a Move.
+ *
+ * Identity is declared, never inferred: a `declaredArchetypeId` that matches a
+ * catalog archetype wins outright. Only when nothing is declared (or the
+ * declaration is unknown) does keyword inference run, and it is a fallback
+ * suggestion, never authority. `useCaseArchetype` that is itself exactly a
+ * catalog id is also honored as a declaration.
+ */
 export function getDiscoveryBlueprint(
   useCaseArchetype: string,
+  declaredArchetypeId?: string | null,
 ): DiscoveryBlueprint {
+  // Declared identity wins over inference. Try the explicit declaration first,
+  // then the primary arg in case a caller passed a clean catalog id as the
+  // archetype. A multi-word inference blob won't exact-match a catalog key, so
+  // this never false-matches.
+  const declared =
+    resolveDeclaredDiscoveryBlueprint(declaredArchetypeId) ??
+    resolveDeclaredDiscoveryBlueprint(useCaseArchetype);
+  if (declared) return declared;
+
   const a = (useCaseArchetype || "").toLowerCase();
   const hasFinancialLendingSignals =
     /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
