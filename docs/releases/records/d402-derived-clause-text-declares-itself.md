@@ -106,6 +106,9 @@ not `global-control-lane`.
   **new**, driven over the real package.
 - `.github/workflows/integrity.yml` — runs the new suite in the required
   `Routes and disclaimers` job.
+- `src/__tests__/behaviors/t451-source-program-suite-ci-coverage.test.ts` — the
+  new suite is **declared** in the owned-suite list for its directory. See the
+  caused-and-fixed red below; nothing in that suite is weakened.
 
 ## QA / Validation
 
@@ -203,6 +206,39 @@ instrument, staged or not. So the census cannot evidence a suite placed under
 suite now lives in the test directory of the module it tests, which is both the
 canonical home and inside the census's reach. Filed as a follow-up below.
 
+**A required check went red because of this change, and was fixed by declaring
+the suite rather than by weakening anything.** `Behavior coverage floor` — one
+of the 19 required contexts — failed on the pull request. **It was not the
+coverage percentage**, which is the obvious failure mode for adding a test; it
+was a single test failure, 1 of 2050, in
+`src/__tests__/behaviors/t451-source-program-suite-ci-coverage.test.ts`, case
+`measures exactly the eight named suites`.
+
+Attributed by execution across bases rather than assumed: that suite **passes
+6 of 6 at the merge-base `ad0209f7ed` and fails on this branch**, so it is this
+change's doing. The cause is the gate working as designed. T-451 declares the
+exact suite list of four *wholly owned* directories, and
+`src/lib/source/contract-depth-package/__tests__` is one of them — precisely so
+that a new suite cannot arrive there unowned. It caught the file this change
+moved into that directory for the census-visibility reason above.
+
+The fix declares the suite: the list gains `clause-text-basis.test.ts`,
+`toHaveLength(8)` becomes `9` because there are genuinely nine owned suites, and
+the test's title is corrected from "eight" to "nine" so it does not lie. **No
+assertion is loosened and no bound is lowered.** Every ownership assertion still
+runs and still holds — the directory is named by a workflow jest command, and
+the census reports it neither partially covered nor uncovered.
+
+**The declaration was mutation-checked in both directions**, so it is not a
+number changed to turn red green: dropping the new suite from the list while
+leaving the count at 9 fails the case (1 of 6), and keeping the suite while
+reverting the count to 8 also fails it (1 of 6). Restored: 6 of 6.
+
+After the fix the whole behaviours directory is **197 suites / 2050 tests, 0
+failing**, and the real gate `npm run coverage:behavior-gate` **exits 0**:
+lines 90.08 and statements 90.08 against a floor of 90, functions 70.54 against
+60, branches 71.89 against 50.
+
 **Governance gate.** `npm run validate:context-corpus` → **passed**, all five
 checks (`exceptions`, `tenant-coverage`, `agent-readiness`, `duplicates`,
 `manifests`). It failed first, with `Unrecognized key: "derived_text_declarations"`,
@@ -264,6 +300,17 @@ page-less and unreviewed.
   rewritten from.
 
 ## Known Gaps
+
+- **`Fence coverage matches the committed census` is red on this pull request and
+  this change did not cause it.** Running the check at the merge-base
+  `ad0209f7ed` and on this branch gives byte-identical output: one route,
+  `src/app/api/v1/source/[eventId]/award/route.ts`, "not in the committed
+  census". That route arrived in the merge-base commit itself without the census
+  being refreshed; this change adds no API route and contributes zero fence
+  drift. The check is also not one of the 19 required contexts, read by name
+  from `docs/ci/required-status-checks.json` rather than off the rollup. Left
+  for its own item: the one-command fix would make this diff
+  un-attributable.
 
 - **The loader's SQL parameters are not driven end-to-end.** The governed field
   set is behaviourally tested over all 56 real rows through its exported
