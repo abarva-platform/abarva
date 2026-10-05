@@ -166,3 +166,56 @@ export function formatOriginateNavFootProgress(input: {
 export function formatAnswersCapturedNoun(total: number): string {
   return `${agreeNoun(total, "answer", "answers")} captured`;
 }
+
+// ---------------------------------------------------------------------------
+// The captured-brief review, on the P0 phase screen.
+//
+// A fourth figure of the same family, two components away from the three
+// above. The review header rendered `{capturedCount} of 7` — bare, with no
+// noun in the visible element and no `title` attribute either, on a screen
+// that also carries the capture strip ("N questions" / "N of M answered") and
+// the phase stepper ("N of M gate criteria"). Three per-phase figures within
+// one scroll, and this was the only one that did not say what it counted.
+//
+// Its denominator was also a LITERAL. The row set it describes is built
+// immediately above it, so `7` was a third independent copy of the same fact
+// (the figure, the heading's "seven", and the array itself) — any row added or
+// removed makes two of the three lie. The fix derives both sides from the row
+// set and leaves the heading carrying no numeral at all, so there is nothing
+// left to disagree with.
+// ---------------------------------------------------------------------------
+
+/**
+ * The captured-brief review's tally. `total` is the number of rows the review
+ * actually renders, never a literal.
+ */
+export function formatCapturedBriefTally(input: {
+  readonly captured: number;
+  readonly total: number;
+}): string {
+  const noun = agreeNoun(input.total, "answer", "answers");
+  return `${input.captured} of ${input.total} ${noun} captured`;
+}
+
+/**
+ * Summarises the review's row set. Taking the rows themselves — rather than a
+ * caller-supplied total — is what makes the literal unrepresentable: the
+ * denominator cannot drift from the set it counts.
+ *
+ * A row counts as captured when it has a non-empty saved value.
+ */
+export function summariseCapturedBrief(
+  rows: readonly { readonly value: string | null | undefined }[],
+): {
+  readonly captured: number;
+  readonly total: number;
+  readonly tally: string;
+} {
+  const total = rows.length;
+  const captured = rows.filter((row) => Boolean(row.value)).length;
+  return {
+    captured,
+    total,
+    tally: formatCapturedBriefTally({ captured, total }),
+  };
+}

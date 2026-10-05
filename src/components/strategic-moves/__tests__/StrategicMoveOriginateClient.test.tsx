@@ -20,8 +20,10 @@ import {
   formatOriginateDiscardProgress,
   formatOriginateNavFootProgress,
   formatOriginateRailTally,
+  formatCapturedBriefTally,
   formatOriginateStepPosition,
   originateStepCount,
+  summariseCapturedBrief,
 } from "../originate-figure-labels";
 
 const mockPush = jest.fn();
@@ -1135,6 +1137,55 @@ describe("StrategicMoveOriginateClient", () => {
         )[0],
       ).toBeInTheDocument();
       expect(screen.queryByText(/0 of 10 complete/)).not.toBeInTheDocument();
+    });
+  });
+  describe("the captured-brief review's tally (summariseCapturedBrief)", () => {
+    it("states the noun it counts, so the figure is not a bare N of M", () => {
+      expect(formatCapturedBriefTally({ captured: 7, total: 7 })).toBe(
+        "7 of 7 answers captured",
+      );
+      expect(formatCapturedBriefTally({ captured: 3, total: 7 })).toBe(
+        "3 of 7 answers captured",
+      );
+    });
+
+    it("agrees the noun to the denominator, not to the numerator", () => {
+      // Agreeing to `captured` is the plausible wrong fix: it would read
+      // "1 of 7 answer".
+      expect(formatCapturedBriefTally({ captured: 1, total: 7 })).toBe(
+        "1 of 7 answers captured",
+      );
+      expect(formatCapturedBriefTally({ captured: 0, total: 1 })).toBe(
+        "0 of 1 answer captured",
+      );
+    });
+
+    it("derives the denominator from the row set, so no literal can drift from it", () => {
+      const rows = [
+        { value: "Members wait on hold." },
+        { value: "Agent assist" },
+        { value: "" },
+      ];
+      expect(summariseCapturedBrief(rows)).toEqual({
+        captured: 2,
+        total: 3,
+        tally: "2 of 3 answers captured",
+      });
+
+      // Vacuity guard: the total follows the set, so it cannot be a constant.
+      expect(summariseCapturedBrief([...rows, { value: "Q4" }]).total).toBe(4);
+      expect(summariseCapturedBrief([]).total).toBe(0);
+    });
+
+    it("counts a row as captured only when it holds a saved value", () => {
+      expect(
+        summariseCapturedBrief([
+          { value: "Something saved" },
+          { value: "" },
+          { value: null },
+          { value: undefined },
+        ]).captured,
+      ).toBe(1);
     });
   });
 });

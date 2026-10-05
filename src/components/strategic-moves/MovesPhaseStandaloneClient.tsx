@@ -106,6 +106,7 @@ import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-pro
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import { summariseCapturedBrief } from "./originate-figure-labels";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import {
   assembleP3SolutionOptions,
@@ -6593,20 +6594,23 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
       value: charterText(move.charter, "foundation_readiness"),
     },
   ];
-  const capturedCount = rows.filter((row) => row.value).length;
+  // Both sides of the figure come from the row set above — the denominator was
+  // a literal `7`, a third copy of a fact already stated by the array and by
+  // the heading, so any row added or removed made two of the three lie.
+  const briefReview = summariseCapturedBrief(rows);
 
   return (
     <section className="mxw-p0-brief-review" aria-label="Captured P0 brief">
       <header>
         <div>
           <span>P0 brief captured</span>
-          <h2>Review your seven Originate answers</h2>
+          <h2>Review the Originate answers saved here</h2>
           <p>
             These are the answers saved from Start a Move. Gate criteria below
             are a separate governance checklist.
           </p>
         </div>
-        <strong>{capturedCount} of 7</strong>
+        <strong>{briefReview.tally}</strong>
       </header>
       <div className="mxw-p0-brief-name">
         <span>Move name</span>
