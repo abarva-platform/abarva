@@ -704,6 +704,11 @@ jobs:
       - name: Keep the supplier panels inside the supplier phase
         run: npx jest --runTestsByPath src/components/source/new-workspace/SupplierPhasePanels.test.tsx --runInBand
 
+      # Unread authority must never render as a decision. Request and Strategy
+      # now say the same thing when unread, so each is asserted by its own row.
+      - name: Report Strategy authority without inventing a decision
+        run: npx jest --runTestsByPath src/components/source/new-workspace/StrategyAuthorityLabel.test.tsx --runInBand
+
       # The file cabinet is where the workspace's motion labels are actually
       # read: the folder rail carries the accepted motion, and the artifact
       # opened inside it carries a reused stage key that must not contradict
