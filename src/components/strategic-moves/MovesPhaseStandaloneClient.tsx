@@ -68,6 +68,7 @@ import {
   notesInsertBasisRecordingKeys,
 } from "@/lib/programs/capture-notes-basis-link";
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
+import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
@@ -2675,23 +2676,28 @@ export function MovesPhaseStandaloneClient({
   // it reported the default set's size for a Move whose P3 asks a narrower or a
   // wider set, which both misstates a completed phase and lets the viewed row's
   // answered count sit above or permanently below its total.
-  const capturePhases: MovesCaptureFlowPhase[] = PHASES.map((p) => {
-    const total = capturePhaseSectionTotal(p.phase, confirmedSolutionRoute);
-    const answered =
-      p.phase < currentPhase
-        ? total
-        : p.phase === currentPhase
-          ? phaseCaptureCompleteCount
-          : 0;
-    return {
+  //
+  // The answered count is a second, independent attribution:
+  // `phaseCaptureCompleteCount` counts the sections of the phase ON SCREEN, so
+  // it belongs to `phase.phase` and not to `currentPhase`. The two differ
+  // whenever you open a phase other than the one the Move sits on, and the row
+  // then showed a count borrowed from a different phase's question set — which
+  // could exceed its own total. `capturePhaseProgress` owns the "N";
+  // `capturePhaseSectionTotal` owns the "M".
+  const capturePhases: MovesCaptureFlowPhase[] = capturePhaseProgress(
+    PHASES.map((p) => ({
       phase: p.phase,
       code: p.code,
       name: p.navLabel,
-      answered,
-      total,
+      total: capturePhaseSectionTotal(p.phase, confirmedSolutionRoute),
       reachable: p.phase <= currentPhase,
-    };
-  });
+    })),
+    {
+      viewedPhase: phase.phase,
+      currentPhase,
+      viewedAnsweredCount: phaseCaptureCompleteCount,
+    },
+  );
 
   const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
 
