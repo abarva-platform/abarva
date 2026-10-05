@@ -4,6 +4,8 @@
 // pattern. The Discovery Plan deliverable (generated at the P1→P2 gate) turns
 // this catalog into a client-facing evidence-request list + interview guide.
 
+import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+
 export interface EvidenceFamily {
   id: string;
   label: string;
@@ -865,16 +867,6 @@ export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
   [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
 };
 
-/** Normalize a declared archetype token to a catalog key. */
-function normalizeArchetypeId(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[\s./-]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
 /**
  * Resolve a DECLARED archetype to its blueprint — the authoritative path.
  * Returns null when nothing was declared or the declaration does not exactly
@@ -884,8 +876,10 @@ function normalizeArchetypeId(value: string): string {
 export function resolveDeclaredDiscoveryBlueprint(
   declaredArchetypeId: string | null | undefined,
 ): DiscoveryBlueprint | null {
-  if (!declaredArchetypeId || !declaredArchetypeId.trim()) return null;
-  return DISCOVERY_BLUEPRINT_CATALOG[normalizeArchetypeId(declaredArchetypeId)] ?? null;
+  return resolveArchetypeCatalogEntry(
+    DISCOVERY_BLUEPRINT_CATALOG,
+    declaredArchetypeId,
+  );
 }
 
 export interface DiscoveryArchetypeSuggestion {

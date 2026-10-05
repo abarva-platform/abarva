@@ -7,6 +7,8 @@
 
 import type { ExpectedExhibit, ExpectedTable } from "../types";
 
+import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+
 export interface ArchetypePack {
   archetype: string;
   label: string; // how the role line describes the expertise
@@ -463,6 +465,12 @@ export const ARCHETYPE_PACKS: Record<string, ArchetypePack> = {
   ANALYTICS_CAPABILITY_REPATRIATION: ANALYTICS_REPATRIATION,
 };
 
+/**
+ * Resolve the pack for a declared archetype. Shares one identity rule with the
+ * discovery blueprint catalog (`archetype-identity.ts`), so the SAME declared
+ * value selects both the pack and the blueprint instead of only whichever
+ * catalog happens to be keyed in the spelling the declaration used.
+ */
 export function getArchetypePack(archetype: string): ArchetypePack | undefined {
-  return ARCHETYPE_PACKS[archetype];
+  return resolveArchetypeCatalogEntry(ARCHETYPE_PACKS, archetype) ?? undefined;
 }
