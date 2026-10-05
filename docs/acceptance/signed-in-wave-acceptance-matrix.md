@@ -34,6 +34,173 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-05 fourteenth wave — walked on serving SHA `786df70f82`
+
+**Item:** U-561.
+**Walked:** 2026-10-05, between 01:45:10Z and 01:47:04Z, by
+`source-backlog-executor#20261005T0125Z`. An earlier pass over the same surfaces,
+between 01:43Z and 01:44Z, was **discarded**; why is below, and it is the most
+important thing in this block.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**Which SHA, and why the item was right to forbid pinning one.** U-561 was filed
+naming `fd7dc069b6` as the build that would be serving, with the caveat that
+#8987's deploy was still `in_progress`. By walk time it had been superseded
+again. The serving SHA is `786df70f82` (#8983) — a merge the item does not name,
+because it landed after the item was written.
+
+**The serving SHA is established from two independent sources.** A revision
+suffix is a label a deploy wrote; the registry is asked first.
+`az acr manifest show-metadata` on the serving digest returns exactly one tag,
+`main-786df70f`. The revision name `--m786df70f` agrees. Two sources, one answer.
+
+**Runtime invariant, read read-only with `az` at 01:45:10Z and again at
+01:47:04Z, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App template image | `sha256:8424205c…8819` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--m786df70f`, sole entry, weight 100 |
+| That revision's own image | `sha256:8424205c…8819` — identical to the template |
+| Revision state | `active` / `Healthy`, created 01:43:34Z |
+| Deploy run | `37252091902`, `completed` / `success` at 01:45:56Z |
+
+### The build changed underneath the first pass, and that pass was thrown away
+
+This is recorded in full because the failure is silent and the result would have
+read as a clean walk.
+
+The first pass ran against what every pre-walk read said was the serving build,
+`fd7dc069b6`: template image and sole 100%-traffic revision agreed on
+`sha256:c9957d36…f7e3`, revision `--m786…` did not yet exist, ACR returned the
+single tag `main-fd7dc069`, and the invariant held. Then, at **01:43:34Z**, a new
+revision took 100% of traffic — mid-pass. The P1 observations straddled that
+instant and the P0 observations fell after it, so **no observation in that pass
+could be honestly attributed to a named build**. The numbers it produced were, as
+it happens, the same ones the clean pass produced. That is exactly why it is
+recorded: a walk whose build moved under it does not announce itself in its
+results, and attributing those readings to `fd7dc069b6` would have been a false
+statement that nothing downstream could have caught.
+
+So the pass was discarded rather than reported, the serving SHA was re-resolved
+from both sources after the revision settled, and **every observation below was
+taken afresh between 01:45:10Z and 01:47:04Z**, with the invariant re-read at
+both ends of that window and unchanged. The practical rule this yields, and the
+reason it is in the matrix and not only in a run log: **re-read the invariant at
+the END of a walk, not only before it.** A pre-walk read proves what was serving
+when you started, which is not the question the verdict answers.
+
+### The ancestor sweep — re-derived, and it found a merge the item does not name
+
+A row list is a floor, not a ceiling. The population was recomputed rather than
+inherited, and it came back larger than the item's.
+
+- Both merges U-561 names are ancestors of the walked build, asserted with
+  `git merge-base --is-ancestor`: `8b22aa5a90` (#8984), `7ee02ad1c1` (#8986).
+- The repository squash-merges, so `--merges` over `8bcfa6fa6f..786df70f82`
+  returns **0**; the sweep is taken over `--first-parent`, which returns **5**.
+- Client-visibility is decided by **measurement, not by the subject line**:
+  files under `src/app`, `src/components` or `src/lib` excluding tests.
+  `fd7dc069b6` (#8987) = 0 and `62b5f135c2` (#8985) = 0, so both are excluded.
+  `8b22aa5a90` = 3, `7ee02ad1c1` = 3, `786df70f82` = 6.
+- So **three** client-visible merges are in scope, not the two the item names.
+  The third is `786df70f82` (#8983), governed fill-from-notes in the capture
+  dock, which merged after U-561 was written. It gets a verdict here.
+
+**All three edit the same shared component.** `MovesPhaseStandaloneClient.tsx`,
+the phase route, and `src/lib/features/registry.ts` appear in all three diffs.
+That is the item's premise and the reason the regression check below matters more
+than any OFF-path confirmation.
+
+### Flag state, read from the serving SHA
+
+| Flag | `includeTenants` | Meaning on this runtime |
+|---|---|---|
+| `moves_capture_v2` | `["meridian"]` | **ON** for the synthetic demo tenant — the path under regression test |
+| `moves_capture_p0_v1` | `[]` | ON for no tenant |
+| `moves_capture_composition_v1` | `[]` | ON for no tenant |
+| `moves_capture_notes_v1` | `[]` | ON for no tenant |
+
+**No flag was flipped**, per the twelfth wave's standing rule: a surface whose
+proof required changing its own tenant flag state is not proven. A consequence
+worth stating plainly rather than burying: because all three new flags are
+empty-tenant, **every** tenant is an OFF-path tenant for them, and the strictest
+place to observe that OFF path is the one tenant where the shared component is
+actually mounted. On a `moves_capture_v2`-off tenant the component does not
+render at all, so an absence there would prove less, not more. That is why
+verdict 1 is taken on the synthetic demo tenant and not elsewhere. (The two
+`includeTenants` literals in the table above are quoted configuration, read from
+`registry.ts` on the serving SHA; everywhere else this block names the tenant by
+its role, which is the habit to keep once real engagements exist.)
+
+### What was observed, and the boundary it stayed inside
+
+Subjects: `Payment integrity and leakage reduction`
+(`15f3538a-2354-4aae-9320-aa021a92dc55`, P1 Charter) for the ON path, and
+`End-to-end cost transparency` (`6ac2a1ee-f706-4d4e-b44d-d562fff45bfe`, P0
+Originate) for P0. Both on the synthetic demo tenant.
+
+Stepping 1 → 2 → 3 is a client-side view change and no write: on the serving
+SHA, `MovesCaptureFlow`'s footer primary calls `go(view + 1)` for views 0 and 1
+and reaches `onSubmitPhase()` only at view 2. The step-3 button was **not**
+pressed. Nothing else was clicked, and no field was typed into.
+
+**The six discriminators the thirteenth wave recorded for the `moves_capture_v2`
+ON path, re-observed at 01:46:11Z:**
+
+| # | Discriminator | Thirteenth wave | This walk |
+|---|---|---|---|
+| 1 | `[data-testid="moves-capture-flow"]` | 1 | **1** |
+| 2 | `.mcf-phasebar` | 1 | **1** |
+| 3 | `.mcf-stepbar` | 1 | **1** |
+| 4 | step titles *Scope the bet* / *People & decisions* / *Plan the proof* | present | **all three present** |
+| 5 | footer *Step 1 of 3* | 1 | **1** |
+| 6 | `.mcf-question` on step 1 | 3 | **3** |
+
+**And the whole mount set across all three steps, at 01:46:26Z** — 3 + 2 + 2 =
+**7**, the same total the thirteenth wave measured for this phase, with **0**
+fill-from-notes affordances (`[data-testid^="capture-notes"]`, `[class^="cnf"]`)
+at any step.
+
+### Results
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves P1 Charter capture — `moves_capture_v2` ON path, regression check | #8984 `8b22aa5a90` + #8986 `7ee02ad1c1` | **pass — not regressed** | All six discriminators identical to the thirteenth wave's readings, and the full mount set across the three steps is 7, also identical. The two gated merges edit this component and changed nothing on the path that is actually served. |
+| 2 | Moves phase capture — `moves_capture_composition_v1` OFF path | #8986 `7ee02ad1c1` | **pass (OFF path)** | The merge's claimed effects are both absent, measured rather than assumed: the workspace surface tabs (*Steps* / *Files & Evidence* / *Intelligence* / *Approvals*) still render as a standalone row above the content, not inside the dock's workspace column; and the legacy stage head still repeats the phase title, the question *"What exactly are we committing to investigate?"*, the lede *"Turn the idea into a bounded charter…"* and the progress card (`INPUTS 0/7`, `GATE 1/2 hard met`). Flag off, surface unchanged. |
+| 3 | Moves capture dock — `moves_capture_notes_v1` OFF path | #8983 `786df70f82` | **pass (OFF path)** | **Not named by U-561; found by the sweep.** 0 of `capture-notes-fill`, `capture-notes-open`, and 0 elements carrying any `cnf*` class, across all three steps of the capture — 7 mount points' worth of surface with nothing added. The merge's own claim is that the dock renders byte-for-byte as today until a tenant is enabled; the dock did. |
+| 4 | Moves P0 Originate — `moves_capture_p0_v1` | #8984 `8b22aa5a90` | **excluded — flag off, observed off** | P0 on the same tenant renders the legacy finder-columns canvas: `P0 INPUTS` with its eleven named inputs, the `Prepare / Frame / Gate approval` workflow rail, 60 elements carrying a `finder*` class — and **0** of `moves-capture-flow`, `.mcf-phasebar`, `.mcf-stepbar`, `.mcf-question`, 0 occurrences of P0's step titles *Why now* / *The bet* / *Readiness*, and no *Step n of 3* footer anywhere. #8984's claimed effect is unobservable without manufacturing it, and it was not manufactured. |
+
+### Stated limits of this walk
+
+- **Three OFF paths and one regression check is what this wave proves.** Rows 2,
+  3 and 4 each say a merge's new behaviour is *absent*, which is the whole of its
+  flag-off contract and none of its ON behaviour. No ON path of #8984, #8986 or
+  #8983 has been observed anywhere, by anyone, and nothing in this file should be
+  read as evidence that any of them works.
+- **Row 1 is the load-bearing row**, and it is a structural comparison: the same
+  discriminators, the same counts, on the same phase of the same tenant. It does
+  not prove the capture *behaves* identically — no answer was typed, no phase was
+  submitted — only that the three gated merges did not change what the served
+  path renders.
+- **Row 4 is `excluded`, not `pass`.** The flag is off and P0 was observed off,
+  which is consistent and is not proof of anything #8984 claims.
+- **Sixth-wave merges are still unverdicted in this file.** PR #8963 carries their
+  verdicts and is open; this walk neither merged it nor re-walked its merges.
+
+### Noted, not filed
+
+- The three new Moves flags now in `registry.ts` are all `includeTenants: []`,
+  which means four merges' worth of client-visible Moves work (#8983, #8984,
+  #8986, plus `moves_capture_v2`'s own unenabled tenants) is deployed and reaches
+  no user. That is a deliberate rollout posture, not a defect, and it is noted
+  only so the count is visible: three consecutive waves have now verdicted OFF
+  paths. The first tenant enablement of any of them will need an ON-path walk
+  that no existing row covers.
+
+---
+
 ## 2026-10-05 thirteenth wave — walked on serving SHA `8bcfa6fa6f`
 
 **Item:** U-560.
