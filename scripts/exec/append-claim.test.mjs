@@ -1660,5 +1660,125 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
   }
 }
 
+// ---------------------------------------------------------------------------
+// Case 29 (item T-818) — the refusal headline counts PATHS, not hold records.
+//
+// The headline read `N of M requested path(s) already held`, where N was
+// `fileOverlap.conflicts.length` and M was `fileOverlap.requested.length`.
+// Those count different things. `conflicts` is one entry per (path x citing
+// line) and that is deliberate — `register-time-authority.mjs` says in
+// comment that two runs holding one file is two conflicts, because collapsing
+// them would report only one of the two holders. So when a single holder
+// cites one path on two live lines (a claim plus an amendment, which is the
+// append-only register's normal shape), that path yields two entries and N
+// over-counts it.
+//
+// Reproduced on the live register on 2026-10-05 while probing two lane-T
+// rows: a 3-path request printed `4 of 3 requested path(s)` and a 2-path
+// request printed `4 of 2`. A ratio above 1 is not a near-miss, it is a
+// statement that cannot be true, and the describer's own preamble says it was
+// written because `verdict: take` under a REFUSED banner "invites the reading
+// that the control is broken".
+//
+// The cost is the one the block exists to remove, not cosmetic. That same
+// preamble says an agent "cannot tell WHICH of the files it asked for is
+// held, so it re-invokes the helper one path at a time to find out". In the
+// 3-path probe the true answer was two held and ONE FREE; `4 of 3` cannot
+// carry that, while `2 of 3` tells the reader to go looking for the clear one.
+//
+// So the fix is in the summary sentence only. The per-holder list below it is
+// correct and the guardrail below keeps it whole: de-duplicating `conflicts`
+// to make the numerator agree would lose a holder, which is the failure the
+// gate's comment is guarding.
+// ---------------------------------------------------------------------------
+{
+  const HELD_A = "scripts/exec/alpha-module.mjs";
+  const HELD_B = "scripts/exec/beta-module.mjs";
+  const FREE = "docs/releases/records/t818-nobody-holds-this.md";
+  const ago = (minutes) =>
+    new Date(Date.now() - minutes * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  // One holder, TWO live lines, the SAME two files on both — a claim and the
+  // amendment the protocol tells agents to append rather than restamp.
+  const { dir, file } = fixture([
+    `${ago(45)} | ${OTHER} | item T-819 claimed on branch \`exec/t-819\` — ` +
+      `taking it. files: ${HELD_A},${HELD_B}`,
+    `${ago(15)} | ${OTHER} | item T-819 claimed on branch \`exec/t-819\` — ` +
+      `amendment, appended not restamped. files: ${HELD_A},${HELD_B}`,
+  ]);
+
+  // SETUP, from the REAL gate rather than from the fixture text: the scenario
+  // only exists if the gate genuinely emits more conflict entries than the
+  // request had paths. Without this the acceptance could pass against a gate
+  // that never produced the shape.
+  const probe = preclaimFiles(file, "T-818", ME, ago(0), `${HELD_A},${HELD_B},${FREE}`);
+  const conflicts = probe.report.fileOverlap?.conflicts ?? [];
+  const requested = probe.report.fileOverlap?.requested ?? [];
+  const distinctHeld = new Set(conflicts.map((c) => c.path));
+  check(
+    "T-818 setup — the REAL gate emits 4 hold records for 2 held paths out of 3 requested",
+    probe.status === 1 && conflicts.length === 4 && requested.length === 3 && distinctHeld.size === 2,
+    `status=${probe.status} conflicts=${conflicts.length} requested=${requested.length} ` +
+      `distinct=${distinctHeld.size}`,
+  );
+
+  const beforeRefusal = digest(file);
+  const refused = run([
+    ...base({ file, item: "T-818", identity: ME, message: "three paths, two of them held" }),
+    "--branch", "exec/t-818", "--files", `${HELD_A},${HELD_B},${FREE}`,
+  ]);
+  const out = refused.stdout + refused.stderr;
+  const headline = out.match(
+    /REFUSED BY THE FILE HALF — (\d+) of (\d+) requested path\(s\) already held by another live claim:/,
+  );
+
+  check(
+    "T-818 setup — the claim is refused, appends nothing, and prints the file-half headline",
+    refused.status === 1 && digest(file) === beforeRefusal && headline !== null,
+    `status=${refused.status} changed=${digest(file) !== beforeRefusal}\nout=${out}`,
+  );
+
+  // THE ACCEPTANCE. The sentence says "of M requested path(s)", so the
+  // numerator has to be a count of requested paths. Both numbers are asserted,
+  // not just their ratio: a numerator that merely stopped exceeding the
+  // denominator could still be wrong.
+  check(
+    "T-818 THE ACCEPTANCE — the headline reads `2 of 3`: distinct HELD paths, out of paths requested",
+    headline !== null && headline[1] === "2" && headline[2] === "3",
+    `headline=${headline ? headline[0] : "(absent)"}\nout=${out}`,
+  );
+
+  // The impossible statement, asserted as its own case so a regression names
+  // itself. This is the shape measured on the live register.
+  check(
+    "T-818 THE ACCEPTANCE — the headline never claims more held paths than were requested",
+    headline !== null && Number(headline[1]) <= Number(headline[2]),
+    `headline=${headline ? headline[0] : "(absent)"}`,
+  );
+
+  // GUARDRAIL, and the reason the fix belongs in the sentence rather than in
+  // `conflicts`: every citing line must still be listed. Two lines cite each
+  // of the two held paths, so four `file:` lines are owed. Collapsing the list
+  // to agree with the numerator would report one holder and hide the other.
+  const fileLines = out.split("\n").filter((l) => /^file:\s/.test(l.trim()));
+  check(
+    "T-818 GUARDRAIL — all 4 citing lines are still listed, one per (path x line)",
+    fileLines.length === 4 &&
+      fileLines.filter((l) => l.includes(HELD_A)).length === 2 &&
+      fileLines.filter((l) => l.includes(HELD_B)).length === 2,
+    `fileLines=${fileLines.length}\n${fileLines.join("\n")}`,
+  );
+
+  // The free path is the thing the broken headline could not express. It is
+  // not held, so it must not be reported as held anywhere in the refusal.
+  check(
+    "T-818 GUARDRAIL — the path nobody holds is named nowhere in the refusal",
+    !out.includes(FREE),
+    out,
+  );
+
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
