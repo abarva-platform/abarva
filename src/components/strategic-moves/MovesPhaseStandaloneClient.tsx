@@ -56,7 +56,12 @@ import {
   summarizeCharterBasis,
   type CharterBasisValue,
 } from "@/components/strategic-moves/CharterBasisField";
-import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
+import {
+  charterBasisRollupSections,
+  charterBasisSectionKeys as resolveCharterBasisSectionKeys,
+  charterBasisSurfaceActive,
+  charterBasisSurfaceForSection,
+} from "@/lib/programs/charter-basis-host-join";
 import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
 import {
   basisForNotesInsert,
@@ -2419,16 +2424,19 @@ export function MovesPhaseStandaloneClient({
   // phase-capture route); this is the only surface that lets a workspace user
   // DECLARE the basis. Flag off ⇒ none of it renders and the legacy
   // approved-evidence lock is untouched.
-  const charterBasisActive = charterBasisEnabled && phase.phase === 1;
+  const charterBasisActive = charterBasisSurfaceActive({
+    flagEnabled: charterBasisEnabled,
+    phaseNumber: phase.phase,
+  });
 
-  const charterBasisSectionKeys = useMemo(() => {
-    if (!charterBasisActive) return new Set<string>();
-    return new Set(
-      phaseCaptureSections
-        .filter((section) => isP1CharterEvidenceFamily(section.evidenceFamily))
-        .map((section) => section.key),
-    );
-  }, [charterBasisActive, phaseCaptureSections]);
+  const charterBasisSectionKeys = useMemo(
+    () =>
+      resolveCharterBasisSectionKeys({
+        active: charterBasisActive,
+        sections: phaseCaptureSections,
+      }),
+    [charterBasisActive, phaseCaptureSections],
+  );
 
   const [charterBasisBySection, setCharterBasisBySection] = useState<
     Record<string, CharterBasisValue>
@@ -2503,7 +2511,8 @@ export function MovesPhaseStandaloneClient({
   );
 
   const captureSectionBasis = (section: PhaseCaptureSection): ReactNode => {
-    if (!charterBasisSectionKeys.has(section.key)) return null;
+    if (!charterBasisSurfaceForSection(section.key, charterBasisSectionKeys))
+      return null;
     const approvedSources = initialApprovedP1CaptureEvidenceReferences
       .filter((reference) => reference.familyKey === section.evidenceFamily)
       .map((reference) => ({
@@ -2546,7 +2555,8 @@ export function MovesPhaseStandaloneClient({
   };
 
   const captureSectionBadge = (section: PhaseCaptureSection): ReactNode => {
-    if (!charterBasisSectionKeys.has(section.key)) return null;
+    if (!charterBasisSurfaceForSection(section.key, charterBasisSectionKeys))
+      return null;
     return isCharterAssumption(charterBasisBySection[section.key]) ? (
       <CharterAssumptionBadge />
     ) : null;
@@ -2556,7 +2566,8 @@ export function MovesPhaseStandaloneClient({
   // hand-off read-back an unmarked row is indistinguishable from a backed one,
   // which is the failure the basis control exists to prevent.
   const captureSectionRecapMark = (section: PhaseCaptureSection): ReactNode => {
-    if (!charterBasisSectionKeys.has(section.key)) return null;
+    if (!charterBasisSurfaceForSection(section.key, charterBasisSectionKeys))
+      return null;
     return <CharterBasisMark value={charterBasisBySection[section.key]} />;
   };
 
@@ -2625,13 +2636,16 @@ export function MovesPhaseStandaloneClient({
   // disclosure have to agree — two independent folds of the same bases would be
   // free to drift, and a gate that disagreed with the read-back the author just
   // saw is worse than a gate that says nothing.
+  const charterBasisRollupRows = charterBasisRollupSections({
+    sections: phaseCaptureSections,
+    sectionKeys: charterBasisSectionKeys,
+  });
+
   const charterBasisSummary =
-    charterBasisSectionKeys.size === 0
+    charterBasisRollupRows === null
       ? null
       : summarizeCharterBasis(
-          phaseCaptureSections
-            .filter((section) => charterBasisSectionKeys.has(section.key))
-            .map((section) => ({ key: section.key, label: section.label })),
+          charterBasisRollupRows,
           charterBasisBySection,
           isCaptureSectionComplete,
         );
