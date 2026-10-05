@@ -1357,8 +1357,50 @@ ${free.length
  */
 const partlyGated = all.filter((i) => !isFinished(i) && i.partialGate);
 
+/**
+ * Which claimable rule, if any, withholds a partly-gated row from the lane
+ * tables — standing item 26.
+ *
+ * This section used to say, of every row it printed, that the claimable half
+ * "is offered in the lane tables above". MEASURED on the live documents at
+ * 2026-10-05T03:58Z: **0 of its 6 rows appeared in any lane table.** Four were
+ * already delivered — two print `DELIVERED ... NOT to be re-taken` inside the
+ * offered cell itself — one was closed on `main`, and the single live row was
+ * blocked on another item.
+ *
+ * The filter above is the whole mechanism, and it is why the same observation
+ * was recorded three times without being repaired. It tests `isFinished` and
+ * `partialGate` and nothing else, so the section bypasses `CLAIMABLE_STAGES`
+ * entirely — and the very first of those stages, `already has proof (not at
+ * rung 0)`, is what correctly keeps a shipped item out of the lane tables. For
+ * any item carrying proof the referral could therefore never be true. That is
+ * not a wording defect: it is a sentence with no state of the world that
+ * falsifies it, printed over the one table in this file an agent is told to
+ * act on.
+ *
+ * So the referral is DERIVED per row, from `CLAIMABLE_STAGES` itself. Not from
+ * a second copy of its rules and not from membership in `claimable`: the list
+ * is declared once because "a report re-deriving the rules a second time can
+ * disagree with the filter it claims to describe", and a row withheld here is
+ * shown under the stage's own label so a generator that starts disagreeing
+ * with its own filter cannot stay green.
+ *
+ * `find` returns the FIRST rejecting stage, which is the funnel's own removal
+ * point, since the funnel applies the stages in this order. Returning `null`
+ * is exactly membership in `claimable` — every stage keeps — so there is no
+ * third outcome to defend and no unreachable branch here to pretend to test.
+ */
+function withholdingStage(item) {
+  return CLAIMABLE_STAGES.find((stage) => !stage.keep(item))?.label ?? null;
+}
+
+const partlyGatedOffered = partlyGated.filter((i) => withholdingStage(i) === null);
+const partlyGatedWithheld = partlyGated.filter((i) => withholdingStage(i) !== null);
+
 function renderPartlyGated() {
   const n = partlyGated.length;
+  const offered = partlyGatedOffered.length;
+  const withheld = partlyGatedWithheld.length;
   const head = "## Partly gated — claimable, with a half you must not take";
 
   if (!n) {
@@ -1371,21 +1413,60 @@ stopped looking are not the same thing.
 `;
   }
 
-  const rows = partlyGated
-    .map((i) => `| ${formatItemId(i.num)} | ${i.lane ?? "?"} | ${String(i.partialGate.say)} | ${String(i.partialGate.gated).replace(/\|/g, "\\|").slice(0, 160)} | ${String(i.partialGate.open).replace(/\|/g, "\\|").slice(0, 160)} |`)
+  const renderRows = (items, withReason) => items
+    .map((i) => {
+      const cells = [
+        formatItemId(i.num),
+        i.lane ?? "?",
+        String(i.partialGate.say),
+        String(i.partialGate.gated).replace(/\|/g, "\\|").slice(0, 160),
+        String(i.partialGate.open).replace(/\|/g, "\\|").slice(0, 160),
+      ];
+      // The stage's own words, never a paraphrase — see `withholdingStage`.
+      if (withReason) cells.splice(2, 0, String(withholdingStage(i)));
+      return `| ${cells.join(" | ")} |`;
+    })
     .join("\n");
+
+  const offeredTable = offered
+    ? `**${offered} of ${n} ${offered === 1 ? "is" : "are"} offered in the lane tables above**, and for ${offered === 1 ? "that row" : "those rows"} the
+other half is ordinary executable work. Take the claimable half; do not attempt
+the gated one, and do not read its appearance here as permission.
+
+| # | Lane | Gate | The half that is GATED | The half that is CLAIMABLE |
+|---|---|---|---|---|
+${renderRows(partlyGatedOffered, false)}
+`
+    : `**0 of ${n} ${n === 1 ? "is" : "are"} offered in the lane tables above.** Every row below was
+removed from the claimable filter by a rule this file already applies, so there
+is no takeable half here at all. That is a real state and it is reported rather
+than implied: it was the live state of this section on 2026-10-05, when all six
+of its rows were withheld and the text still told an agent to take one.
+`;
+
+  const withheldTable = withheld
+    ? `\n**${withheld} of ${n} ${withheld === 1 ? "is" : "are"} withheld** — the claimable filter removes ${withheld === 1 ? "it" : "them"} from
+every lane table, so the half named below is NOT on offer and taking it means
+redoing finished or blocked work. The rule that removed each row is its own, as
+\`CLAIMABLE_STAGES\` words it, and the commonest is \`already has proof (not at
+rung 0)\`: an item whose claimable half already shipped stays here because its
+GATED half is still open, which is correct, and says nothing about the other.
+
+| # | Lane | Why it is NOT offered | Gate | The half that is GATED | The half that was CLAIMABLE |
+|---|---|---|---|---|---|
+${renderRows(partlyGatedWithheld, true)}
+`
+    : `\n**0 of ${n} ${n === 1 ? "is" : "are"} withheld**, so the referral above holds for every row. This
+line renders at zero for the same reason the section does: an empty bucket and a
+generator that stopped checking must not read the same.
+`;
 
   return `${head}
 
 **${n} item${n === 1 ? "" : "s"}** carr${n === 1 ? "ies" : "y"} a gate that its own row, or a
-register line, declares over a NAMED half. The other half is ordinary executable
-work and is offered in the lane tables above. Take the claimable half; do not
-attempt the gated one, and do not read its appearance here as permission.
+register line, declares over a NAMED half.
 
-| # | Lane | Gate | The half that is GATED | The half that is CLAIMABLE |
-|---|---|---|---|---|
-${rows}
-
+${offeredTable}${withheldTable}
 A gate with no declared scope still covers the whole item and stays in *Blocked
 on Anand*, unchanged. The declaration is \`**Gate scope — partial.** Gated half:
 <text>. Claimable half: <text>.\`, both halves are required, and a declaration
