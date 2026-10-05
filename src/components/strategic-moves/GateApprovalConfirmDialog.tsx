@@ -10,6 +10,8 @@
 // user before they commit. Reuses the same confirm-dialog CSS pattern
 // already established in StrategicMoveOriginateClient.tsx.
 
+import type { ReactNode } from "react";
+
 import styles from "./StrategicMoves.module.css";
 
 interface Props {
@@ -22,6 +24,14 @@ interface Props {
    *  free-text/user-editable — this is a display of who the session
    *  already resolves to, not an identity claim the user can alter. */
   approverLabel: string | null;
+  /**
+   * Optional disclosure rendered between the summary and the approver line —
+   * what the approver should know about the basis of what they are approving,
+   * rather than what the action does. Advisory: it is never allowed to disable
+   * the confirm button, so a caller that passes one cannot turn this dialog
+   * into a second gate. Omitted ⇒ the dialog renders exactly as before.
+   */
+  disclosure?: ReactNode;
   actorLabelPrefix?: string;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -34,6 +44,7 @@ export function GateApprovalConfirmDialog({
   title,
   summary,
   approverLabel,
+  disclosure,
   actorLabelPrefix = "Approving as",
   confirmLabel = "Confirm approval",
   cancelLabel = "Cancel",
@@ -56,6 +67,7 @@ export function GateApprovalConfirmDialog({
           {title}
         </h3>
         <p className={styles.confirmDialogBody}>{summary}</p>
+        {disclosure ?? null}
         {approverLabel ? (
           <p className={styles.confirmDialogBody} style={{ fontWeight: 700 }}>
             {actorLabelPrefix}: {approverLabel}

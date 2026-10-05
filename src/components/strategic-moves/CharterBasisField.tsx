@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import type { CharterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-assumption-disclosure";
 
 /**
  * The visible half of the P1 Charter minimum-viable-evidence gate: a per-field
@@ -286,6 +287,14 @@ const CBF_CSS = `
 .cbr-open-label{font-size:14px;font-weight:600}
 .cbr-open-plan{font-size:13px;color:#5f5e5a}
 .cbr-foot{font-size:12.5px;color:#5f5e5a;margin:14px 0 0}
+.cgd{--cbf-mono:'JetBrains Mono',ui-monospace,monospace;font-family:Inter,system-ui,sans-serif;text-align:left;border:1px solid rgba(10,10,11,.12);border-radius:10px;background:#f5f1eb;color:#2c2c2a;padding:12px 14px;margin:4px 0 2px}
+.cgd-amber{border-color:rgba(186,117,23,.3);background:#fdf7ee}
+.cgd-eyebrow{font-family:var(--cbf-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6f6e68;margin-bottom:6px}
+.cgd-headline{font-size:13.5px;line-height:1.5;margin:0;font-weight:500}
+.cgd-amber .cgd-headline{color:#ba7517}
+.cgd ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cgd-label{font-size:13px;font-weight:600}
+.cgd-plan{font-size:12.5px;color:#5f5e5a}
 `;
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -485,6 +494,54 @@ export function CharterBasisRollup({
           An assumption completes the charter. It is not evidence, and it is not
           counted as covered — Discover carries it forward to confirm or correct.
         </p>
+      ) : null}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * The gate dialog's disclosure.
+ *
+ * Same counts as the rollup, different surface and a different moment. The
+ * rollup informs the person writing the charter; this informs the person
+ * approving it, inside the confirm dialog, before they commit. The decision of
+ * what to say lives in `src/lib/programs/charter-gate-assumption-disclosure.ts`
+ * so the copy is testable without rendering a modal; this only paints it.
+ *
+ * Advisory. It never disables the confirm button — an assumption is a thing the
+ * approver is told about, not a thing the capture flow gets to veto.
+ * ───────────────────────────────────────────────────────────────────────────*/
+
+export function CharterGateAssumptionNotice({
+  disclosure,
+}: {
+  disclosure: CharterGateAssumptionDisclosure | null;
+}) {
+  if (!disclosure) return null;
+  const amber = disclosure.tone === "amber";
+  return (
+    <section
+      className={`cgd${amber ? " cgd-amber" : ""}`}
+      aria-label="How this charter is known"
+      data-testid="charter-gate-assumption-notice"
+      data-tone={disclosure.tone}
+      data-assumptions={disclosure.openAssumptions.length}
+      data-unrecorded={disclosure.unrecorded}
+    >
+      <style>{CBF_CSS}</style>
+      <div className="cgd-eyebrow">How this charter is known</div>
+      <p className="cgd-headline">{disclosure.headline}</p>
+      {disclosure.openAssumptions.length > 0 ? (
+        <ul>
+          {disclosure.openAssumptions.map((assumption) => (
+            <li key={assumption.sectionKey}>
+              <div className="cgd-label">
+                {assumption.label} · {assumption.owner}
+              </div>
+              <div className="cgd-plan">{assumption.p2ValidationPlan}</div>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </section>
   );
