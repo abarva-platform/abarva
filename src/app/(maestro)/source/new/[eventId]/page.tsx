@@ -18,6 +18,8 @@ import {
 import { readinessForEvent } from "@/lib/source/new-workspace/step-readiness-adapter";
 import { readPreparedRfxPackagesForEvent } from "@/lib/source/rfx-delivery/prepared-package-repository";
 import { describeReleaseState } from "@/lib/source/new-workspace/release-state-view";
+import { readParsedYieldForEvent } from "@/lib/source/artifact-registry/parsed-yield-repository";
+import { describeParsedYield } from "@/lib/source/artifact-registry/parsed-yield-view";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
 import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/stage-plan-snapshot";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
@@ -90,6 +92,7 @@ export default async function SourceNewEventPage({
     requestVersion,
     strategyVersion,
     preparedRfxPackages,
+    parsedYield,
     stage04VendorPanel,
     stage05NdaCoverage,
     responseArtifactsResult,
@@ -109,6 +112,10 @@ export default async function SourceNewEventPage({
     readSourceAuthorityVersionState(event.id, activeClient.key, "strategy"),
     readPreparedRfxPackagesForEvent({
       clientKey: activeClient.key,
+      eventId: event.id,
+    }),
+    readParsedYieldForEvent({
+      tenantKey: activeClient.key,
       eventId: event.id,
     }),
     readSourceNewStage04VendorPanel({
@@ -317,6 +324,7 @@ export default async function SourceNewEventPage({
         requestVersionApproval,
         strategyVersionApproval,
         releaseState: describeReleaseState(preparedRfxPackages),
+        parsedYield: describeParsedYield(parsedYield),
         requestAuthorityVersionId:
           requestVersion.kind === "available"
             ? (requestVersion.currentVersion?.id ?? null)
