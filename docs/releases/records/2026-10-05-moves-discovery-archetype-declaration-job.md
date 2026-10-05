@@ -36,10 +36,12 @@ Release lane: `client-data-lane`.
 
 ## QA / Validation
 
-- Conditional writer tests verify tenant/id scoping, legacy-field guards, JSONB merge semantics, and fail-closed behavior when the target row does not match.
-- Resolver test verifies the declared charter classification selects the catalog blueprint and the expected required family keys.
-- Release and CI checks are required before merge.
-- The operator job must emit validation and quality-gate outputs to a private Blob proof bundle before this release is considered data-applied.
+- Focused unit tests: `PASS` — conditional writer tests verify tenant/id scoping, legacy-field guards, JSONB merge semantics, and fail-closed behavior when the target row does not match; the resolver test pins the declared blueprint and required family keys.
+- ESLint: `PASS` — changed TypeScript files.
+- Typecheck: `PASS` — repository typecheck wrapper.
+- Release check: `NOT RUN` — pending final candidate commit.
+- Remote CI: `NOT RUN` — pending PR creation.
+- Governed ACA declaration job and signed-in readback: `NOT RUN` — must occur only after merge and verified deployment.
 
 ## Rollout Plan
 
