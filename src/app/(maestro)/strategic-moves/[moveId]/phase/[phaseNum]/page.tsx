@@ -414,6 +414,13 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_assumptions_discover_v1",
   );
+  // Whether a charter assumption Discover has already resolved still counts as
+  // open. Separate from the flag above on purpose: a tenant may want to inherit
+  // the assumptions read-only without the resolve path acting on them.
+  const charterAssumptionResolutionEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_assumption_resolution_v1",
+  );
   // Composition-only polish for the redesigned capture. It has nothing to show
   // unless the redesigned capture is what renders, so it is resolved as the
   // conjunction rather than left to the client to remember.
@@ -913,6 +920,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       status: entry.status,
       state: entry.state ?? null,
     })),
+    resolutionReadEnabled: charterAssumptionResolutionEnabled,
   });
   const initialPhaseCaptureRevision = computeCaptureRevision(
     initialPhaseCaptureValues,

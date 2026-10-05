@@ -108,7 +108,8 @@ export type FeatureFlagKey =
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
   | "moves_capture_notes_v1"
-  | "moves_capture_handoff_recap_v1";
+  | "moves_capture_handoff_recap_v1"
+  | "moves_charter_assumption_resolution_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -456,6 +457,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Enabled for the synthetic demo tenant for signed-in review; the dock is unchanged elsewhere.",
     policy: "tenant",
     includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_assumption_resolution_v1",
+    summary:
+      "2026-10-05: Lets P2 Discover close a charter assumption it has validated. The phase already inherits the charter answers P1 left standing on an assumption (moves_charter_assumptions_discover_v1), each with an owner and the plan for validating it, but a person looking at one could not record what Discover found, so an assumption stayed open forever once declared. This adds the resolution data model and the resolution-aware read: an assumption resolved as confirmed, corrected, or superseded by approved evidence stops being listed as open and owed. A resolution is stored on the same capture-module row as the recorded basis under its own key, never nested inside it, and is pinned to the revision of the answer it was written about - edit the answer and the resolution no longer applies, the same rule the basis itself follows. A resolution is never rendered as approved evidence. The write path and its control are a later slice; with nothing writing one yet, on and off read identically today. Deliberately separate from moves_charter_assumptions_discover_v1 so a tenant can inherit the assumptions read-only without the resolve path. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
   },
 ];
 
