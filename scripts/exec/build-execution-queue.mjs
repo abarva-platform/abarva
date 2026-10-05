@@ -21,6 +21,11 @@ import { formatQueueProvenance, queueProvenanceStamp } from "./queue-provenance.
 import { isDirectInvocation } from "./cli-entry.mjs";
 import { branchesInClaim } from "./fossil-claims.mjs";
 import {
+  absentNamedPaths,
+  describePreconditionGap,
+  findRepoRoot,
+} from "./claimable-preconditions.mjs";
+import {
   announcesAbstention,
   parseRegisterLines,
   heldPaths,
@@ -1399,6 +1404,65 @@ const blockedCounts = blockedOnUser.reduce((a, i) => {
   return a;
 }, {});
 
+/*
+ * Is each claimable row BUILDABLE, as distinct from claimable?
+ *
+ * Claimability is decided from the backlog's text and the register. Neither
+ * can see the tree, so a row that describes a file it says already exists is
+ * offered as ordinary work when that file is absent — and the cost lands on
+ * whoever takes it. Measured on two consecutive runs against one row: each
+ * read it, re-derived the absence by hand, recorded it in prose this generator
+ * does not read, and the row was offered again unchanged.
+ *
+ * The scan is resolved against the REPO root, found by walking up from this
+ * script, not against OPERATOR_ROOT — the operator root holds the backlog, and
+ * the paths a row names are repository paths.
+ *
+ * It annotates and never filters. See `claimable-preconditions.mjs` for why:
+ * prose names deliverables as well as preconditions, and suppressing a row on
+ * this signal would hide work that is perfectly takeable.
+ */
+const REPO_ROOT = findRepoRoot(SCRIPT_ROOT);
+const preconditionGaps = new Map(
+  claimable
+    .map((i) => [i.num, absentNamedPaths(`${i.title ?? ""} ${i.acceptance ?? ""}`, REPO_ROOT)])
+    .filter(([, absent]) => absent.length),
+);
+
+/*
+ * Say when the scan DID NOT RUN, rather than letting silence read as "clean".
+ *
+ * With no repo root there is no tree to check against, so every path would
+ * look absent and the honest answer is to report nothing — which is
+ * indistinguishable from a clean scan unless this says so. That ambiguity is
+ * the defect class this backlog exists for: one CI gate proved a control
+ * existed by finding its name in a file.
+ */
+function preconditionCaution() {
+  if (!claimable.length) return "";
+  if (REPO_ROOT === null) {
+    return (
+      "**The precondition scan did not run.** No `.git` was found above " +
+      `\`${SCRIPT_ROOT}\`, so the repository tree the rows' paths resolve against ` +
+      "could not be located. Read the absence of a `⚠ PRECONDITION` marker below as " +
+      "**unmeasured**, not as clean, and run the generator from a checkout."
+    );
+  }
+  if (!preconditionGaps.size) return "";
+  const ids = [...preconditionGaps.keys()].sort();
+  const n = [...preconditionGaps.values()].reduce((t, v) => t + v.length, 0);
+  return (
+    `**Caution, not a filter:** ${preconditionGaps.size} of the ${claimable.length} claimable ` +
+    `row${claimable.length === 1 ? "" : "s"} name${preconditionGaps.size === 1 ? "s" : ""} ` +
+    `${n} repository path${n === 1 ? "" : "s"} that ${n === 1 ? "is" : "are"} not in the checkout ` +
+    `— ${ids.map((id) => `\`${id}\``).join(" ")}. Each is marked \`⚠ PRECONDITION\` in its lane ` +
+    "table with the path named. A row may name a path it asks you to CREATE, so this removes " +
+    "nothing and changes no count; establish which case you are in before you claim. If the row " +
+    "describes the file as already existing, the work is blocked until it lands, and taking the " +
+    "row means building a second copy or editing somebody else's branch."
+  );
+}
+
 function row(i) {
   // An ambiguous row used to say only that the number was ambiguous, which
   // told an agent to be careful without telling it what to be careful about.
@@ -1423,7 +1487,11 @@ function row(i) {
       + ` Claimable half: ${String(i.partialGate.open).replace(/\|/g, "\\|")}.`
       + " Take that half only; the gated half needs Anand and is not yours to attempt."
     : "";
-  return `| ${i.num} | ${i.track} | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 150)} | ${(i.acceptance || "—").replace(/\|/g, "\\|").slice(0, 190)}${flag}${scoped} |`;
+  // The precondition marker is LAST so it is the final thing read before the
+  // row is claimed, and it is the queue's own measurement rather than the
+  // row's words — the row cannot know whether the file it names is on disk.
+  const unbuilt = describePreconditionGap(preconditionGaps.get(i.num) ?? []);
+  return `| ${i.num} | ${i.track} | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 150)} | ${(i.acceptance || "—").replace(/\|/g, "\\|").slice(0, 190)}${flag}${scoped}${unbuilt} |`;
 }
 
 const laneSection = (lane) => {
@@ -1632,6 +1700,8 @@ ${Object.entries(byLane).map(([l, v]) => `${l}:${v.length}`).join("  ")}
 
 ${heldWiringCaution()}
 
+${preconditionCaution()}
+
 ${renderClaimableFunnel()}
 ${renderHeldPaths()}
 
@@ -1710,7 +1780,7 @@ ${releasedClaims.length ? `\n**Explicitly released (${releasedClaims.length}):**
 ${renderOrderDisagreements()}`;
 
 fs.writeFileSync(OUT, out);
-console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable (${partlyGated.length} partly gated), ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
+console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable (${partlyGated.length} partly gated, ${REPO_ROOT === null ? "precondition scan DID NOT RUN" : `${preconditionGaps.size} naming an absent path`}), ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
 // Item C-549. On stdout as well as in the file: a run that is tailed rather
 // than read would otherwise never learn that work sits outside every lane.
 console.log(
