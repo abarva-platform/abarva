@@ -212,6 +212,16 @@ lookups, including the inherited-property path, so prefer a forward fix.
   intentional for now: it resolves to nothing and each caller's own fallback
   applies. Whether an undeclared Move should instead resolve an explicit
   general-case entry in both catalogs is open.
+- **The config overlay that landed on `main` while this branch was open can
+  claim to apply a blueprint it did not.** Its id schema permits
+  `[a-z0-9_]+`, which admits `__proto__`; assigning that key on a plain object
+  sets the prototype instead of adding an own id, so the entry never joins the
+  catalog while the loader's `applied` list still names it. Verified
+  independently of this change. Resolution here is already immune — it walks the
+  catalog's own declared ids, so such an entry can never be returned, whereas a
+  raw index would have returned it. The over-claim in `applied` is on the write
+  side, in code that landed minutes before this merge, and is deliberately left
+  for its own narrow fix rather than widened into this release.
 - **Nothing surfaces which catalog answered.** A deployer still cannot see, in
   the product, that a declaration reached one catalog and not the other. Making
   that visible belongs with the blueprint-resolution-basis work already in
