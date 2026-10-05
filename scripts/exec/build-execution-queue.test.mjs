@@ -4190,5 +4190,211 @@ function unplacedSplit(dir) {
   }
 }
 
+
+/* ======================================================================== */
+/* The precondition scan over claimable rows.                               */
+/*                                                                          */
+/* THE DEFECT, measured rather than argued: a row is offered as claimable    */
+/* with nothing saying that a file it describes as ALREADY EXISTING is absent */
+/* from the tree. Two consecutive runs of the execution task took that row,  */
+/* re-derived the absence by hand, wrote it down in prose this generator does */
+/* not read, and handed the row on unchanged to the next run.                */
+/*                                                                          */
+/* Every case here drives the REAL generator over a fixture whose repo root  */
+/* is a `.git` FILE, which is what a git worktree has — and what every run of */
+/* this task works inside. A fixture with a `.git` directory would pass while */
+/* the tool found no root in the only place it is used.                      */
+/* ======================================================================== */
+{
+  function laneRowIdsOf(rendered) {
+    const ids = new Set();
+    let inLane = false;
+    for (const line of rendered.split("\n")) {
+      if (/^### Lane /.test(line)) inLane = true;
+      else if (/^## /.test(line)) inLane = false;
+      if (!inLane) continue;
+      const m = line.match(/^\| (#?[A-Z]-?\d+) \|/);
+      if (m) ids.add(m[1]);
+    }
+    return ids;
+  }
+
+  /*
+   * The LANE ROWS only.
+   *
+   * A document-wide search for the marker is met by a sibling: the "scan did
+   * not run" caution NAMES `⚠ PRECONDITION` in order to tell the reader that
+   * its absence below is unmeasured rather than clean. A whole-file
+   * `!includes(marker)` therefore failed while the rows were correctly
+   * unmarked — the assertion was wrong, not the code. Asserting per row is
+   * what makes "no row is marked" checkable.
+   */
+  function laneRowsOf(rendered) {
+    const rows = [];
+    let inLane = false;
+    for (const line of rendered.split("\n")) {
+      if (/^### Lane /.test(line)) inLane = true;
+      else if (/^## /.test(line)) inLane = false;
+      if (inLane && /^\| (#?[A-Z]-?\d+) \|/.test(line)) rows.push(line);
+    }
+    return rows;
+  }
+
+  const MARKER = "\u26a0 PRECONDITION";
+  const markedRows = (rendered) => laneRowsOf(rendered).filter((r) => r.includes(MARKER));
+
+  /** A fixture whose root is a repo, carrying one claimable item with `text`. */
+  function preconditionFixture(id, text, { repo = true } = {}) {
+    const dir = freshFixture();
+    if (repo) fs.writeFileSync(path.join(dir, ".git"), "gitdir: /elsewhere/.git/worktrees/fx\n");
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **${text}** | T | Close it. |\n`,
+    );
+    // The structure map is repo-owned, so an injected id has to be placed or
+    // the board refuses the whole run.
+    mapFixtureId(dir, id);
+    return dir;
+  }
+
+  /* --- (a) THE DEFECT. A named path that is absent is marked, by name. --- */
+  {
+    const dir = preconditionFixture(
+      "T-910",
+      "scripts/ci/there-is-no-such-scanner.mjs already reads and reports each workflow state",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a claimable row naming an absent repository path is marked PRECONDITION, by name",
+      q.status === 0
+        && markedRows(rendered).length === 1
+        && markedRows(rendered)[0].startsWith("| T-910 |")
+        && markedRows(rendered)[0].includes("scripts/ci/there-is-no-such-scanner.mjs"),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).length}\n${markedRows(rendered).join("\n")}\nstderr=${q.stderr.trim()}`,
+    );
+
+    /* The whole point of an annotation over a filter: the row is STILL there.
+     * A prose-extracted path can be a deliverable, so suppressing the row
+     * would hide work — worse than the defect. If this case ever fails, the
+     * scan has started removing rows and must be reverted. */
+    check(
+      "the marked row is STILL offered in its lane table and the count is unchanged",
+      laneRowIdsOf(rendered).has("T-910")
+        && /Wrote EXECUTION_QUEUE\.md: 2 claimable/.test(q.stdout),
+      `laneIds=${[...laneRowIdsOf(rendered)].join(",")}\nstdout=${q.stdout.trim()}`,
+    );
+
+    check(
+      "the caution says it is not a filter, so a reader does not skip takeable work",
+      /Caution, not a filter[\s\S]*not in the checkout/.test(rendered),
+      rendered.slice(rendered.indexOf("Caution, not a filter"), rendered.indexOf("Caution, not a filter") + 300),
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) NECESSITY. A path that EXISTS is not marked.
+   * Without this, a scan that marked every row would pass (a) while
+   * measuring nothing — the defect class this whole backlog exists for. --- */
+  {
+    const dir = preconditionFixture(
+      "T-911",
+      "scripts/exec/build-execution-queue.mjs is the generator this row changes",
+    );
+    fs.mkdirSync(path.join(dir, "scripts", "exec"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "scripts", "exec", "build-execution-queue.mjs"), "// present\n");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a claimable row naming a path that EXISTS carries no PRECONDITION marker",
+      q.status === 0
+        && markedRows(rendered).length === 0
+        && laneRowIdsOf(rendered).has("T-911")
+        && /0 naming an absent path/.test(q.stdout),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).join("\n")}\nstdout=${q.stdout.trim()}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) A relative fragment is not a repository path.
+   * Rows write `intelligence/query/route.ts` meaning `src/app/api/...`, and
+   * `intelligence/` is a real top-level directory in this repository, so a
+   * listing-derived root rule reports the fragment absent. --- */
+  {
+    const dir = preconditionFixture(
+      "T-912",
+      "the two panels canvas/analytics/ValueWaterfall.tsx and intelligence/query/route.ts",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a relative fragment outside the declared roots raises no marker",
+      q.status === 0 && markedRows(rendered).length === 0 && laneRowIdsOf(rendered).has("T-912"),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).join("\n")}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) No repo root: the queue says the scan DID NOT RUN.
+   * Silence here would read as a clean scan, which is the inversion this
+   * backlog exists to refuse — one CI gate once proved a control existed by
+   * finding its name in a file. --- */
+  {
+    const dir = preconditionFixture(
+      "T-913",
+      "scripts/ci/there-is-no-such-scanner.mjs already reads the state",
+      { repo: false },
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "with no repo root the queue states the scan did not run and marks nothing",
+      q.status === 0
+        && /precondition scan did not run/i.test(rendered)
+        && /unmeasured/.test(rendered)
+        && markedRows(rendered).length === 0
+        && /precondition scan DID NOT RUN/.test(q.stdout),
+      `exit=${q.status}\nsaid=${/precondition scan did not run/i.test(rendered)}` +
+        `\nunmeasured=${/unmeasured/.test(rendered)}` +
+        `\nnoMarkedRows=${markedRows(rendered).length}` +
+        `\nstdoutSaid=${/precondition scan DID NOT RUN/.test(q.stdout)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (e) The extension alternation, held shut end to end.
+   * `ts|tsx` ordering truncates `.tsx` to `.ts` and `.json` to `.js`, and
+   * both then resolve to nothing — the tool inventing two defects out of two
+   * files that are there. Driven through the generator, not just the module,
+   * because that is where the marker a reader acts on is written. --- */
+  {
+    const dir = preconditionFixture(
+      "T-914",
+      "src/components/home/HomeSurface.tsx and scripts/exec/source-stage-map.json both exist",
+    );
+    fs.mkdirSync(path.join(dir, "src", "components", "home"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "src", "components", "home", "HomeSurface.tsx"), "// present\n");
+    // `source-stage-map.json` is already beside the copied toolchain; the
+    // fixture's repo root is that same directory, so the path resolves.
+    fs.mkdirSync(path.join(dir, "scripts", "exec"), { recursive: true });
+    fs.copyFileSync(
+      path.join(dir, "source-stage-map.json"),
+      path.join(dir, "scripts", "exec", "source-stage-map.json"),
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a .tsx and a .json path that both exist raise no marker (extension order)",
+      q.status === 0
+        && markedRows(rendered).length === 0
+        && !rendered.includes("HomeSurface.ts`")
+        && laneRowIdsOf(rendered).has("T-914"),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).join("\n")}\n` +
+        `${rendered.slice(Math.max(0, rendered.indexOf("T-914")), rendered.indexOf("T-914") + 400)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);
