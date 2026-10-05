@@ -2269,6 +2269,191 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    // ─── moves_charter_assumptions_discover_v1 / _resolution_v1:
+    //     the HOST call site ───────────────────────────────────────────────
+    // The fold is pure and pinned (charter-assumptions-carry-forward.test.ts)
+    // and the panel has its own suite. Neither flag had a single case in THIS
+    // file, which is where the two decisions that join them live:
+    //
+    //   1. where the band is mounted — it is the `openingBand` slot on the
+    //      capture flow, so it exists only once `moves_capture_v2` renders,
+    //      and it reads BEFORE the first Discover question rather than under
+    //      the answers it is supposed to qualify;
+    //   2. that the host passes the fold's rows through verbatim — it re-reads
+    //      no flag, re-derives no row, and re-counts nothing. Both flags are
+    //      resolved server-side and arrive collapsed into one prop, so the
+    //      only way the host can break them is by dropping or reshaping it.
+    //
+    // Pinning (2) needs rows the host could not have reconstructed from the
+    // capture state it also holds: the owner and the validation plan live in
+    // the P1 basis record, which is loaded on phase === 1 only. A case that
+    // asserted the band merely EXISTS would survive the prop being dropped
+    // and re-derived empty — the same blind spot
+    // `initialP1CharterBasisBySection` fell into once already.
+    const [sponsorFamily, scopeFamily] = P1_CHARTER_EVIDENCE_FAMILIES;
+
+    // Deliberately unguessable from anything else this component is given.
+    const carriedRows = [
+      {
+        sectionKey: sponsorFamily.sectionKey,
+        label: sponsorFamily.label,
+        answer: "Weekly written update to the steering group.",
+        owner: "Priya Raman",
+        validationPlan: "Confirm the cadence in the sponsor interview.",
+        recordedAt: "2026-10-01T09:00:00.000Z",
+      },
+      {
+        sectionKey: scopeFamily.sectionKey,
+        label: scopeFamily.label,
+        answer: "Member services only; billing stays out.",
+        owner: "Dana Whitfield",
+        validationPlan: "Walk the queue with operations and list what it owns.",
+        recordedAt: "2026-10-01T09:05:00.000Z",
+      },
+    ];
+
+    const discoverMove = () =>
+      makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" });
+
+    it("moves_charter_assumptions_discover_v1 OFF: P2 capture opens with no carried-assumption band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={null}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the flow IS up, so this is the surface being inactive and not an
+      // unmounted capture screen
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-assumptions-carry-forward"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_charter_assumptions_discover_v1 ON: the band opens P2 capture, above the first question", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={carriedRows}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const band = screen.getByTestId("charter-assumptions-carry-forward");
+      const flow = screen.getByTestId("moves-capture-flow");
+      expect(flow).toContainElement(band);
+
+      // the band qualifies the questions, so it has to precede them: a slot
+      // that rendered after the panel would be a footnote to answers the
+      // person has already given
+      const panel = container.querySelector(".mcf-panel");
+      expect(panel).not.toBeNull();
+      expect(
+        band.compareDocumentPosition(panel as Node) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it("moves_charter_assumptions_discover_v1 ON: each row renders the owner and plan the host could not re-derive", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={carriedRows}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const band = screen.getByTestId("charter-assumptions-carry-forward");
+      for (const row of carriedRows) {
+        expect(within(band).getByText(row.label)).toBeInTheDocument();
+        expect(within(band).getByText(row.answer)).toBeInTheDocument();
+        expect(within(band).getByText(row.owner)).toBeInTheDocument();
+        expect(within(band).getByText(row.validationPlan)).toBeInTheDocument();
+      }
+    });
+
+    it("moves_charter_assumptions_discover_v1 ON: the host re-counts nothing — the prop's length is the count", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={[carriedRows[0]]}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // one row in, one row out. `moves_charter_assumption_resolution_v1`
+      // filters a resolved assumption out inside the fold, so the host's only
+      // correct behaviour is to show exactly what it was handed — anything it
+      // added back would re-open an assumption Discover has already closed.
+      const band = screen.getByTestId("charter-assumptions-carry-forward");
+      expect(band).toHaveAttribute("data-count", "1");
+      expect(within(band).getAllByRole("listitem")).toHaveLength(1);
+      expect(
+        within(band).queryByText(scopeFamily.label),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_charter_assumptions_discover_v1 ON with nothing assumed: an empty charter is not announced as a clean one", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={[]}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-assumptions-carry-forward"),
+      ).not.toBeInTheDocument();
+      // and no "0 assumptions" consolation prize anywhere on the screen
+      expect(screen.queryByText(/still an assumption/i)).not.toBeInTheDocument();
+    });
+
+    it("moves_charter_assumptions_discover_v1 ON without moves_capture_v2: the legacy canvas grows no carry-forward band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriedCharterAssumptions={carriedRows}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // structural, not a droppable conditional: `openingBand` is a slot on
+      // the capture flow, so with v2 off there is nowhere to put the band.
+      // Pin the consequence rather than the branch.
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-assumptions-carry-forward"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(carriedRows[0].owner)).not.toBeInTheDocument();
+    });
+
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -2788,6 +2973,150 @@ describe("MovesPhaseStandaloneClient", () => {
         `0 of ${narrower} answered`,
       );
       expect(narrower).not.toBe(DEFAULT_P3_TOTAL);
+    });
+  });
+
+  // ─── the capture phase strip's SAVED counts, AT THE HOST ─────────────────
+  // `moves_capture_phase_rollup_v1`. The strip can measure exactly one row —
+  // the phase on screen — so the other five state a bare question count. The
+  // rollup lets those five say how much of the phase holds a SAVED answer,
+  // from capture-module rows the route already loaded.
+  //
+  // The derivation and the row's rendering each have their own suite, so what
+  // is untested is the wiring in this component: whether the counts reach the
+  // strip, whether each lands on its OWN row, and whether the two nouns stay
+  // apart. A saved answer is only a persisted non-empty value, while the
+  // viewed row's "answered" additionally requires structured validity,
+  // evidence readiness and a satisfied charter basis — so a host that passed
+  // the rollup where the measured count belongs, or spread one phase's count
+  // across the strip, would report work nobody did under the stronger word.
+  describe("capture phase strip saved counts (moves_capture_phase_rollup_v1)", () => {
+    const P0_TOTAL = getPhaseCaptureSections(0, null).length;
+    const P1_TOTAL = getPhaseCaptureSections(1, null).length;
+    const P2_TOTAL = getPhaseCaptureSections(2, null).length;
+    const P5_TOTAL = getPhaseCaptureSections(5, null).length;
+
+    const renderStrip = (args: {
+      savedAnswerCounts?: Readonly<Record<number, number>>;
+      confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+      viewedPhase?: number;
+    }) => {
+      const viewedPhase = args.viewedPhase ?? 1;
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          capturePhaseSavedAnswerCounts={args.savedAnswerCounts}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialConfirmedSolutionRoute={args.confirmedSolutionRoute ?? null}
+          move={makeMove({ currentPhase: 5, phaseLabel: "P1 Charter" })}
+          phaseNum={viewedPhase}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const bar = screen.getByRole("navigation", { name: "Phases" });
+      return {
+        bar,
+        row: (code: string) =>
+          within(bar).getByRole("button", { name: new RegExp(`^${code}`) }),
+      };
+    };
+
+    it("an unmeasured row states the saved count the host was handed, under that word", () => {
+      const { row } = renderStrip({ savedAnswerCounts: { 0: 4, 2: 6 } });
+
+      // Each count lands on its own phase's row — not one figure repeated, and
+      // not another phase's figure, which is the attribution a host assembling
+      // the strip can get wrong without changing anything else on screen.
+      expect(row("P0")).toHaveTextContent(`4 of ${P0_TOTAL} saved`);
+      expect(row("P2")).toHaveTextContent(`6 of ${P2_TOTAL} saved`);
+      // and never under the stronger noun
+      expect(row("P0")).not.toHaveTextContent("answered");
+      expect(row("P2")).not.toHaveTextContent("answered");
+    });
+
+    it("a row the rollup says nothing about keeps its bare question count", () => {
+      // The vacuity guard for the case above: the counts are read per phase,
+      // so a phase with no entry is unchanged rather than borrowing one.
+      const { row } = renderStrip({ savedAnswerCounts: { 0: 4, 2: 6 } });
+
+      expect(row("P5")).toHaveTextContent(`${P5_TOTAL} questions`);
+      expect(row("P5")).not.toHaveTextContent("saved");
+    });
+
+    it("the viewed row keeps its measured count even when the rollup names it", () => {
+      // One figure per row, and on the row the screen CAN measure it must be
+      // the measured one. Nothing here has been answered, so the live count is
+      // 0 — strictly below the 6 the rollup offers, which is what makes a host
+      // that preferred the rollup visible.
+      const { row } = renderStrip({ savedAnswerCounts: { 1: 6 } });
+
+      expect(row("P1")).toHaveTextContent(`0 of ${P1_TOTAL} answered`);
+      expect(row("P1")).not.toHaveTextContent("saved");
+    });
+
+    it("no rollup supplied (flag off): no row claims a saved count", () => {
+      const { bar, row } = renderStrip({});
+
+      expect(row("P0")).toHaveTextContent(`${P0_TOTAL} questions`);
+      expect(bar).not.toHaveTextContent("saved");
+    });
+
+    it("a fully saved unmeasured row still earns no completion tick", () => {
+      // The invariant that must survive the rollup: a tick is a claim that the
+      // phase is complete, and saved answers are not measured ones. This is the
+      // ticked-but-blank row's defect arriving from the other direction.
+      const { row } = renderStrip({ savedAnswerCounts: { 0: P0_TOTAL } });
+
+      expect(row("P0")).toHaveTextContent(`${P0_TOTAL} of ${P0_TOTAL} saved`);
+      expect(within(row("P0")).queryByLabelText("complete")).toBeNull();
+    });
+
+    it("a saved count is stated against the same route-aware total as its row", () => {
+      // P3 Design is the only phase whose question set depends on the Move's
+      // confirmed route, and the count was derived against that route-aware
+      // set server-side. If the host states the row's total without the route,
+      // the pair disagrees about which questions the phase even asks — the
+      // same dropped argument the totals above guard, now on the weaker noun.
+      const narrower = getPhaseCaptureSections(3, {
+        route: "technical_product",
+        recommendation: "technical_product",
+        solutionOutput: "data_product",
+        workflowChange: "limited",
+        roleAccountabilityChange: "none",
+        adoptionOwner: "Named business owner",
+        adoptionResponsibility: "business",
+        decision: "confirm",
+        evidenceReference: "evidence-ref",
+        validatedBy: "Validator",
+        rationale: "Route confirmed against the evidence reviewed at the gate.",
+      }).length;
+      const defaultTotal = getPhaseCaptureSections(3, null).length;
+      expect(narrower).not.toBe(defaultTotal);
+
+      const { row } = renderStrip({
+        savedAnswerCounts: { 3: narrower - 1 },
+        confirmedSolutionRoute: {
+          route: "technical_product",
+          recommendation: "technical_product",
+          solutionOutput: "data_product",
+          workflowChange: "limited",
+          roleAccountabilityChange: "none",
+          adoptionOwner: "Named business owner",
+          adoptionResponsibility: "business",
+          decision: "confirm",
+          evidenceReference: "evidence-ref",
+          validatedBy: "Validator",
+          rationale:
+            "Route confirmed against the evidence reviewed at the gate.",
+        },
+      });
+
+      expect(row("P3")).toHaveTextContent(
+        `${narrower - 1} of ${narrower} saved`,
+      );
+      expect(row("P3")).not.toHaveTextContent(`of ${defaultTotal} saved`);
     });
   });
 
@@ -3329,7 +3658,19 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getAllByText(/already approved/i).length).toBeGreaterThan(0);
+    // A phase the Move has only ADVANCED PAST is read-only on a passed gate,
+    // not on a read approval: nothing on this screen fetches an approval
+    // record. Assert the new claim, and that the old one is gone — over the
+    // joined text of each node, because the tick and the sentence are separate
+    // nodes inside one element.
+    expect(screen.getAllByText(/gate has passed/i).length).toBeGreaterThan(0);
+    expect(
+      screen
+        .queryAllByText(
+          /\bis already approved\b|\bthe approved (output|record)\b/i,
+        )
+        .map((n) => n.textContent),
+    ).toEqual([]);
     expect(
       screen.getAllByRole("button", { name: /Continue to P1 Charter/i }).length,
     ).toBeGreaterThan(0);
@@ -3375,8 +3716,15 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Open Tower →")).toBeInTheDocument();
     expect(
-      screen.getByText(/P5 is already approved and handed off to Tower/i),
+      screen.getByText(/P5's gate has passed and the Move handed off to Tower/i),
     ).toBeInTheDocument();
+    expect(
+      screen
+        .queryAllByText(
+          /\bis already approved\b|\bthe approved (output|record)\b/i,
+        )
+        .map((n) => n.textContent),
+    ).toEqual([]);
     expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
       "Open Tower",
     );

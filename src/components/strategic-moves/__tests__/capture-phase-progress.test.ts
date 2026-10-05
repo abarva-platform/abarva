@@ -120,6 +120,11 @@ describe("capturePhaseAnsweredCount", () => {
       name: "Charter",
       reachable: true,
       answered: 3,
+      // The saved-answer rollup's companion field. `null` here for two
+      // independent reasons — this context passes no rollup, and this is the
+      // viewed row, which never carries one — so the passthrough this case
+      // guards is unaffected by it.
+      savedAnswers: null,
     });
   });
 });
