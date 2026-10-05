@@ -45,6 +45,19 @@ export interface MovesCaptureFlowProps {
   isSectionComplete: (sectionKey: string) => boolean;
   /** The real input for a section (textarea or structured editor). */
   renderSectionInput: (section: PhaseCaptureSection) => ReactNode;
+  /**
+   * Optional per-field affordance rendered directly BELOW the input — today the
+   * P1 Charter "How do you know this?" basis control. Returning null (the
+   * default, and whenever `moves_charter_basis_v1` is off) leaves the question
+   * exactly as it renders without it.
+   */
+  renderSectionBasis?: (section: PhaseCaptureSection) => ReactNode;
+  /**
+   * Optional badge rendered beside a question's label — today the amber
+   * "Assumption · validate in Discover" marker, so an unsupported answer is
+   * visibly classified at the question and never reads as evidence.
+   */
+  renderSectionBadge?: (section: PhaseCaptureSection) => ReactNode;
   /** Short recap value shown on the hand-off screen for a section. */
   sectionRecap: (section: PhaseCaptureSection) => string;
   /** Navigate to another (reachable) phase; opens it at step 1. */
@@ -78,6 +91,8 @@ export function MovesCaptureFlow({
   sections,
   isSectionComplete,
   renderSectionInput,
+  renderSectionBasis,
+  renderSectionBadge,
   sectionRecap,
   onSelectPhase,
   onSubmitPhase,
@@ -201,11 +216,17 @@ export function MovesCaptureFlow({
                   {groups[view]
                     ? groupSections(groups[view]).map((section) => (
                         <div className="mcf-question" key={section.key}>
-                          <label className="mcf-q-label">{section.label}</label>
+                          <div className="mcf-q-labelrow">
+                            <label className="mcf-q-label">
+                              {section.label}
+                            </label>
+                            {renderSectionBadge?.(section) ?? null}
+                          </div>
                           {section.description ? (
                             <p className="mcf-q-help">{section.description}</p>
                           ) : null}
                           {renderSectionInput(section)}
+                          {renderSectionBasis?.(section) ?? null}
                         </div>
                       ))
                     : null}
@@ -346,7 +367,8 @@ const MCF_CSS = `
 .mcf-panel-title{font-family:var(--mcf-serif);font-weight:400;font-size:clamp(28px,4vw,38px);line-height:1.15;letter-spacing:-.01em;margin:0 0 10px}
 .mcf-panel-intro{font-size:17px;color:var(--mcf-muted);margin:0 0 40px}
 .mcf-questions{display:flex;flex-direction:column;gap:36px}
-.mcf-q-label{display:block;font-size:16px;font-weight:600;margin-bottom:6px}
+.mcf-q-labelrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.mcf-q-label{display:block;font-size:16px;font-weight:600}
 .mcf-q-help{font-size:14px;line-height:1.5;color:var(--mcf-muted);margin:0 0 6px}
 .mcf-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px;padding-top:24px;border-top:1px solid var(--mcf-line)}
 .mcf-footer-count{font-size:14px;color:var(--mcf-faint)}

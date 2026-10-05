@@ -104,6 +104,7 @@ export type FeatureFlagKey =
   | "moves_capture_v2"
   | "moves_home_v2"
   | "moves_charter_basis_v1"
+  | "moves_capture_p0_v1"
   | "moves_capture_notes_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
@@ -415,6 +416,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_charter_basis_v1",
     summary:
       "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Off by default; the legacy approved-evidence lock stays in force until a tenant is enabled via includeTenants.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_p0_v1",
+    summary:
+      "2026-10-04: Extends the redesigned 3-step phase capture (moves_capture_v2) to P0 Originate, which was mounted for phases 1-5 only and so stayed on the legacy finder-columns canvas. P0's eleven canonical inputs are already grouped into its three steps (Why now / The bet / Readiness) by the shared step-group contract, so this changes only which phases render that flow. The hand-off step carries P0's own gate control inline, using the same authorization check and the same required-evidence gate as the legacy canvas - P0 still cannot advance on intake answers alone. Requires moves_capture_v2 to also be enabled for the tenant; off by default.",
     policy: "tenant",
     includeTenants: [],
   },

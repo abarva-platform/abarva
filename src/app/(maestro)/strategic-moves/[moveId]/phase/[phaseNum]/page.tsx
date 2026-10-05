@@ -387,6 +387,21 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_v2",
   );
+  // P0 Originate was left on the legacy canvas when the 3-step capture shipped
+  // for phases 1-5. This flag extends the same flow to P0; it is deliberately
+  // separate from `moves_capture_v2` so a tenant already on the redesigned
+  // phases 1-5 does not have its P0 screen change without its own review.
+  const captureP0Enabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_capture_p0_v1",
+  );
+  // The same tenant gate the phase-capture route applies to the P1 basis gate,
+  // resolved here so the per-field basis control renders only where the relaxed
+  // gate is actually in force. Off ⇒ the control does not render at all.
+  const charterBasisEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_basis_v1",
+  );
   // Governed fill-from-notes in the capture dock. Gated separately from the
   // capture redesign itself so the dock affordance can be reviewed on its own.
   const captureNotesEnabled = isFeatureEnabled(
@@ -778,9 +793,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     2,
   );
   const initialApprovedP1CaptureEvidenceReferences =
-    parsedPhase === 1
-      ? await listApprovedPhaseEvidence(ctx, move.id, 1)
-      : [];
+    parsedPhase === 1 ? await listApprovedPhaseEvidence(ctx, move.id, 1) : [];
   // The design phase decides between options. When the Move's approved
   // evidence declares its own option set, that set — not a template one — is
   // what is offered and what gets recorded as approved.
@@ -821,7 +834,8 @@ export default async function StrategicMovePhaseWorkspacePage({
     ),
   });
   const initialPhaseCaptureValues: Record<string, string> = {};
-  const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> = {};
+  const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> =
+    {};
   const initialReferenceDraftValues: Record<string, string> = {};
   for (const section of getPhaseCaptureSections(
     parsedPhase,
@@ -853,7 +867,8 @@ export default async function StrategicMovePhaseWorkspacePage({
       }
     }
     const referenceDraft = readSyntheticReferenceDraft(moduleRow);
-    if (referenceDraft) initialReferenceDraftValues[section.key] = referenceDraft;
+    if (referenceDraft)
+      initialReferenceDraftValues[section.key] = referenceDraft;
   }
   const initialPhaseCaptureRevision = computeCaptureRevision(
     initialPhaseCaptureValues,
@@ -910,6 +925,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         riskAssessmentEnabled={riskAssessmentEnabled}
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
+        captureP0Enabled={captureP0Enabled}
+        charterBasisEnabled={charterBasisEnabled}
+        initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         captureNotesEnabled={captureNotesEnabled}
       />
     </AppShell>
