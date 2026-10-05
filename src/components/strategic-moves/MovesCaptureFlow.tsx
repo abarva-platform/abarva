@@ -75,6 +75,14 @@ export interface MovesCaptureFlowProps {
    * without it.
    */
   handoffSummary?: ReactNode;
+  /**
+   * Optional band rendered at the top of every CAPTURE step (not the hand-off,
+   * which has `handoffSummary`) — today the P2 list of charter answers still
+   * standing on an assumption. Null (the default, and whenever
+   * `moves_charter_assumptions_discover_v1` is off) leaves the step exactly as
+   * it reads without it.
+   */
+  openingBand?: ReactNode;
   /** Navigate to another (reachable) phase; opens it at step 1. */
   onSelectPhase: (phase: number) => void;
   /** Governed submit of this phase (maps to the gate/approval flow). */
@@ -111,6 +119,7 @@ export function MovesCaptureFlow({
   sectionRecap,
   renderSectionRecapMark,
   handoffSummary = null,
+  openingBand = null,
   onSelectPhase,
   onSubmitPhase,
   onAdvanceToNextPhase,
@@ -192,7 +201,11 @@ export function MovesCaptureFlow({
           <ol>
             {groups.map((group, i) => {
               const state =
-                i < view ? "is-done" : i === view ? "is-current" : "is-upcoming";
+                i < view
+                  ? "is-done"
+                  : i === view
+                    ? "is-current"
+                    : "is-upcoming";
               return (
                 <li className={`mcf-step ${state}`} key={group.title}>
                   <span className="mcf-step-rule" />
@@ -222,6 +235,7 @@ export function MovesCaptureFlow({
         <main className="mcf-main">
           {view < 3 ? (
             <>
+              {openingBand}
               <section className="mcf-panel" aria-labelledby="mcf-panel-title">
                 <div className="mcf-panel-head">
                   <h1 id="mcf-panel-title" className="mcf-panel-title">
@@ -326,7 +340,9 @@ export function MovesCaptureFlow({
                   <span className="mcf-eyebrow">
                     Next · {nextPhase ? nextPhase.code : "Delivery"}
                   </span>
-                  <h2>What {nextPhase ? nextPhase.name : "delivery"} will need</h2>
+                  <h2>
+                    What {nextPhase ? nextPhase.name : "delivery"} will need
+                  </h2>
                 </div>
                 <div className="mcf-next-actions">
                   <button
@@ -341,7 +357,9 @@ export function MovesCaptureFlow({
                     className="mcf-btn-primary"
                     onClick={onAdvanceToNextPhase}
                   >
-                    {nextPhase ? `Begin ${nextPhase.name} →` : "Hand off to delivery →"}
+                    {nextPhase
+                      ? `Begin ${nextPhase.name} →`
+                      : "Hand off to delivery →"}
                   </button>
                 </div>
               </div>
