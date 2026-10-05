@@ -43,6 +43,15 @@ const AI_OPERATIONS: DiscoveryBlueprint = {
   blueprintId: "ai_operations_customer_digital",
   blueprintVersion: "2026-07-17",
   archetypeLabel: "AI Operations / Customer-Digital",
+  suggestionKeywords: [
+    "irops",
+    "recovery",
+    "disruption",
+    "operations",
+    "operational optimization",
+    "ai operations",
+    "customer digital",
+  ],
   evidenceFamilies: [
     {
       id: "disruption_ops_data",
@@ -265,6 +274,18 @@ const AI_OPERATIONS: DiscoveryBlueprint = {
 // ── Healthcare / Member-Service Contact Center Agent Assist ────────────────
 const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
   blueprintId: "healthcare_contact_center_agent_assist",
+  suggestionKeywords: [
+    "contact center",
+    "call center",
+    "member service",
+    "agent assist",
+    "crm",
+    "patient",
+    "member",
+    "claims",
+    "eligibility",
+    "prior auth",
+  ],
   blueprintVersion: "2026-07-17",
   archetypeLabel: "Healthcare Contact Center Agent Assist",
   evidenceFamilies: [
@@ -423,6 +444,20 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
 // ── Financial Services / Commercial Lending Agent Assist ───────────────────
 const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
   blueprintId: "financial_services_commercial_lending_agent_assist",
+  suggestionKeywords: [
+    "commercial lending",
+    "loan",
+    "lending",
+    "credit",
+    "kyc",
+    "sanctions",
+    "collateral",
+    "covenant",
+    "servicing",
+    "loan origination",
+    "core banking",
+    "document intelligence",
+  ],
   blueprintVersion: "2026-07-22",
   archetypeLabel: "Financial Services Commercial Lending Agent Assist",
   evidenceFamilies: [
@@ -851,6 +886,52 @@ export function resolveDeclaredDiscoveryBlueprint(
 ): DiscoveryBlueprint | null {
   if (!declaredArchetypeId || !declaredArchetypeId.trim()) return null;
   return DISCOVERY_BLUEPRINT_CATALOG[normalizeArchetypeId(declaredArchetypeId)] ?? null;
+}
+
+export interface DiscoveryArchetypeSuggestion {
+  blueprintId: string;
+  archetypeLabel: string;
+  /** How many suggestion keywords matched the text (higher = stronger hint). */
+  score: number;
+}
+
+/**
+ * Setup-time suggestion only: rank catalog archetypes by how well their
+ * `suggestionKeywords` match a Move's text, so an origination/setup flow can
+ * PROPOSE an archetype for a human to confirm and declare. This never resolves
+ * a blueprint on its own — resolution honors the declaration
+ * (`resolveDeclaredDiscoveryBlueprint`); this only helps a person choose what to
+ * declare. The general default is never suggested.
+ */
+export function suggestDiscoveryArchetypes(
+  text: string,
+  limit = 3,
+): DiscoveryArchetypeSuggestion[] {
+  const haystack = (text || "").toLowerCase();
+  if (!haystack.trim()) return [];
+  return Object.values(DISCOVERY_BLUEPRINT_CATALOG)
+    .filter((bp) => bp.blueprintId !== DEFAULT_BLUEPRINT.blueprintId)
+    .map((bp) => {
+      const keywords =
+        bp.suggestionKeywords && bp.suggestionKeywords.length > 0
+          ? bp.suggestionKeywords
+          : [bp.archetypeLabel.toLowerCase(), bp.blueprintId.replace(/_/g, " ")];
+      let score = 0;
+      for (const keyword of keywords) {
+        if (keyword && haystack.includes(keyword.toLowerCase())) score += 1;
+      }
+      return {
+        blueprintId: bp.blueprintId,
+        archetypeLabel: bp.archetypeLabel,
+        score,
+      };
+    })
+    .filter((suggestion) => suggestion.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score || a.blueprintId.localeCompare(b.blueprintId),
+    )
+    .slice(0, Math.max(0, limit));
 }
 
 /** Resolve the discovery blueprint for a Move.
