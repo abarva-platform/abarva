@@ -34,6 +34,204 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-05 seventeenth wave — walked on serving SHA `bbe053153e`
+
+**Item:** U-565.
+**Walked:** 2026-10-05, between 13:27:43Z and 13:38:14Z, by
+`source-backlog-executor#20261005T125500Z`.
+**Signed in as:** the platform-admin session on an existing browser session. No
+credential was entered on any host during this walk.
+
+**The queue was drained before the walk, not merely re-read after it.** This is
+the sixteenth wave's practical addition and it cost 44 minutes to honour. At
+claim time, 12:54:49Z, `gh run list` showed 12 runs outstanding and an
+`ACA main deploy` pending on a merge that had landed 29 seconds earlier; three
+further merges landed while waiting, and the serving build moved three times
+(`--mf4b52697`, `--m97598648`, `--mbbe05315`). The walk started only once no
+`ACA main deploy` was in flight and the run for `bbe053153e` had completed
+`success` at 13:25:38Z. **Two runs were still outstanding at that moment and are
+named rather than hidden:** `Unit suites` and `Coverage Threshold`, both on
+`7ec02d8e4e`, which `git merge-base --is-ancestor` puts **not** on `main` — a
+pull-request branch, whose CI cannot shift shared web traffic under the
+deployment-authority rule. The literal reading of "no run outstanding" was not
+met; the reading that protects attribution was, and the closing invariant read
+confirms it.
+
+**The serving SHA is established from two independent sources.**
+`az acr manifest show-metadata` on the serving digest returns exactly one tag,
+`main-bbe05315`. The sole 100%-traffic revision is named `--mbbe05315`. They
+agree, and neither was pinned in advance: U-565 was filed naming `ead3fcec28`
+as the serving build and `867b252de9` as `main` HEAD. By walk time the build had
+moved **four** further times and `main` had moved six.
+
+**Runtime invariant, read read-only with `az` at 13:26:36Z, again mid-walk at
+13:36:38Z, and again at the close at 13:38:14Z — unchanged across all three:**
+
+| | |
+|---|---|
+| Container App template image | `sha256:78c09e2c…6964d` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--mbbe05315`, sole entry, weight 100 |
+| That revision's own image | `sha256:78c09e2c…6964d` — identical to the template |
+| Revision state | `Healthy` / `Running`, created 13:22:58Z |
+| Deploy run | `bbe053153e`, `completed` / `success` at 13:25:38Z |
+
+No revision was created inside the observation window: the newest active
+revision's creation time, 13:22:58Z, precedes the window's open at 13:27:43Z by
+over four minutes, and the three older active revisions all sit at weight 0. A
+later deploy (`b7c1f7cbe2`) started at 13:33:25Z and had produced no revision by
+the closing read, so every observation below is attributable to `bbe053153e`.
+
+### The ancestor sweep — re-derived, and it is six merges wider than the item's floor
+
+- `c166b73790`, the sixteenth wave's walked build, is an ancestor of
+  `bbe053153e`, asserted with `git merge-base --is-ancestor`.
+- The repository squash-merges, so the sweep is taken over `--first-parent`,
+  which returns **17** merges over `c166b73790..bbe053153e`. Each was separately
+  asserted an ancestor of the walked build.
+- Client-visibility is decided by **measurement, not by the subject line**: files
+  under `src/app`, `src/components` or `src/lib` excluding tests. **14** score
+  ≥ 1 and **3** score 0.
+- U-565 measured **8** against `867b252de9` and called that a floor. It was one:
+  `#9013` `#9015` `#9012` `#9014` `#9016` `#9018` are in scope and the row names
+  none of them.
+
+| Merge | PR | Non-test files | In scope | Named by U-565 |
+|---|---|---|---|---|
+| `0ea9b3a561` | #9002 | 6 | yes | yes |
+| `f0a4e63d16` | #9003 | 2 | yes | yes |
+| `a78b4a748c` | #9005 | 2 | yes | yes |
+| `b9af8943b8` | #9006 | 2 | yes | yes |
+| `78ffe605c5` | #9007 | 2 | yes | yes |
+| `ead3fcec28` | #9008 | 2 | yes | yes |
+| `a96869f6fc` | #9009 | 1 | yes | yes |
+| `867b252de9` | #9011 | 3 | yes | yes |
+| `372534eb44` | #9013 | 2 | yes | **no** |
+| `3165e2c3aa` | #9015 | 1 | yes | **no** |
+| `f4b52697c1` | #9012 | 1 | yes | **no** |
+| `b126af51ec` | #9014 | 4 | yes | **no** |
+| `97598648d8` | #9016 | 2 | yes | **no** |
+| `bbe053153e` | #9018 | 2 | yes | **no** |
+| `b7eaa059b6` `10146581aa` `28dba57f21` | #9001 #9004 #9010 | 0 each | no — excluded by measurement | — |
+
+### Flag state, read from the serving SHA
+
+| Flag | `includeTenants` | Meaning on this runtime |
+|---|---|---|
+| `moves_capture_v2` | `["meridian"]` | **ON** for the synthetic demo tenant |
+| `moves_charter_basis_v1` | `["meridian"]` | **ON** |
+| `moves_capture_p0_v1` | `["meridian"]` | **ON** |
+| `moves_capture_composition_v1` | `["meridian"]` | **ON** |
+| `moves_capture_notes_v1` | `["meridian"]` | **ON** |
+| `moves_charter_assumptions_discover_v1` | `[]` | **OFF for every tenant** |
+
+**No flag was flipped**, per the twelfth wave's standing rule. (The literals
+above are quoted configuration; everywhere else this block names the tenant by
+its role.)
+
+### What was observed, and the boundary it stayed inside
+
+Five Moves — including `Payment integrity and leakage reduction`
+(`15f3538a…aa021a92dc55`), the Move the fourteenth and sixteenth waves used — at
+P1 Charter and P2 Discover; the P0 Originate intake at `/strategic-moves/new`;
+the portfolio landing; and all four Source New events the runtime serves.
+
+Stepping the Originate navigation and switching an event tab are client-side
+view changes. **No write was performed:** no basis was selected, no answer typed,
+no proposal inserted, no gate or phase control pressed, no intake submitted, no
+flag touched.
+
+### Results
+
+| # | Surface | Merge | Verdict | What was observed |
+|---|---|---|---|---|
+| 1 | Moves P1 Charter capture — `moves_capture_v2` ON path, regression check | #9002 #9003 #9012 #9015 #9016 | **pass on the six discriminators — the full mount set is `blocked`** | All six discriminators identical to the thirteenth, fourteenth and sixteenth waves: capture flow ×1, `.mcf-phasebar` ×1, `.mcf-stepbar` ×1, step titles *Scope the bet* / *People & decisions* / *Plan the proof* all present, footer *Step 1 of 3* ×1, `.mcf-question` ×3 on step 1. **The 3+2+2 = 7 mount set prior waves measured is no longer reachable without a write** — see row 3; steps `02` and `03` are `disabled: true` on the step bar, the step bar only moves backwards, and the single forward control is the now-disabled Continue. Recorded as `blocked`, with the cause named, rather than carried forward from the sixteenth wave. |
+| 2 | Moves capture phase strip — an unmeasured row claims nothing | #9003 `f0a4e63d16` | **pass, and it settles the sixteenth wave's open note** | On the P1 route the six rows read **`11 questions` · `0 of 7 answered` · `8 questions` · `7 questions` · `7 questions` · `7 questions`** — exactly one measured row, the viewed one. On the P2 route of a different Move the measured row **moves with the view**: `11 questions` · `7 questions` · **`0 of 8 answered`** · `8 questions` · `7 questions` · `7 questions`. The sixteenth wave read six measured-looking figures (`11 / 7 / 8 / 7 / 7 / 7`) on this strip. Four further Moves were read and all six returned the same shape. |
+| 3 | Moves capture — Continue is gated on saved step readiness | #9015 `3165e2c3aa` | **pass — against that merge's own recorded baseline** | `.mcf-btn-primary` reads *Continue* and is `disabled: true` on step 1 of P1 with the strip reporting *0 of 7 answered*, and likewise on step 1 of P2 with *0 of 8 answered*. #9015's release record states its signed-in baseline measured the opposite on the same surface: *"Continue enabled while its first step reported 0/7 answered"*. **Enforcement is server-side and was not exercised** — the disabled control is a client affordance. |
+| 4 | Moves capture — the free-text answer boxes fill their column | #9012 `f4b52697c1` | **pass** | The `.mcf-input` rule is present in the component's own `<style>`; the three P1 step-1 textareas each compute to **848px** with `box-sizing: border-box` and no `cols` attribute, and their `.mcf-question` containers are also **848px** — the box exactly fills the column. The filed defect was the browser-default `cols=20`. |
+| 5 | Moves capture dock — the notes trigger is a full-width band above the tab row | #9016 `97598648d8` | **pass on the notes trigger; the dock header is `blocked`** | `capture-notes-open` ×1 at `x: 301, width: 848` — the same left edge and width as `.mcf-stepbar` at `x: 301, width: 848` — and at `y: 351` against the step bar's `y: 578`, so it is full-width, left-aligned and above the tab row. **The AgentDock eyebrow half is `blocked`:** the role label *Charter partner* carries the merge's computed contract (`white-space: nowrap`, `text-overflow: ellipsis`, height 16px against a 15.6px line box, so one line) but the dock chrome on this route computes `display: none` on both the trigger and the panel even at `aria-expanded="true"`, so the crowding-of-mode-icons layout the merge targets was never observed at non-zero width. |
+| 6 | Moves phase stepper — the figure states what it counts | #9007 `78ffe605c5` | **pass** | The six stepper rows read **`3 of 3 gate criteria`** · `1 of 2 gate criteria` · `0 of 6 gate criteria` · `0 of 3 gate criteria` · `0 of 5 gate criteria` · `0 of 4 gate criteria`. The bare nounless `N of M` the merge was opened against is absent from the stepper: the only other `N of M` shapes on the page are `Phase 2 of 6 · Charter` and the footer `Step 1 of 3`, both of which name their own set. |
+| 7 | Moves portfolio value line — counted from the governed field, not its label | #9005 `a78b4a748c` | **pass** | The landing reads **"39 of 52 moves have declared value; the rest declare in Charter."** The defect this merge removed compared the *formatted* string against the `"Declares in Charter"` fallback copy; the reading that defect produces once the copy is changed is `52 of 52`. `39 ≠ 52` is the discriminator, and the plural agrees with the total. |
+| 8 | Moves portfolio reconciliation strip — each noun agrees with its own count | #9006 `b9af8943b8` | **pass** | *Declared by client* **38 programmes**, *Tracked in Moves* **52 records**, *Declared budget* **$739.7M**, *Declared value* **$845.9M**. Both nouns agree with their counts and both amounts render as declared figures rather than the `—` undeclared token. |
+| 9 | P0 Originate intake — every figure says what it counts | #9008 `ead3fcec28` | **pass** | The phase rail reads `P0 Originate` **0 of 17 answers** and then **`Not started`** on all five later rows. The five hard-coded literals the merge removed (`0 of 5`, `0 of 5`, `0 of 4`, `0 of 4`, `0 of 4`) occur **0 times** on the screen. The promote bar reads **"0 of 17 answers captured — finish the remaining P0 answers."** and the progress pill's noun, *answers captured*, agrees with its own total. **The discard-dialog figure was not reached** — opening that dialog risks discarding the intake, which is a write this walk does not perform. |
+| 10 | P0 Originate — the step position counts the list it is a position in | #9013 `372534eb44` | **pass, on the exact reading the defect produced** | The navigation holds 18 steps: 17 scaffold fields plus *Review P0 intake*. The last **field** (*Complexity tier*) reads **`Step 17 of 18`** and the **submit** step reads **`Step 18 of 18`** — two distinct positions, with the last one reachable. The filed defect was the submit step forced to the field count and rendering the same position as the last field. The navigation foot reads **"0 of 17 answers captured · finish the required steps"**, so the figure now names *answers* rather than borrowing *required steps*, a set one larger, from the clause beside it. |
+| 11 | Source New Stage 04 — the Strategy authority is read and shown | #9018 `bbe053153e` | **blocked — the panel renders on no served event** | The row lives in `SourceNewStage04VendorReadiness`, which the workspace renders only when the event's stage normalises to `responses`. All **four** served events were read: two at `02 Define · Current`, one at `04 Market package · Current`, one at `04 Market package · Recorded`; none is at Responses. Neither the new *Strategy authority* row **nor its pre-existing sibling *Request authority*** appears on any of the four, and *Solicitation motion* — the panel's own anchor — is absent from all four, which is what makes this an unreached panel rather than a failing row. The merge's claimed behaviour has no subject on this runtime. |
+| 12 | Source New — supplier and NDA panels sit behind one guard | #9009 `a96869f6fc` | **blocked in the half that renders; the absent half holds** | No served event is at `03 Suppliers & NDA`: two have it `Later`, one `Recorded`, and one does not render the step at all. The recorded step could not be opened read-only — clicking it left the view on MARKET PACKAGE, and `?phase=suppliers` was not honoured — so the panels were never rendered and the concentrated guard's positive side is unobserved. The **negative** side holds on all four: `Supplier`/`NDA` occurs only as the step label, with no panel content, which is the branch the merge says renders neither. |
+| 13 | Gate-criteria figures agree with their own count | #9011 `867b252de9` | **blocked — no product consumer on this runtime** | `src/lib/programs/gate-ribbon-view.ts` is imported by **no** non-test file in the repository, and `gate-approval-drawer-view.ts` only by `ProgramDetailPage`, whose route redirects: `/programs` serves the Moves landing and `/programs/<id>` serves the Moves phase route. `N of M criteria met` and the bare criteria badge occur **0 times** on every surface walked. This agrees with the merge's own statement that the singular reading is unreachable from the canonical gate catalog and the fix is one of construction; it is recorded as `blocked` rather than `pass` because no changed reading was observed. |
+| 14 | Portfolio and canvas figures agree with their own counts | #9014 `b126af51ec` | **blocked — not reached read-only** | `formatProgramsIndexFilterSummary`'s `N moves shown` occurs 0 times on the landing, which is consistent with the merge's own verdict that the index summary is construction-only. `formatDeliverableCanvasSummary`'s `N of M deliverable(s) complete` reaches the product through `PhaseApproveAndBuild` and `PhaseDocumentsPanel`; neither was rendered on any surface this walk reached, and `ProgramDetailPage` is unroutable as above. The workshop coverage note has no product consumer by the merge's own account. Nothing observed contradicts the merge; nothing observed evidences it either. |
+| 15 | Charter assumptions carried into Discover — OFF state | #9002 `0ea9b3a561` | **pass as an absence, with the limit stated** | `[data-testid="charter-assumptions-carry-forward"]` and `.cac` are **0** at `view < 3` on the P2 Discover route, which **is** reachable — of six Moves probed, two land on `/phase/2` and four redirect to `/phase/1?blockedPhase=2`. The panel's own contract is that `null` (surface inactive) and `[]` (active, nothing assumed) both render nothing, so **this absence is consistent with two causes and does not by itself evidence the gate.** Which cause holds is settled independently, by reading `includeTenants: []` from the serving commit: the surface is inactive for every tenant. The enabled path needs a recorded basis, which is a server write, and was not exercised. |
+
+### What the item asked for and did not get
+
+- **(iv) is settled affirmatively, and that was a checkable prediction.** The
+  sixteenth wave filed under *Noted, not filed* that P0 read *11 of 11 answered*
+  from the P1 route and *0 of 11 answered* from its own, minutes apart. On this
+  build the P0 row reads **`11 questions`** from the P1 route — no count, no
+  completion tick — and the measured row follows the viewed phase on both routes
+  read. The advanced-past inference is gone, so the two readings no longer
+  disagree; one of them simply no longer claims anything.
+- **The capture flow's later steps left the walk's reach during this wave.** The
+  sixteenth wave measured 3+2+2 on three steps. #9015 correctly disables Continue
+  on an incomplete step, and since the step bar moves only backwards, the
+  consequence is that steps 2 and 3 of the capture flow cannot be reached by any
+  walk that performs no write. This is not a defect — it is the gate working —
+  but it permanently narrows what this family of waves can measure, and the next
+  wave should not read a missing mount-set figure as a regression.
+
+### Stated limits of this walk
+
+- **Rows 11, 12, 13 and 14 are `blocked`, not `fail`.** In each case the merge's
+  subject does not render on this runtime, for a reason read out of the code or
+  the served data rather than guessed.
+- **The verdict counts, stated so neither can be quoted as the other.** Over
+  the fifteen rows above: **eleven `pass`**, two of them partial (rows 1 and 5,
+  each naming the half it did not reach), and **four `blocked`**. Counted per
+  merge, the fourteen in scope divide **ten `pass`** and **four `blocked`**. The
+  two differ because row 1 verdicts five merges jointly.
+- **Three of the fourteen client-visible merges reached no observation at all**
+  — #9011, #9014, #9018 — and #9009 reached only its negative half. That is
+  named here rather than absorbed into a verdict count.
+- **Enforcement is server-side and was not exercised anywhere.** Every refusal
+  recorded — the disabled Continue, the disabled forward steps, the blocked P2
+  redirect — was observed as a client affordance or a route response.
+- **Row 1 is a structural comparison** on the six discriminators: same markers,
+  same counts, same tenant, same phase. It does not assert the capture *behaves*
+  identically.
+- **The dock-header half of row 5** was observed only as a computed style on a
+  zero-width element, which is weaker than the merge's claim deserves.
+
+### Residue — filed, not absorbed
+
+- **U-566** — the Source New Stage 04 vendor-readiness panel renders on no
+  served event, so `#9018`'s *Strategy authority* row and the pre-existing
+  *Request authority* row beside it reach no user. Filed from row 11. The panel
+  is gated on the `responses` stage and no event the runtime serves is at it;
+  this is the same shape as the sixteenth wave's row 7 and should be settled as
+  a data question — whether a served event is meant to reach Responses — rather
+  than by changing the gate.
+- **U-567** — the capture flow's later steps are unreachable to a walk that
+  performs no write, because #9015 disables Continue on an incomplete step and
+  the step bar moves only backwards. The gate is correct; the gap is that the
+  3+2+2 mount set the last three waves recorded is now unmeasurable, and the
+  wave family needs a different discriminator for steps 2 and 3.
+
+### Noted, not filed
+
+- `/programs` redirects to the Moves landing and `/programs/<id>` to the Moves
+  phase route, so `ProgramDetailPage` — the only product consumer of
+  `gate-approval-drawer-view` and one of three for
+  `deliverable-canvas-polish-view` — is unroutable on this runtime. Recorded so
+  that a later wave does not keep trying to reach rows 13 and 14 through it.
+- **Two merges landed after the walked build and are the eighteenth wave's
+  floor, not this one's gap:** `#9019` (`b7c1f7cbe2`) and `#9020`
+  (`62b65eeef7`). `#9019` is the flag-gated remedy for `U-564`'s gated half and
+  edits `MovesCaptureFlow.tsx`, so it is named here with the one check a reader
+  of `U-567` needs: its diff touches the `view === 2` approve-slot branch and
+  the `go(3)` call site and **not** the step bar's `i < view` rule or `#9015`'s
+  Continue condition, so `U-567`'s premise holds on `main` as filed. Neither
+  merge is verdicted by this block and neither was served during the window.
+
+---
+
 ## 2026-10-05 sixteenth wave — walked on serving SHA `c166b73790`
 
 **Item:** U-563.
