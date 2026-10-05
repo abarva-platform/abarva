@@ -86,7 +86,10 @@ import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
-import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
+import {
+  isP1CharterBasisValidForSection,
+  p1CharterEvidenceFamilyForSection,
+} from "@/lib/programs/p1-charter-evidence";
 import {
   SOLUTION_OUTPUT_TYPES,
   SOLUTION_ROUTE_LABELS,
@@ -1207,6 +1210,52 @@ export function MovesPhaseStandaloneClient({
     () => getPhaseCaptureSections(phase.phase, confirmedSolutionRoute),
     [confirmedSolutionRoute, phase.phase],
   );
+  // ─── moves_charter_basis_v1 (flag, default OFF): the per-field basis ───
+  // The capture stepper uses these persisted declarations as P1's minimum
+  // viable evidence alternative. Assertions and owned assumptions can complete
+  // a saved answer without being relabelled as approved evidence.
+  const charterBasisActive = charterBasisSurfaceActive({
+    flagEnabled: charterBasisEnabled,
+    phaseNumber: phase.phase,
+  });
+  const charterBasisSectionKeys = useMemo(
+    () =>
+      resolveCharterBasisSectionKeys({
+        active: charterBasisActive,
+        sections: phaseCaptureSections,
+      }),
+    [charterBasisActive, phaseCaptureSections],
+  );
+  const [charterBasisBySection, setCharterBasisBySection] = useState<
+    Record<string, CharterBasisValue>
+  >(() => ({ ...initialP1CharterBasisBySection }));
+  const [charterBasisSaveError, setCharterBasisSaveError] = useState<
+    Record<string, string>
+  >({});
+  const [charterBasisSavePendingBySection, setCharterBasisSavePendingBySection] =
+    useState<Record<string, boolean>>({});
+
+  const captureBasisForSection = useCallback(
+    (sectionKey: string) => {
+      if (!charterBasisActive || !charterBasisSectionKeys.has(sectionKey)) {
+        return undefined;
+      }
+      return {
+        value: charterBasisBySection[sectionKey] ?? null,
+        savePending: charterBasisSavePendingBySection[sectionKey] === true,
+        saveFailed: Boolean(charterBasisSaveError[sectionKey]),
+        approvedEvidence: initialApprovedP1CaptureEvidenceReferences,
+      };
+    },
+    [
+      charterBasisActive,
+      charterBasisBySection,
+      charterBasisSaveError,
+      charterBasisSavePendingBySection,
+      charterBasisSectionKeys,
+      initialApprovedP1CaptureEvidenceReferences,
+    ],
+  );
   const inferredSelectedOption = useMemo(
     () =>
       phase.phase === 3
@@ -1328,10 +1377,12 @@ export function MovesPhaseStandaloneClient({
             phaseEvidencePassed,
             evidenceReadinessAvailable,
             initialApprovedP1CaptureEvidenceReferences,
+            captureBasisForSection(section.key),
           ).complete,
       ).length,
     [
       businessChangeAssessment,
+      captureBasisForSection,
       initialApprovedEvidenceReferences,
       initialApprovedP1CaptureEvidenceReferences,
       phaseCaptureSections,
@@ -2431,33 +2482,6 @@ export function MovesPhaseStandaloneClient({
     );
   };
 
-  // ─── moves_charter_basis_v1 (flag, default OFF): the per-field basis ───
-  // The visible half of the P1 Charter minimum-viable-evidence gate. The gate
-  // and the persistence already exist server-side (`p1BasisBySection` on the
-  // phase-capture route); this is the only surface that lets a workspace user
-  // DECLARE the basis. Flag off ⇒ none of it renders and the legacy
-  // approved-evidence lock is untouched.
-  const charterBasisActive = charterBasisSurfaceActive({
-    flagEnabled: charterBasisEnabled,
-    phaseNumber: phase.phase,
-  });
-
-  const charterBasisSectionKeys = useMemo(
-    () =>
-      resolveCharterBasisSectionKeys({
-        active: charterBasisActive,
-        sections: phaseCaptureSections,
-      }),
-    [charterBasisActive, phaseCaptureSections],
-  );
-
-  const [charterBasisBySection, setCharterBasisBySection] = useState<
-    Record<string, CharterBasisValue>
-  >(() => ({ ...initialP1CharterBasisBySection }));
-  const [charterBasisSaveError, setCharterBasisSaveError] = useState<
-    Record<string, string>
-  >({});
-
   const saveCharterBasis = useCallback(
     async (sectionKey: string, next: CharterBasisValue | null) => {
       // An assumption is only a recordable basis once it names an owner AND how
@@ -2468,8 +2492,16 @@ export function MovesPhaseStandaloneClient({
         next?.kind === "assumption" &&
         (!next.owner.trim() || !next.p2ValidationPlan.trim())
       ) {
+        setCharterBasisSavePendingBySection((prev) => ({
+          ...prev,
+          [sectionKey]: false,
+        }));
         return;
       }
+      setCharterBasisSavePendingBySection((prev) => ({
+        ...prev,
+        [sectionKey]: true,
+      }));
       try {
         const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
           method: "POST",
@@ -2517,6 +2549,11 @@ export function MovesPhaseStandaloneClient({
             error instanceof Error
               ? error.message
               : "Could not record how you know this. Try again.",
+        }));
+      } finally {
+        setCharterBasisSavePendingBySection((prev) => ({
+          ...prev,
+          [sectionKey]: false,
         }));
       }
     },
@@ -2638,6 +2675,8 @@ export function MovesPhaseStandaloneClient({
       initialApprovedEvidenceReferences.map((r) => r.evidenceId),
       phaseEvidencePassed,
       phaseEvidenceCheckAvailable,
+      initialApprovedP1CaptureEvidenceReferences,
+      captureBasisForSection(sectionKey),
     ).complete;
   };
 
@@ -3231,6 +3270,7 @@ export function MovesPhaseStandaloneClient({
                         phase: phase.phase,
                         sections: phaseCaptureSections,
                         isSectionComplete: isCaptureSectionComplete,
+                        requireAnswers: true,
                         renderSectionInput: captureSectionInput,
                         renderSectionBasis: captureSectionBasis,
                         renderSectionBadge: captureSectionBadge,
@@ -4041,6 +4081,12 @@ function phaseCaptureStatusForSection(
   evidencePassed = true,
   evidenceReadinessAvailable = true,
   approvedCaptureEvidenceReferences: readonly ApprovedPhaseEvidenceReference[] = [],
+  p1Basis?: {
+    value: CharterBasisValue | null;
+    savePending: boolean;
+    saveFailed: boolean;
+    approvedEvidence: readonly ApprovedPhaseEvidenceReference[];
+  },
 ): PhaseCaptureStatusView {
   // Delegates to the shared, unit-tested state machine so the badge's meaning
   // is asserted somewhere other than a browser run. See phase-capture-status.ts
@@ -4083,11 +4129,28 @@ function phaseCaptureStatusForSection(
       tone: "open",
     };
   }
+  const basisSatisfied = Boolean(
+    p1Basis &&
+      !p1Basis.savePending &&
+      !p1Basis.saveFailed &&
+      (p1Basis.value?.kind !== "assumption" ||
+        (p1Basis.value.owner.trim() &&
+          p1Basis.value.p2ValidationPlan.trim())) &&
+      isP1CharterBasisValidForSection({
+        sectionKey: section.key,
+        basis: p1Basis.value,
+        approvedEvidence: p1Basis.approvedEvidence,
+      }),
+  );
+  if (p1Basis && !basisSatisfied) {
+    return { label: "Basis open", complete: false, tone: "open" };
+  }
   if (
     section.evidenceFamily &&
     !approvedCaptureEvidenceReferences.some(
       (reference) => reference.familyKey === section.evidenceFamily,
-    )
+    ) &&
+    !basisSatisfied
   ) {
     return { label: "Evidence open", complete: false, tone: "open" };
   }
