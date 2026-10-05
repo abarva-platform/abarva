@@ -15,12 +15,13 @@
  *   - getOutboundHandoffs / getInboundHandoffs / getHandoffsByTrigger
  *   - getAgentHandoffSummary returns correct entry or null
  *   - describeMissionWorkflowHandoff format
- *   - Module hygiene
+ *   - Determinism and provenance BY EXECUTION (no source-text scanning)
  */
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
+import {
+  buildAgentMissionQueue,
+  getAgentMissionHandoffs,
+} from '@/lib/agent/agent-mission-queue';
 import {
   buildMissionWorkflowHandoffView,
   getOutboundHandoffs,
@@ -32,9 +33,6 @@ import {
   type AgentMissionAgent,
   type AgentMissionHandoffTrigger,
 } from '@/lib/agent/mission-workflow-handoff';
-
-const root = process.cwd();
-const SOURCE_PATH = 'src/lib/agent/mission-workflow-handoff.ts';
 
 const CANONICAL_AGENTS: AgentMissionAgent[] = ['nexus', 'sentinel', 'atlas', 'steward'];
 
@@ -299,41 +297,179 @@ describe('MW4 — determinism', () => {
   });
 });
 
+
 // ---------------------------------------------------------------------------
-// Module hygiene
+// Determinism and provenance — BY EXECUTION
+//
+// Item T-495, suite 10 of 11 in the claimable half. What stood here was a
+// source-text scanner: it read `src/lib/agent/mission-workflow-handoff.ts` as a
+// string, stripped its comments and literals, and asserted the text did not
+// match /Date\.now\s*\(/, /Math\.random\s*\(/, /new\s+Date\s*\(/ or
+// /\bfetch\s*\(/, plus one case asserting the RAW text contained the substring
+// `@/lib/agent/agent-mission-queue`.
+//
+// Three things that scanner could not see, each of which is a real way for this
+// module to stop being what the scanner claimed it was:
+//
+//   1. It read ONE file. `buildMissionWorkflowHandoffView` composes
+//      `agent-mission-queue`, so a clock or a random seed introduced there is
+//      invisible to a scan of the handoff module — and it would make this view
+//      non-deterministic just the same.
+//   2. It matched a CALL SHAPE. `const now = Date.now; now()`,
+//      `globalThis['Date']['now']()`, or a clock read behind any local helper
+//      defeats the regex while doing exactly the thing it forbids.
+//   3. The import case read the raw text, comments included, so a code comment
+//      naming the module path satisfied it. A module that forked a private copy
+//      of the mission seed and merely MENTIONED the queue in a comment passed.
+//
+// The cases below assert the same four properties by removing the capability
+// from the runtime and building anyway, and assert derivation by reconciling the
+// edge set against what the mission queue module itself returns. They cover the
+// whole transitive composition, every call shape, and actual provenance.
 // ---------------------------------------------------------------------------
 
-describe('MW4 — module hygiene', () => {
-  let source: string;
+/**
+ * Replace a global with a stub that throws on any use, build the view through a
+ * FRESH module load, restore the global, and return the built view.
+ *
+ * The module is re-required inside the window on purpose: a clock read at module
+ * load time is as real as one inside the builder, and a suite that only stubs
+ * around an already-loaded module cannot see it.
+ */
+function buildWithGlobalRemoved(
+  name: 'Date.now' | 'new Date' | 'Math.random' | 'fetch',
+): MissionWorkflowHandoffView {
+  const g = globalThis as unknown as Record<string, unknown>;
+  const realDate = g.Date;
+  const realRandom = Math.random;
+  const realFetch = g.fetch;
+
+  const boom = (): never => {
+    throw new Error(`mission-workflow-handoff read ${name}`);
+  };
+
+  if (name === 'Date.now') {
+    const D = function (this: unknown, ...args: unknown[]) {
+      return new (realDate as new (...a: unknown[]) => object)(...args);
+    } as unknown as DateConstructor;
+    Object.setPrototypeOf(D, realDate as object);
+    D.now = boom;
+    g.Date = D;
+  } else if (name === 'new Date') {
+    const D = function () {
+      return boom();
+    } as unknown as DateConstructor;
+    D.now = (realDate as DateConstructor).now;
+    D.parse = (realDate as DateConstructor).parse;
+    D.UTC = (realDate as DateConstructor).UTC;
+    g.Date = D;
+  } else if (name === 'Math.random') {
+    Math.random = boom;
+  } else {
+    g.fetch = boom;
+  }
+
+  try {
+    let built: MissionWorkflowHandoffView | undefined;
+    jest.isolateModules(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fresh = require('@/lib/agent/mission-workflow-handoff') as {
+        buildMissionWorkflowHandoffView: () => MissionWorkflowHandoffView;
+      };
+      built = fresh.buildMissionWorkflowHandoffView();
+    });
+    return built as MissionWorkflowHandoffView;
+  } finally {
+    g.Date = realDate;
+    Math.random = realRandom;
+    g.fetch = realFetch;
+  }
+}
+
+describe('MW4 — no clock, no entropy, no network, proved by removing them', () => {
+  let reference: string;
 
   beforeAll(() => {
-    const raw = readFileSync(resolve(root, SOURCE_PATH), 'utf8');
-    source = raw
-      .replace(/`[\s\S]*?`/g, '``')
-      .replace(/"[^"]*"/g, '""')
-      .replace(/'[^']*'/g, "''")
-      .replace(/\/\/[^\n]*/g, '')
-      .replace(/\/\*[\s\S]*?\*\//g, '');
+    reference = JSON.stringify(buildMissionWorkflowHandoffView());
   });
 
-  it('does not call Date.now', () => {
-    expect(source).not.toMatch(/Date\.now\s*\(/);
+  it.each(['Date.now', 'new Date', 'Math.random', 'fetch'] as const)(
+    'builds an identical view with %s removed from the runtime',
+    (name) => {
+      const view = buildWithGlobalRemoved(name);
+      expect(JSON.stringify(view)).toBe(reference);
+    },
+  );
+
+  it('is byte-equal when the wall clock is a year apart between builds', () => {
+    const g = globalThis as unknown as Record<string, unknown>;
+    const realDate = g.Date as DateConstructor;
+
+    const at = (iso: string): string => {
+      const fixed = new realDate(iso).getTime();
+      const D = function (this: unknown, ...args: unknown[]) {
+        if (args.length === 0) return new realDate(fixed);
+        return new (realDate as new (...a: unknown[]) => object)(...args);
+      } as unknown as DateConstructor;
+      Object.setPrototypeOf(D, realDate);
+      D.now = () => fixed;
+      g.Date = D;
+      try {
+        let json = '';
+        jest.isolateModules(() => {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const fresh = require('@/lib/agent/mission-workflow-handoff') as {
+            buildMissionWorkflowHandoffView: () => MissionWorkflowHandoffView;
+          };
+          json = JSON.stringify(fresh.buildMissionWorkflowHandoffView());
+        });
+        return json;
+      } finally {
+        g.Date = realDate;
+      }
+    };
+
+    expect(at('2026-01-01T00:00:00.000Z')).toBe(at('2027-01-01T00:00:00.000Z'));
+  });
+});
+
+describe('MW4 — the edge set is DERIVED from the mission queue, not a private copy', () => {
+  let view: MissionWorkflowHandoffView;
+  let queueHandoffs: ReturnType<typeof getAgentMissionHandoffs>;
+
+  beforeAll(() => {
+    view = buildMissionWorkflowHandoffView();
+    queueHandoffs = getAgentMissionHandoffs(buildAgentMissionQueue());
   });
 
-  it('does not call Math.random', () => {
-    expect(source).not.toMatch(/Math\.random\s*\(/);
+  it('totalHandoffs equals the count the mission queue module itself reports', () => {
+    expect(view.totalHandoffs).toBe(queueHandoffs.length);
   });
 
-  it('does not call new Date()', () => {
-    expect(source).not.toMatch(/new\s+Date\s*\(/);
+  it('every edge carries a mission that is byte-equal to the queue mission of that id', () => {
+    const byId = new Map(queueHandoffs.map((m) => [m.id, m]));
+    for (const edge of view.handoffEdges) {
+      const fromQueue = byId.get(edge.mission.id);
+      expect(fromQueue).toBeDefined();
+      expect(JSON.stringify(edge.mission)).toBe(JSON.stringify(fromQueue));
+    }
   });
 
-  it('does not call fetch()', () => {
-    expect(source).not.toMatch(/\bfetch\s*\(/);
+  it('every queue mission carrying a handoff has exactly one edge', () => {
+    for (const mission of queueHandoffs) {
+      const edges = view.handoffEdges.filter((e) => e.mission.id === mission.id);
+      expect(edges).toHaveLength(1);
+    }
   });
 
-  it('imports from @/lib/agent/agent-mission-queue', () => {
-    const raw = readFileSync(resolve(root, SOURCE_PATH), 'utf8');
-    expect(raw).toMatch(/@\/lib\/agent\/agent-mission-queue/);
+  it('each edge toAgent, trigger and reason are the queue handoff fields verbatim', () => {
+    const byId = new Map(queueHandoffs.map((m) => [m.id, m]));
+    for (const edge of view.handoffEdges) {
+      const handoff = byId.get(edge.mission.id)?.handoff;
+      expect(handoff).toBeDefined();
+      expect(edge.toAgent).toBe(handoff?.toAgent);
+      expect(edge.trigger).toBe(handoff?.trigger);
+      expect(edge.reason).toBe(handoff?.reason);
+    }
   });
 });
