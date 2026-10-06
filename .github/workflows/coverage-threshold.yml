@@ -11,7 +11,7 @@ jobs:
   behavior-coverage:
     name: Behavior coverage floor
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -28,6 +28,76 @@ jobs:
 
       - name: Run behavior coverage gate
         run: npm run coverage:behavior-gate
+
+      - name: Check agent answer provenance affordances
+        run: >-
+          npx jest src/components/agent/__tests__/AgentDock.test.tsx
+          --runInBand
+          -t 'marks agent turns as AI drafts|shows a citation gap for substantive uncited agent text without evidence context|does not show a citation gap when the surface carries usable evidence context'
+
+      - name: Check the dock renders structured response parts
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.structured-parts.test.tsx --runInBand
+
+      # Backlog item T-003. The behaviour suite above already drives this
+      # sweep, but it fails as one jest case among many. Running it as its
+      # own step means an unreachable comparison names itself in the job log.
+      - name: Check enum comparisons against their CHECK constraints
+        run: npm run audit:enum-reachability
+
+      # T-595. The three steps below were named in `unit-suites.yml` and
+      # `integration-suites.yml`, neither of which is a required status check,
+      # while the behavior gate above ran all three anonymously inside its
+      # directory sweep. Nothing was unprotected — the floor blocked a merge on
+      # every one of them — but the line anyone could quote belonged to a run
+      # that cannot block, and the blocking run had no line to quote. The
+      # repository's rule is now that a step may name a suite individually only
+      # inside a required job, so the names live here, where the name and the
+      # gate are the same run. Each costs about a second; the sweep above runs
+      # them a second time and that is the deliberate part, not the accident.
+      - name: Refuse a new dark tree under src/__tests__
+        run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
+
+      - name: Refuse a new integration directory that no workflow reaches
+        run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
+
+      # T-590's reason, kept: the route-reachability audit answers "can a route
+      # reach this FILE", and two Source surfaces went dead inside files every
+      # Source route reaches. A named step proves the export grain still flags a
+      # real orphan instead of leaving it inferable from a job's exit code.
+      - name: Prove export-level route reachability still flags a real orphan
+        run: npx jest --runTestsByPath src/__tests__/behaviors/route-export-reachability.test.ts --no-coverage --ci
+
+      # U-553. The merge that first stripped a run identifier from a move title
+      # asserted one crafted string, and 5 of the 8 names on the live board kept
+      # an identifier. This suite asserts a COUNT over an enumerated corpus
+      # instead, so a rule that cleans one shape and misses another cannot read
+      # as green. Named here, inside the required job, because a name in a job
+      # that cannot block a merge is not a gate.
+      - name: Count identifier-bearing move titles on the client surface
+        run: npx jest --runTestsByPath src/__tests__/behaviors/moves-title-identifier-corpus.test.ts --no-coverage --ci
+
+      # C-640. The signed-in crawl's auth-cause suites live in
+      # `src/lib/crawl/__tests__`, which `unit-suites.yml` already names AS A
+      # DIRECTORY -- but `Unit suites that pass on main` is required by NO
+      # ruleset, so that run cannot block a merge. Measured, not assumed:
+      # deleting the single line `mint.url = token.url` from
+      # `src/lib/crawl/persona-switcher.ts` -- the line the whole mint-side
+      # identity read rests on -- leaves `src/__tests__/behaviors` at 29 of 29
+      # PASSING, which is all the sweep above covers, and is caught only by the
+      # live-path suite in that non-required job. A guard that cannot fail the
+      # thing it guards is the defect this repository keeps finding, so the
+      # directory is named here too, where the name and the gate are the same
+      # run. `--no-coverage` on purpose: these suites import the 514-line crawl
+      # handler, and letting it into the sweep's denominator would move the
+      # floor rather than protect the behaviour. Named as a DIRECTORY so a
+      # suite written there tomorrow blocks the day it lands.
+      - name: Prove the signed-in crawl's auth-cause guards can fail a merge
+        run: npx jest src/lib/crawl/__tests__ --no-coverage --ci
+
+      # T-595's own control. It must run in a required job for the same reason
+      # the three steps above moved here.
+      - name: Check a named suite step sits in a job that can block a merge
+        run: npm run audit:named-suite-requiredness
 
       - name: Upload coverage summary
         if: always()

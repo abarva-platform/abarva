@@ -21,22 +21,13 @@ import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getProgramPortfolio } from '@/lib/programs/queries';
+import { getPhaseLabel } from '@/lib/programs/phase-labels';
 
 export const metadata = {
   title: 'Users & Access | AbarVa Admin',
 };
 
 const BASE_URL = '/admin/users-access';
-
-const PHASE_LABELS: Record<number, string> = {
-  0: 'P0 Origination',
-  1: 'P1 Discovery',
-  2: 'P2 Synthesis',
-  3: 'P3 Solution Design',
-  4: 'P4 Execution Roadmap',
-  5: 'P5 Approval & Mobilization',
-  6: 'P6 Tower Handoff',
-};
 
 async function loadProvisionPrograms(): Promise<ProgramProvisionOption[]> {
   const activeClient = await getActiveClientRow().catch(() => null);
@@ -52,7 +43,7 @@ async function loadProvisionPrograms(): Promise<ProgramProvisionOption[]> {
     return programs.map((program) => ({
       id: program.id,
       name: program.name,
-      phaseLabel: PHASE_LABELS[program.currentPhase ?? 0] ?? `P${program.currentPhase ?? 0}`,
+      phaseLabel: getPhaseLabel(program.currentPhase ?? 0),
     }));
   } catch {
     return [];
@@ -85,8 +76,6 @@ export default async function UsersAccessPage({
       <EditorialCanvas eyebrow={view.eyebrow} title={view.title} subtitle={view.subtitle}>
         <ContextBar
           tenant={view.context.tenant}
-          mode={view.context.mode}
-          agent={view.context.agent}
           data={view.context.data}
           liveStatus={view.context.liveStatus}
           liveStatusKind={view.context.liveStatusKind}
@@ -94,7 +83,6 @@ export default async function UsersAccessPage({
         <StewardEditorial
           title={view.editorial.title}
           body={view.editorial.body}
-          contextUsed={view.editorial.contextUsed}
           evidenceStrength={view.editorial.evidenceStrength}
           blocker={view.editorial.blocker}
           primaryAction={view.editorial.primaryAction}

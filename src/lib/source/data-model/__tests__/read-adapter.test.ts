@@ -4,16 +4,22 @@ import {
   getContractEvidenceOverview,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
+  listCloudCommitmentCoverageRows,
   listContract360,
   listContractEvidencePricing,
   listContractEvidenceScope,
   listContractPerformancePeriods,
   listContractSpendMonthly,
+  listContractTabIntelligence,
   listContractFinancialExposure,
   listContractOperationalPerformance,
   listContractVendor360,
   listSourceAvaGroundingBundles,
+  listSourceContractActionCandidates,
+  listSourceContractEvidenceCoverage,
   listSourceContractClaimCards,
+  listSourcePageStoryline,
+  listSourceVendorPositions,
 } from "../read-adapter";
 
 jest.mock("@/lib/data-plane/azureRead", () => ({
@@ -189,7 +195,7 @@ describe("listContractVendor360 tenant-key resolution", () => {
       if (sql.startsWith("SELECT set_config")) return [];
       if (
         sql.includes("source.contract_360") &&
-        sql.includes("AND contract_id = $2")
+        sql.includes("AND c.contract_id = $2")
       ) {
         return [];
       }
@@ -381,6 +387,27 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(avaBundles).toHaveLength(1);
     expect(spendRows).toHaveLength(1);
     expect(performanceRows).toHaveLength(1);
+    const performanceQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("source.contract_performance_observation"),
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "INNER JOIN consumption.sourcing_performance_v1 active",
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "active.observation_id = o.observation_id",
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "active.load_run_id = o.load_run_id",
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "current_contract.load_run_id = o.load_run_id",
+    );
+    const spendQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("source.contract_consumption_observation"),
+    );
+    expect(spendQuery?.[0]).toContain(
+      "current_contract.load_run_id = o.load_run_id",
+    );
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
       ["meridian-health"],
@@ -398,6 +425,370 @@ describe("listContractVendor360 tenant-key resolution", () => {
       ["meridian-health"],
       ["meridian-health"],
     ]);
+  });
+
+  it("hydrates missing contract narrative fields from governed fact assertions", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            contract_name: "Enterprise Agreement",
+            purpose_summary: null,
+          },
+        ];
+      }
+      if (sql.includes("FROM source.canonical_fact_assertion")) {
+        return [
+          {
+            fact_key: "contract.purpose_summary",
+            value_text:
+              "Databricks provides governed analytics platform capacity for the declared workload groups.",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const row = await getContract360("meridian-health", "MER-TECH-DBX-001");
+
+    expect(row?.purpose_summary).toContain(
+      "governed analytics platform capacity",
+    );
+    const factQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("FROM source.canonical_fact_assertion"),
+    );
+    expect(factQuery?.[0]).toContain("review_state IN");
+  });
+
+  it("surfaces a declared archetype preserved on the canonical contract payload", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            vendor_category: null,
+            contract_name: "Databricks Enterprise Agreement",
+            annual_value: "1550000",
+            __declared_contract_archetype: "cloud_consumption_commit",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const row = (await listContract360("meridian")).find(
+      (candidate) => candidate.contract_id === "MER-TECH-DBX-001",
+    );
+
+    expect(row).toMatchObject({
+      contract_archetype: "cloud_consumption_commit",
+      vendor_category: "cloud_consumption_commit",
+    });
+  });
+
+  it("does not turn a canonical-source miss into a false missing contract", async () => {
+    let contractQueryCount = 0;
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        contractQueryCount += 1;
+        return contractQueryCount === 1
+          ? []
+          : [
+              {
+                tenant_key: "meridian-health",
+                contract_id: "MER-TECH-DBX-001",
+                vendor_ref: "MER-VEN-DATABRICKS",
+                vendor_name: "Databricks, Inc.",
+                contract_name: "Enterprise Agreement",
+                purpose_summary:
+                  "Governed analytics platform capacity for declared workload groups.",
+              },
+            ];
+      }
+      return [];
+    });
+
+    const row = await getContract360("meridian-health", "MER-TECH-DBX-001");
+
+    expect(row?.contract_id).toBe("MER-TECH-DBX-001");
+    expect(contractQueryCount).toBe(2);
+    expect(
+      run.mock.calls.filter(([sql]) => sql.includes("FROM source.contract_360")),
+    ).toHaveLength(2);
+  });
+
+  it("reads cloud commitment coverage rows through canonical Source tenant context", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("source.cloud_commitment_coverage_observation")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            dataset_version: "cloud-consumption-test",
+            coverage_id: "coverage:MER-TECH-DBX-001:2026-08",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_id: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            cloud_provider: "aws",
+            period_start: "2026-08-01",
+            period_end: "2026-08-31",
+            eligible_stable_workload_spend_usd: "13900",
+            commitment_covered_spend_usd: "13900",
+            on_demand_eligible_spend_usd: "0",
+            commitment_coverage_pct: "0.1076",
+            commitment_utilization_pct: "0.1076",
+            recommended_step_up_usd: "0",
+            expected_discount_pct: "0.09",
+            candidate_monthly_savings_usd: "12500",
+            evidence_reference: "source_cloud_consumption_package:test",
+            source_file_id: "DOC-MER-TECH-DBX-001-METERING",
+            confidence: "0.9",
+            quality_state: "reviewed",
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const rows = await listCloudCommitmentCoverageRows("meridian");
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      contract_id: "MER-TECH-DBX-001",
+      expected_discount_pct: 0.09,
+      commitment_utilization_pct: 0.1076,
+      confidence: 0.9,
+    });
+    expect(run.mock.calls[0]).toEqual([
+      "SELECT set_config('app.tenant_key', $1, false)",
+      ["meridian-health"],
+    ]);
+    expect(run.mock.calls[1][1][0]).toEqual(["meridian-health"]);
+  });
+
+  it("reads every Source 360 impact view with canonical tenant context before alias fallback", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-M365-001",
+            vendor_ref: "vendor-microsoft",
+            vendor_name: "Microsoft Corporation",
+            contract_name: "Microsoft 365 Enterprise Agreement",
+            spend_rows: "12",
+            actual_spend_usd: "1480000",
+            committed_spend_usd: "1480000",
+            performance_rows: "0",
+            breach_rows: "0",
+            credit_calculated_usd: "0",
+            credit_claimed_usd: "0",
+            credit_recovered_usd: "0",
+            unclaimed_credit_usd: "0",
+            opportunity_rows: "1",
+            candidate_amount_usd: "1960000",
+            finance_confirmation_required_rows: "1",
+            opportunities_with_evidence: "1",
+            scope_rows: "3",
+            critical_scope_rows: "1",
+            document_page_text_rows: "5",
+            change_order_rows: "0",
+            coverage_state: "decision_ready",
+            blocker_if_missing: null,
+            evidence_basis_json: { rows: 12 },
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      if (sql.includes("FROM source.contract_action_candidate_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            action_candidate_id: "OPT-M365-SHELFWARE-001",
+            opportunity_id: "OPT-M365-SHELFWARE-001",
+            contract_id: "MER-TECH-M365-001",
+            vendor_ref: "vendor-microsoft",
+            vendor_name: "Microsoft Corporation",
+            title: "Unused license reduction candidate",
+            action_type: "shelfware_reduction",
+            opportunity_type: "shelfware_reduction",
+            finding_summary: "Inactive licenses remain billed.",
+            deterministic_basis: "usage workbook",
+            candidate_amount_usd: "1960000",
+            priority: "medium",
+            readiness_state: "finance_confirmation_required",
+            evidence_state: "present",
+            authority_state: "accepted",
+            finance_confirmation_state: "not_confirmed",
+            next_action: "Validate usage with owner.",
+            accountable_role: "IT Finance",
+            decision_due_date: null,
+            coverage_state: "decision_ready",
+            blocker_if_missing:
+              "Never present this candidate as realized savings until finance confirms it.",
+            citation_basis_json: { opportunity_ref: "OPT-M365-SHELFWARE-001" },
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      if (sql.includes("FROM source.contract_claim_card_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            claim_card_id: "OPT-M365-SHELFWARE-001:claim-card",
+            action_candidate_id: "OPT-M365-SHELFWARE-001",
+            opportunity_id: "OPT-M365-SHELFWARE-001",
+            contract_id: "MER-TECH-M365-001",
+            vendor_ref: "vendor-microsoft",
+            vendor_name: "Microsoft Corporation",
+            claim_title: "Unused license reduction candidate",
+            allowed_executive_statement:
+              "Candidate action is backed by Source evidence; do not call it realized value.",
+            blocker_if_missing:
+              "Never present this candidate as realized savings until finance confirms it.",
+            candidate_amount_usd: "1960000",
+            finance_confirmation_state: "not_confirmed",
+            readiness_state: "finance_confirmation_required",
+            evidence_state: "present",
+            citation_basis_json: { rows: ["USAGE-001"] },
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      if (sql.includes("FROM source.vendor_position_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            vendor_ref: "vendor-microsoft",
+            vendor_name: "Microsoft Corporation",
+            vendor_category: "productivity_platform",
+            contract_count: "1",
+            annual_value: "1480000",
+            total_committed_value: "4440000",
+            auto_renew_contracts: "1",
+            next_end_date: "2027-12-31",
+            contract_refs: ["MER-TECH-M365-001"],
+            action_candidate_count: "1",
+            candidate_amount_usd: "1960000",
+            not_confirmed_count: "1",
+            decision_ready_contracts: "1",
+            unclaimed_credit_usd: "0",
+            spend_rows: "12",
+            performance_rows: "0",
+            vendor_position_state: "act_on_evidence",
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      if (sql.includes("FROM source.source_page_storyline_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            page_key: "overview",
+            section_key: "portfolio_posture",
+            sort_order: "10",
+            headline: "Governed contract book",
+            allowed_executive_statement:
+              "Claims stay limited to populated evidence rows.",
+            primary_metric_label: "Contracts",
+            primary_metric_value: "230",
+            blocker_if_missing: null,
+            citation_basis_json: { "source.contract_360": 230 },
+          },
+        ];
+      }
+      if (sql.includes("FROM source.contract_tab_intelligence_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-M365-001",
+            vendor_ref: "vendor-microsoft",
+            vendor_name: "Microsoft Corporation",
+            contract_name: "Microsoft Enterprise Agreement",
+            tab_key: "optimize",
+            sort_order: "70",
+            headline: "One governed optimization lever is loaded.",
+            allowed_executive_statement:
+              "Use the opportunity row and keep finance confirmation separate.",
+            supporting_evidence_summary: "1 opportunity row; 1 sized row",
+            missing_evidence_summary: null,
+            action_prompt: "Approve the outreach before sending terms.",
+            source_basis: "source.contract_action_candidate_v1",
+            confidence_level: "high",
+            confidence_rationale:
+              "Generated from reviewed contract and opportunity rows.",
+            review_status: "system_generated_from_reviewed_sources",
+            provenance: { "source.contract_action_candidate_v1": 1 },
+            derived_from_load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      if (sql.includes("FROM source.ava_grounding_bundle_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            grounding_bundle_id: "action:OPT-M365-SHELFWARE-001",
+            page_key: "contract_action",
+            section_key: "OPT-M365-SHELFWARE-001",
+            question_family: "contract_action_grounding",
+            allowed_claims_json: [{ claim: "candidate action only" }],
+            refusal_rules_json: ["Do not claim realized savings."],
+            citation_sources_json: { rows: ["USAGE-001"] },
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const rows = await Promise.all([
+      listSourceContractEvidenceCoverage("meridian"),
+      listSourceContractActionCandidates("meridian"),
+      listSourceContractClaimCards("meridian"),
+      listSourceVendorPositions("meridian"),
+      listSourcePageStoryline("meridian"),
+      listContractTabIntelligence("meridian", "MER-TECH-M365-001"),
+      listSourceAvaGroundingBundles("meridian"),
+    ]);
+
+    expect(rows.map((row) => row.length)).toEqual([1, 1, 1, 1, 1, 1, 1]);
+    expect(rows[5][0]).toMatchObject({
+      tab_key: "optimize",
+      sort_order: 70,
+      headline: "One governed optimization lever is loaded.",
+      provenance: { "source.contract_action_candidate_v1": 1 },
+    });
+    expect(
+      run.mock.calls
+        .filter(
+          ([sql]) => sql === "SELECT set_config('app.tenant_key', $1, false)",
+        )
+        .map(([, params]) => params),
+    ).toEqual([
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+    ]);
+    expect(JSON.stringify(run.mock.calls)).not.toContain(
+      "meridian_health_global",
+    );
   });
 
   it("quantifies unapproved rate-card variance inside recoverable leakage evidence", async () => {

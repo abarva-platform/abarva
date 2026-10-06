@@ -1,5 +1,13 @@
 import type { CSSProperties } from "react";
 
+import {
+  homeNarrativeStatusLabel,
+  homeRecordSourceLabel,
+  homeSourceCoverageGapLabel,
+  homeSourceCoverageLabel,
+  homeSourceFileReviewLabel,
+} from "@/lib/home/preview/record-source";
+import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -21,6 +29,22 @@ export interface RailItem {
   /** Shown in mono after the label -- a record count, never a progress metric. */
   count?: number;
   drafted: boolean;
+  /**
+   * Position in a reading order. The briefing is sequential and the evidence is not; a number is
+   * how the rail says which of the two a reader is looking at.
+   */
+  index?: number;
+  /**
+   * The item's own sections, revealed only while it is the active one.
+   *
+   * Twenty flat entries make the briefing and the evidence look like one list of equal things. They
+   * are not: eight are a reading order, twelve are a reference shelf. Nesting the sections under the
+   * chapter being read puts the second level one click deep without lengthening the list for
+   * everyone else.
+   */
+  sections?: Array<{ id: string; label: string }>;
+  /** A single mark, carried only where the record rates something high. */
+  flagged?: boolean;
 }
 
 export interface RailGroup {
@@ -50,19 +74,74 @@ function itemStyle(active: boolean, drafted: boolean): CSSProperties {
   };
 }
 
+const railLabelStyle: CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const indexStyle: CSSProperties = {
+  fontFamily: MONO,
+  fontSize: 11,
+  color: V4.stone,
+  marginRight: 8,
+};
+
+const flagStyle: CSSProperties = {
+  width: 6,
+  height: 6,
+  borderRadius: "50%",
+  background: V4.red,
+  flexShrink: 0,
+};
+
+const sectionListStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 1,
+  margin: "2px 0 6px 26px",
+};
+
+const sectionLinkStyle: CSSProperties = {
+  fontFamily: SANS,
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  color: V4.blue,
+  textDecoration: "none",
+  padding: "3px 0",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
 export function Rail({
   clientLabel,
+  declaredSyntheticDemo,
   groups,
   activeId,
   onSelect,
   compiledLine,
+  recordSource,
+  exportHrefBase,
 }: {
   clientLabel: string;
+  /**
+   * Whether this tenant is declared synthetic demonstration data. The statements that say so are
+   * shown for a tenant that is declared so and for no other: they are facts about one tenant, not
+   * furniture of the rail.
+   */
+  declaredSyntheticDemo: boolean;
   groups: RailGroup[];
   activeId: string;
   onSelect: (id: string) => void;
   compiledLine: string[];
+  recordSource: HomeRecordRenderSource;
+  exportHrefBase?: string;
 }) {
+  const sourceCoverageLabel = homeSourceCoverageLabel(recordSource);
+  const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
+  const sourceFileReviewLabel = homeSourceFileReviewLabel(recordSource);
   return (
     <nav
       style={{
@@ -79,26 +158,53 @@ export function Rail({
         scrollbarGutter: "stable",
       }}
     >
-      <div>
-        <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
-        <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", alignItems: "baseline", gap: 8, marginTop: 7 }}>
+      <div
+        data-home-tenant-declaration={
+          declaredSyntheticDemo ? "synthetic-demo" : "none"
+        }
+      >
+        {declaredSyntheticDemo ? (
+          <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
+        ) : null}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: declaredSyntheticDemo
+              ? "auto minmax(0,1fr)"
+              : "minmax(0,1fr)",
+            alignItems: "baseline",
+            gap: 8,
+            marginTop: 7,
+          }}
+        >
+          {declaredSyntheticDemo ? (
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: V4.paper,
+                background: V4.navy,
+                borderRadius: 3,
+                padding: "4px 7px 3px",
+                flexShrink: 0,
+              }}
+            >
+              DEMO
+            </span>
+          ) : null}
           <span
             style={{
-              fontFamily: MONO,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: V4.paper,
-              background: V4.navy,
-              borderRadius: 3,
-              padding: "4px 7px 3px",
-              flexShrink: 0,
+              fontFamily: SERIF,
+              fontSize: 21,
+              fontWeight: 500,
+              letterSpacing: "-0.022em",
+              lineHeight: 1.14,
+              minWidth: 0,
             }}
           >
-            DEMO
-          </span>
-          <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 500, letterSpacing: "-0.022em", lineHeight: 1.14, minWidth: 0 }}>
             {clientLabel}
           </span>
         </div>
@@ -113,7 +219,15 @@ export function Rail({
             padding: "4px 9px",
           }}
         >
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: V4.amber, flexShrink: 0 }} />
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: V4.amber,
+              flexShrink: 0,
+            }}
+          />
           <span
             style={{
               fontFamily: MONO,
@@ -128,9 +242,19 @@ export function Rail({
             Candidate · unreviewed
           </span>
         </div>
-        <p style={{ margin: "11px 0 0", fontFamily: SANS, fontSize: 12, lineHeight: 1.5, color: V4.slate }}>
-          Synthetic portfolio. Not a customer, not a case study.
-        </p>
+        {declaredSyntheticDemo ? (
+          <p
+            style={{
+              margin: "11px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: V4.slate,
+            }}
+          >
+            Synthetic portfolio. Not a customer, not a case study.
+          </p>
+        ) : null}
       </div>
 
       {groups.map((group, gi) => (
@@ -144,7 +268,15 @@ export function Rail({
             paddingTop: gi === 0 ? undefined : 15,
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: 8,
+              marginBottom: 8,
+            }}
+          >
             <span style={eyebrow(V4.slate)}>{group.title}</span>
             <span
               style={{
@@ -159,45 +291,189 @@ export function Rail({
               {group.progress}
             </span>
           </div>
-          {group.items.map((item) =>
-            item.drafted ? (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onSelect(item.id);
-                }}
-                style={itemStyle(item.id === activeId, true)}
-                aria-current={item.id === activeId ? "page" : undefined}
-              >
-                <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {item.label}
-                  {typeof item.count === "number" ? (
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}> {item.count}</span>
-                  ) : null}
-                </span>
-              </a>
-            ) : (
-              <span key={item.id} style={itemStyle(false, false)}>
-                <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {item.label}
-                  {typeof item.count === "number" ? (
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}> {item.count}</span>
-                  ) : null}
-                </span>
-                <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: V4.stone, whiteSpace: "nowrap" }}>
-                  NOT IN DRAFT
-                </span>
-              </span>
-            ),
-          )}
+          {group.items.map((item) => {
+            const active = item.id === activeId;
+            return (
+              <div key={item.id}>
+                {item.drafted ? (
+                  <a
+                    href={`#${item.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onSelect(item.id);
+                    }}
+                    style={itemStyle(active, true)}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <span style={railLabelStyle}>
+                      {typeof item.index === "number" ? (
+                        <span style={indexStyle}>{item.index}</span>
+                      ) : null}
+                      {item.label}
+                      {typeof item.count === "number" ? (
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 11,
+                            color: V4.slate,
+                          }}
+                        >
+                          {" "}
+                          {item.count}
+                        </span>
+                      ) : null}
+                    </span>
+                    {item.flagged ? (
+                      <span
+                        aria-label="the record rates something here as high"
+                        data-home-rail-flag
+                        style={flagStyle}
+                      />
+                    ) : null}
+                  </a>
+                ) : (
+                  <span style={itemStyle(false, false)}>
+                    <span style={railLabelStyle}>
+                      {typeof item.index === "number" ? (
+                        <span style={indexStyle}>{item.index}</span>
+                      ) : null}
+                      {item.label}
+                      {typeof item.count === "number" ? (
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 11,
+                            color: V4.slate,
+                          }}
+                        >
+                          {" "}
+                          {item.count}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 11,
+                        letterSpacing: "0.1em",
+                        color: V4.stone,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      NOT IN DRAFT
+                    </span>
+                  </span>
+                )}
+                {active && item.sections?.length ? (
+                  <div
+                    data-home-rail-sections={item.sections.length}
+                    style={sectionListStyle}
+                  >
+                    {item.sections.map((section) => (
+                      <a
+                        key={section.id}
+                        href={`#${section.id}`}
+                        style={sectionLinkStyle}
+                      >
+                        {section.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       ))}
 
       <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Compiled</div>
-        <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, lineHeight: 1.75, color: V4.slate }}>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>
+          Record on screen
+        </div>
+        <p
+          data-home-record-source={recordSource.kind}
+          data-home-canonical-snapshot-hash={recordSource.canonicalSnapshotHash}
+          data-home-projection-content-hash={
+            recordSource.contextVersion?.projectionContentHash
+          }
+          data-home-source-catalog-hash={
+            recordSource.contextVersion?.sourceCatalogHash
+          }
+          data-home-narrative-coherence={recordSource.contextVersion?.coherence}
+          style={{
+            margin: 0,
+            fontFamily: MONO,
+            fontSize: 11,
+            lineHeight: 1.75,
+            color: V4.slate,
+          }}
+        >
+          <span>{homeRecordSourceLabel(recordSource)}</span>
+        </p>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontFamily: SANS,
+            fontSize: 12,
+            lineHeight: 1.4,
+            color: V4.slate,
+          }}
+        >
+          {homeNarrativeStatusLabel(recordSource)}
+        </p>
+        {sourceCoverageLabel ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            {sourceCoverageLabel}
+          </p>
+        ) : null}
+        {sourceFileReviewLabel ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            {sourceFileReviewLabel}
+          </p>
+        ) : null}
+        {sourceCoverageGap ? (
+          <details
+            style={{
+              marginTop: 6,
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            <summary>Source coverage gaps</summary>
+            <p style={{ margin: "5px 0 0" }}>{sourceCoverageGap}</p>
+          </details>
+        ) : null}
+      </div>
+
+      <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Context</div>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: MONO,
+            fontSize: 11,
+            lineHeight: 1.75,
+            color: V4.slate,
+          }}
+        >
           {compiledLine.map((line, i) => (
             <span key={line}>
               {i > 0 ? <br /> : null}
@@ -206,6 +482,53 @@ export function Rail({
           ))}
         </p>
       </div>
+
+      {exportHrefBase ? (
+        <div
+          aria-label="Home walkthrough export"
+          style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}
+        >
+          <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>
+            Home export
+          </div>
+          <p
+            style={{
+              margin: "0 0 9px",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: V4.slate,
+            }}
+          >
+            Walkthrough export: chapters, tables, exhibits, evidence labels and
+            record-source state.
+          </p>
+          <div style={{ display: "flex", gap: 7 }}>
+            {(["html", "pdf"] as const).map((format) => (
+              <a
+                key={format}
+                href={`${exportHrefBase}&format=${format}`}
+                aria-label={`Export full Home walkthrough as ${format.toUpperCase()}`}
+                title={`Export full Home walkthrough as ${format.toUpperCase()}`}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  color: V4.ink,
+                  border: `1px solid ${V4.rule}`,
+                  background: V4.surface,
+                  borderRadius: 6,
+                  padding: "5px 8px",
+                }}
+              >
+                {format}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </nav>
   );
 }

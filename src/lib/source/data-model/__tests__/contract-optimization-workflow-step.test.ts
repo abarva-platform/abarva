@@ -17,6 +17,9 @@ function readiness(
     blockingFamilies: [],
     sizingBlocked: false,
     summary: "All 8 required evidence families have governed evidence.",
+    // These cases describe a contract shape the evidence model has a template
+    // pack for, so a missing required family is a governed gate and must hold.
+    archetypeKey: "ams_contract_optimization",
     ...overrides,
   };
 }
@@ -140,6 +143,58 @@ describe("deriveOptimizeWorkflowPosition", () => {
     expect(position.currentKey).toBe("evidence");
     expect(position.primaryAction).toBe("Collect 2 missing evidence families");
     expect(position.blocker).toContain("2 required evidence families have");
+  });
+
+  it("does not block a sized contract on a required list built for another shape", () => {
+    /*
+     * The live defect: the evidence model carries no template pack for a cloud
+     * consumption commitment, so it scored the contract against a generic list
+     * and reported all eight families missing. The rail then told the reader
+     * the contract could not be sized on the same page that showed $1.5M sized
+     * and four levers reproducing from calculation runs.
+     */
+    const position = positionFor({
+      readinessOverrides: {
+        archetypeKey: null,
+        requiredEvidenced: 0,
+        sizingBlocked: true,
+        status: "blocked",
+        blockingFamilies: [
+          "contract_baseline",
+          "invoice_summary",
+          "sla_performance",
+          "staffing_model",
+        ],
+        summary: "No required evidence family has governed evidence yet.",
+      },
+    });
+
+    expect(position.currentKey).not.toBe("evidence");
+    expect(position.blocker).not.toContain("required evidence famil");
+    expect(position.primaryAction).not.toContain("Collect");
+  });
+
+  it("still blocks an unsized contract when no evidence backs any opportunity", () => {
+    // The bypass rests on traced opportunities. With none, an unmodelled
+    // archetype must still hold at evidence rather than wave the case through.
+    const position = positionFor({
+      set: opportunitySet({
+        // A stated amount with no calculation run behind it does not trace.
+        opportunities: [
+          opportunity({ stage: "signal", calculation: null, amountUsd: null }),
+        ],
+      }),
+      readinessOverrides: {
+        archetypeKey: null,
+        requiredEvidenced: 0,
+        sizingBlocked: true,
+        status: "blocked",
+        blockingFamilies: ["contract_baseline"],
+        summary: "No required evidence family has governed evidence yet.",
+      },
+    });
+
+    expect(position.currentKey).toBe("evidence");
   });
 
   it("uses the singular form for a single missing family", () => {

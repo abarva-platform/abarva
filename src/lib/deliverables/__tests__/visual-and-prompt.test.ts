@@ -95,6 +95,49 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.system).toMatch(/visual-first/i);
   });
 
+  it("binds approved evidence packets into the prompt as citeable governed context", () => {
+    const ctx = applyPhaseDigest(richContext(), {
+      evidencePackets: [
+        {
+          evidenceId: "0f0b9acc-25f4-4764-85de-67050f2bac10",
+          title: "P2 workshop evidence pack",
+          evidenceType: "workshop_notes",
+          phase: 2,
+          summary: "The workshop confirmed manual queue review and policy handoffs.",
+          observations: ["Manual queue review creates handoff delay."],
+          assumptions: ["Future-state automation remains human-supervised."],
+          openQuestions: ["Which control owner signs off policy updates?"],
+          citations: [
+            {
+              quote: "Manual queue review creates handoff delay.",
+              locator: "workshop-notes p.2",
+            },
+          ],
+          approvedAt: "2026-09-27T00:00:00.000Z",
+        },
+      ],
+      evidenceMap: [
+        {
+          claim: "Policy handoffs constrain automation scope.",
+          source: "Approved P2 diagnostic",
+        },
+      ],
+    });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: ctx,
+    });
+
+    expect(p.user).toContain("GOVERNED SOURCE REGISTER");
+    expect(p.user).toContain("[1] P2 workshop evidence pack");
+    expect(p.user).toContain("Manual queue review creates handoff delay.");
+    expect(p.user).toContain("CARRIED-FORWARD EVIDENCE MAP");
+    expect(p.user).toContain("[2] Policy handoffs constrain automation scope.");
+    expect(p.user).toContain("numeric [n] marker");
+    expect(p.user).not.toContain("0f0b9acc-25f4-4764-85de-67050f2bac10");
+  });
+
   it("architecture prompt uses the approved chosenOption", () => {
     const p = buildArtifactPrompt({
       artifact: "target_state_architecture",
@@ -287,11 +330,15 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Target 900-1,100 body words");
     expect(p.user).toContain("Hard maximum 1,300 body words");
     expect(p.user).toContain("Charter Decision box");
-    expect(p.user).toContain("Discovery Preparation table");
-    expect(p.user).toContain("Discovery Activities table");
+    expect(p.user).toContain("Authorization Conditions / Open Inputs table");
     expect(p.user).toContain("Target depth: 900-1,100 words");
-    expect(p.user).toContain("Discovery Preparation");
-    expect(p.user).toContain("Discovery Guidebook");
+    expect(p.user).toContain(
+      "Write at least 700 words of prose before tables, exhibits, and appendices",
+    );
+    expect(p.user).toContain("Authorization Conditions & Open Inputs");
+    expect(p.user).toContain("Discovery Workshop Guide / Evidence Request Pack");
+    expect(p.user).not.toContain("Discovery Activities table");
+    expect(p.user).not.toContain("typical Discovery activities");
     expect(p.user).toContain("Client Decision Required");
     expect(p.user).toContain("To Validate During Discovery");
     expect(p.user).toContain("Evidence Required for P2");
@@ -351,6 +398,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     );
     expect(p.user).toContain("Workshop Agenda and Session Notes appendix");
     expect(p.user).toContain("leadership, teams, decision rights, locations");
+    expect(p.user).toContain("Every sentence containing a number");
+    expect(p.user).toContain("that same sentence");
+    expect(p.user).toContain("Open Inputs Required");
   });
 
   it("P2 package contract makes Word the editable phase record and HTML the visual companion", () => {
@@ -460,6 +510,31 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     );
     expect(p.user).toContain("Needed: AP/procurement systems landscape");
     expect(p.user).toMatch(/If the evidence packet contains exact metrics/);
+  });
+
+  it("foregrounds recorded baseline metrics even when metric inference has not run", () => {
+    const ctx = applyPhaseDigest(richContext(), {
+      baselineMetrics: {
+        "Care-gap closure rate": "41.2% [quality_measures.csv]",
+        "Unmonitored interfaces":
+          "33 of 86 plus 18 partial [interface_inventory.csv]",
+      },
+    });
+
+    const p = buildArtifactPrompt({
+      artifact: "handoff_package",
+      phase: 5,
+      context: ctx,
+    });
+
+    expect(p.user).toContain("RECORDED BASELINE METRICS");
+    expect(p.user).toContain("Care-gap closure rate: 41.2%");
+    expect(p.user).toContain(
+      "Unmonitored interfaces: 33 of 86 plus 18 partial",
+    );
+    expect(p.user).toContain(
+      "Recorded baseline metrics from phase capture; use these exact values",
+    );
   });
 
   it("draft prompt uses the standard pre-gate caveat", () => {

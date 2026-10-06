@@ -36,6 +36,27 @@ const SOURCE_ARTIFACT_REQUIRED_SECTIONS_OVERRIDES = {
     "Boundary clarifications",
     "Scope owner + approval",
   ],
+  d04_app_inv: [
+    "In-scope application and system inventory",
+    "Criticality and risk tiering",
+    "Integration and dependency map",
+    "Disposition and support-model analysis",
+    "Coverage gaps and assumptions",
+  ],
+  d06_excl_log: [
+    "Exclusion answer",
+    "Exclusion register",
+    "Pricing and proposal implications",
+    "Residual risks and owner actions",
+    "Sponsor review and changes to carry into RFP",
+  ],
+  d07_ticket_synth: [
+    "Ticket volume baseline and demand profile",
+    "Incident severity distribution and SLA performance",
+    "Service tower workload breakdown",
+    "Trend analysis and seasonality",
+    "SLA and operational implications for the RFP",
+  ],
 } as const satisfies Record<string, readonly string[]>;
 
 /** @deprecated Kept for external callers reading the literal override map directly; prefer `getRequiredSectionsForArtifact`. */

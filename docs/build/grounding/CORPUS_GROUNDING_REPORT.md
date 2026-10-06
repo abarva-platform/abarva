@@ -64,7 +64,7 @@ Grounding has two parts: (1) the corpus *contains* the depth (proved above), and
 
 | Surface | Binds the function-pack registry today? | Evidence |
 |---|---|---|
-| **Nexus / Moves** | **Yes — fully** | All four phase-artifact models bind the pack: `move-discover-brief-model.ts`, `move-business-case.ts`, `move-solution-architecture-model.ts`, `move-mobilize-model.ts`; plus `origination-submit.ts`, `tenant-metric-inventory.ts`, `gateLifecycle.ts`. |
+| **Nexus / Moves** | **Yes — artifact models** | The phase-artifact models bind the pack: `move-discover-brief-model.ts`, `move-business-case.ts`, `move-solution-architecture-model.ts`, `move-mobilize-model.ts`; plus `origination-submit.ts` and `tenant-metric-inventory.ts`. Reference binding does not itself prove runtime build, approval, or phase-transition behavior. |
 | **Sentinel / Intelligence** | **Partially** | The Meridian VBC decision surfaces (`meridian-vbc-decision-home.ts`, `meridian-vbc-bet-selection.ts`) consume packs; the broader Intelligence surface does not yet bind generically. |
 | **Audit pack** | Yes | `audit-pack-model.ts` binds the pack. |
 | **Sentinel / Source** | **Not yet** | No direct registry binding found. |

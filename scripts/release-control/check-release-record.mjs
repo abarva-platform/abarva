@@ -4,6 +4,10 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
+  loadReleaseLanes,
+  validateLayerImpactLane,
+} from './release-record-lane-guard.mjs';
+import {
   loadTenantNarrativeTerms,
   validateTenantNarrativeGuard,
 } from './release-record-tenant-narrative-guard.mjs';
@@ -42,6 +46,10 @@ const RELEASE_RELEVANT_PATTERNS = [
 ];
 
 const RELEASE_RECORD_PATTERN = /^docs\/releases\/records\/[^/]+\.md$/;
+const RELEASE_RECORD_TEMPLATE_PATH = path.join(
+  process.cwd(),
+  'docs/releases/templates/release-record-template.md',
+);
 
 function argValue(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -97,7 +105,38 @@ function sectionBody(markdown, section) {
   return body.join('\n').trim();
 }
 
-function validateRecord(file, tenantNarrativeTerms) {
+function validateReleaseRecordTemplate() {
+  if (!existsSync(RELEASE_RECORD_TEMPLATE_PATH)) {
+    return ['release record template is missing'];
+  }
+
+  const markdown = readFileSync(RELEASE_RECORD_TEMPLATE_PATH, 'utf8');
+  const headings = [...markdown.matchAll(/^## (.+)$/gm)].map((match) => match[1].trim());
+  const required = new Set(REQUIRED_SECTIONS);
+  const present = new Set(headings);
+  const problems = [];
+
+  for (const section of REQUIRED_SECTIONS) {
+    if (!present.has(section)) {
+      problems.push(`missing required section "## ${section}"`);
+    }
+  }
+  for (const section of headings) {
+    if (!required.has(section)) {
+      problems.push(`unexpected section "## ${section}"`);
+    }
+  }
+  if (
+    headings.length === REQUIRED_SECTIONS.length &&
+    headings.some((section, index) => section !== REQUIRED_SECTIONS[index])
+  ) {
+    problems.push('required section order does not match the release gate');
+  }
+
+  return problems;
+}
+
+function validateRecord(file, tenantNarrativeTerms, releaseLanes) {
   const absolute = path.resolve(process.cwd(), file);
   if (!existsSync(absolute)) {
     return [`${file}: release record does not exist on disk.`];
@@ -118,10 +157,12 @@ function validateRecord(file, tenantNarrativeTerms) {
     }
   }
 
+  // `/lane\b/` used to stand in for this. It is satisfied by the substring inside
+  // `plane`, so "Data plane: no schema changes" passed a check meant to require a
+  // release lane, while `internal-admin`, `public-demo` and `experimental` — three
+  // of the five lanes AGENTS.md declares — were refused for not containing the word.
   const layerBody = sectionBody(markdown, 'Layer Impact');
-  if (!/lane\b/.test(layerBody)) {
-    errors.push(`${file}: Layer Impact must name the affected lane(s).`);
-  }
+  errors.push(...validateLayerImpactLane(file, layerBody, releaseLanes));
 
   const validationBody = sectionBody(markdown, 'QA / Validation');
   if (!/(pass|passed|green|success|not run|blocked|failed)/i.test(validationBody)) {
@@ -139,6 +180,14 @@ function validateRecord(file, tenantNarrativeTerms) {
 
   return errors;
 }
+
+const templateProblems = validateReleaseRecordTemplate();
+if (templateProblems.length > 0) {
+  console.error('Release record template contract failed.');
+  for (const problem of templateProblems) console.error(`- ${problem}`);
+  process.exit(1);
+}
+console.log('Release record template contract passed.');
 
 const base =
   argValue('--base', process.env.GITHUB_BASE_SHA) ||
@@ -166,7 +215,10 @@ if (records.length === 0) {
 }
 
 const tenantNarrativeTerms = loadTenantNarrativeTerms();
-const errors = records.flatMap((file) => validateRecord(file, tenantNarrativeTerms));
+const releaseLanes = loadReleaseLanes();
+const errors = records.flatMap((file) =>
+  validateRecord(file, tenantNarrativeTerms, releaseLanes),
+);
 if (errors.length > 0) {
   console.error('Release Control Gate failed.');
   console.error('');

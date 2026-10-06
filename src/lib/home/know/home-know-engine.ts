@@ -175,6 +175,12 @@ const GRAPH_RE =
   /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|blast radius|depends on|integration|interfaces?)\b/i;
 const EXACT_UNKNOWABLE_RE =
   /\b(exact|precise|to the dollar|specific date|exact date|exactly what|precise headcount|precise nps|roi percentage|will .* deliver|will .* be in \d{4}|next quarter)\b/i;
+const COMMERCIAL_EXPOSURE_RE =
+  /\b(cfo|finance|financial|commercial|commercially|exposed|exposure|vendor concentration|contract exposure|renewal exposure|spend concentration|revenue)\b/i;
+const EXECUTIVE_ATTENTION_RE =
+  /\b(board|ceo|cxo|leadership|leader|friday|walkthrough|address first|what should .* address|mislead|caveat|attention)\b/i;
+const BUSINESS_CONTEXT_RE =
+  /\b(business|revenue|books? of business|operating model|business model|member population|customer segment)\b/i;
 
 export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
@@ -312,6 +318,7 @@ export async function buildHomeKnowResponse(
     tenantKey,
     client: input.client,
   });
+  let currentDossierUnavailableReason: string | null = null;
   try {
     const curated = await loadCuratedSemanticDossier({
       tenantKey: dossierTenantKey,
@@ -379,20 +386,26 @@ export async function buildHomeKnowResponse(
     }
   } catch (error) {
     if (isCuratedDossierNonFallbackError(error)) {
-      return blockedHomeKnowResponse({
-        tenantKey,
-        question: input.question,
-        prose:
-          "I cannot answer this from the current governed context yet. The active context for this tenant or topic needs to be refreshed before Home should use it.",
-      });
+      currentDossierUnavailableReason =
+        error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[home-know.semantic2-dossier] Curated dossier unavailable for ${tenantKey}; using current Home read-model packet: ${currentDossierUnavailableReason}`,
+      );
+    } else {
+      console.warn(
+        `[home-know.semantic2-dossier] Using current read-model packet for ${tenantKey}; retired local dossier fallback disabled: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
-    console.warn(
-      `[home-know.semantic2-dossier] Using current read-model packet for ${tenantKey}; retired local dossier fallback disabled: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
   }
   const packet = await fetchHomeKnowPacket(tenantKey);
+  if (currentDossierUnavailableReason) {
+    packet.readErrors = [
+      ...(packet.readErrors ?? []),
+      "The curated advisor dossier is unavailable; this answer uses the current Home read model instead.",
+    ];
+  }
   const response = buildHomeKnowResponseFromPacket({
     tenantKey,
     question: input.question,
@@ -596,11 +609,18 @@ export function buildHomeKnowResponseFromPacket(input: {
     citations,
   );
   const facts = buildFacts(input.packet, dimensionsUsed, citations);
+  const hasDirectionalExecutiveEvidence =
+    (COMMERCIAL_EXPOSURE_RE.test(question) ||
+      EXECUTIVE_ATTENTION_RE.test(question) ||
+      BUSINESS_CONTEXT_RE.test(question)) &&
+    citations.length > 0 &&
+    (input.packet.coverage.length > 0 || dimensionsUsed.length > 0);
   const hasData =
     facts.length > 0 ||
     tables.some((table) => table.rows.length > 0) ||
     charts.some((chart) => chart.data.length > 0) ||
-    graphs.some((graph) => graph.nodes.length > 0 && graph.edges.length > 0);
+    graphs.some((graph) => graph.nodes.length > 0 && graph.edges.length > 0) ||
+    hasDirectionalExecutiveEvidence;
   const hasGaps = gaps.length > 0;
   const answerStatus: HomeKnowAnswerStatus = hasData
     ? hasGaps
@@ -822,6 +842,26 @@ function dimensionsForIntent(
   }
   const normalized = question.toLowerCase();
   const dims = new Set<string>();
+  if (COMMERCIAL_EXPOSURE_RE.test(normalized)) {
+    dims.add("vendors_contracts");
+    dims.add("it_budget_financials");
+    dims.add("gap_register");
+    if (packet.sourceV4) dims.add("source_v4_cube");
+  }
+  if (EXECUTIVE_ATTENTION_RE.test(normalized)) {
+    dims.add("gap_register");
+    dims.add("security_compliance");
+    dims.add("initiatives_roadmap");
+    dims.add("vendors_contracts");
+    dims.add("it_budget_financials");
+    if (packet.sourceV4) dims.add("source_v4_cube");
+  }
+  if (BUSINESS_CONTEXT_RE.test(normalized)) {
+    dims.add("business_org_functions");
+    dims.add("business_operating_model");
+    dims.add("it_org_ownership");
+    dims.add("applications_core_systems");
+  }
   if (GRAPH_RE.test(normalized)) {
     dims.add("relationship_graph");
     dims.add("applications_core_systems");
@@ -848,7 +888,7 @@ function dimensionsForIntent(
     if (packet.sourceV4) dims.add("source_v4_cube");
   }
   if (
-    /\b(budget|budgets|spend|cost|costs|financial|financials)\b/.test(
+    /\b(budget|budgets|spend|cost|costs|financial|financials|cfo|finance)\b/.test(
       normalized,
     )
   ) {
@@ -892,6 +932,10 @@ function dimensionsForIntent(
     dims.add("it_budget_financials");
     dims.add("vendors_contracts");
     dims.add("applications_core_systems");
+  }
+  if (dims.size === 0 && EXECUTIVE_ATTENTION_RE.test(normalized)) {
+    for (const row of packet.coverage) dims.add(row.dimension_id);
+    if (packet.sourceV4) dims.add("source_v4_cube");
   }
   return [...dims];
 }
@@ -1159,6 +1203,22 @@ function buildTablesForIntent(
     citations,
   );
   if (sourceV4Tables.length > 0) return sourceV4Tables;
+  if (COMMERCIAL_EXPOSURE_RE.test(normalized)) {
+    const tables: HomeKnowTable[] = [];
+    if (packet.sourceV4) tables.push(sourceV4PortfolioTable(packet.sourceV4, citations));
+    if (packet.vendors.length > 0) tables.push(vendorTable(packet.vendors, citations));
+    if (packet.budgets.length > 0) tables.push(budgetTable(packet.budgets, citations));
+    return tables.length > 0 ? tables.slice(0, 2) : [coverageTable(packet.coverage, citations)];
+  }
+  if (EXECUTIVE_ATTENTION_RE.test(normalized)) {
+    const relevantGaps = packet.gaps.filter((row) =>
+      ["high", "critical"].includes(row.severity.toLowerCase()),
+    );
+    return [
+      gapTable(relevantGaps.length > 0 ? relevantGaps : packet.gaps, citations),
+      coverageTable(packet.coverage, citations),
+    ];
+  }
   if (
     /\b(data product|analytics|data & analytics|data and analytics)\b/.test(
       normalized,
@@ -1215,6 +1275,7 @@ function buildTablesForIntent(
     ];
   }
   if (
+    BUSINESS_CONTEXT_RE.test(normalized) ||
     /\b(business function|business functions|business org|operating model)\b|\bbusiness\b.*\b(organized|organization|org|function|functions|model)\b/.test(
       normalized,
     )
@@ -1243,7 +1304,14 @@ function buildTablesForIntent(
     ) {
       tables.push(orgTable(packet.org, citations));
     }
-    return tables.length > 0 ? tables : [orgTable(packet.org, citations)];
+    if (tables.length > 0) return tables;
+    if (packet.applications.length > 0) {
+      return [
+        applicationTable(packet.applications, citations),
+        coverageTable(packet.coverage, citations),
+      ];
+    }
+    return [coverageTable(packet.coverage, citations)];
   }
   if (
     /\b(org|team|portfolio|lead|leader|leaders|owner|ownership|who leads|cio)\b/.test(
@@ -1563,6 +1631,7 @@ function sourceV4TablesForQuestion(
     return [sourceV4ScopeTable(snapshot, citations)];
   }
   if (
+    COMMERCIAL_EXPOSURE_RE.test(normalizedQuestion) ||
     /\b(source v4|cube|vendor|vendors|contract|contracts|supplier|suppliers|renewal|renewals|portfolio)\b/.test(
       normalizedQuestion,
     )
@@ -2476,6 +2545,32 @@ function homeKnowProse(input: {
   ) {
     return "The security and compliance readout is limited to available coverage and source-supported fields. Control strength is not inferred; missing control fields are shown as gaps.";
   }
+  if (COMMERCIAL_EXPOSURE_RE.test(input.question)) {
+    const totalRun = input.packet.budgets.reduce(
+      (sum, row) => sum + number(row.run_budget_usd),
+      0,
+    );
+    const topVendors = readableList(
+      input.packet.vendors
+        .map((row) => row.vendor_name)
+        .filter(isString)
+        .slice(0, 3),
+    );
+    const sourceV4 = input.packet.sourceV4;
+    if (sourceV4) {
+      return `Short answer: Home can frame commercial exposure from cited contract, vendor, spend, and gap evidence, but it should not turn that into an approval recommendation without Source drill-down. Key signals: ${sourceV4.executivePortfolio.contractCount} contracts, ${sourceV4.contextCoverage.vendors} vendors, ${formatUsd(sourceV4.executivePortfolio.annualValue)} annual contract value, and ${formatUsd(sourceV4.performanceCredits.unclaimedCredit)} in unclaimed service-credit evidence. Caveat: exposure evidence is directional until contract terms, owners, and remediation status are confirmed.`;
+    }
+    return topVendors || totalRun > 0
+      ? `Short answer: Home can frame commercial exposure directionally from the loaded vendor and budget records. Key signals: ${topVendors ? `vendors include ${topVendors}` : "vendor rows are present"}${totalRun > 0 ? `, with ${formatUsd(totalRun)} in loaded run budget` : ""}. Caveat: use Source for contract-term drill-down before approval.`
+      : "Home has commercial-adjacent coverage, but not enough vendor, contract, or budget rows to state exposure cleanly.";
+  }
+  if (EXECUTIVE_ATTENTION_RE.test(input.question)) {
+    const highGapCount = input.packet.gaps.filter((row) =>
+      ["high", "critical"].includes(row.severity.toLowerCase()),
+    ).length;
+    const coverageCount = input.packet.coverage.length;
+    return `Short answer: use Home as a CXO walkthrough map, not as the final decision record. Lead with the evidence boundary, then the highest-severity gaps, then the cited domains that are ready to drill into. Evidence: ${coverageCount} coverage area(s) are visible${highGapCount > 0 ? ` and ${highGapCount} high/critical gap(s) need explicit handling` : ""}. Caveat: unresolved gaps should be named before recommendations so the page does not imply more certainty than the sources support.`;
+  }
   if (input.packet.sourceV4 && /\b(source v4|cube|invoice|invoices|off-contract|off contract|credit|credits|sla|saas|seat|seats|copilot|claude code|ai tool|cloud|azure|rate card|fieldglass|sourcing event|bafo|ariba)\b/i.test(input.question)) {
     const v4 = input.packet.sourceV4;
     if (/\b(ai|saas|seat|seats|copilot|claude code|ai tool|productivity|value proof|claimable)\b/i.test(input.question)) {
@@ -2570,6 +2665,7 @@ function homeKnowProse(input: {
       : "The loaded application and system inventory includes ownership and lifecycle fields where those fields were supplied.";
   }
   if (
+    BUSINESS_CONTEXT_RE.test(input.question) ||
     /\b(business function|business functions|business org|operating model)\b|\bbusiness\b.*\b(organized|organization|org|function|functions|model)\b/i.test(
       input.question,
     )
@@ -2605,6 +2701,18 @@ function homeKnowProse(input: {
     }
     if (functions) {
       return `The available material describes the business through ${functions}. Named technology leaders are only shown where the tenant supplied IT ownership fields.`;
+    }
+    if (input.packet.applications.length > 0) {
+      const systems = readableList(
+        input.packet.applications
+          .map((row) => row.application_name)
+          .filter(isString)
+          .slice(0, 4),
+      );
+      return `Short answer: Home can describe the business indirectly through the systems and ownership evidence now loaded${systems ? `, including ${systems}` : ""}. Caveat: named business-model records are not complete in this read-model slice, so do not treat the technology inventory as the whole business story.`;
+    }
+    if (input.packet.coverage.length > 0) {
+      return "Short answer: Home has enough governed context to orient a business conversation, but not enough business-model depth in this read-model slice to replace source-owner narration. Caveat: use this as a walkthrough prompt, not as proof that the business chapter is fully evidenced.";
     }
   }
   if (

@@ -4,21 +4,21 @@
 // (./docx.ts) calls this and serializes the document to a buffer; this
 // module performs no I/O and no auth.
 //
-// The Program Charter is the sponsor's binding commitment at the P2
-// gate. It mirrors the P2 phase pack outcome statement (see
+// The Program Charter is an evidence-backed working record. Product approval
+// is recorded by an authorized workspace user; sponsors are listed contacts
+// and may receive informational progress updates. It mirrors the P2 outcome
+// statement (see
 // src/lib/programs/phase-packs/P2_synthesis.ts):
 //
-//   "A signed gate package combining (a) a synthesis recommendation that
+//   "A gate package combining (a) a synthesis recommendation that
 //    names at least two viable target-state options, makes the trade-offs
 //    explicit, and recommends a path with an architecture sketch the
-//    architecture function has reviewed; AND (b) a charter the sponsor
-//    has personally signed — naming baseline KPIs, the value hypothesis
+//    architecture function has reviewed; AND (b) a charter — naming baseline KPIs, the value hypothesis
 //    with causal mechanism, the scope boundary, a named dissenter, a
 //    kill criterion, and a succession owner."
 //
-// The eight document sections enforce that discipline; a charter that
-// renders cleanly through this builder is a charter where the structure
-// alone forced the sponsor to confront the decisions a P2 gate demands.
+// The document captures the evidence and decisions that the authorized
+// workspace user reviews at the phase gate.
 //
 // Design source: docs/build/DELIVERABLE_EXPORT_DESIGN.md §2 (taxonomy)
 // + §6 (slice plan EXPORT-3).
@@ -60,13 +60,17 @@ export interface ProgramCharterValueHypothesis {
   outOfScope?: ReadonlyArray<string>;
 }
 
-/** Sponsor: the named exec who carries air cover for the program. */
+/** Sponsor: a listed contact for informational progress communication only. */
 export interface ProgramCharterSponsor {
   name: string;
   role: string;
-  decisionRights: ReadonlyArray<string>;
+  email?: string;
+  progressEmailPreference?: boolean;
+  /** @deprecated Retained for legacy payload compatibility; not rendered as approval authority. */
+  decisionRights?: ReadonlyArray<string>;
+  /** @deprecated Retained for legacy payload compatibility; not rendered as a commitment. */
   successionOwner?: string;
-  /** Free-text recurring cadence committed (e.g. 'weekly 30-min steer'). */
+  /** @deprecated Retained for legacy payload compatibility; not rendered as a commitment. */
   cadence?: string;
 }
 
@@ -126,14 +130,14 @@ export interface ProgramCharterBaselineKpi {
   measurementMethod: string;
 }
 
-/** Sponsor sign-off. */
+/** Product approval recorded by an authorized workspace user. */
 export interface ProgramCharterSignoff {
-  sponsorName: string;
-  /** Signature line placeholder, e.g. '_______________________ (signature)'. */
-  sponsorSignatureLine: string;
-  /** ISO timestamp of sign-off, when available. */
-  signedAt?: string;
-  /** Free-text notes captured at sign-off. */
+  approverName: string;
+  /** Approval-record label; never a sponsor signature placeholder. */
+  approvalRecordLine: string;
+  /** ISO timestamp of approval, when available. */
+  approvedAt?: string;
+  /** Free-text notes captured with the approval. */
   notes?: string;
 }
 
@@ -346,7 +350,10 @@ function labeledLine(label: string, value: string): Paragraph {
 // ── Section builders ────────────────────────────────────────────────────
 
 /** Section 1 · Title page. */
-function buildTitlePage(spec: ProgramCharterSpec, generatedAt: Date): Paragraph[] {
+function buildTitlePage(
+  spec: ProgramCharterSpec,
+  generatedAt: Date,
+): Paragraph[] {
   const out: Paragraph[] = [];
   out.push(titleHeading(spec.title));
   if (spec.subtitle !== undefined) {
@@ -359,16 +366,16 @@ function buildTitlePage(spec: ProgramCharterSpec, generatedAt: Date): Paragraph[
     ),
   );
   if (spec.authors !== undefined && spec.authors.length > 0) {
-    out.push(
-      timestampParagraph(`Authors: ${spec.authors.join(', ')}`),
-    );
+    out.push(timestampParagraph(`Authors: ${spec.authors.join(', ')}`));
   }
   out.push(signedCharterBanner());
   return out;
 }
 
 /** Section 2 · Value hypothesis. */
-function buildValueHypothesisSection(payload: ProgramCharterPayload): Paragraph[] {
+function buildValueHypothesisSection(
+  payload: ProgramCharterPayload,
+): Paragraph[] {
   const vh = payload.valueHypothesis;
   const prose =
     `For ${vh.cohort} experiencing ${vh.currentPain}, this program will ` +
@@ -395,44 +402,34 @@ function buildValueHypothesisSection(payload: ProgramCharterPayload): Paragraph[
   return out;
 }
 
-/** Section 3 · Sponsor commitment. */
+/** Section 3 · Sponsor contact. */
 function buildSponsorSection(payload: ProgramCharterPayload): Paragraph[] {
   const s = payload.sponsor;
   const out: Paragraph[] = [
-    sectionHeading('Sponsor commitment'),
-    labeledLine('Sponsor', `${s.name} (${s.role})`),
+    sectionHeading('Sponsor contact'),
+    labeledLine('Contact', `${s.name} (${s.role})`),
+    labeledLine('Email', s.email ?? 'Not recorded'),
+    labeledLine(
+      'Phase-progress emails',
+      s.progressEmailPreference === true
+        ? 'Enabled'
+        : s.progressEmailPreference === false
+          ? 'Not requested'
+          : 'Preference not recorded',
+    ),
   ];
-  if (s.decisionRights.length > 0) {
-    out.push(subsectionHeading('Decision rights'));
-    for (const right of s.decisionRights) {
-      out.push(bulletParagraph(right));
-    }
-  }
-  if (s.successionOwner !== undefined) {
-    out.push(labeledLine('Succession owner', s.successionOwner));
-  }
-  if (s.cadence !== undefined) {
-    out.push(
-      bodyParagraph(
-        `${s.name} commits to a recurring sponsor cadence: ${s.cadence}. ` +
-          'This cadence is binding for the life of the program; phantom ' +
-          'sponsorship is the #1 P2 failure mode and is rejected at this gate.',
-      ),
-    );
-  } else {
-    out.push(
-      bodyParagraph(
-        `${s.name} commits to a recurring sponsor cadence sufficient to make ` +
-          'real-time decisions on behalf of the program. Phantom sponsorship ' +
-          'is the #1 P2 failure mode and is rejected at this gate.',
-      ),
-    );
-  }
+  out.push(
+    bodyParagraph(
+      'The sponsor is listed as a progress contact only. Product approvals are recorded by an authorized workspace user.',
+    ),
+  );
   return out;
 }
 
 /** Section 4 · Recommended path with options-not-chosen. */
-function buildRecommendedPathSection(payload: ProgramCharterPayload): Paragraph[] {
+function buildRecommendedPathSection(
+  payload: ProgramCharterPayload,
+): Paragraph[] {
   const rp = payload.recommendedPath;
   const out: Paragraph[] = [
     sectionHeading('Recommended path'),
@@ -490,7 +487,9 @@ function buildArchitectureAttestationSection(
 }
 
 /** Section 6 · Kill criterion. */
-function buildKillCriterionSection(payload: ProgramCharterPayload): Paragraph[] {
+function buildKillCriterionSection(
+  payload: ProgramCharterPayload,
+): Paragraph[] {
   const k = payload.killCriterion;
   return [
     sectionHeading('Kill criterion'),
@@ -525,7 +524,9 @@ function buildNamedDissenterSection(
 }
 
 /** Section 8 · Baseline KPIs (table). */
-function buildBaselineKpisSection(payload: ProgramCharterPayload): Array<Paragraph | Table> {
+function buildBaselineKpisSection(
+  payload: ProgramCharterPayload,
+): Array<Paragraph | Table> {
   const headers: ReadonlyArray<string> = [
     'Metric',
     'Current value',
@@ -595,16 +596,16 @@ function buildBaselineKpisSection(payload: ProgramCharterPayload): Array<Paragra
   return [sectionHeading('Baseline KPIs'), table];
 }
 
-/** Section 9 · Sponsor sign-off. */
+/** Section 9 · Authorized workspace-user approval record. */
 function buildSignoffSection(payload: ProgramCharterPayload): Paragraph[] {
   const s = payload.signoff;
   const out: Paragraph[] = [
-    sectionHeading('Sponsor sign-off'),
-    labeledLine('Sponsor', s.sponsorName),
-    bodyParagraph(s.sponsorSignatureLine),
+    sectionHeading('Approval record'),
+    labeledLine('Authorized workspace user', s.approverName),
+    bodyParagraph(s.approvalRecordLine),
   ];
-  if (s.signedAt !== undefined) {
-    out.push(labeledLine('Signed at', s.signedAt));
+  if (s.approvedAt !== undefined) {
+    out.push(labeledLine('Approved at', s.approvedAt));
   }
   if (s.notes !== undefined && s.notes.length > 0) {
     out.push(subsectionHeading('Notes'));
@@ -620,7 +621,9 @@ function buildSignoffSection(payload: ProgramCharterPayload): Paragraph[] {
  * no I/O. The DOCX renderer dispatcher serializes the returned document
  * to a buffer.
  */
-export function buildProgramCharterDocument(spec: ProgramCharterSpec): Document {
+export function buildProgramCharterDocument(
+  spec: ProgramCharterSpec,
+): Document {
   const generatedAt =
     spec.generatedAt !== undefined ? new Date(spec.generatedAt) : new Date();
 

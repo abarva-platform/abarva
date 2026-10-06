@@ -1,0 +1,39 @@
+name: Control gates run through a symlink
+
+on:
+  pull_request:
+    paths:
+      - "scripts/quality/**"
+      - "scripts/release-control/**"
+      - "scripts/exec/cli-entry.mjs"
+      - ".github/workflows/quality-cli-invocation-guard.yml"
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    # A gate that decides whether to run by comparing a path as typed against
+    # its own realpath silently declines when it is reached through a symlink,
+    # prints nothing and exits 0 (item T-741, and item T-723 before it in
+    # scripts/exec). This job runs each gate twice, once through each kind of
+    # path, and requires the same exit code and the same bytes.
+    name: Every guarded gate behaves the same through a symlinked root
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sweep the gate directories
+        run: npm run check:cli-invocation-guard

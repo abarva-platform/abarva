@@ -99,8 +99,6 @@ export interface ConnectorsPageView {
   subtitle: string;
   context: {
     tenant: string;
-    mode: string;
-    agent: string;
     data: string;
     liveStatus: string;
     liveStatusKind: ContextLiveStatus;
@@ -108,7 +106,6 @@ export interface ConnectorsPageView {
   editorial: {
     title: string;
     body: string;
-    contextUsed: ReadonlyArray<string>;
     evidenceStrength: EvidenceStrength;
     blocker?: string;
     primaryAction: { label: string; href: string };
@@ -895,8 +892,6 @@ export async function buildConnectorsPageView(
       'Which external systems are configured, blocked, or deferred. None are live in this environment — all show stub or deferred status.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Admin workspace',
-      agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',
       liveStatusKind: 'deferred',
@@ -904,7 +899,6 @@ export async function buildConnectorsPageView(
     editorial: {
       title: editorial.title,
       body: connectorBody,
-      contextUsed: editorial.contextUsed,
       evidenceStrength: editorial.evidenceStrength,
       blocker: blockerLabel,
       primaryAction: editorial.primaryAction,

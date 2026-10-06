@@ -378,23 +378,23 @@ describe('NexusProgramWorkbench · per-program journey wiring', () => {
     ]);
   });
 
-  it('spec 4 (Build & Deliver) maps to Build as current', () => {
+  it('spec 4 maps to Execution Roadmap as current', () => {
     const v = viewFor(4, 'MRD-02', 'Prior Authorization Automation');
     expect(v.defaultPhaseKey).toBe('build');
-    expect(v.contextStrip.phaseLabel).toBe('P4 · Build');
+    expect(v.contextStrip.phaseLabel).toBe('P4 · Execution Roadmap');
     expect(v.phaseJourney.map((p) => p.state)).toEqual([
       'done', 'done', 'done', 'current', 'gate-pending', 'locked',
     ]);
   });
 
-  it('spec 5 (Outcome) maps MRD-05 to Operate as current with no further gate', () => {
+  it('spec 5 maps to Tower Handoff as current with no further gate', () => {
     const v = viewFor(5, 'MRD-05', 'Readmission Risk Model Refresh');
     expect(v.defaultPhaseKey).toBe('operate');
-    expect(v.contextStrip.phaseLabel).toBe('P6 · Operate');
+    expect(v.contextStrip.phaseLabel).toBe('P6 · Tower Handoff');
     expect(v.phaseJourney.map((p) => p.state)).toEqual([
       'done', 'done', 'done', 'done', 'done', 'current',
     ]);
-    expect(v.currentGateLabel).toContain('Operate');
+    expect(v.currentGateLabel).toContain('Tower Handoff');
   });
 
   it('two programs at different phases produce distinct journeys + briefs + gates', () => {
@@ -410,6 +410,6 @@ describe('NexusProgramWorkbench · per-program journey wiring', () => {
   it('journey subtitle mentions the current and next phase', () => {
     const v = viewFor(3);
     expect(v.journeySubtitle).toContain('P3 Design is current');
-    expect(v.journeySubtitle).toContain('P4 Build is the next gate');
+    expect(v.journeySubtitle).toContain('P4 Execution Roadmap is the next gate');
   });
 });

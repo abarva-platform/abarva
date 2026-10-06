@@ -58,6 +58,10 @@ export interface TemplateFactMap {
    * be present + non-empty on a row or the cell is rejected loudly.
    */
   entityRefColumns?: string[];
+  /** Required non-fact dimensions retained in source_citation on each row. */
+  contextColumns?: readonly string[];
+  /** Additional provenance columns accepted but not required in an upload. */
+  optionalContextColumns?: readonly string[];
   /** The fact-bearing column bindings. */
   columns: TemplateColumnMapping[];
 }
@@ -141,6 +145,29 @@ const VOLUMETRICS_TEMPLATE: TemplateFactMap = {
       entityKind: 'event',
       unit: 'pct',
       note: 'Historical chronic-miss rate for the tower SLAs.',
+    },
+  ],
+};
+
+// ITSM-owned ticket history is separate from Finance-owned value-lever inputs.
+// One row is one service tower / tier / month / time-window cohort.
+const TICKET_HISTORY_TEMPLATE: TemplateFactMap = {
+  templateCode: 'TICKET_HISTORY_V1',
+  label: 'ITSM ticket history by tier and time window',
+  rowEntity: 'tower',
+  entityRefColumn: 'Service Tower',
+  contextColumns: ['Support Tier', 'Month', 'Time Window', 'Source Basis'],
+  optionalContextColumns: ['Fixture Status'],
+  columns: [
+    {
+      header: 'Ticket Count', factKey: 'ticket_count',
+      entityKind: 'tower', unit: 'count',
+      note: 'Observed non-negative integer count, not a projected volume decline.',
+    },
+    {
+      header: 'SLA Breach Count', factKey: 'sla_breach_count',
+      entityKind: 'tower', unit: 'count',
+      note: 'Observed breaches for the same cohort, at most the ticket count.',
     },
   ],
 };
@@ -424,6 +451,7 @@ const VENDOR_BIDS_TEMPLATE: TemplateFactMap = {
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
   [VOLUMETRICS_TEMPLATE.templateCode]: VOLUMETRICS_TEMPLATE,
+  [TICKET_HISTORY_TEMPLATE.templateCode]: TICKET_HISTORY_TEMPLATE,
   [CONTRACT_TERMS_TEMPLATE.templateCode]: CONTRACT_TERMS_TEMPLATE,
   [RFP_CLAUSES_TEMPLATE.templateCode]: RFP_CLAUSES_TEMPLATE,
   [COMMITTED_VALUE_TEMPLATE.templateCode]: COMMITTED_VALUE_TEMPLATE,

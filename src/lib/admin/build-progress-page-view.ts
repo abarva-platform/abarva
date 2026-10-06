@@ -113,8 +113,6 @@ export interface BuildProgressPageView {
   subtitle: string;
   context: {
     tenant: string;
-    mode: string;
-    agent: string;
     data: string;
     liveStatus: string;
     liveStatusKind: ContextLiveStatus;
@@ -122,7 +120,6 @@ export interface BuildProgressPageView {
   editorial: {
     title: string;
     body: string;
-    contextUsed: ReadonlyArray<string>;
     evidenceStrength: EvidenceStrength;
     blocker?: string;
     primaryAction: { label: string; href: string };
@@ -481,8 +478,6 @@ export async function buildBuildProgressPageView(): Promise<BuildProgressPageVie
       'Waves shipped, slices completed, blockers active. Deterministic snapshot — not a live deploy monitor.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Admin workspace',
-      agent: 'Steward',
       data: 'Build manifest',
       liveStatus: 'Deferred',
       liveStatusKind: 'deferred',
@@ -490,7 +485,6 @@ export async function buildBuildProgressPageView(): Promise<BuildProgressPageVie
     editorial: {
       title: editorial.title,
       body: buildBody,
-      contextUsed: editorial.contextUsed,
       evidenceStrength: editorial.evidenceStrength,
       blocker: editorial.blocker ?? undefined,
       primaryAction: editorial.primaryAction,

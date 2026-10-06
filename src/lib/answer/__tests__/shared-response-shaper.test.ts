@@ -1,6 +1,23 @@
 import { shapeSharedAdvisorResponse } from "@/lib/answer/shared-response-shaper";
 
 describe("shapeSharedAdvisorResponse", () => {
+  it("preserves a structured table while still removing raw identifiers and stale brands", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "| Program | Owner |",
+        "|---|---|",
+        "| LAK-AI-004 | Atlas |",
+      ].join("\n"),
+      labels: [{ id: "LAK-AI-004", label: "ERP modernization" }],
+      preserveStructure: true,
+    });
+
+    expect(result.text).toContain("| Program | Owner |");
+    expect(result.text).toContain("| ERP modernization | aVa |");
+    expect(result.text).not.toContain("LAK-AI-004");
+    expect(result.text).not.toContain("Atlas");
+  });
+
   it("replaces raw ids with display names and blocks stale agent brands", () => {
     const result = shapeSharedAdvisorResponse({
       text: [
@@ -12,7 +29,6 @@ describe("shapeSharedAdvisorResponse", () => {
         { id: "LAK-AI-004", label: "ERP modernization" },
         { id: "LAK-AI-001", label: "AI service desk rollout" },
       ],
-      requireNextStep: true,
     });
 
     expect(result.text).toContain("aVa");
@@ -42,7 +58,6 @@ describe("shapeSharedAdvisorResponse", () => {
       targetChars: 650,
       hardMaxChars: 800,
       maxParagraphs: 5,
-      requireNextStep: true,
     });
 
     expect(result.text.length).toBeLessThanOrEqual(800);
@@ -53,6 +68,32 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.issues).toEqual([]);
   });
 
+  // C-503 — this case's TRIGGER changed; its subject did not.
+  //
+  // The fixture is six LINES in ONE paragraph, and 393 characters against
+  // the 900-character target it used to be given. It was collapsed because
+  // `paragraphSplit` counted its six lines as six paragraphs and called a
+  // one-paragraph answer over a five-paragraph budget. Now that the budget
+  // counts paragraphs, six bullets inside the character target are inside
+  // both declared limits and are returned whole — so the old parameters no
+  // longer exercise collapsing at all.
+  //
+  // The case is kept and re-aimed rather than deleted: what it is FOR is
+  // that a ranked list, once genuinely over budget, comes back as compact
+  // evidence lines and not as a restructured essay. `targetChars` is
+  // lowered to 320 — under the fixture's 393 characters — so the character
+  // limit, the other half of the same gate and the half that was always
+  // doing the real work here, is what fires. The output is the same
+  // collapsed text the case has always asserted, and every assertion below
+  // is the original one, unweakened. 320 rather than something tighter on
+  // purpose: below about 260 the rebuilt answer is itself over target and a
+  // second, harder pass drops the evidence line this case exists to check.
+  //
+  // Worth knowing while reading it: this input cannot reach the compactor
+  // through the product at all. `shapeAgentResponseForSurface` is the only
+  // production caller, and `looksAlreadyStructured` recognises three or
+  // more bullet lines, so a four-bullet list is passed through with
+  // `preserveStructure: true`. The case exercises the module's direct API.
   it("collapses compact ranked lists into chat-sized evidence lines", () => {
     const result = shapeSharedAdvisorResponse({
       text: [
@@ -63,10 +104,9 @@ describe("shapeSharedAdvisorResponse", () => {
         "- AWS is also the only vendor spanning more than one portfolio company.",
         "Next: ask aVa to inspect the supporting evidence, compare options, or shape the next CIO action.",
       ].join("\n"),
-      targetChars: 900,
+      targetChars: 320,
       hardMaxChars: 1100,
       maxParagraphs: 5,
-      requireNextStep: true,
     });
 
     expect(
@@ -90,7 +130,6 @@ describe("shapeSharedAdvisorResponse", () => {
       targetChars: 900,
       hardMaxChars: 1100,
       maxParagraphs: 5,
-      requireNextStep: true,
     });
 
     expect(result.text).toContain("Northline Logistics Group: $62.0M");
@@ -100,6 +139,17 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.text).not.toContain("Breakdown:;");
     expect(result.text).not.toContain("Next: Next");
     expect(result.text).not.toContain("supporting supporting");
-    expect(result.text).not.toMatch(/\b(before|with|and|or|to)\.$/m);
+    // Backlog item 42 — this assertion used to require that every one of
+    // `before|with|and|or|to` was stripped from the end of a line. Doing
+    // that deleted the last word of finished prose, because English
+    // strands prepositions ("the comparison you asked for.") and uses
+    // subordinators adverbially ("nobody has raised this before."). The
+    // rule now covers only the coordinating conjunctions, which never end
+    // an English sentence. The cost is stated rather than hidden: this
+    // input really is a truncated sentence, and `before.` now survives —
+    // the user sees prose that is visibly cut instead of prose that was
+    // silently shortened.
+    expect(result.text).not.toMatch(/\b(and|or|but)\.$/m);
+    expect(result.text).toMatch(/gate before\.$/m);
   });
 });

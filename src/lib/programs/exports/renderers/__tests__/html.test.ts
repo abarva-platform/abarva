@@ -97,9 +97,9 @@ function buildCharterSpec(overrides?: {
       },
     ],
     signoff: {
-      sponsorName: 'James Wright',
-      sponsorSignatureLine: '_______________________ (signature)',
-      signedAt: '2026-04-29T12:00:00.000Z',
+      approverName: 'Authorized workspace user',
+      approvalRecordLine: 'Approved in Moves after evidence review.',
+      approvedAt: '2026-04-29T12:00:00.000Z',
       notes: 'Sign-off contingent on consent open item.',
     },
   };
@@ -144,15 +144,19 @@ describe('renderDeliverableAsHtml · program-charter', () => {
     const doc = html(result.buffer);
     for (const heading of [
       'Value hypothesis',
-      'Sponsor commitment',
+      'Sponsor contact',
       'Recommended path',
       'Architecture review attestation',
       'Kill criterion',
       'Baseline KPIs',
-      'Sponsor sign-off',
+      'Approval record',
     ]) {
       expect(doc).toContain(heading);
     }
+    expect(doc).toContain(
+      'Product approvals are recorded by an authorized workspace user.',
+    );
+    expect(doc).not.toContain('Sign phase gates');
   });
 
   it('renders the baseline KPI table with N data rows', async () => {

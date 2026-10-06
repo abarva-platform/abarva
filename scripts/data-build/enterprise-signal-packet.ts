@@ -93,6 +93,8 @@ export interface ContextItem {
   id: string;
   statement: string;
   domains: string[];
+  /** Canonical source-row references when the serving projection declares them. */
+  evidenceRefs?: string[];
 }
 
 /** A relationship the compiler could not confirm from an explicit canonical link, only propose. */

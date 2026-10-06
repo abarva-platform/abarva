@@ -17,25 +17,51 @@ import {
   type GovernedCandidateLike,
 } from "./source-register";
 import type { GovernedEvidenceItem, SourceRegisterEntry } from "./types";
+import {
+  packEvidence,
+  resolveContextBudget,
+  type ContextBudget,
+} from "./context-budget";
+import { buildContextCoverage, type ContextCoverage } from "./context-coverage";
+import { approvedGeneratedArtifactIds } from "./approved-artifact-context";
+import {
+  reviewedExtractionFromStoredSourceRef,
+  toStoredReviewedStructured,
+} from "@/lib/programs/evidence-review-contract";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import { PROGRAM_MODULE_EVIDENCE_COLUMNS } from "./program-module-evidence-columns";
+import { estimateCaptureStatement } from "./estimate-capture-evidence";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
   clientId?: string;
   sourceArtifactRef?: string;
-  query: string;
+  /** Move phase whose evidence is allowed to inform this generation. */
+  phase?: number;
+  query?: string;
+  queries?: string[];
   topK?: number;
   audienceIsVendorFacing?: boolean;
   minConfidence?: number;
+  contextBudget?: ContextBudget;
 }
 
 export interface AssembledEvidence {
   evidence: GovernedEvidenceItem[];
   sourceRegister: SourceRegisterEntry[];
   retrievedCount: number;
+  coverage: ContextCoverage;
 }
 
 type QueryFn = typeof defaultQueryTenantContext;
 type FluentDb = ReturnType<typeof getAzureWriteFluentClient>;
+
+const MOVE_PHASE_CAPTURE_LIMIT = 240;
+const MOVE_LEDGER_LIMIT = 240;
+const MOVE_REVIEW_LIMIT = 160;
+const MOVE_GENERATED_ARTIFACT_LIMIT = 80;
+const MOVE_CANDIDATE_LIMIT = 720;
+const TENANT_CONTEXT_TOP_K = 32;
 
 function chunkToCandidate(chunk: TenantContextChunk): GovernedCandidateLike {
   const score = chunk.vectorScore ?? 0;
@@ -65,10 +91,28 @@ function numberOrDefault(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function phaseNumberOrNull(value: unknown): number | null {
+  const phase = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(phase) && phase >= 0 && phase <= 5 ? phase : null;
+}
+
+function isAtOrBeforePhase(value: unknown, requestedPhase: number): boolean {
+  const phase = phaseNumberOrNull(value);
+  return phase !== null && phase <= requestedPhase;
+}
+
 function confidenceFromScore(
   score: number,
 ): GovernedCandidateLike["confidence"] {
   return score >= 0.75 ? "high" : score >= 0.5 ? "medium" : "low";
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return String(err);
 }
 
 function sourceRefObject(value: unknown): Record<string, unknown> {
@@ -87,6 +131,117 @@ function compactText(
     .join(" ")
     .replace(/\s+/g, " ")
     .slice(0, max);
+}
+
+function humanizeCaptureLabel(value: string | null | undefined): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "Capture signal";
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatCaptureScalar(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+      value,
+    );
+  }
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return null;
+}
+
+function parseCaptureValue(value: string): unknown | null {
+  const trimmed = value.trim();
+  if (!/^[\[{]/.test(trimmed)) return null;
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function captureSnippetLabel(snippet: string): string | null {
+  if (/\bclosure[_ -]?rate\b/i.test(snippet)) return "Closure rate";
+  if (/\bopen\s+gaps?|\bcare[- ]?gaps?\b/i.test(snippet))
+    return "Open care gaps";
+  if (/\bunmonitored|without\s+monitoring\b/i.test(snippet))
+    return "Unmonitored interfaces";
+  if (/\bunversioned|not\s+under\s+source\s+control\b/i.test(snippet))
+    return "Unversioned interfaces";
+  if (
+    /\bdesign[- ]?only|scope\s+caveat|exclude[ds]?|exclusion\b/i.test(snippet)
+  )
+    return "Scope caveat";
+  if (/\bvacant|vacancy|owner|ownership\b/i.test(snippet))
+    return "Ownership gap";
+  if (/\bzero|unvalidated\b/i.test(snippet)) return "Unvalidated value input";
+  if (/\bshadow\b/i.test(snippet)) return "Shadow ownership";
+  if (/\bretired|declined|monitoring\s+plan\b/i.test(snippet))
+    return "Prior governance decision";
+  return null;
+}
+
+function captureValueSignals(
+  label: string,
+  value: string,
+): Array<{ label: string; statement: string; key: string }> {
+  const parsed = parseCaptureValue(value);
+  const out: Array<{ label: string; statement: string; key: string }> = [];
+
+  const push = (rawKey: string, rawValue: unknown, source?: unknown) => {
+    const formattedValue = formatCaptureScalar(rawValue);
+    if (!formattedValue) return;
+    const signalLabel = humanizeCaptureLabel(rawKey);
+    const sourceText = formatCaptureScalar(source);
+    out.push({
+      key: rawKey,
+      label: signalLabel,
+      statement: `${signalLabel}: ${formattedValue}${sourceText ? ` (source: ${sourceText})` : ""}`,
+    });
+  };
+
+  if (Array.isArray(parsed)) {
+    for (const item of parsed.slice(0, 24)) {
+      const obj = sourceRefObject(item);
+      const metric = stringOrNull(obj.metric) ?? stringOrNull(obj.label);
+      if (!metric) continue;
+      push(metric, obj.value ?? obj.result ?? obj.count, obj.source);
+    }
+  } else if (parsed && typeof parsed === "object") {
+    const obj = sourceRefObject(parsed);
+    for (const [key, rawValue] of Object.entries(obj).slice(0, 24)) {
+      push(key, rawValue);
+    }
+  }
+
+  if (parsed === null) {
+    const snippets = value
+      .split(/[.;]|\s*,\s+(?=(?:and\s+)?(?:\d|[A-Z]))/g)
+      .map((part) => part.trim())
+      .filter((part) => part.length >= 12 && part.length <= 220);
+    for (const snippet of snippets.slice(0, 32)) {
+      const signalLabel = captureSnippetLabel(snippet);
+      if (!signalLabel) continue;
+      out.push({
+        key: signalLabel.toLowerCase().replace(/\s+/g, "_"),
+        label: signalLabel,
+        statement: `${signalLabel}: ${snippet}`,
+      });
+    }
+  }
+
+  const seen = new Set<string>();
+  return out.filter((signal) => {
+    const key = `${signal.label}:${signal.statement}`.toLowerCase();
+    if (seen.has(key) || signal.statement === `${label}: ${value}`)
+      return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function stripHtml(value: string): string {
@@ -146,15 +301,25 @@ function structuredSignals(value: unknown): string[] {
   take("risks", "Risk", 3);
   take("baseline_candidates", "Baseline", 5);
   take("action_items", "Action", 2);
+  const flexible = sourceRefObject(structured.flexible);
+  if (Array.isArray(flexible.citations)) {
+    for (const citation of flexible.citations.slice(0, 8)) {
+      const ref = sourceRefObject(citation);
+      const quote = stringOrNull(ref.quote);
+      if (!quote) continue;
+      const locator = stringOrNull(ref.locator) ?? "source file";
+      out.push(`Source reference: "${quote}" (${locator})`);
+    }
+  }
   return out;
 }
 
-function phaseCaptureCandidate(
+function phaseCaptureCandidates(
   row: Record<string, unknown>,
-): GovernedCandidateLike | null {
+): GovernedCandidateLike[] {
   const state = sourceRefObject(row.state_jsonb);
   const value = stringOrNull(state.value);
-  if (!value) return null;
+  if (!value) return [];
 
   const moduleKey = stringOrNull(row.module_key);
   const sectionKey =
@@ -171,20 +336,48 @@ function phaseCaptureCandidate(
     status === "completed" ? "high" : "medium";
   const phasePrefix =
     phaseNumber === null ? "Move capture" : `P${phaseNumber} capture`;
-
-  return {
+  const baseCandidate: GovernedCandidateLike = {
     label: `${phasePrefix}: ${label}`,
     statement: `${label}: ${value}`,
     evidenceFamily: `phase_capture:${sectionKey}`,
     confidence,
     asOf:
       stringOrNull(row.completed_at) ??
-      stringOrNull(row.updated_at) ??
+      stringOrNull(row.started_at) ??
+      stringOrNull(row.created_at) ??
       undefined,
     disclosureTier: "internal_only",
     provenanceRef:
       stringOrNull(row.id) ?? moduleKey ?? `program_modules:${sectionKey}`,
   };
+  // The reviewed estimate is cited as its calculated rendering, whole: the
+  // figures a deliverable presents are the calculated ones, and they are not
+  // in the saved inputs. See estimate-capture-evidence.ts.
+  const estimateStatement = estimateCaptureStatement(sectionKey, value);
+  if (estimateStatement) {
+    return [
+      {
+        ...baseCandidate,
+        label: `${phasePrefix}: reviewed estimate model`,
+        statement: estimateStatement,
+      },
+    ];
+  }
+  const signalCandidates = captureValueSignals(label, value).map(
+    (signal, index): GovernedCandidateLike => ({
+      label: `${phasePrefix}: ${signal.label}`,
+      statement: signal.statement,
+      evidenceFamily: `phase_capture:${sectionKey}:${signal.key}`,
+      confidence,
+      asOf: baseCandidate.asOf,
+      disclosureTier: "internal_only",
+      provenanceRef: `${baseCandidate.provenanceRef}:signal:${index}`,
+    }),
+  );
+
+  return signalCandidates.length > 0
+    ? [...signalCandidates, baseCandidate]
+    : [baseCandidate];
 }
 
 function evidenceItemToCandidate(
@@ -279,43 +472,70 @@ function generatedArtifactToCandidate(
 async function loadMoveCurrentStateCandidates(
   params: Pick<
     AssembleEvidenceParams,
-    "tenantClientKey" | "clientId" | "sourceArtifactRef"
+    "tenantClientKey" | "clientId" | "sourceArtifactRef" | "phase"
   >,
   db: FluentDb = getAzureWriteFluentClient(),
-): Promise<GovernedCandidateLike[]> {
+): Promise<{
+  candidates: GovernedCandidateLike[];
+  approvedAvailable: number;
+  unreadable: number;
+}> {
   const clientId = stringOrNull(params.clientId);
   const moveId = stringOrNull(params.sourceArtifactRef);
-  if (!clientId || !moveId) return [];
+  if (!clientId || !moveId)
+    return { candidates: [], approvedAvailable: 0, unreadable: 0 };
 
   const candidates: GovernedCandidateLike[] = [];
+  let approvedAvailable = 0;
+  let unreadable = 0;
 
   // The operator's phase capture is the Move's own source of truth for the
   // current generation pass. It is not a signable gate artifact by itself, but
   // it must lead generation context so broad tenant facts cannot hijack a
   // specific Move narrative.
   try {
-    const { data: modules } = await db
+    let moduleQuery = db
       .from("program_modules")
-      .select(
-        "id, module_key, module_name, phase_number, module_order, status, state_jsonb, updated_at, completed_at",
-      )
-      .eq("engagement_id", moveId)
+      .select(PROGRAM_MODULE_EVIDENCE_COLUMNS.join(", "))
+      .eq("engagement_id", moveId);
+    if (params.phase !== undefined) {
+      moduleQuery = moduleQuery.lte("phase_number", params.phase);
+    }
+    const { data: modules, error: modulesError } = await moduleQuery
       .order("phase_number", { ascending: true })
       .order("module_order", { ascending: true })
-      .limit(80);
+      .limit(MOVE_PHASE_CAPTURE_LIMIT);
+    // A failed read is not "no saved inputs". Generation still proceeds on the
+    // remaining evidence, but the failure is reported: when it was silent, a
+    // query naming a column the table does not have removed every saved
+    // input from evidence and nothing showed it.
+    if (modulesError) {
+      console.error(
+        "[evidence-assembler] saved phase inputs could not be read; they are absent from this build's evidence",
+        { moveId, message: errorMessage(modulesError) },
+      );
+    }
     if (Array.isArray(modules)) {
       for (const row of modules as Array<Record<string, unknown>>) {
+        if (
+          params.phase !== undefined &&
+          !isAtOrBeforePhase(row.phase_number, params.phase)
+        )
+          continue;
         const status = stringOrNull(row.status);
         if (status !== "completed" && status !== "in_progress") continue;
         const moduleKey = stringOrNull(row.module_key);
         if (!moduleKey?.startsWith("phase_")) continue;
-        const candidate = phaseCaptureCandidate(row);
-        if (candidate) candidates.push(candidate);
+        candidates.push(...phaseCaptureCandidates(row));
       }
     }
-  } catch {
+  } catch (err) {
     // Older tenants or fixtures may not have phase-capture rows. Fall through to
     // reviewed evidence and tenant context instead of failing generation.
+    console.error(
+      "[evidence-assembler] saved phase inputs could not be read; they are absent from this build's evidence",
+      { moveId, message: errorMessage(err) },
+    );
   }
 
   // Structured current-state CSVs land in canonical tower_* tables and write a
@@ -330,11 +550,16 @@ async function loadMoveCurrentStateCandidates(
       .eq("client_id", clientId)
       .eq("surface", "moves")
       .order("created_at", { ascending: false })
-      .limit(80);
+      .limit(MOVE_LEDGER_LIMIT);
     if (Array.isArray(data)) {
       for (const row of data as Array<Record<string, unknown>>) {
         const sourceRef = sourceRefObject(row.source_ref);
         if (stringOrNull(sourceRef.moveId) !== moveId) continue;
+        if (
+          params.phase !== undefined &&
+          !isAtOrBeforePhase(sourceRef.phase, params.phase)
+        )
+          continue;
         const statement = stringOrNull(row.claim_text);
         if (!statement) continue;
         const family =
@@ -359,25 +584,80 @@ async function loadMoveCurrentStateCandidates(
   // program_evidence_items. Pull approved review rows and their extracted
   // summaries/signals first so explicit human review remains the preferred path.
   try {
-    const { data: reviews } = await db
+    let reviewSummaryQuery = db
       .from("program_evidence_reviews")
-      .select("evidence_id, family_key, source_ref, reviewed_at, decision")
+      .select("decision, source_ref, phase")
+      .eq("tenant_key", params.tenantClientKey)
+      .eq("program_id", moveId);
+    if (params.phase !== undefined) {
+      reviewSummaryQuery = reviewSummaryQuery.lte("phase", params.phase);
+    }
+    const { data: reviewSummary } =
+      await reviewSummaryQuery.limit(MOVE_REVIEW_LIMIT);
+    if (Array.isArray(reviewSummary)) {
+      for (const review of reviewSummary as Array<Record<string, unknown>>) {
+        if (
+          params.phase !== undefined &&
+          !isAtOrBeforePhase(review.phase, params.phase)
+        )
+          continue;
+        if (stringOrNull(review.decision) === "approved")
+          approvedAvailable += 1;
+        const sourceRef = sourceRefObject(review.source_ref);
+        const parsed = sourceRef.parsed;
+        const parseMethod = stringOrNull(sourceRef.parse_method);
+        const parseStatus = stringOrNull(sourceRef.parse_status);
+        if (
+          parsed === false ||
+          parseStatus === "failed" ||
+          parseMethod === "failed" ||
+          parseMethod === "unreadable"
+        ) {
+          unreadable += 1;
+        }
+      }
+    }
+  } catch {
+    // Coverage instrumentation is best-effort on older databases; never fail
+    // generation because the summary columns are not present yet.
+  }
+
+  try {
+    let reviewsQuery = db
+      .from("program_evidence_reviews")
+      .select(
+        "evidence_id, family_key, source_ref, reviewed_at, decision, phase",
+      )
       .eq("tenant_key", params.tenantClientKey)
       .eq("program_id", moveId)
-      .eq("decision", "approved")
-      .limit(40);
+      .eq("decision", "approved");
+    if (params.phase !== undefined) {
+      reviewsQuery = reviewsQuery.lte("phase", params.phase);
+    }
+    const { data: reviews } = await reviewsQuery.limit(MOVE_REVIEW_LIMIT);
     if (Array.isArray(reviews) && reviews.length > 0) {
-      const reviewRows = reviews as Array<Record<string, unknown>>;
+      const reviewRows = (reviews as Array<Record<string, unknown>>).filter(
+        (review) =>
+          params.phase === undefined ||
+          isAtOrBeforePhase(review.phase, params.phase),
+      );
+      if (approvedAvailable === 0) approvedAvailable = reviewRows.length;
       const evidenceIds = reviewRows
         .map((r) => stringOrNull(r.evidence_id))
         .filter((id): id is string => Boolean(id));
       if (evidenceIds.length > 0) {
-        const { data: evidenceRows } = await db
+        let evidenceQuery = db
           .from("program_evidence_items")
           .select(
-            "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at",
+            "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at, phase",
           )
+          .eq("tenant_key", params.tenantClientKey)
+          .eq("program_id", moveId)
           .in("id", evidenceIds);
+        if (params.phase !== undefined) {
+          evidenceQuery = evidenceQuery.lte("phase", params.phase);
+        }
+        const { data: evidenceRows } = await evidenceQuery;
         const byId = new Map(
           (Array.isArray(evidenceRows) ? evidenceRows : []).map((row) => [
             stringOrNull((row as Record<string, unknown>).id),
@@ -400,7 +680,19 @@ async function loadMoveCurrentStateCandidates(
             stringOrNull(sourceRef.filename) ??
             stringOrNull(row.title) ??
             family;
-          const candidate = evidenceItemToCandidate(row, {
+          const reviewed = reviewedExtractionFromStoredSourceRef(sourceRef);
+          const reviewedRow = reviewed
+            ? {
+                ...row,
+                summary: reviewed.summary,
+                extracted_text: null,
+                extracted_structured: toStoredReviewedStructured(
+                  reviewed,
+                  row.extracted_structured,
+                ),
+              }
+            : row;
+          const candidate = evidenceItemToCandidate(reviewedRow, {
             family,
             familyPrefix: "document_extract",
             title,
@@ -419,23 +711,73 @@ async function loadMoveCurrentStateCandidates(
   // clear the review lifecycle before generation can consume it; otherwise the
   // context extract, readiness, and generated deliverables can diverge.
 
-  // Prior generated artifacts are the reviewed working product of earlier Move
-  // phases. P5 handoff/value contracts must inherit that structured state
-  // instead of requiring an operator to upload it again as external evidence.
+  // Prior generated artifacts are context only after a human signs the exact
+  // deliverable version that links to them. A newer draft must never replace or
+  // contaminate the previously approved version in a later phase prompt.
   try {
-    const { data: artifacts } = await db
+    const { data: deliverables, error: deliverablesError } = await db
+      .from("deliverables_v2")
+      .select("id, status, signed_off_version")
+      .eq("engagement_id", moveId)
+      .limit(MOVE_GENERATED_ARTIFACT_LIMIT);
+    if (deliverablesError || !Array.isArray(deliverables))
+      return {
+        candidates,
+        approvedAvailable,
+        unreadable,
+      };
+    const deliverableRows = deliverables as Array<Record<string, unknown>>;
+    const deliverableIds = deliverableRows
+      .map((row) => stringOrNull(row.id))
+      .filter((id): id is string => Boolean(id));
+    if (deliverableIds.length === 0) {
+      return { candidates, approvedAvailable, unreadable };
+    }
+
+    const { data: versions, error: versionsError } = await db
+      .from("deliverable_versions")
+      .select("deliverable_id, version, structured_data")
+      .in("deliverable_id", deliverableIds)
+      .limit(MOVE_GENERATED_ARTIFACT_LIMIT * 4);
+    if (versionsError || !Array.isArray(versions)) {
+      return { candidates, approvedAvailable, unreadable };
+    }
+    const approvedArtifactIds = approvedGeneratedArtifactIds({
+      deliverables: deliverableRows as Array<{
+        id: string;
+        status: string;
+        signed_off_version: number | null;
+      }>,
+      versions: versions as Array<{
+        deliverable_id: string;
+        version: number;
+        structured_data: unknown;
+      }>,
+    });
+    if (approvedArtifactIds.length === 0) {
+      return { candidates, approvedAvailable, unreadable };
+    }
+
+    const { data: artifacts, error: artifactsError } = await db
       .from("generated_artifacts")
       .select(
         "id, quality_score, rendered_at, source_artifact_ref, superseded_by, quarantine_reason, metadata",
       )
       .eq("client_id", clientId)
       .eq("source_artifact_ref", moveId)
-      .is("superseded_by", null)
+      .in("id", approvedArtifactIds)
       .is("quarantine_reason", null)
       .order("rendered_at", { ascending: false })
-      .limit(24);
-    if (Array.isArray(artifacts)) {
+      .limit(MOVE_GENERATED_ARTIFACT_LIMIT);
+    if (!artifactsError && Array.isArray(artifacts)) {
+      const approvedIds = new Set(approvedArtifactIds);
       for (const row of artifacts as Array<Record<string, unknown>>) {
+        if (!approvedIds.has(stringOrNull(row.id) ?? "")) continue;
+        if (
+          params.phase !== undefined &&
+          !isGeneratedArtifactAtOrBeforePhase(row, params.phase)
+        )
+          continue;
         const candidate = generatedArtifactToCandidate(row);
         if (candidate) candidates.push(candidate);
       }
@@ -446,14 +788,78 @@ async function loadMoveCurrentStateCandidates(
   }
 
   const seen = new Set<string>();
-  return candidates
-    .filter((candidate) => {
-      const key = `${candidate.provenanceRef}:${candidate.statement}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 24);
+  return {
+    candidates: candidates
+      .filter((candidate) => {
+        const key = `${candidate.provenanceRef}:${candidate.statement}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, MOVE_CANDIDATE_LIMIT),
+    approvedAvailable,
+    unreadable,
+  };
+}
+
+function isGeneratedArtifactAtOrBeforePhase(
+  row: Record<string, unknown>,
+  requestedPhase: number,
+): boolean {
+  const metadata = sourceRefObject(row.metadata);
+  const typeKey = stringOrNull(metadata.deliverableTypeKey);
+  if (!typeKey) return false;
+  const artifactPhase = DELIVERABLE_REGISTRY.find(
+    (spec) => spec.deliverableTypeKey === typeKey,
+  )?.phase;
+  return artifactPhase !== undefined && artifactPhase <= requestedPhase;
+}
+
+function normalizedQueries(params: AssembleEvidenceParams): string[] {
+  const raw =
+    params.queries && params.queries.length > 0
+      ? params.queries
+      : [params.query ?? "current state baseline"];
+  const seen = new Set<string>();
+  const queries: string[] = [];
+  for (const query of raw) {
+    const trimmed = query.trim().replace(/\s+/g, " ");
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    queries.push(trimmed);
+  }
+  return queries.length > 0 ? queries : ["current state baseline"];
+}
+
+async function queryTenantChunks(
+  params: AssembleEvidenceParams,
+  queryTenantContext: QueryFn,
+): Promise<TenantContextChunk[]> {
+  const chunksById = new Map<string, TenantContextChunk>();
+  const queries = normalizedQueries(params);
+  const results = await Promise.all(
+    queries.map((query) =>
+      queryTenantContext({
+        tenantClientKey: params.tenantClientKey,
+        query,
+        topK: params.topK ?? TENANT_CONTEXT_TOP_K,
+        filters: {
+          minConfidence: params.minConfidence ?? 0.5,
+          // vendor-facing generation should never even retrieve restricted/confidential
+          sensitivity: params.audienceIsVendorFacing
+            ? ["public", "internal"]
+            : ["public", "internal", "confidential"],
+        },
+      }),
+    ),
+  );
+  for (const chunk of results.flat()) {
+    const id = chunk.chunkId || chunk.sourceSegmentId || chunk.text;
+    if (!chunksById.has(id)) chunksById.set(id, chunk);
+  }
+  return [...chunksById.values()];
 }
 
 export async function assembleGovernedEvidence(
@@ -461,27 +867,34 @@ export async function assembleGovernedEvidence(
   deps: { queryTenantContext?: QueryFn; db?: FluentDb } = {},
 ): Promise<AssembledEvidence> {
   const query = deps.queryTenantContext ?? defaultQueryTenantContext;
-  const chunks = await query({
-    tenantClientKey: params.tenantClientKey,
-    query: params.query,
-    topK: params.topK ?? 12,
-    filters: {
-      minConfidence: params.minConfidence ?? 0.5,
-      // vendor-facing generation should never even retrieve restricted/confidential
-      sensitivity: params.audienceIsVendorFacing
-        ? ["public", "internal"]
-        : ["public", "internal", "confidential"],
-    },
-  });
-  const moveCandidates = await loadMoveCurrentStateCandidates(params, deps.db);
+  const chunks = await queryTenantChunks(params, query);
+  const moveContext = await loadMoveCurrentStateCandidates(params, deps.db);
+  const moveCandidates = moveContext.candidates;
   const tenantCandidates = chunks.map(chunkToCandidate);
   const candidates = [...moveCandidates, ...tenantCandidates];
   const { evidence, register } = buildSourceRegister(candidates, {
     audienceIsVendorFacing: params.audienceIsVendorFacing,
   });
+  const budget = params.contextBudget ?? resolveContextBudget();
+  const packed = packEvidence(evidence, budget);
+  const packedCitations = new Set(
+    packed.packed.map((item) => item.citationNumber),
+  );
+  const packedRegister = register.filter((entry) =>
+    packedCitations.has(entry.citationNumber),
+  );
   return {
-    evidence,
-    sourceRegister: register,
+    evidence: packed.packed,
+    sourceRegister: packedRegister,
     retrievedCount: candidates.length,
+    coverage: buildContextCoverage({
+      approvedAvailable: moveContext.approvedAvailable,
+      retrieved: candidates.length,
+      packed: packed.packed.length,
+      droppedForBudget: packed.droppedCount,
+      unreadable: moveContext.unreadable,
+      usedTokens: packed.usedTokens,
+      evidenceTokenBudget: budget.evidenceTokens,
+    }),
   };
 }

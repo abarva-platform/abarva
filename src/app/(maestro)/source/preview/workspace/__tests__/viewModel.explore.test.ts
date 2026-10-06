@@ -15,6 +15,7 @@ import type {
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
+import type { Contract360Response } from "../live/contractDetail";
 
 // Live-found bug (2026-08-04): selecting a value in the Explore lens (e.g.
 // Vendor = Salesforce) correctly updated the "current selection" total, but
@@ -138,6 +139,7 @@ const WORKSPACE_DIAGNOSTICS = {
   datasetVersion: "v4",
   analyticsProvider: "CubeSourceProvider",
   activeLoadRunId: null,
+  lastCompletedLoadAtIso: null,
   asOfDateIso: "2027-06-30T00:00:00Z",
   v4ContractCount: 0,
   v4VendorCount: 0,
@@ -238,6 +240,27 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(state.tabs.contract).toBe(INITIAL_STATE.tabs.contract);
   });
 
+  it("initializes command-center sections from URL state", () => {
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "contracts" }).sel.kind,
+    ).toBe("contractList");
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "levers" }).sel.kind,
+    ).toBe("optimize");
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "evidence" }).sel.kind,
+    ).toBe("evidence");
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "coverage" }).sel.kind,
+    ).toBe("vendorList");
+
+    const commandState = buildInitialWorkspaceState({
+      workspaceTab: "command",
+    });
+    expect(commandState.sel.kind).toBe("portfolio");
+    expect(commandState.tabs.portfolio).toBe("Portfolio");
+  });
+
   it("does not substitute the first contract when a deep link points to a missing contract", () => {
     const state = buildInitialWorkspaceState({
       contractId: "CTR-DOES-NOT-EXIST",
@@ -262,6 +285,90 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(view.valueStrip.map((item) => item.value)).toContain(
       "CTR-DOES-NOT-EXIST",
     );
+    expect(view.avaSurfaceContext).toMatchObject({
+      module: "Source",
+      sourceContract360Mode: true,
+      contractId: "CTR-DOES-NOT-EXIST",
+      contractName: null,
+      vendorName: null,
+      annualValue: null,
+      actualAnnualSpend: null,
+      evidencePosture:
+        "Requested contract was not returned by the active Source provider.",
+      nextAction:
+        "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim.",
+    });
+    expect(view.title).not.toContain(CONTRACTS[0]!.vendor_name);
+  });
+
+  it("promotes a fetched supplemental contract into Contract 360 and aVa context", () => {
+    const contract = contractRow({
+      tenant_key: "example-health",
+      contract_id: "SUP-TECH-AMS-001",
+      vendor_ref: "SUP-VEN-AMS",
+      vendor_name: "Example Managed Services Provider",
+      contract_name: "Legacy Analytics Application Managed Services Agreement",
+      annual_value: 7_850_000,
+      actual_annual_spend: 8_032_500.04,
+      source_confidence: 0.94,
+    });
+    const detail = {
+      contract,
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      optimizationOpportunitySet: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
+    } satisfies Contract360Response;
+    const state = {
+      ...buildInitialWorkspaceState({ contractId: contract.contract_id }),
+      contractDetail: { [contract.contract_id]: detail },
+    };
+    const vm = new WorkspaceViewModel(
+      state,
+      () => undefined,
+      PORTFOLIO,
+      "Example Health System",
+      () => undefined,
+    );
+
+    const view = buildViewModel(vm);
+
+    expect(view.title).toContain("Example Managed Services Provider");
+    expect(view.c?.id).toBe(contract.contract_id);
+    expect(view.detailState).toBe("ready");
+    expect(view.avaSurfaceContext).toMatchObject({
+      sourceContract360Mode: true,
+      contractId: contract.contract_id,
+      contractName: contract.contract_name,
+      vendorName: contract.vendor_name,
+      annualValue: 7_850_000,
+      actualAnnualSpend: 8_032_500.04,
+      evidencePosture: "94.0% source confidence",
+      selection: `${contract.contract_id} · ${contract.vendor_name}`,
+    });
+    expect(
+      view.avaSurfaceContext.sourceV4.contractDirectory.some(
+        (row) => row.contractId === contract.contract_id,
+      ),
+    ).toBe(true);
     expect(view.title).not.toContain(CONTRACTS[0]!.vendor_name);
   });
 

@@ -75,7 +75,7 @@ export function PhaseWorkspaceComposition(): React.ReactElement {
             'One open gap resolved and re-confirmed by the owner.',
             'SME sign-off attached — the version is auditable.',
           ]}
-          gateQuestion="A gate is a set of human attestations. Confirm the current-state findings are accurate to advance to Choose the Approach."
+          gateQuestion="A gate is a set of human attestations. Confirm the current-state findings are accurate to advance to Design Future State."
         />
 
         <p className="pw-foot">

@@ -11,10 +11,59 @@ describe("contract depth package Layer 4 overlay job", () => {
 
   it("projects the depth package as an overlay instead of replacing the active base cube", () => {
     expect(source).toContain("source.l4_cube_active_load_run_overlay");
-    expect(source).toContain("UNION");
+    expect(source).toContain("UNION ALL");
     expect(source).toContain("source.l4_cube_active_load_run");
+    expect(source).toContain("active_contract_versions");
+    expect(source).toContain(
+      "PRIMARY KEY (tenant_key, load_run_id, dataset_version)",
+    );
+    expect(source).toContain(
+      "ON CONFLICT (tenant_key, load_run_id, dataset_version)",
+    );
+    expect(source).toContain(
+      "DROP CONSTRAINT IF EXISTS l4_cube_active_load_run_overlay_pkey",
+    );
+    expect(source).toContain("WHERE NOT EXISTS (");
+    expect(source).not.toContain(
+      "SELECT DISTINCT ON (tenant_key, load_run_id)",
+    );
     expect(source).toContain("source_contract_360_total regressed");
     expect(source).not.toMatch(/\bDROP VIEW\b/i);
+  });
+
+  it("scopes overlay facts to the active contract version instead of stacking historical package rows", () => {
+    expect(source).toContain(
+      "JOIN active_contract_runs active\n        ON active.tenant_key = s.tenant_key\n       AND active.contract_id = s.contract_id\n       AND active.load_run_id = s.load_run_id",
+    );
+    expect(source).toContain(
+      "JOIN active_contract_runs active\n        ON active.tenant_key = o.tenant_key\n       AND active.contract_id = o.contract_id\n       AND active.load_run_id = o.load_run_id",
+    );
+    expect(source).toContain(
+      "JOIN active_contract_versions active\n        ON active.tenant_key = facts.tenant_key\n       AND active.contract_id = facts.contract_id",
+    );
+    expect(source).toContain(
+      "CREATE OR REPLACE VIEW source.contract_vendor_360 AS\n    WITH active_runs AS (${activeRuns}),\n    active_contract_versions AS (${activeContractVersions}),\n    active_contract_runs AS (${activeContractRuns}),",
+    );
+    expect(source).toContain("facts.dataset_version = active.dataset_version");
+    expect(source).toContain("o.dataset_version = active.dataset_version");
+    expect(source).toContain("AND depth.load_run_id = c.load_run_id");
+    expect(source).toContain("GROUP BY tenant_key, contract_id, load_run_id");
+    expect(source).toContain("AND spend.load_run_id = c.load_run_id");
+    expect(source).toContain("AND opportunities.load_run_id = c.load_run_id");
+    expect(source).toContain("AND cov.load_run_id = o.load_run_id");
+  });
+
+  it("keeps one active header usable across multiple package versions on a shared run", () => {
+    expect(source).toContain("const activeContractRuns = `");
+    expect(source).toContain(
+      "FROM (${activeContractVersions}) active_contract_versions",
+    );
+    expect(source).not.toContain(
+      "NULLIF(c.raw_payload->>'dataset_version', '') = active.dataset_version",
+    );
+    expect(source).toContain(
+      "o.dataset_version IN (\n         SELECT active.dataset_version",
+    );
   });
 
   it("requires repaired canonical alternatives before product projection", () => {
@@ -32,9 +81,46 @@ describe("contract depth package Layer 4 overlay job", () => {
 
   it("projects governed optimization and consumption rows into product views", () => {
     expect(source).toContain("source.optimization_opportunity");
+    expect(source).toContain("a.load_run_id,");
+    expect(source).toContain(
+      "PARTITION BY a.tenant_key, a.contract_id, a.load_run_id",
+    );
+    expect(source).toContain("GROUP BY tenant_key, contract_id, load_run_id");
+    expect(source).toContain("opportunity.load_run_id = c.load_run_id");
+    expect(source).toContain("context_brief AS");
+    expect(source).toContain("contract.purpose_summary");
+    expect(source).toContain("contract.scope_summary");
+    expect(source).toContain("contract.commercial_thesis");
+    expect(source).toContain("contract.relationship_summary");
+    expect(source).toContain("contract.evidence_boundary");
+    expect(source).toContain(
+      "facts.review_state IN ('reviewed', 'approved', 'system_extracted_synthetic_demo')",
+    );
+    expect(source).toContain("context_brief.scope_summary");
+    expect(source).toContain("purpose_summary");
+    expect(source).toContain("commercial_thesis");
+    expect(source).toContain("relationship_summary");
+    expect(source).toContain("evidence_boundary_summary");
+    expect(source).toContain(
+      "c.load_run_id,\n      COALESCE(app.scoped_application_count",
+    );
+    expect(source).toContain("c.evidence_boundary_summary");
+    expect(source).not.toContain(
+      "SELECT\n      c.*,\n      COALESCE(app.scoped_application_count",
+    );
     expect(source).toContain("consumption.sourcing_spend_monthly_v1");
     expect(source).toContain("consumption.sourcing_performance_v1");
     expect(source).toContain("finance_confirmation_required");
+    expect(source).toContain("WHEN o.value_type = 'control_action' THEN 'control_required'");
+    expect(source).toContain(
+      "COALESCE(accepted.amount_low_usd, accepted.amount_usd)::numeric(18,2) AS value_low",
+    );
+    expect(source).toContain(
+      "COALESCE(accepted.amount_high_usd, accepted.amount_usd)::numeric(18,2) AS value_high",
+    );
+    expect(source).toContain(
+      "COALESCE(accepted.amount_high_usd, accepted.amount_usd)::numeric(18,2) AS annual_value_exposed",
+    );
     expect(source).toContain("document_page_text_count");
     expect(source).toContain("change_order_count");
     expect(source).toContain("annual_change_order_spend");
@@ -44,11 +130,33 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source_contract_360_change_order_rows_package: 8",
     );
     expect(source).toContain("source_optimization_opportunity: 6");
+    expect(source).toContain("meridian-laams-new-event-rich-v2-20260908");
+    expect(source).toContain("source_contract_scope: 48");
+    expect(source).toContain("source_contract_performance_observation: 72");
+    expect(source).toContain("source_contract_360_page_text_rows_package: 45");
     expect(source).toContain(
-      "COALESCE(NULLIF(c.raw_payload ->> 'archetype', ''), v.supplier_category) AS vendor_category",
+      "source_contract_360_change_order_rows_package: 12",
+    );
+    expect(source).toContain(
+      "source_contract_360_resource_role_rows_package: 30",
+    );
+    expect(source).toContain(
+      "source_contract_360_invoice_line_rows_package: 72",
+    );
+    expect(source).toContain("meridian-managed-services-depth-v1-20260907");
+    expect(source).toContain("source_contract: 1");
+    expect(source).toContain("source_contract_consumption_observation: 12");
+    expect(source).toContain("source_contract_performance_observation: 12");
+    expect(source).toContain("source_contract_360_page_text_rows_package: 12");
+    expect(source).toContain(
+      "source_contract_360_change_order_rows_package: 5",
+    );
+    expect(source).toContain(
+      "NULLIF(c.raw_payload ->> 'contract_archetype', ''),\n        NULLIF(c.raw_payload ->> 'archetype', ''),\n        v.supplier_category",
     );
     expect(source).toContain(`SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
+    ${"${sourcingExclusionSql(allPairs)}"}
     UNION ALL
     SELECT * FROM optimization
     WHERE source.can_read_sourcing_tenant(tenant_key)`);
@@ -61,6 +169,7 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source.contract_claim_card_v1",
       "source.vendor_position_v1",
       "source.source_page_storyline_v1",
+      "source.contract_tab_intelligence_v1",
       "source.ava_grounding_bundle_v1",
     ];
     expectedViews.forEach((viewName) => {
@@ -71,12 +180,16 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("source_contract_claim_card_v1_package: 6");
     expect(source).toContain("source_vendor_position_v1_package: 5");
     expect(source).toContain("source_page_storyline_v1_rows: 5");
+    expect(source).toContain("source_contract_tab_intelligence_v1_package: 35");
     expect(source).toContain("source_ava_grounding_bundle_v1_rows: 6");
+    expect(source).toContain("source_stage <> 'signal'");
+    expect(source).toContain("source_amount_state <> 'not_sized'");
+    expect(source).toContain("signal-stage rows");
     expect(source).toContain(
       "deterministic_layer_unclaimed_credit_usd expected > 0",
     );
     expect(source).toContain(
-      "deterministic_layer_candidate_amount_usd expected > 0",
+      "deterministic_layer_candidate_amount_usd cannot be negative",
     );
     expect(source).toContain(
       "Never present this candidate as realized savings until finance confirms it.",
@@ -87,7 +200,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain(
       "COALESCE(NULLIF(cov.vendor_name, ''), 'Vendor name not resolved') AS vendor_name",
     );
-    expect(source).not.toContain("o.vendor_ref, 'Unknown vendor') AS vendor_name");
+    expect(source).not.toContain(
+      "o.vendor_ref, 'Unknown vendor') AS vendor_name",
+    );
     expect(source).not.toContain("o.vendor_name,");
     expect(source).toContain("page_key = 'contract_action'");
     expect(source).toContain("FROM source.contract_action_candidate_v1 a");
@@ -122,7 +237,7 @@ describe("contract depth package Layer 4 overlay job", () => {
       "COALESCE(op.cloud_sev1_sev2_incidents, 0)::numeric AS cloud_sev1_sev2_incidents",
     );
     expect(source).toContain(
-      "WHEN c.source_confidence ~ '^[0-9]+(\\\\.[0-9]+)?$' THEN c.source_confidence::numeric",
+      "WHEN c.source_confidence::text ~ '^[0-9]+(\\\\.[0-9]+)?$' THEN c.source_confidence::numeric",
     );
     expect(source).toContain("ELSE 0.9::numeric");
     expect(source).not.toContain(

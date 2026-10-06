@@ -15,7 +15,7 @@ export function getPercentileMultiplier(percentile: EstimatePercentile) {
 }
 
 export function summarizeCommitmentRisk(estimate: TimelineResourceEstimate) {
-  const percentile = estimate.sponsor_approval.approval_percentile_commitment;
+  const percentile = estimate.workspace_approval.approval_percentile_commitment;
   const multiplier = getPercentileMultiplier(percentile);
   const weeks = estimate.summary.total_calendar_weeks_p80;
   return {

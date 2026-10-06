@@ -17,17 +17,38 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
+import { EventRetirementControl } from "@/components/source/approval/EventRetirementControl";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
-import { BafoScenarioComparePanel } from "@/components/source/canvas/bafo/BafoScenarioComparePanel";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
+import { VendorBafoInstructionPackPanel } from "@/components/source/canvas/responses/VendorBafoInstructionPackPanel";
+import { VendorChallengeLeveragePanel } from "@/components/source/canvas/responses/VendorChallengeLeveragePanel";
+import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/responses/EvaluationBafoReadinessPanel";
+import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
-import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
+import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
+import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
+import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
+import { criterionForSourceApprovalPolicy, sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { evidenceMeetsRequirement, hasAuditedAbsence, hasRecordedSource, permitsAbsenceDeclaration, requiresRecordedSource } from "@/lib/source/evidence-authority";
+import { evaluateStagePromotionReadiness, isArtifactGateReady, SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
+import {
+  buildSourceStage08AcceptanceSpine,
+  type SourceStage08AcceptanceSpine,
+} from "@/lib/source/stage08-acceptance-spine";
+import type {
+  SourceAwardSowArtifactInput,
+  SourceAwardSowHandoffReadiness,
+  SourceAwardSowStageInput,
+} from "@/lib/source/award-sow-handoff-readiness-types";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
+import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
+  EvaluationBafoReadinessView,
+  Stage07NegotiationBriefCandidate,
   VendorEvaluationDecisionView,
   VendorResponseParseReport,
   VendorResponseProfileSet,
@@ -39,7 +60,6 @@ import {
   type SourceShellEvidenceBasis,
   type SourceShellFileItem,
   type SourceShellStep,
-  type SourceShellStepGroup,
   type SourceShellWorkspace,
 } from "@/lib/source/source-event-shell-v2";
 import {
@@ -57,10 +77,19 @@ import {
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
 import {
+  SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER,
+  SOURCE_NEW_PHASE_DISPLAY_LABELS,
+  sourceNewFilePhase,
+  sourceNewPhaseState,
+  type SourceNewExternalCheckpointKey,
+  type SourceNewPhaseEvidence,
+} from "@/lib/source/new-workspace/phase-state";
+import {
   criteriaForStage,
   evidenceForStage,
   requiredEvidenceForStage,
   requiredSpecsForStage,
+  specByCode,
   type SourceEvidenceRequirement,
 } from "@/lib/source/canonical-specs";
 import type {
@@ -68,6 +97,7 @@ import type {
   SourceEventEvidence,
   SourceEventEvidenceCurrentState,
   SourceEventGateCriterion,
+  SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import {
   deriveSourceEvidenceLifecycle,
@@ -79,16 +109,24 @@ import {
 } from "@/lib/source/gate-auto-assessment";
 import { computeStageRequirementCoverage } from "@/lib/source/requirement-coverage";
 import {
+  buildGovernedStageEvidenceReadinessBrief,
+  type GovernedStageEvidenceReadinessBrief,
+} from "@/lib/source/stage-evidence-readiness-brief";
+import {
   resolveSimpleStageScreen,
   type SimpleStageScreenView,
 } from "@/lib/source/simple-front";
-import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import {
   adaptStageViewToSourceJourney,
   sourceJourneyLabelForStage,
   type SourceJourneyDefinition,
 } from "@/lib/source/sourcing-motion-journeys";
-import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import type {
+  SourceArtifactStatus,
+  SourceStageKey,
+  SourcingEventSummary,
+  WorkflowStage,
+} from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 import type {
@@ -96,13 +134,14 @@ import type {
   SourceEmbeddingStatus,
   SourceParseStatus,
 } from "@/lib/source/artifact-registry/types";
-import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness-types";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { CommercialActiveCanvasStrip } from "./CommercialActiveCanvasStrip";
 import { IntelPanel } from "./IntelPanel";
 import {
+  SponsorDelegationControl,
+  SponsorReviewRequest,
   TaskProvideUpload,
   TemplateDownloadLink,
   type TaskProvideUploadReadback,
@@ -110,7 +149,12 @@ import {
 import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
+  requiredEvidenceRequirementIdsForTask,
 } from "@/lib/source/facts/task-evidence-requirements";
+import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
+import {
+  hydrateTaskEvidenceState,
+} from "@/lib/source/facts/view/task-evidence-hydration";
 import { ValueWaterfall } from "./ValueWaterfall";
 import { StepInsightPanel } from "./insights";
 import {
@@ -181,9 +225,34 @@ const SESSION_EVIDENCE_LANES: readonly SessionEvidenceLane[] = [
 
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
+  canRetireEvent?: boolean;
+  /**
+   * U-520 — pass-through to `VendorResponseDecisionProofPanel`, the one
+   * descendant of this canvas that prints an exact financial magnitude. The
+   * canvas does not read it.
+   *
+   * Optional, and defaulted to `false` at the destructure below. The LEAF that
+   * consumes it takes it as required, because that is where a silent caller
+   * would become a granted reader. Here the safe default is available and the
+   * cost of requiring it is not: this canvas is mounted at 78 call sites across
+   * twelve suites that have nothing to do with financial entitlement, and a
+   * mechanical prop added to all of them is the large-diff-nobody-reads shape
+   * this backlog exists against.
+   *
+   * `false` is the fail-CLOSED direction, and the distinction matters: U-508's
+   * defect was eight components defaulting to `true`, and its record notes that
+   * the one reader already defaulting to `false` "has no fail-open default to
+   * remove". A route that forgets this prop restricts, which a reader can see
+   * and report; the opposite silently discloses.
+   */
+  canViewFinancialValues?: boolean;
   viewStage: SourceStageKey;
   tenantName: string;
   stageView?: StageAnalyticsView;
+  /** Current-stage action resolved from the server approval policy, independent of value analytics. */
+  stageGateAction?: StageGateActionView;
+  /** A server-verified delegation receipt, never a raw fact or artifact payload. */
+  verifiedFallbackSponsorAcknowledgement?: boolean;
   stepInsight?: StepInsightView;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
@@ -196,6 +265,8 @@ interface SourceAnalyticsCanvasProps {
   latestArtifactAcceptances?: readonly ArtifactAcceptanceRecord[];
   /** Durable per-requirement evidence readiness rows already read by the route. */
   evidenceStates?: readonly SourceEventEvidence[];
+  gateCriterionStates?: readonly SourceEventGateCriterion[];
+  stageArtifactStates?: readonly SourceEventArtifactState[];
   /** Initial workspace selected by the route, e.g. from ?workspace=approvals. */
   initialWorkspace?: SourceShellWorkspace;
   /**
@@ -208,8 +279,6 @@ interface SourceAnalyticsCanvasProps {
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   /** Event-specific journey: competitive RFP by default, contract optimization for incumbent-renegotiation work. */
   journey?: SourceJourneyDefinition;
-  /** Server-built Source selection readiness projection for Selection / Executive Decision stages. */
-  selectionReadiness?: SourceVendorSelectionReadiness | null;
   /** Server-built vendor response package readiness for the live Responses stage. */
   vendorResponseReadiness?: SourceVendorResponseCompleteness | null;
   /** Server-built proposal profile chain used by the live Responses cockpit. */
@@ -217,7 +286,12 @@ interface SourceAnalyticsCanvasProps {
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
+  negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
+  normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  /** Optional deterministic Stage 08 readiness override for tests or server-built callers. */
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -413,17 +487,17 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     missingAction: "Review the mandate and confirm the sponsor.",
   },
   "scope.volumetrics": {
-    item: "Volumetrics file",
+    item: "Ticket-history file",
     requirement: "1 required file",
-    sourceSystem: "ITSM / finance baseline",
-    ownerRole: "IT Ops / Finance",
+    sourceSystem: "ITSM ticket export",
+    ownerRole: "ITSM owner",
     acceptedFormats: "CSV or XLSX",
-    grainHistory: "Monthly by service tower for 12-24 months",
-    templateLabel: "Scope volumetrics template",
-    parseTarget: "Tickets, SLA misses, change orders, run volumes",
-    artifactImpact: "Scope memo, value lever sizing, pricing baseline",
+    grainHistory: "By service tower, L2/L3 tier, month, and time window",
+    templateLabel: "ITSM ticket history by tier and time window",
+    parseTarget: "Ticket counts and SLA breach counts",
+    artifactImpact: "Scope memo and service-volume baseline",
     missingAction:
-      "Download the template, fill one row per tower, then upload.",
+      "Download the template, fill one row per tower, tier, month, and time window, then upload.",
   },
   "scope.app-inventory": {
     item: "Application inventory file",
@@ -437,29 +511,29 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     artifactImpact: "Scope boundaries, transition risk, RFP exhibits",
     missingAction: "Download the template, fill one row per app, then upload.",
   },
-  "scope.vendor-commercials": {
-    item: "Vendor commercials file",
-    requirement: "1 required file",
-    sourceSystem: "Commercial workbook / proposal",
-    ownerRole: "Procurement lead",
-    acceptedFormats: "CSV or XLSX",
-    grainHistory: "One row per rate, service line, term, and pricing unit",
-    templateLabel: "Vendor commercials template",
-    parseTarget: "Transition fee, credits, term, productivity, SLA caps",
-    artifactImpact: "Commercial baseline, pricing traps, BAFO asks",
-    missingAction: "Upload the required vendor-commercials workbook.",
+  "scope.prior-baseline": {
+    item: "Prior commercial baseline",
+    requirement: "Recorded prior baseline or audited absence",
+    sourceSystem: "Prior contract or finance baseline",
+    ownerRole: "Procurement and finance owners",
+    acceptedFormats: "CSV, XLSX, PDF or DOCX",
+    grainHistory: "Prior agreement, fiscal period or run-cost line",
+    templateLabel: "Prior baseline template",
+    parseTarget: "Contract and run-cost basis, if present",
+    artifactImpact: "Scope economics and future pricing assumptions",
+    missingAction: "Upload a recorded prior baseline or declare its absence with a reason.",
   },
   "scope.sponsor": {
-    item: "Sponsor commitment letter",
-    requirement: "1 required signed file",
+    item: "Sponsor commitment",
+    requirement: "Verified signer proof or delegated acknowledgement with provider-accepted sponsor notice",
     sourceSystem: "Scope readiness pack",
     ownerRole: "Executive sponsor",
     acceptedFormats: "PDF or DOCX",
-    grainHistory: "One signed commitment for the current scope gate",
+    grainHistory: "One commitment bound to the current Scope memo",
     templateLabel: "Sponsor sign-off checklist",
     parseTarget: "Sponsor commitment evidence",
     artifactImpact: "Scope approval and governance record",
-    missingAction: "Upload the signed sponsor commitment.",
+    missingAction: "Submit signed commitment evidence for verification or acknowledge as an authorized delegate and notify the sponsor.",
   },
   "rfp.clause-coverage": {
     item: "RFP clause coverage file",
@@ -572,6 +646,19 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
   },
 };
 
+const SELF_STRATEGY_REQUIREMENT: WorkflowStepRequirement = {
+  item: "Event Owner strategy confirmation",
+  requirement: "1 required confirmation",
+  sourceSystem: "Sourcing intake record",
+  ownerRole: "Event Owner or client admin",
+  acceptedFormats: "No upload required",
+  grainHistory: "One version-bound decision per event",
+  templateLabel: "Strategy intake fields",
+  parseTarget: "Mandate, decision owner, value thesis",
+  artifactImpact: "Strategy memo and Scope collection guide",
+  missingAction: "Review the mandate and value thesis, then confirm as Event Owner.",
+};
+
 function sampleStageViewFor(
   stageKey: SourceStageKey,
   journey?: SourceJourneyDefinition,
@@ -607,6 +694,41 @@ function sampleStageViewFor(
     }
   })();
   return adaptStageViewToSourceJourney(sample, journey);
+}
+
+export function liveFallbackStageViewFor(
+  stageKey: SourceStageKey,
+  journey?: SourceJourneyDefinition,
+): StageAnalyticsView {
+  const exemplar = sampleStageViewFor(stageKey, journey);
+  if (normalizeSourceStageKey(stageKey) !== "scope") return exemplar;
+
+  return {
+    ...exemplar,
+    intel: {
+      provenance: "sample",
+      lead: "Scope analytics await governed event facts; review the evidence ledger for current coverage.",
+      points: [],
+    },
+    tasks: exemplar.tasks
+      .filter((task) => task.id !== "scope.apps")
+      .map((task) => ({
+        ...task,
+        state: "todo" as const,
+        subtitle:
+          task.id === "scope.exclusions"
+            ? "Exclusions and retained work"
+            : task.subtitle,
+        guide:
+          task.id === "scope.exclusions"
+            ? "Record excluded work, its owner, and the supporting current-scope evidence."
+            : task.guide,
+        rows: undefined,
+        file: undefined,
+        template: undefined,
+        provenance: undefined,
+      })),
+  };
 }
 
 function placeholderStageViewFor(
@@ -674,9 +796,12 @@ function SourceRailAdvisorNote({
 
 export function SourceAnalyticsCanvas({
   event,
+  canRetireEvent = false,
   viewStage,
   tenantName,
   stageView,
+  stageGateAction,
+  verifiedFallbackSponsorAcknowledgement = false,
   stepInsight,
   artifacts = [],
   approvalItems = [],
@@ -684,16 +809,22 @@ export function SourceAnalyticsCanvas({
   guidebook = null,
   latestArtifactAcceptances = [],
   evidenceStates = [],
+  gateCriterionStates = [],
+  stageArtifactStates = [],
   initialWorkspace,
   contractOptimizationProfile = null,
   journey,
-  selectionReadiness = null,
   vendorResponseReadiness = null,
   vendorResponseProfiles = null,
   vendorChallengeIntelligence = null,
   vendorBafoInstructionPack = null,
   vendorEvaluationDecisionView = null,
+  evaluationBafoReadinessView = null,
+  negotiationBriefCandidate = null,
   vendorResponseParseReports = [],
+  normalizedResponsePackages = [],
+  awardSowHandoffReadiness = null,
+  canViewFinancialValues = false,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -713,16 +844,38 @@ export function SourceAnalyticsCanvas({
   );
 
   const baseStageView = useMemo(
-    () =>
-      adaptStageViewToSourceJourney(
-        stageView ?? sampleStageViewFor(viewStage, journey),
+    () => {
+      const journeyStageView = adaptStageViewToSourceJourney(
+        stageView ?? liveFallbackStageViewFor(viewStage, journey),
         journey,
-      ),
-    [journey, stageView, viewStage],
+      );
+      const hydratedStageView = stageView
+        ? journeyStageView
+        : {
+            ...journeyStageView,
+            tasks: hydrateTaskEvidenceState({
+              tasks: journeyStageView.tasks,
+              factInputs: {},
+              evidenceStates,
+              stageKey: journeyStageView.stageKey,
+              verifiedDelegatedSponsorAcknowledgement: verifiedFallbackSponsorAcknowledgement,
+            }),
+          };
+      const actionableStageView = stageGateAction
+        ? { ...hydratedStageView, gate: { ...hydratedStageView.gate, action: stageGateAction } }
+        : hydratedStageView;
+      return applySourceApprovalPolicyToStageView(actionableStageView, event.approvalPolicyCode);
+    },
+    [event.approvalPolicyCode, evidenceStates, verifiedFallbackSponsorAcknowledgement, journey, stageGateAction, stageView, viewStage],
   );
   const resolvedStageView: StageAnalyticsView = useMemo(
     () => (stepInsight ? { ...baseStageView, stepInsight } : baseStageView),
     [baseStageView, stepInsight],
+  );
+  const gateCriteriaReady = useMemo(
+    () => viewStage !== "strategy" || event.currentStageKey !== "strategy" || event.status !== "active" ||
+      strategyGateReady(gateCriterionStates, stageArtifactStates, evidenceStates, event.approvalPolicyCode),
+    [viewStage, event.currentStageKey, event.status, event.approvalPolicyCode, gateCriterionStates, stageArtifactStates, evidenceStates],
   );
 
   const shellView = useMemo(
@@ -732,6 +885,7 @@ export function SourceAnalyticsCanvas({
         tenantName,
         viewedStageKey: viewStage,
         stageView: resolvedStageView,
+        gateCriteriaReady,
         stepInsight,
         artifacts,
         approvalItems,
@@ -751,12 +905,36 @@ export function SourceAnalyticsCanvas({
       latestArtifactAcceptancesById,
       journey,
       resolvedStageView,
+      gateCriteriaReady,
       stepInsight,
       tenantName,
       viewStage,
       workspace,
     ],
   );
+  const computedAwardSowHandoffReadiness = useMemo(
+    () => buildAwardSowHandoffReadinessForCanvas(event, shellView),
+    [event, shellView],
+  );
+  const computedStage08AcceptanceSpine = useMemo(
+    () =>
+      buildStage08AcceptanceSpineForCanvas(event, shellView, {
+        profileSet: vendorResponseProfiles,
+        challengeIntelligence: vendorChallengeIntelligence,
+        bafoInstructionPack: vendorBafoInstructionPack,
+        decisionView: vendorEvaluationDecisionView,
+      }),
+    [
+      event,
+      shellView,
+      vendorBafoInstructionPack,
+      vendorChallengeIntelligence,
+      vendorEvaluationDecisionView,
+      vendorResponseProfiles,
+    ],
+  );
+  const resolvedAwardSowHandoffReadiness =
+    awardSowHandoffReadiness ?? computedAwardSowHandoffReadiness;
 
   const stageLabel =
     sourceJourneyLabelForStage(journey, viewStage) ??
@@ -785,6 +963,7 @@ export function SourceAnalyticsCanvas({
             rail={
               <SourceShellRail
                 view={shellView}
+                journey={journey}
                 workspace={workspace}
                 onWorkspaceChange={setWorkspace}
               />
@@ -793,6 +972,10 @@ export function SourceAnalyticsCanvas({
             alignItems="stretch"
             paneStyle={{ padding: "28px 28px 150px" }}
           >
+            {/* Above the workspace, not inside StageHeader: the header renders
+                only on the "steps" pane, and off-stage work happens just as
+                readily on files, approvals and intelligence. */}
+            <OffStageNotice view={shellView} />
             {contractOptimizationProfile ? (
               <div style={{ marginBottom: 28 }}>
                 <ContractOptimizationProfilePanel
@@ -800,27 +983,27 @@ export function SourceAnalyticsCanvas({
                 />
               </div>
             ) : null}
-            {selectionReadiness && workspace === "steps" ? (
-              <div
-                data-testid="source-shell-selection-readiness-bridge"
-                style={{ maxWidth: 1040, marginBottom: 12 }}
-              >
-                <SourceVendorSelectionReadinessPanel
-                  readiness={selectionReadiness}
-                />
-              </div>
-            ) : null}
             <SourceWorkspace
               view={shellView}
+              canRetireEvent={canRetireEvent}
               stageView={resolvedStageView}
               workspace={workspace}
+              canViewFinancialValues={canViewFinancialValues}
               vendorResponseReadiness={vendorResponseReadiness}
               vendorResponseProfiles={vendorResponseProfiles}
               vendorChallengeIntelligence={vendorChallengeIntelligence}
               vendorBafoInstructionPack={vendorBafoInstructionPack}
               vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+              evaluationBafoReadinessView={evaluationBafoReadinessView}
+              negotiationBriefCandidate={negotiationBriefCandidate}
               vendorResponseParseReports={vendorResponseParseReports}
+              normalizedResponsePackages={normalizedResponsePackages}
+              artifacts={artifacts}
+              awardSowHandoffReadiness={resolvedAwardSowHandoffReadiness}
+              stage08AcceptanceSpine={computedStage08AcceptanceSpine}
               evidenceStates={evidenceStates}
+              gateCriterionStates={gateCriterionStates}
+              stageArtifactStates={stageArtifactStates}
               eventDisplayName={event.name}
               contractOptimizationProfile={contractOptimizationProfile}
               onWorkspaceChange={setWorkspace}
@@ -845,15 +1028,40 @@ export function SourceAnalyticsCanvas({
   );
 }
 
+function strategyGateReady(
+  states: readonly SourceEventGateCriterion[],
+  artifacts: readonly SourceEventArtifactState[],
+  evidence: readonly SourceEventEvidence[],
+  approvalPolicyCode: SourcingEventSummary["approvalPolicyCode"],
+): boolean {
+  const definitions = criteriaForStage("strategy");
+  if (!definitions.length || !definitions.every((definition) =>
+    states.some((state) => state.criterionId === definition.criterionId && state.fromStage === "strategy")
+  )) return false;
+  return evaluateStagePromotionReadiness({
+    currentStage: "strategy",
+    targetStage: "scope",
+    criteria: [...states],
+    artifacts: [...artifacts],
+    evidence: evidence.filter((row) => row.stage === "strategy"),
+    reason: "Review of the current Strategy gate is ready.",
+    approvalPolicyCode,
+  }).ok;
+}
+
 function SourceShellRail({
   view,
+  journey,
   workspace,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
+  journey?: SourceJourneyDefinition;
   workspace: SourceShellWorkspace;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
+  const readerJourney = sourceReaderJourneyCheckpoints(view, journey);
+
   return (
     <aside
       data-testid="source-shell-v2-rail"
@@ -865,14 +1073,14 @@ function SourceShellRail({
       }}
     >
       <Link
-        href="/source/workspace"
+        href="/source/new"
         style={{
           color: ANALYTICS.MUTED,
           fontSize: 12,
           textDecoration: "none",
         }}
       >
-        ← All Source events
+        ← Source New
       </Link>
       <div style={{ marginTop: 16, marginBottom: 22 }}>
         <div
@@ -896,38 +1104,25 @@ function SourceShellRail({
 
       <RailLabel>Journey</RailLabel>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {view.journey.map((stage) => {
-          const currentStageHasArtifactBlockers =
-            stage.current &&
-            view.stage.ready >= view.stage.total &&
-            view.stage.artifactReadiness.blockerCount > 0;
-          const stageProgressLabel = stage.viewed
-            ? currentStageHasArtifactBlockers
-              ? "review files"
-              : `${stage.done}/${stage.total}`
-            : "";
-
+        {readerJourney.map((checkpoint, index) => {
+          const checkpointState = checkpoint.state;
           return (
             <Link
-              key={stage.key}
-              href={`/source/events/${view.event.id}?stage=${stage.key}`}
-              data-approval-evidenced={String(stage.approvalEvidenced)}
-              title={
-                stage.state === "past" && stage.approvalEvidenced === false
-                  ? `${stage.label}: the case moved past this stage, but no approval record backs it.`
-                  : undefined
-              }
+              key={checkpoint.key}
+              href={checkpoint.href}
+              data-testid="source-reader-journey-checkpoint"
               style={{
                 display: "grid",
-                gridTemplateColumns: "22px 1fr auto",
+                gridTemplateColumns: "22px 1fr",
                 gap: 9,
                 alignItems: "center",
                 padding: "8px 9px",
                 borderRadius: 8,
-                border: stage.viewed
+                border: checkpointState === "current"
                   ? `1px solid ${ANALYTICS.LINE}`
                   : "1px solid transparent",
-                background: stage.viewed ? ANALYTICS.CARD : "transparent",
+                background:
+                  checkpointState === "current" ? ANALYTICS.CARD : "transparent",
                 textDecoration: "none",
               }}
             >
@@ -939,17 +1134,29 @@ function SourceShellRail({
                   display: "grid",
                   placeItems: "center",
                   background:
-                    stage.state === "past"
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "recorded"
                       ? ANALYTICS.INK
-                      : stage.current
+                      : checkpointState === "historical_gap"
+                        ? ANALYTICS.AMBER_TINT
+                      : checkpointState === "current"
                         ? ANALYTICS.BLUE
                         : ANALYTICS.CARD,
                   color:
-                    stage.state === "past" || stage.current
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "recorded" ||
+                    checkpointState === "current"
                       ? "#fff"
+                      : checkpointState === "historical_gap"
+                        ? ANALYTICS.AMBER_TEXT
                       : ANALYTICS.FAINT,
                   border:
-                    stage.state === "past" || stage.current
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "recorded" ||
+                    checkpointState === "current"
                       ? "none"
                       : `1px solid ${ANALYTICS.LINE_STRONG}`,
                   fontFamily: ANALYTICS.MONO,
@@ -957,43 +1164,137 @@ function SourceShellRail({
                   fontWeight: 800,
                 }}
               >
-                {stage.state === "past" && stage.approvalEvidenced !== false
+                {checkpointState === "past" ||
+                checkpointState === "complete" ||
+                checkpointState === "recorded"
                   ? "✓"
-                  : String(stage.index).padStart(2, "0")}
+                  : checkpointState === "historical_gap"
+                    ? "!"
+                    : checkpointState === "no_record"
+                      ? "–"
+                  : String(index + 1).padStart(2, "0")}
               </span>
               <span
                 style={{
+                  display: "grid",
+                  gap: 2,
                   color:
-                    stage.viewed || stage.current || stage.state === "past"
+                    checkpointState === "current" ||
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "recorded"
                       ? ANALYTICS.INK
                       : ANALYTICS.MUTED,
                   fontSize: 13,
-                  fontWeight: stage.viewed ? 700 : 600,
+                  fontWeight: checkpointState === "current" ? 700 : 600,
                 }}
               >
-                {stage.label}
-              </span>
-              <span
-                data-testid={
-                  stage.current
-                    ? "source-journey-current-stage-status"
-                    : undefined
-                }
-                style={{
-                  color: currentStageHasArtifactBlockers
-                    ? ANALYTICS.AMBER_TEXT
-                    : ANALYTICS.FAINT,
-                  fontFamily: ANALYTICS.MONO,
-                  fontSize: 10,
-                  fontWeight: 700,
-                }}
-              >
-                {stageProgressLabel}
+                <span>{checkpoint.label}</span>
+                {checkpointState === "historical_gap" ? (
+                  <span
+                    style={{
+                      color: ANALYTICS.AMBER_TEXT,
+                      fontFamily: ANALYTICS.MONO,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Historical gap
+                  </span>
+                ) : checkpointState === "no_record" ? (
+                  <span
+                    style={{
+                      color: ANALYTICS.MUTED,
+                      fontFamily: ANALYTICS.MONO,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    No record
+                  </span>
+                ) : null}
               </span>
             </Link>
           );
         })}
       </div>
+
+      {journey?.id !== "contract_optimization" ? (
+        <div
+          style={{
+            marginTop: 14,
+            paddingTop: 12,
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          }}
+        >
+          <RailLabel>Stage detail</RailLabel>
+          <Link
+            href={`/source/events/${view.event.id}?stage=${view.stage.key}`}
+            data-testid="source-reader-journey-deep-stage-link"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "22px 1fr auto",
+              gap: 9,
+              alignItems: "center",
+              padding: "8px 9px",
+              borderRadius: 8,
+              border: `1px solid ${ANALYTICS.LINE}`,
+              background: ANALYTICS.CARD,
+              textDecoration: "none",
+            }}
+          >
+            <span
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                background: ANALYTICS.BLUE,
+                color: "#fff",
+                fontFamily: ANALYTICS.MONO,
+                fontSize: 9,
+                fontWeight: 800,
+              }}
+            >
+              ↗
+            </span>
+            <span
+              style={{
+                color: ANALYTICS.INK,
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
+              {view.stage.label}
+            </span>
+            <span
+              data-testid={
+                view.event.viewedStageKey === view.event.currentStageKey
+                  ? "source-journey-current-stage-status"
+                  : undefined
+              }
+              style={{
+                color:
+                  view.stage.ready >= view.stage.total &&
+                  view.stage.artifactReadiness.blockerCount > 0
+                    ? ANALYTICS.AMBER_TEXT
+                    : ANALYTICS.FAINT,
+                fontFamily: ANALYTICS.MONO,
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              {view.stage.ready >= view.stage.total &&
+              view.stage.artifactReadiness.blockerCount > 0
+                ? "review files"
+                : `${view.stage.ready}/${view.stage.total}`}
+            </span>
+          </Link>
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -1054,8 +1355,119 @@ function SourceShellRail({
   );
 }
 
+type SourceReaderCheckpointState =
+  | "complete"
+  | "past"
+  | "recorded"
+  | "current"
+  | "future"
+  | "historical_gap"
+  | "no_record";
+
+interface SourceReaderJourneyCheckpoint {
+  key: string;
+  href: string;
+  label: string;
+  state: SourceReaderCheckpointState;
+}
+
+function sourceReaderJourneyCheckpoints(
+  view: SourceEventShellView,
+  journey?: SourceJourneyDefinition,
+): SourceReaderJourneyCheckpoint[] {
+  if (journey?.id === "contract_optimization") {
+    return view.journey.map((stage) => ({
+      key: stage.key,
+      href: `/source/events/${encodeURIComponent(view.event.id)}?stage=${stage.key}`,
+      label: stage.label,
+      state: stage.state,
+    }));
+  }
+
+  const evidence = sourceReaderPhaseEvidence(view);
+
+  return SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.map((checkpoint) => ({
+    key: checkpoint,
+    href: sourceReaderCheckpointHref(view, checkpoint),
+    label: sourceReaderCheckpointLabel(checkpoint),
+    state: sourceReaderCheckpointState(view, checkpoint, evidence),
+  }));
+}
+
+function sourceReaderPhaseEvidence(
+  view: SourceEventShellView,
+): SourceNewPhaseEvidence {
+  const recordedFilePhases = new Set(
+    view.files.items.map((item) =>
+      sourceNewFilePhase({
+        sourcingStage: item.stageKey,
+        artifactType: `${item.artifactCode} ${item.name}`,
+      }),
+    ),
+  );
+  const approvedStages = new Set(
+    view.approvals.ledger
+      .filter((row) => row.state === "approved")
+      .map((row) => row.stageKey),
+  );
+
+  return {
+    request:
+      recordedFilePhases.has("request") || approvedStages.has("strategy"),
+    define:
+      recordedFilePhases.has("define") || approvedStages.has("scope"),
+    suppliers: recordedFilePhases.has("suppliers"),
+    rfi: recordedFilePhases.has("rfi") || approvedStages.has("rfp"),
+  };
+}
+
+function sourceReaderCheckpointLabel(
+  checkpoint: SourceNewExternalCheckpointKey,
+): string {
+  if (checkpoint === "request_intake") return "Request intake";
+  return SOURCE_NEW_PHASE_DISPLAY_LABELS[checkpoint];
+}
+
+function sourceReaderCheckpointHref(
+  view: SourceEventShellView,
+  checkpoint: SourceNewExternalCheckpointKey,
+): string {
+  const eventId = encodeURIComponent(view.event.id);
+  switch (checkpoint) {
+    case "request_intake":
+      return "/source/new";
+    case "request":
+      return `/source/events/${eventId}?stage=strategy`;
+    case "define":
+      return `/source/events/${eventId}?stage=scope`;
+    case "suppliers":
+      return `/source/events/${eventId}?stage=scope&workspace=files`;
+    case "rfi":
+      return `/source/events/${eventId}?stage=rfp`;
+  }
+}
+
+function sourceReaderCheckpointState(
+  view: SourceEventShellView,
+  checkpoint: SourceNewExternalCheckpointKey,
+  evidence: SourceNewPhaseEvidence,
+): SourceReaderCheckpointState {
+  if (checkpoint === "request_intake") return "complete";
+  const event = {
+    currentStage: view.event.currentStageKey,
+    lifecycle: view.event.lifecycle,
+  };
+  const state = sourceNewPhaseState(checkpoint, event, evidence);
+  if (state === "current" || state === "review_needed") return "current";
+  if (state === "recorded") return "recorded";
+  if (state === "historical_gap") return "historical_gap";
+  if (state === "no_record") return "no_record";
+  return "future";
+}
+
 function SourceWorkspace({
   view,
+  canRetireEvent,
   stageView,
   workspace,
   vendorResponseReadiness,
@@ -1063,14 +1475,24 @@ function SourceWorkspace({
   vendorChallengeIntelligence,
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
+  evaluationBafoReadinessView,
+  negotiationBriefCandidate,
   vendorResponseParseReports,
+  normalizedResponsePackages,
+  artifacts,
+  awardSowHandoffReadiness,
+  canViewFinancialValues = false,
+  stage08AcceptanceSpine,
   evidenceStates,
+  gateCriterionStates,
+  stageArtifactStates,
   eventDisplayName,
   contractOptimizationProfile,
   onWorkspaceChange,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  canRetireEvent: boolean;
   stageView: StageAnalyticsView;
   workspace: SourceShellWorkspace;
   vendorResponseReadiness?: SourceVendorResponseCompleteness | null;
@@ -1078,8 +1500,18 @@ function SourceWorkspace({
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
+  negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
+  normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  artifacts: readonly SourceShellArtifactLike[];
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
+  /** U-520 — pass-through only; see the canvas's own prop for the reasoning. */
+  canViewFinancialValues?: boolean;
+  stage08AcceptanceSpine?: SourceStage08AcceptanceSpine | null;
   evidenceStates?: readonly SourceEventEvidence[];
+  gateCriterionStates?: readonly SourceEventGateCriterion[];
+  stageArtifactStates?: readonly SourceEventArtifactState[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
@@ -1089,19 +1521,33 @@ function SourceWorkspace({
     return (
       <FilesWorkspace
         view={view}
+        artifacts={artifacts}
         evidenceStates={evidenceStates ?? []}
         onClientFinalAccepted={onClientFinalAccepted}
       />
     );
   }
   if (workspace === "intelligence") {
-    return <IntelligenceWorkspace view={view} stageView={stageView} />;
+    return (
+      <IntelligenceWorkspace
+        view={view}
+        stageView={stageView}
+        evidenceStates={evidenceStates ?? []}
+      />
+    );
   }
   if (workspace === "approvals")
     return (
       <ApprovalsWorkspace
         view={view}
+        canRetireEvent={canRetireEvent}
         gateAction={stageView.gate.action}
+        evidenceStates={evidenceStates ?? []}
+        gateCriterionStates={gateCriterionStates ?? []}
+        stageArtifactStates={stageArtifactStates ?? []}
+        canReviewCriteria={canRetireEvent}
+        onCriterionSaved={onClientFinalAccepted}
+        onGoToFiles={() => onWorkspaceChange("files")}
         onGoToSteps={() => onWorkspaceChange("steps")}
       />
     );
@@ -1109,21 +1555,36 @@ function SourceWorkspace({
 
   return (
     <section data-testid="source-shell-v2-steps">
-      <StageHeader view={view} />
+      <StageHeader view={view} evidenceStates={evidenceStates ?? []} />
       <CommercialActiveCanvasStrip
         view={view}
         onWorkspaceChange={onWorkspaceChange}
       />
-      {view.stage.key === "pricing" ? (
+      {["pricing", "executive_decision", "selection", "transition"].includes(
+        view.stage.key,
+      ) ? (
         <div style={{ maxWidth: 1120, marginBottom: 16 }}>
-          <StageDecisionLensPanel stage={view.stage.key} />
+          <StageDecisionLensPanel
+            stage={view.stage.key}
+            profileSet={vendorResponseProfiles}
+            decisionView={vendorEvaluationDecisionView}
+          />
         </div>
       ) : null}
       <FocusedWorkPanel
         view={view}
         evidenceStates={evidenceStates ?? []}
+        awardSowHandoffReadiness={awardSowHandoffReadiness}
         onWorkspaceChange={onWorkspaceChange}
       />
+      {view.stage.key === "transition" && awardSowHandoffReadiness ? (
+        <div style={{ marginTop: 16, maxWidth: 1120 }}>
+          <SourceAwardSowHandoffReadinessPanel
+            readiness={awardSowHandoffReadiness}
+            acceptanceSpine={stage08AcceptanceSpine ?? undefined}
+          />
+        </div>
+      ) : null}
       {view.stage.key === "responses" ? (
         <div style={{ marginTop: 16, maxWidth: 1040 }}>
           <ResponsesStageView
@@ -1133,17 +1594,281 @@ function SourceWorkspace({
             bafoInstructionPack={vendorBafoInstructionPack}
             evaluationDecisionView={vendorEvaluationDecisionView}
             parseReports={vendorResponseParseReports}
+            canViewFinancialValues={canViewFinancialValues}
+            normalizedResponsePackages={normalizedResponsePackages}
+            artifacts={artifacts}
+            responseProposalAvailabilityState={
+              evidenceStates?.find(
+                (state) =>
+                  state.requirementId === "EVID-SRC-RESP-PROPOSALS",
+              )?.currentState ?? null
+            }
+            onResponseUploaded={onClientFinalAccepted}
             contractOptimizationProfile={contractOptimizationProfile}
             eventDisplayName={eventDisplayName}
             documentWorkspace={null}
           />
         </div>
       ) : null}
+      {view.stage.key === "evaluation" ? (
+        <div style={{ marginTop: 16, maxWidth: 1120 }}>
+          <EvaluationBafoReadinessPanel
+            view={evaluationBafoReadinessView}
+            negotiationBriefCandidate={negotiationBriefCandidate}
+          />
+        </div>
+      ) : null}
+      {view.stage.key === "evaluation" ? (
+        <div style={{ marginTop: 16, maxWidth: 1120 }}>
+          <VendorEvaluationScorecardPanel
+            decisionView={vendorEvaluationDecisionView}
+            eventDisplayName={eventDisplayName}
+          />
+        </div>
+      ) : null}
+      {view.stage.key === "bafo" ? (
+        <div
+          style={{ display: "grid", gap: 16, marginTop: 16, maxWidth: 1120 }}
+        >
+          <EvaluationBafoReadinessPanel
+            view={evaluationBafoReadinessView}
+            negotiationBriefCandidate={negotiationBriefCandidate}
+          />
+          <VendorChallengeLeveragePanel
+            intelligence={vendorChallengeIntelligence}
+          />
+          <VendorBafoInstructionPackPanel pack={vendorBafoInstructionPack} />
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function StageHeader({ view }: { view: SourceEventShellView }) {
+type SourceAnalyticsEventWithDetail = SourcingEventSummary & {
+  stages?: readonly WorkflowStage[];
+  artifacts?: readonly SourceAwardSowArtifactInput[];
+};
+
+const SOURCE_ARTIFACT_STATUSES: readonly SourceArtifactStatus[] = [
+  "not_started",
+  "draft",
+  "needs_inputs",
+  "needs_review",
+  "approved",
+  "locked",
+  "superseded",
+  "archived",
+];
+
+function buildAwardSowHandoffReadinessForCanvas(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+): SourceAwardSowHandoffReadiness | null {
+  if (
+    view.stage.key !== "transition" &&
+    view.stage.key !== "contract_mobilization"
+  ) {
+    return null;
+  }
+
+  return buildSourceAwardSowHandoffReadiness({
+    event: {
+      id: event.id,
+      name: event.name,
+      currentStageKey: event.currentStageKey,
+      currentStageLabel: event.currentStageLabel,
+      stages: stageInputsForAwardSow(event, view),
+      artifacts: artifactInputsForAwardSow(event, view),
+    },
+  });
+}
+
+function buildStage08AcceptanceSpineForCanvas(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+  evaluation: {
+    profileSet?: VendorResponseProfileSet | null;
+    challengeIntelligence?: VendorChallengeIntelligence | null;
+    bafoInstructionPack?: VendorBafoInstructionPack | null;
+    decisionView?: VendorEvaluationDecisionView | null;
+  },
+): SourceStage08AcceptanceSpine | null {
+  if (
+    view.stage.key !== "transition" &&
+    view.stage.key !== "contract_mobilization"
+  ) {
+    return null;
+  }
+
+  return buildSourceStage08AcceptanceSpine({
+    evaluation,
+    handoff: {
+      event: {
+        id: event.id,
+        name: event.name,
+        currentStageKey: event.currentStageKey,
+        currentStageLabel: event.currentStageLabel,
+        stages: stageInputsForAwardSow(event, view),
+        artifacts: artifactInputsForAwardSow(event, view),
+      },
+    },
+  });
+}
+
+function stageInputsForAwardSow(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+): SourceAwardSowStageInput[] {
+  const detailedEvent = event as SourceAnalyticsEventWithDetail;
+  if (Array.isArray(detailedEvent.stages) && detailedEvent.stages.length > 0) {
+    return detailedEvent.stages.map((stage) => ({
+      key: stage.key,
+      label: stage.label,
+      status: stage.status,
+      gate: {
+        status: stage.gate.status,
+        requiredArtifacts: stage.gate.requiredArtifacts,
+        blocker: stage.gate.blocker,
+      },
+    }));
+  }
+
+  return view.journey.map((stage) => ({
+    key: stage.key,
+    label: stage.label,
+    status:
+      stage.approvalEvidenced === true || stage.state === "complete"
+        ? "complete"
+        : stage.current
+          ? "active"
+          : "not_started",
+    gate: {
+      status: stage.approvalEvidenced === true ? "approved" : "not_started",
+      requiredArtifacts: [],
+      blocker: null,
+    },
+  }));
+}
+
+function artifactInputsForAwardSow(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+): SourceAwardSowArtifactInput[] {
+  const detailedEvent = event as SourceAnalyticsEventWithDetail;
+  const eventArtifacts = Array.isArray(detailedEvent.artifacts)
+    ? detailedEvent.artifacts
+    : [];
+  const shellArtifacts = view.files.items.map((file) => ({
+    id: file.artifactCode || file.id,
+    title: file.name || file.artifactCode,
+    status:
+      file.latestAcceptance || file.state === "locked"
+        ? ("locked" as const)
+        : sourceArtifactStatusFromString(file.state),
+    summary: [file.artifactCode, file.stageLabel, file.governanceLabel]
+      .filter(Boolean)
+      .join(" · "),
+    sourceCount: 1,
+  }));
+
+  const byId = new Map<string, SourceAwardSowArtifactInput>();
+  for (const artifact of [...eventArtifacts, ...shellArtifacts]) {
+    byId.set(artifact.id, artifact);
+  }
+  return [...byId.values()];
+}
+
+function sourceArtifactStatusFromString(value: string): SourceArtifactStatus {
+  return SOURCE_ARTIFACT_STATUSES.includes(value as SourceArtifactStatus)
+    ? (value as SourceArtifactStatus)
+    : "draft";
+}
+
+/**
+ * A reader can open any stage of an event by URL (`?stage=`), including one the
+ * event has not reached and one it has already left. Nothing saved there moves
+ * the event, so the canvas has to say so — an unlabelled future stage reads
+ * exactly like the live one.
+ *
+ * Direction comes from the journey's own order rather than the canonical stage
+ * order, so an event on a motion that hides stages is described in the order
+ * its reader sees. When either stage is outside that journey the notice still
+ * renders and simply drops the direction, rather than guessing one.
+ */
+function OffStageNotice({ view }: { view: SourceEventShellView }) {
+  const viewedStageKey = view.event.viewedStageKey;
+  const currentStageKey = view.event.currentStageKey;
+  if (viewedStageKey === currentStageKey) return null;
+
+  const viewedEntry = view.journey.find(
+    (stage) => stage.key === viewedStageKey,
+  );
+  const currentEntry = view.journey.find(
+    (stage) => stage.key === currentStageKey,
+  );
+  const viewedLabel =
+    view.stage.label || SOURCE_STAGE_LABELS[viewedStageKey] || viewedStageKey;
+  const currentLabel =
+    currentEntry?.label ||
+    SOURCE_STAGE_LABELS[currentStageKey] ||
+    currentStageKey;
+  const ahead =
+    viewedEntry && currentEntry ? viewedEntry.index > currentEntry.index : null;
+
+  const eyebrow =
+    ahead === null
+      ? "Off-stage"
+      : ahead
+        ? "Off-stage · not reached"
+        : "Off-stage · already passed";
+  const body =
+    ahead === null
+      ? `This event is in ${currentLabel}, not ${viewedLabel}. Nothing saved here advances it.`
+      : ahead
+        ? `Previewing ${viewedLabel}. This event is in ${currentLabel} and has not reached ${viewedLabel} — nothing saved here advances it. Clear the ${currentLabel} gate first.`
+        : `Reviewing ${viewedLabel}. This event has moved on to ${currentLabel} — nothing saved here advances it.`;
+
+  return (
+    <div
+      data-testid="source-canvas-off-stage-notice"
+      data-off-stage-direction={
+        ahead === null ? "unknown" : ahead ? "ahead" : "behind"
+      }
+      role="status"
+      style={{
+        maxWidth: 1040,
+        marginBottom: 18,
+        padding: "10px 14px",
+        background: ANALYTICS.AMBER_TINT,
+        border: `1px solid ${ANALYTICS.AMBER}`,
+        borderRadius: 8,
+        color: ANALYTICS.AMBER_TEXT,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <div style={{ fontSize: 13, lineHeight: 1.5 }}>{body}</div>
+    </div>
+  );
+}
+
+function StageHeader({
+  view,
+  evidenceStates,
+}: {
+  view: SourceEventShellView;
+  evidenceStates: readonly SourceEventEvidence[];
+}) {
   const stageIndex =
     view.journey.find((stage) => stage.key === view.stage.key)?.index ?? 1;
   // Keep the headline owner simple; richer agent handoffs live in the stage
@@ -1154,11 +1879,17 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
       : "aVa";
   const inputsComplete =
     view.stage.total > 0 && view.stage.ready >= view.stage.total;
+  const requiredEvidenceOpen = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required" && !row.ready).length;
   const hasArtifactReviewBlockers =
     inputsComplete && view.stage.artifactReadiness.blockerCount > 0;
-  const readinessLabel = hasArtifactReviewBlockers ? "inputs ready" : "ready";
-  const readinessAriaLabel = hasArtifactReviewBlockers
-    ? `${view.stage.ready} of ${view.stage.total} inputs ready; ${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain`
+  const readinessLabel = requiredEvidenceOpen > 0
+    ? "inputs captured"
+    : hasArtifactReviewBlockers ? "inputs ready" : "ready";
+  const readinessAriaLabel = requiredEvidenceOpen > 0
+    ? `${view.stage.ready} of ${view.stage.total} inputs captured; ${requiredEvidenceOpen} required evidence items open`
+    : hasArtifactReviewBlockers
+      ? `${view.stage.ready} of ${view.stage.total} inputs ready; ${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain`
     : `${view.stage.ready} of ${view.stage.total} ready`;
 
   return (
@@ -1252,14 +1983,14 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
               style={{
                 width: `${view.stage.readyPct}%`,
                 height: "100%",
-                background: ANALYTICS.GREEN,
+                background: requiredEvidenceOpen > 0 ? ANALYTICS.FAINT : ANALYTICS.GREEN,
               }}
             />
           </div>
           <span
             data-testid="source-stage-header-readiness-label"
             style={{
-              color: hasArtifactReviewBlockers
+              color: requiredEvidenceOpen > 0 || hasArtifactReviewBlockers
                 ? ANALYTICS.AMBER_TEXT
                 : ANALYTICS.FAINT,
               fontSize: 12,
@@ -1294,6 +2025,8 @@ type StageOperatingStatus = {
   gateReady: number;
   gateTotal: number;
   blockedCount: number;
+  approvalRecorded: boolean;
+  historicalApproval: boolean;
   nextActionLabel: string;
 };
 
@@ -1324,6 +2057,7 @@ function buildStageOperatingStatus(
     stageKey: view.stage.key,
     artifactStates,
     evidenceStates: stageEvidence,
+    approvalPolicyCode: view.event.approvalPolicyCode,
   });
   const recommendation = buildStageRecommendation(
     assessStageGate({
@@ -1331,6 +2065,7 @@ function buildStageOperatingStatus(
       criteria: gateCriterionStates,
       artifacts: artifactStates,
       evidence: stageEvidence,
+      approvalPolicyCode: view.event.approvalPolicyCode,
     }),
   );
   const requiredRows = rows.filter(
@@ -1349,14 +2084,21 @@ function buildStageOperatingStatus(
     optionalTotal: rows.length - requiredRows.length,
     coverageValue: coverage.displayValue,
     canonicalRequiredTotal:
-      requiredEvidenceForStage(view.stage.key).length +
+      requiredEvidenceForStage(view.stage.key).filter((row) =>
+        sourceEvidenceAppliesToApprovalPolicy(row.requirementId, view.event.approvalPolicyCode)).length +
       requiredSpecsForStage(view.stage.key).length,
     gateReady: recommendation.requiredMet,
     gateTotal: recommendation.requiredTotal,
     blockedCount: recommendation.blockers.length,
-    nextActionLabel: allRequiredReady
-      ? "Open approval gate"
-      : "Load required evidence",
+    approvalRecorded: view.stage.approvalRecorded,
+    historicalApproval: view.stage.approvalTraceState === "historical",
+    nextActionLabel: view.stage.approvalRecorded
+      ? recommendation.blockers.length > 0
+        ? "Remediate current gaps"
+        : "Approval recorded"
+      : allRequiredReady
+        ? "Open approval gate"
+        : "Load required evidence",
   };
 }
 
@@ -1400,7 +2142,9 @@ function StageOperatingStatusPanel({
       >
         <div style={{ minWidth: 0 }}>
           <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
-            {status.stageLabel} gate readiness
+            {status.approvalRecorded
+              ? `${status.stageLabel} decision status`
+              : `${status.stageLabel} gate readiness`}
           </strong>
           <div
             style={{
@@ -1410,8 +2154,13 @@ function StageOperatingStatusPanel({
               marginTop: 3,
             }}
           >
-            {status.simpleScreen.deliverable.name} unlocks{" "}
-            {status.simpleScreen.nextStep.label}.
+            {status.approvalRecorded
+              ? status.blockedCount > 0
+                ? status.historicalApproval
+                  ? "The event advanced under an earlier control state; today's open controls remain visible for remediation."
+                  : "Approval is recorded; today's open controls remain visible for remediation."
+                : "Approval is recorded and current controls are clear."
+              : `${status.simpleScreen.deliverable.name} unlocks ${status.simpleScreen.nextStep.label}.`}
           </div>
         </div>
         <ReadinessChip
@@ -1441,7 +2190,7 @@ function StageOperatingStatusPanel({
           value={`${status.coverageValue} total`}
         />
         <StepNeedDatum
-          label="Gate"
+          label={status.approvalRecorded ? "Current controls" : "Gate"}
           value={`${status.gateReady}/${status.gateTotal || 0} criteria`}
           tone={status.blockedCount > 0 ? "warn" : "good"}
         />
@@ -1457,10 +2206,12 @@ function StageOperatingStatusPanel({
 function FocusedWorkPanel({
   view,
   evidenceStates,
+  awardSowHandoffReadiness,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
   evidenceStates: readonly SourceEventEvidence[];
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const router = useRouter();
@@ -1472,6 +2223,25 @@ function FocusedWorkPanel({
         .sort((a, b) => a.order - b.order),
     [view.stage.groups],
   );
+  const requiredEvidenceRows = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required");
+  const requiredEvidenceById = new Map(
+    requiredEvidenceRows.map((row) => [row.requirement.requirementId, row]),
+  );
+  const requiredRowsForStep = (step: SourceShellStep) =>
+    requiredEvidenceRequirementIdsForTask({
+      id: step.id,
+      factTemplateCode: step.factTemplateCode ?? undefined,
+    }, view.stage.key)
+      .filter((id) => sourceEvidenceAppliesToApprovalPolicy(id, view.event.approvalPolicyCode))
+      .map((id) => requiredEvidenceById.get(id));
+  const evidenceReadyForStep = (step: SourceShellStep) => {
+    const rows = requiredRowsForStep(step);
+    return rows.every((row) => row?.ready === true);
+  };
+  const firstUnreadyStepId = flatSteps.find((step) =>
+    step.status !== "captured" || !evidenceReadyForStep(step))?.id ??
+    flatSteps[0]?.id ?? null;
   const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(
     () =>
       new Set(
@@ -1481,10 +2251,7 @@ function FocusedWorkPanel({
       ),
   );
   const [activeStepId, setActiveStepId] = useState<string | null>(
-    () =>
-      flatSteps.find((step) => step.status !== "captured")?.id ??
-      flatSteps[0]?.id ??
-      null,
+    () => firstUnreadyStepId,
   );
 
   useEffect(() => {
@@ -1495,18 +2262,21 @@ function FocusedWorkPanel({
           .map((step) => step.id),
       ),
     );
-    setActiveStepId(
-      flatSteps.find((step) => step.status !== "captured")?.id ??
-        flatSteps[0]?.id ??
-        null,
-    );
-  }, [flatSteps, view.event.id, view.stage.key]);
+    setActiveStepId(firstUnreadyStepId);
+  }, [flatSteps, firstUnreadyStepId, view.event.id, view.stage.key]);
 
   const isComplete = (step: SourceShellStep) =>
-    step.status === "captured" || completedIds.has(step.id);
+    (step.factTemplateCode
+      ? hasCapturedStepReadback(step)
+      : step.status === "captured" || completedIds.has(step.id)) &&
+    evidenceReadyForStep(step);
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
+  const allInputsCaptured = flatSteps.length > 0 && flatSteps.every((step) =>
+    hasCapturedStepReadback(step) || (!step.factTemplateCode && completedIds.has(step.id)));
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
+  const requiredEvidenceOpen = requiredEvidenceRows.filter((row) => !row.ready).length;
+  const stageInputsReady = !hasArtifactGaps && requiredEvidenceOpen === 0;
   // An approval record exists for the stage being viewed. `approvalEvidenced` is
   // null when no approval ledger was supplied, which is not the same as "not
   // approved" — only an explicit true means a record backs it.
@@ -1522,6 +2292,12 @@ function FocusedWorkPanel({
     ? flatSteps.findIndex((step) => step.id === activeStep.id)
     : -1;
   const activeComplete = activeStep ? isComplete(activeStep) : false;
+  const activeMissingEvidence = activeStep
+    ? requiredRowsForStep(activeStep).find((row) => row?.ready !== true)
+    : null;
+  const canShowNext =
+    activeComplete &&
+    (activeIndex < flatSteps.length - 1 || stageInputsReady);
   const activeGroup =
     (activeStep
       ? view.stage.groups.find((group) =>
@@ -1532,15 +2308,18 @@ function FocusedWorkPanel({
         )) ??
     view.stage.groups[0] ??
     null;
-  const continueGuidance = activeStep
-    ? activeStepContinueGuidance(
-        activeStep,
-        activeComplete,
-        activeIndex,
-        flatSteps.length,
-        view.stage.label,
-      )
-    : null;
+  const continueGuidance =
+    activeComplete && activeIndex === flatSteps.length - 1 && !stageInputsReady
+      ? "Required evidence or file review is still open. Review Files."
+      : activeStep
+        ? activeStepContinueGuidance(
+            activeStep,
+            activeComplete,
+            activeIndex,
+            flatSteps.length,
+            view.stage.label,
+          )
+        : null;
   const stageOperatingStatus =
     view.stage.key === "strategy" ||
     view.stage.key === "scope" ||
@@ -1582,7 +2361,6 @@ function FocusedWorkPanel({
         display: "grid",
         gridTemplateColumns: "286px minmax(0, 1fr)",
         maxWidth: "none",
-        overflow: "hidden",
         boxShadow: ANALYTICS.SHADOW_SM,
         width: "100%",
       }}
@@ -1701,8 +2479,8 @@ function FocusedWorkPanel({
           }}
         >
           {allReady
-            ? hasArtifactGaps
-              ? `Required inputs are complete for ${view.stage.label}. Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded.`
+            ? !stageInputsReady
+              ? `Workflow inputs are complete for ${view.stage.label}. Review required evidence and Files before the approval action appears.`
               : `All required work is complete for ${view.stage.label}. Open the approval gate when the owner is ready.`
             : viewedStageApproved
               ? // Approve-with-gaps is a supported decision, but it must be
@@ -1711,18 +2489,22 @@ function FocusedWorkPanel({
                 // gap and misdescribes the state — live-found on a stage reading
                 // 0/1 whose approval record was already in the ledger.
                 `${view.stage.label} was approved with ${flatSteps.length - doneCount} required input${flatSteps.length - doneCount === 1 ? "" : "s"} still open. The approval stands; the gap is recorded here so it is not mistaken for completed work.`
-              : `${flatSteps.length - doneCount} step${flatSteps.length - doneCount === 1 ? "" : "s"} left before ${view.stage.label} can move to approval.`}
+              : allInputsCaptured
+                ? `All workflow inputs are captured for ${view.stage.label}; ${requiredEvidenceOpen > 0 ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? " remains" : "s remain"}` : "linked evidence review remains"}. Review Files and gate criteria before approval.`
+              : `${flatSteps.length - doneCount} required workflow step${flatSteps.length - doneCount === 1 ? " remains" : "s remain"} for ${view.stage.label}. Review evidence, artifact status, and gate criteria separately in Approvals.`}
         </div>
       </div>
 
       <div
         data-testid="source-shell-active-workflow-pane"
-        style={{ minWidth: 0 }}
+        style={{ minWidth: 0, paddingBottom: 88 }}
       >
-        {allReady ? (
+        {allReady || viewedStageApproved ? (
           <StageReadyPanel
             view={view}
             stageOperatingStatus={stageOperatingStatus}
+            requiredEvidenceOpen={requiredEvidenceOpen}
+            awardSowHandoffReadiness={awardSowHandoffReadiness}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
           />
@@ -1732,7 +2514,6 @@ function FocusedWorkPanel({
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
                 gap: 16,
                 padding: "20px 24px",
                 borderBottom: `1px solid ${ANALYTICS.LINE}`,
@@ -1761,54 +2542,6 @@ function FocusedWorkPanel({
                 >
                   Step {activeIndex + 1} of {flatSteps.length}
                 </div>
-              </div>
-              <div
-                data-testid="source-shell-continue-guidance"
-                style={{
-                  display: "grid",
-                  gap: 6,
-                  justifyItems: "end",
-                  maxWidth: 260,
-                }}
-              >
-                <button
-                  type="button"
-                  disabled={!activeComplete}
-                  onClick={goNext}
-                  style={{
-                    border: `1px solid ${activeComplete ? ANALYTICS.INK : ANALYTICS.LINE_STRONG}`,
-                    borderRadius: 8,
-                    background: activeComplete ? ANALYTICS.INK : "#e8e0d4",
-                    color: activeComplete ? "#fff" : "#81786a",
-                    cursor: activeComplete ? "pointer" : "not-allowed",
-                    fontFamily: ANALYTICS.SANS,
-                    fontSize: 13,
-                    fontWeight: 900,
-                    minHeight: 42,
-                    minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
-                    padding: "0 16px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {activeIndex >= flatSteps.length - 1
-                    ? `Open ${view.stage.label} gate →`
-                    : "Continue →"}
-                </button>
-                {continueGuidance ? (
-                  <span
-                    style={{
-                      color: activeComplete
-                        ? ANALYTICS.GREEN_TEXT
-                        : ANALYTICS.AMBER_TEXT,
-                      fontSize: 12,
-                      fontWeight: 800,
-                      lineHeight: 1.35,
-                      textAlign: "right",
-                    }}
-                  >
-                    {continueGuidance}
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -1866,6 +2599,10 @@ function FocusedWorkPanel({
               <ActiveStepNeedsPanel
                 step={activeStep}
                 isComplete={activeComplete}
+                missingEvidence={activeMissingEvidence}
+                eventId={view.event.id}
+                onOpenFiles={() => onWorkspaceChange("files")}
+                onEvidenceReviewed={() => router.refresh()}
               />
 
               <ActiveStepGuidePanel
@@ -1876,26 +2613,111 @@ function FocusedWorkPanel({
                 onOpenGuidebook={() => onWorkspaceChange("guidebook")}
               />
 
-              {activeGroup ? (
-                <EvidenceAskTable
-                  group={activeGroup}
-                  activeStepId={activeStep.id}
-                />
-              ) : null}
-
               <StepDetail
+                key={activeStep.id}
                 step={activeStep}
                 eventId={view.event.id}
                 stageKey={view.stage.key}
                 stepInsight={view.intelligence.stepInsight}
                 isComplete={activeComplete}
-                onComplete={() => markComplete(activeStep.id)}
+                missingEvidence={activeMissingEvidence}
+                onComplete={() => {
+                  if (activeStep.id !== "strategy.confirm" || view.event.approvalPolicyCode !== "self_v1") {
+                    markComplete(activeStep.id);
+                  }
+                }}
+              />
+            </div>
+            <div data-testid="source-shell-continue-guidance">
+              <ProgressActionDock
+                action={canShowNext ? {
+                  label: activeIndex >= flatSteps.length - 1
+                    ? `Open ${view.stage.label} gate →`
+                    : "Continue →",
+                  onClick: goNext,
+                  testId: "source-shell-progress-action",
+                } : null}
+                status={activeIndex >= flatSteps.length - 1
+                  ? "Approval locked"
+                  : "Continue locked"}
+                detail={continueGuidance}
               />
             </div>
           </>
         ) : null}
       </div>
     </section>
+  );
+}
+
+function ProgressActionDock({
+  action,
+  status,
+  detail,
+}: {
+  action: { label: string; onClick: () => void; testId: string } | null;
+  status: string;
+  detail?: string | null;
+}) {
+  return (
+    <div
+      data-testid="source-shell-progress-dock"
+      style={{
+        background: ANALYTICS.CARD,
+        border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+        borderRadius: 8,
+        bottom: 16,
+        boxShadow: "0 8px 28px rgba(12, 26, 58, 0.18)",
+        boxSizing: "border-box",
+        fontFamily: ANALYTICS.SANS,
+        left: "max(16px, calc(50% - 250px))",
+        padding: 6,
+        position: "fixed",
+        width: "min(500px, calc(100vw - 112px))",
+        zIndex: 80,
+      }}
+    >
+      {action ? (
+        <button
+          type="button"
+          data-testid={action.testId}
+          onClick={action.onClick}
+          style={{
+            background: ANALYTICS.GREEN_TEXT,
+            border: `1px solid ${ANALYTICS.GREEN_TEXT}`,
+            borderRadius: 6,
+            color: "#fff",
+            cursor: "pointer",
+            fontFamily: ANALYTICS.SANS,
+            fontSize: 15,
+            fontWeight: 800,
+            minHeight: 48,
+            padding: "10px 14px",
+            textAlign: "center",
+            width: "100%",
+          }}
+        >
+          {action.label}
+        </button>
+      ) : (
+        <div
+          data-testid="source-shell-progress-status"
+          role="status"
+          style={{
+            background: "#e8ebee",
+            borderRadius: 6,
+            color: ANALYTICS.INK_2,
+            display: "grid",
+            gap: 2,
+            minHeight: 48,
+            padding: "9px 12px",
+          }}
+        >
+          <strong style={{ fontSize: 13 }}>{status}</strong>
+          {detail ? <span style={{ fontSize: 12, lineHeight: 1.35 }}>{detail}</span> : null}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1909,22 +2731,52 @@ function plainStageStepGroupLabel(label: string) {
 function StageReadyPanel({
   view,
   stageOperatingStatus,
+  requiredEvidenceOpen,
+  awardSowHandoffReadiness,
   onOpenApprovalPage,
   onOpenFiles,
 }: {
   view: SourceEventShellView;
   stageOperatingStatus: StageOperatingStatus | null;
+  requiredEvidenceOpen: number;
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
 }) {
+  const approvalRecorded = view.stage.approvalRecorded;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
-  const primaryActionLabel = hasArtifactGaps
-    ? "Review Files and accept artifacts"
-    : view.stage.approvalCtaLabel;
-  const primaryAction = hasArtifactGaps ? onOpenFiles : onOpenApprovalPage;
-  const gateStatus = hasArtifactGaps
-    ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
-    : "Ready for approval";
+  const hasReadinessGaps = hasArtifactGaps || requiredEvidenceOpen > 0;
+  const gapSummary = [
+    requiredEvidenceOpen > 0
+      ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"}`
+      : null,
+    hasArtifactGaps
+      ? `${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+      : null,
+  ].filter(Boolean).join(" and ");
+  const stage08HandoffBlocked =
+    awardSowHandoffReadiness !== null &&
+    awardSowHandoffReadiness !== undefined &&
+    !awardSowHandoffReadiness.readyForContract360Handoff;
+  const primaryActionLabel = approvalRecorded
+    ? "View approval record"
+    : hasReadinessGaps
+      ? "Review evidence"
+      : view.stage.approvalCtaLabel;
+  const primaryAction = approvalRecorded
+    ? onOpenApprovalPage
+    : hasReadinessGaps
+      ? onOpenFiles
+      : onOpenApprovalPage;
+  const fileStatus = approvalRecorded
+    ? hasArtifactGaps
+      ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+      : "No blockers"
+    : hasArtifactGaps
+      ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+      : requiredEvidenceOpen > 0
+        ? "No file review gaps"
+        : "Ready for approval";
   return (
     <div
       data-testid="source-shell-stage-ready-panel"
@@ -1938,7 +2790,7 @@ function StageReadyPanel({
       <div>
         <div
           style={{
-            color: hasArtifactGaps
+            color: hasReadinessGaps || stage08HandoffBlocked
               ? ANALYTICS.AMBER_TEXT
               : ANALYTICS.GREEN_TEXT,
             fontFamily: ANALYTICS.MONO,
@@ -1949,14 +2801,20 @@ function StageReadyPanel({
             textTransform: "uppercase",
           }}
         >
-          {hasArtifactGaps
-            ? "Inputs ready - artifact review open"
-            : "Stage ready"}
+          {approvalRecorded
+            ? stage08HandoffBlocked
+              ? "Stage approval recorded"
+              : "Stage approved"
+            : hasReadinessGaps
+              ? "Inputs ready - evidence review open"
+              : "Stage ready"}
         </div>
         <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
-          {hasArtifactGaps
-            ? `Required inputs are complete, but ${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain.`
-            : `All required evidence is ready for ${view.stage.label}.`}
+          {approvalRecorded
+            ? `${view.stage.label} approval is recorded.`
+            : hasReadinessGaps
+              ? `Required inputs are complete, but ${gapSummary} remain.`
+              : `All required evidence is ready for ${view.stage.label}.`}
         </h2>
         <p
           style={{
@@ -1967,9 +2825,17 @@ function StageReadyPanel({
             maxWidth: 650,
           }}
         >
-          {hasArtifactGaps
-            ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
-            : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
+          {approvalRecorded
+            ? stage08HandoffBlocked
+              ? "The stage approval remains recorded. Stage 08 handoff remains blocked until the contract-formation evidence gaps are resolved; this does not reopen or replace the approval."
+              : hasArtifactGaps
+              ? view.stage.approvalTraceState === "historical"
+                ? "The event advanced before stage-level approval tracking captured a complete decision record. Current artifact gaps are follow-up remediation under today's controls; no duplicate approval is required."
+                : "The stage decision is complete. Current artifact-review gaps remain visible for remediation; no duplicate approval is required."
+              : "The stage decision is complete and no further approval is required. Open the approval record to review its rationale and audit trail."
+            : hasReadinessGaps
+              ? `${requiredEvidenceOpen > 0 ? `Required evidence remains open: ${requiredEvidenceOpen}. ` : ""}Review Files and accept client-final artifacts. The approval action appears only after the required evidence and artifact checks are complete.`
+              : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
       {stageOperatingStatus ? (
@@ -1993,21 +2859,26 @@ function StageReadyPanel({
         />
         <StageReadyStatusDatum
           label="Files"
-          value={gateStatus}
+          value={fileStatus}
           tone={hasArtifactGaps ? "warn" : "good"}
         />
         <StageReadyStatusDatum
           label="Next"
           value={
-            hasArtifactGaps ? "Accept artifacts in Files" : "Open approval gate"
+            approvalRecorded
+              ? stage08HandoffBlocked
+                ? "Resolve Stage 08 handoff blockers"
+                : hasArtifactGaps
+                ? "Remediate current review gaps"
+                : "No further approval required"
+              : hasReadinessGaps
+                ? "Review required evidence in Files"
+                : "Open approval gate"
           }
-          tone={hasArtifactGaps ? "warn" : "good"}
+          tone={hasReadinessGaps || stage08HandoffBlocked ? "warn" : "good"}
         />
       </div>
-      {view.stage.key === "bafo" || view.stage.key === "orals_bafo" ? (
-        <BafoScenarioComparePanel view={buildBafoScenarioCompareView()} />
-      ) : null}
-      {hasArtifactGaps ? (
+      {hasReadinessGaps && !approvalRecorded ? (
         <div
           data-testid="source-stage-ready-approval-blocker"
           style={{
@@ -2035,8 +2906,8 @@ function StageReadyPanel({
             Approval gate blocker
           </strong>
           <span>
-            Continue to approval is blocked until these client-final artifacts
-            are accepted in Files, or the owner records an exception.
+            Continue to approval is blocked until required evidence and
+            client-final artifact review are complete.
           </span>
           {view.stage.artifactReadiness.blockers.slice(0, 3).map((blocker) => (
             <span key={blocker}>{blocker}</span>
@@ -2048,29 +2919,21 @@ function StageReadyPanel({
           ) : null}
         </div>
       ) : null}
-      <div style={{ display: "grid", gap: 12 }}>
-        {view.stage.groups.map((group) => (
-          <EvidenceAskTable
-            key={group.id}
-            group={group}
-            artifactReviewOpen={hasArtifactGaps}
-            inset={false}
-          />
-        ))}
-      </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <button
+        {approvalRecorded || hasReadinessGaps ? <button
           type="button"
           data-testid={
-            hasArtifactGaps
-              ? "source-stage-ready-primary-files"
-              : "source-stage-ready-open-approval"
+            approvalRecorded
+              ? "source-stage-ready-view-approval"
+              : hasReadinessGaps
+                ? "source-stage-ready-primary-files"
+                : "source-stage-ready-open-approval"
           }
           onClick={primaryAction}
           style={{
             ...BUTTON_STYLE,
-            background: ANALYTICS.INK,
-            color: "#fff",
+            background: approvalRecorded ? ANALYTICS.INK : "#e8ebee",
+            color: approvalRecorded ? "#fff" : ANALYTICS.INK_2,
             display: "inline-flex",
             justifyContent: "center",
             padding: "12px 16px",
@@ -2078,24 +2941,19 @@ function StageReadyPanel({
           }}
         >
           {primaryActionLabel}
-        </button>
-        {hasArtifactGaps ? (
-          <button
-            type="button"
-            data-testid="source-stage-ready-open-approval"
-            onClick={onOpenApprovalPage}
-            style={{
-              ...BUTTON_STYLE,
-              display: "inline-flex",
-              justifyContent: "center",
-              padding: "12px 16px",
-              width: "fit-content",
-            }}
-          >
-            Open exception approval
-          </button>
-        ) : null}
+        </button> : null}
       </div>
+      <ProgressActionDock
+        action={!approvalRecorded && !hasReadinessGaps ? {
+          label: `${view.stage.approvalCtaLabel} →`,
+          onClick: onOpenApprovalPage,
+          testId: "source-stage-ready-open-approval",
+        } : null}
+        status={approvalRecorded ? "Approval recorded" : "Approval locked"}
+        detail={approvalRecorded
+          ? "The decision is already recorded."
+          : `${gapSummary} remain. Review evidence before approval.`}
+      />
       <Link
         href={view.stage.approvalHref}
         style={{
@@ -2160,267 +3018,106 @@ function StageReadyStatusDatum({
   );
 }
 
-function EvidenceAskTable({
-  group,
-  activeStepId,
-  artifactReviewOpen = false,
-  inset = true,
-}: {
-  group?: SourceShellStepGroup;
-  activeStepId?: string;
-  artifactReviewOpen?: boolean;
-  inset?: boolean;
-}) {
-  if (!group) return null;
-  return (
-    <div
-      data-testid="source-shell-evidence-ask-table"
-      style={{
-        border: `1px solid ${ANALYTICS.LINE}`,
-        borderRadius: 8,
-        margin: inset ? "0 0 16px 42px" : 0,
-        maxWidth: "none",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
-          color: ANALYTICS.INK,
-          fontSize: 13,
-          fontWeight: 800,
-          padding: "10px 12px",
-        }}
-      >
-        {group.label}
-      </div>
-      <div
-        style={{
-          background: ANALYTICS.PAGE_BG,
-          color: ANALYTICS.MUTED,
-          display: "grid",
-          fontFamily: ANALYTICS.MONO,
-          fontSize: 9,
-          fontWeight: 800,
-          gridTemplateColumns:
-            "minmax(220px, 1.2fr) minmax(170px, 0.85fr) minmax(200px, 1fr) minmax(118px, 0.52fr) minmax(170px, 0.82fr)",
-          letterSpacing: "0.06em",
-          padding: "9px 12px",
-          textTransform: "uppercase",
-        }}
-      >
-        <span>Evidence needed</span>
-        <span>Where to get it</span>
-        <span>Template / grain</span>
-        <span>Status</span>
-        <span>Next action</span>
-      </div>
-      {group.steps.map((step, index) => {
-        const active = step.id === activeStepId;
-        const captured = step.status === "captured";
-        const need = activeStepNeed(step, captured);
-        const uploaded = Boolean(step.file);
-        return (
-          <div
-            key={step.id}
-            data-testid={`source-shell-evidence-ask-row-${step.id}`}
-            data-ready={captured ? "true" : "false"}
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "minmax(220px, 1.2fr) minmax(170px, 0.85fr) minmax(200px, 1fr) minmax(118px, 0.52fr) minmax(170px, 0.82fr)",
-              gap: 12,
-              padding: "11px 12px",
-              borderTop:
-                index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
-              background: captured
-                ? "rgba(24, 151, 108, 0.045)"
-                : active
-                  ? "#fbfaf6"
-                  : ANALYTICS.CARD,
-              color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
-              fontSize: 12.5,
-              lineHeight: 1.35,
-              opacity: captured && !active ? 0.88 : 1,
-            }}
-          >
-            <EvidenceAskCell
-              label={step.title}
-              detail={`${need.item} · ${need.requirement} · ${need.formats}`}
-              active={active}
-              captured={captured}
-            />
-            <EvidenceAskCell
-              label={need.sourceSystem}
-              detail={`Owner: ${need.owner}`}
-              active={active}
-              captured={captured}
-            />
-            <EvidenceAskCell
-              label={need.template}
-              detail={`${step.factTemplateCode ?? "artifact only"} · ${need.grainHistory}`}
-              active={active}
-              captured={captured}
-            />
-            <span style={{ display: "grid", gap: 6, alignSelf: "start" }}>
-              <ReadinessChip
-                label={need.requiredness}
-                tone={need.requiredness === "Required" ? "warn" : "neutral"}
-              />
-              <EvidenceAskMicroStatus
-                label={
-                  captured ? "Parsed" : uploaded ? "Uploaded" : need.status
-                }
-                done={captured}
-              />
-            </span>
-            <EvidenceAskCell
-              label={
-                captured
-                  ? artifactReviewOpen
-                    ? "Captured; review Files"
-                    : "Continue"
-                  : active
-                    ? step.type === "provide"
-                      ? "Upload below"
-                      : step.cta
-                    : "Select when ready"
-              }
-              detail={captured ? need.readback : need.nextAction}
-              active={active}
-              captured={captured}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function EvidenceAskCell({
-  label,
-  detail,
-  active,
-  captured,
-}: {
-  label: string;
-  detail: string;
-  active: boolean;
-  captured: boolean;
-}) {
-  return (
-    <span style={{ display: "grid", gap: 3, minWidth: 0 }}>
-      <span
-        style={{
-          alignItems: "center",
-          display: "flex",
-          gap: 7,
-          minWidth: 0,
-        }}
-      >
-        {captured ? (
-          <span
-            aria-hidden="true"
-            style={{
-              alignItems: "center",
-              background: ANALYTICS.GREEN,
-              borderRadius: 999,
-              color: "#ffffff",
-              display: "inline-flex",
-              flex: "0 0 16px",
-              fontSize: 11,
-              fontWeight: 900,
-              height: 16,
-              justifyContent: "center",
-              lineHeight: 1,
-              width: 16,
-            }}
-          >
-            ✓
-          </span>
-        ) : null}
-        <b
-          style={{
-            color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
-            overflowWrap: "anywhere",
-          }}
-        >
-          {label}
-        </b>
-      </span>
-      <span
-        style={{
-          color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED,
-          fontSize: 11.5,
-          lineHeight: 1.35,
-          overflowWrap: "anywhere",
-        }}
-      >
-        {detail}
-      </span>
-    </span>
-  );
-}
-
-function EvidenceAskMicroStatus({
-  label,
-  done,
-  iconOnly = false,
-}: {
-  label: string;
-  done: boolean;
-  iconOnly?: boolean;
-}) {
-  return (
-    <span
-      data-testid={done ? "source-shell-evidence-status-done" : undefined}
-      aria-label={done ? "Done" : label || "Open"}
-      title={done ? "Done" : label || "Open"}
-      style={{
-        alignItems: "center",
-        color: done ? ANALYTICS.GREEN_TEXT : ANALYTICS.FAINT,
-        display: "inline-flex",
-        gap: 5,
-        fontSize: 11,
-        fontWeight: 900,
-        minWidth: 0,
-      }}
-    >
-      <span
-        aria-hidden="true"
-        style={{
-          alignItems: "center",
-          background: done ? ANALYTICS.GREEN_TEXT : ANALYTICS.CARD,
-          border: done ? "none" : `1px solid ${ANALYTICS.LINE_STRONG}`,
-          borderRadius: 999,
-          color: done ? "#fff" : "transparent",
-          display: "inline-flex",
-          flex: "0 0 16px",
-          fontSize: 10,
-          height: 16,
-          justifyContent: "center",
-          lineHeight: 1,
-          width: 16,
-        }}
-      >
-        {done ? "✓" : ""}
-      </span>
-      {iconOnly ? null : (
-        <span style={{ overflowWrap: "anywhere" }}>
-          {done ? label || "Done" : label}
-        </span>
-      )}
-    </span>
-  );
+/** Keep guide and upload readback names aligned with the published template map. */
+function clientTemplateName(
+  templateCode: string | null | undefined,
+): string | null {
+  if (!templateCode) return null;
+  return templateFactMapByCode(templateCode)?.label ?? templateCode;
 }
 
 function ActiveStepNeedsPanel({
   step,
   isComplete,
+  missingEvidence,
+  eventId,
+  onOpenFiles,
+  onEvidenceReviewed,
 }: {
   step: SourceShellStep;
   isComplete: boolean;
+  missingEvidence?: StageEvidenceRequirementRow | null;
+  eventId: string;
+  onOpenFiles: () => void;
+  onEvidenceReviewed: () => void;
 }) {
+  if (missingEvidence) {
+    const { requirement, lifecycle, evidence, file } = missingEvidence;
+    const currentEvidenceState =
+      requiresRecordedSource(requirement) && !hasRecordedSource(evidence)
+        ? "Not loaded"
+        : evidence?.currentState ?? "Not Requested";
+    const requiresHumanReview =
+      lifecycle.parsed &&
+      EVIDENCE_STATE_RANK[requirement.minimumState] > EVIDENCE_STATE_RANK.Parsed;
+    return (
+      <div
+        data-testid="source-shell-active-step-needs"
+        style={{
+          border: `1px solid ${ANALYTICS.LINE}`,
+          borderRadius: 8,
+          background: ANALYTICS.CARD,
+          margin: "0 0 16px 42px",
+          padding: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>What Continue needs</strong>
+          <span style={{ color: ANALYTICS.AMBER_TEXT, fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
+            Required evidence
+          </span>
+        </div>
+        <div style={{ color: ANALYTICS.INK, fontSize: 14, fontWeight: 750, marginTop: 8 }}>
+          {requirement.label}
+        </div>
+        <div style={{ color: ANALYTICS.MUTED, fontSize: 12, lineHeight: 1.45, marginTop: 4 }}>
+          {requirement.description}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+          <span>Source: {requirement.sourceSystems[0]}</span>
+          <span>Needed: {requirement.minimumState}</span>
+          <span>Now: {currentEvidenceState}</span>
+        </div>
+        {step.file && evidenceRequirementIdForTask({
+          id: step.id,
+          factTemplateCode: step.factTemplateCode ?? undefined,
+        }) === requirement.requirementId ? (
+          <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 8 }}>
+            Stored: {step.file.name} · {step.file.meta}
+          </div>
+        ) : null}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <a
+            href={`/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
+            style={TABLE_LINK_STYLE}
+          >
+            Download template
+          </a>
+          <button type="button" onClick={onOpenFiles} style={TABLE_BUTTON_STYLE}>
+            Open Files to upload
+          </button>
+          {evidence?.applicabilityStatus !== undefined &&
+            permitsAbsenceDeclaration(requirement.requirementId) &&
+            (!file || hasAuditedAbsence(requirement, evidence)) ? (
+              <EvidenceAbsenceControl
+                eventId={eventId}
+                requirement={requirement}
+                declaredAbsent={hasAuditedAbsence(requirement, evidence)}
+                onDecided={onEvidenceReviewed}
+              />
+            ) : null}
+          {requiresHumanReview ? (
+            <EvidenceReviewControl
+              eventId={eventId}
+              requirement={requirement}
+              fileName={file?.name ?? requirement.label}
+              onReviewed={onEvidenceReviewed}
+            />
+          ) : null}
+        </div>
+      </div>
+    );
+  }
   const need = activeStepNeed(step, isComplete);
   return (
     <div
@@ -2680,27 +3377,37 @@ function StepNeedDatum({
   );
 }
 
+function hasCapturedStepReadback(step: SourceShellStep): boolean {
+  return step.status === "captured" &&
+    (!step.factTemplateCode || step.sourceBasis === "live_fact");
+}
+
 function activeStepNeed(
   step: SourceShellStep,
   isComplete: boolean,
 ): ActiveStepNeedView {
   const requirement = stepRequirementFor(step);
+  const isSelfStrategy = step.id === "strategy.confirm" &&
+    step.approvalPolicyCode === "self_v1";
   const uploaded = Boolean(step.file);
+  const captured = hasCapturedStepReadback(step);
   const status = isComplete
     ? "Complete"
-    : step.type === "provide"
-      ? uploaded
-        ? "Uploaded"
-        : "Missing"
-      : "Needs review";
-  const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
+    : captured
+      ? "Captured"
+      : step.type === "provide"
+        ? uploaded
+          ? "Uploaded"
+          : "Missing"
+        : "Needs review";
+  const tone: "good" | "warn" = isComplete || captured || uploaded ? "good" : "warn";
   const readback = stepReadbackLabel(step, isComplete, uploaded);
   return {
     item: requirement.item,
     requiredness: requirement.requiredness ?? "Required",
     requirement: requirement.requirement,
-    sourceSystem: step.provenance?.source ?? requirement.sourceSystem,
-    owner: step.provenance?.owner ?? requirement.ownerRole,
+    sourceSystem: isSelfStrategy ? requirement.sourceSystem : step.provenance?.source ?? requirement.sourceSystem,
+    owner: isSelfStrategy ? requirement.ownerRole : step.provenance?.owner ?? requirement.ownerRole,
     formats: requirement.acceptedFormats,
     grainHistory: requirement.grainHistory,
     template: step.template?.name ?? requirement.templateLabel,
@@ -2718,7 +3425,10 @@ function stepReadbackLabel(
   isComplete: boolean,
   uploaded: boolean,
 ): string {
-  if (isComplete) {
+  if (isComplete && step.id === "scope.prior-baseline") {
+    return "Readback: baseline requirement resolved from governed evidence.";
+  }
+  if (isComplete || hasCapturedStepReadback(step)) {
     switch (step.sourceBasis) {
       case "live_fact":
         return "Readback: typed facts available.";
@@ -2748,6 +3458,9 @@ function stepReadbackLabel(
 }
 
 function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
+  if (step.id === "strategy.confirm" && step.approvalPolicyCode === "self_v1") {
+    return SELF_STRATEGY_REQUIREMENT;
+  }
   const catalogRequirement = STEP_REQUIREMENTS[step.id];
   if (catalogRequirement) return catalogRequirement;
 
@@ -2833,6 +3546,9 @@ function activeStepNextAction(
         return "Continue is enabled.";
     }
   }
+  if (hasCapturedStepReadback(step)) {
+    return "Review remaining required evidence in Files.";
+  }
   if (step.type === "provide") {
     if (uploaded) {
       return (
@@ -2881,6 +3597,8 @@ function activeStepGuide(
     step.type === "provide" ? need.item : firstSentence(step.help);
   const template = step.template
     ? `${step.template.name} (${step.template.format})`
+    : step.id === "scope.prior-baseline"
+      ? "Prior record or absence decision"
     : step.type === "provide"
       ? "Upload file"
       : "No template";
@@ -2910,6 +3628,7 @@ function StepDetail({
   stageKey,
   stepInsight,
   isComplete,
+  missingEvidence,
   onComplete,
 }: {
   step: SourceEventShellView["stage"]["activeStep"];
@@ -2917,6 +3636,7 @@ function StepDetail({
   stageKey: SourceStageKey;
   stepInsight: SourceEventShellView["intelligence"]["stepInsight"];
   isComplete: boolean;
+  missingEvidence?: StageEvidenceRequirementRow | null;
   onComplete: () => void;
 }) {
   const router = useRouter();
@@ -2927,9 +3647,21 @@ function StepDetail({
   >({ phase: "idle" });
   const [uploadReadback, setUploadReadback] =
     useState<TaskProvideUploadReadback | null>(null);
+  const [scopeMatrix, setScopeMatrix] = useState({
+    retainedResponsibilities: "",
+    vendorResponsibilities: "",
+    rationale: "",
+  });
+  const [scopeExclusions, setScopeExclusions] = useState({
+    excludedWork: "",
+    responsibleOwner: "",
+    rationale: "",
+  });
   const activeStepId = step?.id;
   useEffect(() => {
     setUploadReadback(null);
+    setScopeMatrix({ retainedResponsibilities: "", vendorResponsibilities: "", rationale: "" });
+    setScopeExclusions({ excludedWork: "", responsibleOwner: "", rationale: "" });
   }, [activeStepId]);
   if (!step) return null;
   const activeStep = step;
@@ -2937,8 +3669,19 @@ function StepDetail({
     id: activeStep.id,
     factTemplateCode: activeStep.factTemplateCode ?? undefined,
   });
-  const canPersistAction =
-    activeStep.type !== "provide" && Boolean(evidenceRequirementId);
+  if (missingEvidence && activeStep.type !== "provide") {
+    return null;
+  }
+  const isStrategyConfirmation =
+    stageKey === "strategy" && activeStep.id === "strategy.confirm" &&
+    activeStep.approvalPolicyCode === "self_v1";
+  const isScopeMatrix = stageKey === "scope" && activeStep.id === "scope.matrix";
+  const isScopeExclusions = stageKey === "scope" && activeStep.id === "scope.exclusions";
+  const matrixReady = Object.values(scopeMatrix).every((value) => value.trim().length >= 24);
+  const exclusionsReady = Object.values(scopeExclusions).every((value) => value.trim().length >= 24);
+  const canPersistAction = isStrategyConfirmation
+    ? Boolean(activeStep.confirmationVersion)
+    : activeStep.type !== "provide" && Boolean(evidenceRequirementId);
   const evidenceRow = (
     <ActiveStepRequirementRow
       step={activeStep}
@@ -2952,19 +3695,29 @@ function StepDetail({
     setActionState({ phase: "saving" });
     let response: Response;
     try {
-      response = await fetch(
-        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(
-          evidenceRequirementId!,
-        )}/answer`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            stage: stageKey,
-            answer: `${activeStep.title}: ${activeStep.help}`,
-          }),
-        },
-      );
+      response = isStrategyConfirmation
+        ? await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/strategy-confirmation`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ version: activeStep.confirmationVersion, confirmed: true }),
+          })
+        : await fetch(
+            `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(
+              evidenceRequirementId!,
+            )}/answer`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                stage: stageKey,
+                ...(isScopeMatrix
+                  ? { scopeMatrix }
+                  : isScopeExclusions
+                    ? { scopeExclusions }
+                  : { answer: `${activeStep.title}: ${activeStep.help}` }),
+              }),
+            },
+          );
     } catch (error) {
       setActionState({
         phase: "error",
@@ -2992,14 +3745,20 @@ function StepDetail({
       return;
     }
 
-    onComplete();
+    if (!isStrategyConfirmation && !isScopeMatrix && !isScopeExclusions) onComplete();
     setActionState({ phase: "idle" });
     router.refresh();
   }
 
-  const actionButton = canPersistAction ? (
+  const actionButton = isStrategyConfirmation && !activeStep.confirmationVersion ? (
+    <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+      A governed Event Owner confirmation is required for this step.
+    </span>
+  ) : canPersistAction ? (
     <StepActionButton
       saving={actionState.phase === "saving"}
+      ready={isScopeMatrix ? matrixReady : isScopeExclusions ? exclusionsReady : true}
+      highlight={isScopeMatrix || isScopeExclusions}
       onClick={completeStepAction}
     >
       {step.cta}
@@ -3026,6 +3785,46 @@ function StepDetail({
         {actionState.message}
       </div>
     ) : null;
+  const matrixFields = isScopeMatrix ? (
+    <div style={{ display: "grid", gap: 10, maxWidth: 680, marginBottom: 12 }}>
+      {([
+        ["retainedResponsibilities", "Retained responsibilities"],
+        ["vendorResponsibilities", "Prospective vendor responsibilities"],
+        ["rationale", "Decision rationale"],
+      ] as const).map(([field, label]) => (
+        <label key={field} style={{ display: "grid", gap: 5, color: ANALYTICS.INK, fontSize: 12, fontWeight: 700 }}>
+          {label}
+          <textarea
+            value={scopeMatrix[field]}
+            onChange={(event) => setScopeMatrix((previous) => ({ ...previous, [field]: event.target.value }))}
+            rows={2}
+            maxLength={2000}
+            style={{ width: "100%", resize: "vertical", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: "9px 10px", font: "inherit", fontWeight: 400, color: ANALYTICS.INK }}
+          />
+        </label>
+      ))}
+    </div>
+  ) : null;
+  const exclusionFields = isScopeExclusions ? (
+    <div style={{ display: "grid", gap: 10, maxWidth: 680, marginBottom: 12 }}>
+      {([
+        ["excludedWork", "Excluded work"],
+        ["responsibleOwner", "Responsible owner"],
+        ["rationale", "Exclusions rationale"],
+      ] as const).map(([field, label]) => (
+        <label key={field} style={{ display: "grid", gap: 5, color: ANALYTICS.INK, fontSize: 12, fontWeight: 700 }}>
+          {label}
+          <textarea
+            value={scopeExclusions[field]}
+            onChange={(event) => setScopeExclusions((previous) => ({ ...previous, [field]: event.target.value }))}
+            rows={2}
+            maxLength={2000}
+            style={{ width: "100%", resize: "vertical", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: "9px 10px", font: "inherit", fontWeight: 400, color: ANALYTICS.INK }}
+          />
+        </label>
+      ))}
+    </div>
+  ) : null;
 
   if (activeStep.rows.length > 0) {
     return (
@@ -3069,6 +3868,8 @@ function StepDetail({
               borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
             }}
           >
+            {matrixFields}
+            {exclusionFields}
             {actionButton}
             {actionError}
           </div>
@@ -3106,13 +3907,20 @@ function StepDetail({
           eventId={eventId}
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
-          onUploaded={onComplete}
+          evidenceRequirementId={activeStep.id === "scope.app-inventory" ? "EVID-SRC-SCOPE-APP-INV" : activeStep.id === "scope.prior-baseline" ? "EVID-SRC-SCOPE-FY-CONTRACT" : undefined}
+          onUploaded={activeStep.id === "scope.sponsor" || activeStep.id === "scope.app-inventory" || activeStep.id === "scope.prior-baseline" ? () => router.refresh() : onComplete}
           onUploadReadback={setUploadReadback}
         />
         <ActiveStepUploadReadback
           readback={uploadReadback}
           factTemplateCode={factTemplateCode}
         />
+        {stageKey === "scope" && activeStep.id === "scope.sponsor" && !isComplete ? (
+          <>
+            <SponsorDelegationControl eventId={eventId} />
+            <SponsorReviewRequest eventId={eventId} />
+          </>
+        ) : null}
         {vendorCoverage ? (
           <VendorResponseCoverageList vendors={vendorCoverage} />
         ) : null}
@@ -3137,6 +3945,8 @@ function StepDetail({
   return (
     <div style={{ marginLeft: 42 }}>
       {evidenceRow}
+      {matrixFields}
+      {exclusionFields}
       {actionButton}
       {actionError}
     </div>
@@ -3156,7 +3966,9 @@ function ActiveStepUploadReadback({
       ? "Registry-only upload; no typed fact template on this step."
       : `${readback.factsWritten} typed fact${
           readback.factsWritten === 1 ? "" : "s"
-        } written${factTemplateCode ? ` through ${factTemplateCode}` : ""}.`;
+        } written${
+          factTemplateCode ? ` through ${clientTemplateName(factTemplateCode)}` : ""
+        }.`;
   const issues: string[] = [];
   if (readback.unmappedColumns.length > 0) {
     issues.push(
@@ -3224,6 +4036,7 @@ function ActiveStepRequirementRow({
   factTemplateCode?: string;
 }) {
   const need = activeStepNeed(step, isComplete);
+  const captured = hasCapturedStepReadback(step);
   const requirement = stepRequirementFor(step);
   const format =
     factTemplateCode && step.type === "provide"
@@ -3265,10 +4078,10 @@ function ActiveStepRequirementRow({
         <span
           style={{
             border: `1px solid ${
-              isComplete ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.AMBER
+              isComplete || captured ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.AMBER
             }`,
             borderRadius: 999,
-            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            color: isComplete || captured ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
             fontFamily: ANALYTICS.MONO,
             fontSize: 9,
             fontWeight: 900,
@@ -3277,7 +4090,7 @@ function ActiveStepRequirementRow({
             whiteSpace: "nowrap",
           }}
         >
-          {isComplete ? "Accepted" : "Action needed"}
+          {isComplete ? "Accepted" : captured ? "Captured" : "Action needed"}
         </span>
       </div>
       <div
@@ -3508,23 +4321,27 @@ function ActionButton({
 function StepActionButton({
   children,
   saving,
+  ready = true,
+  highlight = false,
   onClick,
 }: {
   children: ReactNode;
   saving: boolean;
+  ready?: boolean;
+  highlight?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={saving}
+      disabled={saving || !ready}
       style={{
         border: "none",
         borderRadius: 8,
-        background: saving ? ANALYTICS.FAINT : ANALYTICS.INK,
-        color: "#fff",
-        cursor: saving ? "wait" : "pointer",
+        background: saving || !ready ? ANALYTICS.SOFT : highlight ? ANALYTICS.GREEN : ANALYTICS.INK,
+        color: saving || !ready ? ANALYTICS.MUTED : "#fff",
+        cursor: saving ? "wait" : !ready ? "not-allowed" : "pointer",
         fontFamily: ANALYTICS.SANS,
         fontSize: 13,
         fontWeight: 800,
@@ -3538,10 +4355,12 @@ function StepActionButton({
 
 function FilesWorkspace({
   view,
+  artifacts,
   evidenceStates,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  artifacts: readonly SourceShellArtifactLike[];
   evidenceStates: readonly SourceEventEvidence[];
   onClientFinalAccepted: () => void;
 }) {
@@ -3566,11 +4385,8 @@ function FilesWorkspace({
       <StageEvidenceChecklistPanel
         view={view}
         evidenceStates={evidenceStates}
-        onUploadClick={() => {
-          document
-            .getElementById("source-session-evidence-capture")
-            ?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
+        onEvidenceReviewed={onClientFinalAccepted}
+        onUploaded={onClientFinalAccepted}
       />
       <SessionEvidenceCapturePanel
         eventId={view.event.id}
@@ -3581,6 +4397,7 @@ function FilesWorkspace({
       <EvidenceReadinessPanel files={view.files.items} />
       <ArtifactLifecyclePanel
         view={view}
+        artifacts={artifacts}
         onClientFinalAccepted={onClientFinalAccepted}
       />
       {view.files.byStage.length === 0 ? (
@@ -3642,7 +4459,8 @@ function buildStageEvidenceRequirementRows(
   view: SourceEventShellView,
   evidenceStates: readonly SourceEventEvidence[],
 ): StageEvidenceRequirementRow[] {
-  const requirements = evidenceForStage(view.stage.key).sort((a, b) => {
+  const requirements = evidenceForStage(view.stage.key).filter((row) =>
+    sourceEvidenceAppliesToApprovalPolicy(row.requirementId, view.event.approvalPolicyCode)).sort((a, b) => {
     if (a.level !== b.level) return a.level === "required" ? -1 : 1;
     return a.label.localeCompare(b.label);
   });
@@ -3666,7 +4484,7 @@ function buildStageEvidenceRequirementRows(
         : null,
     });
     const ready = requirementMeetsMinimum(requirement, evidence, lifecycle);
-    const uploaded = requirementHasUploadedEvidence(lifecycle, evidence, file);
+    const uploaded = requirementHasUploadedEvidence(requirement, lifecycle, evidence, file);
     return { requirement, evidence, file, lifecycle, ready, uploaded };
   });
 }
@@ -3738,17 +4556,23 @@ function virtualGateCriteriaForStage(
 function StageEvidenceChecklistPanel({
   view,
   evidenceStates,
-  onUploadClick,
+  onEvidenceReviewed,
+  onUploaded,
 }: {
   view: SourceEventShellView;
   evidenceStates: readonly SourceEventEvidence[];
-  onUploadClick: () => void;
+  onEvidenceReviewed: () => void;
+  onUploaded: () => void;
 }) {
   const rows = buildStageEvidenceRequirementRows(view, evidenceStates);
+  const supportsApplicability = evidenceStates.some(
+    (state) => state.applicabilityStatus !== undefined);
   const requiredRows = rows.filter(
     (row) => row.requirement.level === "required",
   );
   const requiredReady = requiredRows.filter((row) => row.ready).length;
+  const hasDeclaredAbsence = requiredRows.some((row) =>
+    hasAuditedAbsence(row.requirement, row.evidence));
   const allRequiredReady =
     requiredRows.length > 0 && requiredReady === requiredRows.length;
 
@@ -3781,8 +4605,9 @@ function StageEvidenceChecklistPanel({
               letterSpacing: 0,
             }}
           >
-            {requiredReady} of {requiredRows.length} required evidence items
-            ready
+            {requiredReady} of {requiredRows.length} required {hasDeclaredAbsence
+              ? "items resolved"
+              : "evidence items ready"}
           </h2>
           <p
             style={{
@@ -3832,7 +4657,23 @@ function StageEvidenceChecklistPanel({
             </thead>
             <tbody>
               {rows.map(
-                ({ requirement, evidence, lifecycle, ready, uploaded }) => {
+                ({
+                  requirement,
+                  evidence,
+                  file,
+                  lifecycle,
+                  ready,
+                  uploaded,
+                }) => {
+                  const missingRecordedSource =
+                    requiresRecordedSource(requirement) &&
+                    !hasRecordedSource(evidence);
+                  const requiresHumanReview =
+                    lifecycle.parsed &&
+                    !ready &&
+                    EVIDENCE_STATE_RANK[requirement.minimumState] >
+                      EVIDENCE_STATE_RANK.Parsed;
+                  const declaredAbsent = hasAuditedAbsence(requirement, evidence);
                   return (
                     <tr
                       key={requirement.requirementId}
@@ -3923,22 +4764,23 @@ function StageEvidenceChecklistPanel({
                               Uploaded
                             </span>
                           ) : null}
-                          <button
-                            type="button"
-                            onClick={onUploadClick}
-                            style={TABLE_BUTTON_STYLE}
-                          >
-                            {uploaded ? "Upload more" : "Upload"}
-                          </button>
+                          <EvidenceRequirementUploadControl
+                            eventId={view.event.id}
+                            requirement={requirement}
+                            uploaded={uploaded}
+                            onUploaded={onUploaded}
+                          />
                         </div>
                       </td>
                       <td style={FILE_TD_CENTER}>
                         <ReadinessChip
-                          label={parseLabelForRequirement(lifecycle, evidence)}
+                          label={declaredAbsent ? "not applicable" : parseLabelForRequirement(requirement, lifecycle, evidence)}
                           tone={
-                            lifecycle.parsed ||
-                            evidence?.currentState === "Available" ||
-                            evidence?.currentState === "Usable Evidence"
+                            declaredAbsent ||
+                            (!missingRecordedSource &&
+                              (lifecycle.parsed ||
+                                evidence?.currentState === "Available" ||
+                                evidence?.currentState === "Usable Evidence"))
                               ? "good"
                               : lifecycle.uploaded
                                 ? "warn"
@@ -3971,12 +4813,31 @@ function StageEvidenceChecklistPanel({
                         </span>
                       </td>
                       <td style={FILE_TD_ACTION}>
-                        <strong>{ready ? "Ready" : "Open"}</strong>
+                        <strong>{declaredAbsent ? "Not applicable" : ready ? "Ready" : "Open"}</strong>
                         <span>
-                          {ready
+                          {declaredAbsent
+                            ? evidence?.applicabilityReason
+                            : ready
                             ? "Use in stage review and approval."
                             : nextActionForRequirement(requirement, lifecycle)}
                         </span>
+                        {supportsApplicability && permitsAbsenceDeclaration(requirement.requirementId) &&
+                          (!uploaded || declaredAbsent) ? (
+                            <EvidenceAbsenceControl
+                              eventId={view.event.id}
+                              requirement={requirement}
+                              declaredAbsent={declaredAbsent}
+                              onDecided={onEvidenceReviewed}
+                            />
+                          ) : null}
+                        {requiresHumanReview ? (
+                          <EvidenceReviewControl
+                            eventId={view.event.id}
+                            requirement={requirement}
+                            fileName={file?.name ?? requirement.label}
+                            onReviewed={onEvidenceReviewed}
+                          />
+                        ) : null}
                       </td>
                     </tr>
                   );
@@ -3987,6 +4848,381 @@ function StageEvidenceChecklistPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function EvidenceRequirementUploadControl({
+  eventId,
+  requirement,
+  uploaded,
+  onUploaded,
+}: {
+  eventId: string;
+  requirement: SourceEvidenceRequirement;
+  uploaded: boolean;
+  onUploaded: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<string | null>(null);
+
+  const upload = async (file: File) => {
+    setPending(true);
+    setError(null);
+    setReceipt(null);
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    formData.append("stageKey", requirement.stage);
+    formData.append("evidenceRequirementId", requirement.requirementId);
+    formData.append("dataClassification", "Internal");
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/upload`,
+        { method: "POST", body: formData, credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | SourceSessionEvidenceUploadPayload
+        | null;
+      if (!response.ok || payload?.ok !== true || !payload.artifact?.id) {
+        throw new Error(payload?.detail ?? payload?.error ?? `Upload failed with HTTP ${response.status}.`);
+      }
+      setReceipt(`Captured ${payload.artifact.originalName ?? file.name} · ${summarizeSubstrateSync(payload.substrateSync)}`);
+      onUploaded();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Upload failed.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={requirement.acceptedFileTypes.map((type) => `.${type}`).join(",")}
+        aria-label={`${requirement.label} source file`}
+        data-testid={`source-required-evidence-input-${requirement.requirementId}`}
+        style={{ display: "none" }}
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          event.currentTarget.value = "";
+          if (file) void upload(file);
+        }}
+      />
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => inputRef.current?.click()}
+        style={TABLE_BUTTON_STYLE}
+      >
+        {pending ? "Uploading..." : uploaded ? "Upload more" : "Upload"}
+      </button>
+      {receipt ? (
+        <span data-testid={`source-required-evidence-status-${requirement.requirementId}`} style={{ color: ANALYTICS.GREEN_TEXT, fontSize: 11 }}>
+          {receipt}
+        </span>
+      ) : null}
+      {error ? <span role="alert" style={{ color: ANALYTICS.RUST, fontSize: 11 }}>{error}</span> : null}
+    </>
+  );
+}
+
+function EvidenceAbsenceControl({
+  eventId,
+  requirement,
+  declaredAbsent,
+  onDecided,
+}: {
+  eventId: string;
+  requirement: SourceEvidenceRequirement;
+  declaredAbsent: boolean;
+  onDecided: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const subject = requirement.requirementId === "EVID-SRC-STR-INCUMBENT"
+    ? "incumbent"
+    : requirement.requirementId === "EVID-SRC-SCOPE-FY-CONTRACT"
+      ? "prior contract or run-cost baseline"
+      : requirement.requirementId === "EVID-SRC-SCOPE-CURRENT-SOW"
+        ? "current SOW or change-order history"
+      : "historical spend";
+  const decision = declaredAbsent ? "applicable" : "not_applicable";
+
+  const submit = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/applicability`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision, reason: reason.trim(), confirmsAbsence: confirmed }),
+        },
+      );
+      const result = (await response.json()) as { detail?: string };
+      if (!response.ok) throw new Error(result.detail ?? "The decision was not recorded.");
+      setOpen(false);
+      setReason("");
+      setConfirmed(false);
+      onDecided();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The decision was not recorded.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 7, marginTop: 6 }}>
+      <button type="button" style={TABLE_BUTTON_STYLE} onClick={() => setOpen(!open)}>
+        {declaredAbsent ? "Restore requirement" : `Declare no ${subject}`}
+      </button>
+      {open ? (
+        <div style={{ display: "grid", gap: 8, maxWidth: 300 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>{declaredAbsent ? "Reason to restore requirement" : `Reason no ${subject} exists`}</span>
+            <textarea
+              aria-label={declaredAbsent ? "Reason to restore requirement" : `Reason no ${subject} exists`}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              rows={3}
+              maxLength={2_000}
+              style={{ width: "100%", border: `1px solid ${ANALYTICS.LINE_STRONG}`, padding: 7 }}
+            />
+          </label>
+          {!declaredAbsent ? (
+            <label style={{ display: "flex", gap: 7, alignItems: "start" }}>
+              <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
+              <span>I confirm no {subject} exists for this event. This is my accountable decision, not an uploaded record.</span>
+            </label>
+          ) : null}
+          {reason.trim().length >= 24 && (declaredAbsent || confirmed) ? (
+            <button type="button" style={TABLE_BUTTON_STYLE} onClick={submit} disabled={pending}>
+              {pending ? "Recording..." : "Record applicability"}
+            </button>
+          ) : null}
+          {error ? <span role="alert" style={{ color: ANALYTICS.AMBER_TEXT }}>{error}</span> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function EvidenceReviewControl({
+  eventId,
+  requirement,
+  fileName,
+  onReviewed,
+}: {
+  eventId: string;
+  requirement: SourceEvidenceRequirement;
+  fileName: string;
+  onReviewed: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [preview, setPreview] = useState<{
+    actionLabel: string;
+    reviewer: {
+      displayName: string;
+      email: string;
+      role: string;
+    };
+    targetState: string;
+    disclaimer: string;
+    sourceArtifactId?: string;
+    sourceSha256?: string;
+  } | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reviewUrl = `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/availability-review`;
+
+  const beginReview = async () => {
+    setLoadingPreview(true);
+    setError(null);
+    try {
+      const response = await fetch(reviewUrl, { credentials: "include" });
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+        review?: typeof preview;
+      } | null;
+      if (!response.ok || payload?.ok !== true || !payload.review) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Evidence review preview failed with HTTP ${response.status}.`,
+        );
+      }
+      setPreview(payload.review);
+      setNote(requirement.requirementId === "EVID-SRC-SCOPE-APP-INV"
+        ? `Reviewed ${fileName} as the operational service inventory for this Scope boundary. This does not validate costs or approve contractual terms.`
+        : `Reviewed ${fileName} for evidence availability and confirmed that its parsed content is relevant to this workflow requirement. This is not legal, security, commercial, supplier, or finance approval.`);
+      setOpen(true);
+    } catch (previewError) {
+      setError(
+        previewError instanceof Error
+          ? previewError.message
+          : "Evidence review preview failed.",
+      );
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const submitReview = async () => {
+    if (note.trim().length < 8) {
+      setError("Record a short review rationale before confirming.");
+      return;
+    }
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch(reviewUrl, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rationale: note.trim(),
+          stage: requirement.stage,
+          ...(requirement.requirementId === "EVID-SRC-SCOPE-APP-INV" ? {
+            sourceArtifactId: preview?.sourceArtifactId,
+            sourceSha256: preview?.sourceSha256,
+          } : {}),
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+      } | null;
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Evidence review failed with HTTP ${response.status}.`,
+        );
+      }
+      setOpen(false);
+      setPreview(null);
+      onReviewed();
+    } catch (reviewError) {
+      setError(
+        reviewError instanceof Error
+          ? reviewError.message
+          : "Evidence review failed.",
+      );
+    } finally {
+      setPending(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <div style={{ display: "grid", gap: 6, marginTop: 7 }}>
+        <button
+          type="button"
+          data-testid={`source-evidence-review-open-${requirement.requirementId}`}
+          disabled={loadingPreview}
+          onClick={() => void beginReview()}
+          style={TABLE_BUTTON_STYLE}
+        >
+          {loadingPreview ? "Resolving reviewer..." : "Review parsed evidence"}
+        </button>
+        {error ? (
+          <span role="alert" style={{ color: ANALYTICS.AMBER_TEXT }}>
+            {error}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <form
+      data-testid={`source-evidence-review-form-${requirement.requirementId}`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void submitReview();
+      }}
+      style={{ display: "grid", gap: 6, marginTop: 7 }}
+    >
+      {preview ? (
+        <div
+          data-testid={`source-evidence-review-preview-${requirement.requirementId}`}
+          style={{
+            background: ANALYTICS.CARD,
+            border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+            borderRadius: 6,
+            color: ANALYTICS.MUTED,
+            display: "grid",
+            gap: 3,
+            padding: 8,
+          }}
+        >
+          <strong style={{ color: ANALYTICS.INK }}>
+            {preview.actionLabel}
+          </strong>
+          <span>
+            Reviewer: {preview.reviewer.displayName} ({preview.reviewer.email})
+            · {preview.reviewer.role}
+          </span>
+          <span>Evidence state after review: {preview.targetState}</span>
+          <span>{preview.disclaimer}</span>
+        </div>
+      ) : null}
+      <textarea
+        aria-label={`Review rationale for ${requirement.label}`}
+        value={note}
+        onChange={(event) => setNote(event.currentTarget.value)}
+        rows={3}
+        style={{
+          border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+          borderRadius: 6,
+          color: ANALYTICS.INK,
+          font: "inherit",
+          minWidth: 260,
+          padding: 8,
+          resize: "vertical",
+        }}
+      />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <button type="submit" disabled={pending} style={TABLE_BUTTON_STYLE}>
+          {pending ? "Recording..." : "Record evidence review"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            setOpen(false);
+            setPreview(null);
+            setError(null);
+          }}
+          style={{
+            ...TABLE_BUTTON_STYLE,
+            background: ANALYTICS.CARD,
+            color: ANALYTICS.INK,
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+      {error ? (
+        <span role="alert" style={{ color: ANALYTICS.AMBER_TEXT }}>
+          {error}
+        </span>
+      ) : null}
+    </form>
   );
 }
 
@@ -4036,19 +5272,19 @@ function requirementMeetsMinimum(
   evidence: SourceEventEvidence | undefined,
   lifecycle: SourceEvidenceLifecycleResult,
 ): boolean {
+  if (hasAuditedAbsence(requirement, evidence)) return true;
+  if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) return false;
   if (lifecycle.stageReady || lifecycle.meetsMinimumState) return true;
-  if (!evidence) return false;
-  return (
-    (EVIDENCE_STATE_RANK[evidence.currentState] ?? -1) >=
-    (EVIDENCE_STATE_RANK[requirement.minimumState] ?? 99)
-  );
+  return evidenceMeetsRequirement(requirement, evidence);
 }
 
 function requirementHasUploadedEvidence(
+  requirement: SourceEvidenceRequirement,
   lifecycle: SourceEvidenceLifecycleResult,
   evidence: SourceEventEvidence | undefined,
   file: SourceShellFileItem | null,
 ): boolean {
+  if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) return false;
   if (file || lifecycle.uploaded || lifecycle.parsed) return true;
   if (!evidence) return false;
   return (
@@ -4058,9 +5294,13 @@ function requirementHasUploadedEvidence(
 }
 
 function parseLabelForRequirement(
+  requirement: SourceEvidenceRequirement,
   lifecycle: SourceEvidenceLifecycleResult,
   evidence: SourceEventEvidence | undefined,
 ): string {
+  if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) {
+    return "not loaded";
+  }
   if (evidence?.currentState === "Usable Evidence") return "usable";
   if (evidence?.currentState === "Available") return "available";
   if (lifecycle.parsed) return "parsed";
@@ -4122,6 +5362,17 @@ function ownerRoleForRequirement(
   requirement: SourceEvidenceRequirement,
 ): string {
   if (
+    requirement.stage === "rfp" &&
+    requirement.sourceSystems.some((system) =>
+      /Coupa Sourcing|Ariba Sourcing|Jaggaer|procurement/i.test(system),
+    )
+  ) {
+    return "Procurement / sourcing owner";
+  }
+  if (requirement.evidenceClass === "risk_control") {
+    return "Risk / security owner";
+  }
+  if (
     requirement.sourceSystems.some((system) =>
       /ServiceNow|Jira|BMC/i.test(system),
     )
@@ -4148,9 +5399,6 @@ function ownerRoleForRequirement(
   if (requirement.evidenceClass === "workforce") {
     return "HR / workforce owner";
   }
-  if (requirement.evidenceClass === "risk_control") {
-    return "Risk / security owner";
-  }
   return "Stage owner";
 }
 
@@ -4161,7 +5409,9 @@ function EvidenceReadinessPanel({
 }) {
   const summary = summarizeEvidenceReadiness(files);
   const registeredOnly = files
-    .filter((file) => file.parseStatus !== "parsed")
+    .filter(
+      (file) => !isUnreviewedGeneratedDraft(file) && file.parseStatus !== "parsed",
+    )
     .slice(0, 3);
 
   return (
@@ -4213,8 +5463,9 @@ function EvidenceReadinessPanel({
               maxWidth: 780,
             }}
           >
-            Files are persisted in Source as soon as upload succeeds. Parsed
-            files can support Source evidence now; search indexing and
+            Uploaded files are persisted in Source as soon as capture succeeds.
+            Parsed evidence can support Source review; unreviewed AI drafts are
+            separate from evidence readiness. Search indexing and
             enterprise-context promotion remain separate governed steps.
           </p>
           {registeredOnly.length > 0 ? (
@@ -4246,11 +5497,12 @@ function EvidenceReadinessPanel({
           }}
         >
           {[
-            ["Stored", summary.storedCount],
+            ["Stored evidence", summary.storedCount],
             ["Parsed", summary.parsedCount],
             ["Needs parser", summary.registeredOnlyCount],
             ["Parser failed", summary.failedCount],
             ["Search-ready", summary.searchReadyCount],
+            ["Generated drafts", summary.generatedDraftCount],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -4303,6 +5555,12 @@ function FileUseReadinessMap({
       readyForUse: fileReadyForUse(file),
     }))
     .sort((a, b) => {
+      if (
+        isUnreviewedGeneratedDraft(a.file) !==
+        isUnreviewedGeneratedDraft(b.file)
+      ) {
+        return isUnreviewedGeneratedDraft(a.file) ? 1 : -1;
+      }
       if (a.file.artifactRole !== b.file.artifactRole) {
         return a.file.artifactRole === "authoritative" ? -1 : 1;
       }
@@ -4310,6 +5568,9 @@ function FileUseReadinessMap({
       return a.file.name.localeCompare(b.file.name);
     })
     .slice(0, 6);
+  const evidenceRows = rows.filter(
+    (row) => !isUnreviewedGeneratedDraft(row.file),
+  );
 
   return (
     <div
@@ -4341,11 +5602,14 @@ function FileUseReadinessMap({
           >
             Shows what each file can do next: gate-defining artifact, supporting
             evidence, parser state, search readiness, graph projection, and the
-            next action.
+            next action. Availability review and workflow usability are separate
+            checks.
           </p>
         </div>
         <span style={SMALL_STATUS_PILL}>
-          {rows.filter((row) => row.readyForUse).length}/{rows.length} ready
+          {evidenceRows.length === 0
+            ? "No evidence files eligible"
+            : `${evidenceRows.filter((row) => row.readyForUse).length}/${evidenceRows.length} workflow-usable`}
         </span>
       </div>
       {rows.length === 0 ? (
@@ -4377,21 +5641,29 @@ function FileUseReadinessMap({
                   <td style={FILE_TD_CENTER}>
                     <ReadinessChip
                       label={
-                        file.artifactRole === "authoritative"
-                          ? "Gate"
-                          : "Evidence"
+                        isUnreviewedGeneratedDraft(file)
+                          ? "AI draft"
+                          : file.artifactRole === "authoritative"
+                            ? "Gate"
+                            : "Evidence"
                       }
                       tone={
-                        file.artifactRole === "authoritative"
-                          ? "good"
-                          : "neutral"
+                        isUnreviewedGeneratedDraft(file)
+                          ? "warn"
+                          : file.artifactRole === "authoritative"
+                            ? "good"
+                            : "neutral"
                       }
                     />
                   </td>
                   <td style={FILE_TD_CENTER}>
                     <ReadinessChip
                       label={fileParseReadinessLabel(file)}
-                      tone={file.parseStatus === "parsed" ? "good" : "warn"}
+                      tone={isUnreviewedGeneratedDraft(file)
+                        ? "neutral"
+                        : file.parseStatus === "parsed"
+                          ? "good"
+                          : "warn"}
                     />
                   </td>
                   <td style={FILE_TD_CENTER}>
@@ -4427,17 +5699,18 @@ function FileUseReadinessMap({
 }
 
 function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
-  const storedCount = files.length;
-  const parsedCount = files.filter(
+  const evidenceFiles = files.filter((file) => !isUnreviewedGeneratedDraft(file));
+  const storedCount = evidenceFiles.length;
+  const parsedCount = evidenceFiles.filter(
     (file) => file.parseStatus === "parsed",
   ).length;
-  const failedCount = files.filter(
+  const failedCount = evidenceFiles.filter(
     (file) => file.parseStatus === "failed",
   ).length;
-  const registeredOnlyCount = files.filter(
+  const registeredOnlyCount = evidenceFiles.filter(
     (file) => file.parseStatus !== "parsed",
   ).length;
-  const searchReadyCount = files.filter(
+  const searchReadyCount = evidenceFiles.filter(
     (file) => file.embeddingStatus === "embedded",
   ).length;
 
@@ -4447,18 +5720,25 @@ function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
     failedCount,
     registeredOnlyCount,
     searchReadyCount,
+    generatedDraftCount: files.length - evidenceFiles.length,
   };
+}
+
+function isUnreviewedGeneratedDraft(file: SourceShellFileItem): boolean {
+  return file.sourceOrigin === "generated" && !file.acceptedAsAuthoritative;
 }
 
 function fileReadyForUse(file: SourceShellFileItem): boolean {
   return (
+    !isUnreviewedGeneratedDraft(file) &&
     file.parseStatus === "parsed" &&
     !file.needsComplianceReview &&
-    (file.artifactRole === "evidence" || Boolean(file.latestAcceptance))
+    (file.artifactRole === "evidence" || file.acceptedAsAuthoritative)
   );
 }
 
 function fileParseReadinessLabel(file: SourceShellFileItem): string {
+  if (isUnreviewedGeneratedDraft(file)) return "draft only";
   if (file.parseStatus === "parsed") return "parsed";
   if (file.parseStatus === "failed") return "failed";
   return "not parsed";
@@ -4473,13 +5753,16 @@ function fileGraphReadinessLabel(file: SourceShellFileItem): string {
 }
 
 function fileNextAction(file: SourceShellFileItem): string {
+  if (isUnreviewedGeneratedDraft(file)) {
+    return "Review the AI draft and accept a separately reviewed client-final version; do not parse this draft as evidence.";
+  }
   if (file.needsComplianceReview) {
     return "Resolve compliance review before this file influences scoring or approval.";
   }
   if (file.parseStatus !== "parsed") {
     return "Run or retry parser before using this file as evidence.";
   }
-  if (file.artifactRole === "authoritative" && !file.latestAcceptance) {
+  if (file.artifactRole === "authoritative" && !file.acceptedAsAuthoritative) {
     return "Accept as client-final before it gates the stage.";
   }
   if (file.embeddingStatus !== "embedded") {
@@ -4836,12 +6119,38 @@ function summarizeSubstrateSync(
 
 function ArtifactLifecyclePanel({
   view,
+  artifacts,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  artifacts: readonly SourceShellArtifactLike[];
   onClientFinalAccepted: () => void;
 }) {
   const lifecycle = view.files.lifecycle;
+  const driftedFinalCodes = new Set(
+    artifacts
+      .filter((artifact) => {
+        const acceptedAt: unknown = artifact.clientFinalAcceptedAt;
+        const hasAcceptedAt =
+          (typeof acceptedAt === "string" && acceptedAt.trim().length > 0) ||
+          (acceptedAt instanceof Date && !Number.isNaN(acceptedAt.getTime()));
+        return artifact.recordKind === "registry_artifact" &&
+          artifact.isClientFinal === true &&
+          artifact.isCurrentAuthoritative === true &&
+          typeof artifact.clientFinalAcceptedBy === "string" &&
+          artifact.clientFinalAcceptedBy.trim().length > 0 &&
+          hasAcceptedAt;
+      })
+      .filter((final) => {
+        const code = final.artifactCode ?? final.artifactType ?? final.artifactKind;
+        const state = artifacts.find((artifact) =>
+          artifact.recordKind === "canvas_state" && artifact.artifactCode === code,
+        );
+        return Boolean(state && state.linkedArtifactId !== final.id);
+      })
+      .map((artifact) => artifact.artifactCode ?? artifact.artifactType ?? artifact.artifactKind)
+      .filter((code): code is string => Boolean(code)),
+  );
   // Default to the stage the user is actually viewing — a wall of every
   // artifact standard across all 11 stages (most of them not reached yet)
   // is exactly the "lines and lines of content" this panel should avoid.
@@ -4855,7 +6164,13 @@ function ArtifactLifecyclePanel({
     (row) => row.stageLabel === view.stage.label,
   );
   const currentStageActionRows = currentStageRows.filter(
-    (row) => row.lifecycleState !== "client_final",
+    (row) =>
+      row.lifecycleState === "evidence_only" ||
+      ((row.requirementLabel === "Required" || row.gateLabel === "Gate-defining") &&
+        (row.lifecycleState !== "client_final" ||
+          row.consultingGate.state === "required_not_run" ||
+          row.consultingGate.state === "failed" ||
+          row.contentQuality.state === "blocked")),
   );
   const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     buildSourceArtifactStandardsCsv(lifecycle.rows),
@@ -5098,6 +6413,7 @@ function ArtifactLifecyclePanel({
         eventId={view.event.id}
         stageLabel={view.stage.label}
         rows={currentStageActionRows}
+        canReviseFinal={view.event.lifecycle === "active" && view.event.currentStageKey === view.stage.key}
         onClientFinalAccepted={onClientFinalAccepted}
       />
       {showAuditMetrics ? (
@@ -5186,6 +6502,9 @@ function ArtifactLifecyclePanel({
               key={group.stageLabel}
               eventId={view.event.id}
               group={group}
+              activeStageKey={view.event.lifecycle === "active" ? view.event.currentStageKey : null}
+              queuedArtifactCodes={new Set(currentStageActionRows.map((row) => row.code))}
+              driftedFinalCodes={driftedFinalCodes}
               onClientFinalAccepted={onClientFinalAccepted}
             />
           ))
@@ -5199,22 +6518,32 @@ function CurrentStageArtifactReviewQueue({
   eventId,
   stageLabel,
   rows,
+  canReviseFinal,
   onClientFinalAccepted,
 }: {
   eventId: string;
   stageLabel: string;
   rows: SourceArtifactLifecycleRow[];
+  canReviseFinal: boolean;
   onClientFinalAccepted: () => void;
 }) {
-  const blockers = rows.filter((row) =>
-    ["ai_draft", "not_registered"].includes(row.lifecycleState),
+  const blockers = rows.filter(
+    (row) =>
+      ["ai_draft", "not_registered"].includes(row.lifecycleState) ||
+      row.consultingGate.state === "required_not_run" ||
+      row.consultingGate.state === "failed" ||
+      row.contentQuality.state === "blocked",
   );
   const evidenceOnly = rows.filter(
     (row) => row.lifecycleState === "evidence_only",
   );
   const queueLabel =
     blockers.length > 0
-      ? `${blockers.length} artifact review blocker${blockers.length === 1 ? "" : "s"}`
+      ? `${blockers.length} blocker${blockers.length === 1 ? "" : "s"}${
+          evidenceOnly.length > 0
+            ? ` · ${evidenceOnly.length} evidence item${evidenceOnly.length === 1 ? "" : "s"}`
+            : ""
+        }`
       : evidenceOnly.length > 0
         ? `${evidenceOnly.length} evidence item${evidenceOnly.length === 1 ? "" : "s"} to review`
         : "Ready for approval";
@@ -5286,6 +6615,7 @@ function CurrentStageArtifactReviewQueue({
               key={row.code}
               eventId={eventId}
               row={row}
+              canReviseFinal={canReviseFinal}
               onClientFinalAccepted={onClientFinalAccepted}
             />
           ))}
@@ -5298,13 +6628,19 @@ function CurrentStageArtifactReviewQueue({
 function CurrentStageArtifactReviewRow({
   eventId,
   row,
+  canReviseFinal,
   onClientFinalAccepted,
 }: {
   eventId: string;
   row: SourceArtifactLifecycleRow;
+  canReviseFinal: boolean;
   onClientFinalAccepted: () => void;
 }) {
   const action = artifactReviewAction(row);
+  const [draftRevision, setDraftRevision] = useState(0);
+  const canGenerateFromEvidence =
+    row.lifecycleState === "evidence_only" &&
+    (row.requirementLabel === "Required" || row.gateLabel === "Gate-defining");
 
   return (
     <div
@@ -5358,18 +6694,344 @@ function CurrentStageArtifactReviewRow({
         </div>
       </div>
       <div>
-        {row.lifecycleState === "ai_draft" ? (
+        {row.lifecycleState === "client_final" &&
+        row.consultingGate.required &&
+        row.consultingGate.state !== "passed" ? (
+          <div style={{ display: "grid", gap: 8 }}>
+            <ReviewArtifactQualityButton
+              eventId={eventId}
+              artifactCode={row.code}
+              artifactName={row.name}
+              onReviewed={onClientFinalAccepted}
+            />
+            {canReviseFinal && row.consultingGate.state === "failed" ? (
+              <AcceptClientFinalButton
+                eventId={eventId}
+                artifactCode={row.code}
+                artifactName={row.name}
+                buttonLabel="Replace Client Final"
+                onAccepted={onClientFinalAccepted}
+              />
+            ) : null}
+          </div>
+        ) : row.lifecycleState === "client_final" &&
+          row.contentQuality.state === "blocked" ? (
           <AcceptClientFinalButton
             eventId={eventId}
             artifactCode={row.code}
             artifactName={row.name}
             hasGeneratedDraft
+            buttonLabel="Replace Client Final"
             onAccepted={onClientFinalAccepted}
+          />
+        ) : row.lifecycleState === "ai_draft" ? (
+          <div style={{ display: "grid", gap: 8 }}>
+            <GenerateArtifactButton
+              eventId={eventId}
+              artifactCode={row.code}
+              artifactName={row.name}
+              buttonLabel="Regenerate draft"
+              onGenerated={() => {
+                setDraftRevision((revision) => revision + 1);
+                onClientFinalAccepted();
+              }}
+            />
+            <AcceptClientFinalButton
+              eventId={eventId}
+              artifactCode={row.code}
+              artifactName={row.name}
+              hasGeneratedDraft
+              onAccepted={onClientFinalAccepted}
+            />
+          </div>
+        ) : row.lifecycleState === "not_registered" ||
+          canGenerateFromEvidence ? (
+          <GenerateArtifactButton
+            eventId={eventId}
+            artifactCode={row.code}
+            artifactName={row.name}
+            onGenerated={onClientFinalAccepted}
           />
         ) : (
           <span style={SMALL_STATUS_PILL}>{action.cta}</span>
         )}
       </div>
+      {row.lifecycleState === "ai_draft" ? (
+        <SourceDraftBodyPreview
+          key={`${eventId}:${row.code}:${draftRevision}`}
+          eventId={eventId}
+          artifactCode={row.code}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function SourceDraftBodyPreview({
+  eventId,
+  artifactCode,
+}: {
+  eventId: string;
+  artifactCode: string;
+}) {
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "loaded" | "error"
+  >("idle");
+  const [body, setBody] = useState<string | null>(null);
+
+  async function loadBody() {
+    setStatus("loading");
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/body`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) throw new Error("draft_body_unavailable");
+      const payload = (await response.json()) as {
+        artifactCode?: unknown;
+        body?: unknown;
+      };
+      if (
+        payload.artifactCode !== artifactCode ||
+        typeof payload.body !== "string" ||
+        !payload.body.trim()
+      ) {
+        throw new Error("draft_body_unavailable");
+      }
+      setBody(payload.body);
+      setStatus("loaded");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  return (
+    <details
+      data-testid={`source-draft-preview-${artifactCode}`}
+      onToggle={(event) => {
+        if (event.currentTarget.open && status === "idle") void loadBody();
+      }}
+      style={{
+        gridColumn: "1 / -1",
+        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        paddingTop: 10,
+      }}
+    >
+      <summary
+        style={{
+          color: ANALYTICS.INK,
+          cursor: "pointer",
+          fontSize: 12.5,
+          fontWeight: 800,
+        }}
+      >
+        Preview AI draft
+      </summary>
+      <p style={{ color: ANALYTICS.MUTED, fontSize: 12, margin: "8px 0" }}>
+        Not a client-final artifact. Review source claims and quality findings
+        before accepting a separately reviewed final.
+      </p>
+      {status === "loading" ? <p>Loading draft...</p> : null}
+      {status === "error" ? (
+        <p role="alert">
+          Draft content is unavailable. No review is recorded.{" "}
+          <button
+            type="button"
+            style={TABLE_BUTTON_STYLE}
+            onClick={() => void loadBody()}
+          >
+            Retry
+          </button>
+        </p>
+      ) : null}
+      {status === "loaded" ? (
+        <pre
+          style={{
+            maxHeight: 520,
+            overflow: "auto",
+            overflowWrap: "anywhere",
+            whiteSpace: "pre-wrap",
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 11.5,
+            lineHeight: 1.5,
+            margin: 0,
+          }}
+        >
+          {body}
+        </pre>
+      ) : null}
+    </details>
+  );
+}
+
+function GenerateArtifactButton({
+  eventId,
+  artifactCode,
+  artifactName,
+  buttonLabel = "Generate with aVa",
+  onGenerated,
+}: {
+  eventId: string;
+  artifactCode: string;
+  artifactName: string;
+  buttonLabel?: string;
+  onGenerated: () => void;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<
+    | { phase: "idle" }
+    | { phase: "generating" }
+    | { phase: "error"; message: string }
+  >({ phase: "idle" });
+
+  const generate = async () => {
+    setState({ phase: "generating" });
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/generate`,
+        { method: "POST", credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+        blockers?: Array<{ detail?: string }>;
+      } | null;
+      if (!response.ok || payload?.ok !== true) {
+        const blocker = payload?.blockers?.find((item) => item.detail)?.detail;
+        throw new Error(
+          blocker ??
+            payload?.detail ??
+            payload?.error ??
+            `Generation failed with HTTP ${response.status}.`,
+        );
+      }
+      setState({ phase: "idle" });
+      onGenerated();
+      router.refresh();
+    } catch (error) {
+      setState({
+        phase: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : `Could not generate ${artifactName}.`,
+      });
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <button
+        type="button"
+        data-testid={`source-generate-artifact-${artifactCode}`}
+        disabled={state.phase === "generating"}
+        onClick={() => void generate()}
+        style={{
+          ...BUTTON_STYLE,
+          background: ANALYTICS.INK,
+          color: "#fff",
+          cursor: state.phase === "generating" ? "wait" : "pointer",
+          opacity: state.phase === "generating" ? 0.65 : 1,
+          padding: "9px 12px",
+        }}
+      >
+        {state.phase === "generating" ? "Generating..." : buttonLabel}
+      </button>
+      {state.phase === "error" ? (
+        <span
+          role="alert"
+          style={{ color: ANALYTICS.RUST, fontSize: 11.5, lineHeight: 1.35 }}
+        >
+          {state.message}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function ReviewArtifactQualityButton({
+  eventId,
+  artifactCode,
+  artifactName,
+  onReviewed,
+}: {
+  eventId: string;
+  artifactCode: string;
+  artifactName: string;
+  onReviewed: () => void;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<
+    | { phase: "idle" }
+    | { phase: "reviewing" }
+    | { phase: "error"; message: string }
+  >({ phase: "idle" });
+
+  const review = async () => {
+    setState({ phase: "reviewing" });
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/generate`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reviewExistingBody: true }),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+      } | null;
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Quality review failed with HTTP ${response.status}.`,
+        );
+      }
+      setState({ phase: "idle" });
+      onReviewed();
+      router.refresh();
+    } catch (error) {
+      setState({
+        phase: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : `Could not review ${artifactName}.`,
+      });
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <button
+        type="button"
+        data-testid={`source-review-artifact-quality-${artifactCode}`}
+        disabled={state.phase === "reviewing"}
+        onClick={() => void review()}
+        style={{
+          ...BUTTON_STYLE,
+          background: ANALYTICS.INK,
+          color: "#fff",
+          cursor: state.phase === "reviewing" ? "wait" : "pointer",
+          opacity: state.phase === "reviewing" ? 0.65 : 1,
+          padding: "9px 12px",
+        }}
+      >
+        {state.phase === "reviewing" ? "Reviewing..." : "Run quality review"}
+      </button>
+      {state.phase === "error" ? (
+        <span
+          role="alert"
+          style={{ color: ANALYTICS.RUST, fontSize: 11.5, lineHeight: 1.35 }}
+        >
+          {state.message}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -5379,6 +7041,30 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
   detail: string;
   cta: string;
 } {
+  if (
+    row.lifecycleState === "client_final" &&
+    row.consultingGate.required &&
+    row.consultingGate.state !== "passed"
+  ) {
+    return {
+      title: "Run the consulting-grade review on the accepted package.",
+      detail:
+        "The accepted body is preserved; Source records a separate quality receipt and fails closed if the package does not pass.",
+      cta: "Run review",
+    };
+  }
+  if (
+    row.lifecycleState === "client_final" &&
+    row.contentQuality.state === "blocked"
+  ) {
+    return {
+      title: "Repair the accepted final before relying on it.",
+      detail:
+        row.contentQuality.blockers[0] ??
+        "Content QA found a blocking issue in the accepted version. Upload the corrected client-approved final to replace it.",
+      cta: "Replace final",
+    };
+  }
   if (row.lifecycleState === "ai_draft") {
     return {
       title: "Review the draft and accept the client-final version.",
@@ -5396,6 +7082,17 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
       cta: "Missing",
     };
   }
+  if (
+    row.lifecycleState === "evidence_only" &&
+    (row.requirementLabel === "Required" || row.gateLabel === "Gate-defining")
+  ) {
+    return {
+      title: "Create a governed draft from the available evidence.",
+      detail:
+        "Registered evidence is not a client-final deliverable. Generate a draft, then review and accept a final separately.",
+      cta: "Generate draft",
+    };
+  }
   return {
     title: "Review supporting evidence before relying on it.",
     detail:
@@ -5404,13 +7101,68 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
   };
 }
 
+function RestoreCurrentFinalButton({
+  eventId,
+  artifactCode,
+  onRestored,
+}: {
+  eventId: string;
+  artifactCode: string;
+  onRestored: () => void;
+}) {
+  const [state, setState] = useState<"idle" | "restoring" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const restore = async () => {
+    setState("restoring");
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/restore-current-final`,
+        { method: "POST", credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (!response.ok) {
+        throw new Error(payload?.error ?? `Restore failed with HTTP ${response.status}.`);
+      }
+      setState("idle");
+      onRestored();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not restore the accepted final.");
+      setState("error");
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <button
+        type="button"
+        data-testid={`source-restore-client-final-${artifactCode}`}
+        title="Restore the already accepted file after its stage link drifted"
+        disabled={state === "restoring"}
+        onClick={() => void restore()}
+        style={{ ...BUTTON_STYLE, padding: "9px 12px", cursor: state === "restoring" ? "wait" : "pointer" }}
+      >
+        {state === "restoring" ? "Restoring..." : "Restore accepted final"}
+      </button>
+      {state === "error" ? <span role="alert" style={{ color: ANALYTICS.RUST, fontSize: 11.5 }}>{message}</span> : null}
+    </div>
+  );
+}
+
 function LifecycleStageRows({
   eventId,
   group,
+  activeStageKey,
+  queuedArtifactCodes,
+  driftedFinalCodes,
   onClientFinalAccepted,
 }: {
   eventId: string;
   group: { stageLabel: string; rows: SourceArtifactLifecycleRow[] };
+  activeStageKey: SourceStageKey | null;
+  queuedArtifactCodes: ReadonlySet<string>;
+  driftedFinalCodes: ReadonlySet<string>;
   onClientFinalAccepted: () => void;
 }) {
   return (
@@ -5620,13 +7372,51 @@ function LifecycleStageRows({
                   row.consultingGate.nextAction}
               </div>
             ) : null}
-            {row.lifecycleState === "ai_draft" ? (
+            {driftedFinalCodes.has(row.code) ? (
+              <div style={{ marginTop: 10 }}>
+                <RestoreCurrentFinalButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  onRestored={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "ai_draft" ? (
               <div style={{ marginTop: 10 }}>
                 <AcceptClientFinalButton
                   eventId={eventId}
                   artifactCode={row.code}
                   artifactName={row.name}
                   hasGeneratedDraft
+                  onAccepted={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "not_registered" && row.stageKey === activeStageKey && !queuedArtifactCodes.has(row.code) ? (
+              <div style={{ marginTop: 10 }}>
+                <GenerateArtifactButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  onGenerated={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "client_final" &&
+              row.consultingGate.required &&
+              row.consultingGate.state !== "passed" ? (
+              <div style={{ marginTop: 10 }}>
+                <ReviewArtifactQualityButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  onReviewed={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "client_final" && row.stageKey === activeStageKey && !queuedArtifactCodes.has(row.code) ? (
+              <div style={{ marginTop: 10 }}>
+                <AcceptClientFinalButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  buttonLabel="Replace Client Final"
                   onAccepted={onClientFinalAccepted}
                 />
               </div>
@@ -5654,10 +7444,20 @@ function groupLifecycleRows(rows: SourceArtifactLifecycleRow[]) {
 function IntelligenceWorkspace({
   view,
   stageView,
+  evidenceStates,
 }: {
   view: SourceEventShellView;
   stageView: StageAnalyticsView;
+  evidenceStates: readonly SourceEventEvidence[];
 }) {
+  const evidenceReadiness = buildGovernedStageEvidenceReadinessBrief(
+    buildStageEvidenceRequirementRows(view, evidenceStates).map((row) => ({
+      label: row.requirement.label,
+      required: row.requirement.level === "required",
+      ready: row.ready,
+    })),
+  );
+
   return (
     <section data-testid="source-shell-v2-intelligence">
       <WorkspaceTitle
@@ -5674,7 +7474,10 @@ function IntelligenceWorkspace({
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <IntelligenceReadinessBrief view={view} />
+          <IntelligenceReadinessBrief
+            view={view}
+            evidenceReadiness={evidenceReadiness}
+          />
           {view.intelligence.stepInsight ? (
             <StepInsightPanel insight={view.intelligence.stepInsight} />
           ) : null}
@@ -5689,11 +7492,25 @@ function IntelligenceWorkspace({
   );
 }
 
-function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
+function IntelligenceReadinessBrief({
+  view,
+  evidenceReadiness,
+}: {
+  view: SourceEventShellView;
+  evidenceReadiness: GovernedStageEvidenceReadinessBrief | null;
+}) {
   const currentStageFiles =
     view.files.byStage.find((stage) => stage.stageKey === view.stage.key)
       ?.items ?? [];
-  const missing = intelligenceMissingLine(view);
+  const workflowOpen = view.stage.ready < view.stage.total;
+  const governedEvidenceOpen = Boolean(
+    evidenceReadiness && evidenceReadiness.missingLabels.length > 0,
+  );
+  const missing = governedEvidenceOpen
+    ? workflowOpen
+      ? `${intelligenceMissingLine(view)}. ${evidenceReadiness!.missingLine}`
+      : evidenceReadiness!.missingLine
+    : intelligenceMissingLine(view);
   const produced = view.intelligence.stepInsight
     ? "Stage insight produced"
     : `${view.intelligence.findings.length} finding${view.intelligence.findings.length === 1 ? "" : "s"} produced`;
@@ -5704,8 +7521,13 @@ function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
           .map((file) => file.name)
           .join(", ")
       : intelligenceBasisLabel(view.intelligence.sourceBasis);
-  const nextAction =
-    view.stage.ready < view.stage.total
+  const nextAction = governedEvidenceOpen && !workflowOpen
+    ? evidenceReadiness!.nextAction
+    : view.stage.approvalRecorded
+    ? view.stage.artifactReadiness.blockerCount > 0
+      ? "Remediate current artifact gaps; approval remains recorded."
+      : "No further approval required."
+    : view.stage.ready < view.stage.total
       ? "Complete the active step before approval."
       : view.stage.artifactReadiness.blockerCount > 0
         ? "Resolve Files blockers before approval."
@@ -5794,13 +7616,29 @@ function intelligenceBasisLabel(basis: SourceShellEvidenceBasis): string {
 
 function ApprovalsWorkspace({
   view,
+  canRetireEvent,
   gateAction,
+  evidenceStates,
+  gateCriterionStates,
+  stageArtifactStates,
+  canReviewCriteria,
+  onCriterionSaved,
+  onGoToFiles,
   onGoToSteps,
 }: {
   view: SourceEventShellView;
+  canRetireEvent: boolean;
   gateAction?: StageGateActionView;
+  evidenceStates: readonly SourceEventEvidence[];
+  gateCriterionStates: readonly SourceEventGateCriterion[];
+  stageArtifactStates: readonly SourceEventArtifactState[];
+  canReviewCriteria: boolean;
+  onCriterionSaved: () => void;
+  onGoToFiles: () => void;
   onGoToSteps: () => void;
 }) {
+  const requiredEvidenceOpen = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required" && !row.ready).length;
   return (
     <section data-testid="source-shell-v2-approvals">
       <WorkspaceTitle
@@ -5808,16 +7646,45 @@ function ApprovalsWorkspace({
         title="Stage decisions"
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
-      <ApprovalReadinessBrief view={view} />
+      <ApprovalReadinessBrief
+        view={view}
+        requiredEvidenceOpen={requiredEvidenceOpen}
+        gateCriterionStates={gateCriterionStates}
+        gateAction={gateAction}
+      />
+      {(view.stage.key === "strategy" || view.stage.key === "scope") &&
+      view.event.currentStageKey === view.stage.key && view.event.lifecycle === "active" ? (
+        <StageCriterionReview
+          view={view}
+          states={gateCriterionStates}
+          artifacts={stageArtifactStates}
+          canReview={canReviewCriteria}
+          onSaved={onCriterionSaved}
+          onGoToFiles={onGoToFiles}
+        />
+      ) : null}
+      <PendingDecisionGroups view={view} />
       {view.approvals.currentStageItem ? (
         <ApprovalCard
           item={view.approvals.currentStageItem}
           gateAction={gateAction}
+          decision={currentApprovalDecision(view)}
+          requiredEvidenceOpen={requiredEvidenceOpen}
+          approvalPolicyCode={view.event.approvalPolicyCode}
           featured
           onGoToSteps={onGoToSteps}
         />
       ) : (
-        <EmptyCard text={view.approvals.readinessLine} />
+        <>
+          <EmptyCard text={view.approvals.readinessLine} />
+          <ProgressActionDock
+            action={null}
+            status="Approval locked"
+            detail={view.stage.ready < view.stage.total
+              ? "No approval item is routed. Complete the current steps and evidence review."
+              : "No approval item is routed for this stage; no decision can be recorded yet."}
+          />
+        </>
       )}
       {view.approvals.items.length > 0 ? (
         <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
@@ -5832,37 +7699,345 @@ function ApprovalsWorkspace({
       {view.approvals.ledger.length > 0 ? (
         <ApprovalLedgerTable ledger={view.approvals.ledger} />
       ) : null}
+      {canRetireEvent && view.event.lifecycle === "active" ? (
+        <EventRetirementControl eventId={view.event.id} eventCode={view.event.code} />
+      ) : null}
     </section>
   );
 }
 
-function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
+function StageCriterionReview({
+  view,
+  states,
+  artifacts,
+  canReview,
+  onSaved,
+  onGoToFiles,
+}: {
+  view: SourceEventShellView;
+  states: readonly SourceEventGateCriterion[];
+  artifacts: readonly SourceEventArtifactState[];
+  canReview: boolean;
+  onSaved: () => void;
+  onGoToFiles: () => void;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const definitions = criteriaForStage(view.stage.key);
+  const recorded = definitions.filter((definition) =>
+    states.some((state) => state.criterionId === definition.criterionId &&
+      (state.state === "met" || state.state === "waived")),
+  ).length;
+
+  async function changeState(criterionId: string, state: SourceEventGateCriterionState, rationale: string) {
+    setPendingId(criterionId);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(view.event.id)}/gate-criteria/${encodeURIComponent(criterionId)}/state`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ state, reason: rationale }),
+        },
+      );
+      const result = await response.json().catch(() => null) as { detail?: string } | null;
+      if (!response.ok) throw new Error(result?.detail ?? "Criterion review could not be recorded.");
+      setOpenId(null);
+      setReason("");
+      onSaved();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Criterion review could not be recorded.");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  return (
+    <section data-testid="source-stage-criterion-review" style={{ margin: "18px 0", borderTop: `1px solid ${ANALYTICS.LINE}` }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "14px 0 8px" }}>
+        <h3 style={{ margin: 0, fontSize: 16 }}>{view.stage.label} gate criteria</h3>
+        <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>{recorded} of {definitions.length} recorded</span>
+      </div>
+      {definitions.map((definition) => {
+        const current = states.find((state) => state.criterionId === definition.criterionId);
+        const title = criterionForSourceApprovalPolicy(definition, view.event.approvalPolicyCode)?.title ?? definition.title;
+        const missingArtifacts = definition.linkedArtifactCodes.filter((code) =>
+          !isArtifactGateReady(artifacts.find((artifact) => artifact.artifactCode === code)),
+        );
+        const isRecorded = current?.state === "met" || current?.state === "waived";
+        const isNotMet = current?.state === "not_met";
+        return (
+          <div key={definition.criterionId} style={{ borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`, padding: "12px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ display: "grid", gap: 4 }}>
+                <strong style={{ fontSize: 13 }}>{title}</strong>
+                <span style={{ color: isRecorded ? ANALYTICS.GREEN_TEXT : ANALYTICS.MUTED, fontSize: 12 }}>
+                  {isRecorded ? "Recorded" : isNotMet ? "Not met" : missingArtifacts.length
+                    ? `Client Final required for ${missingArtifacts.map((code) => specByCode(code)?.name ?? "required artifact").join(", ")}`
+                    : current ? "Ready for Event Owner review" : "Criterion state unavailable"}
+                </span>
+              </div>
+              {canReview && current && isRecorded ? (
+                <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
+                  onClick={() => void changeState(definition.criterionId, "pending", "")}>Reopen</button>
+              ) : canReview && current ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  {missingArtifacts.length > 0 ? (
+                    <button type="button" style={BUTTON_STYLE} onClick={onGoToFiles}>Open files</button>
+                  ) : null}
+                  <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
+                    onClick={() => { setOpenId(definition.criterionId); setReason(""); setError(null); }}>
+                    Review {title}
+                  </button>
+                </div>
+              ) : missingArtifacts.length > 0 ? (
+                <button type="button" style={BUTTON_STYLE} onClick={onGoToFiles}>Open files</button>
+              ) : null}
+            </div>
+            {openId === definition.criterionId ? (
+              <div style={{ display: "grid", gap: 8, maxWidth: 560, paddingTop: 12 }}>
+                <label htmlFor="source-criterion-rationale" style={{ fontSize: 12, fontWeight: 700 }}>Criterion rationale</label>
+                <textarea id="source-criterion-rationale" value={reason} rows={3}
+                  onChange={(event) => setReason(event.target.value)}
+                  placeholder="Record what you reviewed and why this criterion is met or not met."
+                  style={{ width: "100%", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: 9 }} />
+                <div style={{ display: "flex", gap: 8 }}>
+                  {missingArtifacts.length === 0 ? (
+                    <button type="button" style={{ ...BUTTON_STYLE, padding: "8px 12px", background: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? ANALYTICS.GREEN : ANALYTICS.SOFT, color: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? "#fff" : ANALYTICS.MUTED }}
+                      disabled={reason.trim().length < SOURCE_APPROVAL_REASON_MIN_LENGTH || pendingId !== null}
+                      onClick={() => void changeState(definition.criterionId, "met", reason.trim())}>Mark criterion met</button>
+                  ) : null}
+                  <button type="button" style={{ ...BUTTON_STYLE, padding: "8px 12px" }}
+                    disabled={reason.trim().length < SOURCE_APPROVAL_REASON_MIN_LENGTH || pendingId !== null}
+                    onClick={() => void changeState(definition.criterionId, "not_met", reason.trim())}>Record not met</button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+      {error ? <p role="alert" style={{ color: ANALYTICS.RUST, fontSize: 12 }}>{error}</p> : null}
+    </section>
+  );
+}
+
+type ApprovalDecisionForCard =
+  SourceEventShellView["approvals"]["pendingDecisionGroups"][number]["decisions"][number];
+
+function currentApprovalDecision(
+  view: SourceEventShellView,
+): ApprovalDecisionForCard | null {
+  return view.approvals.pendingDecisionGroups[0]?.decisions[0] ?? null;
+}
+
+function recordedApprovalAuditBlockers(
+  decision: ApprovalDecisionForCard | null,
+): ApprovalDecisionForCard["blockers"] {
+  if (!decision || decision.status !== "recorded") return [];
+  return decision.blockers.filter((blocker) =>
+    ["approval_item_missing", "stale_version", "reviewer_role_missing"].includes(
+      blocker.code,
+    ),
+  );
+}
+
+function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
+  if (view.approvals.pendingDecisionGroups.length === 0) return null;
+
+  return (
+    <section
+      data-testid="source-approval-pending-decisions"
+      style={{ display: "grid", gap: 10, marginBottom: 14 }}
+    >
+      {view.approvals.pendingDecisionGroups.map((group) => (
+        <div key={group.key} style={{ ...CARD_STYLE, padding: 16 }}>
+          <div style={WORKSPACE_EYEBROW}>Pending decision</div>
+          <h3
+            style={{
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 18,
+              lineHeight: 1.2,
+              margin: "5px 0 10px",
+            }}
+          >
+            {group.eventCode} · {group.versionLabel}
+          </h3>
+          <div style={{ display: "grid", gap: 10 }}>
+            {group.decisions.map((decision) => (
+              <div
+                key={decision.id}
+                data-testid="source-approval-pending-decision"
+                style={{
+                  borderTop: `1px solid ${ANALYTICS.LINE}`,
+                  display: "grid",
+                  gap: 8,
+                  paddingTop: 10,
+                }}
+              >
+                <div
+                  style={{
+                    alignItems: "center",
+                    display: "flex",
+                    gap: 10,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ fontWeight: 800 }}>
+                    {decision.stageLabel} gate ·{" "}
+                    {decision.reviewerRole ?? "reviewer role missing"}
+                  </div>
+                  <span
+                    style={{
+                      ...SMALL_STATUS_PILL,
+                      color:
+                        decision.status === "ready"
+                          ? ANALYTICS.GREEN_TEXT
+                          : decision.status === "recorded"
+                            ? ANALYTICS.BLUE
+                            : ANALYTICS.AMBER_TEXT,
+                    }}
+                  >
+                    {decision.status === "ready"
+                      ? "Ready"
+                      : decision.status === "recorded"
+                        ? "Recorded"
+                        : "Blocked"}
+                  </span>
+                </div>
+                {decision.blockers.length > 0 ? (
+                  <ul
+                    style={{
+                      color: ANALYTICS.MUTED,
+                      fontSize: 12.5,
+                      lineHeight: 1.45,
+                      margin: 0,
+                      paddingLeft: 18,
+                    }}
+                  >
+                    {decision.blockers.map((blocker) => (
+                      <li key={blocker.code}>{blocker.detail}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p
+                    style={{
+                      color: ANALYTICS.GREEN_TEXT,
+                      fontSize: 12.5,
+                      margin: 0,
+                    }}
+                  >
+                    Version binding, reviewer role, readiness, entitlement, and
+                    rationale are satisfied.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function ApprovalReadinessBrief({
+  view,
+  requiredEvidenceOpen,
+  gateCriterionStates,
+  gateAction,
+}: {
+  view: SourceEventShellView;
+  requiredEvidenceOpen: number;
+  gateCriterionStates: readonly SourceEventGateCriterion[];
+  gateAction?: StageGateActionView;
+}) {
+  const stageApproved = view.stage.approvalRecorded;
+  const approvalDecision = currentApprovalDecision(view);
+  const approvalRouted = view.approvals.currentStageItem != null;
+  const gateCriteriaOpen =
+    (approvalDecision?.blockers.some((blocker) => blocker.code === "gate_criteria_open") ?? false) ||
+    (view.stage.key === "scope" && approvalRouted && gateAction == null && criteriaForStage("scope").some((criterion) =>
+      !gateCriterionStates.some((state) => state.criterionId === criterion.criterionId &&
+        (state.state === "met" || state.state === "waived"))));
+  const approvalAuditBlockers = recordedApprovalAuditBlockers(approvalDecision);
+  const approvalAuditGapsOpen =
+    stageApproved && approvalAuditBlockers.length > 0;
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
-  const ready = workflowComplete && filesReady;
+  const ready =
+    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0 && !gateCriteriaOpen && gateAction != null;
   const stageHref = `/source/events/${encodeURIComponent(
     view.event.id,
   )}?stage=${encodeURIComponent(view.stage.key)}`;
   const filesHref = `${stageHref}&workspace=files`;
-  const decision =
-    view.approvals.currentStageItem != null
+  const decision = stageApproved
+    ? approvalAuditGapsOpen
+      ? `${view.stage.label} approval is recorded, but ${approvalAuditBlockers.length} audit metadata gap${approvalAuditBlockers.length === 1 ? " remains" : "s remain"}.`
+      : `${view.stage.label} approval is recorded.`
+    : view.approvals.currentStageItem != null
       ? `${view.stage.label} gate decision routed.`
       : `No approval item is currently routed for ${view.stage.label}.`;
-  const nextAction = !workflowComplete
-    ? "Return to steps."
-    : !filesReady
-      ? "Clear artifact queue."
-      : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
-  const readinessTitle = ready
-    ? "Ready to decide"
-    : workflowComplete
-      ? "Artifact queue blocks the gate"
-      : "Workflow inputs still open";
-  const readinessStatus = ready
-    ? "Ready"
-    : workflowComplete
-      ? "Not gate-ready"
-      : "Inputs open";
+  const nextAction = stageApproved
+    ? approvalAuditGapsOpen
+      ? "Resolve approval record gaps."
+      : "No further approval required."
+    : !workflowComplete
+      ? "Return to steps."
+      : requiredEvidenceOpen > 0
+        ? "Review required evidence in the owning steps."
+        : !filesReady
+          ? "Clear artifact queue."
+          : !approvalRouted
+            ? "Approval routing unavailable."
+          : gateCriteriaOpen
+            ? "Review required gate criteria."
+          : !gateAction
+            ? "Review stage gate blockers."
+          : (view.approvals.currentStageItem?.actionLabel ??
+            "Approval routing unavailable.");
+  const readinessTitle = stageApproved
+    ? approvalAuditGapsOpen
+      ? "Approval recorded; audit gaps open"
+      : !filesReady && view.stage.approvalTraceState === "historical"
+      ? "Historically approved; remediation open"
+      : "Stage approved"
+    : ready
+      ? "Ready to decide"
+      : !workflowComplete
+        ? "Workflow inputs still open"
+        : requiredEvidenceOpen > 0
+          ? "Required evidence still open"
+        : !filesReady
+          ? "Artifact queue blocks the gate"
+          : !approvalRouted
+            ? "Approval routing unavailable"
+            : gateCriteriaOpen
+              ? "Gate criteria still open"
+            : !gateAction
+              ? "Stage gate still blocked"
+            : "Approval routing unavailable";
+  const readinessStatus = stageApproved
+    ? approvalAuditGapsOpen
+      ? "Recorded with gaps"
+      : "Approved"
+    : ready
+      ? "Ready"
+      : !workflowComplete
+        ? "Inputs open"
+        : requiredEvidenceOpen > 0
+          ? "Evidence open"
+        : !filesReady
+          ? "Not gate-ready"
+          : !approvalRouted
+            ? "Routing open"
+            : gateCriteriaOpen
+              ? "Criteria open"
+            : !gateAction
+              ? "Gate blocked"
+            : "Routing open";
 
   return (
     <section
@@ -5894,7 +8069,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         <span
           style={{
             ...SMALL_STATUS_PILL,
-            color: ready ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            color:
+              ready || (stageApproved && !approvalAuditGapsOpen)
+                ? ANALYTICS.GREEN_TEXT
+                : ANALYTICS.AMBER_TEXT,
           }}
         >
           {readinessStatus}
@@ -5908,9 +8086,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         }}
       >
         <StepNeedDatum
-          label="Workflow"
-          value={`${view.stage.ready}/${view.stage.total} steps complete`}
-          tone={workflowComplete ? "good" : "warn"}
+          label="Workflow inputs"
+          value={`${view.stage.ready}/${view.stage.total} inputs captured`}
+          tone={workflowComplete && requiredEvidenceOpen === 0 ? "good" : "warn"}
         />
         <StepNeedDatum
           label="Artifact queue"
@@ -5925,10 +8103,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         <StepNeedDatum
           label="Next action"
           value={nextAction}
-          tone={ready ? "good" : "warn"}
+          tone={ready || stageApproved ? "good" : "warn"}
         />
       </div>
-      {!filesReady ? (
+      {!filesReady && !stageApproved ? (
         <div
           data-testid="source-shell-approval-review-gaps"
           style={{
@@ -5949,8 +8127,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           </strong>
           <span>
             {workflowComplete
-              ? "Stage inputs are complete, but the approval gate is not decision-ready until the current-stage artifact queue is cleared or an owner records an explicit exception."
-              : `Stage inputs are still open (${view.stage.ready} of ${view.stage.total} complete) and the current-stage artifact queue is not cleared. Close both, or record an explicit owner exception, before the approval gate is decision-ready.`}
+              ? requiredEvidenceOpen > 0
+                ? `Task inputs are captured, but ${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? " remains" : "s remain"} open and the artifact queue is not cleared.`
+                : "Stage inputs are complete, but the approval gate is not decision-ready until the current-stage artifact queue is cleared or an owner records an explicit exception."
+              : `Stage inputs are still open (${view.stage.ready} of ${view.stage.total} captured) and the current-stage artifact queue is not cleared. Close both, or record an explicit owner exception, before the approval gate is decision-ready.`}
           </span>
           {view.stage.artifactReadiness.blockers.slice(0, 4).map((blocker) => (
             <span key={blocker}>{blocker}</span>
@@ -5962,7 +8142,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           ) : null}
         </div>
       ) : null}
-      {!ready ? (
+      {!ready && !stageApproved ? (
         <div
           data-testid="source-shell-approval-next-actions"
           style={{
@@ -5972,7 +8152,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
             marginTop: 14,
           }}
         >
-          {!workflowComplete ? (
+          {!workflowComplete || requiredEvidenceOpen > 0 ? (
             <Link
               data-testid="source-shell-approval-return-steps"
               href={stageHref}
@@ -6569,7 +8749,10 @@ function StageGuideEvidencePrepTable({
                 <GuidePrepCell label={need.sourceSystem} detail={need.owner} />
                 <GuidePrepCell
                   label={template}
-                  detail={step.factTemplateCode ?? "No template code"}
+                  detail={
+                    clientTemplateName(step.factTemplateCode) ??
+                    "No intake template"
+                  }
                 />
                 <GuidePrepCell label={need.parseTarget} detail={need.status} />
                 <GuidePrepStatusCell
@@ -6998,6 +9181,7 @@ function FileCard({
         operation={operation}
         artifactRole={item.artifactRole}
         parseStatus={item.parseStatus}
+        sourceOrigin={item.sourceOrigin}
         embeddingStatus={item.embeddingStatus}
         graphStatus={item.graphStatus}
         needsComplianceReview={item.needsComplianceReview}
@@ -7053,11 +9237,17 @@ function ProcessingReadinessBadge({ item }: { item: SourceShellFileItem }) {
 function ApprovalCard({
   item,
   gateAction,
+  decision,
+  requiredEvidenceOpen = 0,
+  approvalPolicyCode,
   featured = false,
   onGoToSteps,
 }: {
   item: ApprovalsInboxItem;
   gateAction?: StageGateActionView;
+  decision?: ApprovalDecisionForCard | null;
+  requiredEvidenceOpen?: number;
+  approvalPolicyCode?: string | null;
   featured?: boolean;
   onGoToSteps?: () => void;
 }) {
@@ -7078,6 +9268,10 @@ function ApprovalCard({
     textDecoration: "none",
     flexShrink: 0,
   } as const;
+  const onlyRationaleOpen = decision?.blockers.length === 1 &&
+    decision.blockers[0]?.code === "approval_reason_required";
+  const canOfferGateAction = requiredEvidenceOpen === 0 &&
+    ((decision?.primaryAction.enabled ?? true) || onlyRationaleOpen);
 
   return (
     <section
@@ -7104,12 +9298,36 @@ function ApprovalCard({
             {item.readiness}
           </div>
         </div>
-        {gateAction ? (
+        {gateAction && canOfferGateAction ? (
           <StageGateApprovalButton
             action={gateAction}
             status={item.status}
             stageLabel={item.stageLabel}
+            requiresSponsorContext={approvalPolicyCode === "self_v1" && item.stageKey === "scope"}
           />
+        ) : gateAction && decision ? (
+          <>
+            <span
+              data-testid="source-stage-gate-blocked"
+              role="status"
+              style={{
+                ...buttonStyle,
+                color: ANALYTICS.FAINT,
+              }}
+            >
+              {requiredEvidenceOpen > 0
+                ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"} remain open. `
+                : null}
+              {decision.primaryAction.disabledReason}
+            </span>
+            {featured ? <ProgressActionDock
+              action={null}
+              status="Approval locked"
+              detail={requiredEvidenceOpen > 0
+                ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"} remain open.`
+                : decision.primaryAction.disabledReason}
+            /> : null}
+          </>
         ) : goToStepsInstead ? (
           <button
             type="button"
@@ -7133,15 +9351,22 @@ function StageGateApprovalButton({
   action,
   status,
   stageLabel,
+  requiresSponsorContext,
 }: {
   action: StageGateActionView;
   status: ApprovalsInboxItem["status"];
   stageLabel: string | null;
+  requiresSponsorContext: boolean;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState(action.rationale);
+  const [sponsorName, setSponsorName] = useState("");
+  const [sponsorTitle, setSponsorTitle] = useState("");
+  const [sponsorRole, setSponsorRole] = useState("");
+  const [sponsorEmail, setSponsorEmail] = useState("");
+  const [ownerAcknowledged, setOwnerAcknowledged] = useState(false);
   const requiresRationale = status === "ready_with_gaps";
   const buttonLabel = requiresRationale
     ? "Approve exception and advance"
@@ -7150,8 +9375,22 @@ function StageGateApprovalButton({
     ? `${stageLabel ?? "Stage"} exception rationale`
     : `${stageLabel ?? "Stage"} approval rationale`;
   const trimmedRationale = rationale.trim();
+  const sponsorInputStyle: CSSProperties = {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
+    border: `1px solid ${ANALYTICS.LINE}`,
+    borderRadius: 6,
+    background: ANALYTICS.SOFT,
+    color: ANALYTICS.INK,
+    fontSize: 12.5,
+    padding: "7px 9px",
+  };
   const disabled =
-    submitting || (requiresRationale && trimmedRationale.length === 0);
+    submitting || trimmedRationale.length < SOURCE_APPROVAL_REASON_MIN_LENGTH ||
+    (requiresSponsorContext && (!ownerAcknowledged ||
+      [sponsorName, sponsorTitle, sponsorRole].some((value) => value.trim().length < 2) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sponsorEmail.trim())));
 
   const approve = async () => {
     if (disabled) return;
@@ -7171,6 +9410,15 @@ function StageGateApprovalButton({
               action.confirmationKeys.map((key) => [key, true]),
             ),
             selfApproveIfAuthorized: true,
+            ...(requiresSponsorContext ? {
+              sponsorContext: {
+                name: sponsorName.trim(),
+                title: sponsorTitle.trim(),
+                role: sponsorRole.trim(),
+                email: sponsorEmail.trim(),
+                ownerAcknowledged,
+              },
+            } : {}),
           }),
         },
       );
@@ -7236,21 +9484,51 @@ function StageGateApprovalButton({
           resize: "vertical",
         }}
       />
-      <button
-        type="button"
-        data-testid="source-stage-gate-approve"
-        disabled={disabled}
-        onClick={() => void approve()}
-        style={{
-          ...BUTTON_STYLE,
-          padding: "10px 12px",
-          background: disabled ? "rgba(10,10,11,0.14)" : ANALYTICS.INK,
-          color: disabled ? ANALYTICS.FAINT : "#fff",
-          cursor: disabled ? "not-allowed" : "pointer",
-        }}
-      >
-        {submitting ? "Approving..." : `${buttonLabel} →`}
-      </button>
+      {requiresSponsorContext ? (
+        <div style={{ display: "grid", gap: 8 }}>
+          <span style={{ fontWeight: 700, fontSize: 12.5, color: ANALYTICS.INK }}>Sponsor reference</span>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor name
+            <input value={sponsorName} onChange={(event) => setSponsorName(event.currentTarget.value)}
+              maxLength={120} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor title
+            <input value={sponsorTitle} onChange={(event) => setSponsorTitle(event.currentTarget.value)}
+              maxLength={120} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor role
+            <input value={sponsorRole} onChange={(event) => setSponsorRole(event.currentTarget.value)}
+              maxLength={120} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor notification email
+            <input type="email" value={sponsorEmail} onChange={(event) => setSponsorEmail(event.currentTarget.value)}
+              maxLength={254} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ display: "flex", gap: 8, fontSize: 12, color: ANALYTICS.INK_2 }}>
+            <input type="checkbox" checked={ownerAcknowledged}
+              onChange={(event) => setOwnerAcknowledged(event.currentTarget.checked)} />
+            I am approving this stage, not the sponsor. A notification will be attempted after the decision; delivery is audited separately.
+          </label>
+        </div>
+      ) : null}
+      <ProgressActionDock
+        action={!disabled ? {
+          label: `${buttonLabel} →`,
+          onClick: () => void approve(),
+          testId: "source-stage-gate-approve",
+        } : null}
+        status={submitting ? "Recording approval" : "Approval locked"}
+        detail={submitting
+          ? "Submitting the recorded decision."
+          : trimmedRationale.length < SOURCE_APPROVAL_REASON_MIN_LENGTH
+            ? `Enter an approval rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
+            : requiresSponsorContext
+              ? "Complete the sponsor reference and acknowledge this decision."
+              : null}
+      />
       {requiresRationale ? (
         <span style={{ color: ANALYTICS.AMBER_TEXT, fontSize: 11.5 }}>
           Exception approval is audited. Name the open review gaps and the owner

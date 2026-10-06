@@ -30,7 +30,12 @@ export type ArtifactFileFormat =
   | "html"
   | "md"
   | "csv"
-  | "json";
+  | "json"
+  | "txt"
+  | "image"
+  | "audio"
+  | "video"
+  | "unknown";
 
 export interface SourceArtifactRecord {
   id: string;
@@ -69,6 +74,16 @@ export interface SourceArtifactRecord {
   supersededByArtifactId: string | null;
   lifecycleState: ArtifactLifecycle;
   blobSha256: string | null;
+  /**
+   * Malware scan verdict, in Defender's vocabulary. `not_scanned` is the
+   * honest value for an artifact created through a synchronous path, which is
+   * every path today — the file is parsed in the same request, so nothing has
+   * scanned it. Absent means the record was built in memory rather than read from
+   * storage; null means the stored row predates the column. Neither means
+   * clean.
+   */
+  malwareScanStatus?: string | null;
+  malwareScanReason?: string | null;
   isClientFinal: boolean;
   isCurrentAuthoritative: boolean;
   sourceGeneratedArtifactId: string | null;
@@ -138,6 +153,11 @@ const CONTENT_TYPES: Record<ArtifactFileFormat, string> = {
   md: "text/markdown; charset=utf-8",
   csv: "text/csv; charset=utf-8",
   json: "application/json",
+  txt: "text/plain; charset=utf-8",
+  image: "application/octet-stream",
+  audio: "application/octet-stream",
+  video: "application/octet-stream",
+  unknown: "application/octet-stream",
 };
 
 export function contentTypeFor(format: ArtifactFileFormat): string {

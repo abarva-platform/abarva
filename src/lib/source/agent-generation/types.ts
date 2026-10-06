@@ -25,6 +25,11 @@ import type {
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { SourceStageKey } from "@/lib/source/types";
 import type { VendorProposalFactRecord } from "@/lib/source/vendor-proposals/types";
+import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
+import type {
+  ContractEvidenceGenerationRecord,
+  ContractEvidenceRuntimeSummary,
+} from "@/lib/source/contract-evidence/read-model";
 
 /**
  * Audit receipt persisted to body_generation_metadata after an Anthropic
@@ -69,6 +74,10 @@ export interface SourceArtifactBodyGenerationMetadata {
   humanEditedAt?: string;
   /** Clerk user id of the human who edited/saved the AI draft. */
   humanEditedByUserId?: string | null;
+  /** ISO timestamp set when Gate B is rerun on the current human-edited body. */
+  reviewedExistingBodyAt?: string;
+  /** Clerk user id of whoever initiated the human-edited-body review. */
+  reviewedExistingBodyByUserId?: string | null;
   /**
    * Reasoning-spine capture (Slices 1.6–1.7, flag `source_reasoning_spine`). Present
    * iff the flag was on.
@@ -110,6 +119,7 @@ export interface SourceGenerationContext {
     classifiedCategory?: string | null;
     rigor: string | null;
     currentStageKey: SourceStageKey;
+    approvalPolicyCode?: string | null;
     statusLabel: string;
     owner: string | null;
     triggerDescription: string | null;
@@ -137,6 +147,21 @@ export interface SourceGenerationContext {
    * Empty array when no evidence has been uploaded or parsed.
    */
   uploadedEvidence?: SourceGenerationUploadedArtifact[];
+  /**
+   * Latest persisted normalized response package for each vendor. These rows
+   * are the controlling response-intake evidence for d13-d15 and downstream
+   * evaluation; generic uploaded-file excerpts must not override them.
+   */
+  normalizedVendorResponsePackages?: NormalizedVendorResponsePackage[];
+  /**
+   * Tenant- and event-scoped structured evidence loaded through the governed
+   * contract-evidence import path. Summary supports claim discipline; records
+   * provide exact application, ticket, SLA, staffing, and commercial inputs.
+   */
+  structuredContractEvidence?: {
+    summary: ContractEvidenceRuntimeSummary;
+    records: ContractEvidenceGenerationRecord[];
+  };
   /**
    * Archetype-specific commercial intelligence block (traps, levers, failure
    * modes) resolved from the event's classified category. Pre-formatted for

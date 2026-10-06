@@ -14,10 +14,15 @@ import {
   aiFindings,
   organizationTables,
   organizationFindings,
+  interviewTables,
+  interviewFindings,
+  crossFamilyFindings,
+  relationshipPathTables,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
   dataFindings,
+  dropUndeclaredColumns,
   unsupportedApplicationViews,
   unsupportedAiViews,
   type EstateRow,
@@ -49,6 +54,7 @@ const CHAPTER_SOURCES: Partial<
       | "programs"
       | "ai"
       | "organization"
+      | "interviews"
     >
   >
 > = {
@@ -56,11 +62,21 @@ const CHAPTER_SOURCES: Partial<
   // the same family produced five identical tables under two different questions, which reads as a
   // page that does not know what it is for.
   technology_data: ["applications", "data"],
+  // Leadership Perspective asks what leaders agree on, disagree on and worry about, and until the
+  // interview family was served it answered with written insights over nothing openable.
+  leadership_perspective: ["interviews"],
   // Performance and Value is the metrics surface; What Needs Attention is the register. Both were
   // unreachable until the projection carried these families.
   how_we_operate: ["organization", "infrastructure"],
-  what_needs_attention: ["risks", "infrastructure"],
-  performance_value: ["metrics", "vendors"],
+  // Risks here, infrastructure in How We Operate. The two chapters were rendering the same four
+  // platform tables under different questions, so a reader who scrolled from one to the other met
+  // an identical grid -- which reads as a page that has not decided what either chapter is for.
+  // The platform EXPOSURES still argue here, as findings; see EXTRA_FINDING_SOURCES.
+  what_needs_attention: ["risks"],
+  // Measurement here, commercial terms in Strategy & Value Creation. Same duplication, five tables
+  // wide: contract risk, renewals, term ends, commercial model and benchmark rights appeared whole
+  // under both "what bets are we making" and "can we prove the value".
+  performance_value: ["metrics"],
   strategy_value_creation: ["programs", "ai", "vendors"],
 };
 
@@ -88,10 +104,12 @@ export interface EstateRecordTypes {
   programs?: EstateRow[];
   ai?: EstateRow[];
   organization?: EstateRow[];
+  interviews?: EstateRow[];
   applications?: EstateRow[];
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
   data?: EstateRow[];
+  relationships?: EstateRow[];
 }
 
 export interface ChapterDepth {
@@ -114,6 +132,7 @@ const BUILDERS = {
   programs: { tables: programTables, findings: programFindings },
   ai: { tables: aiTables, findings: aiFindings },
   organization: { tables: organizationTables, findings: organizationFindings },
+  interviews: { tables: interviewTables, findings: interviewFindings },
 } as const;
 
 /**
@@ -124,8 +143,25 @@ const BUILDERS = {
  * Technology & Data. A finding is an argument; a table is a description. They do not have to come
  * from the same family.
  */
+/** What each family is called when a chapter has to report that it did not arrive. */
+const FAMILY_LABELS: Record<EstateFamily, string> = {
+  applications: "Applications & systems",
+  vendors: "Vendor contracts",
+  infrastructure: "Infrastructure & platforms",
+  data: "Data assets & integrations",
+  metrics: "Metrics & outcomes",
+  risks: "Risks & controls",
+  programs: "Programs & initiatives",
+  ai: "AI & automation use cases",
+  organization: "Organization & ownership",
+  interviews: "Leadership interviews",
+};
+
 const EXTRA_FINDING_SOURCES: Partial<Record<ChapterId, EstateFamily[]>> = {
-  what_needs_attention: ["applications"],
+  what_needs_attention: ["applications", "infrastructure"],
+  // A contract that renews without a decision is value leaving, which is this chapter's subject
+  // even though the contract register is described elsewhere.
+  performance_value: ["vendors"],
 };
 
 function depthForSources(
@@ -137,8 +173,38 @@ function depthForSources(
   const unsupported: UnsupportedView[] = [];
   for (const source of sources) {
     const rows = estate[source];
-    if (!rows || rows.length === 0) continue;
-    tables.push(...BUILDERS[source].tables(rows));
+    if (!rows || rows.length === 0) {
+      // A chapter whose own family is not served used to render nothing and say nothing, which
+      // reads as a chapter with nothing to say. It is a chapter that was not given its rows.
+      //
+      // This is how the duplication arose: two chapters were pointed at a family that WAS served,
+      // so each of them looked full while describing the other's subject. Removing the duplicate
+      // makes the real gap visible, and the gap has to be legible or the fix looks like a loss.
+      unsupported.push({
+        caption: FAMILY_LABELS[source],
+        missingColumn: source,
+        why: `This chapter is built from the ${FAMILY_LABELS[source].toLowerCase()} record, and no rows of it reached this page. That is a gap in what was served, not a gap in the record.`,
+      });
+      continue;
+    }
+    // Applied here rather than in each builder, so neither an empty table nor a column of dashes
+    // can reach a reader from a family nobody thought to check.
+    //
+    // A table grouped on a column the record does not carry produces no rows and a total of zero,
+    // and reads as a result: "0 blocked claims", "0 platforms without recovery". That is the most
+    // flattering possible misreading of an absent column. Such a table is not rendered; it is
+    // reported as a view the rows could not support, which is what it is.
+    for (const table of BUILDERS[source].tables(rows)) {
+      if (table.rows.length === 0) {
+        unsupported.push({
+          caption: table.caption,
+          missingColumn: table.columns[0],
+          why: `No row in this family declares ${table.columns[0].toLowerCase()}, so the table has nothing to group. An empty table with a total of zero would read as a result rather than as an absent column.`,
+        });
+        continue;
+      }
+      tables.push(dropUndeclaredColumns(table));
+    }
     findings.push(
       ...(source === "vendors"
         ? vendorFindings(rows, estate.asOf)
@@ -164,16 +230,34 @@ export function chapterDepth(
   estate: EstateRecordTypes,
 ): ChapterDepth {
   const depth = depthForSources(CHAPTER_SOURCES[chapterId] ?? [], estate);
+  const crossFamily =
+    chapterId === "what_needs_attention" ? crossFamilyFindings(estate) : [];
+  const graphTables =
+    chapterId === "what_needs_attention" ? relationshipPathTables(estate) : [];
+  const baseDepth =
+    graphTables.length > 0
+      ? { ...depth, tables: [...depth.tables, ...graphTables] }
+      : depth;
   const extra = EXTRA_FINDING_SOURCES[chapterId];
-  if (!extra) return depth;
-  const seen = new Set(depth.findings.map((f) => f.claim));
+  if (!extra) {
+    const seen = new Set(baseDepth.findings.map((f) => f.claim));
+    return {
+      ...baseDepth,
+      findings: [
+        ...baseDepth.findings,
+        ...crossFamily.filter((f) => !seen.has(f.claim)),
+      ],
+    };
+  }
+  const seen = new Set(baseDepth.findings.map((f) => f.claim));
   return {
-    ...depth,
+    ...baseDepth,
     findings: [
-      ...depth.findings,
+      ...baseDepth.findings,
       ...depthForSources(extra, estate).findings.filter(
         (f) => !seen.has(f.claim),
       ),
+      ...crossFamily.filter((f) => !seen.has(f.claim)),
     ],
   };
 }

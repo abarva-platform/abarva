@@ -15,6 +15,7 @@ on:
       - src/scripts/governance/**
       - src/config/tenants/CANONICAL_TENANTS.ts
       - docs/governance/policy-exceptions.json
+      - docs/governance/dataset-manifests/**
       - .github/workflows/context-corpus-governance.yml
       - package.json
       - package-lock.json

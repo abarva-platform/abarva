@@ -49,6 +49,23 @@ const baselineColumns = [
 
 export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
   {
+    family: "application_inventory",
+    sheetName: "Application Inventory",
+    fileName: "application-inventory.csv",
+    required: false,
+    purpose: "Bind the in-scope application estate to the sourcing event.",
+    sourceGuidance: "Pull from the governed CMDB and the executed SOW scope schedule. Preserve stable application references, names, business functions, criticality, hosting model, and scope role.",
+    notFor: "Do not infer applications from vendor marketing material or generic architecture descriptions.",
+    columns: [
+      { key: "application_ref", label: "Application reference", valueType: "text", required: true, description: "Stable CMDB or scope identifier.", example: "APP-AMS-001" },
+      { key: "application_name", label: "Application name", valueType: "text", required: true, description: "Governed application or system name.", example: "Claims Analytics Mart" },
+      { key: "business_function", label: "Business function", valueType: "text", required: true, description: "Owning or served business function.", example: "Claims Operations" },
+      { key: "criticality", label: "Criticality", valueType: "text", required: true, description: "Loaded criticality tier.", example: "Tier 1" },
+      { key: "hosting_model", label: "Hosting model", valueType: "text", required: true, description: "Primary technology or hosting model.", example: "AWS" },
+      { key: "scope_role", label: "Scope role", valueType: "text", required: true, description: "The application's role in the sourced scope.", example: "primary" },
+    ],
+  },
+  {
     family: "contract_baseline",
     sheetName: "Contract Baseline",
     fileName: "contract-baseline.csv",

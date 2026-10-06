@@ -1,5 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
+import { SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER } from "@/lib/source/new-workspace/phase-state";
+import {
+  SOURCE_JOURNEYS,
+  sourceJourneyStageHref,
+  sourceJourneyStageKeys,
+} from "@/lib/source/sourcing-motion-journeys";
+import { SOURCE_STAGE_ORDER, normalizeSourceStageKey } from "@/lib/source/constants";
 
 const repoRoot = process.cwd();
 
@@ -21,20 +28,25 @@ describe("Source old surface archive guard", () => {
     expect(source).not.toContain("simpleFrontEnabled");
   });
 
-  it("archives old Source event-list page into the governed workspace", () => {
+  it("keeps old Source entry surfaces free of the retired shell", () => {
     const root = read("src/app/(maestro)/source/page.tsx");
     const events = read("src/app/(maestro)/source/events/page.tsx");
 
-    expect(root).toMatch(/redirect\(["\x27]\/source\/workspace["\x27]\)/);
-    expect(events).toContain('redirect("/source/workspace")');
     expect(root).not.toContain("UniversalCanvasShell");
     expect(events).not.toContain("UniversalCanvasShell");
   });
 
-  it("keeps the canonical eleven-stage event route contract intact", () => {
-    const constants = read("src/lib/source/constants.ts");
+  it("keeps the external Source New flow separate from the internal stage spine", () => {
+    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toEqual([
+      "request_intake",
+      "request",
+      "define",
+      "suppliers",
+      "rfi",
+    ]);
+    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toHaveLength(5);
 
-    for (const stage of [
+    expect(SOURCE_STAGE_ORDER).toEqual([
       "strategy",
       "scope",
       "rfp",
@@ -46,8 +58,37 @@ describe("Source old surface archive guard", () => {
       "selection",
       "transition",
       "value",
-    ]) {
-      expect(constants).toContain(`'${stage}'`);
-    }
+    ]);
+    expect(SOURCE_STAGE_ORDER).toHaveLength(11);
+  });
+
+  it("normalizes legacy stage keys before event-route journey coercion", () => {
+    expect(normalizeSourceStageKey(" RFP_RFI_PACKAGE ")).toBe("rfp");
+    expect(normalizeSourceStageKey("vendor_responses")).toBe("responses");
+    expect(normalizeSourceStageKey("contract_mobilization")).toBe("transition");
+
+    expect(sourceJourneyStageKeys(SOURCE_JOURNEYS.contract_optimization)).toEqual([
+      "strategy",
+      "scope",
+      "pricing",
+      "bafo",
+      "executive_decision",
+      "transition",
+      "value",
+    ]);
+    expect(
+      sourceJourneyStageHref({
+        eventId: "evt-stage-contract",
+        journey: SOURCE_JOURNEYS.contract_optimization,
+        stageKey: "rfp_rfi_package",
+      }),
+    ).toBe("/source/events/evt-stage-contract?stage=pricing");
+    expect(
+      sourceJourneyStageHref({
+        eventId: "evt-stage-contract",
+        journey: SOURCE_JOURNEYS.contract_optimization,
+        stageKey: "contract_mobilization",
+      }),
+    ).toBe("/source/events/evt-stage-contract?stage=transition");
   });
 });

@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-08-24",
-  "purpose": "Baselines inherited package.json script targets that predate the npm script target reconciliation gate. New missing targets must not be added.",
+  "purpose": "Baselines inherited package.json script targets that predate the npm script target reconciliation gate. New missing targets must not be added, AND an entry that no longer describes anything must be removed in the change that made it stale: the gate fails on a stale entry as well as on a new one. Stale means the script was deleted, the target file came back, or the script stopped naming that token. A list that can only be appended to stops describing the repository.",
   "known_missing": [
     { "scriptName": "foundation-v2:identity-bootstrap", "token": "scripts/foundation-v2/bootstrap-db-identities.mjs", "disposition": "inherited_missing_target" },
     { "scriptName": "foundation-v2:identity-bootstrap:self-test", "token": "scripts/foundation-v2/bootstrap-db-identities.mjs", "disposition": "inherited_missing_target" },
@@ -41,7 +41,6 @@
     { "scriptName": "audit:runtime-supabase-imports:guard", "token": "scripts/audit/runtime-supabase-import-allowlist.js", "disposition": "inherited_missing_target" },
     { "scriptName": "corpus:meridian-health-health-plan:dry-run", "token": "src/scripts/corpus/load-meridian-health-health-plan-corpus.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "corpus:meridian-health-health-plan:load", "token": "src/scripts/corpus/load-meridian-health-health-plan-corpus.ts", "disposition": "inherited_missing_target" },
-    { "scriptName": "intel:patterns:generate", "token": "src/scripts/intelligence/generate-pattern-manifest.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "intel:expert-packs:load", "token": "src/scripts/intelligence/load-expert-packs.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "intel:canonical-corpus:preview", "token": "src/scripts/intelligence/preview-canonical-corpus-backfill.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "intel:canonical-corpus:backfill:dry", "token": "src/scripts/intelligence/backfill-canonical-corpus.ts", "disposition": "inherited_missing_target" },
@@ -50,7 +49,6 @@
     { "scriptName": "intel:canonical-corpus:sample-retrieval-qa", "token": "src/scripts/intelligence/sample-retrieval-qa.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "intel:context-insights:evaluate", "token": "src/scripts/intelligence/evaluate-context-insights.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "scb:golden-eval", "token": "src/scripts/intelligence/scb-golden-eval-runner.ts", "disposition": "inherited_missing_target" },
-    { "scriptName": "scb:live-answer-eval", "token": "src/scripts/intelligence/scb-live-answer-eval-runner.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "qa:source-new-event-journey-smoke", "token": "src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.newEventJourneySmoke.test.ts", "disposition": "inherited_missing_target" },
     { "scriptName": "source:v4:question-evidence:build", "token": "docs/source/skyharbor-v4/source_v4_question_bank.js", "disposition": "inherited_missing_target" },
     { "scriptName": "source:v4:question-evidence:build", "token": "docs/source/skyharbor-v4/source_v4_question_coverage_matrix.js", "disposition": "inherited_missing_target" },

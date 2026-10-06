@@ -139,7 +139,7 @@ describe("buildPhaseSuccessPackages", () => {
     expect(packages[0].body).toContain("Sessions To Run");
     expect(packages[0].body).toContain("Evidence Requirements");
     expect(packages[0].body).toContain("Recommended Templates");
-    expect(packages[1].body).toContain("P3 Choose the Approach");
+    expect(packages[1].body).toContain("P3 Design Future State");
     expect(packages[1].body).toContain("Baseline evidence accepted");
     expect(packages[0].body).toContain("Package Status");
     expect(packages[0].metadata.sourcePhase).toBe(2);
@@ -192,6 +192,6 @@ describe("buildPhaseSuccessPackages", () => {
     expect(lakeshore[0].body).toContain("legal_operations");
     expect(meridian[0].body).not.toBe(lakeshore[0].body);
     expect(meridian[0].body).not.toBe(meridianP3[0].body);
-    expect(meridianP3[1].body).toContain("P4 Build the Plan");
+    expect(meridianP3[1].body).toContain("P4 Roadmap & Business Case");
   });
 });

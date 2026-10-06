@@ -1,0 +1,44 @@
+{
+  "checkedAt": "2026-09-22T11:03:46.858Z",
+  "containerAppName": "ca-abarva-web-lab-eastus",
+  "resourceGroup": "rg-abarva-controlplane-lab-eastus",
+  "productionBaseUrl": "https://app.abarva.ai",
+  "expectedImage": null,
+  "templateImage": "acrabarvalab001.azurecr.io/abarva/web@sha256:c61529bfc1bcd4c83520f8393976b845f7fab51323ecac6abca49b920d00242a",
+  "activeRevisionName": "ca-abarva-web-lab-eastus--m924d5a0d",
+  "activeImage": "acrabarvalab001.azurecr.io/abarva/web@sha256:c61529bfc1bcd4c83520f8393976b845f7fab51323ecac6abca49b920d00242a",
+  "activeDigest": "sha256:c61529bfc1bcd4c83520f8393976b845f7fab51323ecac6abca49b920d00242a",
+  "activeDigestTags": [
+    "main-924d5a0d"
+  ],
+  "traffic": [
+    {
+      "revisionName": "ca-abarva-web-lab-eastus--m924d5a0d",
+      "weight": 100
+    }
+  ],
+  "health": {
+    "ok": true,
+    "checks": {
+      "postgres": true,
+      "direct_postgres": true,
+      "azure_graph": "postgres"
+    }
+  },
+  "workerJobs": [
+    {
+      "name": "job-abarva-deliv-worker",
+      "containerName": "worker",
+      "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:c61529bfc1bcd4c83520f8393976b845f7fab51323ecac6abca49b920d00242a",
+      "passed": true
+    },
+    {
+      "name": "job-abarva-deliv-worker-event",
+      "containerName": "worker",
+      "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:c61529bfc1bcd4c83520f8393976b845f7fab51323ecac6abca49b920d00242a",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "errors": []
+}

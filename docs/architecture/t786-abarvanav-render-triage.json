@@ -1,0 +1,85 @@
+{
+  "item": "T-786",
+  "title": "Rewrite the AbarvaNav client-routing byte scan as a render test and wire it by named file; keep legacy-setup-links held",
+  "recordedAt": "2026-09-30T14:40:00Z",
+  "base": "5df067d0418294c942acc08e34fdc1559a33c40d",
+  "supersedes": "docs/architecture/t785-stale-suite-triage.json",
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair",
+    "already_verdicted_elsewhere"
+  ],
+  "scope": {
+    "directories": ["src/components/__tests__"],
+    "testFiles": 2,
+    "judgedWhole": "Every test file in the directory is a row. Once one of two runs, the directory is PARTIAL and leaves the dark-directory ratchet's set, so that ratchet can no longer see a third file added beside them. The control pins the directory's on-disk file set to this record in its place.",
+    "everyFileWasExecuted": "Each file was run on its own with `npx jest --runTestsByPath <file> --no-coverage --ci` on the branch: 2 of 2 green (8 and 5 cases)."
+  },
+  "rewrite": {
+    "path": "src/components/__tests__/AbarvaNav.client-routing.test.ts",
+    "before": "One case. Read the bytes of src/components/AbarvaNav.tsx and asserted the literals 'const navLink = ' and '<Link href={href} prefetch' present and '<a href={href}' absent.",
+    "after": "Eight cases. Renders AbarvaNav in jsdom with next/link replaced by an anchor carrying a marker attribute, and asserts on the rendered DOM: every product nav item for a signed-in admin and client is a prefetched next/link route to the right href; no anchor in the bar lacks the marker (admin, client, signed out); only the current path's item is active; compact omits the product items; the signed-out Investor item is a next/link route. The file no longer imports node:fs.",
+    "pathKept": "The file keeps its .ts path (React.createElement, no JSX) so that T-785's row for it is superseded by this record's row under the same path.",
+    "mutations": {
+      "harness": "Each mutation edits src/components/AbarvaNav.tsx, runs both the pre-change byte scan and the new suite by --runTestsByPath, then restores the file.",
+      "results": [
+        { "id": "M1", "mutation": "product item rendered as a plain <a>, spelled with two spaces", "before": "caught", "after": "caught" },
+        { "id": "M2", "mutation": "product item rendered as a plain <a>, canonical spelling", "before": "caught", "after": "caught" },
+        { "id": "M3", "mutation": "prefetch dropped from product items", "before": "caught", "after": "caught" },
+        { "id": "M4", "mutation": "signed-out Login rendered as a plain <a>", "before": "missed", "after": "caught" },
+        { "id": "M5", "mutation": "wordmark rendered as a plain <a>", "before": "missed", "after": "caught" },
+        { "id": "M6", "mutation": "Source item routes to the wrong href", "before": "missed", "after": "caught" },
+        { "id": "M7", "mutation": "compact flag ignored", "before": "missed", "after": "caught" },
+        { "id": "M8", "mutation": "Source active state inverted", "before": "missed", "after": "caught" }
+      ],
+      "neutral": { "id": "N1", "mutation": "Link props reformatted onto separate lines (no behaviour change)", "before": "false red", "after": "green" },
+      "summary": "Before: 3 of 8 caught, and red on a neutral reformat. After: 8 of 8 caught, green on the reformat."
+    }
+  },
+  "wiring": {
+    "workflow": ".github/workflows/unit-suites.yml",
+    "step": "Run the T-786 AbarvaNav render suite by named file",
+    "namedFiles": ["src/components/__tests__/AbarvaNav.client-routing.test.ts"],
+    "suitesWired": 1,
+    "casesWired": 8,
+    "whyByFile": "Naming the directory would also select legacy-setup-links.test.ts, which is still a source-text scanner over an unreachable component. Retire-or-rewrite for it is the gated half of T-786."
+  },
+  "gatedHalf": {
+    "decision": "Retire src/components/__tests__/legacy-setup-links.test.ts (its only surviving surface is listed unreachable, and its register module is testOnly), or rewrite it against a reachable surface.",
+    "status": "decision needed — not taken by this record",
+    "heldHere": "src/components/__tests__/legacy-setup-links.test.ts"
+  },
+  "suites": [
+    {
+      "path": "src/components/__tests__/AbarvaNav.client-routing.test.ts",
+      "directory": "src/components/__tests__",
+      "run": true,
+      "green": true,
+      "totalTests": 8,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "wiredInThisItem": true,
+      "subject": "src/components/AbarvaNav.tsx",
+      "rationale": "Rewritten as a render: green 8 of 8, behavioural. Subject is imported by MaestroChrome, /demo, /demo/explore and /investors."
+    },
+    {
+      "path": "src/components/__tests__/legacy-setup-links.test.ts",
+      "directory": "src/components/__tests__",
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "readsRepositoryFileText": true,
+      "sourceTextScanner": true,
+      "textIsTheSubject": true,
+      "verdict": "rewrite_as_behavior",
+      "wiredInThisItem": false,
+      "scannerCase": "%s routes setup CTAs through canonical Admin setup",
+      "ownerItem": "T-786",
+      "rationale": "Unchanged by this record. Still a byte scan over a component listed unreachable; held for T-786's gated half."
+    }
+  ]
+}

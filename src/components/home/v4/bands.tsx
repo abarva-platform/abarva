@@ -146,7 +146,7 @@ function ClaimRow({
           }}
         >
           {source.ids}
-          {source.hasUnresolved ? " · one citation does not resolve" : ""}
+          {source.hasUnresolved ? " · source mapping needed" : ""}
         </p>
       </aside>
     </>
@@ -159,6 +159,15 @@ const CLAIM_GRID: CSSProperties = {
   gap: "0 clamp(20px,2.6vw,56px)",
   marginTop: 14,
 };
+
+const questionsRubricStyle = {
+  margin: "-18px 0 28px",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.55,
+  color: V4.slate,
+  maxWidth: "62ch",
+} as const;
 
 /** Band 1 -- counted from the client's own systems and interviews. */
 export function RecordBand({
@@ -287,9 +296,12 @@ export function ExposuresBand({
   if (claims.length === 0) return null;
   return (
     <div style={{ padding: `0 ${PAGE_X}px` }}>
+      {/* "Open" named a control state the record does not vary: every risk reads open, so the word
+          described the intake rather than the exposure. These are the ones the record RATES, which
+          is what the rows are actually selected on. */}
       <BandHeading
-        title="Open exposures"
-        rubric="Carried here from this enterprise's own risk and dependency records."
+        title="Risk-rated exposures"
+        rubric="Carried here from this enterprise's own risk and dependency records, selected on the severity it rates. Control status is not a predicate unless the source field varies."
         color={V4.red}
         ruleColor="rgba(163,45,45,0.32)"
         style={{ margin: "52px 0 0" }}
@@ -466,6 +478,15 @@ export function QuestionsSection({ questions }: { questions: string[] }) {
       >
         Take these into the room.
       </h2>
+      {/*
+        A reader who meets a question on a page like this reasonably waits for the answer. Saying
+        the page does not hold one stops them looking, and stops the questions reading as a
+        rhetorical device leading somewhere.
+      */}
+      <p data-home-questions-rubric style={questionsRubricStyle}>
+        Stated, not answered. The record does not resolve them, and this chapter
+        does not attempt to.
+      </p>
       <ol
         style={{
           listStyle: "none",

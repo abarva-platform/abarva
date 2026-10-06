@@ -460,6 +460,12 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     promisedBenefitLoaded: item.promisedValueUsd !== null,
     financeValidatedUsd: num(item.financeValidatedValueUsd),
     posture: postureFor(item),
+    rolloutGoal: item.rolloutGoal ?? null,
+    rolloutStage: item.rolloutStage ?? null,
+    rolloutTargetUsers: item.rolloutTargetUsers ?? null,
+    enabledUsers: item.enabledUsers ?? null,
+    monthlyActiveUsers: item.usageActual ?? null,
+    adoptionActualPct: item.adoptionRatePct ?? null,
     usageHeadline: trimOrNull(item.usageMetric)
       ? `${humanize(item.usageMetric)} · ${formatCount(item.usageActual)}`
       : null,
@@ -468,6 +474,12 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     linkedBusinessCaseCount: item.linkedBusinessCaseCount,
     note: trimOrNull(item.caveat),
     sourceFile: trimOrNull(item.sourceFile),
+    sourceSystem: item.sourceSystem ?? null,
+    sourceRecordId: item.sourceRecordId ?? null,
+    extractDate: item.extractDate ?? null,
+    sourceAsOfDate: item.sourceAsOfDate ?? null,
+    refreshCadence: item.refreshCadence ?? null,
+    sourceQualityState: item.sourceQualityState ?? null,
   };
 }
 
@@ -1384,6 +1396,7 @@ function toActionView(
     moveTitle: action.title,
     moduleHandoff:
       trimOrNull(action.handoffModule) ?? trimOrNull(action.moduleHandoff),
+    handoffEntityId: trimOrNull(action.handoffEntityId),
   };
 }
 

@@ -1,0 +1,8 @@
+system_id,domain,system_role,proposed_read_path,owner_role,refresh_or_latency,access_status,phase_one_boundary,evidence_ref
+SYS-CRM,interaction history,CRM and case context,approved read API or embedded panel,CRM Product Owner,near real time target not measured,owner validation pending,read only; no automatic save,SYN-SYS-01
+SYS-CLAIMS,claim status,claims administration,read API or curated view,Claims Platform Owner,15 minute target to validate,interface not approved,display source timestamp; no determination,SYN-SYS-01
+SYS-AUTH,authorization status,authorization case state,read API or curated view,Authorization Operations Owner,30 minute target to validate,metadata quality gap,show status only; no approval or denial,SYN-SYS-01
+SYS-ELIG,eligibility,coverage effective-date lookup,read API or curated view,Eligibility Product Owner,near real time target not measured,owner validation pending,agent confirms source and date,SYN-SYS-01
+SYS-KNOW,knowledge,approved policy and service content,search endpoint,Knowledge Operations Owner,daily target to validate,content review gap,answer only from current approved article,SYN-KNOW-01
+SYS-ID,identity and access,agent authentication and role context,existing identity provider,Security Architect,session-bound,design validation pending,enforce least privilege and audit,SYN-SESSION-SEC-01
+SYS-LOG,audit event store,assist retrieval and agent actions,event interface,Security Architect,near real time target to validate,retention policy open,log source/version and human action,SYN-SESSION-SEC-01

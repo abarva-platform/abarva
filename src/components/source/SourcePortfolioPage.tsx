@@ -48,14 +48,14 @@ interface SourcePortfolioPageProps {
     demo?: string;
     tour?: string;
   };
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 }
 
 export function SourcePortfolioPage({
   events,
   tenantName,
   searchParams,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: SourcePortfolioPageProps) {
   // Canonical visible set — the SAME selection the Events surface and Decision
   // Queue use (audit 2026-06-03, Tier 0), so portfolio counts/value can never

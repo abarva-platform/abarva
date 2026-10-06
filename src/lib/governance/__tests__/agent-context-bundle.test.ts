@@ -11,7 +11,7 @@ import {
 function candidate(over: Partial<GovernedCandidate> = {}): GovernedCandidate {
   return {
     id: "c1",
-    client_key: "lakeshore-holdings",
+    client_key: "meridian-health",
     tenant_id: "tenant-1",
     source_layer: "tenant_context",
     source_basis: "tenant_admin_upload",
@@ -190,7 +190,7 @@ describe("buildDecisionReasoningRequest", () => {
     const req = buildDecisionReasoningRequest({
       task: "summarize cloud posture",
       agent: "sentinel",
-      tenantKey: "lakeshore-holdings",
+      tenantKey: "meridian-health",
       candidates: [candidate()],
     });
     expect(req.task).toMatch(/cloud posture/);
@@ -203,7 +203,7 @@ describe("buildDecisionReasoningRequest", () => {
 describe("bundle-shape adapters", () => {
   it("adapts a broker EnterpriseAgentContextBundle, fencing restricted items", () => {
     const bundle = {
-      tenantKey: "lakeshore-holdings",
+      tenantKey: "meridian-health",
       items: [
         {
           id: "i1",
@@ -223,8 +223,8 @@ describe("bundle-shape adapters", () => {
     };
     const candidates = fromEnterpriseBundle(
       bundle,
-      "lakeshore-holdings",
-      "lakeshore-holdings",
+      "meridian-health",
+      "meridian-health",
     );
     expect(candidates).toHaveLength(2);
     const b = buildValidatedAgentContextBundle(candidates);
@@ -236,7 +236,7 @@ describe("bundle-shape adapters", () => {
   it("preserves downstream context policy from enterprise bundle items", () => {
     const candidates = fromEnterpriseBundle(
       {
-        tenantKey: "lakeshore-holdings",
+        tenantKey: "meridian-health",
         items: [
           {
             id: "source-artifact-1",
@@ -245,8 +245,8 @@ describe("bundle-shape adapters", () => {
           },
         ],
       },
-      "lakeshore-holdings",
-      "lakeshore-holdings",
+      "meridian-health",
+      "meridian-health",
     );
 
     expect(candidates[0].downstream_context_policy).toBe("exclude");
@@ -258,8 +258,8 @@ describe("bundle-shape adapters", () => {
   it("maps AskSource confidence to a confidence level", () => {
     const c = fromAskSource(
       { id: "s1", name: "Annual report", confidence: 0.9 },
-      "lakeshore-holdings",
-      "lakeshore-holdings",
+      "meridian-health",
+      "meridian-health",
     );
     expect(c.confidence_level).toBe("high");
     expect(c.citations).toEqual(["s1"]);

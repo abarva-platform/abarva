@@ -1,3 +1,4 @@
+import { CANONICAL_TENANT_KEYS } from "@/lib/tenant/aliases";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -85,5 +86,34 @@ describe("Home data quality read model", () => {
       fs.writeFileSync(path.join(dir, fileName), "{}\n", "utf8");
     }
     expect(fs.readdirSync(dir).sort()).toEqual(required.sort());
+  });
+
+  it("only ever returns a declared canonical tenant key", () => {
+    // Derived from the tenant alias table, so it cannot go stale the way the assertion above did.
+    // The SkyHarbor branch returned an ALIAS while every other branch returned the canonical key,
+    // and nothing said so -- the value was self-consistent everywhere it was compared to itself.
+    const inputs = [
+      "skyharbor",
+      "skyharbor-air",
+      "skyharbor_global",
+      "lakeshore",
+      "lakeshore-industries",
+      "apexretail",
+      "firstcapital",
+      "arcturus",
+      "meridian",
+    ];
+    for (const input of inputs) {
+      expect(CANONICAL_TENANT_KEYS).toContain(
+        normalizeHomeQualityTenantKey(input),
+      );
+    }
+  });
+
+  it("is idempotent, so a key can be normalized twice without moving", () => {
+    for (const input of ["skyharbor", "meridian", "lakeshore"]) {
+      const once = normalizeHomeQualityTenantKey(input);
+      expect(normalizeHomeQualityTenantKey(once)).toBe(once);
+    }
   });
 });

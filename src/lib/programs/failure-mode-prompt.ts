@@ -15,7 +15,12 @@ import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
 import type { AttachmentTextPreview } from '@/lib/programs/attachments/extract-text';
 import type { EnterpriseAgentContextItem } from '@/lib/knowledge/agent-context-broker';
 
-const PROGRAMS_SURFACE_PREFIXES = ['/programs', '/demo/programs', '/tower', '/strategic-moves'];
+const PROGRAMS_SURFACE_PREFIXES = [
+  '/programs',
+  '/demo/programs',
+  '/tower',
+  '/strategic-moves',
+];
 
 /** Programs surfaces eligible for the failure-mode catalog block. */
 export function isProgramsSurface(surface: string | null | undefined): boolean {
@@ -34,22 +39,24 @@ export function isProgramsSurface(surface: string | null | undefined): boolean {
 // as FAILURE_MODES so index alignment is guaranteed. These are the SIGNALS
 // the agent should recognise — not a restatement of the name.
 const FM_DETECTION_HOOKS: Readonly<Record<number, string>> = {
-  1:  'No named sponsor · no confirmed budget authority · "we got funding, now what?" · sponsor not named before Discovery spend · budget approved but no executive owns the outcome',
-  2:  'Vague objective ("improve operations" / "leverage AI") · no testable hypothesis · starting build before the problem is validated · hypothesis never written down',
-  3:  'Unknown data ownership · no data access · quality undefined · no data lineage · "we think we have the data" without verification',
-  4:  'Model accuracy reported without business-metric baseline · missing production monitoring · ROI projected but not tracked · no A/B comparison after go-live',
-  5:  'Security/governance not involved until late · privacy impact not assessed · HITL skipped · compliance review deferred · "we\'ll fix it in production"',
-  6:  'Build started before vendor/infra decision settled · architecture rework mid-program · cloud commitment without workload shape · no infra sizing done',
-  7:  'Stakeholder support assumed but not tested · critical team not engaged in Design · change management skipped · adoption assumed · training plan absent',
-  8:  'No delivery plan for P4 or later · no defined build milestone · "agile will figure it out" · no sprint cadence · timeline undefined',
-  9:  'Success defined as "the model runs" · no business KPI baseline · outcome measurement deferred · no way to attribute value to the AI intervention',
+  1: 'No named sponsor · no confirmed budget authority · "we got funding, now what?" · sponsor not named before Discovery spend · budget approved but no executive owns the outcome',
+  2: 'Vague objective ("improve operations" / "leverage AI") · no testable hypothesis · starting build before the problem is validated · hypothesis never written down',
+  3: 'Unknown data ownership · no data access · quality undefined · no data lineage · "we think we have the data" without verification',
+  4: 'Model accuracy reported without business-metric baseline · missing production monitoring · ROI projected but not tracked · no A/B comparison after go-live',
+  5: 'Security/governance not involved until late · privacy impact not assessed · HITL skipped · compliance review deferred · "we\'ll fix it in production"',
+  6: 'Build started before vendor/infra decision settled · architecture rework mid-program · cloud commitment without workload shape · no infra sizing done',
+  7: 'Stakeholder support assumed but not tested · critical team not engaged in Design · change management skipped · adoption assumed · training plan absent',
+  8: 'No delivery plan for P4 or later · no defined build milestone · "agile will figure it out" · no sprint cadence · timeline undefined',
+  9: 'Success defined as "the model runs" · no business KPI baseline · outcome measurement deferred · no way to attribute value to the AI intervention',
   10: 'Simultaneously running 10+ AI pilots · scope keeps expanding beyond the original use case · new features bolted on · trying to solve every problem at once',
 };
 
 export function formatFailureModeCatalogForPrompt(): string {
   const lines = FAILURE_MODES.map((mode) => {
     const num = String(mode.id).padStart(2, ' ');
-    const hook = FM_DETECTION_HOOKS[mode.id] ? ` — detect when: ${FM_DETECTION_HOOKS[mode.id]}` : '';
+    const hook = FM_DETECTION_HOOKS[mode.id]
+      ? ` — detect when: ${FM_DETECTION_HOOKS[mode.id]}`
+      : '';
     return `${num}. ${mode.name}${hook}`;
   });
 
@@ -66,7 +73,9 @@ export function formatFailureModeCatalogForPrompt(): string {
  * Compose the failure-mode catalog block iff the surface qualifies.
  * Empty string on non-Programs surfaces so the route's filter strips it.
  */
-export function composeFailureModeBlock(surface: string | null | undefined): string {
+export function composeFailureModeBlock(
+  surface: string | null | undefined,
+): string {
   if (!isProgramsSurface(surface)) return '';
   return formatFailureModeCatalogForPrompt();
 }
@@ -87,7 +96,7 @@ export function formatFailureModeDoctrineForPrompt(): string {
   return [
     'FAILURE-MODE DOCTRINE:',
     '',
-    "Emit `failure-mode-flagged` when the user, evidence, or broker bundle shows a SIGNAL — specific, observable — that one of the 10 (see catalog above) is being committed in this program right now. Not vibes. Not hypotheticals.",
+    'Emit `failure-mode-flagged` when the user, evidence, or broker bundle shows a SIGNAL — specific, observable — that one of the 10 (see catalog above) is being committed in this program right now. Not vibes. Not hypotheticals.',
     '',
     'Emit when: the signal is present in this turn or the visible context, AND no active phase-pack `anti-pattern-flag` already captures it cleanly.',
     '',
@@ -98,11 +107,11 @@ export function formatFailureModeDoctrineForPrompt(): string {
     '',
     'Relationship to `anti-pattern-flag`: the pack flag is phase-local doctrine; `failure-mode-flagged` is the cross-phase platform catalog. They CAN co-occur — when a pack anti-pattern is a specific instance of one of the 10, emit both. Example: `phantom-sponsor` (P0) → FM #1; emit both. Telemetry aggregates by catalog id.',
     '',
-    "Severity: `'soft'` for note-and-redirect signals where the program continues with awareness — this is the default. `'hard'` only when the signal genuinely blocks phase advance: sponsor commitment unmet at P0 gate close, baseline missing at P1→P2, kill criterion missing at P2→P3, value attribution undefined at P5 outcome.",
+    "Severity: `'soft'` means note-and-redirect and is default. Use `'hard'` only when the active phase contract blocks advance: missing required evidence or outcome owner, P1→P2 baseline, P2→P3 kill criterion, or P5 value attribution. Sponsor approval or participation is never a product gate.",
     '',
     'Common misclassifications to avoid:',
-    '- "No confirmed budget" or "funding approved but sponsor unnamed" → FM #1 (sponsorship), NOT FM #10 (sprawl). Sprawl is about running too many initiatives simultaneously, not about missing funding authority.',
-    '- "Unclear value / no hypothesis" → FM #2 (problem definition), not FM #1. FM #1 requires a sponsor gap specifically.',
+    '- Missing budget authority or outcome owner → FM #1, not FM #10 (sprawl). #10 means too many concurrent initiatives. Product gates belong to an authorized workspace user, never the sponsor.',
+    '- "Unclear value / no hypothesis" → FM #2, not FM #1. FM #1 requires a current ownership or funding-authority signal.',
     '- "AI everywhere at once, bolting on features" → FM #10 (sprawl). FM #2 is about the core problem being poorly defined; FM #10 is about scope metastasising.',
     '',
     'Field discipline:',
@@ -136,7 +145,9 @@ export function composeFailureModeDoctrineBlock(
  * matches returned by detectBriefOverlap. Empty string when matches is
  * empty. Caller is responsible for slicing to the top N (typically 3).
  */
-export function composeOverlapBlock(matches: readonly BriefOverlapMatch[]): string {
+export function composeOverlapBlock(
+  matches: readonly BriefOverlapMatch[],
+): string {
   if (!matches || matches.length === 0) return '';
 
   const matchLines = matches.flatMap((m) => {
@@ -189,10 +200,10 @@ export function composeBriefProgressCadenceDirective(
     return '';
   }
   return [
-    "- MANDATORY EVERY TURN: end the turn by emitting ONE `brief-progress` artifact that lists ALL scaffold fields with their current status and value — including fields that did not change this turn. The right pane and the Promote gate read ONLY this artifact; your prose is never parsed.",
+    '- MANDATORY EVERY TURN: end the turn by emitting ONE `brief-progress` artifact that lists ALL scaffold fields with their current status and value — including fields that did not change this turn. The right pane and the Promote gate read ONLY this artifact; your prose is never parsed.',
     "- Capturing a field in prose does NOT update the scaffold. If you say a section is captured, confirmed, or locked — or that the user can promote — you MUST have emitted it in this same turn's `brief-progress`. Omitting the artifact silently stalls the scaffold and dead-ends the user at a disabled Promote button.",
-    "- Re-emit the full brief-progress (all fields) on every turn even when nothing changed, so the pane always reflects the latest known state.",
-  ].join("\n");
+    '- Re-emit the full brief-progress (all fields) on every turn even when nothing changed, so the pane always reflects the latest known state.',
+  ].join('\n');
 }
 
 /**
@@ -294,7 +305,7 @@ export function composeCrossProgramSignalsBlock(
   if (parsed.length === 0) return '';
 
   const lines: string[] = [
-    'CROSS-PROGRAM SIGNALS (this tenant has the following multi-program dependencies / conflicts; surface as `cross-program-signal` artifacts when relevant to the user\'s question):',
+    "CROSS-PROGRAM SIGNALS (this tenant has the following multi-program dependencies / conflicts; surface as `cross-program-signal` artifacts when relevant to the user's question):",
     '',
   ];
 
@@ -327,9 +338,7 @@ export function composeCrossProgramSignalsBlock(
  * agent emission needs at least one program id, so a malformed item is
  * dropped rather than surfaced as a half-empty signal.
  */
-function parseCrossProgramSignalItem(
-  item: EnterpriseAgentContextItem,
-): {
+function parseCrossProgramSignalItem(item: EnterpriseAgentContextItem): {
   signalId: string;
   title: string;
   programs: string[];

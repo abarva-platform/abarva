@@ -26,13 +26,28 @@ describe('Lakeshore corpus activation plan', () => {
     const personas = CXO_PERSONAS as ReadonlyArray<ExtendedCxoPersona>;
     const lakeshore = personas.filter((persona) => persona.clientKey === 'lakeshore');
 
-    expect(lakeshore).toHaveLength(2);
+    // The register holds the two CXO logins plus a deliberate tenant-admin persona
+    // (admin-lakeshore, added with the Lakeshore persona pinning in #3125, after this case
+    // was written). The admin is an operations account, not a CXO login, so the plan's two
+    // CXO logins must still each resolve to a persona with no role override.
+    expect(lakeshore).toHaveLength(3);
     expect(lakeshore.map((persona) => persona.slug).sort()).toEqual([
+      'admin-lakeshore',
       'cfo-lakeshore',
       'cio-lakeshore',
     ]);
     expect(lakeshore.every((persona) => persona.tenantKey === 'lakeshore-holdings')).toBe(true);
     expect(lakeshore.every((persona) => persona.email.endsWith('@lakeshore-holdings.example.com'))).toBe(true);
+
+    const admins = lakeshore.filter((persona) => persona.authRole !== undefined);
+    expect(admins.map((persona) => [persona.slug, persona.authRole])).toEqual([['admin-lakeshore', 'admin']]);
+
+    const plan = buildLakeshoreCorpusActivationPlan({ generatedAt: '2026-06-04T00:00:00.000Z' });
+    const cxoPersonaEmails = lakeshore
+      .filter((persona) => persona.authRole === undefined)
+      .map((persona) => persona.email)
+      .sort();
+    expect(cxoPersonaEmails).toEqual(plan.cxoLogins.map((login) => login.email).sort());
   });
 
   it('points every corpus source at an existing artifact', () => {

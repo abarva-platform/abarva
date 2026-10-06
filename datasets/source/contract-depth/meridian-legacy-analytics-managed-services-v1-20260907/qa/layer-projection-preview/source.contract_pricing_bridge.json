@@ -1,0 +1,62 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:labor",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "resource_model_billed_labor",
+    "amount_usd": "7179500.0",
+    "basis": "Sum of FTE x annual_client_bill_rate_usd from resource_model.csv",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-SOW"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:tooling",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "analytics_ops_tooling_and_monitoring",
+    "amount_usd": "180000",
+    "basis": "Monitoring, scheduler, extract automation, and reporting operations tooling allowance",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-PRICING"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:transition",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "transition_runbook_and_knowledge_reserve",
+    "amount_usd": "95000",
+    "basis": "Runbook maintenance, transition evidence pack, and continuity reserve",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-PRICING"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:service_management",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "service_management_overhead",
+    "amount_usd": "165500.0",
+    "basis": "Contract management, quality systems, and account operations overhead needed to reconcile to committed annual base",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-PRICING"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:improvement_pool",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "approved_minor_enhancement_capacity",
+    "amount_usd": "230000",
+    "basis": "Annual value above committed run base for pre-approved minor enhancement capacity",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-PRICING"
+  }
+]

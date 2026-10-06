@@ -1,8 +1,9 @@
 export function SourceWorkspaceLoadingShell({
-  tenantName = "AbarVa Client",
+  contractId,
 }: {
-  tenantName?: string;
+  readonly contractId?: string | null;
 }) {
+  const openingContract = Boolean(contractId?.trim());
   return (
     <section
       aria-label="Source 360 is preparing"
@@ -14,52 +15,6 @@ export function SourceWorkspaceLoadingShell({
         flexDirection: "column",
       }}
     >
-      <div
-        style={{
-          height: 56,
-          background: "#0a0a0b",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          gap: 18,
-          padding: "0 40px",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "Fraunces, Georgia, serif",
-            fontSize: 21,
-            fontWeight: 600,
-          }}
-        >
-          Abar<span style={{ color: "#2fbf8f" }}>Va</span>
-        </span>
-        <span
-          style={{
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: ".16em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,.62)",
-          }}
-        >
-          Source 360
-        </span>
-        <span
-          style={{
-            marginLeft: "auto",
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 10,
-            letterSpacing: ".12em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,.62)",
-          }}
-        >
-          {tenantName}
-        </span>
-      </div>
       <div style={{ padding: "28px 40px 40px" }}>
         <p
           style={{
@@ -84,52 +39,56 @@ export function SourceWorkspaceLoadingShell({
             lineHeight: 1.1,
           }}
         >
-          Preparing the governed contract book.
+          {openingContract
+            ? "Opening Contract 360."
+            : "Opening Source command center."}
         </h1>
         <p
           style={{
             margin: "10px 0 26px",
             color: "#5f5e5a",
             fontSize: 14,
-            maxWidth: 640,
+            maxWidth: 1120,
             lineHeight: 1.55,
           }}
         >
-          Loading portfolio rows, vendor rollups, action candidates, and
-          evidence coverage before the executive view opens.
+          {openingContract
+            ? `Restoring ${contractId} in the governed Source workspace. The selected contract and tab will remain stable through refresh.`
+            : "Opening portfolio rows and vendor rollups first. Evidence coverage and action candidates hydrate after the executive view is visible."}
         </p>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(6, minmax(112px, 1fr))",
-            border: "1px solid rgba(10,10,11,.22)",
-            borderBottom: "3px solid #0a0a0b",
+            gridTemplateColumns: "repeat(5, minmax(140px, 1fr))",
+            gap: 6,
+            borderBottom: "1px solid rgba(211,209,199,.72)",
             background: "#f5f1eb",
-            maxWidth: 920,
+            maxWidth: "100%",
+            overflowX: "auto",
+            padding: "14px 0 12px",
           }}
         >
-          {[
-            "Verdict",
-            "Vendors",
-            "Contracts",
-            "Optimize",
-            "Evidence",
-            "Contract graph",
-          ].map((label) => (
-            <div
-              key={label}
-              style={{
-                padding: "16px 18px",
-                borderRight: "1px solid rgba(10,10,11,.22)",
-                background: label === "Verdict" ? "#0a0a0b" : "#fff",
-                color: label === "Verdict" ? "#fff" : "#5f5e5a",
-                fontWeight: 800,
-                textAlign: "center",
-              }}
-            >
-              {label}
-            </div>
-          ))}
+          {["Command", "Contracts", "Levers", "Evidence", "Coverage"].map(
+            (label) => (
+              <div
+                key={label}
+                style={{
+                  minHeight: 44,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 6,
+                  padding: "0 10px",
+                  background: label === "Command" ? "#0f6e56" : "#f1efe8",
+                  color: label === "Command" ? "#fff" : "#5f5e5a",
+                  fontWeight: label === "Command" ? 700 : 500,
+                  textAlign: "center",
+                }}
+              >
+                {label}
+              </div>
+            ),
+          )}
         </div>
         <div
           style={{
@@ -138,6 +97,7 @@ export function SourceWorkspaceLoadingShell({
             gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
             gap: 12,
             maxWidth: 920,
+            width: "100%",
           }}
         >
           {["Portfolio", "Evidence", "Actions"].map((label) => (

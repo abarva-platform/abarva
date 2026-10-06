@@ -110,6 +110,7 @@ function makeQueryBuilder(table: string) {
 
 const fromMock = jest.fn((table: string) => makeQueryBuilder(table));
 const mockCloseP0OnApproval = jest.fn();
+const mockAssertP0SourceEvidenceReady = jest.fn();
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => ({ from: fromMock }),
@@ -117,6 +118,11 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 
 jest.mock("../origination-close", () => ({
   closeP0OnApproval: mockCloseP0OnApproval,
+}));
+
+jest.mock("../p0-source-evidence", () => ({
+  assertP0SourceEvidenceReady: (...args: unknown[]) =>
+    mockAssertP0SourceEvidenceReady(...args),
 }));
 
 import {
@@ -161,12 +167,19 @@ beforeEach(() => {
   maybeSingleMock.mockClear();
   fromMock.mockClear();
   mockCloseP0OnApproval.mockReset();
+  mockAssertP0SourceEvidenceReady.mockReset();
   mockCloseP0OnApproval.mockResolvedValue({
     briefEnsured: true,
     briefSigned: true,
     advanced: true,
     newPhase: 1,
     blockedBy: [],
+  });
+  mockAssertP0SourceEvidenceReady.mockResolvedValue({
+    available: true,
+    approvedSourceFileCount: 1,
+    pendingReviewCount: 0,
+    evidenceTitles: ["p0-intake.md"],
   });
   lastQuery = null;
 });
@@ -281,6 +294,35 @@ describe("submitForApproval", () => {
 });
 
 describe("decideApprovalRequest", () => {
+  it("does not record a P0 approval when source evidence is not reviewed", async () => {
+    pendingResults.push({
+      maybeSingleResult: {
+        data: { program_id: "eng_1", tenant_key: "tenant-a" },
+        error: null,
+      },
+    });
+    pendingResults.push({
+      maybeSingleResult: { data: { current_phase: 0 }, error: null },
+    });
+    mockAssertP0SourceEvidenceReady.mockRejectedValue(
+      new Error("Upload and review one P0 source file."),
+    );
+
+    await expect(
+      decideApprovalRequest({
+        requestId: "req_1",
+        decidedByUserId: "sponsor_1",
+        decision: "approved",
+      }),
+    ).rejects.toThrow("Upload and review one P0 source file.");
+
+    expect(mockAssertP0SourceEvidenceReady).toHaveBeenCalledWith({
+      tenantKey: "tenant-a",
+      moveId: "eng_1",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
   it("approves a pending request and returns the decided row", async () => {
     const updated = makeDbRow({
       request_status: "approved",
@@ -290,6 +332,15 @@ describe("decideApprovalRequest", () => {
         sponsor_person_id: "sponsor_1",
         lead_person_id: "lead_1",
       },
+    });
+    pendingResults.push({
+      maybeSingleResult: {
+          data: { program_id: "eng_1", tenant_key: "tenant-a" },
+        error: null,
+      },
+    });
+    pendingResults.push({
+      maybeSingleResult: { data: { current_phase: 1 }, error: null },
     });
     pendingResults.push({ singleResult: { data: updated, error: null } });
 

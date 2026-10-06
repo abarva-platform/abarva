@@ -1,11 +1,20 @@
 import { notFound } from "next/navigation";
 import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
-import { getSourcingEvent, isUuid } from "@/lib/source/queries";
-import { getActiveClientRow } from "@/lib/active-client";
+import {
+  getSourcingEventWithReadContext,
+  isUuid,
+} from "@/lib/source/queries";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
-import { listEffectiveEvidenceStatesForEvent } from "@/lib/source/canvas-substrate";
+import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
+import {
+  listArtifactStatesForEventStage,
+  listEffectiveEvidenceStatesForEvent,
+  listGateCriterionStatesForEvent,
+} from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import {
   adaptStageViewToSourceJourney,
@@ -26,11 +35,18 @@ import {
   readVendorLeverResponses,
   readVendorBids,
 } from "@/lib/source/facts/event-facts-reader";
-import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
+import {
+  buildLiveStageView,
+  resolveValueArchetype,
+} from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
-import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
+import {
+  hydrateTaskEvidenceState,
+  type HydrationArtifact,
+} from "@/lib/source/facts/view/task-evidence-hydration";
 import { loadApprovalsInbox } from "@/lib/source/approvals-inbox";
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
+import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
 import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
@@ -38,11 +54,19 @@ import {
 import { type SourceShellWorkspace } from "@/lib/source/source-event-shell-v2";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
-import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
 import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-completeness-from-profiles";
 import {
+  deriveVendorResponseProfilesFromNormalized,
+  deriveVendorResponseSeedInputsFromNormalized,
+} from "@/lib/source/vendor-response-completeness-from-normalized";
+import { buildSourceResponseCoverageReadModel } from "@/lib/source/response-coverage-read-model";
+import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
+import {
   buildVendorBafoInstructionPack,
+  buildEvaluationBafoReadinessView,
+  buildStage07BafoRoundConcessionView,
+  buildStage07NegotiationBriefCandidate,
   buildVendorChallengeIntelligence,
   compactVendorResponseParseReportsForRoute,
   buildVendorEvaluationDecisionView,
@@ -52,6 +76,12 @@ import {
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
+import {
+  hasCurrentStrategyOwnerConfirmation,
+  strategyConfirmationVersion,
+  type StrategyConfirmationEvent,
+} from "@/lib/source/strategy-confirmation";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type {
   StageAnalyticsView,
@@ -72,11 +102,11 @@ export default async function SourceEventDetailPage({
   const sp: Record<string, string | string[] | undefined> =
     (await (searchParams ?? Promise.resolve({}))) ?? {};
 
-  const [event, activeClient] = await Promise.all([
-    getSourcingEvent(eventId),
-    getActiveClientRow().catch(() => null),
-  ]);
-  if (!event) notFound();
+  const eventReadContext = await getSourcingEventWithReadContext(eventId);
+  if (!eventReadContext) notFound();
+  const { event, readClient: activeClient } = eventReadContext;
+
+  const canvasTenancy = await requireTenancy().catch(() => null);
 
   // Resolve viewing stage from ?stage=<key>; default to current stage.
   const stageParam = typeof sp.stage === "string" ? sp.stage : null;
@@ -104,6 +134,21 @@ export default async function SourceEventDetailPage({
     // path) for this exact event, if one was loaded for it. The render gate is
     // row presence for this tenant and event, not tenant identity or keywords.
     const normalizedClientKey = activeClient?.key?.trim().toLowerCase();
+    // U-520. The canvas mounts a descendant that prints an exact financial
+    // magnitude (the evidenced BAFO leverage range), so this route now has to
+    // answer the entitlement question here rather than only inside the strategy
+    // stage builder below, where U-517 reads the same policy for its own figure.
+    // Fails CLOSED: no tenancy, no client key or a failed policy read all
+    // restrict.
+    const canvasSourcePolicy =
+      canvasTenancy && normalizedClientKey
+        ? await loadUserSourceAccessPolicy(canvasTenancy, {
+            activeClientKey: normalizedClientKey,
+            sourceEventId: event.id,
+          }).catch(() => null)
+        : null;
+    const canViewFinancialValues =
+      canvasSourcePolicy?.canViewFinancialData === true;
     const contractOptimizationProfile = normalizedClientKey
       ? await getContractOptimizationProfile(
           normalizedClientKey,
@@ -130,22 +175,16 @@ export default async function SourceEventDetailPage({
       event.currentStageKey,
       event.currentStageKey,
     );
-    const selectionReadiness =
-      viewStage === "executive_decision" || viewStage === "selection"
-        ? buildSourceVendorSelectionReadiness({
-            event: {
-              id: event.id,
-              name: event.name,
-              currentStageKey: viewStage,
-              currentStageLabel: sourceJourneyLabelForStage(
-                sourceJourney,
-                viewStage,
-              ),
-              valueAtStakeUsd: event.valueAtStakeUsd,
-            },
-          })
-        : null;
-    const vendorResponseProfiles =
+    const needsVendorResponseContext = [
+      "responses",
+      "evaluation",
+      "pricing",
+      "bafo",
+      "executive_decision",
+      "selection",
+      "transition",
+    ].includes(viewStage);
+    const seededVendorResponseProfiles =
       viewStage === "responses"
         ? buildVendorResponseMveProfiles({
             id: event.id,
@@ -154,6 +193,59 @@ export default async function SourceEventDetailPage({
             accountName: event.accountName,
           })
         : null;
+    const normalizedResponsePackages =
+      needsVendorResponseContext && activeClient?.key
+        ? await readNormalizedVendorResponsePackages({
+            eventId: event.id,
+            tenantKey: activeClient.key,
+          }).catch((error) => {
+            console.error(
+              "[SourceEventDetailPage] normalized response read failed",
+              error instanceof Error ? error.message : String(error),
+            );
+            return [];
+          })
+        : [];
+    const normalizedVendorResponseProfiles = activeClient?.key
+      ? deriveVendorResponseProfilesFromNormalized({
+          packages: normalizedResponsePackages,
+          event: { id: event.id, name: event.name },
+          tenantKey: activeClient.key,
+        })
+      : null;
+    const vendorResponseProfiles = needsVendorResponseContext
+      ? (normalizedVendorResponseProfiles ??
+        (viewStage === "responses" ? seededVendorResponseProfiles : null))
+      : null;
+    const responseCoverageReadModel = buildSourceResponseCoverageReadModel({
+      packages: normalizedResponsePackages,
+      requiredFields: normalizedResponsePackages.flatMap((responsePackage) =>
+        responsePackage.rows.map((row) => row.requirementId),
+      ),
+      criticalRequiredFields: normalizedResponsePackages.flatMap(
+        (responsePackage) =>
+          responsePackage.rows
+            .filter((row) => row.requirementLevel === "Mandatory")
+            .map((row) => row.requirementId),
+      ),
+    });
+    const productionResponseVendorIds = new Set(
+      responseCoverageReadModel.production.vendors.map(
+        (vendor) => vendor.vendorId,
+      ),
+    );
+    const normalizedProductionResponsePackages =
+      productionResponseVendorIds.size > 0
+        ? normalizedResponsePackages.filter((responsePackage) =>
+            productionResponseVendorIds.has(responsePackage.vendorId),
+          )
+        : normalizedResponsePackages.filter(
+            (responsePackage) => responsePackage.syntheticDemo !== true,
+          );
+    const normalizedResponseSeeds =
+      deriveVendorResponseSeedInputsFromNormalized(
+        normalizedProductionResponsePackages,
+      );
     // Events outside the vendor-response seed table take their vendor
     // population from the same parsed profiles the rest of the stage renders,
     // so the cockpit and the file-readiness ledger cannot report an empty
@@ -165,29 +257,57 @@ export default async function SourceEventDetailPage({
               id: event.id,
               name: event.name,
               currentStageKey: viewStage,
-              vendorResponses: resolveVendorResponseSeedInputs(
-                event.id,
-                vendorResponseProfiles,
-              ),
+              vendorResponses:
+                normalizedResponseSeeds.length > 0
+                  ? normalizedResponseSeeds
+                  : resolveVendorResponseSeedInputs(
+                      event.id,
+                      vendorResponseProfiles,
+                    ),
             },
           })
         : null;
-    const vendorChallengeIntelligence =
-      viewStage === "responses"
-        ? buildVendorChallengeIntelligence(vendorResponseProfiles)
+    const vendorChallengeIntelligence = needsVendorResponseContext
+      ? buildVendorChallengeIntelligence(vendorResponseProfiles)
+      : null;
+    const vendorBafoInstructionPack = needsVendorResponseContext
+      ? buildVendorBafoInstructionPack(vendorChallengeIntelligence)
+      : null;
+    const vendorEvaluationDecisionView = needsVendorResponseContext
+      ? buildVendorEvaluationDecisionView(
+          vendorResponseProfiles,
+          vendorChallengeIntelligence,
+          vendorBafoInstructionPack,
+        )
+      : null;
+    const evaluationBafoReadinessView = ["evaluation", "bafo"].includes(
+      viewStage,
+    )
+      ? buildEvaluationBafoReadinessView({
+          profileSet: vendorResponseProfiles,
+          normalizedPackages: normalizedProductionResponsePackages,
+          challengeIntelligence: vendorChallengeIntelligence,
+          bafoInstructionPack: vendorBafoInstructionPack,
+          decisionView: vendorEvaluationDecisionView,
+        })
+      : null;
+    const bafoRoundConcessionView =
+      evaluationBafoReadinessView && activeClient?.key
+        ? buildStage07BafoRoundConcessionView({
+            tenantKey: activeClient.key,
+            sourceEventId: event.id,
+            rounds: [],
+            concessions: [],
+          })
         : null;
-    const vendorBafoInstructionPack =
-      viewStage === "responses"
-        ? buildVendorBafoInstructionPack(vendorChallengeIntelligence)
-        : null;
-    const vendorEvaluationDecisionView =
-      viewStage === "responses"
-        ? buildVendorEvaluationDecisionView(
-            vendorResponseProfiles,
-            vendorChallengeIntelligence,
-            vendorBafoInstructionPack,
-          )
-        : null;
+    const negotiationBriefCandidate = evaluationBafoReadinessView
+      ? buildStage07NegotiationBriefCandidate({
+          readinessView: evaluationBafoReadinessView,
+          bafoInstructionPack: vendorBafoInstructionPack,
+          decisionView: vendorEvaluationDecisionView,
+          bafoRoundConcessionView,
+        })
+      : null;
     const vendorResponseParseReports =
       viewStage === "responses"
         ? compactVendorResponseParseReportsForRoute(
@@ -209,6 +329,7 @@ export default async function SourceEventDetailPage({
     // checklist's done-state can be re-derived from persisted evidence on load
     // (a reload / tab switch must reflect uploaded facts, not reset to empty).
     let hydrationFactInputs: Record<string, number> = {};
+    let rfpClauseChecklistComplete = false;
     let analyticsEvidenceStates: Awaited<
       ReturnType<typeof listEffectiveEvidenceStatesForEvent>
     > = [];
@@ -218,16 +339,45 @@ export default async function SourceEventDetailPage({
     // 11-stage event can push the RSC payload into megabytes and freeze browser
     // verification. File cards do not render body previews, so content remains a
     // server-side artifact concern rather than default route payload.
-    const analyticsRegistryArtifacts =
-      await listSourceArtifactsForSourceEventId(event.id).catch(
-        (error) => {
-          console.error(
-            "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
-            error instanceof Error ? error.message : String(error),
-          );
-          return [];
-        },
-      );
+    const [
+      analyticsRegistryArtifacts,
+      currentStageArtifactStates,
+      gateCriterionStates,
+      fileCabinetArtifacts,
+    ] = await Promise.all([
+      listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      listArtifactStatesForEventStage(event.id, viewStage).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] current-stage artifact state read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      listGateCriterionStatesForEvent(event.id).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] gate criterion state read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      activeClient?.key
+        ? listSourceArtifacts(event.id, {
+            tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
+          }).catch((error) => {
+            console.error(
+              "[SourceEventDetailPage] source file-cabinet read failed for task hydration",
+              error instanceof Error ? error.message : String(error),
+            );
+            return [];
+          })
+        : Promise.resolve([]),
+    ]);
     analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
       event.id,
     ).catch((error) => {
@@ -237,16 +387,64 @@ export default async function SourceEventDetailPage({
       );
       return [];
     });
-    const analyticsArtifacts = [...analyticsRegistryArtifacts];
-    const analyticsHydrationArtifacts = analyticsArtifacts.flatMap(
-      (artifact) =>
-        artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
+    const analyticsArtifacts = [
+      ...currentStageArtifactStates.map((artifact) => ({
+        id: artifact.id,
+        recordKind: "canvas_state" as const,
+        artifactCode: artifact.artifactCode,
+        artifactKind: artifact.artifactCode,
+        stageKey: artifact.stage,
+        status: artifact.status,
+        linkedArtifactId: artifact.linkedArtifactId,
+        body: artifact.body,
+        bodyGenerationMetadata: artifact.bodyGenerationMetadata,
+      })),
+      ...analyticsRegistryArtifacts.map((artifact) => ({
+        ...artifact,
+        recordKind: "registry_artifact" as const,
+      })),
+    ];
+    const analyticsHydrationArtifacts: HydrationArtifact[] =
+      analyticsArtifacts.flatMap((artifact) =>
+        artifact.stageKey
+          ? [
+              {
+                stageKey: artifact.stageKey,
+                artifactKind: artifact.artifactKind,
+                originalName:
+                  "originalName" in artifact
+                    ? artifact.originalName
+                    : undefined,
+                sourceFormat:
+                  "sourceFormat" in artifact
+                    ? artifact.sourceFormat
+                    : undefined,
+                sizeBytes:
+                  "sizeBytes" in artifact ? artifact.sizeBytes : undefined,
+              },
+            ]
+          : [],
+      );
+    analyticsHydrationArtifacts.push(
+      ...fileCabinetArtifacts.flatMap((artifact) =>
+        artifact.sourcingStage
+          ? [
+              {
+                stageKey: artifact.sourcingStage,
+                artifactKind: artifact.artifactType,
+                originalName: artifact.fileName,
+                sourceFormat: artifact.fileFormat,
+                sizeBytes: artifact.fileSize ?? undefined,
+              },
+            ]
+          : [],
+      ),
     );
     // SOURCE-SHELL-004: real artifact ids only — synthetic pseudo-artifact
     // ids (e.g. `artifact-state:<uuid>`, used for authored bodies with no
     // registry row yet) can never have an acceptance record and would fail
     // a UUID-typed `.in()` query.
-    const analyticsArtifactIds = analyticsArtifacts
+    const analyticsArtifactIds = analyticsRegistryArtifacts
       .map((artifact) => artifact.id)
       .filter((id): id is string => isUuid(id));
     const analyticsLatestAcceptances = analyticsArtifactIds.length
@@ -308,17 +506,24 @@ export default async function SourceEventDetailPage({
         // RFP clause coverage reads a per-lever presence signal (one
         // rfp_clause_present fact per lever, keyed by lever key in entity_ref)
         // that the collapsed event-facts read cannot express. Only fetch it on the
-        // RFP stage. `undefined` (no signal) keeps the insight an honest MODEL;
-        // a set (even empty) flips it LIVE.
+        // RFP stage. Only a valid decision for every required lever becomes a
+        // live checklist; a partial assessment remains unproven.
         let rfpClausePresentLeverKeys: ReadonlySet<string> | undefined =
           undefined;
         if (viewStage === "rfp") {
-          const { signalPresent, presentLeverKeys } =
+          const { signalPresent, presentLeverKeys, assessedLeverKeys } =
             await readRfpClausePresentLeverKeys({
               eventId: event.id,
               clientKey: activeClient.key,
             });
-          rfpClausePresentLeverKeys = signalPresent
+          const requiredLeverKeys = resolveValueArchetype(
+            event.eventType,
+            event.classifiedCategory,
+          )?.valueLeverRules?.map((rule) => rule.key) ?? [];
+          rfpClauseChecklistComplete = signalPresent &&
+            requiredLeverKeys.length > 0 &&
+            requiredLeverKeys.every((key) => assessedLeverKeys.has(key));
+          rfpClausePresentLeverKeys = rfpClauseChecklistComplete
             ? presentLeverKeys
             : undefined;
         }
@@ -427,14 +632,13 @@ export default async function SourceEventDetailPage({
             ? { bids: [...bidsByVendor.values()], vendors }
             : undefined;
         }
-        // eventType is not on the summary; leave it unset so the builder
-        // resolves the value archetype the same way buildLiveStageView does
-        // (the first archetype carrying value-lever rules — today AMS).
         stepInsight =
           buildStepInsight({
             stageKey: viewStage,
             inputs,
             citations,
+            eventType: event.eventType,
+            classifiedCategory: event.classifiedCategory,
             baselineLabel: "Value at stake (event estimate)",
             baselineAmount: event.valueAtStakeUsd ?? 0,
             rfpClausePresentLeverKeys,
@@ -450,31 +654,18 @@ export default async function SourceEventDetailPage({
             buildLiveStageView({
               inputs,
               citations,
+              eventType: event.eventType,
+              classifiedCategory: event.classifiedCategory,
               baselineLabel: "Value at stake (event estimate)",
               baselineAmount: event.valueAtStakeUsd ?? 0,
               stageKey: viewStage,
               stageName: sourceJourneyLabelForStage(sourceJourney, viewStage),
+              vendorResponses,
+              rfpClausePresentLeverKeys,
+              committedValueByLeverKey,
+              realizedValueByLeverKey,
             }) ?? undefined;
 
-          // Arm the LIVE approve action on the gate ONLY when the event actually
-          // SITS on the stage being viewed (viewStage === current stage) and the
-          // user can approve. A future stage the event has not reached stays
-          // presentational (no action). Strategy is handled on its own path below.
-          if (liveStageView) {
-            const approveAction = await resolveStageGateAction(
-              event.id,
-              activeClient.key,
-              viewStage,
-              effectiveCurrentStageKey,
-              sourceJourney,
-            );
-            if (approveAction) {
-              liveStageView = {
-                ...liveStageView,
-                gate: { ...liveStageView.gate, action: approveAction },
-              };
-            }
-          }
         }
       } catch (error) {
         console.error(
@@ -503,8 +694,22 @@ export default async function SourceEventDetailPage({
     // template-less `provide` tasks (e.g. the signed sponsor letter) derive from the
     // artifact registry. Honest: a task is stamped complete ONLY because its evidence
     // reached a usable, persisted state — never a fabricated done. Never fatal.
+    const verifiedDelegatedSponsorAcknowledgement =
+      viewStage === "scope" && activeClient?.key
+        ? await hasVerifiedSponsorDelegation({
+            eventId: event.id,
+            tenantKey: activeClient.key,
+          }).catch((error) => {
+            console.error("[SourceEventDetailPage] sponsor delegation read failed", error);
+            return false;
+          })
+        : false;
     if (liveStageView) {
       try {
+        liveStageView = applySourceApprovalPolicyToStageView(
+          liveStageView,
+          event.approvalPolicyCode,
+        );
         const journeyStageView = adaptStageViewToSourceJourney(
           liveStageView,
           sourceJourney,
@@ -517,6 +722,8 @@ export default async function SourceEventDetailPage({
             artifacts: analyticsHydrationArtifacts,
             evidenceStates: analyticsEvidenceStates,
             stageKey: journeyStageView.stageKey,
+            verifiedDelegatedSponsorAcknowledgement,
+            rfpClauseChecklistComplete,
           }),
         };
       } catch (error) {
@@ -527,12 +734,40 @@ export default async function SourceEventDetailPage({
       }
     }
 
+    const stageGateAction = activeClient?.key && viewStage !== "strategy"
+      ? await resolveStageGateAction(
+          event.id,
+          activeClient.key,
+          viewStage,
+          effectiveCurrentStageKey,
+          sourceJourney,
+        )
+      : null;
+
+    const awardSowHandoffReadiness =
+      normalizeSourceStageKey(viewStage) === "transition"
+        ? buildSourceAwardSowHandoffReadiness({
+            event: {
+              id: event.id,
+              name: event.name,
+              currentStageKey: event.currentStageKey,
+              currentStageLabel: event.currentStageLabel,
+              stages: event.stages,
+              artifacts: event.artifacts,
+            },
+          })
+        : null;
+
     return (
       <SourceAnalyticsCanvas
         event={event}
+        canRetireEvent={canvasSourcePolicy?.canApproveSourceStages === true}
+        canViewFinancialValues={canViewFinancialValues}
         viewStage={viewStage}
         tenantName={analyticsTenantName}
         stageView={liveStageView}
+        stageGateAction={stageGateAction ?? undefined}
+        verifiedFallbackSponsorAcknowledgement={verifiedDelegatedSponsorAcknowledgement}
         stepInsight={stepInsight}
         artifacts={analyticsArtifacts}
         approvalItems={analyticsApprovalItems}
@@ -540,16 +775,21 @@ export default async function SourceEventDetailPage({
         guidebook={analyticsGuidebook}
         latestArtifactAcceptances={analyticsLatestAcceptances}
         evidenceStates={analyticsEvidenceStates}
+        gateCriterionStates={gateCriterionStates.filter((row) => row.fromStage === viewStage)}
+        stageArtifactStates={currentStageArtifactStates}
         initialWorkspace={initialWorkspace}
         contractOptimizationProfile={contractOptimizationProfile}
         journey={sourceJourney}
-        selectionReadiness={selectionReadiness}
         vendorResponseReadiness={vendorResponseReadiness}
         vendorResponseProfiles={vendorResponseProfiles}
         vendorChallengeIntelligence={vendorChallengeIntelligence}
         vendorBafoInstructionPack={vendorBafoInstructionPack}
         vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+        evaluationBafoReadinessView={evaluationBafoReadinessView}
+        negotiationBriefCandidate={negotiationBriefCandidate}
         vendorResponseParseReports={vendorResponseParseReports}
+        normalizedResponsePackages={normalizedResponsePackages}
+        awardSowHandoffReadiness={awardSowHandoffReadiness}
       />
     );
   }
@@ -631,7 +871,12 @@ async function resolveStageGateAction(
   };
 }
 
-async function buildStrategyStageForRoute(
+// Exported for the U-517 permission cases. The financial-permission resolution
+// this function performs is not reachable from any render harness for this
+// route, so with the function private the only guard on it was `tsc` — and a
+// literal `true` typechecks, which is exactly the mutation that has to fail.
+// `renderTowerPage` in `(maestro)/tower/page.tsx` is the same pattern.
+export async function buildStrategyStageForRoute(
   eventId: string,
   clientKey: string,
   currentStageKey: string,
@@ -641,7 +886,7 @@ async function buildStrategyStageForRoute(
     const { data } = await getAzureReadFluentClient()
       .from("source_events")
       .select(
-        "id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, created_at, updated_at",
+        "id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, approval_policy_code, created_at, updated_at",
       )
       .eq("id", eventId)
       .eq("client_key", clientKey)
@@ -649,29 +894,43 @@ async function buildStrategyStageForRoute(
     if (!data) return undefined;
 
     const row = data as SourceEventRow;
-    const facts = deriveStrategyIntakeFacts(row);
+    // Item U-517. The viewer's access policy is read ONCE here and answers two
+    // questions: may they approve, and may they see exact financial values. It
+    // used to be read only inside the `awaitingApproval` branch below, which is
+    // why the value thesis was derived with a literal `true` — the object that
+    // could have answered was loaded after the derivation, and conditionally.
+    // Both reads fail CLOSED: a null policy denies approval and restricts the
+    // figure.
+    const tenancy = await requireTenancy().catch(() => null);
+    const policy = tenancy
+      ? await loadUserSourceAccessPolicy(tenancy, {
+          activeClientKey: clientKey,
+          sourceEventId: eventId,
+        }).catch(() => null)
+      : null;
+    const canViewFinancialValues = policy?.canViewFinancialData === true;
+
+    const facts = deriveStrategyIntakeFacts(row, canViewFinancialValues);
 
     // Only offer the live approve action when the event is genuinely awaiting the
     // P0 approval in the strategy stage AND the user can approve. The approve
     // route re-checks access + confirmations server-side regardless; this just
     // avoids arming a gate that would be rejected.
-    let canApprove = false;
     const awaitingApproval =
       currentStageKey === "strategy" &&
       STRATEGY_APPROVAL_STATES.has(row.lifecycle_state);
-    if (awaitingApproval) {
-      const tenancy = await requireTenancy().catch(() => null);
-      if (tenancy) {
-        const policy = await loadUserSourceAccessPolicy(tenancy, {
-          activeClientKey: clientKey,
-          sourceEventId: eventId,
-        }).catch(() => null);
-        canApprove = policy?.canApproveSourceStages === true;
-      }
-    }
+    const activeStrategyGate =
+      currentStageKey === "strategy" && row.lifecycle_state === "active";
+    const canApprove =
+      (awaitingApproval || activeStrategyGate) && policy?.canApproveSourceStages === true;
 
-    return adaptStageViewToSourceJourney(
-      buildStrategyStageView({
+    const ownerConfirmationEvent = row as SourceEventRow & StrategyConfirmationEvent;
+    const ownerConfirmed = await hasCurrentStrategyOwnerConfirmation(ownerConfirmationEvent)
+      .catch((error) => {
+        console.error("[SourceEventDetailPage] strategy confirmation read failed", error);
+        return false;
+      });
+    const stage = buildStrategyStageView({
         facts,
         provenance: "live",
         approve: canApprove
@@ -680,9 +939,21 @@ async function buildStrategyStageForRoute(
               redirectStageKey: nextSourceStageForJourney("strategy", journey),
             }
           : null,
-      }),
-      journey,
-    );
+      });
+    return adaptStageViewToSourceJourney({
+      ...stage,
+      tasks: stage.tasks.map((task) => task.id === "strategy.confirm"
+        ? {
+            ...task,
+            confirmationVersion: ownerConfirmationEvent.approval_policy_code === "self_v1"
+              ? strategyConfirmationVersion(ownerConfirmationEvent)
+              : undefined,
+            evidenceComplete: ownerConfirmationEvent.approval_policy_code === "self_v1"
+              ? ownerConfirmed
+              : task.evidenceComplete,
+          }
+        : task),
+    }, journey);
   } catch (error) {
     console.error(
       "[SourceEventDetailPage] strategy stage build failed; falling back to sample",

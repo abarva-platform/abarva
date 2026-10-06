@@ -44,6 +44,17 @@ export type SourceAnswerMode =
   | "missing_data"
   | "expert_sourcing";
 
+/**
+ * Titles of the three response parts that describe *the answer* rather than the
+ * event. Exported because a surface that substitutes a different answer for the
+ * deterministic one has to re-derive exactly these — see
+ * `applySourceSentinelModelAnswer` in ./sentinel-chat-llm.ts. Matching them by
+ * a copied string literal is how the two sides drift.
+ */
+export const SOURCE_ADVISOR_ANSWER_PART_TITLE = "Advisor answer";
+export const SOURCE_EVIDENCE_USED_PART_TITLE = "Evidence used";
+export const SOURCE_SUPPORT_METRIC_LABEL = "Support";
+
 export interface SourceAnswerEvidenceCitation {
   id: string;
   label: string;
@@ -257,6 +268,13 @@ export function buildSourceAnswerEngine(
     unique([...missingData, ...corpusMissingData]),
     live,
   );
+  const answerRiskTraps = stageReadinessAnswer ? [] : finalRiskTraps;
+  const answerMissingData = stageReadinessAnswer
+    ? unique([
+        ...input.contextBundle.blockers,
+        ...input.contextBundle.missingInputs,
+      ])
+    : finalMissingData;
   const finalExpertLens = unique([...playbook.expertLens, ...corpusExpertLens]);
   const confidence = deriveAnswerConfidence(live, evidence);
   const limits = unique([
@@ -290,8 +308,8 @@ export function buildSourceAnswerEngine(
       currentStateFindings,
       sourcingImplications,
       cxoGuidance,
-      riskTraps: finalRiskTraps,
-      missingData: finalMissingData,
+      riskTraps: answerRiskTraps,
+      missingData: answerMissingData,
       confidence,
       evidence,
       limits,
@@ -331,8 +349,8 @@ export function buildSourceAnswerEngine(
   const visibleSourcingImplications =
     sourcingImplications.map(toAvaVisibleText);
   const visibleCxoGuidance = finalCxoGuidance.map(toAvaVisibleText);
-  const visibleRiskTraps = finalRiskTraps.map(toAvaVisibleText);
-  const visibleMissingData = finalMissingData.map(toAvaVisibleText);
+  const visibleRiskTraps = answerRiskTraps.map(toAvaVisibleText);
+  const visibleMissingData = answerMissingData.map(toAvaVisibleText);
   const visibleRecommendedNextAction = toAvaVisibleText(recommendedNextAction);
   const categoryStrategy = classifyEventCategory(input.contextBundle);
   const deliveryModelGate = gateEventDeliveryModel(input.contextBundle);
@@ -374,9 +392,15 @@ export function buildSourceAnswerEngine(
       missingData: visibleMissingData,
       evidenceCitations,
       recommendedNextAction: visibleRecommendedNextAction,
-      deliveryModelGate,
-      shouldCostEstimate,
-      proposalNormalization,
+      deliveryModelGate: shouldShowDeliveryModelGate(input.prompt)
+        ? deliveryModelGate
+        : null,
+      shouldCostEstimate: shouldShowShouldCost(input.prompt)
+        ? shouldCostEstimate
+        : null,
+      proposalNormalization: shouldShowProposalNormalization(input.prompt)
+        ? proposalNormalization
+        : null,
       extraResponseParts:
         structuredEvidenceAnswer?.extraResponseParts ??
         contractOptimizationAnswer?.extraResponseParts ??
@@ -387,6 +411,24 @@ export function buildSourceAnswerEngine(
     shouldCostEstimate,
     proposalNormalization,
   };
+}
+
+function shouldShowDeliveryModelGate(prompt: string): boolean {
+  return /\b(build\s*\/\s*buy|build or buy|build buy|delivery model|partner model|systems? integrator|\bsi\b)\b/i.test(
+    prompt,
+  );
+}
+
+function shouldShowShouldCost(prompt: string): boolean {
+  return /\b(should[- ]cost|tco|total cost|cost iceberg|hidden costs?|vendor quote|quoted cost)\b/i.test(
+    prompt,
+  );
+}
+
+function shouldShowProposalNormalization(prompt: string): boolean {
+  return /\b(normaliz(?:e|ed|ation)|compare (?:the )?(?:vendor )?(?:proposals?|bids?|prices?)|proposal comparison|pricing comparison|bid comparison)\b/i.test(
+    prompt,
+  );
 }
 
 /**
@@ -1131,7 +1173,7 @@ function buildSourceStageReadinessAnswer(args: {
 } | null {
   const text = args.prompt.toLowerCase();
   if (
-    !/\b(current stage|stage readiness|what'?s blocking the gate|what is blocking the current stage|blocking the current stage|stage blocker|gate blocker|blocking the gate)\b/.test(
+    !/\b(current stage|stage readiness|(?:strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value) readiness|what'?s blocking the gate|what is blocking the current stage|blocking the current stage|stage blocker|gate blocker|blocking the gate)\b/.test(
       text,
     )
   ) {
@@ -1141,7 +1183,11 @@ function buildSourceStageReadinessAnswer(args: {
   const event = args.contextBundle.sourcingEvent;
   if (!event) return null;
 
-  const stage = event.currentStageKey ?? "current";
+  const lifecycleStage = event.currentStageKey ?? "current";
+  const requestedStage = inferRequestedSourceStage(text);
+  const stageLine = requestedStage
+    ? `The requested stage is ${requestedStage}; the event lifecycle is currently ${lifecycleStage}.`
+    : `The current lifecycle stage is ${lifecycleStage}.`;
   const blockers = [
     ...args.contextBundle.blockers,
     ...args.contextBundle.missingInputs,
@@ -1153,11 +1199,11 @@ function buildSourceStageReadinessAnswer(args: {
   return {
     title: "Source stage readiness answer",
     answerText: [
-      `The current stage is ${stage}.`,
+      stageLine,
       `What is blocking or gating it: ${blockerLine}`,
-      "Stage readiness should be judged from the Source gate, the client-final artifact authority chain, and event-specific evidence. aVa can explain the blockers, but it should not bypass named human approval.",
+      "Stage readiness should be judged from the visible Source gate, the authoritative artifact chain, and the event's recorded evidence. aVa can explain that record, but it must not bypass named human approval.",
     ].join("\n"),
-    currentStateFindings: [`Current stage is ${stage}.`, blockerLine],
+    currentStateFindings: [stageLine, blockerLine],
     sourcingImplications: [
       "Stage movement should follow gate criteria and authoritative artifact status.",
       "Supplier recommendations should remain withheld until proposal evidence and scoring holdbacks exist for this event.",
@@ -1168,6 +1214,14 @@ function buildSourceStageReadinessAnswer(args: {
     recommendedNextAction:
       "Review the visible stage gate, confirm artifact finality, and resolve any named evidence or approval blockers before advancing.",
   };
+}
+
+function inferRequestedSourceStage(prompt: string): string | null {
+  const match = prompt.match(
+    /\b(strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value)\s+readiness\b/,
+  );
+  if (!match?.[1]) return null;
+  return match[1] === "response" ? "responses" : match[1];
 }
 
 function buildArtifactStandardsAnswer(args: {
@@ -2908,7 +2962,7 @@ function buildAvaResponseParts(args: {
           tone: confidenceTone(args.confidence),
         },
         {
-          label: "Support",
+          label: SOURCE_SUPPORT_METRIC_LABEL,
           value: String(args.evidenceCitations.length),
           tone: args.evidenceCitations.length > 0 ? "good" : "warning",
         },
@@ -2921,7 +2975,7 @@ function buildAvaResponseParts(args: {
     },
     {
       type: "text",
-      title: "Advisor answer",
+      title: SOURCE_ADVISOR_ANSWER_PART_TITLE,
       text: args.answerText,
     },
   ];
@@ -3021,7 +3075,7 @@ function buildAvaResponseParts(args: {
   if (args.evidenceCitations.length > 0) {
     parts.push({
       type: "citations",
-      title: "Evidence used",
+      title: SOURCE_EVIDENCE_USED_PART_TITLE,
       citations: args.evidenceCitations.slice(0, 5).map((citation) => ({
         label: citation.label,
         excerpt: citation.excerpt,

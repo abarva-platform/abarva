@@ -144,6 +144,118 @@ describe("QA gate runner", () => {
     expect(report.passed).toBe(false);
   });
 
+  it("scores vendor packs against solicitation controls instead of executive recommendation language", () => {
+    const content = `# Request for Proposal
+
+    ## Purpose and scope
+    This request for proposal defines the scope of services and the supplier response required for managed application services.
+
+    ## Executive summary
+    ## Current-State Baseline
+    ## Scope towers
+    ## Estate summary
+    ## SLA obligations
+    ## Transition approach
+    ## Commercial model
+    ## Response instructions
+    ## Evaluation framework
+    ## Risk register
+    ## Gap register
+
+    ## Submission instructions
+    Submit the completed response by the submission deadline. An authorized representative must acknowledge the proposal validity period.`;
+
+    const report = runDocumentQA({ artifactCode: "d09", content });
+
+    expect(report.blockers).toHaveLength(0);
+    expect(report.warnings).toHaveLength(0);
+    expect(report.results.find((row) => row.gate.id === "decision_clarity")?.result.message).toContain(
+      "vendor-facing purpose",
+    );
+  });
+
+  it("accepts a response-control pack opening without forcing RFP-specific wording", () => {
+    const content = `# Vendor Response Control Pack
+
+    ## Why This Pack Exists
+    This pack makes supplier proposals comparable, evidence-backed, and ready for challenge.
+    Vendors must complete the controlled response workbook. Narrative proposals may supplement it but may not replace required structured fields.`;
+
+    const report = runDocumentQA({ artifactCode: "d11", content });
+    const decisionGate = report.results.find(
+      (row) => row.gate.id === "decision_clarity",
+    );
+
+    expect(decisionGate?.result.pass).toBe(true);
+    expect(decisionGate?.result.message).toContain("recipient action");
+  });
+
+  it("recognizes human shortlist headings as the required decision exhibits", () => {
+    const content = `Recommendation: approve the conditionally locked vendor shortlist.
+
+    ## Approved Vendor List
+    Four governed invitation candidates with rationale and conditions.
+
+    ## Excluded / Not-Invited Vendor Rationale
+    No additional supplier is invited without evidence and sponsor approval.
+
+    ## Coverage, Commercial, and Risk Fit
+    Evaluate service coverage, commercial comparability, conflicts, and delivery risk.
+
+    Recommended action: approve the list after the stated pre-invitation conditions close.`;
+
+    const report = runDocumentQA({ artifactCode: "d12", content });
+    const exhibitGate = report.results.find(
+      (row) => row.gate.id === "required_exhibits",
+    );
+
+    expect(exhibitGate?.result.pass).toBe(true);
+    expect(report.blockers).toEqual([]);
+  });
+
+  it("still blocks a shortlist that omits an exclusion rationale", () => {
+    const content = `Recommendation: approve the vendor shortlist.
+    ## Approved Vendor List
+    ## Coverage, Commercial, and Risk Fit
+    Recommended action: hold until the evidence is complete.`;
+
+    const report = runDocumentQA({ artifactCode: "d12", content });
+
+    expect(report.blockers.join(" ")).toContain("eliminated_vendors");
+  });
+
+  it("allows legitimate security-vector language while still blocking vector infrastructure jargon", () => {
+    const base = `# Request for Proposal
+    ## Purpose and scope
+    This request for proposal defines the scope of services and vendor response instructions.
+    ## Executive summary
+    ## Current state baseline
+    ## Scope towers
+    ## Estate summary
+    ## SLA obligations
+    ## Transition approach
+    ## Commercial model
+    ## Response instructions
+    ## Evaluation framework
+    ## Risk register
+    ## Gap register
+    ## Submission instructions
+    Submit the completed response by the submission deadline.`;
+
+    expect(
+      runDocumentQA({
+        artifactCode: "d09",
+        content: `${base}\nAddress every identified threat vector.`,
+      }).blockers.join(" "),
+    ).not.toContain("Mechanical language");
+    expect(
+      runDocumentQA({
+        artifactCode: "d09",
+        content: `${base}\nThe internal vector database is the evidence substrate.`,
+      }).blockers.join(" "),
+    ).toContain("Mechanical language");
+  });
+
   it("does not block for length — no hard cap enforcement", () => {
     const longContent = `Recommendation: approve the sourcing strategy.
     Decision requested: authorize full RFP process.

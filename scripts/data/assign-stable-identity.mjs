@@ -89,7 +89,13 @@ function stableId(type, name) {
 function readCsv(file) {
   const target = abs(`${root}/${file}`);
   if (!fs.existsSync(target)) return null;
-  const parsed = Papa.parse(fs.readFileSync(target, 'utf8').trim(), { header: true, skipEmptyLines: true });
+  const raw = fs.readFileSync(target, 'utf8');
+  const parsed = Papa.parse(raw.trim(), { header: true, skipEmptyLines: true });
+  // Write back with the terminator the file was written with. Papa.unparse defaults to CRLF, and
+  // an LF file rewritten that way -- plus the final LF appended on write -- mixes both, which
+  // readers count differently. A file that is mostly CRLF stays CRLF.
+  const crlf = (raw.match(/\r\n/g) ?? []).length;
+  const newline = crlf > (raw.match(/\n/g) ?? []).length - crlf ? '\r\n' : '\n';
   // Mixed line endings otherwise leave a stray carriage return in the final column of every
   // CRLF row on a parse/unparse round trip.
   for (const row of parsed.data) {
@@ -102,6 +108,7 @@ function readCsv(file) {
   // interpretation back would silently delete rows. Refuse instead, and report it.
   const fatal = parsed.errors.filter((e) => e.code === 'TooManyFields' || e.code === 'TooFewFields' || e.code === 'MissingQuotes');
   return {
+    newline,
     rows: parsed.data,
     fields: (parsed.meta.fields ?? []).map((field) => field.replace(/\r/g, '')),
     parseErrors: fatal,
@@ -158,6 +165,10 @@ function identityFor(type, name) {
 const summary = [];
 const blocked = [];
 const idByTypeName = new Map();
+// Every id a name can reach through any key column. A name usually reaches one row; when an
+// alternate key on one row equals the primary key of another, it reaches two, and the last
+// write to idByTypeName is an accident of row order rather than a resolution.
+const idsByTypeName = new Map();
 const claimedHomeDimensions = new Set();
 
 // 1. Stamp an ID column on every node-type home dimension.
@@ -188,7 +199,11 @@ for (const spec of ontology.nodeTypes) {
     stamped += 1;
     for (const key of keyColumns) {
       const value = String(row[key] ?? '').trim();
-      if (value) idByTypeName.set(`${spec.type} ${normalise(value)}`, id);
+      if (!value) continue;
+      const nameKey = `${spec.type} ${normalise(value)}`;
+      idByTypeName.set(nameKey, id);
+      if (!idsByTypeName.has(nameKey)) idsByTypeName.set(nameKey, new Set());
+      idsByTypeName.get(nameKey).add(id);
     }
   }
 
@@ -197,7 +212,9 @@ for (const spec of ontology.nodeTypes) {
     continue;
   }
   const fields = parsed.fields.includes(idColumn) ? parsed.fields : [...parsed.fields, idColumn];
-  if (!args.dryRun) fs.writeFileSync(abs(`${root}/${file}`), `${Papa.unparse({ fields, data: parsed.rows })}\n`);
+  if (!args.dryRun) {
+    fs.writeFileSync(abs(`${root}/${file}`), `${Papa.unparse({ fields, data: parsed.rows }, { newline: parsed.newline })}${parsed.newline}`);
+  }
   summary.push({ file, idColumn, rows: parsed.rows.length, stamped });
 }
 
@@ -223,7 +240,14 @@ if (relationshipsFile) {
       // still carries a pre-rename label must still resolve to the same object, otherwise
       // the ledger protects the node and abandons every edge pointing at it.
       const key = type && name ? `${type} ${normalise(name)}` : '';
-      const id = key ? (idByTypeName.get(key) ?? ledgerByAlias.get(key)?.id) : undefined;
+      // An endpoint already resolved to an id keeps it while its name still reaches
+      // that id. Without this, a row appended later whose name equals another row's alternate
+      // key silently takes over every edge that named the original -- a re-target nobody
+      // declared. A prior id the name no longer reaches (a shared id this run separated) is not
+      // kept, so those edges follow the row they name.
+      const prior = String(row[`${side}_object_id`] ?? '').trim();
+      const keepPrior = Boolean(key && prior && idsByTypeName.get(key)?.has(prior));
+      const id = keepPrior ? prior : key ? (idByTypeName.get(key) ?? ledgerByAlias.get(key)?.id) : undefined;
       row[`${side}_object_id`] = id ?? '';
       if (id) resolved += 1;
       else if (type && name) {
@@ -238,7 +262,10 @@ if (relationshipsFile) {
     if (!fields.includes(column)) fields.push(column);
   }
   if (!args.dryRun && parsed.rows.length) {
-    fs.writeFileSync(abs(`${root}/${relationshipsFile}`), `${Papa.unparse({ fields, data: parsed.rows })}\n`);
+    fs.writeFileSync(
+      abs(`${root}/${relationshipsFile}`),
+      `${Papa.unparse({ fields, data: parsed.rows }, { newline: parsed.newline })}${parsed.newline}`,
+    );
   }
   edgeStats = { edges: parsed.rows.length, resolved, unresolved, unresolvedByType };
 }

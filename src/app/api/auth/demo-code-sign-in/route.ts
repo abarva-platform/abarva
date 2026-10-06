@@ -1,6 +1,8 @@
 import { createClerkClient } from '@clerk/backend';
 import { NextResponse } from 'next/server';
 import { DEMO_CODE_VALUE, isDemoCodeEmail } from '@/lib/auth/demo-code';
+import { ensureLaunchAccessClerkUserWithClient } from '@/lib/auth/launch-user-provisioning';
+import { getLaunchAccessProfile } from '@/lib/auth/launch-access-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,8 +48,13 @@ export async function POST(request: Request) {
   }
 
   const clerk = createClerkClient({ secretKey });
-  const users = await clerk.users.getUserList({ emailAddress: [email], limit: 1 });
-  const user = users.data[0];
+  const profile = getLaunchAccessProfile(email);
+  const ensured = profile
+    ? await ensureLaunchAccessClerkUserWithClient(clerk, profile)
+    : null;
+  const user = ensured
+    ? { id: ensured.userId }
+    : (await clerk.users.getUserList({ emailAddress: [email], limit: 1 })).data[0];
 
   if (!user) {
     return badRequest('demo_user_not_found', 404);

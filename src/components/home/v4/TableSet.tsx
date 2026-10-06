@@ -48,7 +48,7 @@ const KIND_FORM: Record<
   },
   absence: {
     dot: V4.amber,
-    label: "not carried by the record",
+    label: "record does not carry this yet",
     labelColor: V4.amber,
   },
   established: { dot: null, label: null, labelColor: V4.slate },
@@ -68,17 +68,16 @@ const COUNT_WORD = [
   "ten",
 ];
 
-/** A finding's trace, in the shape the provenance mark reads. Same contract as Tower's. */
+/** A generated file hint is not a verified canonical source link. */
 function lineageForFinding(finding: Finding): FactLineage | null {
   if (!finding.trace) return null;
   return {
     value: finding.claim,
     label: "this finding",
     grain: finding.trace.grain,
-    sources: [
-      { file: finding.trace.file, rows: 0, filter: finding.trace.rule },
-    ],
-    agreement: "single_source",
+    rule: finding.trace.rule,
+    sources: [],
+    agreement: "unverified",
     openRows: finding.openRows,
   };
 }
@@ -514,6 +513,22 @@ export function FindingsBlock({
             >
               {finding.owner}
             </span>
+            {finding.rated ? (
+              <span
+                data-home-finding-rated={finding.rated}
+                style={{
+                  gridColumn: "1 / -1",
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.09em",
+                  textTransform: "uppercase",
+                  color: finding.rated === "high" ? V4.red : V4.amber,
+                }}
+              >
+                {finding.rated} · rated by the record
+              </span>
+            ) : null}
             {KIND_FORM[finding.kind].label ? (
               <span
                 data-home-finding-mark={finding.kind}
@@ -584,8 +599,8 @@ export function UnsupportedViews({ views }: { views: UnsupportedView[] }) {
     >
       <span style={eyebrow(V4.amber)}>
         {views.length === 1
-          ? "One view this page cannot build"
-          : `${views.length} views this page cannot build`}
+          ? "One evidence view pending"
+          : `${views.length} evidence views pending`}
       </span>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {views.map((view) => (
@@ -624,7 +639,7 @@ export function UnsupportedViews({ views }: { views: UnsupportedView[] }) {
                   flex: "none",
                 }}
               />
-              not carried by the record
+              evidence not yet served
             </span>
             <span
               style={{ fontFamily: SANS, fontSize: 14.5, lineHeight: 1.45 }}
@@ -678,7 +693,7 @@ export function PageShape({
       ? `${exposures} the record says ${exposures === 1 ? "is" : "are"} wrong now`
       : null,
     unsupported.length
-      ? `${unsupported.length} ${unsupported.length === 1 ? "view" : "views"} this page cannot build`
+      ? `${unsupported.length} evidence ${unsupported.length === 1 ? "view" : "views"} pending`
       : null,
   ].filter(Boolean);
   if (parts.length === 0) return null;

@@ -1,0 +1,7 @@
+tenant_key,application_ref,application_name,business_function,criticality,hosting_model,lifecycle_state
+meridian-health,APP-CLOUD-EHR-INT,EHR interface platform,Clinical Operations,Tier 1,AWS,active
+meridian-health,APP-CLOUD-PATIENT-DIGITAL,Patient digital front door,Patient Access,Tier 1,AWS,active
+meridian-health,APP-CLOUD-CLAIMS-ANALYTICS,Claims analytics lake,Enterprise Analytics,Tier 2,Azure,active
+meridian-health,APP-CLOUD-SECURITY-LAKE,Security event lake,Security,Tier 1,Azure,active
+meridian-health,APP-CLOUD-DATA-PLATFORM,Enterprise data platform,Enterprise Analytics,Tier 1,Azure,active
+meridian-health,APP-CLOUD-INTEGRATION-HUB,Integration services hub,Enterprise Integration,Tier 2,Hybrid,active

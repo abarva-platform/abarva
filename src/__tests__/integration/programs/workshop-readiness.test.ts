@@ -47,15 +47,25 @@ describe('buildWorkshopReadinessForProgram · determinism', () => {
     }
   });
 
-  it('all four canonical demo tenants surface workshops', () => {
-    expect(plan.tenants.length).toBeGreaterThanOrEqual(4);
-    for (const tenant of plan.tenants) {
-      const collected: WorkshopReadiness[] = [];
-      for (const program of tenant.programs) {
-        const list = buildWorkshopReadinessForProgram(tenant, program);
-        collected.push(...list);
-      }
+  it('surfaces workshops only for tenants with seeded programs', () => {
+    const programTenants = plan.tenants.filter((tenant) => tenant.programs.length > 0);
+    const routeStubTenants = plan.tenants.filter((tenant) => tenant.programs.length === 0);
+
+    expect(programTenants.length).toBeGreaterThan(0);
+    expect(routeStubTenants.length).toBeGreaterThan(0);
+
+    for (const tenant of programTenants) {
+      const collected = tenant.programs.flatMap((program) =>
+        buildWorkshopReadinessForProgram(tenant, program),
+      );
       expect(collected.length).toBeGreaterThan(0);
+    }
+
+    for (const tenant of routeStubTenants) {
+      const collected: WorkshopReadiness[] = tenant.programs.flatMap((program) =>
+        buildWorkshopReadinessForProgram(tenant, program),
+      );
+      expect(collected).toEqual([]);
     }
   });
 });

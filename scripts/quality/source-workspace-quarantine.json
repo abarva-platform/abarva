@@ -1,0 +1,29 @@
+{
+  "note": "Source workspace suites under src/app/(maestro)/source/preview/workspace/__tests__ that are deliberately NOT wired into CI. This directory's default is EXCLUDED by file: T-478 wired suites into .github/workflows/unit-suites.yml by exact path, so a file nobody enumerated is silently unrun. Before this list existed the only record of these three holds was a verdict in docs/architecture/t478-source-workspace-wiring-triage.json, which the CI coverage census does not read — so all three reported as untriaged and the directory held rank 2 on the governed-risk ranking with no untriaged work actually left in it. Adding an entry needs an owner, a reason, and the triage record the verdict is written in. Removing an entry is the fix.",
+  "howToClear": "Each entry is held because the suite is a source-text scanner: it reads a source file and asserts substrings of it, so a comment carrying the same substring satisfies it and wiring it would buy a green check and no protection. Clearing an entry means rewriting the suite to execute the behaviour it describes, wiring it into unit-suites.yml by exact path, deleting the entry here, and amending the triage record to record the discharge — as T-764 did for page-tenant-routing.test.ts. check-source-workspace-quarantine.mjs re-measures the reason on every run: when a held suite stops reading source text the entry FAILS, so it cannot outlive its reason.",
+  "ceiling": 3,
+  "scope": "src/app/(maestro)/source/preview/workspace/__tests__",
+  "quarantined": [
+    {
+      "suite": "sourceFreshness.test.tsx",
+      "owner": "T-558",
+      "reason": "Reads a source file at module scope and asserts substrings of it; renders nothing. Measured on 31f6badae: 1 readFileSync, 5 toContain — the same counts T-478 recorded.",
+      "heldBecause": "source_text_scanner",
+      "triageRecord": "docs/architecture/t478-source-workspace-wiring-triage.json"
+    },
+    {
+      "suite": "workspace-ava-contract.test.ts",
+      "owner": "T-558",
+      "reason": "Reads a client component, a view-model builder, a lens, a stylesheet and a retriever as text and asserts substrings of each. Measured on 31f6badae: 4 readFileSync, 40 toContain — the heaviest scanner in the directory.",
+      "heldBecause": "source_text_scanner",
+      "triageRecord": "docs/architecture/t478-source-workspace-wiring-triage.json"
+    },
+    {
+      "suite": "workspace-explicit-client-api-routing.test.ts",
+      "owner": "T-558",
+      "reason": "Reads a client component and two API route files and asserts substrings of each. Measured on 31f6badae: 1 readFileSync, 4 toContain. Its .browser.test.tsx sibling is wired; the pair takes opposite verdicts.",
+      "heldBecause": "source_text_scanner",
+      "triageRecord": "docs/architecture/t478-source-workspace-wiring-triage.json"
+    }
+  ]
+}

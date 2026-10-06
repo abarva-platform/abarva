@@ -7,6 +7,7 @@ on:
     paths:
       - "src/lib/atlas/**"
       - "src/lib/agent/retrieval*.ts"
+      - "src/lib/agent/visible-answer-contract.ts"
       - "src/lib/agent/response-shape.ts"
       - "src/app/api/tower/synthesis/**"
       - "src/app/api/v1/atlas/**"
@@ -36,3 +37,33 @@ jobs:
 
       - name: Atlas eval harness
         run: npm run atlas:eval
+
+      # The Tower grounding contract suite lives in `src/__tests__/integration`,
+      # which NO workflow runs: `coverage:behavior-gate` covers
+      # `src/__tests__/behaviors` only, and `production-readiness-gate.yml`
+      # runs a single named file from the integration tree. This workflow
+      # already triggers on `src/__tests__/integration/atlas/**` and on
+      # `src/lib/atlas/**` — the two things the suite is about — so it is the
+      # right place to actually execute it. Without this step the suite is
+      # enforced only by the local `test:before-commit` command.
+      # --runTestsByPath: jest reads a bare pattern as a regex.
+      - name: Exercise Atlas grounding contract
+        run: >-
+          npx jest --runTestsByPath
+          src/__tests__/integration/atlas/atlas-tower-grounding-contract.test.ts
+          --runInBand
+
+      # Two suites used to be named here as well —
+      # `src/lib/agent/__tests__/retrieval.azure-context.test.ts` and
+      # `…/visible-answer-contract.test.ts` — and they are not withdrawn from
+      # CI: T-743 wired their whole directory into the required "AI surface
+      # control catalog" job, which runs on every pull request with no `paths:`
+      # filter. That made these two steps the case
+      # `src/__tests__/behaviors/named-suite-requiredness.test.ts` refuses: a
+      # suite named in a job that does not block a merge while a required job
+      # already runs it, so the quotable line is the one with no authority. The
+      # rule's own remedy is "drop it and read PASS <path> out of the required
+      # job's own log", and that is what this is. The two path triggers above
+      # went with them for the same reason; the source files they guard —
+      # `retrieval*.ts` and `visible-answer-contract.ts` — still trigger this
+      # workflow.

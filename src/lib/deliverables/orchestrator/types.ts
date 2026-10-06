@@ -60,6 +60,17 @@ export interface GovernedEvidenceItem {
   provenanceRef: string;
 }
 
+/** A numeric value explicitly marked unsupported or excluded by governed evidence. */
+export interface ExcludedNumericClaim {
+  citationNumber: number;
+  sourceLabel: string;
+  kind: "currency" | "percentage" | "date";
+  /** Regular-expression sources for equivalent renderings of this same value. */
+  matchPatterns: string[];
+  /** Exact source rendering, used only to redact model-facing evidence. */
+  sourceValue: string;
+}
+
 export interface MissingEvidenceItem {
   evidenceFamily: string;
   label: string;
@@ -94,6 +105,17 @@ export interface SourceRegisterEntry {
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
   asOf?: string;
+}
+
+export interface RequiredEvidenceSignal {
+  /** Stable key used for audit/debug output only; never rendered as client prose. */
+  key: string;
+  /** The exact governed evidence statement that must survive into the artifact. */
+  statement: string;
+  /** The citation number that proves this signal. */
+  citationNumber: number;
+  /** Human-readable label shown in prompts and any deterministic carry-forward row. */
+  label: string;
 }
 
 // ── Formatting + quality profile ──
@@ -145,6 +167,16 @@ export interface QualityBar {
    * still being tuned against real generations.
    */
   advisoryBandMax?: number;
+  /**
+   * Depth-aware override for this deck's slide floor. When set, it REPLACES the
+   * fixed SLIDE_BANDS[type].min for both the generator instruction
+   * (deckLengthInstruction) and the gate (judgeSlideCount), so a smaller-scope
+   * Move is not forced to the full-scope slide count. Derived in build-request
+   * from confirmed scope (see shared/depth-aware-floor.ts); only ever lowers the
+   * band's min, never raises it, and the band ceiling is untouched. Undefined
+   * preserves the fixed band exactly.
+   */
+  slideFloor?: number;
   requiresCitations: boolean;
   requiresDecisionSection: boolean;
   requiresRecommendation: boolean;
@@ -195,8 +227,18 @@ export interface DeliverableIntelligenceRequest {
   deliverableType: string; // 'rfp_package' | 'business_case' | 'charter' | …
   audience: AudienceRole[];
   decisionContext: string; // the decision this artifact must support
+  /** Registry-authored, deliverable-specific generation constraints. */
+  generationPromptGuidance?: string;
   governedEvidenceBundle: GovernedEvidenceItem[];
+  /** Explicitly excluded values that must not appear in generated client artifacts. */
+  prohibitedNumericClaims?: ExcludedNumericClaim[];
   sourceRegister: SourceRegisterEntry[];
+  /**
+   * High-signal facts selected from governed evidence that must remain visible
+   * in the generated artifact. This closes the gap where a document can use many
+   * citations but quietly drop a decision-critical baseline metric.
+   */
+  requiredEvidenceSignals?: RequiredEvidenceSignal[];
   missingEvidence: MissingEvidenceItem[];
   clientCompleteItems: ClientCompleteItem[];
   approvedAssumptions: ApprovedAssumption[];
@@ -378,12 +420,15 @@ export type GenerationPass =
   | "board_grade_rewrite" // Pass 5 — revise to board-grade
   | "render_package" // Pass 6 — structure for renderers
   | "section_draft" // decomposed: write ONE planned section (bounded-parallel fan-out)
+  | "section_repair" // targeted repair for a section below its contract prose target
   | "synthesis"; // decomposed: the doc-level structured fields (recommendation, tables, checklist)
 
 export interface PassPrompt {
   pass: GenerationPass;
   system: string;
   user: string;
+  /** Stable user-message prefix that can be marked as an Anthropic prompt-cache breakpoint. */
+  cacheableContext?: string;
   maxTokens: number;
   /** board-grade artifacts must NOT be capped low; this guards that. */
   highStakes: boolean;
@@ -415,6 +460,22 @@ export interface QualityValidationResult {
     hasCentralTension: boolean;
     hasOptionsConsidered: boolean;
     hasEvidenceGapsNoted: boolean;
+    requiredEvidenceSignalCount?: number;
+    missingRequiredEvidenceSignalCount?: number;
+    /**
+     * How many exhibits the artifact brief asked for, and how many of those
+     * arrived. Since the synthesis pass may legitimately OMIT an exhibit rather
+     * than emit a placeholder one, absence is the expected failure mode, and an
+     * absence nobody counted reads exactly like a deliverable that never wanted
+     * the visual. These make the shortfall a number.
+     *
+     * Absent (not zero) when the caller supplied no expected-exhibit list —
+     * "not measured" and "measured, none expected" are different facts.
+     */
+    expectedExhibitCount?: number;
+    receivedExpectedExhibitCount?: number;
+    /** Titles of the expected exhibits that no produced exhibit matched. */
+    missingExpectedExhibits?: string[];
     /** ~200 words/minute executive reading pace, rounded up to at least 1. */
     readingTimeMinutes: number;
     /** true whenever any advisory/warning fired — a signal to track whether the
@@ -429,10 +490,19 @@ export interface QualityValidationResult {
 /** The structured document the model returns at render_package time. */
 export interface RenderableDeliverable {
   title: string;
+  /** Canonical deliverable key, carried by persistence for format-specific layout. */
+  deliverableType?: string;
   subtitle?: string;
   clientDisplayName: string;
   initiativeDisplayName: string;
   generatedSections: RenderableSection[];
+  /**
+   * Optional authored deck layer for PPTX output. When present, each slide is a
+   * model-authored executive argument with explicit supporting points, notes,
+   * and an optional link to a typed exhibit payload. The PPTX renderer should
+   * prefer this over inferring slides from document sections.
+   */
+  deckSlides?: RenderableDeckSlide[];
   tables: RenderableTable[];
   exhibits: RenderableExhibit[];
   sourceRegister: SourceRegisterEntry[];
@@ -440,6 +510,20 @@ export interface RenderableDeliverable {
   clientCompleteChecklist: ClientCompleteItem[];
   recommendation: string;
   nextActions: string[];
+}
+
+export interface RenderableDeckSlide {
+  key?: string;
+  title?: string;
+  /** One sentence: the argument this slide makes, not a topic label. */
+  governingMessage: string;
+  /** Short support points visible on the slide face. */
+  points?: string[];
+  /** Key of an exhibit in `exhibits`; the exhibit carries the drawable data. */
+  exhibitKey?: string;
+  /** Evidence, traceability, and facilitation notes stay off the slide face. */
+  speakerNotes?: string;
+  citationsUsed?: number[];
 }
 
 export interface RenderableSection {
@@ -469,7 +553,84 @@ export interface RenderableTable {
   columns: string[];
   rows: string[][];
   targetFormat: OutputFormat;
+  /**
+   * Zero-based index of the column that carries a status / RAG / ownership value
+   * (e.g. a risk level, an acceptance pass/fail, a readiness state). When set,
+   * the renderer colours that column's cells by value (see shared/cell-tone.ts),
+   * so an executive table reads at a glance. Undefined renders a plain table.
+   */
+  statusColumn?: number;
 }
+
+export interface ExhibitFlowNode {
+  id: string;
+  label: string;
+  role?: string;
+}
+
+export interface ExhibitFlowEdge {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+export interface ExhibitMatrixCell {
+  x: string;
+  y: string;
+  label: string;
+  value?: string;
+  weight?: number;
+}
+
+export interface ExhibitTimelineItem {
+  label: string;
+  start: string;
+  end?: string;
+}
+
+export interface ExhibitTimelineLane {
+  label: string;
+  items: ExhibitTimelineItem[];
+}
+
+export interface ExhibitArchitectureLane {
+  label: string;
+  items: string[];
+}
+
+export type ExhibitData =
+  | {
+      kind: "flow";
+      nodes: ExhibitFlowNode[];
+      edges: ExhibitFlowEdge[];
+    }
+  | {
+      kind: "matrix" | "heatmap" | "comparison";
+      axes?: { x: string; y: string };
+      cells: ExhibitMatrixCell[];
+    }
+  | {
+      kind: "timeline" | "roadmap";
+      lanes: ExhibitTimelineLane[];
+    }
+  | {
+      kind: "value_tree";
+      root: { label: string; value?: string };
+      branches: Array<{
+        label: string;
+        value?: string;
+        children?: Array<{ label: string; value?: string }>;
+      }>;
+    }
+  | {
+      kind:
+        | "conceptual_architecture"
+        | "logical_architecture"
+        | "physical_architecture"
+        | "agent_orchestration";
+      lanes: ExhibitArchitectureLane[];
+      legend?: string[];
+    };
 
 export interface RenderableExhibit {
   key: string;
@@ -477,4 +638,11 @@ export interface RenderableExhibit {
   kind: ExpectedExhibit["kind"];
   description: string;
   targetFormat: OutputFormat;
+  /**
+   * Structured values the renderer can draw. A title + description is not
+   * enough to create a client-ready exhibit; if this is absent, the renderer
+   * must not invent a generic diagram and the quality gate should surface the
+   * missing visual.
+   */
+  data?: ExhibitData;
 }

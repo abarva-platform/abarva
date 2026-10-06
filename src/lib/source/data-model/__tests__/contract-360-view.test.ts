@@ -270,6 +270,36 @@ describe("buildContract360View docExtractions", () => {
       towerValueClaims: NO_CLAIMS,
     });
     expect(view.docExtractions).toEqual([]);
+    expect(view.documentFiles).toEqual([]);
+  });
+
+  it("passes through governed document inventory rows", () => {
+    const file = {
+      file_id: "DOC-MSA",
+      tenant_key: "skyharbor_global",
+      file_name: "agreement.txt",
+      media_type: "text/plain",
+      page_count: 12,
+      load_run_id: "load-1",
+      document_role: "executed_agreement",
+      document_type: "master_services_agreement",
+      contract_ref: "c1",
+      visibility_class: "internal",
+      content_authenticity: "synthetic",
+      uploaded_at: "2027-01-01T00:00:00Z",
+      metadata_json: {},
+    };
+    const view = buildContract360View({
+      contract: contract(),
+      applicationScope: [],
+      financialExposure: NO_FINANCIAL,
+      operationalPerformance: NO_OPERATIONAL,
+      initiativeDependencies: NO_INITIATIVES,
+      towerObservations: NO_OBSERVATIONS,
+      towerValueClaims: NO_CLAIMS,
+      documentFiles: [file],
+    });
+    expect(view.documentFiles).toEqual([file]);
   });
 
   it("passes through supplied extractions verbatim", () => {

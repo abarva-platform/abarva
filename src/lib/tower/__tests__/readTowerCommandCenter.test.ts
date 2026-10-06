@@ -276,6 +276,9 @@ describe("readTowerCommandCenter", () => {
         servingRow({
           row_key: "action-1",
           page_key: "recommended_actions",
+          primary_object_id: undefined,
+          contract_id: "MER-TECH-IMS-001",
+          handoff_module: "Source",
         }),
       ],
       tower_ai_portfolio: [
@@ -326,6 +329,7 @@ describe("readTowerCommandCenter", () => {
     );
     expect(mart?.command.sourceFiles).toContain("SP08_Vendor_Contract");
     expect(mart?.programLanes[0]?.programName).toBe("Revenue-cycle automation");
+    expect(mart?.cxoActions[0]?.handoffEntityId).toBe("MER-TECH-IMS-001");
     expect(mart?.requiredFieldGaps[0]?.sourceRecordId).toBe("source-record-1");
     expect(mart?.headline).toContain("1 value claim");
     expect(mart?.headline).toContain("8 separate review rows");

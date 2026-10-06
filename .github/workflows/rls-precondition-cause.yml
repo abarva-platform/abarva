@@ -1,0 +1,99 @@
+name: RLS precondition cause (L4 fixture)
+
+# C-632. The L4 isolation suite refuses when a canonical tenant row does not
+# resolve. Until this gate existed, the only check on that refusal was a string
+# assertion that its sentence appeared in the SQL -- which proves a token is
+# present, not that the check can tell two causes apart.
+#
+# public.clients carries row-level security with one policy scoped to
+# service_role, so a connecting role outside that policy reads zero rows whether
+# or not the rows exist. "Absent" and "present but filtered" have OPPOSITE
+# remedies: one runs a canonicalization migration against the shared control
+# database, the other must not. A check that cannot distinguish them was
+# prescribing the first unconditionally.
+#
+# This job builds a pair of databases the connecting role cannot tell apart by
+# looking -- one with the rows, one without -- and requires the shipped SQL to
+# name the right cause for each, plus `indeterminate` from a vantage that cannot
+# compare. It runs against a disposable Postgres service container: it issues
+# DDL and DELETEs and must never point at a real database. The test itself
+# refuses any host that is not loopback.
+#
+# Complements .github/workflows/rls-regression.yml, which runs the same SQL
+# read-only against Azure Postgres through a private operator job on a schedule.
+# That lane proves the suite works where it matters; this one proves the suite's
+# precondition is honest, and it can run on a pull request because nothing here
+# touches Azure.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rls-precondition-cause.yml"
+      - "scripts/run-rls-regression.ts"
+      - "src/lib/security/rls-precondition-classification.ts"
+      - "supabase/migrations/20260516093000_clients_service_role_policy.sql"
+      - "tests/security/rls-regression-contract.test.ts"
+      - "tests/security/rls-regression.sql"
+      - "tests/security/test_rls_precondition_cause.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  precondition-cause:
+    name: L4 precondition tells absent from invisible
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: rls_precondition_fixture
+          POSTGRES_USER: rls_fixture_admin
+          POSTGRES_PASSWORD: rls_fixture_admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rls_fixture_admin -d rls_precondition_fixture"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+
+      # The fixture needs to create roles and a policy, so the connecting user
+      # must be the database superuser the service container provisions. It is a
+      # throwaway container, discarded with the job.
+      - name: Prove the precondition names the cause it can establish
+        env:
+          RLS_PRECONDITION_TEST_DATABASE_URL: postgresql://rls_fixture_admin:rls_fixture_admin@127.0.0.1:5432/rls_precondition_fixture
+        run: node --import tsx --test tests/security/test_rls_precondition_cause.ts
+
+      # Running it twice is part of the proof, not belt-and-braces: the fixture
+      # drops and rebuilds its own roles, and a hook that collapses on a second
+      # run reads exactly like a caught mutation. That happened while this was
+      # being written.
+      - name: Prove the fixture is re-runnable, so a collapsed hook cannot pass for a catch
+        env:
+          RLS_PRECONDITION_TEST_DATABASE_URL: postgresql://rls_fixture_admin:rls_fixture_admin@127.0.0.1:5432/rls_precondition_fixture
+        run: node --import tsx --test tests/security/test_rls_precondition_cause.ts
+
+      # Deliberately does NOT name
+      # src/__tests__/behaviors/rls-precondition-classification.test.ts. That
+      # suite is already swept by the required `Behavior coverage floor` job, and
+      # naming it here would make the quotable line the one that cannot block a
+      # merge while the blocking line stays anonymous --
+      # scripts/quality/check-named-suite-requiredness.mjs refuses exactly that,
+      # and refused this file before it was corrected. Read that suite's result
+      # out of the required job's own log. Only the contract test, which no
+      # required job sweeps, is named here.
+      - name: Hold the suite's precondition wording to the token the classifier keys on
+        run: npx jest --runTestsByPath tests/security/rls-regression-contract.test.ts

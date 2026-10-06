@@ -167,8 +167,6 @@ export default async function PatternOpsPage() {
       >
         <ContextBar
           tenant={tenant.tenantName}
-          mode="Read-only"
-          agent="Steward"
           data={`${numberLabel(report.totals.genomePatterns)} genome patterns`}
           liveStatus="Azure read"
           liveStatusKind="live"

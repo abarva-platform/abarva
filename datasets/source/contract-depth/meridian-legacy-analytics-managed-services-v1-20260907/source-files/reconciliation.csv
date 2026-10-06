@@ -1,0 +1,16 @@
+check_id,expected,actual,status
+contract_count,1,1,PASS
+scope_rows,8,8,PASS
+resource_rows,15,15,PASS
+pricing_bridge_rows,5,5,PASS
+monthly_spend_rows,12,12,PASS
+invoice_line_rows,56,56,PASS
+sla_rows,12,12,PASS
+ticket_rows,48,48,PASS
+batch_job_rows,96,96,PASS
+change_order_rows,8,8,PASS
+qbr_rows,4,4,PASS
+opportunity_rows,3,3,PASS
+evidence_documents,8,8,PASS
+contract_page_text_rows,19,19,PASS
+finance_confirmed_savings,0,0,PASS

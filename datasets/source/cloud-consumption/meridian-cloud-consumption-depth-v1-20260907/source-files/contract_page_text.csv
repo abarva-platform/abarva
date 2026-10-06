@@ -1,0 +1,251 @@
+tenant_key,dataset_version,source_row_id,contract_id,vendor_ref,vendor_name,source_file_id,source_page,page_text,page_text_sha256,mapping_status,parser_version,synthetic_policy
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AWS-001:DOC-MER-CLOUD-AWS-001-EDP:p1,MER-CLOUD-AWS-001,VEN-AWS,"Amazon Web Services, Inc.",DOC-MER-CLOUD-AWS-001-EDP,1,"# MER-CLOUD-AWS-001 EDP
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Amazon Web Services, Inc.
+Contract: MER-CLOUD-AWS-001
+Document type: enterprise discount program agreement
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for enterprise discount program agreement. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AWS-001-EDP
+- Expected layer: doc.extraction
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $23,400,000
+
+## Example action context
+- OPT-AWS-COMMIT-STEPUP-001: Convert persistent EC2 and RDS workloads from on-demand into committed-use coverage. Candidate amount: $620,000. Finance state: not_confirmed.
+- OPT-AWS-RIGHTSIZE-001: Downsize low-utilization production compute after owner validation. Candidate amount: $410,000. Finance state: not_confirmed.
+- OPT-AWS-EGRESS-001: Reduce avoidable cross-region and internet data-transfer charges on patient digital workloads. Candidate amount: $185,000. Finance state: not_confirmed.
+- OPT-AWS-SUPPORT-TIER-001: Review enterprise support tier charges against actual support usage and escalation profile. Candidate amount: $240,000. Finance state: not_confirmed.
+- OPT-CLOUD-AP-RECON-001: Keep billing export and AP-paid invoice reconciliation matched before any savings claim. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",1953c7c0783e73b3f5eba2babde148d73b831f032800e4dd24b24bb4115c89e6,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AWS-001:DOC-MER-CLOUD-AWS-001-CUR:p1,MER-CLOUD-AWS-001,VEN-AWS,"Amazon Web Services, Inc.",DOC-MER-CLOUD-AWS-001-CUR,1,"# MER-CLOUD-AWS-001 CUR
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Amazon Web Services, Inc.
+Contract: MER-CLOUD-AWS-001
+Document type: AWS Cost and Usage Report export
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for AWS Cost and Usage Report export. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AWS-001-CUR
+- Expected layer: consumption.sourcing_spend_monthly_v1
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $23,400,000
+
+## Example action context
+- OPT-AWS-COMMIT-STEPUP-001: Convert persistent EC2 and RDS workloads from on-demand into committed-use coverage. Candidate amount: $620,000. Finance state: not_confirmed.
+- OPT-AWS-RIGHTSIZE-001: Downsize low-utilization production compute after owner validation. Candidate amount: $410,000. Finance state: not_confirmed.
+- OPT-AWS-EGRESS-001: Reduce avoidable cross-region and internet data-transfer charges on patient digital workloads. Candidate amount: $185,000. Finance state: not_confirmed.
+- OPT-AWS-SUPPORT-TIER-001: Review enterprise support tier charges against actual support usage and escalation profile. Candidate amount: $240,000. Finance state: not_confirmed.
+- OPT-CLOUD-AP-RECON-001: Keep billing export and AP-paid invoice reconciliation matched before any savings claim. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",007a21c656f0a441280c87ac1c17541a718f0324e0babc083b45c88c979c8a2c,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AWS-001:DOC-MER-CLOUD-AWS-001-SAVINGS-PLAN:p1,MER-CLOUD-AWS-001,VEN-AWS,"Amazon Web Services, Inc.",DOC-MER-CLOUD-AWS-001-SAVINGS-PLAN,1,"# MER-CLOUD-AWS-001 COMMITMENTS
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Amazon Web Services, Inc.
+Contract: MER-CLOUD-AWS-001
+Document type: Savings Plans and Reserved Instance report
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for Savings Plans and Reserved Instance report. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AWS-001-SAVINGS-PLAN
+- Expected layer: consumption.sourcing_opportunity_v1
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $23,400,000
+
+## Example action context
+- OPT-AWS-COMMIT-STEPUP-001: Convert persistent EC2 and RDS workloads from on-demand into committed-use coverage. Candidate amount: $620,000. Finance state: not_confirmed.
+- OPT-AWS-RIGHTSIZE-001: Downsize low-utilization production compute after owner validation. Candidate amount: $410,000. Finance state: not_confirmed.
+- OPT-AWS-EGRESS-001: Reduce avoidable cross-region and internet data-transfer charges on patient digital workloads. Candidate amount: $185,000. Finance state: not_confirmed.
+- OPT-AWS-SUPPORT-TIER-001: Review enterprise support tier charges against actual support usage and escalation profile. Candidate amount: $240,000. Finance state: not_confirmed.
+- OPT-CLOUD-AP-RECON-001: Keep billing export and AP-paid invoice reconciliation matched before any savings claim. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",aac8f3a9c6bd6cd146086d03036f33d27b568174a5628e851d8a9ac9e2414aba,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AWS-001:DOC-MER-CLOUD-AWS-001-CLOUDWATCH:p1,MER-CLOUD-AWS-001,VEN-AWS,"Amazon Web Services, Inc.",DOC-MER-CLOUD-AWS-001-CLOUDWATCH,1,"# MER-CLOUD-AWS-001 UTILIZATION
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Amazon Web Services, Inc.
+Contract: MER-CLOUD-AWS-001
+Document type: CloudWatch and Compute Optimizer export
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for CloudWatch and Compute Optimizer export. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AWS-001-CLOUDWATCH
+- Expected layer: source.contract_operational_performance
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $23,400,000
+
+## Example action context
+- OPT-AWS-COMMIT-STEPUP-001: Convert persistent EC2 and RDS workloads from on-demand into committed-use coverage. Candidate amount: $620,000. Finance state: not_confirmed.
+- OPT-AWS-RIGHTSIZE-001: Downsize low-utilization production compute after owner validation. Candidate amount: $410,000. Finance state: not_confirmed.
+- OPT-AWS-EGRESS-001: Reduce avoidable cross-region and internet data-transfer charges on patient digital workloads. Candidate amount: $185,000. Finance state: not_confirmed.
+- OPT-AWS-SUPPORT-TIER-001: Review enterprise support tier charges against actual support usage and escalation profile. Candidate amount: $240,000. Finance state: not_confirmed.
+- OPT-CLOUD-AP-RECON-001: Keep billing export and AP-paid invoice reconciliation matched before any savings claim. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",ee8c375399983d07b4b4bf53ae37ff8dcb0c2b92ad21ba05f2b9696b2f5e0636,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AWS-001:DOC-MER-CLOUD-AWS-001-AP-INVOICES:p1,MER-CLOUD-AWS-001,VEN-AWS,"Amazon Web Services, Inc.",DOC-MER-CLOUD-AWS-001-AP-INVOICES,1,"# MER-CLOUD-AWS-001 AP RECON
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Amazon Web Services, Inc.
+Contract: MER-CLOUD-AWS-001
+Document type: AP invoice reconciliation
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for AP invoice reconciliation. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AWS-001-AP-INVOICES
+- Expected layer: source.contract_financial_exposure
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $23,400,000
+
+## Example action context
+- OPT-AWS-COMMIT-STEPUP-001: Convert persistent EC2 and RDS workloads from on-demand into committed-use coverage. Candidate amount: $620,000. Finance state: not_confirmed.
+- OPT-AWS-RIGHTSIZE-001: Downsize low-utilization production compute after owner validation. Candidate amount: $410,000. Finance state: not_confirmed.
+- OPT-AWS-EGRESS-001: Reduce avoidable cross-region and internet data-transfer charges on patient digital workloads. Candidate amount: $185,000. Finance state: not_confirmed.
+- OPT-AWS-SUPPORT-TIER-001: Review enterprise support tier charges against actual support usage and escalation profile. Candidate amount: $240,000. Finance state: not_confirmed.
+- OPT-CLOUD-AP-RECON-001: Keep billing export and AP-paid invoice reconciliation matched before any savings claim. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",97a53c634ea69613aaa050a0ace5deb0a7fbcfee8ce247b5873c73e0f5195193,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AZURE-001:DOC-MER-CLOUD-AZURE-001-EA:p1,MER-CLOUD-AZURE-001,VEN-MICROSOFT,Microsoft Corporation,DOC-MER-CLOUD-AZURE-001-EA,1,"# MER-CLOUD-AZURE-001 EA
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Microsoft Corporation
+Contract: MER-CLOUD-AZURE-001
+Document type: Azure enterprise agreement
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for Azure enterprise agreement. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AZURE-001-EA
+- Expected layer: doc.extraction
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $16,200,000
+
+## Example action context
+- OPT-AZURE-RESERVATION-001: Reserve steady Azure VM and SQL capacity for analytics workloads. Candidate amount: $430,000. Finance state: not_confirmed.
+- OPT-AZURE-SYNAPSE-SCHEDULE-001: Schedule non-production analytics pools and retire idle storage attached to old reporting jobs. Candidate amount: $275,000. Finance state: not_confirmed.
+- OPT-AZURE-TAG-COVERAGE-001: Close owner and application tag gaps before making business-unit savings claims. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",e05a3393dfea71e87ebcd4d27f8725a5cfd65bfd15ccdd896f83128fcc7f74b8,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AZURE-001:DOC-MER-CLOUD-AZURE-001-COST-MGMT:p1,MER-CLOUD-AZURE-001,VEN-MICROSOFT,Microsoft Corporation,DOC-MER-CLOUD-AZURE-001-COST-MGMT,1,"# MER-CLOUD-AZURE-001 COST MGMT
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Microsoft Corporation
+Contract: MER-CLOUD-AZURE-001
+Document type: Azure Cost Management export
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for Azure Cost Management export. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AZURE-001-COST-MGMT
+- Expected layer: consumption.sourcing_spend_monthly_v1
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $16,200,000
+
+## Example action context
+- OPT-AZURE-RESERVATION-001: Reserve steady Azure VM and SQL capacity for analytics workloads. Candidate amount: $430,000. Finance state: not_confirmed.
+- OPT-AZURE-SYNAPSE-SCHEDULE-001: Schedule non-production analytics pools and retire idle storage attached to old reporting jobs. Candidate amount: $275,000. Finance state: not_confirmed.
+- OPT-AZURE-TAG-COVERAGE-001: Close owner and application tag gaps before making business-unit savings claims. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",5ec5424692d5a4b0dd587145c3225e99df18933c94953b28a0c66f08be1ba0c3,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AZURE-001:DOC-MER-CLOUD-AZURE-001-RESERVATIONS:p1,MER-CLOUD-AZURE-001,VEN-MICROSOFT,Microsoft Corporation,DOC-MER-CLOUD-AZURE-001-RESERVATIONS,1,"# MER-CLOUD-AZURE-001 RESERVATIONS
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Microsoft Corporation
+Contract: MER-CLOUD-AZURE-001
+Document type: Azure reservations and savings plan report
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for Azure reservations and savings plan report. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AZURE-001-RESERVATIONS
+- Expected layer: consumption.sourcing_opportunity_v1
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $16,200,000
+
+## Example action context
+- OPT-AZURE-RESERVATION-001: Reserve steady Azure VM and SQL capacity for analytics workloads. Candidate amount: $430,000. Finance state: not_confirmed.
+- OPT-AZURE-SYNAPSE-SCHEDULE-001: Schedule non-production analytics pools and retire idle storage attached to old reporting jobs. Candidate amount: $275,000. Finance state: not_confirmed.
+- OPT-AZURE-TAG-COVERAGE-001: Close owner and application tag gaps before making business-unit savings claims. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",138bdd780c4acc7a397578724f88c6a63faea5f430106265927caf5986bd66d0,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AZURE-001:DOC-MER-CLOUD-AZURE-001-ADVISOR:p1,MER-CLOUD-AZURE-001,VEN-MICROSOFT,Microsoft Corporation,DOC-MER-CLOUD-AZURE-001-ADVISOR,1,"# MER-CLOUD-AZURE-001 ADVISOR
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Microsoft Corporation
+Contract: MER-CLOUD-AZURE-001
+Document type: Azure Advisor and Resource Graph export
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for Azure Advisor and Resource Graph export. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AZURE-001-ADVISOR
+- Expected layer: source.contract_operational_performance
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $16,200,000
+
+## Example action context
+- OPT-AZURE-RESERVATION-001: Reserve steady Azure VM and SQL capacity for analytics workloads. Candidate amount: $430,000. Finance state: not_confirmed.
+- OPT-AZURE-SYNAPSE-SCHEDULE-001: Schedule non-production analytics pools and retire idle storage attached to old reporting jobs. Candidate amount: $275,000. Finance state: not_confirmed.
+- OPT-AZURE-TAG-COVERAGE-001: Close owner and application tag gaps before making business-unit savings claims. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",dbe06f1348196573b955ee7ebd098742a169c548c343ab06b041d7535cd18247,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-cloud-consumption-depth-v1-20260907,page:MER-CLOUD-AZURE-001:DOC-MER-CLOUD-AZURE-001-AP-INVOICES:p1,MER-CLOUD-AZURE-001,VEN-MICROSOFT,Microsoft Corporation,DOC-MER-CLOUD-AZURE-001-AP-INVOICES,1,"# MER-CLOUD-AZURE-001 AP RECON
+
+Synthetic demo evidence. Tenant: meridian-health. Dataset: meridian-cloud-consumption-depth-v1-20260907.
+
+Vendor: Microsoft Corporation
+Contract: MER-CLOUD-AZURE-001
+Document type: AP invoice reconciliation
+
+## What this file is meant to prove
+This synthetic file mimics the client-owned source evidence for AP invoice reconciliation. It is not client truth and must not be used as finance-confirmed value.
+
+## Example extracted fields
+- Source file id: DOC-MER-CLOUD-AZURE-001-AP-INVOICES
+- Expected layer: source.contract_financial_exposure
+- Synthetic policy: synthetic_demo_only_not_client_truth
+- Related contract value: $16,200,000
+
+## Example action context
+- OPT-AZURE-RESERVATION-001: Reserve steady Azure VM and SQL capacity for analytics workloads. Candidate amount: $430,000. Finance state: not_confirmed.
+- OPT-AZURE-SYNAPSE-SCHEDULE-001: Schedule non-production analytics pools and retire idle storage attached to old reporting jobs. Candidate amount: $275,000. Finance state: not_confirmed.
+- OPT-AZURE-TAG-COVERAGE-001: Close owner and application tag gaps before making business-unit savings claims. Candidate amount: $0. Finance state: not_confirmed.
+
+## Parser notes
+The governed loader should preserve source_file_id, contract_id, vendor_ref, source section, row grain, source basis, and synthetic policy. Product pages may cite this file only as synthetic demo evidence.",297034d57fb2f075ac5766bd51d688745bad8c56fe505d37e989ee4f75fe1533,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth

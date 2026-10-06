@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState, type CSSProperties } from "react";
+import { presentOverlapTreatment } from "@/lib/source/data-model/overlap-treatment-narrative";
 import { DataTable } from "../DataTable";
 import { EvidenceLineageGraph } from "./EvidenceLineageGraph";
 import type { SourceWorkspaceVM } from "../buildViewModel";
@@ -129,6 +130,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
             </div>
           ) : null}
+          <CommercialPostureStrip vm={vm} />
           <ContractActionStoryPanel vm={vm} />
           <div
             style={{
@@ -687,6 +689,64 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
           <DetailPanel vm={vm} kind="evidence" />
           <EvidenceLineageGraph vm={vm} />
         </>
+      ) : null}
+
+      {vm.cEducation && vm.contractEducation ? (
+        <section
+          style={{
+            background: "#fff",
+            border: "1px solid rgba(10,10,11,.12)",
+            borderRadius: 8,
+            padding: "22px 26px",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              color: "#0f6e56",
+              marginBottom: 8,
+            }}
+          >
+            Archetype coaching guide
+          </div>
+          <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>
+            {vm.contractEducation.headline}
+          </h2>
+          <p style={{ color: "#5f5e5a", lineHeight: 1.55, maxWidth: 900 }}>
+            {vm.contractEducation.body}
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+              gap: 10,
+              marginTop: 16,
+            }}
+          >
+            {vm.contractEducation.steps.map((step) => (
+              <div
+                key={step.key}
+                style={{
+                  border: "1px solid rgba(10,10,11,.12)",
+                  borderTop: `3px solid ${step.state === "loaded" ? "#2f9e78" : "#c27a13"}`,
+                  borderRadius: 7,
+                  padding: "14px 15px",
+                  minHeight: 170,
+                }}
+              >
+                <b>{step.title}</b>
+                <p style={{ fontWeight: 700, lineHeight: 1.35 }}>{step.question}</p>
+                <p style={{ color: "#5f5e5a", lineHeight: 1.45, fontSize: 12 }}>
+                  {step.guidance}
+                </p>
+                <small style={{ color: "#888780" }}>Basis: {step.evidence}.</small>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {vm.cRenewal ? (
@@ -1526,6 +1586,16 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
               value={selected?.grade ?? "Not established"}
             />
             <SmallMetric
+              label="Confidence"
+              value={selected?.confidence ?? "Not established"}
+              tone={
+                selected?.confidence === "Not established" ||
+                Number.parseFloat(selected?.confidence ?? "0") < 50
+                  ? "#ba7517"
+                  : "#0f6e56"
+              }
+            />
+            <SmallMetric
               label="Finance confirmed"
               value={view.financeConfirmed}
               tone="#246b45"
@@ -1562,7 +1632,8 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
                     {opportunity.label}
                   </div>
                   <div style={{ fontSize: 11, color: "#5f5e5a", marginTop: 3 }}>
-                    {opportunity.stage} · {opportunity.grade}
+                    {opportunity.stage} · {opportunity.confidence} confidence ·{" "}
+                    {opportunity.grade}
                   </div>
                 </div>
                 <div
@@ -1731,8 +1802,7 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         <div style={{ fontSize: 12.2, color: "#5f5e5a", lineHeight: 1.45 }}>
           <b style={{ color: "#0a0a0b" }}>Overlap:</b>{" "}
-          {selected?.overlapTreatment ??
-            "No opportunity value is approved until evidence is resolved."}
+          {presentOverlapTreatment(selected?.overlapTreatment).text}
         </div>
       </div>
     </section>
@@ -1878,6 +1948,94 @@ const subStyle: CSSProperties = {
   color: "#888780",
   lineHeight: 1.35,
 };
+
+function CommercialPostureStrip({ vm }: { vm: SourceWorkspaceVM }) {
+  const posture = vm.commercialPosture;
+  if (!posture) return null;
+  return (
+    <section
+      aria-label="Commercial posture"
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(10,10,11,.12)",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "13px 16px",
+          borderBottom: "1px solid rgba(10,10,11,.08)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 850,
+            letterSpacing: ".08em",
+            textTransform: "uppercase",
+            color: "#0f6e56",
+            marginBottom: 4,
+          }}
+        >
+          {posture.headline}
+        </div>
+        <div style={{ fontSize: 12.5, color: "#5f5e5a", lineHeight: 1.45 }}>
+          {posture.summary}
+        </div>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))",
+        }}
+      >
+        {posture.items.map((item) => (
+          <div
+            key={item.label}
+            style={{
+              minHeight: 104,
+              padding: "12px 14px",
+              borderRight: "1px solid rgba(10,10,11,.07)",
+              borderBottom: "1px solid rgba(10,10,11,.07)",
+              background:
+                item.label === "Commitment posture"
+                  ? "rgba(15,110,86,.05)"
+                  : "#fff",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 850,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+                color: "#888780",
+                marginBottom: 6,
+              }}
+            >
+              {item.label}
+            </div>
+            <div
+              style={{
+                fontSize: 13.5,
+                fontWeight: 850,
+                color: item.tone,
+                lineHeight: 1.25,
+                marginBottom: 6,
+              }}
+            >
+              {item.value}
+            </div>
+            <div style={{ fontSize: 11.5, color: "#5f5e5a", lineHeight: 1.4 }}>
+              {item.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
@@ -2283,6 +2441,124 @@ function pluralOpportunity(count: number) {
   return count === 1 ? "opportunity" : "opportunities";
 }
 
+function OpportunityExecutiveStrip({
+  view,
+}: {
+  view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
+}) {
+  const quantifiedCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "quantified",
+  ).length;
+  const signalCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "signal",
+  ).length;
+  const financeConfirmedCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "finance_confirmed",
+  ).length;
+  const items = [
+    {
+      label: "Levers",
+      value: String(view.opportunities.length),
+      detail: "governed opportunity rows",
+      tone: "#0a0a0b",
+    },
+    {
+      label: "Negotiable",
+      value: view.potential.negotiable,
+      detail: "potential value, not a booked outcome",
+      tone: "#0f6e56",
+    },
+    {
+      label: "Quantified",
+      value: String(quantifiedCount),
+      detail: "calculation-backed or document-evidenced",
+      tone: "#1d9e75",
+    },
+    {
+      label: "Signal-stage",
+      value: String(signalCount),
+      detail: "requires more evidence before upgrade",
+      tone: "#ba7517",
+    },
+    {
+      label: "Finance confirmed",
+      value: String(financeConfirmedCount),
+      detail:
+        view.financeConfirmed === "Not established"
+          ? "no outcome claimed"
+          : `${view.financeConfirmed} outcome`,
+      tone: financeConfirmedCount > 0 ? "#246b45" : "#5f5e5a",
+    },
+  ];
+
+  return (
+    <div
+      aria-label="Executive lever summary"
+      style={{
+        borderTop: "1px solid rgba(10,10,11,.1)",
+        background: "#fff",
+        padding: "12px 16px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+          gap: 8,
+        }}
+      >
+        {items.map((item) => (
+          <div
+            key={item.label}
+            aria-label={`${item.label}: ${item.value}`}
+            style={{
+              border: "1px solid rgba(10,10,11,.1)",
+              borderRadius: 7,
+              padding: "10px 11px",
+              background: "#fbfaf7",
+              minHeight: 72,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 850,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+                color: "#888780",
+                marginBottom: 5,
+              }}
+            >
+              {item.label}
+            </div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 18,
+                fontWeight: 900,
+                color: item.tone,
+                lineHeight: 1.05,
+              }}
+            >
+              {item.value}
+            </div>
+            <div
+              style={{
+                fontSize: 11.3,
+                lineHeight: 1.35,
+                color: "#5f5e5a",
+                marginTop: 5,
+              }}
+            >
+              {item.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const view = vm.opportunityView;
   if (!view) return null;
@@ -2290,6 +2566,14 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const selectedSpine = vm.optSpine?.selected ?? null;
   const conflict = view.baseline.status === "conflict";
   const visibleOpportunities = view.opportunities.slice(0, 5);
+  // Item U-518. The sentences above count the whole set; the queue below shows
+  // five. Without this the difference is silent, and the densest opportunity
+  // fixture in the repository carries six rows for one contract, so the cap is
+  // reached rather than theoretical.
+  const cappedDisclosure =
+    view.opportunities.length > visibleOpportunities.length
+      ? `Showing ${visibleOpportunities.length} of ${view.opportunities.length}`
+      : null;
   const blockedCount = view.opportunities.filter(
     (opportunity) =>
       opportunity.stageRaw === "baseline_conflict" ||
@@ -2347,8 +2631,8 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
     : actionTriggers.length > 0
       ? actionTriggers.map((reason) => reason.detail).join(" ")
       : c?.notice && c?.expiry
-      ? `Notice ${c.notice}; expiry ${c.expiry}. Timing informs the workflow, but the case is driven by evidence and materiality.`
-      : "Timing is governed by the loaded contract terms when available.";
+        ? `Notice ${c.notice}; expiry ${c.expiry}. Timing informs the workflow, but the case is driven by evidence and materiality.`
+        : "Timing is governed by the loaded contract terms when available.";
   const rankRead = selectedSpine
     ? `${selectedSpine.rank} of the current optimization queue with fit ${selectedSpine.score}/100. ${
         supportSignals.length > 0
@@ -2449,7 +2733,11 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
               title="Proof standard"
               body={conflict ? view.baseline.headline : evidenceGateRead}
             />
-            <StoryTile index="05" title="Next decision" body={`${evidenceRead} ${nextAction}`} />
+            <StoryTile
+              index="05"
+              title="Next decision"
+              body={`${evidenceRead} ${nextAction}`}
+            />
           </div>
         </div>
         <div>
@@ -2534,6 +2822,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
           </div>
         </div>
       </div>
+      <OpportunityExecutiveStrip view={view} />
       <div
         style={{
           borderTop: "1px solid rgba(10,10,11,.1)",
@@ -2555,6 +2844,9 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
           <div style={{ fontSize: 11.5, color: "#5f5e5a" }}>
             Fact-backed lines only; values are potential until workflow and
             finance prove outcome.
+            {cappedDisclosure
+              ? ` ${cappedDisclosure} identified opportunities, highest value first.`
+              : ""}
           </div>
         </div>
         <div
@@ -3034,6 +3326,22 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                     </text>
                   </g>
                 ))}
+                {/*
+                  Item U-518. The box holds five rows; the set can hold more.
+                  Plotting the first five under an unqualified heading reads as
+                  the whole set.
+                */}
+                {view.opportunities.length > 5 ? (
+                  <text
+                    x="606"
+                    y="282"
+                    fontSize="9.6"
+                    fontWeight="700"
+                    fill="#5f5e5a"
+                  >
+                    {`Showing 5 of ${view.opportunities.length}`}
+                  </text>
+                ) : null}
               </g>
 
               <g filter="url(#relShadow)">
@@ -4119,8 +4427,7 @@ function DetailPanel({
         sum +
         Math.max(
           0,
-          Number(row.credit_calculated ?? 0) -
-            Number(row.credit_claimed ?? 0),
+          Number(row.credit_calculated ?? 0) - Number(row.credit_claimed ?? 0),
         ),
       0,
     );
@@ -4153,10 +4460,13 @@ function DetailPanel({
               {
                 text:
                   row.actual_value ??
-                  (row.value_num == null ? "Not established" : String(row.value_num)),
+                  (row.value_num == null
+                    ? "Not established"
+                    : String(row.value_num)),
                 align: "right" as const,
                 weight: row.performance_state === "breached" ? 800 : 400,
-                color: row.performance_state === "breached" ? "#a32d2d" : "#2c2c2a",
+                color:
+                  row.performance_state === "breached" ? "#a32d2d" : "#2c2c2a",
               },
               {
                 text:
@@ -4166,7 +4476,8 @@ function DetailPanel({
                       ? "Not loaded"
                       : "Met",
                 weight: row.performance_state === "breached" ? 800 : 500,
-                color: row.performance_state === "breached" ? "#a32d2d" : "#246b45",
+                color:
+                  row.performance_state === "breached" ? "#a32d2d" : "#246b45",
               },
               {
                 text: hasCredit ? formatCurrency(creditOwed) : "-",

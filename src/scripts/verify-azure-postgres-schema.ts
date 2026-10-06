@@ -15,6 +15,28 @@ const TABLES_TO_VERIFY = [
   'source_events',
   'gate_criteria',
   'ai_initiatives_registry',
+  'source_contract_evidence_manifests',
+  'source_contract_evidence_rows',
+  'source_contract_evidence_metrics',
+  'tower_cmdb_cis',
+  'tower_dora_metrics',
+  'tower_workforce',
+  'program_evidence_items',
+  'program_evidence_reviews',
+];
+
+const REQUIRED_SOURCE_EVIDENCE_TABLES = [
+  'source_contract_evidence_manifests',
+  'source_contract_evidence_rows',
+  'source_contract_evidence_metrics',
+];
+
+const REQUIRED_MOVES_CURRENT_STATE_TABLES = [
+  'tower_cmdb_cis',
+  'tower_dora_metrics',
+  'tower_workforce',
+  'program_evidence_items',
+  'program_evidence_reviews',
 ];
 
 async function scalar<T = unknown>(client: Client, sql: string): Promise<T> {
@@ -45,6 +67,24 @@ async function main() {
     for (const table of TABLES_TO_VERIFY) {
       const exists = await scalar<boolean>(client, `select to_regclass('public.${table}') is not null`);
       summary[table] = exists ? await scalar<number>(client, `select count(*)::int from ${table}`) : null;
+    }
+
+    const missingSourceEvidenceTables = REQUIRED_SOURCE_EVIDENCE_TABLES.filter(
+      (table) => summary[table] === null,
+    );
+    if (missingSourceEvidenceTables.length > 0) {
+      throw new Error(
+        `Required Source evidence tables are missing: ${missingSourceEvidenceTables.join(', ')}`,
+      );
+    }
+
+    const missingMovesCurrentStateTables = REQUIRED_MOVES_CURRENT_STATE_TABLES.filter(
+      (table) => summary[table] === null,
+    );
+    if (missingMovesCurrentStateTables.length > 0) {
+      throw new Error(
+        `Required Moves current-state tables are missing: ${missingMovesCurrentStateTables.join(', ')}`,
+      );
     }
 
     console.log(JSON.stringify(summary, null, 2));

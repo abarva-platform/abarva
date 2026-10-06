@@ -7,14 +7,23 @@
 // used throughout the Moves phase-workspace slice.
 
 import {
+  buildAvaModuleCaveats,
+  collectMissingAvaModuleInputs,
+  type AvaModuleOptionalInputField,
+} from "@/lib/agent/module-expert-contract";
+import {
   MOVES_AVA_ALLOWED_ACTIONS,
   MOVES_AVA_DISALLOWED_ACTIONS,
+  type MovesAvaApprovedEvidenceItem,
   type MovesAvaChatPacket,
   type MovesAvaChecklistStatus,
   type MovesAvaFeedForwardSummary,
   type MovesAvaGateCriterion,
 } from "./types";
-import { detectSourceAwareness, detectTowerAwareness } from "./source-tower-awareness";
+import {
+  detectSourceAwareness,
+  detectTowerAwareness,
+} from "./source-tower-awareness";
 
 export interface BuildMovesAvaChatPacketInput {
   tenant: string;
@@ -28,18 +37,21 @@ export interface BuildMovesAvaChatPacketInput {
   recommendedSessions?: string[];
   checklistStatus?: MovesAvaChecklistStatus | null;
   evidenceNeedPackets?: string[];
+  approvedEvidence?: MovesAvaApprovedEvidenceItem[];
+  approvedEvidenceTotal?: number;
+  approvedEvidenceUnavailable?: boolean;
   currentStateAssessment?: string | null;
   uploadedTemplateMappings?: string[];
   whatChangedSummary?: string | null;
   gateCriteria?: MovesAvaGateCriterion[];
   nextPhaseFeedForwardPack?: MovesAvaFeedForwardSummary | null;
   approvedInputsPackPresent?: boolean;
+  terminalHandoffComplete?: boolean;
 }
 
-const OPTIONAL_FIELD_LABELS: ReadonlyArray<{
-  key: keyof BuildMovesAvaChatPacketInput;
-  label: string;
-}> = [
+const OPTIONAL_FIELD_LABELS: ReadonlyArray<
+  AvaModuleOptionalInputField<BuildMovesAvaChatPacketInput>
+> = [
   { key: "checklistStatus", label: "phase checklist status" },
   { key: "evidenceNeedPackets", label: "evidence-need packets" },
   { key: "currentStateAssessment", label: "current-state assessment" },
@@ -49,25 +61,19 @@ const OPTIONAL_FIELD_LABELS: ReadonlyArray<{
   { key: "nextPhaseFeedForwardPack", label: "next-phase feed-forward pack" },
 ];
 
-function isPresent(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
-  if (Array.isArray(value)) return value.length > 0;
-  return true;
-}
-
 export function buildMovesAvaChatPacket(
   input: BuildMovesAvaChatPacketInput,
   questionText: string,
 ): MovesAvaChatPacket {
-  const missingInputs = OPTIONAL_FIELD_LABELS.filter(
-    ({ key }) => !isPresent(input[key]),
-  ).map(({ label }) => label);
-
-  const caveats = missingInputs.map(
-    (label) => `${label} was not loaded this turn — treat as needs confirmation, do not guess.`,
+  const terminalHandoffComplete = input.terminalHandoffComplete ?? false;
+  const missingInputs = collectMissingAvaModuleInputs(
+    input,
+    OPTIONAL_FIELD_LABELS,
   );
+  const caveats = buildAvaModuleCaveats(missingInputs);
 
   return {
+    surface: "moves",
     tenant: input.tenant,
     moveId: input.moveId,
     moveTitle: input.moveTitle,
@@ -78,13 +84,22 @@ export function buildMovesAvaChatPacket(
     phaseTemplates: input.phaseTemplates ?? [],
     recommendedSessions: input.recommendedSessions ?? [],
     checklistStatus: input.checklistStatus ?? null,
-    evidenceNeedPackets: input.evidenceNeedPackets ?? [],
+    evidenceNeedPackets: terminalHandoffComplete
+      ? []
+      : (input.evidenceNeedPackets ?? []),
+    approvedEvidence: input.approvedEvidence ?? [],
+    approvedEvidenceTotal:
+      input.approvedEvidenceTotal ?? input.approvedEvidence?.length ?? 0,
+    approvedEvidenceUnavailable: input.approvedEvidenceUnavailable ?? false,
     currentStateAssessment: input.currentStateAssessment ?? null,
     uploadedTemplateMappings: input.uploadedTemplateMappings ?? [],
     whatChangedSummary: input.whatChangedSummary ?? null,
     gateCriteria: input.gateCriteria ?? [],
-    nextPhaseFeedForwardPack: input.nextPhaseFeedForwardPack ?? null,
+    nextPhaseFeedForwardPack: terminalHandoffComplete
+      ? null
+      : (input.nextPhaseFeedForwardPack ?? null),
     approvedInputsPackPresent: input.approvedInputsPackPresent ?? false,
+    terminalHandoffComplete,
     sourceImplication: detectSourceAwareness(questionText),
     towerMeasurement: detectTowerAwareness(questionText),
     missingInputs,

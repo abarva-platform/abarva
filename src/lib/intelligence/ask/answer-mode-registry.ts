@@ -1,9 +1,12 @@
 import {
+  GENERAL_ADVISORY_CONTRACT,
   INDUSTRY_TREND_TO_AI_BETS_CONTRACT,
+  PORTFOLIO_PRIORITIZATION_CONTRACT,
   STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
   STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
   type AbarvaAnswerMode,
 } from "./response-policy";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 export type CxoAnswerModeKey =
   | AbarvaAnswerMode
@@ -40,18 +43,25 @@ export interface CxoAnswerModeContract {
   systemContract?: string;
   promptDirective?: string;
   deterministicFallback?: (text: string) => string;
+  /**
+   * The surface-handoff FORMAT OVERRIDE tells the model to explain how AbarVa
+   * would run the work through Moves. That is right for the strategy and
+   * bet-framing modes, but wrong for `general`, which also answers simple
+   * factual lookups where a Moves handoff is noise.
+   */
+  suppressSurfaceHandoffOverride?: boolean;
 }
 
 const ABARVA_SURFACE_PLAN_SENTENCE =
   "Have Intelligence frame the executive bet, Home verify current-state systems, data, owners, and gaps, Moves turn it into governed phase work, Source test vendor/commercial levers when relevant, and Tower track value, adoption, risk, and funding evidence.";
 
 export const MOVES_EXECUTION_PHASE_LABELS = [
-  "P0 Originate",
-  "P1 Charter",
-  "P2 Understand Current State",
-  "P3 Choose the Approach",
-  "P4 Build the Plan",
-  "P5 Prepare to Execute",
+  PHASE_LABELS[0],
+  PHASE_LABELS[1],
+  PHASE_LABELS[2],
+  PHASE_LABELS[3],
+  PHASE_LABELS[4],
+  PHASE_LABELS[5],
   "Tower Track Outcomes",
 ] as const;
 
@@ -75,18 +85,18 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
       (label) => !presentPhaseLabels.includes(label),
     ).map((label) => {
       switch (label) {
-        case "P0 Originate":
+        case PHASE_LABELS[0]:
           return "- P0 Originate: frame the bet, sponsor, decision owner, and why-now logic.";
-        case "P1 Charter":
+        case PHASE_LABELS[1]:
           return "- P1 Charter: define scope, sponsor, success metric, and decision cadence.";
-        case "P2 Understand Current State":
-          return "- P2 Understand Current State: ground systems, data, owners, contracts, gaps, and evidence boundaries.";
-        case "P3 Choose the Approach":
-          return "- P3 Choose the Approach: compare options by value, readiness, risk, and dependency.";
-        case "P4 Build the Plan":
-          return "- P4 Build the Plan: turn the chosen approach into workstreams, milestones, risks, and funding asks.";
-        case "P5 Prepare to Execute":
-          return "- P5 Prepare to Execute: confirm owners, controls, vendors, adoption plan, and launch readiness.";
+        case PHASE_LABELS[2]:
+          return "- P2 Discover & Diagnose: ground systems, data, owners, contracts, gaps, and evidence boundaries.";
+        case PHASE_LABELS[3]:
+          return "- P3 Design Future State: compare options by value, readiness, risk, and dependency.";
+        case PHASE_LABELS[4]:
+          return "- P4 Roadmap & Business Case: turn the chosen approach into workstreams, milestones, risks, and funding asks.";
+        case PHASE_LABELS[5]:
+          return "- P5 Mobilize & Handoff: confirm owners, controls, adoption plan, and Tower handoff readiness; project execution starts after roadmap approval.";
         case "Tower Track Outcomes":
           return "- Tower Track Outcomes: track adoption, KPI movement, benefits, risks, and funding gates.";
       }
@@ -102,10 +112,10 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
     "",
     "- P0 Originate: Intelligence frames the candidate bets, decision owner, and why-now logic. Output: bet slate and executive question.",
     "- P1 Charter: Moves defines scope, sponsor, success metric, and decision cadence. Output: sprint charter and governance path.",
-    "- P2 Understand Current State: Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. Output: current-state evidence pack.",
-    "- P3 Choose the Approach: Moves compares options by value, readiness, risk, and dependency. Output: recommended approach and stop/go gate.",
-    "- P4 Build the Plan: Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. Output: roadmap and business case.",
-    "- P5 Prepare to Execute: Moves confirms owners, controls, vendors, adoption plan, and launch readiness. Output: execution-ready plan.",
+    "- P2 Discover & Diagnose: Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. Output: current-state evidence pack.",
+    "- P3 Design Future State: Moves compares options by value, readiness, risk, and dependency. Output: recommended approach and stop/go gate.",
+    "- P4 Roadmap & Business Case: Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. Output: roadmap and business case.",
+    "- P5 Mobilize & Handoff: Moves confirms owners, controls, adoption plan, and Tower handoff readiness. Output: mobilization package; execution begins after roadmap approval.",
     "- Tower Track Outcomes: Tower tracks adoption, KPI movement, benefits, risks, and funding gates for accountable owner review. Output: value-realization scorecard.",
   ].join("\n");
 
@@ -331,6 +341,10 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     bannedPhrases: COMMON_BANNED_PHRASES,
     exportRequired: false,
     liveProofPrompt: "What is the executive read on the current state?",
+    systemContract: GENERAL_ADVISORY_CONTRACT,
+    promptDirective:
+      "ACTIVE ANSWER MODE: general advisory. Classify the depth of the question before writing. If it is a simple factual lookup, answer it directly in one short paragraph and stop -- no executive framework, no unrequested recommendation, no evidence-boundary lecture, no table. If it is an executive or analytical question, lead with the judgment, support it with the two or three strongest tenant signals, and close on the decision implication. Separate tenant-loaded fact from industry pattern from recommendation. Name missing evidence as missing instead of assuming it.",
+    suppressSurfaceHandoffOverride: true,
   },
   strategy_to_abarva_solution: {
     mode: "strategy_to_abarva_solution",
@@ -343,7 +357,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
       "How would AbarVa solve this for supply-chain AI top bets? Include Intelligence, Home, Moves, Source, and Tower.",
     systemContract: STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
     promptDirective:
-      "ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as a compact AbarVa Pyramid Brief, not a mini deck. Use exactly 3 short paragraphs by default: Answer, Proof, Move. The Move paragraph must explain the AbarVa path naturally: Intelligence frames the bet, Home validates current-state evidence, Moves turns it into governed execution, Source checks vendor/commercial levers when relevant, and Tower tracks value/adoption/risk evidence. Do not create a long surface-by-surface section unless the user explicitly asks for a deep implementation plan.",
+      "ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as a compact AbarVa Pyramid Brief, not a mini deck. Use exactly 3 short paragraphs by default: Answer, Proof, Move. The Move paragraph must explain the AbarVa path naturally: Intelligence frames the bet, Home validates current-state evidence, Moves shapes the approved roadmap and mobilization handoff, Source checks vendor/commercial levers when relevant, and Tower tracks post-approval execution and value/adoption/risk evidence. Do not create a long surface-by-surface section unless the user explicitly asks for a deep implementation plan.",
     deterministicFallback: ensureAbarvaSolutionBrief,
   },
   strategy_to_moves_execution: {
@@ -364,8 +378,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     liveProofPrompt:
       "If I run the supply-chain AI top bets through Moves for 8 weeks, what would the plan look like by phases?",
     systemContract: `${STRATEGY_TO_ABARVA_SOLUTION_CONTRACT}\n\n${STRATEGY_TO_MOVES_EXECUTION_CONTRACT}`,
-    promptDirective:
-      'ACTIVE ANSWER MODE: strategy_to_moves_execution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking. Include a compact Moves phase plan with one clear item for each label: P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes. Do not say Tower certifies by itself; Tower tracks value evidence for Finance or the accountable outcome owner to certify.',
+    promptDirective: `ACTIVE ANSWER MODE: strategy_to_moves_execution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for the approved roadmap and mobilization handoff, Source for vendor/commercial levers, and Tower for post-approval execution and value/adoption tracking. Include a compact Moves phase plan with one clear item for each label: ${MOVES_EXECUTION_PHASE_LABELS.slice(0, 6).join(", ")}, and Tower Track Outcomes. Do not say Tower certifies by itself; Tower tracks value evidence for Finance or the accountable outcome owner to certify.`,
     deterministicFallback: ensureMovesExecutionPhaseTable,
   },
   strategy_to_source_execution: {
@@ -470,7 +483,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
   },
   portfolio_prioritization: {
     mode: "portfolio_prioritization",
-    active: false,
+    active: true,
     requiredSections: [
       "Portfolio read",
       "Ranking logic",
@@ -483,6 +496,9 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     exportRequired: true,
     liveProofPrompt:
       "Prioritize these AI bets by value, readiness, complexity, and dependency.",
+    systemContract: PORTFOLIO_PRIORITIZATION_CONTRACT,
+    promptDirective:
+      "ACTIVE ANSWER MODE: portfolio_prioritization. The user is ordering a set the enterprise already holds, not discovering industry options. Open with the portfolio read, state the ranking logic before the ranking, and keep value separate from readiness. Name the dependencies that force sequence -- a shared data foundation, a single owner, or one vendor negotiation decides order more than any score. Recommend invest now, validate next, sequence, or hold for each item, and say why. Do not manufacture ROI, savings percentages, or composite scores; where readiness or value is unevidenced, make that the validation gate. Emit the scorecard and value/readiness matrix payload only for an explicit ranking, matrix, or top-N ask.",
   },
   risk_control_plan: {
     mode: "risk_control_plan",
@@ -513,6 +529,9 @@ export function buildCxoAnswerModeSystemAddendum(
 ): string {
   const contract = getCxoAnswerModeContract(mode);
   if (!contract.systemContract) return "";
+  if (contract.suppressSurfaceHandoffOverride) {
+    return `\n\n${contract.systemContract}`;
+  }
 
   return `\n\n${contract.systemContract}
 

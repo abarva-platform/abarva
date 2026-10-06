@@ -58,6 +58,56 @@ describe("getContractOptimizationOpportunitySet", () => {
     withSessionMock.mockReset();
   });
 
+  it("leads with a recorded P0 ask and preserves the negotiation owner while refusing an unsupported size", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (sql.includes("GROUP BY dataset_version")) {
+          return [{ dataset_version: "test-v1" }] as R[];
+        }
+        if (sql.includes("FROM source.optimization_opportunity") && sql.includes("ORDER BY amount_usd")) {
+          return [
+            { opportunity_id: "a-marketplace", contract_id: "CTR-090", stage: "signal", owner: "Generic owner", blocking_gap: "Finance confirmation and owner approval are required before realized value can be claimed.", payload: { label: "Marketplace route", owner_role: "Cloud FinOps", priority: "P2" } },
+            { opportunity_id: "z-ramp", contract_id: "CTR-090", stage: "signal", owner: "Generic owner", blocking_gap: "Finance confirmation and owner approval are required before realized value can be claimed.", payload: { label: "Re-time commitment", owner_role: "Strategic Sourcing", priority: "P0" } },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.opportunity_claim claim")) {
+          return [{ claim_id: "nonsizing", claim_role: "timing", opportunity_id: "z-ramp", contract_id: "CTR-090" }] as R[];
+        }
+        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+          return [
+            { opportunity_id: "a-marketplace", accountable_role: "Cloud FinOps", priority: "P2" },
+            { opportunity_id: "z-ramp", accountable_role: "Category Management", priority: "P0" },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.optimization_case") && !sql.includes("JOIN source.optimization_case")) {
+          return [{
+            optimization_case_id: "case-unverified",
+            case_state: "unexpected_future_state",
+            owner: null,
+            next_action: null,
+            case_count: 1,
+          }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract());
+    expect(set?.opportunities.map((row) => row.opportunityId)).toEqual(["z-ramp", "a-marketplace"]);
+    expect(set?.selectedOpportunityId).toBe("z-ramp");
+    expect(set?.optimizationCase).toMatchObject({
+      caseState: "unverified",
+      nextAction: "Next action not recorded.",
+    });
+    expect(set?.opportunities[0]).toMatchObject({
+      owner: "Category Management",
+      amountUsd: null,
+      blockingGap: "No supported sizing calculation or accepted benchmark is recorded.",
+    });
+  });
+
   it("does not include evidence requirements from another contract in the same dataset", async () => {
     const baselineSql: string[] = [];
     withSessionMock.mockImplementation(async (callback) => {
@@ -92,7 +142,7 @@ describe("getContractOptimizationOpportunitySet", () => {
               approval_state: "requires_scope_owner_approval",
               narrative:
                 "Scope reduction is ready for an internal reclaim decision.",
-              payload: { label: "Scope reduction" },
+              payload: { title: "Scope reduction from loaded title" },
             },
             {
               tenant_key: "skyharbor_global",
@@ -166,6 +216,7 @@ describe("getContractOptimizationOpportunitySet", () => {
               optimization_case_id: "CTR-090:optimize-contract",
               door1_event_id: "event-090",
               case_state: "outreach_approval",
+              case_count: 2,
               owner: "Strategic sourcing owner",
               next_action: "Route the target position for outreach approval.",
             },
@@ -221,6 +272,12 @@ describe("getContractOptimizationOpportunitySet", () => {
 
     expect(set?.contractId).toBe("CTR-090");
     expect(set?.baseline.status).toBe("ready");
+    expect(set?.opportunities[0]?.label).toBe(
+      "Scope reduction from loaded title",
+    );
+    expect(set?.opportunities[0]?.shortLabel).toBe(
+      "Scope reduction from loaded title",
+    );
     expect(set?.evidenceRequirements).toEqual([
       "Review included invoice lines and complete the amendment search.",
     ]);
@@ -230,6 +287,7 @@ describe("getContractOptimizationOpportunitySet", () => {
       caseId: "CTR-090:optimize-contract",
       door1EventId: "event-090",
       caseState: "outreach_approval",
+      caseCount: 2,
     });
     expect(set?.approvalRequests).toHaveLength(1);
     expect(set?.approvalRequests?.[0]).toMatchObject({
@@ -321,6 +379,74 @@ describe("getContractOptimizationOpportunitySet", () => {
     expect(set?.baseline.pricingScheduleAnnualValueUsd).toBeNull();
   });
 
+  it("shows the contract annual value and blocks a stale persisted baseline", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (sql.includes("GROUP BY dataset_version")) return [{ dataset_version: "test-v1" }] as R[];
+        if (sql.includes("FROM source.optimization_opportunity") && sql.includes("ORDER BY amount_usd")) {
+          return [{ opportunity_id: "opp-1", contract_id: "CTR-090", stage: "signal" }] as R[];
+        }
+        if (sql.includes("FROM source.optimization_baseline")) {
+          return [{
+            baseline_state: "ready", annual_value_usd: 42_000_000,
+            actual_annual_spend_usd: 37_400_000, total_committed_value_usd: 173_900_000,
+            conflict_amount_usd: 0, payload: { headline: "Commercial baseline reconciles." },
+          }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract({
+      resolved_annual_value: 44_000_000,
+      annual_value_conflict_flag: true,
+    }));
+    expect(set?.baseline.annualValueUsd).toBe(43_500_000);
+    expect(set?.baseline.status).toBe("conflict");
+    expect(set?.baseline.conflictAmountUsd).toBe(1_500_000);
+    expect(set?.baseline.detail).toContain("Contract 360");
+    expect(set?.actionState).toBe("request_evidence");
+    expect(set?.recommendation).toBe("Build evidence before optimizing.");
+  });
+
+  it("does not present an authored claim as calculated when its run disagrees", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (sql.includes("GROUP BY dataset_version")) return [{ dataset_version: "test-v1" }] as R[];
+        if (sql.includes("FROM source.optimization_opportunity") && sql.includes("ORDER BY amount_usd")) {
+          return [{
+            opportunity_id: "opp-1", contract_id: "CTR-090", stage: "signal",
+            amount_usd: 1_200_000, amount_state: "exact", value_type: "avoided_cost",
+          }] as R[];
+        }
+        if (sql.includes("FROM source.opportunity_claim claim")) {
+          return [{
+            claim_id: "claim-1", claim_role: "sizing", opportunity_id: "opp-1",
+            contract_id: "CTR-090", basis: "calculated", amount_usd: 1_200_000,
+            evidence_status: "supported", calculation_run_id: "run-1",
+            source_refs: [{ source_table: "source.calculation_input", source_record_id: "input-1" }],
+          }] as R[];
+        }
+        if (sql.includes("FROM source.calculation_run run")) {
+          return [{ opportunity_id: "opp-1", calculation_run_id: "run-1" }] as R[];
+        }
+        if (sql.includes("FROM source.calculation_output output")) {
+          return [{ calculation_run_id: "run-1", output_key: "calculated_amount_usd", amount_usd: 900_000 }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract());
+    expect(set?.opportunities[0]).toMatchObject({ amountUsd: null, amountState: "not_sized" });
+    expect(set?.opportunities[0]?.blockingGap).toContain("calculation run");
+    expect(set?.potentialAvoidableUsd).toBe(0);
+  });
+
   it("selects the approval-ready target position before diagnostic rate variance when no request exists", async () => {
     withSessionMock.mockImplementation(async (callback) => {
       const run = async <R>(sql: string): Promise<R[]> => {
@@ -374,7 +500,17 @@ describe("getContractOptimizationOpportunitySet", () => {
               approval_state: "requires_strategy_approval",
               narrative:
                 "The target position is ready for approval before outreach.",
-              payload: { label: "Negotiated improvement" },
+              payload: {
+                label: "Negotiated improvement",
+                buyer_ask: "Reset the commitment ramp.",
+                negotiation_language:
+                  "Tie commitment step-up to production workload gates.",
+                vendor_concession: "Accept milestone-based consumption growth.",
+                timing_dependency: "Before renewal lock-in.",
+                owner_role: "Strategic sourcing",
+                priority: "P0",
+                risk_if_ignored: "Shelfware commitment persists.",
+              },
             },
           ];
         } else if (sql.includes("FROM source.optimization_baseline")) {
@@ -444,7 +580,7 @@ describe("getContractOptimizationOpportunitySet", () => {
               opportunity_id: "CTR-090:negotiated-improvement",
               contract_id: "CTR-090",
               vendor_id: "salesforce",
-              value_type: "negotiable_improvement",
+              value_type: "negotiated_improvement",
               stage: "target_position",
               amount_usd: 1_300_000,
               amount_state: "exact",
@@ -456,7 +592,17 @@ describe("getContractOptimizationOpportunitySet", () => {
               approval_state: "requires_strategy_approval",
               narrative:
                 "The target position is ready for approval before outreach.",
-              payload: { label: "Negotiated improvement" },
+              payload: {
+                label: "Negotiated improvement",
+                buyer_ask: "Reset the commitment ramp.",
+                negotiation_language:
+                  "Tie commitment step-up to production workload gates.",
+                vendor_concession: "Accept milestone-based consumption growth.",
+                timing_dependency: "Before renewal lock-in.",
+                owner_role: "Strategic sourcing",
+                priority: "P0",
+                risk_if_ignored: "Shelfware commitment persists.",
+              },
             },
             {
               tenant_key: "skyharbor_global",
@@ -535,5 +681,20 @@ describe("getContractOptimizationOpportunitySet", () => {
     );
 
     expect(set?.selectedOpportunityId).toBe("CTR-090:rate-variance");
+    expect(
+      set?.opportunities.find(
+        (opportunity) =>
+          opportunity.opportunityId === "CTR-090:negotiated-improvement",
+      )?.negotiationDetail,
+    ).toMatchObject({
+      buyerAsk: "Reset the commitment ramp.",
+      negotiationLanguage:
+        "Tie commitment step-up to production workload gates.",
+      vendorConcession: "Accept milestone-based consumption growth.",
+      timingDependency: "Before renewal lock-in.",
+      ownerRole: "Strategic sourcing",
+      priority: "P0",
+      riskIfIgnored: "Shelfware commitment persists.",
+    });
   });
 });

@@ -114,11 +114,26 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     source = readFileSync(SOURCE_FILE, "utf8");
     html = renderToStaticMarkup(
       createElement(SourceOriginatePage, {
+        clientName: "Example Organization",
+        clientShortName: "Example",
+        clientKey: "example",
+      }),
+    );
+  });
+
+  it("returns intake users to the Source New request workspace", () => {
+    render(
+      createElement(SourceOriginatePage, {
         clientName: "Apex Retail Group",
         clientShortName: "Apex Retail",
         clientKey: "apexretail",
       }),
     );
+
+    const returnLink = screen.getByRole("link", {
+      name: /back to source new/i,
+    });
+    expect(returnLink.getAttribute("href")).toBe("/source/new");
   });
 
   it("marks the file as a client component with 'use client'", () => {

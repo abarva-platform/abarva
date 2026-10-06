@@ -17,7 +17,11 @@ export function withGovernedOpportunityFinding(input: {
 }): SourceOptimization {
   const { optimization, opportunity } = input;
   if (optimization.diagnosis.findings.length > 0) return optimization;
-  if (!opportunity || opportunity.amountUsd == null || opportunity.amountUsd <= 0) {
+  if (
+    !opportunity ||
+    opportunity.amountUsd == null ||
+    opportunity.amountUsd <= 0
+  ) {
     return optimization;
   }
   if (
@@ -86,16 +90,19 @@ function findingFromOpportunity(
 function categoryFor(
   opportunity: ContractOptimizationOpportunity,
 ): ValueLeverCategory {
-  const text = `${opportunity.opportunityId} ${opportunity.label}`.toLowerCase();
+  const text =
+    `${opportunity.opportunityId} ${opportunity.label}`.toLowerCase();
   if (text.includes("sla") || text.includes("credit")) return "sla_economics";
-  if (text.includes("scope") || text.includes("shelfware")) return "scope_leakage";
+  if (text.includes("scope") || text.includes("shelfware"))
+    return "scope_leakage";
   if (text.includes("renewal")) return "renewal_leverage";
-  if (text.includes("negotiat") || text.includes("term")) return "commercial_posture";
+  if (text.includes("negotiat") || text.includes("term"))
+    return "commercial_posture";
   return "pricing";
 }
 
 function valueTypeFor(opportunity: ContractOptimizationOpportunity): ValueType {
-  if (opportunity.valueType === "negotiable_improvement") {
+  if (opportunity.valueType === "negotiated_improvement") {
     return "incremental_negotiated";
   }
   if (opportunity.valueType === "avoided_cost") return "protected";
@@ -105,7 +112,7 @@ function valueTypeFor(opportunity: ContractOptimizationOpportunity): ValueType {
 function recoveryBucketFor(
   opportunity: ContractOptimizationOpportunity,
 ): RecoveryBucket {
-  if (opportunity.valueType === "negotiable_improvement") return "incremental";
+  if (opportunity.valueType === "negotiated_improvement") return "incremental";
   if (opportunity.valueType === "avoided_cost") return "protected";
   return "risk_adjusted";
 }

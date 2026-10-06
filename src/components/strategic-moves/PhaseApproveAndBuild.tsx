@@ -14,11 +14,13 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import {
   PHASE_CANONICAL_KEYS,
   DELIVERABLE_REGISTRY,
@@ -31,6 +33,7 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
+import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -40,6 +43,11 @@ const FRESH = "#3F7A5B"; // succeeded
 const ATTENTION = "#B5852A"; // blocked / below gate
 const STALE = "#B4513C"; // error / failed
 const RUNNING = "#1D4ED8"; // queued / running
+
+function finalDownloadUrl(url: string): string {
+  if (!url.startsWith("/api/v1/artifacts/")) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}format=docx`;
+}
 
 type RunStatus =
   | "queued"
@@ -60,6 +68,7 @@ interface DeliverableRow {
   artifactId: string | null;
   blobUrl: string | null;
   packageReadiness: PackageReadiness | null;
+  blockers: string[];
   error?: string;
 }
 
@@ -99,6 +108,7 @@ interface RunStatusResponse {
   progressPct?: number;
   progressLabel?: string | null;
   blockers?: string[];
+  error?: string | null;
   packageReadiness?: PackageReadiness | null;
 }
 
@@ -129,6 +139,8 @@ interface Props {
   evidenceNeedPackets?: MoveEvidenceNeedPacket[];
   /** Some older callers pass current-phase evidence blockers. The phase workspace passes next-phase readiness, so default false. */
   blockOnEvidenceGaps?: boolean;
+  /** Render the single build action in the active step header instead of beside the output list. */
+  actionPortalTargetId?: string;
   /** Parent-owned prerequisite work, such as phase capture finalization. */
   onBeforeBuild?: () => Promise<void>;
   /**
@@ -150,6 +162,8 @@ interface Props {
   approverLabel?: string | null;
   /** Current generated deliverables from the artifact registry, preloaded server-side. */
   initialArtifacts?: PhaseBuildArtifact[];
+  /** Server-confirmed route-specific package, when the parent has one. */
+  deliverableKeys?: readonly string[];
 }
 
 export interface BuildSettledResult {
@@ -189,7 +203,7 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   queued: "Queued",
   running: "Building",
   succeeded: "Built",
-  blocked: "Needs evidence",
+  blocked: "Build blocked",
   failed: "Failed",
   error: "Could not start",
 };
@@ -219,6 +233,7 @@ function buildInitialRows(
       artifactId: artifact?.artifactId ?? null,
       blobUrl: artifact?.downloadUrl ?? null,
       packageReadiness: null,
+      blockers: [],
     };
   });
 }
@@ -233,18 +248,26 @@ export function PhaseApproveAndBuild({
   inputCount,
   evidenceNeedPackets = [],
   blockOnEvidenceGaps = false,
+  actionPortalTargetId,
   onBeforeBuild,
   onBuildSettled,
   disabledReason = null,
   approverLabel = null,
   initialArtifacts = [],
+  deliverableKeys,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
-    .map((key) =>
-      DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
-    )
-    .filter(Boolean) as DeliverableSpec[];
+  const [actionPortalTarget, setActionPortalTarget] =
+    useState<HTMLElement | null>(null);
+  const specs = useMemo(
+    () =>
+      (deliverableKeys ?? PHASE_CANONICAL_KEYS[phaseNum] ?? [])
+        .map((key) =>
+          DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
+        )
+        .filter(Boolean) as DeliverableSpec[],
+    [deliverableKeys, phaseNum],
+  );
 
   const [rows, setRows] = useState<DeliverableRow[]>(() =>
     buildInitialRows(specs, initialArtifacts),
@@ -259,8 +282,29 @@ export function PhaseApproveAndBuild({
     signalBasis?: string;
     resolutionConfidence?: string;
   } | null>(null);
+  useEffect(() => {
+    if (!actionPortalTargetId) return;
+    setActionPortalTarget(
+      document.getElementById(actionPortalTargetId) as HTMLElement | null,
+    );
+  }, [actionPortalTargetId]);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
+  const initialArtifactSignature = initialArtifacts
+    .map((artifact) =>
+      [
+        artifact.artifactId,
+        artifact.deliverableTypeKey,
+        artifact.documentTitle,
+        artifact.phase,
+        artifact.status,
+        artifact.version,
+        artifact.downloadUrl,
+      ].join(":"),
+    )
+    .join("|");
+  const rowSourceSignature = `${phaseNum}::${initialArtifactSignature}`;
+  const lastRowSourceSignature = useRef(rowSourceSignature);
   // Set true only while a real batch is in flight, so the settle-detection
   // effect below never fires from the component's initial idle render or
   // from unrelated row updates.
@@ -272,6 +316,13 @@ export function PhaseApproveAndBuild({
       Object.values(t).forEach((id) => clearTimeout(id));
     };
   }, []);
+
+  useEffect(() => {
+    if (runInFlight.current) return;
+    if (lastRowSourceSignature.current === rowSourceSignature) return;
+    lastRowSourceSignature.current = rowSourceSignature;
+    setRows(buildInitialRows(specs, initialArtifacts));
+  }, [initialArtifacts, rowSourceSignature, specs]);
 
   const patchRow = useCallback(
     (key: string, patch: Partial<DeliverableRow>) => {
@@ -300,6 +351,7 @@ export function PhaseApproveAndBuild({
             progressPct: data.progressPct ?? 0,
             progressLabel: data.progressLabel ?? null,
             packageReadiness: data.packageReadiness ?? null,
+            blockers: data.blockers ?? [],
           });
           if (Date.now() - startedAt.current < MAX_MS) {
             timers.current[key] = setTimeout(
@@ -316,6 +368,8 @@ export function PhaseApproveAndBuild({
           artifactId: data.artifactId,
           blobUrl: data.blobUrl,
           packageReadiness: data.packageReadiness ?? null,
+          blockers: data.blockers ?? [],
+          error: data.error ?? undefined,
         });
       } catch {
         // transient — back off and retry within the window
@@ -425,6 +479,7 @@ export function PhaseApproveAndBuild({
           artifactId: null,
           blobUrl: null,
           packageReadiness: null,
+          blockers: [],
           error: d.error,
         })),
       );
@@ -474,8 +529,9 @@ export function PhaseApproveAndBuild({
       r.status === "blocked" || r.status === "failed" || r.status === "error",
   ).length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
-  const requiredGaps = evidenceNeedPackets.filter(
-    (packet) => packet.priority === "required" && packet.status !== "covered",
+  const requiredGaps = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phaseNum,
   );
   const hasEvidenceGuidanceGaps = requiredGaps.length > 0;
   const hasRequiredGaps = blockOnEvidenceGaps && hasEvidenceGuidanceGaps;
@@ -494,10 +550,37 @@ export function PhaseApproveAndBuild({
       : hasRequiredGaps
         ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
         : blockedCount > 0
-          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} need evidence or quality fixes before the phase can advance.`
+          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
           : builtCount === specs.length
             ? `${phaseLabel} documents are built. Review them before relying on them.`
             : "Capture is separate from gate readiness. Build once the record is ready for review.";
+
+  const buildActionButton = (
+    <button
+      type="button"
+      onClick={() => setConfirmOpen(true)}
+      disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
+      className="mxw-phase-progress-button"
+      style={{
+        padding: "10px 16px",
+        background:
+          building || anyRunning || hasParentBlocker ? "#D8DDE5" : "#147C5B",
+        color:
+          building || anyRunning || hasParentBlocker ? "#596579" : "#FFFFFF",
+        border: "1px solid transparent",
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 800,
+        cursor:
+          building || anyRunning || hasRequiredGaps || hasParentBlocker
+            ? "default"
+            : "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
+    </button>
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -573,12 +656,146 @@ export function PhaseApproveAndBuild({
         {hasEvidenceGuidanceGaps && (
           <details style={{ marginTop: 10, color: "#5C4320" }}>
             <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-              {requiredGaps.length} prep item
-              {requiredGaps.length === 1 ? "" : "s"} carrying forward
+              {hasRequiredGaps
+                ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} open`
+                : `${requiredGaps.length} prep item${requiredGaps.length === 1 ? "" : "s"} carrying forward`}
             </summary>
-            <div style={{ marginTop: 6 }}>
-              These items inform the next phase. They do not block this build
-              unless the phase marks them as current-phase blockers.
+            <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+              {hasRequiredGaps ? (
+                <p style={{ margin: 0 }}>
+                  Final build stays blocked until each required item is reviewed
+                  and covered.
+                </p>
+              ) : (
+                <p style={{ margin: 0 }}>
+                  These items inform the next phase and do not block this phase
+                  build.
+                </p>
+              )}
+              {requiredGaps.map((packet) => {
+                const acceptedFormats =
+                  packet.acceptedFormats?.filter(Boolean) ?? [];
+                const evidenceTitles =
+                  packet.evidenceTitles?.filter(Boolean) ?? [];
+                const exampleContent =
+                  packet.exampleContent?.filter(Boolean) ?? [];
+                const title = packet.evidenceSlot || packet.familyId;
+
+                return (
+                  <section
+                    key={`${packet.familyId}-${packet.phase ?? "unphased"}-${packet.artifactType ?? "evidence"}`}
+                    style={{
+                      padding: "10px 12px",
+                      backgroundColor: "#FFFFFF",
+                      border: `1px solid ${LINE}`,
+                      borderRadius: 6,
+                      color: INK,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "baseline",
+                        justifyContent: "space-between",
+                        gap: 6,
+                      }}
+                    >
+                      <strong>{title}</strong>
+                      <span
+                        style={{
+                          color: ATTENTION,
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {hasRequiredGaps
+                          ? "Required · Not yet covered"
+                          : "Preparation · Not yet covered"}
+                      </span>
+                    </div>
+                    {packet.nextAction && (
+                      <p style={{ margin: "7px 0 0", lineHeight: 1.45 }}>
+                        <strong>Next action:</strong> {packet.nextAction}
+                      </p>
+                    )}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "4px 16px",
+                        marginTop: 6,
+                        color: "#525866",
+                        fontSize: 11,
+                      }}
+                    >
+                      {packet.ownerSource && (
+                        <span>
+                          Likely source owner: {packet.ownerSource}
+                        </span>
+                      )}
+                      {acceptedFormats.length > 0 && (
+                        <span>Accepted formats: {acceptedFormats.join(", ")}</span>
+                      )}
+                    </div>
+                    {evidenceTitles.length > 0 && (
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          color: "#525866",
+                          fontSize: 11,
+                        }}
+                      >
+                        On file, not yet cleared: {evidenceTitles.join(", ")}
+                      </p>
+                    )}
+                    {(packet.whyItMatters ||
+                      packet.exampleTemplate ||
+                      exampleContent.length > 0) && (
+                      <details style={{ marginTop: 7 }}>
+                        <summary
+                          style={{
+                            cursor: "pointer",
+                            color: NAVY,
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          Why this matters and examples
+                        </summary>
+                        <div
+                          style={{
+                            marginTop: 6,
+                            color: "#525866",
+                            fontSize: 11,
+                          }}
+                        >
+                          {packet.whyItMatters && (
+                            <p style={{ margin: "0 0 6px" }}>
+                              {packet.whyItMatters}
+                            </p>
+                          )}
+                          {packet.exampleTemplate && (
+                            <p style={{ margin: "0 0 4px" }}>
+                              Example format: {packet.exampleTemplate}
+                            </p>
+                          )}
+                          {exampleContent.length > 0 && (
+                            <ul style={{ margin: 0, paddingLeft: 18 }}>
+                              {exampleContent.map((example) => (
+                                <li key={example}>{example}</li>
+                              ))}
+                            </ul>
+                          )}
+                          <p style={{ margin: "6px 0 0", fontStyle: "italic" }}>
+                            Examples are guidance, not client evidence.
+                          </p>
+                        </div>
+                      </details>
+                    )}
+                  </section>
+                );
+              })}
             </div>
           </details>
         )}
@@ -617,38 +834,19 @@ export function PhaseApproveAndBuild({
         )}
       </div>
 
-      {/* The single phase action */}
-      <button
-        type="button"
-        onClick={() => setConfirmOpen(true)}
-        disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
-        style={{
-          alignSelf: "flex-start",
-          padding: "9px 16px",
-          background:
-            building || anyRunning || hasRequiredGaps || hasParentBlocker
-              ? "#C9C7BE"
-              : NAVY,
-          color: "#FFFFFF",
-          border: "none",
-          borderRadius: 8,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor:
-            building || anyRunning || hasRequiredGaps || hasParentBlocker
-              ? "default"
-              : "pointer",
-          fontFamily: "Fraunces, Georgia, serif",
-        }}
-      >
-        {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
-      </button>
+      {/* Evidence gaps suppress the progression action; the step header still explains why. */}
+      {actionPortalTargetId
+        ? !hasRequiredGaps &&
+          actionPortalTarget &&
+          createPortal(buildActionButton, actionPortalTarget)
+        : buildActionButton}
 
       <GateApprovalConfirmDialog
         open={confirmOpen}
         title={`Approve & build ${phaseLabel}?`}
-        summary={`This generates all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one governed batch and closes the phase gate once every document reaches a terminal state. There is no per-document regenerate afterward — if an input changes, you'll re-run and re-approve the whole phase.`}
+        summary={`This authorizes a governed build of all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one batch. It does not approve the generated document${specs.length === 1 ? "" : "s"} or the phase gate. The authorized Move user reviews each required deliverable in Files & Evidence, then approves the ready phase gate. There is no per-document regenerate afterward — if an input changes, you'll re-run the whole phase build.`}
         approverLabel={approverLabel}
+        actorLabelPrefix="Authorizing build as"
         confirmLabel="Approve & Build"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
@@ -732,7 +930,7 @@ export function PhaseApproveAndBuild({
             </span>
             {r.status === "succeeded" && r.blobUrl && (
               <Link
-                href={r.blobUrl}
+                href={finalDownloadUrl(r.blobUrl)}
                 style={{
                   gridColumn: "2 / -1",
                   justifySelf: "start",
@@ -745,51 +943,66 @@ export function PhaseApproveAndBuild({
                 Download final →
               </Link>
             )}
-            {r.status === "blocked" && r.packageReadiness && (
-              <details
-                style={{
-                  gridColumn: "2 / -1",
-                  marginTop: 2,
-                  color: "#5C4320",
-                  fontSize: 11.5,
-                  lineHeight: 1.45,
-                }}
-              >
-                <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-                  Why this still needs evidence
-                </summary>
-                <div
+            {r.status === "blocked" &&
+              (r.packageReadiness || r.blockers.length > 0 || r.error) && (
+                <details
                   style={{
-                    marginTop: 8,
-                    padding: "10px 12px",
-                    borderRadius: 6,
-                    border: "1px solid rgba(181,133,42,0.24)",
-                    background: "rgba(181,133,42,0.06)",
+                    gridColumn: "2 / -1",
+                    marginTop: 2,
+                    color: "#5C4320",
+                    fontSize: 11.5,
+                    lineHeight: 1.45,
                   }}
                 >
-                  <div style={{ color: ATTENTION, fontWeight: 700 }}>
-                    {r.packageReadiness.headline}
+                  <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+                    Why this output is blocked
+                  </summary>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: "10px 12px",
+                      borderRadius: 6,
+                      border: "1px solid rgba(181,133,42,0.24)",
+                      background: "rgba(181,133,42,0.06)",
+                    }}
+                  >
+                    {r.packageReadiness && (
+                      <>
+                        <div style={{ color: ATTENTION, fontWeight: 700 }}>
+                          {r.packageReadiness.headline}
+                        </div>
+                        <div style={{ marginTop: 6 }}>
+                          Evidence retrieved:{" "}
+                          {r.packageReadiness.retrievedEvidence}/
+                          {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
+                          {r.packageReadiness.executiveReadinessPct}%
+                        </div>
+                      </>
+                    )}
+                    {(r.blockers.length > 0 || r.error) && (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={{ fontWeight: 700 }}>Build blocker: </span>
+                        {r.blockers.length > 0
+                          ? r.blockers.join("; ")
+                          : r.error}
+                      </div>
+                    )}
+                    {r.packageReadiness?.missing.length ? (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={{ fontWeight: 700 }}>Evidence gaps: </span>
+                        {r.packageReadiness.missing.slice(0, 3).join("; ")}
+                        {r.packageReadiness.missing.length > 3 ? "…" : ""}
+                      </div>
+                    ) : null}
+                    {r.packageReadiness?.recommendedNextStep && (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={{ fontWeight: 700 }}>Next: </span>
+                        {r.packageReadiness.recommendedNextStep}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ marginTop: 6 }}>
-                    Evidence: {r.packageReadiness.retrievedEvidence}/
-                    {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
-                    {r.packageReadiness.executiveReadinessPct}% (
-                    {r.packageReadiness.confidenceLabel})
-                  </div>
-                  {r.packageReadiness.missing.length > 0 && (
-                    <div style={{ marginTop: 6 }}>
-                      <span style={{ fontWeight: 700 }}>Missing: </span>
-                      {r.packageReadiness.missing.slice(0, 3).join("; ")}
-                      {r.packageReadiness.missing.length > 3 ? "…" : ""}
-                    </div>
-                  )}
-                  <div style={{ marginTop: 6 }}>
-                    <span style={{ fontWeight: 700 }}>Next: </span>
-                    {r.packageReadiness.recommendedNextStep}
-                  </div>
-                </div>
-              </details>
-            )}
+                </details>
+              )}
           </div>
         ))}
       </div>

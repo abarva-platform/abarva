@@ -10,9 +10,6 @@
  * each anti-pattern fails and each doctrine response passes.
  */
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
 import {
   composeSentinelSystemPrompt,
   checkSentinelVoice,
@@ -991,88 +988,114 @@ describe('Source surface — Brief C expert posture (SRC-VOICE.STRAT-2026-05-10)
   });
 });
 
-// INT-VOICE.STRAT-2026-05-10d · The Ask synthesizer prompt body is the
-// canonical Brief A text from `docs/build/CURSOR_BRIEF_A_SENTINEL.md` plus
-// the surface-conventions footer. These assertions guard against drift from
-// the canonical brief.
-describe('Ask synthesizer prompt — Brief A expert posture (INT-VOICE.STRAT-2026-05-10d)', () => {
-  const synthesizerSource = readFileSync(
-    join(__dirname, '..', '..', '..', 'intelligence', 'ask', 'synthesizer.ts'),
-    'utf8',
-  );
+// INT-VOICE.STRAT-2026-05-10d · The Ask synthesizer's advisor posture.
+//
+// T-010 (2026-09-19). Seven of the nine cases below were red on `main` and
+// had been since 2026-07-19, when #5086 deliberately replaced the Ask
+// synthesizer's mechanical Answer/Proof/Move template with the Executive
+// Narrative voice (release record:
+// docs/releases/records/2026-07-19-intelligence-ava-executive-narrative-prompt.md).
+// The Brief A section headings that block pinned — WHO YOU ARE, WHAT YOU
+// HAVE ACCESS TO, HOW YOU RESPOND, WHAT YOU NEVER DO — and the five
+// numbered few-shot examples went with it. The copy is superseded; the
+// posture it encoded was explicitly kept, so the cases are repointed at the
+// posture rather than deleted.
+//
+// The instrument changed too, and that is the more important half. The old
+// block read `synthesizer.ts` off disk with readFileSync and matched regexes
+// against the source text, so it could not tell a live prompt clause from a
+// comment, and it broke on a file move rather than on a behaviour change.
+// Everything below runs against the exported prompt constants — the objects
+// actually sent to the model.
+import {
+  SYSTEM_PROMPT,
+  CONCISE_SYSTEM_PROMPT,
+} from '@/lib/intelligence/ask/synthesizer';
 
-  it('opens with the WHO YOU ARE / senior advisor identity from Brief A', () => {
-    expect(synthesizerSource).toMatch(/WHO\s+YOU\s+ARE/);
-    expect(synthesizerSource).toMatch(/senior\s+AI\s+strategy\s+advisor/i);
-    expect(synthesizerSource).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
-    expect(synthesizerSource).toMatch(/senior\s+partner\s+at\s+a\s+top[- ]tier\s+firm/i);
+describe('Ask synthesizer prompt — advisor posture (INT-VOICE.STRAT-2026-05-10d)', () => {
+  it('casts the model as a senior strategy advisor, not a retrieval surface', () => {
+    expect(SYSTEM_PROMPT).toMatch(/senior\s+strategy\s+partner/i);
+    expect(SYSTEM_PROMPT).toMatch(/not\s+to\s+summarize/i);
   });
 
-  it('lists the three sources of intelligence (corpus + tenant + own expertise)', () => {
-    expect(synthesizerSource).toMatch(/WHAT\s+YOU\s+HAVE\s+ACCESS\s+TO/);
-    expect(synthesizerSource).toMatch(/industry\s+knowledge\s+corpus/i);
-    expect(synthesizerSource).toMatch(/tenant'?s\s+enterprise\s+knowledge\s+layer/i);
-    expect(synthesizerSource).toMatch(/your\s+own\s+deep\s+expertise/i);
+  it('declares the three sources of intelligence in priority order', () => {
+    // Anchored on the numbered list itself rather than on first mention:
+    // the prompt names the tenant layer in prose above the list, so a
+    // position comparison over the whole string would stay green even if
+    // the ranked list were reordered.
+    const ranked = [1, 2, 3].map((n) => {
+      const match = new RegExp(
+        `\\n${n}\\. ([\\s\\S]*?)(?=\\n${n + 1}\\. |\\n[A-Z]{2,})`,
+      ).exec(SYSTEM_PROMPT);
+      expect(match).not.toBeNull();
+      return match![1];
+    });
+
+    expect(ranked[0]).toMatch(/tenant'?s\s+enterprise\s+knowledge\s+layer/i);
+    expect(ranked[1]).toMatch(/industry\s+knowledge\s+corpus/i);
+    expect(ranked[2]).toMatch(/your\s+own\s+deep\s+expertise/i);
+    // The corpus is explicitly subordinate to tenant evidence, and labelled.
+    expect(ranked[1]).toMatch(/only\s+after\s+tenant\s+evidence/i);
   });
 
-  it('declares the HOW YOU RESPOND posture — opinions, confidence, evidence, disagree, ask, converse', () => {
-    expect(synthesizerSource).toMatch(/HOW\s+YOU\s+RESPOND/);
-    expect(synthesizerSource).toMatch(/OPINIONS,?\s+NOT\s+SUMMARIES/);
-    expect(synthesizerSource).toMatch(/CONFIDENCE\s+IN\s+PLAIN\s+LANGUAGE/);
-    expect(synthesizerSource).toMatch(/EVIDENCE\s+WHERE\s+IT\s+STRENGTHENS\s+THE\s+ARGUMENT/);
-    expect(synthesizerSource).toMatch(/DISAGREE\s+WHEN\s+WARRANTED/);
-    expect(synthesizerSource).toMatch(/ASK\s+CLARIFYING\s+QUESTIONS\s+WHEN\s+THEY\s+WOULD\s+HELP/);
-    expect(synthesizerSource).toMatch(/CONVERSE\s+NATURALLY/);
+  it('keeps the posture clauses — disagree, ask, calibrate confidence in plain language', () => {
+    expect(SYSTEM_PROMPT).toMatch(/DISAGREE\s+WHEN\s+WARRANTED/);
+    expect(SYSTEM_PROMPT).toMatch(
+      /ASK\s+CLARIFYING\s+QUESTIONS\s+WHEN\s+THEY\s+WOULD\s+HELP/,
+    );
+    expect(SYSTEM_PROMPT).toMatch(/CONFIDENCE\s+IN\s+PLAIN\s+LANGUAGE/);
   });
 
-  it('declares WHAT YOU NEVER DO — anti-fabrication, no corpus refusal, no decline-when-can-reason', () => {
-    expect(synthesizerSource).toMatch(/WHAT\s+YOU\s+NEVER\s+DO/);
-    expect(synthesizerSource).toMatch(
+  it('keeps the anti-fabrication prohibitions and their worked examples', () => {
+    expect(SYSTEM_PROMPT).toMatch(
       /NEVER\s+fabricate\s+specific\s+tenant\s+facts/i,
     );
-    expect(synthesizerSource).toMatch(/NEVER\s+fabricate\s+peer\s+statistics/i);
-    expect(synthesizerSource).toMatch(
+    expect(SYSTEM_PROMPT).toMatch(/NEVER\s+fabricate\s+peer\s+statistics/i);
+    // The invented-precision examples are part of the instruction: they show
+    // the model the exact shape it must not produce.
+    expect(SYSTEM_PROMPT).toContain('73% of retailers');
+    expect(SYSTEM_PROMPT).toContain('Algonomy has 89% market share');
+  });
+
+  it('forbids the two refusal modes — corpus-absence and decline-when-it-can-reason', () => {
+    expect(SYSTEM_PROMPT).toMatch(
       /NEVER\s+say\s+"this\s+is\s+not\s+in\s+the\s+corpus"\s+as\s+a\s+refusal/i,
     );
-    expect(synthesizerSource).toContain('73% of retailers');
-    expect(synthesizerSource).toContain('Algonomy has 89% market share');
+    expect(SYSTEM_PROMPT).toMatch(
+      /NEVER\s+decline\s+a\s+question\s+you\s+can\s+reason\s+about/i,
+    );
+    expect(SYSTEM_PROMPT).toMatch(/outside\s+what\s+I'?m\s+here\s+for/i);
   });
 
   it('includes the arithmetic reflection guard from Sentinel-A1', () => {
-    expect(synthesizerSource).toMatch(/ARITHMETIC AND RANKING REFLECTION GUARD/);
-    expect(synthesizerSource).toMatch(/Adobe \$8\.8M ranks above AWS \$13\.6M/);
-    expect(synthesizerSource).toMatch(/Never explain that you performed this check/);
+    expect(SYSTEM_PROMPT).toMatch(/ARITHMETIC AND RANKING REFLECTION GUARD/);
+    expect(SYSTEM_PROMPT).toMatch(/Adobe \$8\.8M ranks above AWS \$13\.6M/);
+    expect(SYSTEM_PROMPT).toMatch(/Never explain that you performed this check/);
   });
 
-  it('declares LANE DISCIPLINE — vendor depth → Source, Move-shaping → Nexus', () => {
-    expect(synthesizerSource).toMatch(/LANE\s+DISCIPLINE/);
-    expect(synthesizerSource).toMatch(/Source\s+has\s+the\s+depth/i);
-    expect(synthesizerSource).toMatch(/Nexus|Moves\s+surface/i);
+  it('declares LANE DISCIPLINE — vendor depth to Source, Move-shaping to Moves', () => {
+    expect(SYSTEM_PROMPT).toMatch(/LANE\s+DISCIPLINE/);
+    expect(SYSTEM_PROMPT).toMatch(/Source\s+has\s+the\s+depth/i);
+    expect(SYSTEM_PROMPT).toMatch(/Moves\s+surface/i);
   });
 
-  it('carries the five Brief A few-shot examples', () => {
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+1\s*·\s*Strategy\s+question\s+with\s+corpus\s+evidence/i);
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+2\s*·\s*Question\s+about\s+a\s+vendor/i);
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+3\s*·\s*Question\s+requiring\s+clarification/i);
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+4\s*·\s*The\s+"I\s+don'?t\s+know"\s+edge\s+case/i);
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+5\s*·\s*Off[- ]domain\s+question/i);
+  it('preserves chat-surface output conventions alongside the role', () => {
+    expect(SYSTEM_PROMPT).toMatch(/OUTPUT\s+CONVENTIONS/);
+    expect(SYSTEM_PROMPT).toMatch(
+      /chat\s+surface\s+renders\s+plain\s+text\s+only/i,
+    );
+    expect(SYSTEM_PROMPT).toMatch(/SURFACE\s+first,?\s+then\s+TENANT,?\s+then\s+GRAPH/);
   });
 
-  it('few-shot examples demonstrate the consultant posture — push-back, verbal confidence, lane handoff, no fabrication, off-domain decline', () => {
-    expect(synthesizerSource).toMatch(/I'?d\s+push\s+back\s+on\s+putting\s+it\s+ahead\s+of\s+assortment/i);
-    expect(synthesizerSource).toMatch(/I'?d\s+put\s+high\s+confidence\s+on/i);
-    expect(synthesizerSource).toMatch(/that'?s\s+Source'?s\s+job/i);
-    expect(synthesizerSource).toMatch(/I\s+don'?t\s+have\s+that\s+level\s+of\s+specific\s+peer\s+data/i);
-    expect(synthesizerSource).toMatch(/That'?s\s+outside\s+what\s+I'?m\s+here\s+for/i);
-  });
-
-  it('preserves chat-surface output conventions outside the Brief A role text', () => {
-    expect(synthesizerSource).toMatch(/OUTPUT\s+CONVENTIONS/);
-    expect(synthesizerSource).toMatch(/chat\s+surface\s+renders\s+plain\s+text\s+only/i);
-    expect(synthesizerSource).toMatch(/Apex\s+Retail/);
-    expect(synthesizerSource).toMatch(/SURFACE\s+first,?\s+then\s+TENANT,?\s+then\s+GRAPH/);
-    expect(synthesizerSource).toMatch(/composeRuntimeOutputDisciplineBlock\("Sentinel"\)/);
-    expect(synthesizerSource).toMatch(/outputDisciplineBlock/);
+  it('binds tenant isolation in both the full and the concise prompt', () => {
+    // The concise prompt is a separate constant and a separate code path; a
+    // rewrite of one has silently left the other behind before.
+    for (const prompt of [SYSTEM_PROMPT, CONCISE_SYSTEM_PROMPT]) {
+      expect(prompt).toMatch(/tenant/i);
+      expect(prompt).toMatch(
+        /Tenant\s+isolation\s+is\s+binding|authenticated\s+tenant\s+only/i,
+      );
+    }
   });
 });
 

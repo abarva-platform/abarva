@@ -9,6 +9,8 @@ import type { ParsedTemplateUpload } from "../../extraction/structured-map";
 import type { SourceEventFactInsert } from "../../fact-types";
 
 let eventClientKey = "lakeshore";
+let eventType = "ams";
+let classifiedCategory: string | null = "ams";
 const insertFacts = jest.fn(
   async (facts: readonly SourceEventFactInsert[]) => ({
     ok: true as const,
@@ -24,7 +26,15 @@ function fakeReadClient() {
         eq: () => chain,
         maybeSingle: async () =>
           table === "source_events"
-            ? { data: { id: "evt-1", client_key: eventClientKey }, error: null }
+            ? {
+                data: {
+                  id: "evt-1",
+                  client_key: eventClientKey,
+                  event_type: eventType,
+                  classified_category: classifiedCategory,
+                },
+                error: null,
+              }
             : { data: null, error: null },
       };
       return chain;
@@ -85,9 +95,22 @@ const APP_INVENTORY_UPLOAD: ParsedTemplateUpload = {
   ],
 };
 
+const RESPONSE_COVERAGE_UPLOAD: ParsedTemplateUpload = {
+  headers: ['Vendor', 'Lever Key', 'Addressed (1/0/0.5)'],
+  rows: [
+    {
+      Vendor: 'vendor-1',
+      'Lever Key': 'AMS.VOLUME_BAND_PRICING',
+      'Addressed (1/0/0.5)': 1,
+    },
+  ],
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   eventClientKey = "lakeshore";
+  eventType = "ams";
+  classifiedCategory = "ams";
 });
 
 describe("ingestTemplateUpload — VOLUMETRICS_V1", () => {
@@ -127,6 +150,73 @@ describe("ingestTemplateUpload — VOLUMETRICS_V1", () => {
         "chronic_miss_rate",
       ]),
     );
+  });
+});
+
+describe("ingestTemplateUpload — TICKET_HISTORY_V1", () => {
+  const ticketUpload: ParsedTemplateUpload = {
+    headers: [
+      "Service Tower", "Support Tier", "Month", "Time Window",
+      "Ticket Count", "SLA Breach Count", "Source Basis", "Fixture Status",
+    ],
+    rows: [
+      {
+        "Service Tower": "Service desk", "Support Tier": "l2", Month: "2026-08",
+        "Time Window": "Business hours", "Ticket Count": 42,
+        "SLA Breach Count": 3, "Source Basis": "Synthetic smoke scenario",
+        "Fixture Status": "SYNTHETIC TEST DATA ONLY",
+      },
+      {
+        "Service Tower": "Service desk", "Support Tier": "L3", Month: "2026-08",
+        "Time Window": "After hours", "Ticket Count": 13,
+        "SLA Breach Count": 1, "Source Basis": "Synthetic smoke scenario",
+        "Fixture Status": "SYNTHETIC TEST DATA ONLY",
+      },
+    ],
+  };
+
+  it("writes ticket counts with file and cohort provenance, not financial levers", async () => {
+    const result = await ingestTemplateUpload(
+      {
+        templateCode: "TICKET_HISTORY_V1", upload: ticketUpload,
+        scope: { eventId: "evt-1", clientKey: "lakeshore" },
+        sourceFile: { name: "synthetic-ticket.csv", sha256: "a".repeat(64) },
+      },
+      deps(),
+    );
+
+    expect(result).toMatchObject({ ok: true, factsWritten: 4, unmappedColumns: [] });
+    const facts = insertFacts.mock.calls[0][0] as SourceEventFactInsert[];
+    expect(facts.map((fact) => fact.fact_key)).toEqual([
+      "ticket_count", "sla_breach_count", "ticket_count", "sla_breach_count",
+    ]);
+    expect(facts[0]).toMatchObject({
+      client_key: "lakeshore", entity_kind: "tower", entity_ref: "Service desk",
+      value_numeric: 42, source_citation: {
+        doc: "synthetic-ticket.csv", source_sha256: "a".repeat(64),
+        source_file: "synthetic-ticket.csv", source_row: 1,
+        source_system: "Synthetic smoke scenario", value_source: "ITSM ticket export",
+        support_tier: "L2", month: "2026-08", time_window: "Business hours",
+        source_basis: "Synthetic smoke scenario",
+      },
+    });
+  });
+
+  it("rejects an invalid breach count before any fact write", async () => {
+    const result = await ingestTemplateUpload(
+      {
+        templateCode: "TICKET_HISTORY_V1",
+        upload: {
+          ...ticketUpload,
+          rows: [{ ...ticketUpload.rows[0], "SLA Breach Count": 43 }, ticketUpload.rows[1]],
+        },
+        scope: { eventId: "evt-1", clientKey: "lakeshore" },
+        sourceFile: { name: "synthetic-ticket.csv", sha256: "a".repeat(64) },
+      },
+      deps(),
+    );
+    expect(result).toMatchObject({ ok: false, code: "invalid_upload" });
+    expect(insertFacts).not.toHaveBeenCalled();
   });
 });
 
@@ -188,6 +278,25 @@ describe("ingestTemplateUpload — validation + fencing", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.code).toBe("not_found");
+    expect(insertFacts).not.toHaveBeenCalled();
+  });
+
+  it('fails before writing composite facts when the event archetype is not analytics-ready', async () => {
+    eventType = 'software';
+    classifiedCategory = 'data_ai_platform';
+
+    const result = await ingestTemplateUpload(
+      {
+        templateCode: 'RESPONSE_COVERAGE_V1',
+        upload: RESPONSE_COVERAGE_UPLOAD,
+        scope: { eventId: 'evt-1', clientKey: 'lakeshore' },
+      },
+      deps(),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('archetype_not_ready');
     expect(insertFacts).not.toHaveBeenCalled();
   });
 });

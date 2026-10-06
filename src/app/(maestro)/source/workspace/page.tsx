@@ -23,6 +23,8 @@ export const dynamic = "force-dynamic";
 // Renewal and notice math must use that stable cut by default; `?asOf=`
 // remains the operator override for explicit live-date comparisons.
 const SOURCE_WORKSPACE_DEFAULT_AS_OF = `${SOURCE_V4_CUBE_AS_OF_DATE}T00:00:00Z`;
+const SOURCE_WORKSPACE_DEFAULT_PROVIDER: SourceWorkspaceProviderMode =
+  "ecl_projection_db";
 
 /**
  * /source/workspace — product Source workspace: native analytical canvas +
@@ -44,31 +46,25 @@ export default async function SourceWorkspacePage({
     provider?: string;
     sourceProvider?: string;
     tab?: string;
+    workspaceTab?: string;
   }>;
 }) {
-  let tenancy;
-  try {
-    tenancy = await requireTenancy();
-  } catch (err) {
-    if (err instanceof TenancyError && err.code === "unauthenticated") {
-      redirect("/sign-in");
-    }
-    throw err;
-  }
-
   const params = await searchParams;
   const requestedClient = params.client?.trim() || null;
   const requestedContractId = params.contractId?.trim() || null;
   const requestedContractTab =
     params.contractTab?.trim() || params.tab?.trim() || null;
+  const requestedWorkspaceTab = params.workspaceTab?.trim() || null;
   const requestedSourceProvider = sourceProviderOverrideFromRequest(
     params.sourceProvider ?? params.provider,
   );
+  const sourceProviderKey =
+    requestedSourceProvider ?? SOURCE_WORKSPACE_DEFAULT_PROVIDER;
   const requestedClientKey = appClientKeyForTenant(requestedClient);
   if (requestedClient && !requestedClientKey) {
     notFound();
   }
-  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+  if (requestedClientKey) {
     const access = await checkTenantAccessByKey(requestedClientKey);
     if (!access.ok) {
       if (access.reason === "tenant_not_found") {
@@ -78,6 +74,17 @@ export default async function SourceWorkspacePage({
         redirect("/sign-in");
       }
       return <SourceWorkspaceTenantAccessDenied />;
+    }
+  }
+  let tenancy = null;
+  if (!requestedClientKey) {
+    try {
+      tenancy = await requireTenancy();
+    } catch (err) {
+      if (err instanceof TenancyError && err.code === "unauthenticated") {
+        redirect("/sign-in");
+      }
+      throw err;
     }
   }
 
@@ -97,7 +104,7 @@ export default async function SourceWorkspacePage({
     requestedClientKey ??
     activeClient?.key ??
     tenant?.appClientKey ??
-    tenancy.clientKey ??
+    tenancy?.clientKey ??
     "";
   const defaultAsOf = SOURCE_WORKSPACE_DEFAULT_AS_OF;
   const asOfDateIso = params.asOf?.trim() || defaultAsOf;
@@ -127,9 +134,10 @@ export default async function SourceWorkspacePage({
         tenantName={tenantName}
         tenantKey={tenantKey}
         asOfDateIso={asOfDateIso}
-        sourceProviderKey={requestedSourceProvider}
+        sourceProviderKey={sourceProviderKey}
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
+        initialWorkspaceTab={requestedWorkspaceTab}
       />
     </div>
   );
@@ -201,10 +209,13 @@ function SourceWorkspaceTenantAccessDenied() {
 function sourceProviderOverrideFromRequest(
   value?: string,
 ): SourceWorkspaceProviderMode | null {
+  const normalized = value?.trim();
+  if (normalized === "ecl_projection_db") {
+    return normalized;
+  }
   if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
     return null;
   }
-  const normalized = value?.trim();
   if (
     normalized === "legacy" ||
     normalized === "ecl_projection" ||

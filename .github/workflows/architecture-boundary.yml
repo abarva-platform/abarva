@@ -29,3 +29,47 @@ jobs:
 
       - name: Check architecture boundaries
         run: npm run audit:architecture-boundaries
+
+      # This audit had an npm script and no workflow, so nothing ran it. It was
+      # failing on nine unreported orphans while three AI control surfaces sat
+      # outside the directory it watched.
+      - name: Check every component is reachable from a route
+        run: npm run audit:route-reachability
+
+      # The step above watches src/components only, which is how eight modules
+      # under src/lib outlived the sunset that removed their only consumer with
+      # nothing but their own tests pointing at them. A test is not an entry
+      # point, and this is the step that says so.
+      - name: Check no src/lib module is reached only by its own test
+        run: npm run audit:lib-orphans
+
+      # Every audit:/validate:/check: script must say whether it gates a PR.
+      - name: Check the CI gate registry
+        run: npm run audit:ci-gate-registry
+
+      # Beside the registry check, not inside it: an unsorted file is a
+      # diff-hygiene problem, not a classification problem, and folding it in
+      # would make one failure message answer two different questions.
+      - name: Keep the gate registry sorted
+        run: npm run audit:ci-gate-registry-order
+
+      - name: Tenant display names derive from the registry
+        run: npm run audit:tenant-display-name-authority
+
+      # Two gates that were passing on main but invoked by nothing. Wired so
+      # they cannot rot unseen the way the reachability audit did.
+      - name: Check enterprise naming conventions
+        run: npm run audit:enterprise-naming
+
+      - name: Check agent substrate readiness
+        run: npm run audit:agent-substrate
+
+      # Was quarantined: it failed on the old nav label set and a literal
+      # breakpoint, both changed on purpose by #7721. Corrected and un-quarantined.
+      - name: Check the canonical NEXUS navigation contract
+        run: npm run audit:nexus-navigation
+
+      # A QA inventory that names a component no route mounts prescribes a
+      # check nobody can perform, in a file that reads like an authority.
+      - name: Check QA inventories name reachable components
+        run: npm run audit:qa-inventory-claims

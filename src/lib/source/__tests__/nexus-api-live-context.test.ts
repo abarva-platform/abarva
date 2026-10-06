@@ -170,7 +170,7 @@ describe("Source Nexus API live context", () => {
     ).toBe(true);
     expect(
       response.agentResponseParts.some((part) => part.type === "barChart"),
-    ).toBe(true);
+    ).toBe(false);
     expect(response.summary).toBe(response.sourceAnswer?.answerText);
     expect(
       response.sentinelBriefing?.primaryVoice.contextUsed[0]
@@ -565,9 +565,9 @@ describe("Source Nexus API live context", () => {
       /Client Final .* is the final RFP version of record/i,
     );
     expect(response.summary).toMatch(
-      /AbarVa generated .*RFP_Package-69d8180c\.docx/i,
+      /AbarVa-generated draft .*RFP_Package-69d8180c\.docx/i,
     );
-    expect(response.summary).toMatch(/client uploaded .*Client Final/i);
+    expect(response.summary).toMatch(/client uploaded Client Final/i);
     expect(response.summary).toMatch(/current authoritative version/i);
     expect(response.summary).not.toMatch(/Vendor A|BAFO|risk-adjusted lead/i);
     expect(response.summary).not.toMatch(

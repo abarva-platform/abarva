@@ -71,14 +71,14 @@ describe("POST Source Optimize workflow action", () => {
     );
     mockGetActiveClientRow.mockResolvedValue({
       id: "client-skyharbor",
-      key: "skyharbor_global",
+      key: "skyharbor",
       name: "SkyHarbor Global",
       industry_code: "AIRLINE",
     });
     mockLoadUserSourceAccessPolicy.mockResolvedValue({
       userId: "user-1",
       clientId: "client-skyharbor",
-      activeClientKey: "skyharbor_global",
+      activeClientKey: "skyharbor",
       accessLevel: "admin",
       canCreateSourceEvents: true,
       canApproveSourceStages: true,
@@ -86,7 +86,7 @@ describe("POST Source Optimize workflow action", () => {
     mockRunContractOptimizationWorkflowAction.mockResolvedValue({
       ok: true,
       action: "create_approval_request",
-      tenantKey: "skyharbor_global",
+      tenantKey: "skyharbor",
       contractId: "CTR-090",
       datasetVersion: "v4",
       optimizationCaseId: "CASE-CTR-090",
@@ -122,7 +122,7 @@ describe("POST Source Optimize workflow action", () => {
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
     expect(mockRunContractOptimizationWorkflowAction).toHaveBeenCalledWith({
-      tenantKey: "skyharbor_global",
+      tenantKey: "skyharbor",
       contractId: "CTR-090",
       opportunityId: "OPP-CTR-090-RATE",
       action: "create_approval_request",
@@ -136,7 +136,7 @@ describe("POST Source Optimize workflow action", () => {
     mockLoadUserSourceAccessPolicy.mockResolvedValueOnce({
       userId: "user-1",
       clientId: "client-skyharbor",
-      activeClientKey: "skyharbor_global",
+      activeClientKey: "skyharbor",
       accessLevel: "viewer",
       canCreateSourceEvents: true,
       canApproveSourceStages: false,
@@ -217,7 +217,7 @@ describe("POST Source Optimize workflow action", () => {
     mockRunContractOptimizationWorkflowAction.mockResolvedValueOnce({
       ok: true,
       action: "request_finance_confirmation",
-      tenantKey: "skyharbor_global",
+      tenantKey: "skyharbor",
       contractId: "CTR-090",
       datasetVersion: "v4",
       optimizationCaseId: "CASE-CTR-090",
@@ -250,7 +250,7 @@ describe("POST Source Optimize workflow action", () => {
     expect(payload.action).toBe("request_finance_confirmation");
     expect(mockRunContractOptimizationWorkflowAction).toHaveBeenCalledWith(
       expect.objectContaining({
-        tenantKey: "skyharbor_global",
+        tenantKey: "skyharbor",
         contractId: "CTR-090",
         opportunityId: "OPP-CTR-090-RATE",
         action: "request_finance_confirmation",

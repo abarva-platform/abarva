@@ -1,0 +1,3 @@
+tenant_key,dataset_version,contract_id,scenario,list_dbu_rate_equiv_usd,discount_pct,net_annual_commitment_usd,support_pct_of_commit,support_fee_usd,total_annual_usd,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,current_signed,1703297,9,1550000,22,341000,1891000,SRC-PRB-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,nexus_target_year2,1043956,9,950000,15,142500,1092500,SRC-PRB-002

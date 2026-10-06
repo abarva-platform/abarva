@@ -68,8 +68,15 @@ export function ValuePoolInsight({ insight }: ValuePoolInsightProps) {
             lineHeight: 1.5,
           }}
         >
-          Provide run-cost, ticket-volume, and contract evidence to size the
-          value pool for this event. We name every lever; we never guess a number.
+          Link the source records required by this event to size value. No amount
+          is asserted yet.
+          {insight.needsEvidenceLevers.length > 0 ? (
+            <ul style={{ margin: '12px 0 0', paddingLeft: 20, textAlign: 'left' }}>
+              {insight.needsEvidenceLevers.map((lever) => (
+                <li key={lever}>{lever}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </InsightShell>
     );

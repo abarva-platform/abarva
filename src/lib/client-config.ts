@@ -22,6 +22,50 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
     /^\s*(?:qa|codex|agent|proof|test)(?:[-_\s]+(?:synthetic|fixture|sandbox|proof|canary))?\s*[-:]\s*/i,
     "",
   ],
+  // The prefix stripper above catches a leading "qa:/test-synthetic:" tag; the
+  // two rules below catch the end-to-end run or build identifier that leaks
+  // from synthetic run names. Both are anchored on the harness token `E2E`,
+  // which appears in no client name, business function or move vocabulary, so
+  // neither can reach a real title.
+  //
+  // U-553. This was one rule, `/\s*\b(?:Claude\s+)?E2E\s+\d+\b/gi`, fitted to
+  // one example and asserted with one crafted string. On the real corpus it was
+  // worse than insufficient: on a board title of the form
+  // "<tenant> Synthetic Rich Evidence E2E <YYYY>-<MM>-<DD>T<HH>-<MM>" the `\d+`
+  // matched the YEAR alone, so the rule removed "E2E <YYYY>" and rendered
+  // "<tenant> Synthetic Rich Evidence-<MM>-<DD>T<HH>-<MM>" — turning a leak that
+  // still carried the token into one that no longer did, which no second pass
+  // anchored on `E2E` could ever clean. A stamp must therefore be consumed
+  // whole, longest shape first, which is what the alternation order below is
+  // for. The other observed shape, "Synthetic <tenant> E2E Smoke - <stamp>",
+  // survived untouched because `E2E` was followed by a word rather than a digit.
+  [
+    /\s*[-–—:]?\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\s*[-–—:]?\s*(?:\d{4}-\d{2}-\d{2}T\d{2}[-:]\d{2}(?:[-:]\d{2})?|\d{8}T\d{6}Z?|\d+)\b/gi,
+    "",
+  ],
+  // The token with no stamp after it is still a harness identifier, and leaving
+  // it renders "… Claims Platform E2E Smoke" to an executive.
+  [/\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\b/gi, ""],
+  // U-556. Every rule above is anchored on the harness token `E2E`, which is
+  // what made them safe — and also what made them blind. A compact run stamp
+  // can reach a client-visible label with no harness token anywhere near it,
+  // and from our own code rather than from a synthetic name:
+  // `deriveDisplayCode` in `src/lib/programs/transformers.ts` builds the middle
+  // segment of every rendered move display code from the first slug piece of
+  // the move name, copied verbatim, so a move whose name begins with a stamp
+  // renders `<SLUG>-20260622161738-2026` on the board. The stamp is consumed
+  // together with the separator that attached it, so no doubled separator is
+  // left where it was.
+  //
+  // Two bounds, both deliberate and both pinned by a named case in
+  // `src/__tests__/behaviors/moves-title-identifier-corpus.test.ts`. The date
+  // half must carry a plausible century, so a 14-digit account or contract
+  // number that cannot be a date survives whole — the rule identifies a stamp
+  // rather than counting digits. And all 14 digits are required, so an 8-digit
+  // date standing on its own in a title is left alone. The `T` is optional
+  // because both forms occur: our stamp helpers mint `20260923T222629Z`, and
+  // the shape this rule was written for carries no `T` at all.
+  [/\s*[-–—:]?\s*\b(?:19|20)\d{6}T?\d{6}Z?\b/g, ""],
   [
     /\bApex Retail Group(?:\s+Retail Group|\s+Group)+\b/gi,
     DEMO_SAFE_CLIENT_NAMES.apexretail,
@@ -143,7 +187,13 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export const ALL_CLIENTS: ClientOption[] = [
+// The ids have to stay literal here: `ClientKey` is derived from them
+// immediately below. An explicit `: ClientOption[]` annotation would widen
+// `id` to `string` before that derivation ran, which made `ClientKey` equal
+// to `string` and left every `Record<ClientKey, …>` unchecked — any key
+// accepted, no key required. `satisfies` gets the same shape checking without
+// the widening.
+export const ALL_CLIENTS = [
   {
     id: "apexretail",
     name: DEMO_SAFE_CLIENT_NAMES.apexretail,
@@ -186,9 +236,16 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: "#2563EB",
     vertical: "Diversified Holdco",
   },
-] as const;
+] as const satisfies readonly ClientOption[];
 
-export type ClientKey = (typeof ALL_CLIENTS)[number]["id"];
+/**
+ * A registry entry with its id still narrowed to the tenant it names.
+ * `ClientOption` widens `id` to `string` for callers that build one; this is
+ * what the registry actually holds.
+ */
+export type RegisteredClientOption = (typeof ALL_CLIENTS)[number];
+
+export type ClientKey = RegisteredClientOption["id"];
 
 export const DEFAULT_CLIENT_KEY: ClientKey = "apexretail";
 
@@ -229,7 +286,10 @@ export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   apexretail: "RETAIL",
   northstar: "MEDTECH",
   skyharbor: "AIRLINE",
-  lakeshore: "INDUSTRIAL",
+  // A holdco, and the only profile that exists for it is DIVERSIFIED. INDUSTRIAL
+  // has no profile, so `industryProfileFor` fell back to the generic one without
+  // saying so.
+  lakeshore: "DIVERSIFIED",
 };
 
 export function industryCodeForClientName(
@@ -256,7 +316,9 @@ export function isClientKey(
   return !!value && ALL_CLIENTS.some((client) => client.id === value);
 }
 
-export function getClientOption(id: string | null | undefined): ClientOption {
+export function getClientOption(
+  id: string | null | undefined,
+): RegisteredClientOption {
   return (
     ALL_CLIENTS.find((client) => client.id === id) ??
     ALL_CLIENTS.find((client) => client.id === DEFAULT_CLIENT_KEY) ??
@@ -264,7 +326,21 @@ export function getClientOption(id: string | null | undefined): ClientOption {
   );
 }
 
-export function canonicalClientDisplayName(args: {
+/**
+ * Canonical display name for a client, or `null` when neither the key nor the
+ * name resolves to a registered one.
+ *
+ * U-511 (2026-09-22): `canonicalClientDisplayName` below answers with the
+ * DEFAULT_CLIENT_KEY option for any input it cannot resolve, so its declared
+ * `| null` could never be returned and every `?? "fallback"` written against it
+ * was dead. That default is right for a surface already inside a tenant and
+ * wrong for one deciding whether it may name a tenant at all: Source's access
+ * guard named the default account to a reader whose tenant read had just
+ * failed. Callers that must be able to say "unresolved" -- guards, refusals,
+ * anything that discloses -- ask this form; everything else keeps the lenient
+ * one, whose behaviour is unchanged.
+ */
+export function canonicalClientDisplayNameOrNull(args: {
   key?: string | null;
   name?: string | null;
 }): string | null {
@@ -384,8 +460,30 @@ export function canonicalClientDisplayName(args: {
   }
 
   if (name) return name;
-  const option = getClientOption(args.key);
-  return option?.name ?? null;
+  // A registered key with no alias branch above still names a real client; an
+  // unregistered or absent one names nothing, and must not be resolved through
+  // `getClientOption`, which answers DEFAULT_CLIENT_KEY for anything it does
+  // not know.
+  if (isClientKey(key)) return getClientOption(key).name;
+  return null;
+}
+
+/**
+ * Canonical display name for a client, falling back to the default account
+ * when nothing resolves. Deliberately unchanged by U-511: ~150 call sites
+ * render a tenant name on a surface the reader is already inside, where the
+ * default is the established behaviour. Its return type stays `string | null`
+ * for the same reason -- narrowing it would churn every caller -- but note that
+ * it does not in practice return `null`, so `?? x` on its result is dead. Use
+ * `canonicalClientDisplayNameOrNull` when the absence has to be visible.
+ */
+export function canonicalClientDisplayName(args: {
+  key?: string | null;
+  name?: string | null;
+}): string | null {
+  return (
+    canonicalClientDisplayNameOrNull(args) ?? getClientOption(args.key).name
+  );
 }
 
 /**
@@ -409,6 +507,11 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> =
     ["northstar-clinical.example.com", "northstar"],
     ["skyharbor-air.example.com", "skyharbor"],
     ["lakeshore-industries.example.com", "lakeshore"],
+    // Every Lakeshore identity in the repo uses the holdings domain. Without
+    // this entry the pin resolves to null for a session that `isLockedTenantRole`
+    // has already locked, and the tenant falls back to caller-supplied metadata —
+    // which is the input the pin exists to override.
+    ["lakeshore-holdings.example.com", "lakeshore"],
   ];
 
 const EXACT_EMAIL_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
@@ -465,20 +568,14 @@ const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
   ["anand.sundaram+lakeshore", "lakeshore"],
 ];
 
-/**
- * Real external pilot users, each pinned to exactly one client. These are live
- * people (pilot sponsors / evaluators), NOT synthetic demo personas — keep the
- * list tiny, explicit, and reviewed: every entry is an access grant. Ported
- * from the production pilot so the main line carries the same access.
- * (fix/pilot-email-access-on-main)
- */
+/** Exact pilot access grants, each pinned to one client; never broaden to a domain grant. */
 const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
-  "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
-  "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
+  "kmysore@gmail.com": "meridian",
+  "surekha.durvasula@gmail.com": "lakeshore",
   "anandshp@gmail.com": "lakeshore",
   "admin@abarva.ai": "meridian",
-  "anand@abarva.ai": "skyharbor",
-  "mreddy@republicebank.com": "arcturus", // Madhu Reddy · Republic E Bank / Financial Services pilot
+  "anand@abarva.ai": "meridian",
+  "mreddy@republicebank.com": "arcturus",
 };
 
 const AGENT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> =

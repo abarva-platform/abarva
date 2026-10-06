@@ -46,7 +46,26 @@ export interface SourceCanvasSubstrateReadAdapter {
    * ordered by `artifact_code`. Throws on a read failure — the lib helper
    * catches and degrades to `[]`, so callers' behavior is preserved.
    */
-  listArtifactStateRows(sourceEventId: string): Promise<SourceEventArtifactStateRow[]>;
+  listArtifactStateRows(
+    sourceEventId: string,
+    stageKey?: string,
+  ): Promise<SourceEventArtifactStateRow[]>;
+  /**
+   * Read the bounded artifact-state projection used by the default event page.
+   * Body text and generation metadata are deliberately excluded.
+   */
+  listArtifactStateMetadataRows(
+    sourceEventId: string,
+    stageKey: string,
+  ): Promise<SourceEventArtifactStateRow[]>;
+  /** Read generation review data for the viewed stage without draft body text. */
+  listArtifactStateReviewRows(
+    sourceEventId: string,
+    stageKey: string,
+  ): Promise<Array<{
+    id: string;
+    body_generation_metadata: Record<string, unknown> | null;
+  }>>;
   /**
    * Read every `source_event_gate_criterion_states` row for `sourceEventId`,
    * ordered by `criterion_id`. Throws on a read failure.
@@ -58,7 +77,9 @@ export interface SourceCanvasSubstrateReadAdapter {
    * Read every `source_event_evidence_states` row for `sourceEventId`,
    * ordered by `requirement_id`. Throws on a read failure.
    */
-  listEvidenceStateRows(sourceEventId: string): Promise<SourceEventEvidenceStateRow[]>;
+  listEvidenceStateRows(
+    sourceEventId: string,
+  ): Promise<SourceEventEvidenceStateRow[]>;
   /**
    * Read every non-stale `source_event_facts` row for `sourceEventId`,
    * newest first. Throws on a read failure.
@@ -69,6 +90,29 @@ export interface SourceCanvasSubstrateReadAdapter {
 // --- Supabase adapter (DEFAULT) --------------------------------------------
 
 export type SupabaseFactory = () => SupabaseClient;
+
+export const SOURCE_ARTIFACT_STATE_METADATA_COLUMNS = [
+  'id',
+  'source_event_id',
+  'tenant_key',
+  'artifact_code',
+  'stage_key',
+  'artifact_family',
+  'tier',
+  'status',
+  'requirement_level',
+  'gate_defining',
+  'linked_artifact_id',
+  'notes',
+  'body_format',
+  'body_authored_by',
+  'body_updated_at',
+  'created_at',
+  'updated_at',
+] as const;
+
+const SOURCE_ARTIFACT_STATE_METADATA_SELECT =
+  SOURCE_ARTIFACT_STATE_METADATA_COLUMNS.join(',');
 
 /**
  * Build the Supabase canvas-substrate adapter. Each query is the exact
@@ -82,15 +126,46 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
 ): SourceCanvasSubstrateReadAdapter {
   return {
     name: 'supabase',
-    async listArtifactStateRows(sourceEventId) {
+    async listArtifactStateRows(sourceEventId, stageKey) {
+      const sb = getClient();
+      let query = sb
+        .from('source_event_artifact_states')
+        .select('*')
+        .eq('source_event_id', sourceEventId);
+      if (stageKey) query = query.eq('stage_key', stageKey);
+      const { data, error } = await query.order('artifact_code', {
+        ascending: true,
+      });
+      if (error)
+        throw new Error(`listArtifactStatesForEvent: ${error.message}`);
+      return (data as SourceEventArtifactStateRow[] | null) ?? [];
+    },
+    async listArtifactStateMetadataRows(sourceEventId, stageKey) {
       const sb = getClient();
       const { data, error } = await sb
         .from('source_event_artifact_states')
-        .select('*')
+        .select(SOURCE_ARTIFACT_STATE_METADATA_SELECT)
         .eq('source_event_id', sourceEventId)
+        .eq('stage_key', stageKey)
         .order('artifact_code', { ascending: true });
-      if (error) throw new Error(`listArtifactStatesForEvent: ${error.message}`);
-      return (data as SourceEventArtifactStateRow[] | null) ?? [];
+      if (error)
+        throw new Error(`listArtifactStatesForEventStage: ${error.message}`);
+      return (data as unknown as SourceEventArtifactStateRow[] | null) ?? [];
+    },
+    async listArtifactStateReviewRows(sourceEventId, stageKey) {
+      const sb = getClient();
+      const { data, error } = await sb
+        .from('source_event_artifact_states')
+        .select('id,body_generation_metadata')
+        .eq('source_event_id', sourceEventId)
+        .eq('stage_key', stageKey)
+        .order('artifact_code', { ascending: true });
+      if (error)
+        throw new Error(`listArtifactStateReviewRows: ${error.message}`);
+      return (data as unknown as Array<{
+        id: string;
+        body_generation_metadata: Record<string, unknown> | null;
+      }> | null) ?? [];
     },
     async listGateCriterionStateRows(sourceEventId) {
       const sb = getClient();
@@ -99,7 +174,8 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
         .select('*')
         .eq('source_event_id', sourceEventId)
         .order('criterion_id', { ascending: true });
-      if (error) throw new Error(`listGateCriterionStatesForEvent: ${error.message}`);
+      if (error)
+        throw new Error(`listGateCriterionStatesForEvent: ${error.message}`);
       return (data as SourceEventGateCriterionStateRow[] | null) ?? [];
     },
     async listEvidenceStateRows(sourceEventId) {
@@ -109,7 +185,8 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
         .select('*')
         .eq('source_event_id', sourceEventId)
         .order('requirement_id', { ascending: true });
-      if (error) throw new Error(`listEvidenceStatesForEvent: ${error.message}`);
+      if (error)
+        throw new Error(`listEvidenceStatesForEvent: ${error.message}`);
       return (data as SourceEventEvidenceStateRow[] | null) ?? [];
     },
     async listEventFactRows(sourceEventId) {
@@ -135,16 +212,52 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
  * an in-memory fake.
  */
 export function createAzureSourceCanvasSubstrateReadAdapter(
-  session: SessionRunner = createDefaultSession('abarva-data-plane-source-canvas'),
+  session: SessionRunner = createDefaultSession(
+    'abarva-data-plane-source-canvas',
+  ),
 ): SourceCanvasSubstrateReadAdapter {
   return {
     name: 'azure-postgres',
-    async listArtifactStateRows(sourceEventId) {
+    async listArtifactStateRows(sourceEventId, stageKey) {
       return session((run) =>
         run<SourceEventArtifactStateRow>(
-          `SELECT * FROM source_event_artifact_states
-            WHERE source_event_id = $1 ORDER BY artifact_code ASC`,
-          [sourceEventId],
+          stageKey
+            ? `SELECT * FROM source_event_artifact_states
+                WHERE source_event_id = $1 AND stage_key = $2
+                ORDER BY artifact_code ASC`
+            : `SELECT * FROM source_event_artifact_states
+                WHERE source_event_id = $1 ORDER BY artifact_code ASC`,
+          stageKey ? [sourceEventId, stageKey] : [sourceEventId],
+        ),
+      );
+    },
+    async listArtifactStateMetadataRows(sourceEventId, stageKey) {
+      return session((run) =>
+        run<SourceEventArtifactStateRow>(
+          `SELECT ${SOURCE_ARTIFACT_STATE_METADATA_SELECT}
+             FROM source_event_artifact_states
+            WHERE source_event_id = $1 AND stage_key = $2
+            ORDER BY artifact_code ASC`,
+          [sourceEventId, stageKey],
+        ),
+      );
+    },
+    async listArtifactStateReviewRows(sourceEventId, stageKey) {
+      return session((run) =>
+        run<{
+          id: string;
+          body_generation_metadata: Record<string, unknown> | null;
+        }>(
+          `SELECT id,
+                  jsonb_build_object(
+                    'qualityGate', body_generation_metadata -> 'qualityGate',
+                    'generatedAt', body_generation_metadata ->> 'generatedAt',
+                    'humanEditedAt', body_generation_metadata ->> 'humanEditedAt'
+                  ) AS body_generation_metadata
+             FROM source_event_artifact_states
+            WHERE source_event_id = $1 AND stage_key = $2
+            ORDER BY artifact_code ASC`,
+          [sourceEventId, stageKey],
         ),
       );
     },

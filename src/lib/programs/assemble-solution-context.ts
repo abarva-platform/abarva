@@ -30,7 +30,10 @@ export interface SolutionContextSources {
     phase?: number,
   ) => Promise<string>;
   /** Full structured digests from prior approved deliverables (NOT 1800-char clips). */
-  loadPriorDigests: (moveId: string) => Promise<PhaseDigest[]>;
+  loadPriorDigests: (
+    moveId: string,
+    targetPhase: number,
+  ) => Promise<PhaseDigest[]>;
   /**
    * Prior deliverables WITH acceptance status + Move/tenant scope + lineage, so
    * the assembler can resolve authoritative architecture readiness by precedence
@@ -99,7 +102,10 @@ export async function assembleMoveSolutionContext(
   }
 
   // 1) fold prior approved phase digests (full, structured) — cumulative memory.
-  for (const digest of await sources.loadPriorDigests(args.moveId)) {
+  for (const digest of await sources.loadPriorDigests(
+    args.moveId,
+    args.targetPhase,
+  )) {
     ctx = applyPhaseDigest(ctx, digest);
   }
 
@@ -109,7 +115,11 @@ export async function assembleMoveSolutionContext(
   // stops falsely reporting "architecture not captured or approved" after it was
   // signed off. Non-authoritative material (candidate/draft/rejected/superseded/
   // cross-Move/cross-tenant) is excluded by the resolver and never binds here.
-  if (sources.loadPriorDeliverables && !ctx.architecture?.trim()) {
+  if (
+    sources.loadPriorDeliverables &&
+    args.targetPhase > 3 &&
+    !ctx.architecture?.trim()
+  ) {
     const priors = await sources
       .loadPriorDeliverables(args.moveId)
       .catch(() => [] as PriorDeliverable[]);
@@ -178,9 +188,15 @@ export async function assembleMoveSolutionContext(
 
   // Promote concrete P2 evidence into first-class prompt fields so the model does
   // not have to hunt through raw CSV/XLSX excerpts for the facts that should drive
-  // the diagnostic thesis. P3 draft shaping must also carry these P2 signals
-  // forward so the future-state blueprint is grounded in the approved diagnostic.
-  if (currentStateBound && (args.targetPhase === 2 || args.targetPhase === 3)) {
+  // the diagnostic thesis. Later phase artifacts inherit the same diagnostic
+  // metrics through approved prior digests, so keep promoting them instead of
+  // letting terminal artifacts fall back to generic prose.
+  const hasSpecificEvidenceInputs =
+    currentStateBound ||
+    Object.keys(ctx.baselineMetrics ?? {}).length > 0 ||
+    (ctx.metricsThatMatter?.length ?? 0) > 0 ||
+    (ctx.evidenceTaxonomy?.length ?? 0) > 0;
+  if (hasSpecificEvidenceInputs && args.targetPhase >= 2) {
     const specificity = inferP2EvidenceSpecificity(ctx);
     ctx = applyPhaseDigest(ctx, specificity);
   }

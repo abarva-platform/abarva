@@ -84,7 +84,9 @@ interface TenantBrand {
   tagline: string;
 }
 
-const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
+// This remains Partial intentionally: an onboarded tenant without authored
+// identity must use the visible fallback rather than inheriting another brand.
+const TENANT_BRAND: Partial<Record<ClientKey, TenantBrand>> = {
   meridian: {
     initials: "MH",
     bgColor: "#0F766E",
@@ -124,6 +126,15 @@ const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
     brandLine: "rgba(7,89,133,0.20)",
     industryLabel: "Industry: Global Airline",
     tagline: "Global airline · $52.1B revenue · IBM Z to AWS modernization",
+  },
+  lakeshore: {
+    initials: "LH",
+    bgColor: "#2563EB",
+    brandSoft: "rgba(37,99,235,0.08)",
+    brandLine: "rgba(37,99,235,0.20)",
+    industryLabel: "Industry: Diversified Holdco",
+    tagline:
+      "Diversified holding company · 4 operating companies · shared services",
   },
 };
 

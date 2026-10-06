@@ -1,0 +1,2270 @@
+name: Unit suites
+
+# `src/__tests__/unit` is 11 suites that no workflow and no npm script ran.
+# Measured through the census resolver on `6166725d0`, not by reading YAML:
+# 11 test files, 0 covered.
+#
+# It stayed dark for a structural reason worth stating. The repository's
+# "changed integration suites have a CI owner" gate is hard-scoped to
+# `src/__tests__/integration/` (`INTEGRATION_ROOT` in
+# `scripts/quality/check-integration-ci-visibility.mjs`), so a suite in any
+# other `src/__tests__` tree is not merely unwired — nothing ever asks whether
+# it has an owner, not even when a pull request edits it.
+#
+# What that cost here: `proxy-session-identity.test.ts` asserted that an
+# ordinary tenant on an ordinary route does not trigger an identity-provider
+# fetch, and went red on 2026-08-27 when the tenant key it had hard-coded to
+# mean "ordinary" joined `FOUNDATION_TENANT_KEYS`, in a commit about Moves data
+# reads. The predicate it tests had not changed since the day the case was
+# written; only the set it consults had. Three weeks red, in four proxy/auth
+# suites nobody was running.
+#
+# The three sibling trees that are still dark are deliberately NOT wired here.
+# Run on `6166725d0`: `features` (1 suite), `guardrails` (1) and `hygiene` (6)
+# are 4 failed / 4 passed of 8 suites, 4 failing cases. A red directory is wired
+# by fixing it, never by adding it to a green command. They are filed as their
+# own backlog item with those numbers.
+#
+# The two mechanics this repository has already paid for twice, both of which
+# apply here:
+#
+#   1. A wrapper script that shells out to jest registers nothing. The gate
+#      counts a suite as registered only when a workflow command mentions a test
+#      runner AND names the suite or a containing directory.
+#   2. A trailing slash stops the gate matching, because it requires the path to
+#      be followed by whitespace or end-of-command.
+#
+# A jest path argument is a regex against the full path, so naming a directory
+# also selects every sibling whose name it prefixes. Nothing under
+# `src/__tests__` is prefixed by `unit` today; `unit-directory-ci-coverage.test.ts`
+# is what refuses the day one arrives.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  unit-suites:
+    name: Unit suites that pass on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # C-639: named as a DIRECTORY, not as the one file it used to name, for
+      # the same reason the step below gives — a suite written here tomorrow
+      # should run the day it lands rather than waiting for someone to add a
+      # line. Both files in it are green and this widens the gate, never
+      # narrows it.
+      - name: Run signed-in crawl proof contracts
+        run: npx jest src/lib/crawl/__tests__ --no-coverage --ci
+
+      # Named as a directory, without a trailing slash, for the two reasons in
+      # the header. Naming the directory rather than the files is what makes a
+      # suite written here tomorrow run the day it lands.
+      - name: Run the unit suites
+        run: npx jest src/__tests__/unit --no-coverage --ci
+
+      - name: Validate Source market candidate research
+        run: >-
+          node --import tsx --test
+          scripts/source/__tests__/market-candidate-research.test.mjs
+
+      # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
+      # npm script reached. Measured through the census resolver on `b061a6819`,
+      # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
+      #
+      # The backlog item that asked for this named 16, which is the top-level
+      # `__tests__` only. `broker/portfolio/__tests__` and
+      # `broker/sentinel/__tests__` are separate census rows and were missing
+      # from the count; naming the parent directory here covers all three and
+      # is why the number in this comment is 21 rather than 16.
+      #
+      # These are not dead modules. 40 non-test files import `admin/broker`,
+      # including webhook routes, cron routes, server actions and admin pages,
+      # so the suites cover code that runs.
+      #
+      # The sibling tree `src/lib/admin/__tests__` (38 files) is deliberately
+      # NOT wired here: run on `b061a6819` it is 5 failed of 62 suites, 9
+      # failing cases. A red directory is wired by fixing it, never by adding
+      # it to a green command. `src/lib/admin/ai-initiatives` (2 files, 8
+      # tests) is green and still unwired -- left for its own item rather than
+      # widened into this one.
+      #
+      # Named as a directory, without a trailing slash, for the two reasons in
+      # the header, so a suite added under `broker` tomorrow runs the day it
+      # lands.
+      - name: Run the admin broker suites
+        run: npx jest src/lib/admin/broker --no-coverage --ci
+
+      # The context-ingestion tree was 24 of 27 suites green before repair.
+      # Triage found one optional-parser assumption, one retired external fixture
+      # dependency, and one document-metadata policy regression. The repaired
+      # tree is 27 suites / 161 tests and is named as a parent so new loader and
+      # intake suites join CI on the commit that adds them.
+      - name: Run the context-ingestion suites
+        run: npx jest src/lib/context-ingestion --no-coverage --ci
+
+      # `src/components/admin` is 31 suites / 171 tests. The first measured
+      # parent run found three stale harness failures: a missing Next router
+      # mock, copy that predated the queued connector-health state, and a
+      # deleted external CSV fixture. After repairing those contracts, the
+      # full parent is green. Naming the parent keeps future nested admin
+      # suites from becoming dark; the small overlap with already-owned
+      # redesign suites is deliberate and keeps this ownership automatic.
+      - name: Run the admin component suites
+        run: npx jest src/components/admin --no-coverage --ci
+
+      # Deliverables was measured before wiring: 86 of 88 suites passed. The
+      # two red suites were stale assertions from source-label normalization
+      # and the document-final renderer release. The green sibling subtrees are
+      # owned below by their measured subdirectory list; this step owns only the
+      # two repaired directories. The synthesis subtree stays unwired because
+      # no product path reaches it.
+      # governance/ and composer/ are named explicitly rather than by a parent
+      # glob: a directory that exists but no command names is dark, and the
+      # behavior gate treats dark as a defect. Adding a suite without adding it
+      # here leaves it green locally and unrun in CI.
+      - name: Run the repaired deliverables suites
+        run: >-
+          npx jest
+          src/lib/deliverables/__tests__
+          src/lib/deliverables/orchestrator/__tests__
+          src/lib/deliverables/governance/__tests__
+          src/lib/deliverables/composer/__tests__
+          --no-coverage --ci
+
+      - name: Validate Moves adaptive synthetic evidence kit
+        run: npm run test:moves:adaptive-e2e-kit
+
+      - name: Validate Moves governed data foundation synthetic E2E pack
+        run: npm run test:moves:gdf-e2e-pack
+
+      - name: Run governed clean-demo Move load suites
+        run: npx jest scripts/demo/__tests__ --no-coverage --ci
+
+      - name: Run the deliverables worker boundary suite
+        run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
+
+      - name: Run the Moves evidence revision suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts
+          src/scripts/__tests__/process-deliverable-queue.test.ts
+          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/artifacts/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts
+          src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
+          src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.scroll-into-view.test.tsx
+          --no-coverage --ci
+
+      - name: Run the uncovered deliverables component suite
+        run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.test.tsx --no-coverage --ci
+
+      - name: Run the deliverables route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/__tests__/route.test.ts
+          src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__/route.test.ts
+          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
+          src/app/api/v1/deliverables/generate/__tests__/route.test.ts
+          src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/role-approvals/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # The two synthesis route directories, wired by C-532.
+      #
+      # Measured from `docs/architecture/test-ci-coverage-census.json` on
+      # `874114b1e` rather than inferred: both directories were
+      # `run: false, covered: false, untriaged: true` at governed-risk band
+      # `high` with signal `tenant_scoped_read` — that is, suites asserting
+      # tenant-scoped behavior on a model-facing route, green locally and run by
+      # nothing. The item that brought this here is about a control that was safe
+      # only by accident; leaving its proof in a directory CI does not enter
+      # would reproduce the original defect in the test tree instead of the
+      # source tree.
+      #
+      # Named as directories, not as files, so the next suite added beside them
+      # joins CI on the commit that adds it rather than waiting for someone to
+      # remember this list. Both directories are green as named: 4 suites /
+      # 20 tests.
+      - name: Run the synthesis route suites
+        run: >-
+          npx jest
+          src/app/api/source/synthesis/__tests__
+          src/app/api/programs/synthesis/__tests__
+          --no-coverage --ci
+
+      # Four more library trees that no workflow and no npm script reached.
+      # Measured on `ced75d7c3` by running them, not by reading YAML:
+      #
+      #   expert-kernel            75 suites / 1662 tests / 43 importers
+      #   data-plane/read-adapters 20 suites /  193 tests / 43 importers
+      #   source/data-model        20 suites /  145 tests / 33 importers
+      #   pricing/effort-engine    14 suites /  140 tests /  5 importers
+      #
+      # "importers" counts non-test files outside each tree that import it, so
+      # none of these is coverage over dead code.
+      #
+      # They are four steps rather than one command so that a failure names the
+      # family it came from in the checks list. Pattern choice is measured in
+      # docs/ci/README-suite-wiring.md: queue time is zero either way and a
+      # dedicated workflow pays its own checkout and install, so a step in a job
+      # that already installed is the cheaper half of the trade.
+      #
+      # Three larger trees were measured at the same time and are deliberately
+      # NOT here, because they are red on `ced75d7c3`:
+      #
+      #   src/lib/deliverables     2 failed of 79 suites
+      #   src/lib/context-ingestion 3 failed of 27 suites
+      #   src/components/admin     3 failed of 31 suites
+      #
+      # A red directory is wired by fixing it, never by adding it to a green
+      # command. They are left for their own items with those numbers.
+      #
+      # Each path is named as a directory without a trailing slash, for the two
+      # reasons in the header. None of the four has a sibling sharing its name
+      # as a prefix today, and no other workflow names any of them, so nothing
+      # here runs twice.
+      - name: Run the expert-kernel suites
+        run: npx jest src/lib/programs/expert-kernel --no-coverage --ci
+
+      - name: Run the data-plane read-adapter suites
+        run: npx jest src/lib/data-plane/read-adapters --no-coverage --ci
+
+      - name: Run the Source data-model suites
+        run: npx jest src/lib/source/data-model --no-coverage --ci
+
+      # Widened from `pricing/effort-engine` to the whole `pricing` tree on
+      # `7ff4759ff`: 42 suites / 384 tests, of which effort-engine's 14 were
+      # already running here. Replacing the narrower path rather than adding
+      # beside it is what keeps those 14 from running twice.
+      - name: Run the pricing suites
+        run: npx jest src/lib/pricing --no-coverage --ci
+
+      # src/lib/ingestion: 11 suites / 76 tests / 13 importers, reached by no
+      # workflow and no npm script.
+      - name: Run the ingestion suites
+        run: npx jest src/lib/ingestion --no-coverage --ci
+
+      # Two Source library trees that no workflow and no npm script reached.
+      # Measured on `0b80d8c7a` by running them:
+      #
+      #   source/facts            18 suites / 264 tests / 24 importers
+      #   source/agent-generation 13 suites / 132 tests / 46 importers
+      #
+      # Both are cleanly unwired, which was checked rather than assumed: each
+      # tree's suite count equals the number of test files the census lists as
+      # uncovered beneath it, so naming the parent adds no suite that some other
+      # workflow already runs.
+      #
+      # That check is why `src/components/source/canvas` is NOT here. Its tree
+      # is 48 suites but only 17 files across four rows are uncovered, because
+      # ai-surface-control-catalog.yml already runs `canvas/__tests__` and
+      # `canvas/analytics`. Naming that parent would run 31 already-covered
+      # suites a second time. It needs a decision between a four-directory list
+      # and an accepted overlap, so it is filed separately rather than folded in
+      # here.
+      #
+      # `src/lib/intelligence/ask` is also excluded: 3 failed of 29 suites on
+      # `0b80d8c7a`. A red directory is wired by fixing it, never by adding it
+      # to a green command.
+      - name: Run the Source facts suites
+        run: npx jest src/lib/source/facts --no-coverage --ci
+
+      - name: Run the Source agent-generation suites
+        run: npx jest src/lib/source/agent-generation --no-coverage --ci
+
+      # `src/components/source/canvas` is 48 suites / 227 tests, of which only
+      # 17 files across four census rows were unreached. The rest is already run
+      # by ai-surface-control-catalog.yml, which names `canvas/__tests__` and
+      # `canvas/analytics` individually.
+      #
+      # So this step deliberately runs 31 suites that another workflow already
+      # runs. The alternative was naming the four uncovered subdirectories,
+      # which is the hand-maintained list this repository keeps removing: it
+      # goes stale the day someone adds a fifth, and nothing would notice.
+      #
+      # The choice was made on the duplicated COST, measured on `0dbb766b2`:
+      #
+      #   already-covered portion   31 suites / 183 tests / 2.577s
+      #   the whole tree            48 suites / 227 tests / 2.639s
+      #
+      # ~2.5 seconds per pull request, which is the same order as the 1.8s
+      # AgentDock overlap this repository measured and deliberately kept (see
+      # docs/ci/README-suite-wiring.md). A correction is owed here and is
+      # recorded in the release record: the change that deferred this one
+      # (PR#8074) asserted the overlap was "a different order of magnitude"
+      # before the number existed. It is not. That aside conflated suite COUNT
+      # with COST, and cost is what the decision turns on.
+      #
+      # Naming the parent is also what makes a suite added under `canvas`
+      # tomorrow run the day it lands, which four pinned subdirectories would
+      # not.
+      - name: Run the Source canvas component suites
+        run: npx jest src/components/source/canvas --no-coverage --ci
+
+      # The direct Source core row contains 69 suites: 9 are already owned by
+      # ai-surface-control-catalog.yml and 60 were not reached by any workflow.
+      # The parent also contains 8 nested files, so the actual Jest command is
+      # 77 suites / 736 tests. All pass unchanged.
+      #
+      # Naming the parent deliberately repeats the 9 owned suites. Their
+      # measured cost is ~1 second (9 suites / 71 tests), while the full parent
+      # is ~2.6 seconds. That bounded overlap buys automatic ownership for new
+      # core and specialist tests instead of pinning a 60-file list that would
+      # become stale on the next addition.
+      - name: Run the Source core suites
+        run: npx jest src/lib/source/__tests__ --no-coverage --ci
+
+      - name: Run the exact Source event tenant guard suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/__tests__/queries-tenant-scope.test.ts
+          --no-coverage --ci
+
+      # Nineteen approval and approval-adjacent route suites across thirteen
+      # directories were not reached by a pull-request workflow. The narrow
+      # list is deliberate: their common parents also contain unrelated route
+      # trees, so naming a broad parent would hide which governed gate failed.
+      - name: Run governed approval route suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/approve-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/estimates-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/config-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/estimate-detail-routes.test.ts"
+          "src/app/(maestro)/admin/__tests__/page-source.test.ts"
+          "src/app/(maestro)/admin/__tests__/cached-helpers-log-errors.test.ts"
+          "src/app/(maestro)/admin/__tests__/layout-access.test.ts"
+          "src/app/api/admin/programs/approvals/__tests__/_auth.test.ts"
+          "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
+          "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
+          "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
+          "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
+          "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
+          "src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts"
+          "src/app/api/v1/source/events/[eventId]/request-approval/__tests__/route.test.ts"
+          --no-coverage --ci
+
+      # The catalog workflow already runs this route's focused approval-gate
+      # contract. The broader route suite was the unowned half of the
+      # directory. The sibling v1 program-advance directory is already covered
+      # by the v1 API parent step and must not be duplicated here.
+      - name: Run phase-advance route suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/api/programs/phase-gate/__tests__/route.test.ts"
+          --no-coverage --ci
+
+      # Source export code produces the files a user can download, so this tree
+      # is a control boundary rather than a formatting convenience. Measured on
+      # `4758bb8aa`: 24 suites / 250 tests pass. One suite,
+      # `artifact-verdict-consistency`, is already run by the AI surface control
+      # workflow; naming the parent deliberately duplicates that single suite
+      # so every new export suite is owned on the day it lands.
+      #
+      # Two suites are called out in the release record because they govern
+      # client-facing truth: the narrative quality gate blocks an unreviewed
+      # RFP body, and artifact verdict consistency keeps downloadable outputs
+      # aligned with the Source judgment kernel.
+      - name: Run the Source export suites
+        run: npx jest src/lib/source/exports/__tests__ --no-coverage --ci
+
+      # These three steps name SUBDIRECTORIES rather than a parent, which is the
+      # opposite of every step above, and the reason matters: each of these
+      # parents contains red suites. Naming the parent here would wire a known
+      # failure into a green command.
+      #
+      # It came out of a mistake worth recording. These trees had been written
+      # off as "red" at TREE level, from one run of the whole parent. Checking
+      # WHICH directories actually failed found the failures confined to two
+      # directories in each case, with green siblings behind them:
+      #
+      #   src/lib/deliverables   2 red dirs of 10; 7 green subtrees, 22 suites
+      #   src/components/admin   2 red dirs of  6; 3 green subtrees,  5 suites
+      #   src/lib/admin          all 5 failures in one dir; ai-initiatives green
+      #
+      # `components/admin/tower` was in this list for one commit and has been
+      # removed: the tower test-ratchet baseline (docs/ci/tower-test-baseline.json,
+      # run by home-surface-guard.yml on pull_request) already names it, so
+      # running it here was a duplicate. See the release record for how that was
+      # missed -- the coverage census had it right and the check that doubted it
+      # was the thing at fault.
+      #
+      # 30 suites / 348 tests, measured on `3720e95eb`, hidden behind a label
+      # applied one level too high.
+      #
+      # Still red and still unwired, deliberately:
+      #   src/lib/deliverables/__tests__/golden-regression.test.ts
+      #   src/lib/deliverables/orchestrator/__tests__
+      #   src/components/admin/__tests__ and components/admin/context-layer/__tests__
+      #   src/lib/admin/__tests__ (5 failed of 62 suites)
+      #
+      # And src/lib/deliverables/synthesis is excluded for a different reason:
+      # nothing outside its own tree imports its one file except the failing
+      # golden-regression suite, so no production code reaches it. Running it
+      # would add a number to the census without covering anything.
+      #
+      # Because these are pinned subdirectories, a NEW directory added under
+      # any of these parents will not run here. That is the cost of the parents
+      # being red, and it goes away when they are fixed: the right repair is to
+      # fix those suites and collapse these lists into their parents.
+      - name: Run the green deliverables subtrees
+        run: >-
+          npx jest
+          src/lib/deliverables/decision-model
+          src/lib/deliverables/planning
+          src/lib/deliverables/profiles
+          src/lib/deliverables/quality
+          src/lib/deliverables/shared
+          src/lib/deliverables/story
+          src/lib/deliverables/templates
+          --no-coverage --ci
+
+      - name: Run the green admin component subtrees
+        run: >-
+          npx jest
+          src/components/admin/agent-readiness-redesign
+          src/components/admin/data-trust-redesign
+          src/components/admin/setup
+          --no-coverage --ci
+
+      - name: Run the admin AI-initiatives suites
+        run: npx jest src/lib/admin/ai-initiatives --no-coverage --ci
+
+      # Eight approval/lifecycle-adjacent suites across six small trees were
+      # measured first. Seven were green and import live code; the lifecycle
+      # operating-system suite was red on an authored-contract expectation and
+      # stayed unwired as an exact file-level quarantine.
+      #
+      # That quarantine is lifted here and the suite joins the step. It ranked 7
+      # in the census, band `critical`, the highest-ranked fully unreached
+      # directory in the tree, and it was red for one reason: the case asserted
+      # a `programs:P6` lifecycle contract against a phase-pack registry that
+      # has held six packs since before the suite was written, and whose
+      # `PhaseNumber` type cannot express a seventh. The expectation was
+      # corrected to the six authored phases with that reasoning recorded beside
+      # it. 1 failed / 43 passed before; 44 passed after.
+      #
+      # What the band does NOT mean, stated here so the number is not read as a
+      # guard it is not: the `approval_or_lifecycle_write` signal fires from
+      # `APPROVAL_OR_LIFECYCLE_PATH_RE` matching the word `lifecycle` in the
+      # directory path. No source in the module matches the corresponding
+      # source-level regex, and the module makes no database, network, or async
+      # call at all — it is a pure builder over authored packs. The suite
+      # asserts authored-content shape, never a refused approval or a blocked
+      # transition. Its value is that `buildSourceLifecycleContract` is read on
+      # a live path (`src/app/api/chat/agent/route.ts`); the program half it
+      # also covers has no non-test importer.
+      - name: Run small approval and lifecycle suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/nexus/__tests__/context-adapter.test.ts
+          src/lib/source/notifications/__tests__/approval-recipient-policy.test.ts
+          src/lib/source/notifications/__tests__/approval-request.test.ts
+          src/lib/source/notifications/__tests__/stage-decision-update.test.ts
+          src/components/source/approval/__tests__/EventApprovalCard.test.tsx
+          src/lib/enterprise-knowledge/narratives/__tests__/knowledge-narrative-store.test.ts
+          src/lib/intelligence/insight-engine/rules/__tests__/context-record-rules.test.ts
+          src/lib/lifecycle-operating-system/__tests__/lifecycle-operating-system.test.ts
+          --no-coverage --ci
+
+      # Four Program archetype suites, census rank 13, band `high`, signal
+      # `tenant_scoped_read`, 4 files and 0 covered. All four load, collect and
+      # run. The subjects they exercise have
+      # live non-test importers outside the directory: `registry` 6 (four v1
+      # Programs API routes and two library modules), `resolver` 3,
+      # `method-library` 1, `types` 9 — so this is not coverage of nothing.
+      #
+      # The former exact-file quarantine for `resolver.test.ts` is closed: the
+      # `ANALYTICS_CAPABILITY_REPATRIATION` method declarations now resolve to
+      # distinct `ANALYSIS_METHODS` entries instead of dangling authored keys.
+      # Loaded 4; collected 4; run 4; green 4; newly owned 4.
+      - name: Run the green Program archetype suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/programs/archetypes/__tests__/ai-pdlc.test.ts
+          src/lib/programs/archetypes/__tests__/generality.test.ts
+          src/lib/programs/archetypes/__tests__/resolver.test.ts
+          src/lib/programs/archetypes/__tests__/resolve-program-archetype.test.ts
+          --no-coverage --ci
+
+      # `src/lib/admin/__tests__` was measured as 33 green files and 5 red
+      # files. Four additional green files exercise policy/runbook modules that
+      # no non-test code imports, so they are not counted as live-code CI
+      # coverage here. The red files are quarantined individually so healthy
+      # siblings in the same directory still run.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces Jest's default ignore list.
+      - name: Run live admin library suites
+        run: >-
+          npx jest
+          src/lib/admin/__tests__
+          --testPathIgnorePatterns /node_modules/
+          src/lib/admin/__tests__/setup-acts-registry.test.ts
+          src/lib/admin/__tests__/setup-data-load-center.test.ts
+          src/lib/admin/__tests__/admin-tenant.test.ts
+          src/lib/admin/__tests__/data-layer-explorer.test.ts
+          src/lib/admin/__tests__/agent-readiness-composer.test.ts
+          src/lib/admin/__tests__/pilot-data-plane-security-policy.test.ts
+          src/lib/admin/__tests__/pilot-observability-isolation-smoke.test.ts
+          src/lib/admin/__tests__/setup-ai-governance.test.ts
+          src/lib/admin/__tests__/pilot-private-data-plane-runbook.test.ts
+          --no-coverage --ci
+
+      # The data-plane write-adapter tree is 11 suites / 169 tests. Ten suites
+      # were green on the first measured run; the remaining three failures in
+      # one suite came from a stale Supabase read mock after the production
+      # parent lookup moved to the Azure/Postgres compatibility client. The
+      # repaired directory is named literally so new write-adapter suites join
+      # CI on the commit that adds them.
+      - name: Run the data-plane write-adapter suites
+        run: npx jest src/lib/data-plane/write-adapters/__tests__ --no-coverage --ci
+
+      # src/app/api/admin: 16 suites / 74 tests / ~0.4s, measured on
+      # `4735d934f`. Twelve of its directories were reached by no workflow.
+      #
+      # The two files named in --testPathIgnorePatterns are a QUARANTINE, not
+      # a cleanup: both are red (5 failing tests between them) and this step
+      # would fail on arrival without them. Nothing forces that list to shrink
+      # when they are fixed -- it is two lines with the reason beside them,
+      # which is the best available here and not a guarantee.
+      #
+      # Naming the parent with two exclusions rather than listing ten green
+      # subdirectories is the same trade made elsewhere in this file: a list
+      # of directories goes stale the day an eleventh appears and nothing
+      # notices, while the parent runs it on arrival. The cost is that this
+      # step re-runs the four governed approval suites another step already
+      # owns -- measured at 4 suites / 20 tests / 0.17s, the same order as the
+      # overlaps already accepted in docs/ci/README-suite-wiring.md. Count is
+      # not cost.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces jest's default rather than adding to it.
+      #
+      # The patterns are unquoted. Quoting them is honoured by jest and, since
+      # `4735d934f`, by the coverage census too -- but unquoted stays the
+      # clearer form, and it is what the census's own quarantine generators
+      # emit.
+      #
+      # No path here contains a bracketed route segment. One that did would
+      # need --runTestsByPath, because `[id]` is a character class to a jest
+      # path argument -- the reason the governed approval suites are named by
+      # exact path rather than swept.
+      - name: Run the admin API route suites
+        run: >-
+          npx jest
+          src/app/api/admin
+          --testPathIgnorePatterns /node_modules/
+          src/app/api/admin/context-layer/csv-upload
+          src/app/api/admin/users/provision
+          --no-coverage --ci
+
+      # T-464 repairs the stale row-shape expectation in the structured context
+      # CSV upload route suite and proves both write boundaries are mocked:
+      # postgresCompat is strict to expected tables, object storage is replaced,
+      # and the exact pending chunk row must keep tenant identifiers. Keep this
+      # exact while the sibling user-provisioning suite remains a separate
+      # safety item.
+      - name: Run context CSV upload boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/admin/context-layer/csv-upload/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # T-463 replaces the route's actual read and write boundaries and keeps
+      # the Clerk invitation transport inert. The suite pins the tenant key on
+      # every person upsert and fails when that scope is removed.
+      - name: Run user provisioning boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/admin/users/provision/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # Five subtrees under src/app/api/v1 that no workflow reached: 55 suites
+      # / 328 tests, measured on `e0362a92e`.
+      #
+      #   v1/source     28 suites / 166 tests   21 files newly covered
+      #   v1/programs   24 suites / 128 tests   12 files newly covered
+      #   v1/agent       1 suite  /  20 tests    1
+      #   v1/artifacts   1 suite  /  10 tests    1
+      #   v1/moves       1 suite  /   4 tests    1
+      #
+      # The suite counts exceed the newly-covered counts because other steps
+      # already own some of these files -- notably the governed approval
+      # routes. That overlap is deliberate and cheap: the two large subtrees
+      # run in about 0.74s and 0.72s in total, so the duplicated portion is a
+      # fraction of a second, against a directory list that would need editing
+      # every time a route is added.
+      #
+      # v1/atlas is NOT here: 3 suites, all three failing, 4 of 8 tests red on
+      # `e0362a92e`. A red directory is wired by fixing it, never by adding it
+      # to a green command.
+      #
+      # Every path named here is bracket-free. The directories BELOW them are
+      # full of `[eventId]`, `[programId]` and the like, which is fine -- those
+      # are matched as descendants of a literal prefix. Naming one of them
+      # directly would not be: a jest path argument is a regex, so `[id]` is a
+      # character class. That is why the governed approval routes are run by
+      # exact path with --runTestsByPath, and any future addition naming a
+      # bracketed segment must do the same.
+      - name: Run the v1 API route suites
+        run: >-
+          npx jest
+          src/app/api/v1/source
+          src/app/api/v1/programs
+          src/app/api/v1/agent
+          src/app/api/v1/artifacts
+          src/app/api/v1/moves
+          --no-coverage --ci
+
+      # The auth tree is 19 suites / 206 tests. Thirteen suites (88 tests) are
+      # green and are owned here. Six suites remain red with 11 stale-policy or
+      # fixture failures, so they stay named in an explicit quarantine rather
+      # than making the green tenancy controls dark. A new suite under the
+      # parent runs automatically unless it is deliberately added below.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces Jest's default rather than extending it.
+      - name: Run the green auth and tenancy suites
+        run: >-
+          npx jest
+          src/lib/auth/__tests__
+          --testPathIgnorePatterns /node_modules/
+          src/lib/auth/__tests__/access-routing.test.ts
+          src/lib/auth/__tests__/legacy-tenant-sunset.test.ts
+          src/lib/auth/__tests__/private-browser-proof-session.test.ts
+          src/lib/auth/__tests__/program-access-policy.test.ts
+          src/lib/auth/__tests__/source-access-policy.test.ts
+          src/lib/auth/__tests__/tenant-isolation-probes.test.ts
+          --no-coverage --ci
+
+      # Four more library trees no workflow reached: 38 suites / 487 tests,
+      # measured on `024adb43f`.
+      #
+      #   lib/notifications          10 suites / 127 tests /  9 importers
+      #   programs/phase-packs       10 suites / 187 tests / 11 importers
+      #   programs/discovery          9 suites /  56 tests / 23 importers
+      #   programs/exports            9 suites / 117 tests /  7 importers
+      #
+      # Three neighbours were measured at the same time and are NOT here,
+      # because each is partly red on `024adb43f`:
+      #
+      #   lib/visual-system          1 failed of 10 suites
+      #   lib/enterprise-context     2 failed of  9
+      #   lib/knowledge              3 failed of 31
+      #
+      # A red directory is wired by fixing it, never by adding it to a green
+      # command. Whether each has green subtrees worth naming separately is a
+      # live question, not a settled one.
+      - name: Run the notifications and programs library suites
+        run: >-
+          npx jest
+          src/lib/notifications
+          src/lib/programs/phase-packs
+          src/lib/programs/discovery
+          src/lib/programs/exports
+          --no-coverage --ci
+
+      # src/lib/knowledge: 28 suites / 339 tests / ~0.9s, measured on
+      # `216228cde`. 81 non-test files import this tree.
+      #
+      # Three files are quarantined, and they are named as FILES rather than
+      # as the directories holding them, which is the whole point. Each of the
+      # three red suites sits in a directory of mostly-green ones -- 9, 5 and 4
+      # test files respectively -- so excluding the directories would have
+      # dropped fifteen passing files to quarantine three.
+      #
+      # Naming the five green subtrees instead reaches only 13 suites, because
+      # it abandons those fifteen. The parent plus three file exclusions
+      # reaches 28. Measured both ways before choosing.
+      #
+      # This is a quarantine: nothing forces the list to shrink when those
+      # three are fixed.
+      #
+      # Two neighbours measured alongside are NOT here, and cannot be split the
+      # same way: `visual-system` (1 failed of 10) and `enterprise-context`
+      # (2 failed of 9) each have a single flat test directory, so there is no
+      # green subtree to name and no directory boundary to quarantine along.
+      - name: Run the knowledge suites
+        run: >-
+          npx jest
+          src/lib/knowledge
+          --testPathIgnorePatterns /node_modules/
+          src/lib/knowledge/__tests__/tenant-enterprise-context
+          src/lib/knowledge/context-broker/__tests__/pinecone-client
+          src/lib/knowledge/tenant-data/__tests__/stub-adapter
+          --no-coverage --ci
+
+      # The flat enterprise-context tree contains nine suites. Seven are green
+      # and exercise modules or generated packages consumed outside tests:
+      # chunking (3 importers), the intake loader (7), refresh simulation (1),
+      # schema composition (1), template schema (7), and generated package
+      # inputs consumed by seven loader/generator scripts. Two files stay in an
+      # exact quarantine: derived-enterprise-read currently fails because its
+      # retired local inputs are absent, and it is held by its own open item as
+      # a decision rather than a repair. The eighth, intelligence-read-model,
+      # was re-baselined under item T-756 against the record-type separation
+      # that made it red and is wired here; its subject has three non-test
+      # importers including a diagnostics route and the pilot dashboard
+      # aggregates. Loaded 9; collected 9; run 9; green 8.
+      - name: Run the green enterprise context suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/enterprise-context/__tests__/chunking.test.ts
+          src/lib/enterprise-context/__tests__/client-enterprise-context-datasets.test.ts
+          src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts
+          src/lib/enterprise-context/__tests__/meridian-ingestion-plan.test.ts
+          src/lib/enterprise-context/__tests__/meridian-refresh-simulator.test.ts
+          src/lib/enterprise-context/__tests__/meridian-synthetic-dataset.test.ts
+          src/lib/enterprise-context/__tests__/schema.test.ts
+          src/lib/enterprise-context/__tests__/template-schema.test.ts
+          --no-coverage --ci
+
+      # Sixteen tenant/governance suites were measured before wiring: 11 green
+      # and 5 red. One green policy-exceptions suite is already owned by the
+      # context-corpus workflow. The database compatibility suite is also left
+      # out because newly owning its legacy client import violates the
+      # architecture gate. This step adds the remaining 9. The green subjects
+      # have live non-test importer counts of 1, 4, 1, 1, 125, 1, 1, 4, and 1
+      # respectively. Red files remain exact quarantines: three governance
+      # fixtures, active-client display-name drift, and a tenant purity scan
+      # with current findings. Loaded 16; collected 16; run 16; green 11;
+      # newly owned 9.
+      #
+      # T-559 (2026-09-22) adds `active-client.test.ts`, whose quarantine reason
+      # above -- "active-client display-name drift" -- stopped being true when
+      # its three stale display-name expectations were repaired. It had been red
+      # since 2026-07-01 and no workflow noticed, which is the whole reason it is
+      # named here now. It is the only place the tenant display-name
+      # canonicalization on `getActiveClientRow` and the artifact-download
+      # tenant-lookup retry are asserted together. Measured green on the branch:
+      # 7 tests, and each repaired case was proved to still fail when the
+      # canonicalizer is replaced with a pass-through.
+      - name: Run the green governance and tenant library suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/governance/__tests__/inventory.test.ts
+          src/lib/governance/__tests__/promotion-evaluator.test.ts
+          src/lib/governance/__tests__/readiness-backfill.test.ts
+          src/lib/governance/__tests__/tenant-coverage.test.ts
+          src/lib/__tests__/active-client.test.ts
+          src/lib/__tests__/client-config-canonical.test.ts
+          src/lib/azure-search/__tests__/index-contracts.test.ts
+          src/lib/azure-search/__tests__/index-results.test.ts
+          src/lib/azure-search/__tests__/retriever-parity.test.ts
+          src/lib/azure-search/__tests__/tenant-context-backfill.test.ts
+          --no-coverage --ci
+
+      # Nine Source-adjacent control suites were measured before wiring:
+      # six green and three red. The three corpus subjects have 2, 7, and 8
+      # non-test importers. The contract-optimization subjects have live
+      # importers ranging from 1 to 7. The three Atlas route files remain an
+      # exact file-level quarantine: their stale source-string and return-shape
+      # assertions fail on current main and do not execute an opposite-tenant
+      # refusal. Loaded 9; collected 9; run 9; green 6; newly owned 6.
+      - name: Run the green Source control library suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/corpus/azure-search.test.ts
+          src/lib/corpus/industry-scope.test.ts
+          src/lib/corpus/retrieval.test.ts
+          src/lib/source/contract-optimization/__tests__/contract-optimization-mve.test.ts
+          src/lib/source/contract-optimization/__tests__/eligibility.test.ts
+          src/lib/source/contract-optimization/__tests__/read.test.ts
+          --no-coverage --ci
+
+      # Seven previously dark Source suites were measured unchanged: all seven
+      # load, collect, and run; six are green. This step owns the five green,
+      # behavior-bearing files. The four readiness files exercise modules with
+      # direct non-test importer counts from 1 to 3. The route file executes a
+      # Next.js page entry point, which is framework-owned and therefore has no
+      # ordinary importer. The red tenant-named source scanner remains an exact
+      # file-level quarantine.
+      #
+      # U-511 (2026-09-22) adds the not-found suite, whose quarantine reason
+      # above -- "source-text-only" -- stopped being true when it was rewritten
+      # to render the component. It now mounts Source's access guard and is the
+      # only place the guard's disclosure behaviour is asserted, so leaving it
+      # unwired left that control unrun. Measured green on the branch: 6 tests.
+      # Every `(maestro)` path is quoted because that route-group segment
+      # would be read as a capture group by a bare Jest pattern.
+      #
+      # U-514 (2026-09-25) adds the requester-estimate disclosure suite. It
+      # renders both Source approval surfaces and asserts that a figure the
+      # requester declared carries its provenance label; wired here on the day
+      # it lands, because a control that runs nowhere is the failure this
+      # directory's census exists to catch. Measured green on the branch: 5
+      # tests.
+      #
+      # U-517 (2026-09-25) adds the approval financial-permission suite. It is
+      # the only assertion that a viewer whose policy restricts exact financial
+      # values does not receive the figure on either the event approval page or
+      # the event detail route's Strategy stage, and it asserts the opposite
+      # direction as well so an always-restrict page cannot satisfy it. Wired in
+      # the same change that creates it. Measured green on the branch: 9 tests.
+      - name: Run Source readiness and route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/rfp-readiness/__tests__/ams-section-map.test.ts
+          src/lib/source/rfp-readiness/__tests__/intake.test.ts
+          src/lib/source/rfp-readiness/__tests__/resolver.test.ts
+          src/lib/source/rfp-readiness/__tests__/section-trace.test.ts
+          "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
+          "src/app/(maestro)/source/__tests__/not-found-source.test.tsx"
+          "src/app/(maestro)/source/__tests__/requester-estimate-disclosure.test.tsx"
+          "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx"
+          "src/app/(maestro)/source/__tests__/scope-stage-action-without-value.test.tsx"
+          --no-coverage --ci
+
+      # Eight Source contract suites were measured before wiring: all eight
+      # loaded, collected, and ran; seven suites were green and one was red.
+      # Only three green files are owned here. Evidence review has one runtime
+      # importer and executes refusal behavior. Cloud adaptation has one
+      # operator importer and checks structured evidence projection. Education
+      # has two runtime product importers and checks decision-readiness states.
+      # Four files remain exact quarantines: persistence and read-model omit a
+      # register contract identity and cannot reproduce the live identity split;
+      # prompt only checks strings and has no importer; and provenance asserts
+      # refusal but its validators have no runtime importer. Loaded 8;
+      # collected 8; run 8; green 7; newly owned 3 — that measurement is the
+      # original draw and is not restated.
+      #
+      # templates was the fifth quarantine, and its recorded reason was "the
+      # current suite is red after application inventory became required". Item
+      # T-756 re-baselined it against the change that added that family, so the
+      # reason no longer describes anything and the entry is retired rather than
+      # deleted around: an exemption that outlives its defect is worse than none.
+      - name: Run the owned Source contract suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/contract-evidence/__tests__/evidence-review.test.ts
+          src/lib/source/contract-evidence/__tests__/templates.test.ts
+          src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts
+          src/lib/source/contract-intelligence/__tests__/education.test.ts
+          --no-coverage --ci
+
+      # Eight previously dark suites were measured before wiring: 8 loaded,
+      # 8 collected, 8 run, 6 green. The two stale setup route harnesses were
+      # repaired by mocking tenancy plus the read/write persistence boundary;
+      # the route itself is unchanged. All 8 are now green, and both setup
+      # suites assert refusal before any mocked data call. The attachment
+      # suites cover successful transfer plus unauthenticated and tenant/access
+      # refusal, with object storage and metadata writes mocked. Framework route
+      # entry points have 0 ordinary importers. Contract adapter/projection have
+      # 2 non-test importers each; File Cabinet blob-store/service/repository
+      # have 5/2/11. The File Cabinet tests cover storage, versioning, tenancy,
+      # and row mapping, not rendered identifiers.
+      - name: Run T-451 Source and Programs suites
+        run: >-
+          npx jest
+          src/app/api/programs/__tests__
+          src/app/api/setup/initiatives/__tests__
+          src/lib/source/contract-depth-package/__tests__
+          src/lib/source/file-cabinet/__tests__
+          --no-coverage --ci
+
+      # Four admin and Source route/action suites were measured unchanged:
+      # loaded 4, collected 4, run 4, green 4 (21 tests). The connector suite
+      # replaces its broker write with a mock. The invitation suite replaces
+      # both the Clerk transport and audit writer with mocks. The financial
+      # access suite proves that a caller without financial visibility cannot
+      # invoke or serialize financial reads. The Source New route suite proves
+      # tenant and event refusal; it does not claim phase-completeness or
+      # rendered-identifier coverage. Action subjects have one non-test
+      # importer each; both page subjects are framework-owned route entries.
+      - name: Run admin and Source action/route control suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/admin/connectors/_actions/__tests__/create-pending-connector.test.ts"
+          "src/app/(maestro)/admin/users-access/_actions/__tests__/send-invite.test.ts"
+          "src/app/(maestro)/source/new/[eventId]/page.test.tsx"
+          "src/app/(maestro)/source/optimize/__tests__/page.financial-access.test.tsx"
+          --no-coverage --ci
+
+      # Ten previously dark suites were measured unchanged: all ten loaded,
+      # collected, ran, and passed (69 tests before canonical-key expansion).
+      # The tenant suites now iterate the canonical tenant-key authority rather
+      # than maintaining another list. Their subjects have 101, 11, and 10
+      # direct non-test importers. The Tower projector is a package-script CLI;
+      # its write helper has one runtime importer and both Tower tests use fake
+      # clients. Each notification action has one UI importer and replaces the
+      # Postgres write boundary. The Ask route is a Next.js entry point and both
+      # suites replace model, data, auth, session, and telemetry boundaries.
+      # Exact files are named so a future writer or sender is not adopted
+      # without the same boundary review.
+      #
+      # Item T-496 adds a third Ask suite here, and the boundary review is the
+      # same: it replaces model, data, auth, session and telemetry exactly as
+      # the two above do, and it drives the real `POST` to prove the route
+      # reaches the Sentinel reasoning module at the canonical `src/lib/agent/`
+      # path rather than the retired `src/lib/agents/` one.
+      #
+      # It sits here rather than in `src/__tests__/behaviors`, where it was
+      # first written, for a measured reason. `Behavior coverage floor` runs
+      # that whole directory under `--coverage` with no `collectCoverageFrom`,
+      # so every file a suite LOADS enters the denominator. This suite imports
+      # the Ask route, which pulls 212 files and 137,960 lines at 77.01% lines
+      # and 14.45% functions; a typical suite in that directory is 3 files and
+      # 550 lines at 98.9%. One suite therefore moved the aggregate from
+      # 90.90 / 71.33 to 83.75 / 42.19 against floors of 90 / 60 and failed the
+      # gate with all 151 suites and 1,624 cases passing. The gate was not
+      # weakened and the case was not dropped: the suite moved to the directory
+      # that owns the route it drives, which runs `--no-coverage` here.
+      - name: Run tenant, Tower, notification, and Intelligence Ask suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/tenant/__tests__/aliases.test.ts
+          src/lib/tenant/__tests__/foundation-tenants.test.ts
+          src/lib/tenant/__tests__/resolveTenant.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-client-resolver.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-write.test.ts
+          "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/save-preferences.test.ts"
+          "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/send-test.test.ts"
+          src/app/api/intelligence/ask/__tests__/route.source-contract-authority.test.ts
+          src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts
+          src/app/api/intelligence/ask/__tests__/t496-sentinel-reasoning-canonical-path.test.ts
+          --no-coverage --ci
+
+      # Four previously dark suites. Measured before any edit: the Atlas
+      # /api/v1 trio was red (4 of 8 cases failing) and the context demo route
+      # was green at 24 of 24. Two of the three Atlas suites asserted their
+      # control by reading route source as text, and both failed on a quote
+      # style while the control they named was intact — so they are rewritten
+      # to invoke the handler rather than requoted. Deleting the header and
+      # leaving its name in a comment now fails three cases; the text version
+      # passed that same mutation. Boundaries: the Atlas suites replace the
+      # tenancy resolver and the orchestrator, the demo route replaces tenancy,
+      # active client and the broker. No suite here can reach Postgres, a
+      # model, or an outbound send. Exact files are named so a later addition
+      # to either directory is not adopted without the same review.
+      - name: Run Atlas v1 auth and context demo route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/v1/atlas/__tests__/auth-boundary.test.ts
+          src/app/api/v1/atlas/__tests__/auth-user-id-normalization.test.ts
+          src/app/api/v1/atlas/__tests__/mode-visibility.test.ts
+          src/app/api/context/demo/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # The request and strategy authority module. Its logic had no caller and
+      # its own suites ran in no workflow, so both halves of the version
+      # authority were dark at once. Every suite in the module is listed and
+      # every one is green on arrival; the census recorded both directories as
+      # zero-covered before this step.
+      - name: Run the Source New workspace authority suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/new-workspace/__tests__/authority-version-store.test.ts
+          src/lib/source/new-workspace/__tests__/event-authority.test.ts
+          src/lib/source/new-workspace/source-version-authority.test.ts
+          src/lib/source/new-workspace/phase-state.test.ts
+          src/lib/source/new-workspace/step-readiness.test.ts
+          src/lib/source/award/contract-from-award.test.ts
+          src/lib/source/new-workspace/step-readiness-adapter.test.ts
+          src/lib/source/new-workspace/release-state-view.test.ts
+          src/lib/source/artifact-registry/parsed-yield-view.test.ts
+          src/lib/source/new-workspace/navigation.test.ts
+          src/lib/source/new-workspace/event-intelligence.test.ts
+          src/lib/source/new-workspace/__tests__/response-intake.test.ts
+          --no-coverage --ci
+
+      # The governed Tower answer contract. Measured on origin/main at
+      # 7d19b27ef: 2 collected, 2 FAILED — and not because the routing control
+      # regressed. The suite mocked `@/lib/cio-tower/answer`, which the
+      # orchestrator has not imported since it moved to
+      # `answerCurrentTowerQuestion` in `@/lib/tower/current-layer-answer`
+      # (orchestrator.ts:44, :289). The mock intercepted nothing, so the real
+      # contract ran and tried to open a Postgres session. It failed here only
+      # because no DATABASE_URL is set; anywhere one is, it would have
+      # performed live tenant reads. Repaired against the boundary the
+      # orchestrator actually resolves, so no tenant read is reachable.
+      # Mutation-proved, comment decoy included: deleting the governed branch
+      # fails 3 of 4, routing everything to it fails the negative control,
+      # dropping `answer_current_tower_question` from toolsUsed and leaving the
+      # name in a COMMENT fails 2 of 4, and bypassing canonicalization fails 3
+      # of 4. The rest of src/lib/atlas/__tests__ stays dark on purpose: two of
+      # those suites assert by reading source as text, and a green text-matcher
+      # is worse than a red one. Exact file named for that reason.
+      - name: Run the governed Tower answer contract suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts
+          --no-coverage --ci
+
+      # T-466. Was 2 collected / 2 FAILED on main: it declared a
+      # `mockLoadV7TowerProjection` spy and asserted against it without ever
+      # calling `jest.mock`, so one case could not pass however correct the
+      # code was. Not repaired by installing that spy -- `loadV7TowerProjection`
+      # does not exist anywhere in src/, `buildAtlasTowerCurrentState` imports
+      # no V7 projection, and its `tenantKeyCandidates` input is read by
+      # nothing and passed by nobody at its only call site. That case is
+      # replaced by the tenant-scoping contract that does exist, asserted
+      # through the two projection loaders the function actually imports.
+      # BOUNDARY PROVEN BEFORE WIRING, and the answer differs from the one
+      # assumed for the suite above: an unmocked read here cannot reach
+      # Postgres under jest at all, because postgresCompat loads its driver via
+      # `new Function('specifier','return import(specifier)')`, which the jest
+      # VM refuses without --experimental-vm-modules. Probed against a closed
+      # port with DATABASE_URL set: `{data:null, error:"...
+      # ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG"}` in 0 ms, no socket. The
+      # hazard is the SWALLOW, not the read -- an unmocked read is
+      # indistinguishable from an empty one -- so the mock is strict and a case
+      # asserts `clients` is the only table touched. Mutation-proved, comment
+      # decoy included: bypassing canonicalization fails 2 of 5; leaving
+      # `canonicalCioTowerTenantDisplayName` in a COMMENT while deleting the
+      # call still fails 2 of 5; scoping by the caller's clientKey instead of
+      # the row's tenant key fails 2 of 5; adding a second data-plane read
+      # fails all 5.
+      - name: Run the Tower grounding cover-name and tenant-scoping suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/tower-grounding-client-name.test.ts
+          --no-coverage --ci
+
+      # T-467. Seven Atlas suites were green and still dark after the governed
+      # Tower and grounding repairs. They are wired by exact file path, not by
+      # directory, because the sibling directory still contains suites that
+      # needed technique triage before ownership. The two source-text controls
+      # are no longer source-text controls: scripted CXO language now drives
+      # `runScriptedAtlasIntent`, and LLM determinism now drives `runAtlasLlm`
+      # through the audited Anthropic boundary and asserts the actual
+      # `messages.create` payload. T-469 supplies the Postgres guard; model
+      # egress is replaced at `@/lib/agent/stream`; scripted data reads are
+      # replaced at `@/lib/atlas/tool-belt`. Mutation-proved across all seven,
+      # including comment decoys for the named client and factual-spine
+      # controls.
+      - name: Run the exact Atlas suite ownership set
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/orchestrator-enterprise-read-enrichment.test.ts
+          src/lib/atlas/__tests__/prompt-client-naming.test.ts
+          src/lib/atlas/__tests__/rendered-response.test.ts
+          src/lib/atlas/__tests__/scripted-cxo-language.test.ts
+          src/lib/atlas/__tests__/tower-budget-rollup-resolution.test.ts
+          src/lib/atlas/__tests__/tower-factual-spine.test.ts
+          src/lib/atlas/llm-determinism.test.ts
+          --no-coverage --ci
+
+      # T-516. Eleven suites were green when executed directly but were still
+      # named by no workflow. They are wired as exact files, not as directories:
+      # these directories were the measured green set, and several paths contain
+      # bracketed route segments that Jest would read as regex character
+      # classes without --runTestsByPath.
+      - name: Run the T-516 exact green suite set
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/knowledge/consumption/__tests__/_shared.test.ts
+          "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__/route.test.ts"
+          "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__/route.test.ts"
+          "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts"
+          "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__/route.test.ts"
+          src/app/api/source/workspace/portfolio/__tests__/route.test.ts
+          src/app/api/webhooks/clerk/__tests__/route-w4-pr3-emit.test.ts
+          src/app/programs/expert-kernel/expert-review/export/__tests__/route.test.ts
+          src/lib/enterprise-data/source-adapters/__tests__/mapping-profiles.test.ts
+          src/lib/programs/queries.azure-read.test.ts
+          src/lib/source/stage-guidebooks/__tests__/repository.test.ts
+          --no-coverage --ci
+
+      # T-595. `unit-directory-ci-coverage.test.ts` used to be named here. It
+      # lives in `src/__tests__/behaviors`, which the required `Behavior
+      # coverage floor` job sweeps whole, and this job is not a required check.
+      # A named step in a job that cannot block a merge is the line a closure
+      # note quotes, while the line that actually gates has no name — so the
+      # step moved into the floor rather than being deleted. The rule is in
+      # docs/ci/README-suite-wiring.md and `npm run audit:named-suite-requiredness`
+      # enforces it.
+
+      # T-590, moved by T-595. `route-export-reachability.test.ts` used to be
+      # named here for a good reason — a named step makes a control's execution
+      # self-evident in the log instead of inferable from a job's exit code.
+      # The reason survives; the location did not. It now sits in the required
+      # `Behavior coverage floor` job, where the name and the gate are the same
+      # run. See docs/ci/README-suite-wiring.md.
+
+      # T-469. The per-client test-time data-plane boundary. Two clients, two
+      # opposite failure modes, both invisible from the test file: the static-pg
+      # clients open a real socket on an unstubbed read (proved here by
+      # ECONNREFUSED against a closed port — a live tenant read anywhere a real
+      # connection string is in the environment), while postgresCompat swallows
+      # its own driver-load refusal into `{data: null}` that a caller reads back
+      # as "no rows". Before this, the answer was re-probed by hand per backlog
+      # item and produced two correct-looking conclusions that contradicted each
+      # other. The verdicts now live in
+      # docs/architecture/data-plane-test-boundary.json and this suite re-proves
+      # every one of them BY EXECUTION on each run, so the artifact cannot
+      # become a document that used to be true.
+      #
+      # Enforcement, not advice: jest maps `^pg$` to src/testing/pg-test-boundary.ts,
+      # so a connecting client with no stand-in throws by name instead of
+      # reading. Blast radius measured over the WHOLE collection rather than
+      # reasoned about — 2,635 suites run twice, 330 failed / 441 tests failed
+      # both before and after, identical failing-suite sets, zero newly failing
+      # and zero newly passing.
+      #
+      # Mutation-proved, comment decoy included: deleting the `^pg$` mapping
+      # fails 3 of 12; gutting the guard while leaving
+      # ABARVA_TEST_DATA_PLANE_CONNECT_BLOCKED in a COMMENT fails 3 of 12;
+      # making the guard always allow fails 3 of 12; relabelling one verdict in
+      # the artifact fails 2; adding a client to the artifact with no probe
+      # fails 3.
+      - name: Run the data-plane test-boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/test-boundary.test.ts
+          --no-coverage --ci
+
+      # Last, because it asks what the steps above left behind: did any suite
+      # write to committed client input data? One did. A parallel run executed
+      # a data build and rewrote seven tracked files across four tenants; six
+      # produced identical bytes and only the seventh was visible to
+      # `git status`, so the other six would have surfaced whenever their
+      # The workspace loader's own suite. Added with the impact-read fix and
+      # caught by `--explain` as unrun before it was wired: a new test
+      # directory is dark by default, so a suite that proves a live surface
+      # fails closed would itself have run nowhere.
+      - name: Run the Source workspace loader suite
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx"
+          --no-coverage --ci
+
+      # U-518 added the eighteenth path below. A new file in this directory is
+      # dark unless it is named here -- the directory is covered by
+      # ENUMERATION, which is the shape T-478 found hiding seven files -- so a
+      # suite proving two counts carry distinct labels would itself have run
+      # nowhere.
+      #
+      # T-552. T-550 executed these seventeen Source workspace suites together:
+      # 17 suites, 130 tests, all green, with no pending or todo cases. They
+      # assert behavior or rendered view-model output; the three source-text
+      # scanners from the same draw remain outside this command. Exact paths
+      # are required because `(maestro)` is a regex capture group to Jest when
+      # ordinary path matching is used.
+      - name: Run the T-550 Source workspace behavior suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/compositionInvariants.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Briefing.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Economics.coverage.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contract360Ledes.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Surfaces.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractAnatomy.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractEvidenceFamilies.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/ContractLeverTable.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractOptimizeMethod.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPerformanceCards.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPopulations.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeGuard.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeProse.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractStoryDuplication.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contract360-opportunity-count-labels.test.tsx"
+          --no-coverage --ci
+
+      # U-522. A step of its own rather than one more path in the list above,
+      # because that list is the T-550 draw and its name says so; appending to
+      # it would make a historical measurement look larger than it was.
+      #
+      # Wired in the same change that adds the suite. The census reported this
+      # directory at rank 2 on the governed-risk ranking with an unwired file
+      # in it, and an unwired suite is the shape this whole backlog exists
+      # against: it passes locally, it is green forever, and it is never run by
+      # anything that could stop a merge.
+      - name: Run the U-522 Source workspace posture-absence suite
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.posture-absence.test.tsx"
+          --no-coverage --ci
+
+      # T-478. The rank-2 governed-risk directory in the coverage census —
+      # band `high`, signal `tenant_scoped_read`, 31 product sources. Seven of
+      # its 35 files were unwired in two distinct shapes; three are wired here
+      # and four are deliberately NOT, each for a reason recorded in
+      # `docs/architecture/t478-source-workspace-wiring-triage.json`. The guard
+      # `src/__tests__/behaviors/t478-source-workspace-dark-suite-ci-coverage.test.ts`
+      # reads that record rather than a copy of these paths.
+      #
+      # The 28 files above are covered by ENUMERATION, which is the shape that
+      # hid these: no ignore pattern subtracted them, so nothing named them and
+      # nothing reported them missing.
+      #
+      # Both files below were `collected: false`, `green: "unknown"`, `via: []`
+      # on `274967083`. That was settled by running each directly before
+      # judging it, because a file Jest cannot parse and a file Jest never
+      # reaches are indistinguishable from the census: both parse and both
+      # pass, so `collected: false` was reach, not breakage, and neither needed
+      # a repair.
+      #
+      # `contractDetailRetry.test.tsx` is wired although
+      # `docs/architecture/t550-stale-suite-triage.json` verdicts it
+      # `rewrite_as_behavior`. That verdict was CORRECT at its declared base
+      # `05bdab64e`, where the file held 1 `readFileSync` and 16 `toContain`
+      # against `WorkspaceClient.tsx`. `b66e4cd22` ("assert Source route
+      # behaviour instead of file bytes", #8201) rewrote it +248/-53 and is not
+      # an ancestor of that base, so the rewrite the verdict asked for was
+      # delivered on a parallel line and the record was never amended. On this
+      # commit the file holds 0 `readFileSync` and 0 `toContain`, mocks its
+      # dependencies and mounts the component. The T-550 record is left as the
+      # historical draw it is; the current measurement lives in the T-478
+      # record beside it.
+      #
+      # The two render modes of `workspace-explicit-client-api-routing` are two
+      # files, and only the `.browser.test.tsx` one is here. The `.test.ts` one
+      # is a source-text scanner T-556 verdicted `rewrite_as_behavior`.
+      - name: Run the T-478 dark Source workspace suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractDetailRetry.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx"
+          --no-coverage --ci
+
+      # T-763. The three suites the two steps above deliberately leave out are
+      # held by a verdict in `docs/architecture/t478-source-workspace-wiring-triage.json`,
+      # and the CI coverage census does not read triage records — it credits a
+      # file as triaged only when a command subtracts it or a scoped
+      # `scripts/quality/*-quarantine.json` declares it. So all three reported
+      # `untriaged` and this directory held rank 2 on the governed-risk ranking
+      # with no untriaged work left in it, which is how one draw from that
+      # ranking came back already-verdicted and had to be re-derived by hand.
+      #
+      # `source-workspace-quarantine.json` declares the hold where the census
+      # already reads, and the checker below re-measures each entry's REASON
+      # rather than believing it: a held suite that stops reading source text
+      # fails, so the entry cannot outlive the verdict that justified it. It
+      # also fails a `held_unwired` verdict anywhere in the tree that brings no
+      # entry, which is what makes the triage record alone insufficient.
+      - name: Check the Source workspace quarantine
+        run: >-
+          node --test scripts/quality/check-source-workspace-quarantine.test.mjs
+          scripts/quality/triage-record-census-reconciliation.test.mjs
+          && node scripts/quality/check-source-workspace-quarantine.mjs
+
+      # T-478, second half — a different defect from the two above, which is
+      # why it is a step of its own rather than one more path in that one.
+      # `portfolioAdapter.ecl.test.ts` is already `collected: true,
+      # covered: true`. It is reached only `via: ["script-file"]`:
+      # `COMMAND_CHECKS` in `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
+      # names it, and the only workflow running that gate is
+      # `ecl-product-live-proof.yml`, whose triggers are `workflow_dispatch`
+      # and `workflow_run` after "ACA main deploy" — neither `pull_request` nor
+      # `merge_group`. It ran, green, AFTER the deploy it might have stopped.
+      # Green-and-unwired is the same as absent to a reviewer, and the
+      # difference is visible in the census as
+      # `covered: true, pullRequestCovered: false`.
+      #
+      # This step does not replace the pre-deploy gate's invocation; it adds
+      # the merge-blocking one these files never had.
+      #
+      # T-764 adds `page-tenant-routing.test.ts` here. T-478 left it out for a
+      # reason that was correct at the time and is now discharged: it held 6
+      # `readFileSync` and 100 `toContain` against source text, and the repo's
+      # own rule forbids making a source-text scanner merge-blocking, because
+      # that buys a green check and no protection. It has been rewritten to
+      # execute the route — it calls `SourceWorkspacePage` with real
+      # `searchParams`, mounts the tree it returns with the real loader and the
+      # real `WorkspaceClient` beneath it, and reads the `client` parameter off
+      # the contract-detail request those components actually made. It makes no
+      # file reads at all, and asserts nothing against the bytes of a source
+      # file; one substring assertion remains and it is against rendered DOM
+      # text.
+      #
+      # What the rewrite buys, measured rather than asserted. With the tenant
+      # membership fence left in place and running, its call text byte-identical,
+      # and only its verdict ignored (`if (false && !access.ok)`) — every tenant
+      # can then open every other tenant's contracts — the old scanner passed 13
+      # of 13 and the rewrite fails 4 of 14. In the other direction, renaming a
+      # local binding changes no behaviour: the old scanner failed 1 of 13, the
+      # rewrite passes 14 of 14.
+      #
+      # The directory's governed-risk signal is `tenant_scoped_read`, so the
+      # opposite-tenant case asserts the absence of the read, not the presence
+      # of a warning.
+      - name: Run the T-478 pre-deploy-only Source workspace suite
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts"
+          --no-coverage --ci --runInBand
+
+      # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
+      # When it does not, the V6 builders return null and every caller
+      # degrades silently — which is how two dataset roots stayed missing
+      # unnoticed. This suite fails only when the table and the disk disagree.
+      - name: Run the V6 demo tenant pack root invariant
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/module-v6/__tests__/demo-tenant-pack-roots.test.ts
+          --no-coverage --ci
+
+      # content next changed. The writer is fixed in this same change, so this
+      # step is green on arrival — it is a tripwire for the next one.
+      # Four dark directories, wired by exact file path. Every file listed
+      # was run before wiring: 23 suites, 219 tests, 0 failures. Named file
+      # by file rather than by directory so a later addition to any of them
+      # is not adopted into CI without the same check.
+      - name: Run four previously dark Source and Programs suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/ava/__tests__/export-answer-packet.test.ts
+          src/lib/source/archetypes/__tests__/differentiation.test.ts
+          src/lib/source/archetypes/__tests__/event-archetype-resolver.test.ts
+          src/lib/source/archetypes/__tests__/evidence-readiness.test.ts
+          src/lib/source/archetypes/__tests__/grounded-answer.test.ts
+          src/lib/source/archetypes/__tests__/pricing-engine.test.ts
+          src/lib/source/archetypes/__tests__/readiness.test.ts
+          src/lib/source/archetypes/__tests__/rfp-canon.test.ts
+          src/lib/source/archetypes/__tests__/skyharbor-ams.scenario.test.ts
+          src/lib/programs/archetype-primers/__tests__/ai-coding-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/cc-ai-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/cdp-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/copilot-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/forecast-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/loyalty-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/render-html.test.ts
+          src/lib/source/canvas-substrate/__tests__/event-intake-sync.test.ts
+          src/lib/source/canvas-substrate/__tests__/fact-derived-evidence.test.ts
+          src/lib/source/canvas-substrate/__tests__/queries.test.ts
+          src/lib/source/canvas-substrate/__tests__/scaffold.test.ts
+          src/lib/source/canvas-substrate/__tests__/templates.test.ts
+          src/lib/source/canvas-substrate/__tests__/types.test.ts
+          src/lib/source/canvas-substrate/__tests__/upload-sync.test.ts
+          --no-coverage --ci
+
+      # The context-and-corpus governance contract. These three suites were
+      # 61 of 73 until the stale fixture key was corrected; they are 73 of 73
+      # now, and two governance fences (pii_phi_handling, restricted
+      # downstream context) are provable by them for the first time. Running
+      # nowhere is how they stayed red unnoticed.
+      - name: Run the governance contract suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/governance/__tests__/agent-context-bundle.test.ts
+          src/lib/governance/__tests__/context-corpus-policy.test.ts
+          src/lib/governance/__tests__/dataset-manifest.test.ts
+          --no-coverage --ci
+
+      # Five of the eight suites T-475 verdicted `wire_into_ci`, of the twelve
+      # it drew from the census's own governed-risk ranking. 5 suites / 18
+      # tests, measured on `2f6cac9d5` by running them as one jest process —
+      # which is what this step does, and is not the same evidence as running
+      # them one at a time. All five were unreached by any workflow and any npm
+      # script, measured through the census resolver rather than by reading
+      # YAML.
+      #
+      # What they hold: the data-plane read client's SQL guards and the blob
+      # upload fallback path, the candidate-supplier tenant fence, the
+      # acceptance approval minimums, and the candidate authority pre-query
+      # fence. Each caught a deliberate break in T-475's mutation pass, so none
+      # of them is coverage over nothing.
+      #
+      # FIVE, NOT THE EIGHT THE ITEM ASKED FOR. Three of the eight are named in
+      # the quarantine list of `src/__tests__/behaviors/source-contract-suite-ci-coverage.test.ts`,
+      # a control that runs today and asserts no jest command in this file
+      # mentions them. T-475's draw reached `wire_into_ci` from "green, and
+      # governed risk" without reading it — the same collision T-557 hit and
+      # resolved the same way. Two of the three reasons were re-measured here
+      # with the census's own import parser and are still exactly true:
+      # `contract-intelligence/prompt.ts` and `provenance.ts` have 0 non-test
+      # importers, so wiring them would add a number to the census without
+      # covering any code a product path reaches. The third,
+      # `contract-evidence/read-model.test.ts`, is held because its stated
+      # reason is undischarged, not because it is dead. The withheld three, and
+      # the executable check on each reason, are in
+      # `src/__tests__/behaviors/t754-credited-suite-wiring.test.ts`.
+      #
+      # Named FILE BY FILE, which is the opposite of the directory steps above,
+      # and the reason is specific rather than stylistic. Of the twelve T-475
+      # drew, one is `repair` (T-755) and three are
+      # `update_with_reason_recorded` (T-756), and they share directories with
+      # credited ones:
+      #
+      #   src/lib/source/contract-evidence/__tests__  persistence held by
+      #     T-755, templates held by T-756
+      #   src/lib/enterprise-context/__tests__  both files held by T-756, one
+      #     of them red against the #7795 separation
+      #
+      # A sweep over either parent would run a suite whose own item is open —
+      # including a red one — and would do it silently. `--runTestsByPath` is
+      # what makes "named individually" literal: a bare jest path argument is a
+      # regex against the full path, so a future sibling whose name this one
+      # prefixes would be adopted without anyone choosing it.
+      #
+      # The cost of that choice, stated rather than left implicit: a suite
+      # added to `src/lib/data-plane/__tests__` or
+      # `src/lib/source/candidate-suppliers/__tests__` tomorrow will NOT run
+      # here. That is the correct trade only while the held items are open.
+      # When they close, the right repair is to collapse this list into its
+      # parents, and the behaviour suite named above is what fails when the
+      # collapse happens without them.
+      - name: Run the five suites T-475 credited that no earlier record holds
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/azure-read.test.ts
+          src/lib/data-plane/__tests__/objectStorage.test.ts
+          src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts
+          src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts
+          src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts
+          --no-coverage --ci
+
+      # T-480 (2026-09-26) wires the two suites `T-479` judged `wire_into_ci`.
+      # The item as filed named fourteen; twelve of those are `already_selected
+      # _no_action` in that record, because a ratchet baseline already selects
+      # them. These two are the ones no command reaches.
+      #
+      # They are unreachable for a reason worth stating, because it is the trap
+      # this whole step exists against: a bare Jest path argument is a REGULAR
+      # EXPRESSION. `docs/ci/home-test-baseline.json` names
+      # `src/app/(maestro)/home`, where `(maestro)` is a capture group, so the
+      # pattern matches `src/app/maestro/home` — a directory that does not
+      # exist — and the baseline selects ZERO files beneath the route group.
+      # Measured: given that baseline's five paths verbatim, `--listTests`
+      # selects 84 files and none of them is under a parenthesised segment.
+      # The coverage census credits the name as coverage regardless, which is
+      # why neither directory shows up as unrun (T-487 owns that half).
+      #
+      # So `--runTestsByPath` is load-bearing here, not stylistic: it tells Jest
+      # these arguments are paths. The quotes are load-bearing too — `(` and `)`
+      # are shell metacharacters. Measured green on the branch before wiring:
+      # 3 tests and 7 tests, nothing skipped.
+      #
+      # `src/__tests__/behaviors/t480-home-route-group-suite-ci-wiring.test.ts`
+      # asserts this step by handing its own arguments to Jest and reading back
+      # what Jest selects, rather than by checking that this file contains the
+      # strings. A command can name a path and select nothing; that is the
+      # defect, so the text of this step is not its own evidence.
+      - name: Run the T-480 Home route-group suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/home/__tests__/home-page-ecl-route.test.tsx"
+          "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts"
+          --no-coverage --ci
+
+      # T-767 (2026-09-27) wires `src/components/programs/origination/__tests__`,
+      # which the coverage census ranked #1 by untriaged unrun tests among
+      # governed-risk directories — `critical`, `declared_ai_surface_control`,
+      # 5 untriaged of 5 unrun of 6 test files on `0a6f73356f`, this change's base.
+      # Re-measured there in a separate clean worktree after a rebase rather than
+      # carried over from the branch point, so the figure is one a reader can
+      # reproduce. The repo-wide absolutes DID move across that rebase; the
+      # per-directory figures did not, and the release record states both.
+      #
+      # The item said two of three suites were unwired. The directory holds SIX
+      # and FIVE ran nowhere, so the filing undercounted by three. What it got
+      # right is the hazard it named: `C-544` wired one suite into
+      # `ai-surface-control-catalog.yml` and had to drop the directory from the
+      # committed dark-directory baseline in the same change, which moved it from
+      # `uncovered` to `partial` — a QUIETER state, because the ratchet watches
+      # fully-dark directories and stopped watching this one while five of its
+      # six suites still ran nowhere. The directory is NOT being re-added to that
+      # baseline; a partial directory does not belong in a set of fully-dark ones.
+      #
+      # Two of the five were RED where no workflow could report it, and neither
+      # was a product defect:
+      #
+      #   * `StewardChat.attachments.test.tsx` pinned a starter-prompt button
+      #     named `First Capital risk controls`. #5005 renamed it to `FS Demo
+      #     risk controls` on 2026-07-17 — the case had been red for ten weeks.
+      #     Verdict `update`: the expectation moves to the renamed label.
+      #   * `ProgramOriginationWorkspace.test.tsx` rendered a component that
+      #     calls `useRouter()` unconditionally, with no `next/navigation` mock,
+      #     so both its cases threw `invariant expected app router to be
+      #     mounted`. Verdict `update`: the sibling suite in this same directory
+      #     already carried the mock it was missing.
+      #
+      # Neither was weakened or deleted to reach green. Measured on the branch
+      # after the two repairs and before this step: 6 suites, 49 tests, 0 failing,
+      # 0.7s. A red directory is wired by fixing it, never by adding it to a green
+      # command, which is why the repairs come first and the directory name comes
+      # second.
+      #
+      # Named as a DIRECTORY, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect. A seventh suite
+      # written here tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/programs-origination-directory-ci-coverage.test.ts`
+      # proves this step through the census's own four-hop resolver rather than by
+      # searching this file for a string, and records that no sibling directory is
+      # prefixed by `__tests__` — a bare Jest path argument is a regex, so one
+      # arriving later would be adopted by this command without anyone choosing it.
+      - name: Run the T-767 Programs origination component suites
+        run: >-
+          npx jest src/components/programs/origination/__tests__
+          --no-coverage --ci
+
+      # T-768 (2026-09-27) wires `src/components/programs/discovery/__tests__`,
+      # which the coverage census ranked #1 by untriaged unrun tests among
+      # governed-risk directories on `6a68c913fd`, this change's base — `critical`,
+      # signal `declared_ai_surface_control`, 3 untriaged of 3 unrun of 3. FULLY
+      # dark, where T-767's predecessor was partial, so this directory's line has
+      # to leave `product-directory-ci-coverage.baseline.json` in this same change:
+      # that baseline is a set of fully-dark directories and asserts set EQUALITY,
+      # so a wiring that left the line behind would fail the ratchet.
+      #
+      # It inherited rank 1 the moment T-767 wired the origination directory. It
+      # did not get worse; it stopped being second.
+      #
+      # All three suites were run BEFORE any of this was written and all three were
+      # GREEN — 2, 2 and 3 cases, 7 in total, 0 failing. So this is a wiring job
+      # and not a repair, and that is measured rather than assumed: T-767's
+      # directory looked like a wiring job too and held two suites that had been
+      # red for weeks where nothing could report it. Nothing here was weakened,
+      # skipped or deleted to reach green, because nothing needed to be.
+      #
+      # Triage per suite, and it is reachability that decided `wire` over `delete`,
+      # measured by running `scripts/audit/route-reachability-check.mjs` rather than
+      # reading its committed artifact:
+      #
+      #   * `brief-to-shape.test.ts` -> `wire`. `briefToDiscoveryShape` is imported
+      #     by `ProgramOriginationWorkspace`, which `/programs/new` and
+      #     `/demo/programs/new` both mount. Live code.
+      #   * `DiscoveryCapturePanel.test.tsx` -> `wire`. Rendered by that same
+      #     workspace. Live code.
+      #   * `DiscoveryReceiptCard.test.tsx` -> `wire`, with the coverage it buys
+      #     named honestly. The card is an ORPHAN: its only importer is
+      #     `MoveArtifactUpload.tsx`, itself an orphan, so no route reaches it. A
+      #     green, cheap, correct suite over a presentational card is not worth
+      #     deleting, and the dead mount is a defect with its own id rather than a
+      #     reason to leave the other two dark.
+      #
+      # Named as a DIRECTORY, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect. A fourth suite
+      # written here tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/programs-discovery-directory-ci-coverage.test.ts`
+      # proves this step through the census's own resolver rather than by searching
+      # this file for a string (C-537), and refuses a re-add to the dark baseline.
+      # It deliberately does NOT assert that the card is unreachable: a case pinned
+      # to today's orphan set would go red on the change that finally mounts it.
+      - name: Run the T-768 Programs discovery component suites
+        run: >-
+          npx jest src/components/programs/discovery/__tests__
+          --no-coverage --ci
+
+      # T-492 drew 84 untriaged unrun test files across ten directories — the
+      # first draw from the widened ranking, and more than four times the size of
+      # any before it. Every one of the 84 was EXECUTED on its own, with
+      # `--runTestsByPath` so no path was read as a regex, before any verdict was
+      # written: 1123 cases, 1084 passing, 39 failing across 10 red suites.
+      #
+      # Five of the ten directories came back entirely clean and are wired below:
+      # 35 suites, 460 cases, 0 failing, and not one of the 35 reads a repository
+      # file as text, so nothing being added here pins the shape of a source file.
+      # They were also run TOGETHER, as one jest invocation in the shape of the
+      # steps below, and not only one file at a time — 35 suites, 460 passed.
+      #
+      # The other five drawn directories are deliberately NOT wired. Each holds at
+      # least one row the triage record hands to another item: a red suite, or a
+      # source-text scanner that T-550's rule refuses to wire. A red directory is
+      # wired by fixing it, never by adding it to a green command — the same
+      # sentence this file's header already carries about `hygiene`, which is one
+      # of the five and is still red, three of six.
+      #
+      # Two of the ten reds had been red since the single commit that created both
+      # the suite and the module it tests, four months earlier, and nothing could
+      # report it because nothing ran them. That is the cost this wiring removes
+      # for the five clean directories, and the reason the other five are filed
+      # rather than left to the next census.
+      #
+      # Named as DIRECTORIES, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect, and a suite added
+      # to one of these five tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/t492-wired-directory-ci-coverage.test.ts` proves
+      # these five steps through the census's own resolver rather than by
+      # searching this file for a string (C-537), refuses a trailing slash,
+      # refuses a re-add to the dark baseline, and refuses a sibling directory
+      # whose name merely starts with `__tests__`.
+      - name: Run the T-492 Setup component suites
+        run: >-
+          npx jest src/components/setup/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 Atlas IAC archetype suites
+        run: >-
+          npx jest src/lib/atlas/iac/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 aVa chat suites
+        run: >-
+          npx jest src/lib/programs/ava-chat/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 Source contracts suites
+        run: >-
+          npx jest src/lib/source/contracts/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 visual-system suites
+        run: >-
+          npx jest src/lib/visual-system/__tests__
+          --no-coverage --ci
+
+      # T-493 drew the next 50 untriaged unrun test files, five each across ten
+      # directories. Every one of the 50 was EXECUTED on its own with
+      # `--runTestsByPath` — so no path was read as a regex — before any verdict
+      # was written: 414 cases, 411 passing, 3 failing in one suite.
+      #
+      # THE FILED RANKS WERE STALE AND THE DIRECTORY NAMES WERE NOT. The item
+      # names ranks 19-28; on this change's base the same ten directories sit at
+      # ranks 14-23, because T-492 wired five directories out of the untriaged
+      # set an hour earlier. Re-deriving the census on the base rather than
+      # reading the committed snapshot is what showed that, and it is why the
+      # filing named the ten directories individually instead of by rank.
+      #
+      # Nine of the ten are wired below: 45 suites, 373 cases, 0 failing. They
+      # were also run TOGETHER as one jest invocation in the shape of these
+      # steps — 46 suites / 374 passed, the extra suite being the already-owned
+      # worker-boundary file in `src/scripts/__tests__` — so nothing here passes
+      # only in isolation.
+      #
+      # `src/lib/intelligence/synthesis/__tests__` is deliberately NOT wired. It
+      # holds both of this draw's deferred rows: one suite red on a mock aimed at
+      # a seam its subject no longer uses, and one whose every assertion is a
+      # substring of a committed SQL migration, which T-550's rule refuses to
+      # wire. A red directory is wired by fixing it, never by adding it to a
+      # green command, and the triage record hands both rows to the items that
+      # already own those classes.
+      #
+      # `src/lib/intelligence/ask/retrievers` is NOT a `__tests__` directory —
+      # its five test files sit beside their sources. A `__tests__`-shaped glob
+      # would match nothing there and exit green, which is the gate-reachability
+      # defect this family exists to end, so the sibling control asserts the
+      # FILES are selected rather than the directory name being present.
+      #
+      # `src/scripts/__tests__` deliberately re-runs one suite the pinned
+      # "deliverables worker boundary" step above already owns. Measured, not
+      # asserted: that suite alone is 1 case in 0.858s (it spawns a node
+      # subprocess to check import conditions) against 1.111s for the whole
+      # six-suite directory. That duplication is the same order as the overlaps
+      # docs/ci/README-suite-wiring.md already accepts, and it buys automatic
+      # ownership for the next suite added there; the alternative was excluding a
+      # green file by name, which is a quarantine shape for no defect.
+      #
+      # Named as DIRECTORIES, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect, and a suite added
+      # to any of these nine tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/t493-wired-directory-ci-coverage.test.ts` proves
+      # these steps through the census's own resolver rather than by searching
+      # this file for a string (C-537), refuses a trailing slash, and refuses a
+      # re-add to the dark baseline.
+      - name: Run the T-493 knowledge component suites
+        run: >-
+          npx jest src/components/knowledge/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 aVa answer suites
+        run: >-
+          npx jest src/lib/ava-answer/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Intelligence answer suites
+        run: >-
+          npx jest src/lib/intelligence/answer/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Intelligence ask retriever suites
+        run: >-
+          npx jest src/lib/intelligence/ask/retrievers
+          --no-coverage --ci
+
+      - name: Run the T-493 stage-readiness workbook suites
+        run: >-
+          npx jest src/lib/programs/stage-readiness-workbooks/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Source artifact-registry suites
+        run: >-
+          npx jest src/lib/source/artifact-registry/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Source door1 suites
+        run: >-
+          npx jest src/lib/source/door1/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Source proposal-intelligence suites
+        run: >-
+          npx jest src/lib/source/proposal-intelligence/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 operator script suites
+        run: >-
+          npx jest src/scripts/__tests__
+          --no-coverage --ci
+
+      # Item T-496. The Sentinel reasoning module moved from the retired
+      # `src/lib/agents/` path to the canonical `src/lib/agent/`, and its suite
+      # moved with it. That suite ran nowhere on either path, which is the
+      # condition the item is against: the reason a live Intelligence route
+      # could drift back to a retired import for weeks is that nothing
+      # executable objected. Wiring it here is not incidental tidying — the
+      # module the route calls now has its own suite in a required job.
+      #
+      # Named as a DIRECTORY for this file's header reason, and its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change, which
+      # the ratchet asserts as set equality in both directions.
+      - name: Run the T-496 Sentinel reasoning suites
+        run: >-
+          npx jest src/lib/agent/sentinel-reasoning/__tests__
+          --no-coverage --ci
+
+      # Item T-771. The ninth stale-suite draw found that eleven of the twenty
+      # files it names already carried a verdict in a repo-owned triage record,
+      # and that ONE of those verdicts has a discharged reason. T-472 measured
+      # this suite red — 1 of 4, an exhaustive expectation that had not been
+      # widened when the repository gained a signature-evidence field group —
+      # and assigned the widening to T-519 rather than repairing it in the
+      # triage. T-519 landed the widening in `bd63332ea4` (#8183) and did not
+      # wire the suite, so it has run nowhere since. 4 of 4 green today.
+      #
+      # Named as a DIRECTORY for this file's header reason, and its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change, which
+      # the ratchet asserts as set equality in both directions. The directory is
+      # 1 of 1 unrun, so no sibling this draw did not judge comes with it.
+      - name: Run the T-771 Source NDA authority suite
+        run: >-
+          npx jest src/lib/source/nda/__tests__
+          --no-coverage --ci
+
+      # Item T-776, the eighth stale-suite draw. Three fully-unrun directories,
+      # each judged whole and each executed file by file on base `9f17c47d6f`:
+      # 12 suites, 236 cases, all green, none reading a repository file, and
+      # every subject imported by a live product path (the agent chat route,
+      # the Source CXO report route). Named as DIRECTORIES without a trailing
+      # slash, and each line leaves `product-directory-ci-coverage.baseline.json`
+      # in the same change. The other two drawn directories are held behind
+      # declared scanner rows in `docs/architecture/t776-stale-suite-triage.json`.
+      - name: Run the T-776 agent output-discipline, voice-doctrine and Source expert-judgment suites
+        run: >-
+          npx jest
+          src/lib/agent/output-discipline
+          src/lib/agent/voice-doctrine/__tests__
+          src/lib/source/expert-judgment/__tests__
+          --no-coverage --ci
+
+      # Item T-777. `src/lib/security/__tests__` was held by T-776 behind one
+      # suite that had never passed: it mocked a client module its subject does
+      # not import, and carried a migration-text case. The suite now mocks the
+      # data-plane client the subject calls, and the grant check lives with the
+      # live-Postgres assertion `assert:sensitive-upload-audit-immutability`.
+      # 4 suites, 25 cases. Named as a DIRECTORY without a trailing slash, and
+      # the line leaves `product-directory-ci-coverage.baseline.json` in the
+      # same change. Record: `docs/architecture/t777-security-suite-repair-triage.json`.
+      - name: Run the T-777 security suites
+        run: >-
+          npx jest
+          src/lib/security/__tests__
+          --no-coverage --ci
+
+      # Item T-778. `src/components/intelligence-advisory/__tests__` was held by
+      # T-776 behind one case that read `AdvisoryIntelligencePage.tsx` for the
+      # text of the finalizer call, which a comment could satisfy. It is replaced
+      # by rendered cases that mount the page and release a stream chunk by
+      # chunk with no answer packet. 4 suites, 20 cases. Named as a DIRECTORY
+      # without a trailing slash, and the line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change.
+      # Record: `docs/architecture/t778-intelligence-advisory-triage.json`.
+      - name: Run the T-778 intelligence-advisory suites
+        run: >-
+          npx jest
+          src/components/intelligence-advisory/__tests__
+          --no-coverage --ci
+
+      # Item T-779, the ninth stale-suite draw. Two fully-unrun directories,
+      # each judged whole and each executed file by file on base `af8f66d90d`:
+      # 8 suites, 47 cases, all green, none reading a repository file, and both
+      # subjects imported by live product paths (the Source artifact generate
+      # route; the Moves and Source workspace pages and the setup files route).
+      # Named as DIRECTORIES without a trailing slash, and each line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change. The
+      # other three drawn directories are held: one red on item 51, two beside
+      # a suite that renders an unreachable component (T-775, T-780). Record:
+      # `docs/architecture/t779-stale-suite-triage.json`.
+      - name: Run the T-779 Source reasoning and workspace-explorer suites
+        run: >-
+          npx jest
+          src/lib/source/reasoning/__tests__
+          src/lib/workspace-explorer/__tests__
+          --no-coverage --ci
+
+      # Item T-780. T-779 held `src/components/agent-answer/__tests__` and
+      # `src/components/context-broker/__tests__` whole because one suite in
+      # each renders a component `docs/architecture/unreachable-components.json`
+      # lists (`AvaAsk`, `FourModeDemoSurface`; retire-or-mount is T-775's
+      # decision). The other four suites are green and their subjects are
+      # mounted, so they are named FILE BY FILE here and the two unreachable
+      # renders stay out. Do NOT replace these paths with either directory:
+      # that would count coverage over code no route reaches. Both directories
+      # are PARTIAL after this, so the dark-directory ratchet no longer sees
+      # them; `t780-named-file-wiring.test.ts` pins their exact file set in its
+      # place. Record: `docs/architecture/t780-named-file-triage.json`.
+      - name: Run the T-780 agent-answer and context-broker suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx
+          src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts
+          src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx
+          src/components/context-broker/__tests__/ModeToggle.test.tsx
+          --no-coverage --ci
+
+      # Item 26, 2026-10-01. T-493 held `src/lib/intelligence/synthesis/__tests__`
+      # whole. Its red leg was repaired by T-497 (#8574); the one leg left is
+      # `violationsMigration.test.ts`, a source-text scanner over a committed
+      # migration that T-550's rule refuses to wire (owner T-495). The other
+      # four suites are green and every subject has a product importer, so they
+      # are named FILE BY FILE here, the T-780 shape. Do NOT replace these paths
+      # with the directory: jest would select the scanner with them.
+      # `t493-wired-directory-ci-coverage.test.ts` pins this file set and that
+      # the scanner stays dark. Record: `docs/architecture/t493-stale-suite-triage.json`.
+      - name: Run the T-493 held synthesis suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/intelligence/synthesis/__tests__/healthcareAnswerContract.test.ts
+          src/lib/intelligence/synthesis/__tests__/outputValidator.test.ts
+          src/lib/intelligence/synthesis/__tests__/violationsRecorder.test.ts
+          src/lib/intelligence/synthesis/__tests__/violationsSupabaseBackend.test.ts
+          --no-coverage --ci
+
+      # Item T-781, the tenth stale-suite draw. Two directories, each judged
+      # whole and each executed file by file on base `5b976bdbbf`: 7 suites, 28
+      # cases, all green, and both subjects imported by non-test modules
+      # (`src/lib/agent/retrieval.ts`; the answer-eval harness and the
+      # answer-quality CI gate). Three answer-quality suites read JSONL fixture
+      # files, which are test data, not source text. `scorer.test.ts` is already
+      # run by `wave0:quality-gate` and runs here too, because the directory
+      # line selects it. Named as DIRECTORIES without a trailing slash; the
+      # atlas line leaves `product-directory-ci-coverage.baseline.json` in the
+      # same change. Three drawn directories are held (T-782, T-783, T-784).
+      # Record: `docs/architecture/t781-stale-suite-triage.json`.
+      - name: Run the T-781 atlas composition and answer-quality suites
+        run: >-
+          npx jest
+          src/lib/atlas/composition/__tests__
+          src/lib/eval/answer-quality/__tests__
+          --no-coverage --ci
+
+      # Item T-782. T-781 held `src/lib/atlas/initiative-deep/__tests__` for one
+      # case in `tenant-scoping.test.ts` that asserted over the BYTES of nine
+      # source files that no tenant key was written in them. That case is
+      # replaced by behavioural probes: every tenant-keyed read the deep view
+      # makes is seeded for two tenants, including hostile rows only the fence
+      # excludes, and each carrier is asserted on its own; and every tenant key
+      # the registry knows (canonical and legacy, read from code) must produce
+      # the same view as a neutral key. The directory is judged whole (3 files,
+      # 65 cases, all green) and named as a
+      # DIRECTORY without a trailing slash; it leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change.
+      # Record: `docs/architecture/t782-initiative-deep-triage.json`.
+      - name: Run the T-782 atlas initiative-deep suites
+        run: >-
+          npx jest
+          src/lib/atlas/initiative-deep/__tests__
+          --no-coverage --ci
+
+      # Item T-784, claimable half. T-781 held `src/lib/shell/__tests__` whole
+      # because `atrium-contract.test.ts` tests a module
+      # `docs/architecture/orphaned-lib-modules.json` lists `testOnly`
+      # (retire-or-mount is T-784's gated half, not taken here). The other two
+      # suites are green and their subjects are imported by product code, so
+      # they are named FILE BY FILE, as T-780 did. Do NOT replace these paths
+      # with the directory: that would count coverage over code no route
+      # reaches. The directory is PARTIAL after this, so the dark-directory
+      # ratchet no longer sees it; `t784-shell-named-file-wiring.test.ts` pins
+      # its exact file set in its place.
+      # Record: `docs/architecture/t784-shell-named-file-triage.json`.
+      - name: Run the T-784 shell suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/shell/__tests__/origination-handoff.test.ts
+          src/lib/shell/__tests__/working-pane-shape.test.ts
+          --no-coverage --ci
+
+      # Item T-785, the eleventh stale-suite draw. Three directories, each
+      # judged whole and each executed file by file on base `6ce86fc134`: 7
+      # suites, 42 cases, all green, none reading a repository file, and each
+      # subject imported by a non-test module (`src/lib/source/execution-room`;
+      # the `/home/learn/[section]/[slug]` page; the agent-grounding QA runner).
+      # Named as DIRECTORIES without a trailing slash; each line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change. Two
+      # drawn directories are held (T-786 source-text scanners, T-787 test-only
+      # subjects). Record: `docs/architecture/t785-stale-suite-triage.json`.
+      - name: Run the T-785 renewal-cockpit, learn case-study and agent-grounding suites
+        run: >-
+          npx jest
+          src/lib/source/renewal-cockpit/__tests__
+          src/components/source/learn/case-study/__tests__
+          src/lib/agent-grounding/__tests__
+          --no-coverage --ci
+
+      # Item T-795, the thirteenth stale-suite draw. Its verdicts were recorded
+      # read-only, the three red files were repaired in #8729, and the byte case
+      # in `setup/__tests__/ai-initiatives.test.ts` was replaced in #8732.
+      # Re-executed on base `0f662a090c` before wiring: 19 files, 168 cases, all
+      # green. The seven directories whose every test file is in the draw are
+      # named whole, and they leave `product-directory-ci-coverage.baseline.json`
+      # in the same change. Three are named BY FILE because the directory holds
+      # files outside the draw: `observability/__tests__` (a third, already-run
+      # file), `new-workspace/__tests__` (three already-run files) and
+      # `src/__tests__/features`.
+      - name: Run the T-795 Source, programs, setup and patternops suites
+        run: >-
+          npx jest
+          src/lib/patternops
+          src/lib/programs/source-trigger/__tests__
+          src/lib/setup/__tests__
+          src/lib/source/decision-queue/__tests__
+          src/lib/source/disclosure-flag/__tests__
+          src/lib/source/execution-room/__tests__
+          src/lib/source/pricing-submissions/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-795 observability, new-workspace and graph-gate suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/observability/__tests__/structured-logger.test.ts
+          src/lib/observability/__tests__/tenant-bleed-alerts.test.ts
+          src/lib/source/new-workspace/__tests__/historical-request-summary.test.ts
+          src/lib/source/new-workspace/__tests__/stage05-nda-coverage.test.ts
+          src/__tests__/features/neo4j-gate.test.ts
+          --no-coverage --ci
+
+      # Item T-786, claimable half. T-785 held `src/components/__tests__` whole
+      # because both suites read component source bytes. The AbarvaNav suite is
+      # rewritten as a render (a plain `<a>` in place of `next/link` fails it)
+      # and is named BY FILE, as T-784 did. Do NOT replace this path with the
+      # directory: that would also select `legacy-setup-links.test.ts`, still a
+      # byte scan over an unreachable component and held for T-786's gated
+      # half. The directory is PARTIAL after this, so the dark-directory ratchet
+      # no longer sees it; `t786-abarvanav-render-wiring.test.ts` pins its exact
+      # file set in its place.
+      # Record: `docs/architecture/t786-abarvanav-render-triage.json`.
+      - name: Run the T-786 AbarvaNav render suite by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/components/__tests__/AbarvaNav.client-routing.test.ts
+          --no-coverage --ci
+
+      # Item T-788, the twelfth stale-suite draw, executed file by file on base
+      # `c334308aed`: 6 suites, 27 cases wired, all green, none reading a
+      # repository file, each subject imported by non-test code. The two
+      # `__tests__` directories are named whole, without a trailing slash, and
+      # leave `product-directory-ci-coverage.baseline.json` in the same change.
+      # The two Atlas files are named individually: `src/lib/atlas` already runs
+      # `llm-determinism.test.ts` by name, and naming the directory would also
+      # select `src/lib/atlas/__tests__`. Held: `src/lib/instruments/__tests__`
+      # (migration byte-scan, T-789) and `src/lib/lakeshore/__tests__` (two red
+      # cases, T-790). `src/__tests__/behaviors/t788-stale-suite-wiring.test.ts`
+      # proves both partitions through the census resolver.
+      - name: Run the T-788 artifacts and answer-export suites
+        run: >-
+          npx jest
+          src/lib/artifacts/__tests__
+          src/lib/ava-answer/export/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-788 Atlas suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/classifier.test.ts
+          src/lib/atlas/value-grounding.test.ts
+          --no-coverage --ci
+
+      # Item T-789, claimable half. T-788 held `src/lib/instruments/__tests__`
+      # whole because `instrument-data-layer-migration.test.ts` asserts literals
+      # over the bytes of an applied migration. Its sibling `render.test.ts` is
+      # green, behavioural and reads no repository file, so it is named BY FILE,
+      # as T-786 did. Do NOT replace this path with the directory: that would
+      # also select the migration byte-scan, held for T-789's gated half. The
+      # directory is PARTIAL after this, so the dark-directory ratchet no longer
+      # sees it; `t789-instruments-render-wiring.test.ts` pins its exact file set
+      # in its place. Record: `docs/architecture/t789-instruments-render-triage.json`.
+      - name: Run the T-789 instruments render suite by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/instruments/__tests__/render.test.ts
+          --no-coverage --ci
+
+      # Item T-799, second half: the fourteenth stale-suite draw's seventeen
+      # `wire_into_ci` rows. Verdicts: `docs/architecture/t799-stale-suite-triage.json`
+      # (#8757). Re-executed on base `a1990c0457` before wiring: 17 suites, 80
+      # cases, all green. Fifteen directories hold exactly one test file, the
+      # drawn one, so they are named whole and leave the dark-directory baseline
+      # in the same change. Two are named BY FILE: the `(maestro)` route-group
+      # segment would be read as a capture group by a bare Jest pattern, and
+      # `source/new-workspace` holds two files that already run elsewhere.
+      # Not wired here, by verdict: ProofPointFooter (held for T-775).
+      # `src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts`
+      # was the rewrite_as_behavior row: its byte scan, red on a formatter
+      # reflow, now calls the three Tower routes with mocked collaborators and
+      # asserts which client key reaches the resolver; re-executed 6 of 6 green
+      # on `70e59be180`. Named by file below for the `(maestro)` segment.
+      # `src/components/moves/living/__tests__` was the
+      # update_with_reason_recorded row: its two stale switcher-label
+      # expectations now read the label from the case registry, re-executed
+      # 8 of 8 green on `db5e4afd32`, and it holds only that one file.
+      - name: Run the T-799 route handler, setup, programs and strategic-moves suites
+        run: >-
+          npx jest
+          src/app/api/cron/board-pack/__tests__
+          src/app/api/cron/notifications-tick/__tests__
+          src/app/api/health/__tests__
+          src/app/api/health/postgres-disruption/__tests__
+          src/app/api/knowledge/chunk/__tests__
+          src/app/api/programs/expert-kernel/export/__tests__
+          src/app/api/request-access/__tests__
+          src/app/api/webhooks/resend/__tests__
+          src/components/ava-chat/__tests__
+          src/components/programs/attachments/__tests__
+          src/components/setup/loader/__tests__
+          src/components/source/setup/__tests__
+          src/components/strategic-moves/cost-effort/__tests__
+          src/components/strategic-moves/risk-assessment/__tests__
+          src/components/strategic-moves/solutioning/__tests__
+          src/components/moves/living/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-799 docs page, Source workspace and Tower route-scope suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/docs/__tests__/product-docs-page.test.tsx"
+          src/components/source/new-workspace/SourceNewRequestFirstPage.test.tsx
+          src/components/source/new-workspace/SourceNewNdaCapture.test.tsx
+          "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts"
+          --no-coverage --ci
+
+      # Item 26, draw 15, second half: the fifteenth stale-suite draw's twelve
+      # `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw15-stale-suite-triage.json` (#8767).
+      # Re-executed on base `3160fbf55b` before wiring, each file alone: 12
+      # suites, 94 cases, all green. Ten directories hold exactly one test file,
+      # the drawn one (`jest --listTests` over the ten patterns resolves exactly
+      # those ten files), so they are named whole and leave the dark-directory
+      # baseline in the same change. Two are named BY FILE: `src/lib/agent` as a
+      # pattern would select every suite under `src/lib/agent/**`, and
+      # `src/lib/agent/quality/__tests__` holds a second file that already runs
+      # in `wave0:quality-gate`.
+      # Not wired here, by verdict: six rows held for T-775.
+      # `src/lib/agent/streaming/toolUseLoop.test.ts` was the
+      # rewrite_as_behavior row: its byte scan over the loop's source now
+      # drives runToolUseLoop with a scripted Anthropic client and asserts the
+      # explicit tool_choice is sent on the first turn only; re-executed 4 of 4
+      # green on `1fe80e54c0`. Named by file below, since `src/lib/agent` as a
+      # pattern would select every suite under it.
+      # `src/components/workspace-explorer/__tests__` was the
+      # update_with_reason_recorded row: its stale requirement-label
+      # expectation now reads the label from the canonical evidence spec,
+      # re-executed 6 of 6 green on `9fc88b46a9`, and it holds only that one
+      # file.
+      - name: Run the item 26 draw 15 config, data and lib suites
+        run: >-
+          npx jest
+          src/config/tenants/__tests__
+          src/data/apexretail/__tests__
+          src/lib/ai/__tests__
+          src/lib/answer/__tests__
+          src/lib/atlas/initiative-deep/joins/__tests__
+          src/lib/azure-connectivity/__tests__
+          src/lib/context-trust/__tests__
+          src/lib/corpus/__tests__
+          src/lib/cxo-intel/__tests__
+          src/lib/decisions/__tests__
+          src/components/workspace-explorer/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 15 agent doctrine, CXO answer-quality and tool-use loop suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/agent/all-agent-doctrine.test.ts
+          src/lib/agent/quality/__tests__/cxo-answer-quality.test.ts
+          src/lib/agent/streaming/toolUseLoop.test.ts
+          --no-coverage --ci
+
+      # Item 26, draw 16, second half: the sixteenth stale-suite draw's seven
+      # `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw16-stale-suite-triage.json` (#8779).
+      # Re-executed on base `0858491423` before wiring, each file alone: 7
+      # suites, 59 cases, all green. Six directories hold exactly one test file,
+      # the drawn one (`jest --listTests` over the six patterns resolves exactly
+      # those six files), so they are named whole and leave the dark-directory
+      # baseline in the same change. One is named BY FILE:
+      # `src/lib/intelligence/ask` as a pattern would select all 30 suites under
+      # it, and its `__tests__` subtree was excluded red above.
+      # Not wired here, by verdict: five repair rows and two live-intake
+      # update rows (data-lane decision owed), the ledger migration-text case,
+      # and five rows held for T-775.
+      - name: Run the item 26 draw 16 lib suites
+        run: >-
+          npx jest
+          src/lib/dependencies/__tests__
+          src/lib/email/__tests__
+          src/lib/enterprise-data/contracts/__tests__
+          src/lib/enterprise-knowledge/assembler/__tests__
+          src/lib/features/__tests__
+          src/lib/intelligence/binding/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 16 Intelligence ask response-policy suite by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/intelligence/ask/response-policy.test.ts
+          --no-coverage --ci
+
+      # Item 26, draw 17, second half: the seventeenth stale-suite draw's
+      # eleven `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw17-stale-suite-triage.json` (#8785).
+      # Re-executed on base `788a99f606` before wiring, each file alone: 11
+      # suites, 155 cases, all green. Every directory holds exactly one test
+      # file, the drawn one (`jest --listTests` over the eleven patterns
+      # resolves exactly those eleven files), so all are named whole and leave
+      # the dark-directory baseline in the same change.
+      # Not wired here, by verdict: two repair rows (draw 16 data-lane decision
+      # owed), two test-only fixture re-key updates, and five rows held for
+      # T-775.
+      - name: Run the item 26 draw 17 lib suites
+        run: >-
+          npx jest
+          src/lib/intelligence/dossiers/__tests__
+          src/lib/intelligence/insight-engine/__tests__
+          src/lib/parallel-run/__tests__
+          src/lib/pilot-dashboard/__tests__
+          src/lib/prompts/__tests__
+          src/lib/runtime/__tests__
+          src/lib/semantic2/dossiers/__tests__
+          src/lib/source/classifier/__tests__
+          src/lib/source/context-writeback/__tests__
+          src/lib/source/delivery-model/__tests__
+          src/lib/source/documentation-standards/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 17 fixture-updated suites
+        run: >-
+          npx jest
+          src/lib/programs/learning-writeback/__tests__
+          src/lib/semantic2/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 18 repaired suite
+        run: >-
+          npx jest
+          src/scripts/governance/__tests__
+          --no-coverage --ci
+
+      # Item 26, draw 18, second half: the eighteenth stale-suite draw's
+      # fourteen `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw18-stale-suite-triage.json` (#8797).
+      # Re-executed on base `b14d9a4856` before wiring, each file alone: 14
+      # suites, 353 cases, all green. Thirteen directories hold exactly the
+      # drawn file, so they are named whole and leave the dark-directory
+      # baseline. `src/lib/source/new-workspace` is already partially covered
+      # by name and holds untriaged files, so its one drawn file is named by
+      # path in its own step.
+      # Not wired here, by verdict: four rows held for T-775.
+      - name: Run the item 26 draw 18 lib suites
+        run: >-
+          npx jest
+          src/lib/source/evidence-trace/__tests__
+          src/lib/source/exports/deal-pack/__tests__
+          src/lib/source/industry-intelligence/__tests__
+          src/lib/source/mrm-screen/__tests__
+          src/lib/source/should-cost/__tests__
+          src/lib/source/sourcing/__tests__
+          src/lib/source/stage-gate/__tests__
+          src/lib/source/stage-packs/__tests__
+          src/lib/source/taxonomy/__tests__
+          src/lib/telemetry/__tests__
+          src/lib/workforce-economics/__tests__
+          src/lib/workshops/__tests__
+          src/scripts/qa/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 18 new-workspace file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/new-workspace/stage-plan-snapshot.test.ts
+          --no-coverage --ci
+
+      # Item T-495, claimable half, suite 2 of 11.
+      # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
+      # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
+      # red on this change's base `84b1759323` for a reason that is not a product
+      # defect: `MaestroChrome.tsx` was reformatted from single to double quotes,
+      # so the literal `'/home'` it grepped for is written `"/home"`. The byte
+      # assertions are DELETED rather than repaired — a sharper pattern is the same
+      # defect with a longer fuse (T-550's rule) — and replaced by
+      # `MaestroChrome.learnShellChrome.test.tsx`, which renders the chrome and the
+      # nested Learn layout composed the way the route tree composes them.
+      #
+      # It lands in `src/components/chrome/__tests__` rather than in
+      # `src/__tests__/behaviors`, which is the remedy the behaviour-coverage floor
+      # forces: that directory thresholds an aggregate across every file its suites
+      # touch, so a suite importing a component tree drags the aggregate down while
+      # all cases pass. Beside the component it gates merges without entering that
+      # average.
+      #
+      # `src/__tests__/hygiene` is NOT wired by this change and keeps its five
+      # remaining files. It is a red directory — a red directory is wired by fixing
+      # it, never by adding it to a green command — and three of those five are
+      # T-495's GATED half, which an agent must not attempt.
+      #
+      # Named as a DIRECTORY, not file by file, for this file's header reason. The
+      # directory is 2 of 2 unrun and both are green: measured on the branch,
+      # 2 suites / 15 tests / 0 failing. Its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change, which
+      # that ratchet asserts as set equality in both directions — so removing the
+      # line without this step, or this step without the line, both fail.
+      - name: Run the T-495 chrome shell-ownership suites
+        run: >-
+          npx jest src/components/chrome/__tests__
+          --no-coverage --ci
+
+      # Item T-495, claimable half, suite 3 of 11.
+      # `src/__tests__/hygiene/shell-v2-mode-layout.test.ts` asserted the Shell
+      # Layout Spec v2 rules over the BYTES of surface files. Its Rule 5 nav
+      # cases (product nav visible by default; the product labels) were red on
+      # this change's base for a deliberate nav rename, not a defect -- and the
+      # same rules are already asserted BY RENDER here, in
+      # `NexusTopNav.test.tsx`, which ran in no workflow. The byte suite is
+      # deleted; its chat-entry and Atlas-provider rules are re-asserted by
+      # render in `src/components/shell/__tests__/shell-v2-mode-layout.test.tsx`,
+      # whose directory the AI surface control catalog workflow already runs.
+      #
+      # Named as a DIRECTORY for this file's header reason: 1 of 1 unrun and
+      # green, 17 tests / 0 failing on the branch. Its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change; that
+      # ratchet asserts set equality, so this step without the line, or the
+      # line without this step, both fail.
+      - name: Run the T-495 top-nav render suites
+        run: >-
+          npx jest src/components/navigation/__tests__
+          --no-coverage --ci
+
+      - name: Refuse a test run that modified committed input data
+        if: always()
+        run: node scripts/ci/assert-datasets-unmodified.mjs

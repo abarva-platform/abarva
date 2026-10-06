@@ -1,6 +1,10 @@
 import "server-only";
 
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 
 export type MoveContextExtractFreshnessStatus =
   | "fresh"
@@ -12,6 +16,9 @@ export interface MoveContextExtractFreshness {
   moveId: string;
   tenantKey: string;
   evidenceFingerprint: string;
+  approvedEvidenceRevision: string | null;
+  approvedEvidenceRevisionScope?: "phase" | null;
+  currentApprovedEvidenceCount?: number;
   attachedEvidenceCount: number;
   acceptedEvidenceCount: number;
   latestEvidenceUpdatedAt: string | null;
@@ -54,6 +61,13 @@ export function parseMoveContextExtractFreshness(
   const extract = objectValue(value?.metadata.moveContextExtract);
   const freshness = objectValue(extract.freshness);
   const evidenceFingerprint = stringOrNull(freshness.evidenceFingerprint);
+  const approvedEvidenceRevision = stringOrNull(
+    freshness.approvedEvidenceRevision,
+  );
+  const approvedEvidenceRevisionScope =
+    freshness.approvedEvidenceRevisionScope === "phase"
+      ? "phase"
+      : null;
   const blueprintId = stringOrNull(freshness.blueprintId);
   const blueprintVersion = stringOrNull(freshness.blueprintVersion);
   if (!evidenceFingerprint || !blueprintId || !blueprintVersion) return null;
@@ -63,6 +77,8 @@ export function parseMoveContextExtractFreshness(
     moveId: stringOrNull(freshness.moveId) ?? "",
     tenantKey: stringOrNull(freshness.tenantKey) ?? "",
     evidenceFingerprint,
+    approvedEvidenceRevision,
+    approvedEvidenceRevisionScope,
     attachedEvidenceCount: numberOrNull(freshness.attachedEvidenceCount) ?? 0,
     acceptedEvidenceCount: numberOrNull(freshness.acceptedEvidenceCount) ?? 0,
     latestEvidenceUpdatedAt: stringOrNull(freshness.latestEvidenceUpdatedAt),
@@ -104,8 +120,27 @@ export async function loadCurrentMoveContextExtractFreshness(args: {
     created_at?: string | null;
     generated_at?: string | null;
   };
-  return parseMoveContextExtractFreshness({
+  const parsed = parseMoveContextExtractFreshness({
     createdAt: stringOrNull(row.generated_at) ?? stringOrNull(row.created_at),
     metadata: objectValue(row.metadata),
   });
+  if (!parsed) return null;
+  const current = await loadApprovedMoveEvidenceSnapshot(args);
+  if (!current || !parsed.approvedEvidenceRevision) {
+    return { ...parsed, freshnessStatus: "rebuild_required" };
+  }
+  const freshnessStatus = isApprovedMoveEvidenceBasisCurrent({
+    snapshot: current,
+    phase: args.phase,
+    recordedRevision: parsed.approvedEvidenceRevision,
+    scope: parsed.approvedEvidenceRevisionScope,
+    generatedAt: parsed.createdAt,
+  })
+    ? "fresh"
+    : "stale";
+  return {
+    ...parsed,
+    currentApprovedEvidenceCount: current.approvedEvidenceCount,
+    freshnessStatus,
+  };
 }

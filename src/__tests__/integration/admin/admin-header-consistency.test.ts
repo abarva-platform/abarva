@@ -23,7 +23,24 @@ describe('admin page header consistency', () => {
 
   it('routes shared header treatment through reusable styles', () => {
     expect(read(editorialCanvas)).toContain('ADMIN_PAGE_HEADER_STYLES.title');
-    expect(read(adminHome)).toContain('ADMIN_PAGE_HEADER_STYLES.title');
     expect(read(customerAdmin)).toContain('ADMIN_PAGE_HEADER_STYLES.title');
+  });
+
+  // 2026-09-19 (T-032) - the third subject of the case above used to be
+  // /admin, and it was stale. fb561b85e ("make setup the canonical admin
+  // experience") re-pointed the route at AdminSetupExperience rendered through
+  // AppShell, and that surface carries its own chrome rather than an
+  // ADMIN_PAGE_HEADER_STYLES title. Asserting the shared style on a page that
+  // no longer renders an admin page header tests nothing. What the case is
+  // protecting is that no admin route invents a bespoke page title, so that is
+  // what is asserted here: /admin delegates, and does not grow a header of its
+  // own.
+  it('leaves /admin delegating its chrome instead of inventing a page header', () => {
+    const source = read(adminHome);
+
+    expect(source).toContain('AdminSetupExperience');
+    expect(source).toContain('AppShell');
+    expect(source).not.toContain('<h1');
+    expect(source).not.toMatch(/fontSize:\s*40/);
   });
 });

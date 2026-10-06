@@ -56,7 +56,10 @@ const EMPTY: TransitionRiskInsightView = {
   overrunProbabilityPct: 0,
   overrunCostMultiple: 0,
   confidence: 'low',
-  note: 'Needs evidence — missing transition_fee, overrun_probability. Not a tenant claim.',
+  // Item U-523: the builder no longer names fact keys in a note a client reads;
+  // it maps them through the catalog's published labels. The fixture follows,
+  // so it keeps describing output the builder can actually produce.
+  note: 'Needs evidence — missing Quoted transition fee, Probability of transition overrun. Not a tenant claim.',
   bestPractice: ['Require a milestone-based transition plan with fee-at-risk on slippage.'],
   downstreamImpact: 'Transition ambiguity becomes retained-cost exposure and delayed value.',
 };

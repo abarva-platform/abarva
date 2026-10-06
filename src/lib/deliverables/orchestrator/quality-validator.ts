@@ -8,11 +8,25 @@
 
 import type {
   DeliverableIntelligenceRequest,
+  ExpectedExhibit,
+  GovernedEvidenceItem,
   QualityValidationResult,
   RenderableDeliverable,
+  RenderableExhibit,
 } from "./types";
+import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
+import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
+import { findExcludedNumericClaims } from "./excluded-numeric-claims";
+import { untracedFigures } from "./numeric-lineage-tokens";
+import {
+  classifySlideDensity,
+  deckContractExpectsDiagram,
+  deckContractIdForDeliverable,
+  isGenericSlideTitle,
+  MAX_SUPPORTING_POINTS,
+} from "@/lib/deliverables/shared/deck-story-contract";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
@@ -138,7 +152,10 @@ function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
 }
 
 /** Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
-function collectUnsupportedClaims(body: string): string[] {
+function collectUnsupportedClaims(
+  body: string,
+  evidence: readonly GovernedEvidenceItem[] = [],
+): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
   const sentences = body.split(/(?<=[.!?])\s+/);
   const factLike =
@@ -152,15 +169,110 @@ function collectUnsupportedClaims(body: string): string[] {
       !supported.test(s) &&
       !isSupportedExternalBenchmarkClaim(s)
     ) {
-      claims.push(excerptSentence(s));
+      // Name the figures that trace to nothing. The claim is blocked either
+      // way; this is what lets a reader find the figure inside a long table.
+      const untraced = untracedFigures(s, evidence).slice(0, 6);
+      claims.push(
+        untraced.length > 0
+          ? `${excerptSentence(s)} [figures with no match in evidence: ${untraced.join(", ")}]`
+          : excerptSentence(s),
+      );
     }
   }
   return claims;
 }
 
+/**
+ * Greedy one-to-one match of expected exhibits against produced ones.
+ *
+ * One-to-one and not merely "is a matrix present": a brief that asks for two
+ * matrices and receives one would otherwise report both satisfied, and the
+ * shortfall would disappear in exactly the case it exists to catch.
+ *
+ * Matched in two passes, because kind alone cannot say WHICH exhibit arrived.
+ * 86 of the 105 structure x pack briefs this registry can compose declare two
+ * or more expected exhibits of the same kind (the AMS pack alone asks for three
+ * matrices), and a single-pass match by kind credits them in declaration order.
+ * It then names the losers of that order as missing — so an exhibit that was
+ * delivered gets reported absent while the one actually absent is counted as
+ * received. The count was right and the diagnosis was wrong, which is worse
+ * than silence: an operator reads a specific title and goes looking for a
+ * visual that is already in the document.
+ *
+ * Pass 1 claims the pairs that identify each other — same kind AND the same
+ * title or key, compared loosely, since the prompt names expected exhibits by
+ * title and the author echoes it. Pass 2 is the original rule over whatever is
+ * left, so no brief loses a match it had before. `received` is unchanged for
+ * every input: within one kind both passes leave a maximal matching, so the
+ * total is still the sum over kinds of min(expected, produced). Only the
+ * attribution moves.
+ */
+function exhibitIdentity(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function identifiesSameExhibit(
+  want: ExpectedExhibit,
+  got: RenderableExhibit,
+): boolean {
+  if (want.kind !== got.kind) return false;
+  const wantTitle = exhibitIdentity(want.title);
+  const wantKey = exhibitIdentity(want.key);
+  const gotTitle = exhibitIdentity(got.title);
+  const gotKey = exhibitIdentity(got.key);
+  if (wantTitle && (wantTitle === gotTitle || wantTitle === gotKey)) return true;
+  if (wantKey && (wantKey === gotKey || wantKey === gotTitle)) return true;
+  return false;
+}
+
+function matchExpectedExhibits(
+  expected: readonly ExpectedExhibit[],
+  produced: readonly RenderableExhibit[],
+): { received: number; missing: string[] } {
+  const unconsumed: Array<RenderableExhibit | null> = [...produced];
+  const matched = expected.map(() => false);
+  let received = 0;
+
+  const claim = (at: number): void => {
+    unconsumed[at] = null;
+    received += 1;
+  };
+
+  // pass 1 — the pairs that name each other
+  expected.forEach((want, i) => {
+    const at = unconsumed.findIndex(
+      (got) => got !== null && identifiesSameExhibit(want, got),
+    );
+    if (at === -1) return;
+    matched[i] = true;
+    claim(at);
+  });
+
+  // pass 2 — by kind, over what pass 1 did not claim
+  expected.forEach((want, i) => {
+    if (matched[i]) return;
+    const at = unconsumed.findIndex(
+      (got) => got !== null && got.kind === want.kind,
+    );
+    if (at === -1) return;
+    matched[i] = true;
+    claim(at);
+  });
+
+  return {
+    received,
+    missing: expected.filter((_, i) => !matched[i]).map((want) => want.title),
+  };
+}
+
 export function validateDeliverableQuality(
   doc: RenderableDeliverable,
   req: DeliverableIntelligenceRequest,
+  opts: { expectedExhibits?: readonly ExpectedExhibit[] } = {},
 ): QualityValidationResult {
   const blockers: string[] = [];
   const warnings: string[] = [];
@@ -194,6 +306,7 @@ export function validateDeliverableQuality(
     doc.generatedSections
       .map((s) => s.rawBodyMarkdown ?? s.bodyMarkdown)
       .join("\n\n"),
+    req.governedEvidenceBundle,
   );
   const unsupportedClaimCount = unsupportedClaimExamples.length;
 
@@ -214,6 +327,62 @@ export function validateDeliverableQuality(
     /\[EVIDENCE MISSING|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE/.test(
       body,
     ) || clientCompleteCount > 0;
+  const wholeDocumentText = [
+    doc.title,
+    doc.subtitle ?? "",
+    doc.generatedSections
+      .map((section) => section.rawBodyMarkdown ?? section.bodyMarkdown)
+      .join("\n\n"),
+    body,
+    doc.tables
+      .map(
+        (t) =>
+          `${t.title}\n${t.columns.join(" | ")}\n${t.rows
+            .map((row) => row.join(" | "))
+            .join("\n")}`,
+      )
+      .join("\n\n"),
+    doc.recommendation,
+    doc.nextActions.join("\n"),
+    (doc.deckSlides ?? [])
+      .flatMap((slide) => [
+        slide.title ?? "",
+        slide.governingMessage,
+        ...(slide.points ?? []),
+        slide.speakerNotes ?? "",
+      ])
+      .join("\n"),
+    doc.exhibits
+      .map(
+        (exhibit) =>
+          `${exhibit.title}\n${exhibit.description}\n${JSON.stringify(exhibit.data ?? {})}`,
+      )
+      .join("\n\n"),
+    doc.sourceRegister
+      .map(
+        (source) =>
+          `${source.label} ${source.evidenceFamily} ${source.asOf ?? ""}`,
+      )
+      .join("\n"),
+    doc.assumptions.map((assumption) => assumption.statement).join("\n"),
+    doc.clientCompleteChecklist
+      .map((item) => `${item.label} ${item.placeholderText}`)
+      .join("\n"),
+  ].join("\n\n");
+  const excludedNumericClaimHits = findExcludedNumericClaims(
+    wholeDocumentText,
+    req.prohibitedNumericClaims ?? [],
+  );
+  const missingRequiredEvidenceSignals = (req.requiredEvidenceSignals ?? [])
+    .filter(
+      (signal) =>
+        !carriesRequiredEvidenceSignal(
+          wholeDocumentText,
+          signal.label,
+          signal.statement,
+        ),
+    )
+    .map((signal) => `${signal.label} [${signal.citationNumber}]`);
 
   // ── BLOCKERS ──
   if (leakedInternalTags.length > 0)
@@ -231,8 +400,97 @@ export function validateDeliverableQuality(
         .map((s) => `"${s}"`)
         .join("; ")}`,
     );
+  if (excludedNumericClaimHits.length > 0) {
+    blockers.push(
+      `explicitly excluded numeric claim(s) from governed evidence appear in the artifact: ${excludedNumericClaimHits
+        .map((claim) => `${claim.sourceLabel} [${claim.citationNumber}]`)
+        .join("; ")}`,
+    );
+  }
   if (sectionCount < qb.minSections)
     blockers.push(`only ${sectionCount} sections; minimum ${qb.minSections}`);
+
+  // Deck length, for deliverables that produce one. The band is declared per
+  // deck in slide-contract.ts; a deliverable with no band is not a deck and is
+  // judged by the section and word bars above instead.
+  //
+  // The ceiling is the half that matters. An artifact can satisfy every section
+  // and citation rule and still fail in the room by being thirty slides long,
+  // and that is a failure this pipeline has no other way to see.
+  //
+  // Judge the deck only when a deck is actually produced — when PPTX is an
+  // output format. A document-primary deliverable (DOCX/XLSX) can carry
+  // latent deckSlides the synthesis volunteered that no renderer turns into a
+  // deck; judging those against the deck's slide band blocked a DOCX business
+  // case for having three slides, a band its writer was never given and its
+  // output never shows. This is the same PPTX condition under which the writer
+  // is told the band (deckLengthInstruction) and the slides are contracted
+  // (ensureContractedDeckSlides), so the three now agree.
+  if (
+    req.outputFormats.includes("pptx") &&
+    doc.deckSlides &&
+    doc.deckSlides.length > 0
+  ) {
+    const verdict = judgeSlideCount(
+      req.deliverableType as Parameters<typeof judgeSlideCount>[0],
+      doc.deckSlides.length,
+      qb.slideFloor,
+    );
+    if (!verdict.ok) blockers.push(verdict.message);
+
+    // Deck story-contract quality — ADVISORY (non-blocking) on first wiring, so
+    // activating a previously-unenforced bar never inverts the gate on a deck
+    // that was acceptable before. Each warning names the exact slide(s) so the
+    // signal is actionable, and the generator is told the same contract via
+    // deckStoryContractInstruction — the writer sees every bar it is judged on.
+    const slides = doc.deckSlides;
+    const labelLed = slides.filter((s) =>
+      isGenericSlideTitle(s.governingMessage ?? ""),
+    );
+    if (labelLed.length > 0) {
+      const examples = labelLed
+        .slice(0, 3)
+        .map((s) => `"${(s.governingMessage ?? "").trim()}"`)
+        .join(", ");
+      warnings.push(
+        `Advisory: ${labelLed.length} of ${slides.length} slides lead with a label, not an argument — a slide title should state the conclusion (e.g. ${examples}).`,
+      );
+    }
+
+    const tooDense = slides.filter((s) => {
+      const visible = [s.governingMessage ?? "", ...(s.points ?? [])]
+        .join(" ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length;
+      return classifySlideDensity(visible) === "too_dense";
+    });
+    if (tooDense.length > 0) {
+      warnings.push(
+        `Advisory: ${tooDense.length} of ${slides.length} slides are too dense for a room — split or move the detail to speaker notes / the appendix.`,
+      );
+    }
+
+    const overPointed = slides.filter(
+      (s) => (s.points?.length ?? 0) > MAX_SUPPORTING_POINTS,
+    );
+    if (overPointed.length > 0) {
+      warnings.push(
+        `Advisory: ${overPointed.length} of ${slides.length} slides carry more than ${MAX_SUPPORTING_POINTS} supporting points — more than one idea; split the slide.`,
+      );
+    }
+
+    const contractId = deckContractIdForDeliverable(req.deliverableType);
+    if (
+      contractId &&
+      deckContractExpectsDiagram(contractId) &&
+      !slides.some((s) => (s.exhibitKey ?? "").trim().length > 0)
+    ) {
+      warnings.push(
+        `Advisory: this deck's story contract calls for at least one diagram, but no slide links an exhibit — an all-text deck of this type reads as a section list, not an argument.`,
+      );
+    }
+  }
   if (bodyWordCount < qb.minBodyWords)
     blockers.push(
       `document too short: ${bodyWordCount} words; minimum ${qb.minBodyWords}`,
@@ -263,6 +521,11 @@ export function validateDeliverableQuality(
     blockers.push("no risk/issues/dependencies table");
   if (qb.requiresCitations && hasSourceRegister && !/\[\d+\]/.test(body))
     blockers.push("source register present but body cites nothing [n]");
+  if (missingRequiredEvidenceSignals.length > 0) {
+    blockers.push(
+      `required evidence signal(s) missing from client artifact: ${missingRequiredEvidenceSignals.join("; ")}`,
+    );
+  }
   if (
     qb.requiresClientCompleteChecklistWhenGaps &&
     req.missingEvidence.length + req.clientCompleteItems.length > 0 &&
@@ -310,6 +573,23 @@ export function validateDeliverableQuality(
     warnings.push(
       "document lacks exhibits — consider decision/architecture/roadmap visuals",
     );
+  // ── expected-exhibit shortfall (C-514) ──
+  // The warning above fires only when the document has NO exhibits at all. A
+  // brief that asked for three and received one produced no signal of any kind,
+  // and since the synthesis pass is now allowed to omit an exhibit rather than
+  // fabricate one, that partial case is the likely one. `RenderableExhibit.data`
+  // already says the gate "should surface the missing visual"; this is where it
+  // does. Advisory on purpose — refusing the export is a product decision.
+  const exhibitMatch = opts.expectedExhibits
+    ? matchExpectedExhibits(opts.expectedExhibits, doc.exhibits)
+    : null;
+  if (exhibitMatch && exhibitMatch.missing.length > 0) {
+    warnings.push(
+      `expected exhibits: ${exhibitMatch.received} of ${opts.expectedExhibits!.length} received — missing: ${exhibitMatch.missing
+        .map((t) => `"${t}"`)
+        .join(", ")}`,
+    );
+  }
   // ── reference-contract enforcement (REF_EXECUTIVE_ROADMAP pilot) ──
   // requiredExhibitElements were only ever read into the prompt before this;
   // this is the first real check that the generated exhibit actually
@@ -417,6 +697,15 @@ export function validateDeliverableQuality(
       hasCentralTension,
       hasOptionsConsidered,
       hasEvidenceGapsNoted,
+      requiredEvidenceSignalCount: req.requiredEvidenceSignals?.length ?? 0,
+      missingRequiredEvidenceSignalCount: missingRequiredEvidenceSignals.length,
+      ...(exhibitMatch
+        ? {
+            expectedExhibitCount: opts.expectedExhibits!.length,
+            receivedExpectedExhibitCount: exhibitMatch.received,
+            missingExpectedExhibits: exhibitMatch.missing,
+          }
+        : {}),
       readingTimeMinutes: Math.max(1, Math.round(bodyWordCount / 200)),
       manualEditNeeded: warnings.length > 0 || blockers.length > 0,
       wordBand,

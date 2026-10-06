@@ -24,13 +24,13 @@ const titles = (fromPhase: number, next: string, s: FeedForwardSignals) =>
 
 describe('buildFeedForwardPack — transition-aware, deterministic, honest', () => {
   it('P2 → P3: design inputs / evidence gaps / risks / recommended focus, from real state', () => {
-    const p = buildFeedForwardPack(2, 'P3 Choose the Approach', p2Signals);
-    expect(p.headline).toBe('Prepared for P3 Choose the Approach');
-    expect(titles(2, 'P3 Choose the Approach', p2Signals)).toEqual([
+    const p = buildFeedForwardPack(2, 'P3 Design Future State', p2Signals);
+    expect(p.headline).toBe('Prepared for P3 Design Future State');
+    expect(titles(2, 'P3 Design Future State', p2Signals)).toEqual([
       'Design inputs',
       'Evidence gaps',
       'Risks to consider',
-      'Recommended P3 Choose the Approach focus',
+      'Recommended P3 Design Future State focus',
     ]);
     const design = p.sections.find((s) => s.title === 'Design inputs')!;
     expect(design.status).toBe('ready');
@@ -46,17 +46,17 @@ describe('buildFeedForwardPack — transition-aware, deterministic, honest', () 
   });
 
   it('P3 → P4: selected approach / workstreams / constraints / focus', () => {
-    const p = buildFeedForwardPack(3, 'P4 Build the Plan', {
+    const p = buildFeedForwardPack(3, 'P4 Roadmap & Business Case', {
       selectedApproach: 'CLM-embedded assisted triage (Option B)',
       workstreams: ['Intake redesign', 'Metadata remediation'],
       controlConstraints: ['Audit trail'],
       hardGaps: [],
     });
-    expect(titles(3, 'P4 Build the Plan', { selectedApproach: 'x' })).toEqual([
+    expect(titles(3, 'P4 Roadmap & Business Case', { selectedApproach: 'x' })).toEqual([
       'Selected approach',
       'Workstream candidates',
       'Constraints & controls',
-      'Recommended P4 Build the Plan focus',
+      'Recommended P4 Roadmap & Business Case focus',
     ]);
     expect(p.sections.find((s) => s.title === 'Selected approach')!.items).toEqual([
       'CLM-embedded assisted triage (Option B)',
@@ -65,11 +65,11 @@ describe('buildFeedForwardPack — transition-aware, deterministic, honest', () 
   });
 
   it('P4 → P5: workstreams & owners / launch readiness / risks / focus', () => {
-    expect(titles(4, 'P5 Prepare to Execute', { workstreams: ['A'] })).toEqual([
+    expect(titles(4, 'P5 Mobilize & Handoff', { workstreams: ['A'] })).toEqual([
       'Workstreams & owners',
       'Launch readiness',
       'Risks to consider',
-      'Recommended P5 Prepare to Execute focus',
+      'Recommended P5 Mobilize & Handoff focus',
     ]);
   });
 

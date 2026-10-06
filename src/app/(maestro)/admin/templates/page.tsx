@@ -27,8 +27,6 @@ export default async function AdminTemplatesPage() {
       >
         <ContextBar
           tenant={tenant.tenantName}
-          mode="Authoring"
-          agent="Steward"
           data={`${templates.length} records`}
           liveStatus="Live"
           liveStatusKind="live"

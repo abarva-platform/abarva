@@ -32,6 +32,15 @@ import {
 } from '@/lib/intelligence/sentinel-pattern-detections';
 import { buildAllProgramsSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import {
+  resolvePathStatus,
+  SHARED_PATH_DISPOSITIONS,
+} from '@/lib/qa/path-disposition';
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+const ROOT = path.resolve(__dirname, '../../../../');
 
 const plan = buildAllProgramsSeedPlan();
 
@@ -280,17 +289,21 @@ describe('empty tenant edge', () => {
 // ---------------------------------------------------------------------
 
 describe('module hygiene · sentinel-pattern-view.ts', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
-
+  // Read in beforeAll, not in the describe body. The two blocks that used to
+  // follow this one read their subjects here, and when the sunset deleted
+  // those subjects the throw happened during collection and took all 29 cases
+  // above down with it. A read in a describe body is a landmine that arms
+  // itself the day its subject moves; this one's subject still exists, which
+  // is the only reason it had not gone off.
   const sourcePath = path.resolve(
     __dirname,
     '../../../lib/intelligence/sentinel-pattern-view.ts',
   );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
+  let codeOnly = '';
+
+  beforeAll(() => {
+    codeOnly = stripComments(fs.readFileSync(sourcePath, 'utf8'));
+  });
 
   it('imports only from the I1 detection read model and the seed planner', () => {
     expect(codeOnly).toMatch(/from '@\/lib\/intelligence\/sentinel-pattern-detections'/);
@@ -337,109 +350,60 @@ describe('module hygiene · sentinel-pattern-view.ts', () => {
 });
 
 // ---------------------------------------------------------------------
-// Module hygiene · component
+// Retired · the component and the route these hygiene blocks inspected
 // ---------------------------------------------------------------------
+//
+// Two describe blocks used to live here, reading
+// src/components/intelligence/SentinelActivePatterns.tsx and
+// src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx with
+// fs.readFileSync in the describe body. The legacy surface sunset at
+// 0c6a86c51 deleted both files, so those reads threw during collection --
+// and a throw at collection time takes the whole file with it. Every block
+// above this point, all of them healthy and none of them touching a deleted
+// file, stopped running too. The suite reported "0 tests", which does not
+// read as a failure in a summary line the way a red count does.
+//
+// The blocks are recorded as retired rather than deleted, so what the
+// sunset cost stays visible, and the claim is checked against the register
+// instead of being asserted in this comment.
 
-describe('module hygiene · SentinelActivePatterns.tsx', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+describe('retired · SentinelActivePatterns and the tenant Intelligence route', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../components/intelligence/SentinelActivePatterns.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
+  const RETIRED = [
+    'src/components/intelligence/SentinelActivePatterns.tsx',
+    'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
+  ] as const;
 
-  it('imports buildSentinelIntelligenceView from the I2 view helper', () => {
-    expect(codeOnly).toMatch(/buildSentinelIntelligenceView/);
-    expect(codeOnly).toMatch(/from '@\/lib\/intelligence\/sentinel-pattern-view'/);
+  it.each(RETIRED)('%s is absent, and the register names what removed it', (rel) => {
+    expect(fs.existsSync(path.resolve(ROOT, rel))).toBe(false);
+
+    const resolved = resolvePathStatus(rel, false, SHARED_PATH_DISPOSITIONS, REGISTER_NAME);
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('does not import Sentinel runtime', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
+  it('does not accept an absence nobody declared', () => {
+    // The negative control: both paths above are declared, so without this
+    // the case is satisfied by a register that says yes to anything.
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 
-  it('does not import Atlas or Nexus runtime and only uses deterministic agent mission imports', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).toMatch(/from '@\/lib\/agent\/agent-mission-queue'/);
-    expect(codeOnly).toMatch(/from '@\/lib\/agent\/agent-mission-view'/);
-    expect(codeOnly).toMatch(/from '@\/components\/agent\/AgentMissionPanel'/);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\/runtime/);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\/tools/);
-  });
-
-  it('does not import Source UI', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/\(maestro\)\/source\//);
-  });
-
-  it('does not import legacy /programs routes or mock.ts', () => {
-    expect(codeOnly).not.toMatch(/from '@\/app\/programs\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/programs\/mock'/);
-  });
-
-  it('does not import auth implementation', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/auth\//);
-  });
-
-  it('renders AI-assisted recommendation controls for active pattern cards', () => {
-    expect(source).toContain('Pattern recommendation controls');
-    expect(source).toContain('AI-assisted pattern recommendation');
-    expect(source).toContain('Evidence refs:');
-    expect(source).toContain('human promotion gate required');
-    expect(source).toContain('Sentinel does not create or advance Moves autonomously');
-    expect(source).toContain('formatEvidenceRefs(detection.sourceSignalIds)');
-  });
-});
-
-// ---------------------------------------------------------------------
-// Module hygiene · tenant intelligence route page
-// ---------------------------------------------------------------------
-
-describe('module hygiene · tenant intelligence route page', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
-
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
-
-  it('uses assertTenantAccess and findTenantByRouteSlug', () => {
-    expect(codeOnly).toMatch(/assertTenantAccess/);
-    expect(codeOnly).toMatch(/findTenantByRouteSlug/);
-  });
-
-  it('falls back to notFound when tenant cannot be resolved', () => {
-    expect(codeOnly).toMatch(/notFound\(\)/);
-  });
-
-  it('renders the IntelligenceLensTabs component that owns the Sentinel pattern view', () => {
-    expect(codeOnly).toMatch(/IntelligenceLensTabs/);
-  });
-
-  it('does not import Sentinel runtime, Atlas runtime, Nexus runtime, or agent runtime', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
-  });
-
-  it('does not import Source UI or legacy /programs routes', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/\(maestro\)\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/programs\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/programs\/mock'/);
-  });
+  // A third case tried to assert this file has no readFileSync in a describe
+  // body. It could not work here: the check has to hold an example of the
+  // pattern to prove it can fail, and the file then contains the pattern it
+  // scans itself for. A file cannot be both the scanner and the subject.
+  //
+  // The structural fix stands on its own -- every read in this file is now
+  // inside an `it` or a `beforeAll`, so nothing reads during collection. The
+  // repo-wide version of the rule is filed as its own item rather than
+  // half-built here.
 });
 
 // ---------------------------------------------------------------------

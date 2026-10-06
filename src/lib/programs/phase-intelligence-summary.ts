@@ -202,10 +202,8 @@ async function buildDecisionItem(
 }
 
 async function buildStrategicSignalItem(
-  ctx: TenancyCtx,
-  moveId: string,
+  move: StrategicMoveForPhaseIntelligence | null,
 ): Promise<PhaseIntelligenceItem> {
-  const move = await getStrategicMoveById(ctx, moveId);
   const binding = move ? resolvePhaseIntelligenceFunctionIdentity(move) : null;
   const pack = binding
     ? resolveFunctionPack(binding.identity.industryKey, binding.identity.functionKey)
@@ -282,11 +280,17 @@ async function buildGateEvidenceItem(
   ctx: TenancyCtx,
   moveId: string,
   phase: number,
+  move: StrategicMoveForPhaseIntelligence | null,
 ): Promise<PhaseIntelligenceItem> {
   try {
-    const [move, gateCriteria, readiness] = await Promise.all([
-      getStrategicMoveById(ctx, moveId),
-      buildGateCriteria(ctx, moveId, phase),
+    const [gateCriteria, readiness] = await Promise.all([
+      move && (move.currentPhase ?? 0) === phase
+        ? Promise.resolve(move.gateCriteria)
+        : buildGateCriteria(ctx, moveId, phase, {
+            allowHistoricalPhase: Boolean(
+              move && phase < (move.currentPhase ?? 0),
+            ),
+          }),
       loadDiscoveryEvidenceReadiness(ctx, moveId),
     ]);
     const packets = buildMoveEvidenceNeedPackets({
@@ -347,10 +351,13 @@ export async function buildPhaseIntelligenceSummary(
   ctx: TenancyCtx,
   input: { moveId: string; phase: number },
 ): Promise<PhaseIntelligenceSummary> {
-  const [decision, strategicSignal, gateEvidence] = await Promise.all([
+  const [decision, move] = await Promise.all([
     buildDecisionItem(ctx, input.moveId),
-    buildStrategicSignalItem(ctx, input.moveId),
-    buildGateEvidenceItem(ctx, input.moveId, input.phase),
+    getStrategicMoveById(ctx, input.moveId),
+  ]);
+  const [strategicSignal, gateEvidence] = await Promise.all([
+    buildStrategicSignalItem(move),
+    buildGateEvidenceItem(ctx, input.moveId, input.phase, move),
   ]);
 
   return {

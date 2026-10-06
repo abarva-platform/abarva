@@ -4,6 +4,9 @@ import {
   sanitizeClientFacingRenderableDeliverable,
 } from "../client-facing-artifact-sanitize";
 import type { RenderableDeliverable } from "../orchestrator/types";
+import { CLIENT_NARRATIVE_BANNED_TERMS } from "../profiles/machinery-lexicon";
+import { getDeliverableProfile } from "../profiles/registry";
+import { scanMachinery } from "../quality/transformation-gates";
 
 describe("sanitizeClientFacingArtifactHtml", () => {
   it("rewrites priority shorthand without removing the evidence appendix", () => {
@@ -138,6 +141,44 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).not.toMatch(/quality score/i);
     expect(html).not.toMatch(/data plane/i);
     expect(html).not.toMatch(/client_judgment/i);
+  });
+
+  it("scrubs builder vocabulary (how the deck was generated) from a client slide", () => {
+    // The exact shape of a real leak onto a slide.
+    const leaked =
+      "This Solution Architecture Pack inherits the curated outline from the " +
+      "bound Domain Function Pack. The agent does not improvise the structure. " +
+      "Every figure is produced by the Moves Expert Kernel from the audited substrate.";
+    const clean = sanitizeClientFacingArtifactMarkdown(leaked);
+    expect(clean).not.toMatch(/Domain Function Pack/i);
+    expect(clean).not.toMatch(/Expert Kernel/i);
+    expect(clean).not.toMatch(/the agent does not improvise/i);
+    expect(clean).not.toMatch(/\bsubstrate\b/i);
+    // And the gate agrees nothing machinery remains.
+    const findings = scanMachinery({
+      profile: getDeliverableProfile("target_state_architecture"),
+      narrativeText: clean,
+    });
+    expect(findings).toHaveLength(0);
+  });
+
+  it("rewrites the full machinery lexicon before the quality gate scans client narrative", () => {
+    const body = CLIENT_NARRATIVE_BANNED_TERMS.map(
+      (term) => `<p>The draft repeated ${term} in the client narrative.</p>`,
+    ).join("\n");
+    const html = sanitizeClientFacingArtifactHtml(`
+      ${body}
+      <h2>Appendix A — Source Register</h2>
+      <p>[1] Approved operating evidence.</p>
+    `);
+
+    const findings = scanMachinery({
+      profile: getDeliverableProfile("execution_roadmap"),
+      narrativeText: html,
+    });
+
+    expect(findings).toHaveLength(0);
+    expect(html).toContain("Appendix A — Source Register");
   });
 
   it("sanitizes renderable deliverable text while preserving governance keys", () => {

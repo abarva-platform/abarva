@@ -8,6 +8,7 @@ export type TenantPacketContractVersion = "tenant-packet/v1";
 
 export type TenantPacketSourceClass =
   | "enterprise_profile"
+  | "business_segments"
   | "organization_functions"
   | "applications_systems"
   | "data_assets_integrations"

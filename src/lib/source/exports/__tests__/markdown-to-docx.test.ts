@@ -1,4 +1,5 @@
 import { Packer, Paragraph, Table } from 'docx';
+import JSZip from 'jszip';
 import { markdownToDocxBlocks } from '@/lib/exports-shared/markdown-to-docx';
 
 describe('markdownToDocxBlocks', () => {
@@ -73,6 +74,29 @@ describe('markdownToDocxBlocks', () => {
     );
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toBeInstanceOf(Table);
+  });
+
+  it('keeps authored table rows intact and repeats the header across pages', async () => {
+    const blocks = markdownToDocxBlocks(
+      [
+        '| ID | Constraint | Discovery implication |',
+        '|---|---|---|',
+        '| 1 | Pending readiness validation | Validate owner approval before assuming connectivity. |',
+        '| 2 | Unapproved retention controls | Obtain Privacy and Security sign-off before data access. |',
+      ].join('\n'),
+    );
+    const { Document } = await import('docx');
+    const buffer = await Packer.toBuffer(
+      new Document({ sections: [{ children: blocks }] }),
+    );
+    const zip = await JSZip.loadAsync(buffer);
+    const documentXml = await zip.file('word/document.xml')?.async('text');
+    const tableXml = documentXml?.match(/<w:tbl>[\s\S]*?<\/w:tbl>/)?.[0];
+
+    expect(tableXml).toBeDefined();
+    expect(tableXml).toContain('<w:tblHeader/>');
+    expect(tableXml?.match(/<w:tr>/g)).toHaveLength(3);
+    expect(tableXml?.match(/<w:cantSplit\/>/g)).toHaveLength(3);
   });
 
   it('renders thematic breaks as paragraph blocks', () => {

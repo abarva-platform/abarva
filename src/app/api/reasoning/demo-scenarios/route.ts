@@ -17,6 +17,7 @@ import {
   requireGateApprovalRole,
   reasoningTenantId,
 } from '@/app/api/reasoning/_auth';
+import type { AiDecisionOwner } from '@/lib/ai-liability/human-decision-controls';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,11 +97,24 @@ const SCENARIOS: readonly ScenarioDescriptor[] = [
 // `recordWaiverInternal` export. The route already enforced auth + the
 // gate-approval role before calling these runners, so a trusted internal
 // write (no synthetic Request, no re-auth) is correct here.
-function applyWaiver(tenantId: string, criterionId: string): void {
-  recordWaiverInternal(tenantId, AMS_EVENT_ID, criterionId, 'Demo scenario preset');
+function applyWaiver(
+  tenantId: string,
+  criterionId: string,
+  decisionOwner: AiDecisionOwner,
+): void {
+  recordWaiverInternal(
+    tenantId,
+    AMS_EVENT_ID,
+    criterionId,
+    'Demo scenario preset',
+    decisionOwner,
+  );
 }
 
-function runGreenPath(tenantId: string): void {
+function runGreenPath(
+  tenantId: string,
+  decisionOwner: AiDecisionOwner,
+): void {
   // 1. Reset state to a clean slate first.
   clearWaivers();
   clearResolved();
@@ -110,7 +124,7 @@ function runGreenPath(tenantId: string): void {
 
   // 3. Waive all BAFO gate criteria.
   for (const gateId of BAFO_GATE_IDS) {
-    applyWaiver(tenantId, gateId);
+    applyWaiver(tenantId, gateId, decisionOwner);
   }
 
   // 4. Resolve every AMS contradiction template.
@@ -139,7 +153,10 @@ function runRedAlert(): void {
   }
 }
 
-function runMidReview(tenantId: string): void {
+function runMidReview(
+  tenantId: string,
+  decisionOwner: AiDecisionOwner,
+): void {
   // 1. Reset waivers and resolutions for a deterministic baseline.
   clearWaivers();
   clearResolved();
@@ -150,7 +167,7 @@ function runMidReview(tenantId: string): void {
 
   // 3. Waive two RFP-prerequisite gates.
   for (const gateId of RFP_GATE_IDS_WAIVED) {
-    applyWaiver(tenantId, gateId);
+    applyWaiver(tenantId, gateId, decisionOwner);
   }
 
   // 4. Leave GATE-AMS-SHL-03 and GATE-AMS-RFI-03 unwaived (unmet) — no action needed.
@@ -225,15 +242,21 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    const decisionOwner: AiDecisionOwner = {
+      name: ctx.email ?? ctx.userId,
+      title: ctx.role ?? 'Gate approver',
+      tenantName: tenantId,
+      userId: ctx.userId,
+    };
     switch (scenarioId) {
       case 'green-path':
-        runGreenPath(tenantId);
+        runGreenPath(tenantId, decisionOwner);
         break;
       case 'red-alert':
         runRedAlert();
         break;
       case 'mid-review':
-        runMidReview(tenantId);
+        runMidReview(tenantId, decisionOwner);
         break;
       default:
         return jsonResponse(

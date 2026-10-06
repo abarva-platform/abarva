@@ -243,6 +243,8 @@ export interface SourcingEventSummary {
   accountName: string;
   leadAgent: 'Sentinel';
   archetype: string;
+  /** Raw persisted source_events.event_type used for deterministic archetype resolution. */
+  eventType?: string | null;
   rigor: SourceRigorLevel;
   status: SourceLifecycleStatus;
   statusLabel: string;
@@ -252,6 +254,11 @@ export interface SourcingEventSummary {
   openAlerts: number;
   owner: string;
   decisionOwner?: string | null;
+  approvalPolicyCode?: 'legacy_signed_scope_v1' | 'self_v1' | null;
+  /** Persisted request description exposed by the Source event projection. */
+  triggerDescription?: string | null;
+  /** Persisted intake summary containing the governed scope facts. */
+  scopeDescription?: string | null;
   createdByUserId?: string | null;
   agingDays: number;
   blocker: string | null;
@@ -274,6 +281,10 @@ export interface SourcingEventSummary {
 export interface SourcingEventDetail extends SourcingEventSummary {
   synopsis: string;
   problemStatement: string;
+  /** Persisted intake trigger, kept separate from the user-facing problem summary. */
+  triggerDescription?: string | null;
+  /** Persisted intake scope, kept separate from the trigger. */
+  scopeDescription?: string | null;
   stages: WorkflowStage[];
   alerts: SourceAlert[];
   artifacts: SourceArtifactSummary[];

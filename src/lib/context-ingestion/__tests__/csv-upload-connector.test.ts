@@ -1,6 +1,4 @@
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 
 import {
   inferCsvSchemaMapping,
@@ -8,13 +6,60 @@ import {
   parseCsvUpload,
   parseStructuredUpload,
   prepareCsvUploadForTenantContext,
+  segmentKeyForContextDimension,
 } from "../csv-upload-connector";
 import {
   getTemplateById,
   getTemplateForDimension,
   getTemplatesForTenant,
+  MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES,
 } from "../template-registry";
-import type { ContextDimension } from "../types";
+import type { ContextDimension, ContextDimensionUniversal } from "../types";
+import type { SegmentKey } from "@/lib/ingestion/azure-landing-zone-types";
+
+const UNIVERSAL_SEGMENTS: Record<ContextDimensionUniversal, SegmentKey> = {
+  enterprise_profile: "enterprise_profile",
+  business_org_functions: "org_structure",
+  it_org_ownership: "org_structure",
+  capabilities_value_streams: "enterprise_profile",
+  applications_systems: "it_landscape",
+  system_function_mapping: "it_landscape",
+  infrastructure_cloud: "infrastructure",
+  platform_volumetrics: "infrastructure",
+  data_analytics_estate: "data_estate",
+  integrations_interfaces: "it_landscape",
+  vendors_contracts_licenses: "it_financials",
+  it_budget_financials: "it_financials",
+  initiatives_portfolio: "program_inventory",
+  operations_service_management: "it_landscape",
+  kpis_outcome_evidence: "program_inventory",
+  security_risk_compliance: "program_inventory",
+  ai_automation_footprint: "it_landscape",
+  personas_workforce: "org_structure",
+};
+
+it("routes every universal context dimension to its declared segment", () => {
+  for (const [dimension, segment] of Object.entries(UNIVERSAL_SEGMENTS)) {
+    expect(segmentKeyForContextDimension(dimension as ContextDimensionUniversal)).toBe(segment);
+  }
+});
+
+it("persists the universal application segment in prepared upload chunks", () => {
+  const prepared = prepareCsvUploadForTenantContext({
+    clientId: "client-test",
+    tenantKey: "test-tenant",
+    uploadedBy: "user-test",
+    fileName: "applications-systems.csv",
+    uploadedAt: "2026-09-18T00:00:00.000Z",
+    csvText: [
+      "app_id,name,vendor,category,criticality,it_owner_team,lifecycle_stage",
+      "app-1,Application One,Vendor One,ERP,Tier 1,IT Operations,active",
+    ].join("\n"),
+    mapping: { templateId: "applications-systems" },
+  });
+
+  expect(prepared.chunks[0]?.source_segment_id).toBe("it_landscape");
+});
 
 type MeridianCatalogTemplate = {
   id: string;
@@ -24,6 +69,39 @@ type MeridianCatalogTemplate = {
   owner_role: string;
   refresh_cadence: string;
 };
+
+const ENTERPRISE_PROFILE_YAML = [
+  "enterprise_profile:",
+  "  - metric: headquarters",
+  "    value: Example City",
+  "    period: FY2026",
+  "    source: enterprise-profile",
+  "  - metric: hospitals",
+  "    value: 2",
+  "    period: FY2026",
+  "    source: enterprise-profile",
+].join("\n");
+
+const INTEGRATION_TOPOLOGY_JSON = JSON.stringify({
+  edges: [
+    {
+      edge_id: "INT-001",
+      source: "APP-EHR",
+      target: "APP-LIS",
+      standard: "HL7 v2 ORU",
+      data_class: "PHI",
+      latency_sla: "15m",
+    },
+    {
+      edge_id: "INT-002",
+      source: "APP-EHR",
+      target: "APP-AUTH",
+      standard: "FHIR Prior Auth API",
+      data_class: "PHI",
+      latency_sla: "near-real-time",
+    },
+  ],
+});
 
 function createContextPromotionDbMock(
   calls: Array<{ table: string; operation: string; payload: unknown }>,
@@ -115,14 +193,14 @@ function createContextPromotionDbMock(
 }
 
 function readMeridianTemplateCatalog(): MeridianCatalogTemplate[] {
-  const catalogPath = path.join(
-    process.cwd(),
-    "datasets/meridian-health-synthetic-v1/17-upload-templates/template-catalog.json",
-  );
-  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8")) as {
-    templates: MeridianCatalogTemplate[];
-  };
-  return catalog.templates;
+  return MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES.map((template) => ({
+    id: template.id,
+    dimension: template.dimension,
+    file: `${template.id}.csv`,
+    required_fields: template.requiredFields,
+    owner_role: template.ownerRole,
+    refresh_cadence: template.refreshCadence,
+  }));
 }
 
 describe("csv upload connector", () => {
@@ -146,27 +224,23 @@ describe("csv upload connector", () => {
   });
 
   it("parses Meridian enterprise profile YAML into template rows", () => {
-    const yamlText = fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "datasets/meridian-health-synthetic-v1/17-upload-templates/enterprise-profile.yaml",
-      ),
-      "utf8",
+    const parsed = parseStructuredUpload(
+      ENTERPRISE_PROFILE_YAML,
+      "enterprise-profile.yaml",
     );
-    const parsed = parseStructuredUpload(yamlText, "enterprise-profile.yaml");
 
     expect(parsed.headers).toEqual(["metric", "value", "period", "source"]);
     expect(parsed.rows).toEqual(
       expect.arrayContaining([
         {
           metric: "headquarters",
-          value: "Sacramento, California",
+          value: "Example City",
           period: "FY2026",
           source: "enterprise-profile",
         },
         {
           metric: "hospitals",
-          value: "30",
+          value: "2",
           period: "FY2026",
           source: "enterprise-profile",
         },
@@ -175,15 +249,8 @@ describe("csv upload connector", () => {
   });
 
   it("parses Meridian HL7/FHIR topology JSON into template rows", () => {
-    const jsonText = fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "datasets/meridian-health-synthetic-v1/17-upload-templates/hl7-fhir-integration-topology.json",
-      ),
-      "utf8",
-    );
     const parsed = parseStructuredUpload(
-      jsonText,
+      INTEGRATION_TOPOLOGY_JSON,
       "hl7-fhir-integration-topology.json",
     );
 
@@ -199,8 +266,8 @@ describe("csv upload connector", () => {
     expect(parsed.rows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          edge_id: "MR-INT-001",
-          source: "MR-APP-EPIC",
+          edge_id: "INT-001",
+          source: "APP-EHR",
           standard: "HL7 v2 ORU",
           data_class: "PHI",
         }),
@@ -287,7 +354,10 @@ describe("csv upload connector", () => {
         refreshCadence: catalogTemplate.refresh_cadence,
       });
       expect(byId?.requiredFields).toEqual(catalogTemplate.required_fields);
-      expect(byDimension?.id).toBe(catalogTemplate.id);
+      expect(byDimension?.dimension).toBe(catalogTemplate.dimension);
+      expect(runtimeTemplates.map((template) => template.id)).toContain(
+        byDimension?.id,
+      );
     }
     expect(runtimeTemplates.map((template) => template.id)).toEqual(
       expect.arrayContaining(catalogTemplates.map((template) => template.id)),
@@ -360,7 +430,7 @@ describe("csv upload connector", () => {
         source_record_id: "row-2",
         source_doc: "prior-auth-workqueue.csv",
         source_path:
-          "csv-upload://meridian-health/prior-auth-workqueue.csv#row=2",
+          "csv-upload://meridian-health/prior-auth-workqueue-csv#row=2",
         embedding_status: "pending",
         embedding_model: null,
         embedding_error: null,
@@ -401,29 +471,22 @@ describe("csv upload connector", () => {
   });
 
   it("prepares Meridian YAML and JSON uploads through the same governed connector", () => {
-    const yamlText = fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "datasets/meridian-health-synthetic-v1/17-upload-templates/enterprise-profile.yaml",
-      ),
-      "utf8",
-    );
     const enterpriseProfile = prepareCsvUploadForTenantContext({
       clientId: "client-meridian",
       tenantKey: "meridian-health",
       uploadedBy: "user-meridian",
       fileName: "enterprise-profile.yaml",
       uploadedAt: "2026-06-05T12:00:00.000Z",
-      csvText: yamlText,
+      csvText: ENTERPRISE_PROFILE_YAML,
       mapping: { templateId: "enterprise-profile" },
     });
 
-    expect(enterpriseProfile.rowsParsed).toBeGreaterThanOrEqual(10);
+    expect(enterpriseProfile.rowsParsed).toBe(2);
     expect(enterpriseProfile.chunks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           source_doc: "enterprise-profile.yaml",
-          chunk_text: expect.stringContaining("Sacramento, California"),
+          chunk_text: expect.stringContaining("Example City"),
           provenance: expect.objectContaining({
             loader: "c5-csv-upload-connector",
             tenant_key: "meridian-health",
@@ -432,27 +495,20 @@ describe("csv upload connector", () => {
       ]),
     );
 
-    const jsonText = fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "datasets/meridian-health-synthetic-v1/17-upload-templates/hl7-fhir-integration-topology.json",
-      ),
-      "utf8",
-    );
     const topology = prepareCsvUploadForTenantContext({
       clientId: "client-meridian",
       tenantKey: "meridian-health",
       uploadedBy: "user-meridian",
       fileName: "hl7-fhir-integration-topology.json",
       uploadedAt: "2026-06-05T12:00:00.000Z",
-      csvText: jsonText,
+      csvText: INTEGRATION_TOPOLOGY_JSON,
       mapping: { templateId: "hl7-fhir-integration-topology" },
     });
 
     expect(topology.rowsParsed).toBe(2);
     expect(topology.chunks[0]).toMatchObject({
       source_doc: "hl7-fhir-integration-topology.json",
-      source_record_id: "MR-INT-001",
+      source_record_id: "INT-001",
       source_segment_id: "it_landscape",
     });
   });

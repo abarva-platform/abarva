@@ -156,14 +156,15 @@ describe('parseUpload — document path', () => {
   });
 });
 
-describe('parseUpload — YAML fallback', () => {
-  it('folds an absent yaml package into a document-text fallback', async () => {
-    // `yaml` is not a dependency of this repo, so the optional import fails and
-    // the adapter preserves the raw text as a document.
+describe('parseUpload — YAML', () => {
+  it('parses YAML objects when the runtime package is available', async () => {
     const yaml = 'name: Apex\nspend: 100';
     const result = await parseUpload({ filename: 'conf.yaml', bytes: asBytes(yaml) });
-    expect(result.kind).toBe('document');
-    expect(result.text).toBe(yaml);
+    expect(result).toEqual({
+      kind: 'tabular',
+      columns: ['name', 'spend'],
+      sampleRows: [{ name: 'Apex', spend: 100 }],
+    });
   });
 });
 

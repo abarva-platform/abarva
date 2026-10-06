@@ -49,6 +49,26 @@ type CleanupReport = {
   rows: CleanupRow[];
 };
 
+type ProofUploadResult =
+  | {
+      uploaded: true;
+      account: string;
+      container: string;
+      reportBlob: string;
+      manifestBlob: string;
+    }
+  | {
+      uploaded: false;
+      reason: string;
+    };
+
+type EvidenceWriteResult = {
+  reportPath: string;
+  manifestPath: string;
+  reportSha256: string;
+  proofUpload: ProofUploadResult;
+};
+
 type TenantColumn = {
   schema: string;
   table: string;
@@ -84,6 +104,22 @@ const OUT_ROOT = process.env.TENANT_CLEANUP_OUT_DIR?.trim()
   : path.join(ROOT, 'verification/tenant-canonical-cleanup');
 const OUT_DIR = path.join(OUT_ROOT, STAMP);
 const STATEMENT_TIMEOUT_MS = Number.parseInt(process.env.TENANT_CLEANUP_STATEMENT_TIMEOUT_MS ?? '60000', 10);
+const PROOF_BLOB_ACCOUNT =
+  envValue('TENANT_CLEANUP_PROOF_BLOB_ACCOUNT') ??
+  envValue('DATA_PLANE_OBJECT_STORE_ACCOUNT') ??
+  envValue('AZURE_OBJECT_STORAGE_ACCOUNT_NAME') ??
+  envValue('AZURE_STORAGE_ACCOUNT_NAME');
+const PROOF_BLOB_CONTAINER =
+  envValue('TENANT_CLEANUP_PROOF_BLOB_CONTAINER') ??
+  envValue('DATA_PLANE_OBJECT_STORE_CONTAINER') ??
+  envValue('AZURE_OBJECT_STORAGE_CONTAINER');
+const PROOF_BLOB_PREFIX = normalizeBlobPrefix(
+  envValue('TENANT_CLEANUP_PROOF_BLOB_PREFIX') ?? 'operator-proof/tenant-canonical-cleanup',
+);
+const PROOF_MANAGED_IDENTITY_CLIENT_ID =
+  envValue('TENANT_CLEANUP_PROOF_AZURE_CLIENT_ID') ??
+  envValue('AZURE_STORAGE_AAD_CLIENT_ID') ??
+  envValue('AZURE_CLIENT_ID');
 
 const uniqueKeyCache = new Map<string, UniqueKey[]>();
 const MAINTENANCE_TRIGGER_OVERRIDES = new Map<string, TriggerOverride>([
@@ -112,6 +148,33 @@ const MAINTENANCE_TRIGGER_OVERRIDES = new Map<string, TriggerOverride>([
 
 function normalizeAlias(value: string): string {
   return value.trim().toLowerCase().replace(/_/g, '-');
+}
+
+function envValue(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+function normalizeBlobPrefix(value: string): string {
+  const normalized = value.trim().replace(/^\/+|\/+$/g, '');
+  if (!normalized || normalized.split('/').some((part) => !part || part === '.' || part === '..')) {
+    throw new Error(`Unsafe TENANT_CLEANUP_PROOF_BLOB_PREFIX: ${value}`);
+  }
+  return normalized;
+}
+
+function requireDurableProofConfig(): void {
+  if (!APPLY) return;
+  if (!PROOF_BLOB_ACCOUNT || !PROOF_BLOB_CONTAINER) {
+    throw new Error(
+      'Apply mode requires durable proof storage. Set TENANT_CLEANUP_PROOF_BLOB_ACCOUNT and TENANT_CLEANUP_PROOF_BLOB_CONTAINER, or the DATA_PLANE_OBJECT_STORE equivalents.',
+    );
+  }
+  if (!PROOF_MANAGED_IDENTITY_CLIENT_ID && !process.env.AZURE_STORAGE_CONNECTION_STRING) {
+    throw new Error(
+      'Apply mode requires a proof storage credential. Set TENANT_CLEANUP_PROOF_AZURE_CLIENT_ID/AZURE_CLIENT_ID or AZURE_STORAGE_CONNECTION_STRING.',
+    );
+  }
 }
 
 function quoteIdentifier(value: string): string {
@@ -203,14 +266,18 @@ async function setRuntimeTriggers(
 }
 
 async function writeJson(filePath: string, value: unknown): Promise<string> {
-  const body = `${JSON.stringify(value, null, 2)}\n`;
+  const body = jsonBody(value);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, body);
   return crypto.createHash('sha256').update(body).digest('hex');
 }
 
-async function writeManifest(report: CleanupReport, digest: string): Promise<void> {
-  const manifest = [
+function jsonBody(value: unknown): string {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function buildManifest(report: CleanupReport, digest: string): string {
+  return [
     '# Tenant Canonical Cleanup Manifest',
     '',
     `Generated: ${report.generatedAt}`,
@@ -226,7 +293,99 @@ async function writeManifest(report: CleanupReport, digest: string): Promise<voi
     ),
     '',
   ].join('\n');
-  await fs.writeFile(path.join(OUT_DIR, 'MANIFEST.md'), manifest);
+}
+
+async function writeManifest(report: CleanupReport, digest: string): Promise<string> {
+  const manifestPath = path.join(OUT_DIR, 'MANIFEST.md');
+  await fs.writeFile(manifestPath, buildManifest(report, digest));
+  return manifestPath;
+}
+
+async function uploadProofBundle(report: CleanupReport, digest: string): Promise<ProofUploadResult> {
+  if (!PROOF_BLOB_ACCOUNT || !PROOF_BLOB_CONTAINER) {
+    return { uploaded: false, reason: 'proof blob storage is not configured' };
+  }
+
+  try {
+    const { BlobServiceClient } = await import('@azure/storage-blob');
+    const { DefaultAzureCredential } = await import('@azure/identity');
+    const service = process.env.AZURE_STORAGE_CONNECTION_STRING?.trim()
+      ? BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING)
+      : new BlobServiceClient(
+          `https://${PROOF_BLOB_ACCOUNT}.blob.core.windows.net`,
+          new DefaultAzureCredential(
+            PROOF_MANAGED_IDENTITY_CLIENT_ID
+              ? { managedIdentityClientId: PROOF_MANAGED_IDENTITY_CLIENT_ID }
+              : undefined,
+          ),
+        );
+
+    const container = service.getContainerClient(PROOF_BLOB_CONTAINER);
+    const blobRoot = `${PROOF_BLOB_PREFIX}/${report.mode}/${STAMP}`;
+    const reportBlob = `${blobRoot}/tenant-canonical-cleanup-report.json`;
+    const manifestBlob = `${blobRoot}/MANIFEST.md`;
+    const metadata = {
+      mode: report.mode,
+      report_sha256: digest,
+      active_columns: String(report.activeColumnsAudited),
+      alias_rows: String(report.totalAliasRows),
+      duplicate_alias_rows: String(report.totalDuplicateAliasRows),
+    };
+
+    await container.getBlockBlobClient(reportBlob).uploadData(Buffer.from(jsonBody(report)), {
+      blobHTTPHeaders: { blobContentType: 'application/json' },
+      metadata,
+    });
+    await container.getBlockBlobClient(manifestBlob).uploadData(Buffer.from(buildManifest(report, digest)), {
+      blobHTTPHeaders: { blobContentType: 'text/markdown; charset=utf-8' },
+      metadata,
+    });
+
+    return {
+      uploaded: true,
+      account: PROOF_BLOB_ACCOUNT,
+      container: PROOF_BLOB_CONTAINER,
+      reportBlob,
+      manifestBlob,
+    };
+  } catch (error) {
+    return {
+      uploaded: false,
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function writeCleanupEvidence(report: CleanupReport): Promise<EvidenceWriteResult> {
+  const reportPath = path.join(OUT_DIR, 'tenant-canonical-cleanup-report.json');
+  const reportSha256 = await writeJson(reportPath, report);
+  const manifestPath = await writeManifest(report, reportSha256);
+  const proofUpload = await uploadProofBundle(report, reportSha256);
+  if (APPLY && !proofUpload.uploaded) {
+    throw new Error(`Apply mode requires durable proof upload before commit: ${proofUpload.reason}`);
+  }
+
+  console.log(
+    JSON.stringify({
+      structured_event: 'tenant_canonical_cleanup_evidence',
+      mode: report.mode,
+      report_sha256: reportSha256,
+      local_report: reportPath,
+      blob: proofUpload,
+      totals: {
+        active_columns: report.activeColumnsAudited,
+        alias_rows: report.totalAliasRows,
+        duplicate_alias_rows: report.totalDuplicateAliasRows,
+      },
+    }),
+  );
+
+  return {
+    reportPath,
+    manifestPath,
+    reportSha256,
+    proofUpload,
+  };
 }
 
 async function discoverUniqueKeys(client: Client, column: TenantColumn): Promise<UniqueKey[]> {
@@ -475,6 +634,7 @@ async function deleteDuplicateAliasRows(
 
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
+  requireDurableProofConfig();
 
   const aliasEntries: Array<readonly [string, string]> = Object.entries(TENANT_KEY_ALIASES)
     .map(([alias, canonical]) => [normalizeAlias(alias), String(canonical)] as const)
@@ -494,6 +654,8 @@ async function main(): Promise<void> {
     if (orderDelta !== 0) return orderDelta;
     return `${left.schema}.${left.table}.${left.column}`.localeCompare(`${right.schema}.${right.table}.${right.column}`);
   });
+  let report: CleanupReport | null = null;
+  let evidence: EvidenceWriteResult | null = null;
 
   try {
     await client.query('BEGIN');
@@ -563,6 +725,16 @@ async function main(): Promise<void> {
       }
     }
 
+    report = {
+      generatedAt: NOW,
+      mode: APPLY ? 'apply' : 'dry-run',
+      activeColumnsAudited: columns.length,
+      totalAliasRows: rows.reduce((sum, row) => sum + row.count, 0),
+      totalDuplicateAliasRows: rows.reduce((sum, row) => sum + row.duplicateRows, 0),
+      rows,
+    };
+    evidence = await writeCleanupEvidence(report);
+
     if (APPLY) {
       for (const materializedView of materializedViewsToRefresh.values()) {
         console.log(`tenant-canonical-cleanup: refresh_materialized_view=${materializedView.schema}.${materializedView.table}`);
@@ -593,24 +765,23 @@ async function main(): Promise<void> {
     await client.end();
   }
 
-  const report: CleanupReport = {
-    generatedAt: NOW,
-	    mode: APPLY ? 'apply' : 'dry-run',
-	    activeColumnsAudited: columns.length,
-	    totalAliasRows: rows.reduce((sum, row) => sum + row.count, 0),
-	    totalDuplicateAliasRows: rows.reduce((sum, row) => sum + row.duplicateRows, 0),
-	    rows,
-	  };
-
-  const reportPath = path.join(OUT_DIR, 'tenant-canonical-cleanup-report.json');
-  const digest = await writeJson(reportPath, report);
-  await writeManifest(report, digest);
+  if (!report || !evidence) {
+    throw new Error('tenant cleanup completed without a report');
+  }
 
   console.log(`tenant-canonical-cleanup: mode=${report.mode}`);
-	  console.log(`tenant-canonical-cleanup: active_columns=${report.activeColumnsAudited}`);
-	  console.log(`tenant-canonical-cleanup: alias_rows=${report.totalAliasRows}`);
-	  console.log(`tenant-canonical-cleanup: duplicate_alias_rows=${report.totalDuplicateAliasRows}`);
-  console.log(`tenant-canonical-cleanup: report=${reportPath}`);
+  console.log(`tenant-canonical-cleanup: active_columns=${report.activeColumnsAudited}`);
+  console.log(`tenant-canonical-cleanup: alias_rows=${report.totalAliasRows}`);
+  console.log(`tenant-canonical-cleanup: duplicate_alias_rows=${report.totalDuplicateAliasRows}`);
+  console.log(`tenant-canonical-cleanup: report=${evidence.reportPath}`);
+  console.log(`tenant-canonical-cleanup: report_sha256=${evidence.reportSha256}`);
+  if (evidence.proofUpload.uploaded) {
+    console.log(
+      `tenant-canonical-cleanup: proof_blob=azblob://${evidence.proofUpload.account}/${evidence.proofUpload.container}/${evidence.proofUpload.reportBlob}`,
+    );
+  } else {
+    console.log(`tenant-canonical-cleanup: proof_blob=not_uploaded reason=${evidence.proofUpload.reason}`);
+  }
   if (!APPLY && report.totalAliasRows > 0) {
     console.log('tenant-canonical-cleanup: dry-run only. Re-run with --apply to rewrite active aliases.');
   }

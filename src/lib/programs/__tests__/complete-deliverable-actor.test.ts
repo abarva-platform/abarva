@@ -49,6 +49,17 @@ function makeInsertOnlyBuilder(payloads: unknown[]) {
   };
 }
 
+function makeUpdateEqBuilder(payloads: unknown[]) {
+  return {
+    update: jest.fn((payload) => {
+      payloads.push(payload);
+      return {
+        eq: jest.fn().mockReturnThis(),
+      };
+    }),
+  };
+}
+
 function makeUpsertOnlyBuilder(payloads: unknown[]) {
   return {
     upsert: jest.fn((payload) => {
@@ -145,6 +156,71 @@ describe('completeDeliverable actor attribution', () => {
         expect.objectContaining({ event_type: 'submitted_for_review' }),
         expect.objectContaining({ event_type: 'approval_granted', decision: 'approved' }),
       ]),
+    );
+  });
+
+  it('keeps refreshed draft deliverables off the revalidation path explicitly', async () => {
+    const deliverableTypePayloads: unknown[] = [];
+    const deliverableUpdatePayloads: unknown[] = [];
+    const versionPayloads: unknown[] = [];
+    const lifecyclePayloads: unknown[] = [];
+    const moduleLogPayloads: unknown[] = [];
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'deliverable_types') {
+        return makeUpsertOnlyBuilder(deliverableTypePayloads);
+      }
+      if (table === 'deliverables_v2' && fromMock.mock.calls.filter(([t]) => t === 'deliverables_v2').length === 1) {
+        return makeSelectMaybeSingleBuilder({
+          data: {
+            id: 'deliverable-existing',
+            current_version: 2,
+            signed_off_version: null,
+          },
+          error: null,
+        });
+      }
+      if (table === 'deliverables_v2') {
+        return makeUpdateEqBuilder(deliverableUpdatePayloads);
+      }
+      if (table === 'deliverable_versions') {
+        return makeInsertSelectSingleBuilder(
+          { data: { id: 'version-3' }, error: null },
+          versionPayloads,
+        );
+      }
+      if (table === 'deliverable_lifecycle_events') {
+        return makeInsertOnlyBuilder(lifecyclePayloads);
+      }
+      if (table === 'module_state_log') {
+        return makeInsertOnlyBuilder(moduleLogPayloads);
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await completeDeliverable(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      {
+        deliverableTypeKey: 'discovery_report',
+        title: 'Discovery Report',
+        content: 'Generated discovery report content',
+        signOff: false,
+      },
+    );
+
+    expect(deliverableUpdatePayloads[0]).toEqual(
+      expect.objectContaining({
+        current_version: 3,
+        status: 'draft',
+        signed_off_by: null,
+        signed_off_at: null,
+        signed_off_version: null,
+        requires_revalidation: false,
+      }),
+    );
+    expect(deliverableUpdatePayloads[0]).not.toEqual(
+      expect.objectContaining({ requires_revalidation: undefined }),
     );
   });
 });

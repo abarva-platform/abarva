@@ -143,6 +143,33 @@ export interface StageReadinessProposalReview {
   proposals: StageReadinessWorkbookProposal[];
 }
 
+export function isReviewForStageReadinessProposalSet(input: {
+  proposalSet: {
+    proposalSetId: string;
+    artifactId: string;
+    artifactVersion: number | null;
+  };
+  review:
+    | {
+        proposalSetId?: unknown;
+        sourceProposalSetArtifact?: {
+          artifactId?: unknown;
+          artifactVersion?: unknown;
+        };
+      }
+    | null
+    | undefined;
+}): boolean {
+  return Boolean(
+    input.review &&
+    input.review.proposalSetId === input.proposalSet.proposalSetId &&
+    input.review.sourceProposalSetArtifact?.artifactId ===
+      input.proposalSet.artifactId &&
+    input.review.sourceProposalSetArtifact?.artifactVersion ===
+      input.proposalSet.artifactVersion,
+  );
+}
+
 export interface PersistStageReadinessProposalSetInput {
   ctx: TenancyCtx;
   program: ProgramCore;
@@ -294,6 +321,16 @@ export function buildStageReadinessProposalReview(
 
   const proposals = input.proposalSet.proposals.map((proposal) => {
     const decision = decisionByProposalId.get(proposal.proposalId);
+    if (
+      decision?.disposition === "accepted" &&
+      (proposal.answerState === "blank" ||
+        typeof proposal.response !== "string" ||
+        !proposal.response.trim())
+    ) {
+      throw new Error(
+        `Blank workbook response cannot be accepted: ${proposal.questionId}`,
+      );
+    }
     return decision
       ? { ...proposal, disposition: decision.disposition }
       : proposal;
@@ -468,31 +505,25 @@ function buildProposal(
 function classifyAnswerState(
   response: StageReadinessWorkbookParsedResponse,
 ): StageReadinessProposalAnswerState {
-  const combined = [
-    response.response,
-    response.context,
-    response.evidenceOrSource,
-    response.status,
-  ]
-    .join(" ")
-    .toLowerCase();
-  if (!response.hasUserInput) return "blank";
   if (
-    String(response.response)
-      .trim()
-      .toLowerCase()
-      .match(/^unknown\b/)
+    !response.hasUserInput ||
+    typeof response.response !== "string" ||
+    !response.response.trim()
   ) {
+    return "blank";
+  }
+  const answer = response.response.trim().toLowerCase();
+  if (answer.match(/^unknown\b/)) {
     return "unknown";
   }
   if (
-    combined.match(
+    answer.match(
       /\binsufficient evidence\b|\bnot measured\b|\bnot available\b/,
     )
   ) {
     return "insufficient_evidence";
   }
-  if (combined.match(/\bunknown\b|\btbd\b|\bto be confirmed\b/)) {
+  if (answer.match(/\bunknown\b|\btbd\b|\bto be confirmed\b/)) {
     return "unknown";
   }
   return "answered";

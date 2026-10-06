@@ -93,11 +93,11 @@ describe("NexusTopNav", () => {
     expect(screen.getByText("Menu").closest("details")).toBeInTheDocument();
   });
 
-  it("shows the canonical five product nav labels without demoted Learn", () => {
+  it("shows both Source paths in the primary nav without demoted Learn", () => {
     renderNav("/home");
     const nav = screen.getByRole("navigation", { name: "Primary" });
 
-    for (const label of ["Home", "Intelligence", "Moves", "Source", "Tower"]) {
+    for (const label of ["Home", "Intelligence", "Moves", "Source Optimize", "Source New", "Tower"]) {
       expect(
         within(nav).getAllByRole("link", { name: label }).length,
       ).toBeGreaterThanOrEqual(1);
@@ -122,7 +122,10 @@ describe("NexusTopNav", () => {
     ["/home/context", "Home"],
     ["/intelligence", "Intelligence"],
     ["/strategic-moves/123", "Moves"],
-    ["/source/events/alpha", "Source"],
+    ["/source", "Source Optimize"],
+    ["/source/workspace", "Source Optimize"],
+    ["/source/new", "Source New"],
+    ["/source/events/alpha", "Source New"],
     ["/tower/portfolio", "Tower"],
     ["/home/learn/source", "Home"],
   ])("marks %s as %s", (pathname, label) => {
@@ -132,6 +135,35 @@ describe("NexusTopNav", () => {
 
     expect(
       activeLinks.some((link) => link.getAttribute("aria-current") === "page"),
+    ).toBe(true);
+  });
+
+  it("keeps exactly one Source destination active on each workflow", () => {
+    const { unmount } = renderNav("/source/workspace");
+    let nav = screen.getByRole("navigation", { name: "Primary" });
+    expect(
+      within(nav)
+        .getAllByRole("link", { name: "Source Optimize" })
+        .every((link) => link.getAttribute("aria-current") === "page"),
+    ).toBe(true);
+    expect(
+      within(nav)
+        .getAllByRole("link", { name: "Source New" })
+        .every((link) => !link.hasAttribute("aria-current") && link.getAttribute("href") === "/source/new"),
+    ).toBe(true);
+    unmount();
+
+    renderNav("/source/events/alpha");
+    nav = screen.getByRole("navigation", { name: "Primary" });
+    expect(
+      within(nav)
+        .getAllByRole("link", { name: "Source New" })
+        .every((link) => link.getAttribute("aria-current") === "page"),
+    ).toBe(true);
+    expect(
+      within(nav)
+        .getAllByRole("link", { name: "Source Optimize" })
+        .every((link) => !link.hasAttribute("aria-current")),
     ).toBe(true);
   });
 

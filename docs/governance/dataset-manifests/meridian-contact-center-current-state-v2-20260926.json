@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-contact-center-current-state-v2-20260926",
+  "title": "Meridian Contact Centre Current-State Supplemental Intake V2",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_supplemental_intake",
+  "ingestion_method": "admin_bulk_loader",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade contact-centre operating evidence. No member, patient, provider, claim-line, transcript, PHI, PII or production records are included. The package explicitly excludes transcripts, which are PHI-bearing, and states so in its own gap-coverage tab. Every KPI and cost figure is a synthetic planning figure and must never be presented as measured, Finance-confirmed, or realized value.",
+  "expected_object_count": 89,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-09-26",
+  "notes": "Supplemental current-state intake for the Contact Center Platform / Knowledge Modernization Move (PROG-CONTACT-KNOW), landed alongside the canonical packet rather than inside it so the pre-upload run stays intact as the control. ingestion_method records the approved production path (admin bulk loader); the present load is a local read-only proof harness over the same files, which writes nothing to the data plane. That harness runs the P2 evidence-traceability smoke, measuring whether each uploaded fact reaches the rendered artifact's gap analysis. The package carries its own claim prohibitions (tab 10), including that the capability is already production_enterprise_wide and must not be presented as an opportunity case; those merge into the tenant's prohibition set. Its gap-coverage tab (02) declares which Home-identified gaps it PARTIALLY fills and which remain deliberately open, and that declaration is the smoke's expected result."
+}

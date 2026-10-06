@@ -335,8 +335,19 @@ export function VendorEvaluationScorecardPanel({
                   </td>
                   <td style={TD_CENTER}>{scenario.currentScore.toFixed(1)}</td>
                   <td style={TD_CENTER}>
-                    {scenario.potentialScore.toFixed(1)}
-                    <span style={DELTA}>+{scenario.scoreDelta.toFixed(1)}</span>
+                    {scenario.scoreStatus === "held_pending_condition" ? (
+                      <>
+                        Held
+                        <span style={DELTA}>pending evidence</span>
+                      </>
+                    ) : (
+                      <>
+                        {scenario.potentialScore.toFixed(1)}
+                        <span style={DELTA}>
+                          +{scenario.scoreDelta.toFixed(1)}
+                        </span>
+                      </>
+                    )}
                   </td>
                   <td style={TD}>{scenario.bafoCure}</td>
                   <td style={TD}>{scenario.decisionImpact}</td>
@@ -427,15 +438,23 @@ function ExecutiveDecisionCockpit({
           label="BAFO upside to test"
           value={
             topScenario
-              ? `+${topScenario.scoreDelta.toFixed(1)} pts`
+              ? topScenario.scoreStatus === "held_pending_condition"
+                ? "Held"
+                : `+${topScenario.scoreDelta.toFixed(1)} pts`
               : "No scenario"
           }
           detail={
             topScenario
-              ? `${shortVendor(topScenario.vendorName)}: ${topScenario.requiredEvidence}`
+              ? topScenario.scoreStatus === "held_pending_condition"
+                ? `${shortVendor(topScenario.vendorName)}: pending evidence; no score uplift is asserted.`
+                : `${shortVendor(topScenario.vendorName)}: ${topScenario.requiredEvidence}`
               : "No improvement scenario loaded."
           }
-          tone="good"
+          tone={
+            topScenario?.scoreStatus === "held_pending_condition"
+              ? "warn"
+              : "good"
+          }
         />
       </div>
       {openConditions.length > 0 ? (

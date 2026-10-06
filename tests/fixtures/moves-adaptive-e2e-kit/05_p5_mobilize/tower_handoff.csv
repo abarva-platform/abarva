@@ -1,0 +1,6 @@
+measure,definition_owner,source_of_truth,starting_status,frequency,escalation_rule
+Eligible assist exposure,Contact Center Analytics,Governed event/read model,not instrumented,weekly,Do not infer adoption from total contact count
+Source-grounded answer quality,Knowledge Owner,Approved sample audit,not baselined,weekly,Escalate unsupported or stale-source answer
+Agent-confirmed use,Operations Lead,Audited agent event,not instrumented,weekly,Separate draft shown from agent-confirmed use
+Operational outcome measures,Finance and Analytics,Approved metric contract,definitions unresolved,monthly,No realized-value claim before Finance attestation
+Control exceptions,Compliance Lead,Audit event store,not baselined,weekly,Any prohibited decision/writeback triggers hold and review

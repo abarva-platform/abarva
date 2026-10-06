@@ -142,6 +142,55 @@ export interface QAResult {
   blocksRelease: boolean;
 }
 
+function isVendorPack(profile: SourceArtifactProfile): boolean {
+  return profile.readerMode === "vendor-pack";
+}
+
+function searchableText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const REQUIRED_EXHIBIT_ALIASES: Record<
+  string,
+  Record<string, readonly string[]>
+> = {
+  d12: {
+    shortlisted_vendors: [
+      "approved vendor list",
+      "approved vendors",
+      "vendor shortlist decision",
+    ],
+    screening_criteria: [
+      "coverage commercial and risk fit",
+      "vendor screening criteria",
+      "conditions before release to vendors",
+    ],
+    eliminated_vendors: [
+      "excluded not invited vendor rationale",
+      "excluded vendor rationale",
+      "not invited vendor rationale",
+    ],
+  },
+};
+
+function hasRequiredExhibit(
+  content: string,
+  profile: SourceArtifactProfile,
+  exhibit: string,
+): boolean {
+  const candidates = [
+    exhibit,
+    ...(REQUIRED_EXHIBIT_ALIASES[profile.id]?.[exhibit] ?? []),
+  ];
+  return candidates.some((candidate) =>
+    content.includes(searchableText(candidate)),
+  );
+}
+
 export const QA_GATES: QAGate[] = [
   // ── 1. Decision Clarity ──────────────────────────────────────────────────
   // The sponsor can identify the decision requested and recommendation quickly.
@@ -156,6 +205,42 @@ export const QA_GATES: QAGate[] = [
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const firstBlock = content.slice(0, 800).toLowerCase();
+      if (isVendorPack(profile)) {
+        const opening = searchableText(content.slice(0, 2_400));
+        const hasPurpose =
+          opening.includes("why this pack exists") ||
+          opening.includes("document purpose") ||
+          opening.includes("request for proposal") ||
+          opening.includes("invitation to bid") ||
+          opening.includes("purpose and scope") ||
+          opening.includes("scope of services") ||
+          opening.includes("response compliance") ||
+          opening.includes("clarification") ||
+          opening.includes("best and final offer") ||
+          opening.includes("bafo");
+        const hasRecipientAction =
+          opening.includes("must complete") ||
+          opening.includes("must submit") ||
+          opening.includes("must respond") ||
+          opening.includes("required to complete") ||
+          opening.includes("required to submit") ||
+          opening.includes("submit the") ||
+          opening.includes("complete the") ||
+          opening.includes("respond to") ||
+          opening.includes("response instruction") ||
+          opening.includes("submission instruction") ||
+          opening.includes("vendor response") ||
+          opening.includes("supplier response") ||
+          opening.includes("proposal response");
+        return {
+          pass: hasPurpose && hasRecipientAction,
+          message:
+            hasPurpose && hasRecipientAction
+              ? "Opening section states the vendor-facing purpose and recipient action"
+              : "Missing: vendor-facing purpose and recipient action in the opening section",
+          blocksRelease: !(hasPurpose && hasRecipientAction),
+        };
+      }
       const hasDecision =
         firstBlock.includes("recommendation") ||
         firstBlock.includes("decision requested") ||
@@ -246,6 +331,14 @@ export const QA_GATES: QAGate[] = [
     check: ({ content, profile }) => {
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (isVendorPack(profile)) {
+        return {
+          pass: true,
+          message:
+            "N/A (vendor response tables are instructions, schedules, and completion controls)",
+          blocksRelease: false,
+        };
+      }
       const lc = content.toLowerCase();
       const genericFillers = [
         "the purpose of this document",
@@ -310,6 +403,14 @@ export const QA_GATES: QAGate[] = [
     check: ({ content, profile }) => {
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (isVendorPack(profile)) {
+        return {
+          pass: true,
+          message:
+            "N/A (vendor response tables are instructions, schedules, and completion controls)",
+          blocksRelease: false,
+        };
+      }
       const lc = content.toLowerCase();
       const hasTabularContent =
         lc.includes("| ") ||
@@ -355,6 +456,28 @@ export const QA_GATES: QAGate[] = [
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const tail = content.slice(-600).toLowerCase();
+      if (isVendorPack(profile)) {
+        const close = searchableText(content.slice(-1_200));
+        const hasSubmissionClose = [
+          "submission instruction",
+          "submission deadline",
+          "authorized representative",
+          "proposal validity",
+          "return the completed",
+          "submit the completed",
+          "bidder certification",
+          "supplier certification",
+          "acknowledgement",
+          "acknowledgment",
+        ].some((phrase) => close.includes(phrase));
+        return {
+          pass: hasSubmissionClose,
+          message: hasSubmissionClose
+            ? "Document closes with a vendor submission or certification control"
+            : "Missing: document should close with submission instructions, deadline, certification, or acknowledgement",
+          blocksRelease: false,
+        };
+      }
       const hasDecisionClose =
         tail.includes("approve") ||
         tail.includes("redirect") ||
@@ -414,9 +537,9 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: false,
     appliesToAll: true,
     check: ({ content, profile }) => {
-      const lc = content.toLowerCase();
+      const lc = searchableText(content);
       const missing = profile.requiredExhibits.filter(
-        (ex) => !lc.includes(ex.replace(/_/g, " ")),
+        (ex) => !hasRequiredExhibit(lc, profile, ex),
       );
       return {
         pass: missing.length === 0,

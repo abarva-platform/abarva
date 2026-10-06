@@ -1,0 +1,175 @@
+{
+  "item": "T-495",
+  "title": "Suite 3 of T-495's claimable half: the Shell Layout Spec v2 single-chat-entry rules rewritten from a source-text scanner into render assertions, and the already-behavioural top-nav suite wired",
+  "recordedAt": "2026-09-28T06:40:00.000Z",
+  "base": "a8ef8aed4b",
+  "directory": "src/components/shell/__tests__",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. The other rows of the T-492 draw are untouched and keep their T-492 verdicts.",
+    "The GATED half of T-495 -- the rows carrying textIsTheSubject -- is not touched here. Two of them live in src/__tests__/hygiene, which this change leaves unwired even though it is now green.",
+    "This record exists so the T-770 control resolves the deleted path's classification from the LATEST record rather than from the T-492 draw."
+  ],
+  "method": [
+    "Re-verified on origin/main a8ef8aed4b by RUNNING the suite: 19 cases, 1 failed -- the byte assertion that topbar-nav-items.ts contains label: \"Knowledge\", which a deliberate nav rename removed.",
+    "Measured what the 18 passing cases were worth before rewriting anything. Its 'ProgramDetailPage imports AtlasDrawer' case passed only because a CODE COMMENT in ProgramDetailPage.tsx names AtlasDrawer; the page renders AtlasDrawer through AgentCanvas and no case checked that it still does. Its surface lists were filtered through existsSync, so IntelligenceIndexPage, since deleted, left the suite with no failure. The only listed surface importing AgentColumn, SourceIndexPage, is mounted by no route. And it knew only AgentColumn and AskAnythingBar, so the AgentDock that Tower renders was never counted.",
+    "The byte assertions were DELETED rather than repaired, per the acceptance.",
+    "The replacement renders each surface a route mounts -- ProgramDetailPage, ProgramsIndexPage, TowerCommandCenterAvaShell, SetupPoliciesPage, SetupAuditPage -- with every chat-entry leaf (AgentDock, AgentColumn, AskAnythingBar, AtlasDrawer) replaced by a sentinel, and asserts the exact list of chat entries each renders. The Atlas page-state provider is wrapped rather than replaced, so the surfaces still receive real context and each mount is countable. AppShell is rendered directly for the provider and legacy-rail rules.",
+    "The Rule 5 nav cases were not re-asserted: src/components/navigation/__tests__/NexusTopNav.test.tsx already asserts both by render (the product nav renders with no showProductNav prop; the six current labels, and no Knowledge or Learn), 17 of 17 green, and it ran in no workflow. Its directory is wired as a directory in the same change."
+  ],
+  "counts": {
+    "suites": 3,
+    "wired": 2,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 1
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/hygiene/shell-v2-mode-layout.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": false,
+      "collected": false,
+      "green": null,
+      "totalTests": 0,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": false,
+      "verdict": "deleted_and_replaced",
+      "replacedBy": "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "Nineteen cases over the bytes of six surface files plus AppShell, NexusTopNav and topbar-nav-items. Red on the base for a deliberate nav rename. Of the eighteen green cases, one passed on a comment, the surface lists silently shrank through existsSync, and the chat component the most-used surface actually renders was outside its vocabulary. The classification is set false here because the file no longer exists.",
+      "sourceTextScannerNote": "false because the path is gone, not because its content was reclassified. T-770 resolves classification by path and filters its live set by existsSync, so this row lowers the live declared-scanner count by one."
+    },
+    {
+      "path": "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+      "priorShape": "absent",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorGreen": null,
+      "collected": true,
+      "green": true,
+      "totalTests": 15,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "drivesProductionEntryPoint": "ProgramDetailPage, ProgramsIndexPage, TowerCommandCenterAvaShell, SetupPoliciesPage, SetupAuditPage, AppShell",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/ai-surface-control-catalog.yml",
+      "wiredAs": "directory",
+      "ownerItem": "T-495",
+      "rationale": "Reads no repository file. The directory was already run by the AI surface control catalog workflow's 'Exercise unwired component suites' step, so placing the suite there wires it with no workflow change."
+    },
+    {
+      "path": "src/components/navigation/__tests__/NexusTopNav.test.tsx",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": true,
+      "collected": true,
+      "green": true,
+      "totalTests": 17,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/unit-suites.yml",
+      "wiredAs": "directory",
+      "ownerItem": "T-495",
+      "rationale": "Unchanged. It already renders NexusTopNav and asserts the two nav rules the deleted suite held as byte scans; it simply ran nowhere."
+    }
+  ],
+  "wiring": {
+    "directory": "src/components/navigation/__tests__",
+    "namedAs": "directory",
+    "filesInDirectory": 1,
+    "unrunBefore": 1,
+    "unrunAfter": 0,
+    "measuredOnBranch": "1 suite / 17 tests / 0 failing",
+    "darkBaselineLineRemoved": "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
+    "alreadyWiredDirectory": "src/components/shell/__tests__ -- run by ai-surface-control-catalog.yml; 5 suites / 40 tests before, 6 / 55 after, 0 failing both sides"
+  },
+  "baselines": {
+    "measuredFrom": "a separate clean worktree at a8ef8aed4b, not a stash",
+    "src/__tests__/hygiene": {
+      "before": "5 suites / 85 tests / 1 failing suite / 1 failing test",
+      "after": "4 suites / 66 tests / 0 failing"
+    },
+    "src/components/shell/__tests__": {
+      "before": "5 suites / 40 tests / 0 failing",
+      "after": "6 suites / 55 tests / 0 failing"
+    },
+    "src/components/navigation/__tests__": {
+      "before": "1 suite / 17 tests / 0 failing",
+      "after": "1 suite / 17 tests / 0 failing"
+    }
+  },
+  "mutations": [
+    {
+      "mutation": "replace the <RibbonSynthesis .../> element in ProgramDetailPage.tsx with null",
+      "result": "1 of 15 failed",
+      "catches": "Mode B detail surface losing its ribbon -- one of the rules the old suite held by import name"
+    },
+    {
+      "mutation": "remove the embedded prop from AgentCanvas's <AtlasDrawer>",
+      "result": "3 of 15 failed",
+      "catches": "the Mode B chat becoming an overlay drawer; the old suite's AtlasDrawer case would have stayed green on its comment"
+    },
+    {
+      "mutation": "default showAppRail to true in AppShell",
+      "result": "1 of 15 failed",
+      "catches": "the legacy left rail returning by default"
+    },
+    {
+      "mutation": "remove the AtlasPageStateProvider wrap from AppShell",
+      "result": "1 of 15 failed",
+      "catches": "AppShell no longer owning the Atlas provider"
+    },
+    {
+      "mutation": "render AskAnythingBar beside AtlasChatPanel in TowerCommandCenterAvaShell",
+      "result": "2 of 15 failed",
+      "catches": "a second chat entry on a Mode A surface, and AskAnythingBar on a Mode A surface"
+    },
+    {
+      "mutation": "wrap ProgramsIndexPage's body in its own AtlasPageStateProvider inside AppShell",
+      "result": "1 of 15 failed (Expected <= 1, Received 2)",
+      "catches": "a page mounting the provider AppShell already mounts"
+    },
+    {
+      "mutation": "replace the npx jest src/components/navigation/__tests__ command in unit-suites.yml, leaving the comment",
+      "result": "product-directory-ci-coverage 1 of 4 failed",
+      "catches": "the wiring removed while its comment still names the directory"
+    },
+    {
+      "mutation": "restore the dark-baseline line while keeping the wiring step",
+      "result": "product-directory-ci-coverage 1 of 4 failed",
+      "catches": "the other direction of the ratchet's set equality"
+    }
+  ],
+  "residualsNotClosedHere": [
+    "src/__tests__/hygiene is now 4 of 4 green but deliberately NOT wired: two of its four files, canonical-paths.test.ts and no-apex-literal-leak.test.ts, are T-495's gated textIsTheSubject rows, which T-550 refuses to wire whether they pass or not.",
+    "SourceIndexPage is mounted by no route and is no longer guarded; the old suite guarded it anyway. Whether to delete it is not this change's to decide.",
+    "The chat-entry census counts four leaf components. A future chat component that owns its own composer is not counted until it is added to the mocked leaves; the suite header says so."
+  ]
+}

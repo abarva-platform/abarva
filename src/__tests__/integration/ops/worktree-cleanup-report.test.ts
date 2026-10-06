@@ -11,13 +11,18 @@
 //   - exit 0 for --help
 
 import { execFileSync } from 'child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 
 const SCRIPT_PATH = path.resolve(
   __dirname,
   '../../../../scripts/integration/worktree_cleanup_report.py',
+);
+
+const OBSERVER_PATH = path.resolve(
+  __dirname,
+  '../../../../scripts/integration/observe_python_run.py',
 );
 
 const ONE_DAY_SECONDS = 86_400;
@@ -52,68 +57,140 @@ function writeFixture(name: string, body: string): string {
 // File contract
 // ---------------------------------------------------------------------
 
-describe('worktree_cleanup_report.py · file contract', () => {
-  const source = readFileSync(SCRIPT_PATH, 'utf8');
+/**
+ * Item T-774. This describe block asked four questions of the script's BYTES:
+ * that the file is non-empty, that it starts with the shebang, that no line
+ * containing `subprocess.run` also contains a destructive git verb, and that
+ * every import line names an allowed module.
+ *
+ * The third was the one that mattered and the one least able to answer. It is
+ * a per-LINE scan for a two-token literal, so an argv built in a variable,
+ * split across lines, or assembled from parts reads as clean — and the whole
+ * check is vacuous on the default code path, which no case in this file ever
+ * ran. The destructive-command question is about what the script EXECUTES, so
+ * it is answered by executing it with a recording `git` on PATH.
+ *
+ * The remaining three are answered the same way: the file's existence and its
+ * shebang by invoking the script directly rather than through `python3`, and
+ * its dependencies by `observe_python_run.py`, which reports the modules the
+ * run actually added instead of the import lines it happens to spell out.
+ */
+describe('worktree_cleanup_report.py · what it executes', () => {
+  /**
+   * The read-only git verbs the script is allowed to invoke, as argv prefixes.
+   * A verb not on this list fails the case by name rather than by pattern, so
+   * a new call site has to be declared here rather than slipping past a
+   * negative regular expression.
+   */
+  const ALLOWED_GIT_INVOCATIONS = [
+    ['worktree', 'list', '--porcelain'],
+    ['log', '-1'],
+    ['status', '--short'],
+    ['ls-remote', '--heads', 'origin'],
+  ];
 
-  it('script file exists at canonical path', () => {
-    expect(source.length).toBeGreaterThan(0);
-  });
-
-  it('starts with the python3 shebang', () => {
-    expect(source.startsWith('#!/usr/bin/env python3')).toBe(true);
-  });
-
-  it('does NOT execute git worktree remove or git branch -D anywhere', () => {
-    // The script must only PRINT recommended commands, never invoke them.
-    // We assert no subprocess.run / subprocess.call / os.system call carries
-    // the destructive verbs as positional argv tokens.
-    const lines = source.split('\n');
-    const subprocessLines = lines.filter(
-      (line) =>
-        line.includes('subprocess.run') ||
-        line.includes('subprocess.call') ||
-        line.includes('subprocess.Popen') ||
-        line.includes('subprocess.check_output') ||
-        line.includes('os.system') ||
-        line.includes('os.execvp'),
+  function isAllowed(argv: string[]): boolean {
+    // `-C <path>` is a global flag the script uses before `status`.
+    const tokens = argv[0] === '-C' ? argv.slice(2) : argv;
+    return ALLOWED_GIT_INVOCATIONS.some((prefix) =>
+      prefix.every((token, index) => tokens[index] === token),
     );
-    for (const line of subprocessLines) {
-      expect(line).not.toMatch(/['"]worktree['"]\s*,\s*['"]remove['"]/);
-      expect(line).not.toMatch(/['"]branch['"]\s*,\s*['"]-D['"]/);
+  }
+
+  /**
+   * Put a recording stub named `git` first on PATH, run the script in its
+   * DEFAULT mode — the code path `--fixture` exists to avoid, and the one no
+   * other case in this file reaches — and return every argv it invoked.
+   */
+  function gitInvocationsFromDefaultMode(): { argv: string[][]; status: number } {
+    const dir = mkdtempSync(path.join(tmpdir(), 'ops8-gitstub-'));
+    const logPath = path.join(dir, 'git-argv.log');
+    const stubPath = path.join(dir, 'git');
+    writeFileSync(
+      stubPath,
+      [
+        '#!/bin/sh',
+        `printf '%s\\n' "$*" >> "${logPath}"`,
+        'case "$1" in',
+        '  worktree)',
+        '    printf "worktree /repo/main\\nHEAD 1111111111111111111111111111111111111111\\nbranch refs/heads/main\\n\\nworktree /repo/wt-lane\\nHEAD 2222222222222222222222222222222222222222\\nbranch refs/heads/codex/lane-a\\n\\n" ;;',
+        '  log) printf "%s\\n" "$(date +%s)" ;;',
+        '  ls-remote) printf "2222222222222222222222222222222222222222\\trefs/heads/codex/lane-a\\n" ;;',
+        '  *) : ;;',
+        'esac',
+        'exit 0',
+      ].join('\n') + '\n',
+      { encoding: 'utf8', mode: 0o755 },
+    );
+
+    let status = 0;
+    try {
+      execFileSync(SCRIPT_PATH, ['--json'], {
+        encoding: 'utf8',
+        cwd: dir,
+        env: { ...process.env, PATH: `${dir}:${process.env.PATH ?? ''}` },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch (err: unknown) {
+      status = (err as { status?: number }).status ?? 1;
     }
-    // Script must only invoke whitelisted read-only git verbs.
-    for (const line of subprocessLines) {
-      const allowed =
-        line.includes("'git'") || line.includes('"git"') ? line : '';
-      if (allowed) {
-        expect(allowed).not.toMatch(/['"]rm['"]|['"]reset['"]|['"]push['"]/);
-      }
-    }
+
+    const logged = existsSync(logPath) ? readFileSync(logPath, 'utf8') : '';
+    const argv = logged
+      .split('\n')
+      .filter((line) => line.trim().length > 0)
+      .map((line) => line.trim().split(/\s+/));
+    return { argv, status };
+  }
+
+  it('runs from its own shebang, without an interpreter named on the command line', () => {
+    // Replaces two byte assertions: that the file is non-empty, and that it
+    // starts with `#!/usr/bin/env python3`. A wrong shebang or a missing
+    // execute bit fails here; a correct one that no longer resolves does too.
+    const stdout = execFileSync(SCRIPT_PATH, ['--help'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    expect(stdout).toContain('worktree_cleanup_report.py');
   });
 
-  it('imports only stdlib modules (no third-party runtime deps)', () => {
-    // Match only real top-level imports:
-    //   `import X` or `import X as Y`
-    //   `from X import ...`
-    // This avoids matching prose lines inside the module docstring.
-    const importPattern =
-      /^(?:import\s+([A-Za-z_][A-Za-z0-9_]*)|from\s+([A-Za-z_][A-Za-z0-9_.]*)\s+import\s)/;
-    const allowed = new Set([
-      'argparse',
-      'json',
-      'subprocess',
-      'sys',
-      'pathlib',
-      'datetime',
-      '__future__',
-    ]);
-    const lines = source.split('\n');
-    for (const line of lines) {
-      const match = importPattern.exec(line);
-      if (!match) continue;
-      const moduleName = match[1] || match[2] || '';
-      const root = moduleName.split('.')[0];
-      expect(allowed.has(root)).toBe(true);
+  it('invokes git in its default mode, so the next assertion is not vacuous', () => {
+    // The guardrail for the case below. If the script stopped shelling out, or
+    // the stub stopped being reached, "no destructive command was run" would
+    // be true for the wrong reason and nothing would say so.
+    const { argv } = gitInvocationsFromDefaultMode();
+    expect(argv.length).toBeGreaterThan(0);
+    expect(argv.some((call) => call[0] === 'worktree')).toBe(true);
+  });
+
+  it('executes only read-only git verbs — never worktree remove, branch -D, reset or push', () => {
+    const { argv } = gitInvocationsFromDefaultMode();
+    const disallowed = argv.filter((call) => !isAllowed(call));
+    expect(disallowed.map((call) => call.join(' '))).toEqual([]);
+  });
+
+  it('adds no non-stdlib dependency and attempts no network call', () => {
+    // Replaces the import-line allow-list. Observed at run time, so a
+    // dependency loaded through `__import__` or on one branch only is named.
+    const dir = mkdtempSync(path.join(tmpdir(), 'ops8-observe-'));
+    const fixture = writeFixture(
+      'porcelain.txt',
+      'worktree /repo/main\nHEAD 1111111111111111111111111111111111111111\nbranch refs/heads/main\n\n',
+    );
+
+    for (const [index, args] of [['--help'], [`--fixture=${fixture}`], [`--fixture=${fixture}`, '--json']].entries()) {
+      const observationPath = path.join(dir, `observation-${index}.json`);
+      execFileSync(
+        'python3',
+        [OBSERVER_PATH, '--observation', observationPath, '--', SCRIPT_PATH, ...args],
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+      const observed = JSON.parse(readFileSync(observationPath, 'utf8')) as {
+        nonStdlibModules: string[];
+        networkAttempts: string[];
+      };
+      expect(observed.nonStdlibModules).toEqual([]);
+      expect(observed.networkAttempts).toEqual([]);
     }
   });
 });

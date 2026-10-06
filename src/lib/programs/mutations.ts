@@ -42,6 +42,10 @@ import {
   type AuthoritativeVersion,
   type ReviewerRoleCode,
 } from "@/lib/programs/deliverable-lifecycle";
+import {
+  programPatternLookupFromClient,
+  resolvePromotedProgramPatternKey,
+} from "@/lib/programs/pattern-authority";
 
 /**
  * Resolve the programs write adapter, threading any route-scoped Supabase
@@ -220,6 +224,10 @@ export async function originateProgram(
 ): Promise<ProgramCore> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
+  const acceptedPatternKey = await resolvePromotedProgramPatternKey(
+    input.acceptedPatternKey,
+    programPatternLookupFromClient(sb),
+  );
   const industryCode = await resolveClientIndustryCode(
     ctx.clientId,
     input.industryHint,
@@ -229,7 +237,7 @@ export async function originateProgram(
     name: input.name,
     useCase: input.useCase,
     archetype: input.archetype,
-    acceptedPatternKey: input.acceptedPatternKey,
+    acceptedPatternKey,
   });
   // NOTE: engagements has no `created_by` column on the current schema —
   // creator attribution is captured in module_state_log (changed_by_user_id)
@@ -271,14 +279,14 @@ export async function originateProgram(
     fromState: null,
     toState: "phase_0_seed_created",
     rationale: input.useCase,
-    evidenceRefs: input.acceptedPatternKey ? [input.acceptedPatternKey] : [],
+    evidenceRefs: acceptedPatternKey ? [acceptedPatternKey] : [],
   });
 
   // Record the pattern match event if a pattern was accepted
-  if (input.acceptedPatternKey) {
+  if (acceptedPatternKey) {
     const { error: pmErr } = await sb.from("pattern_match_logs").insert({
       engagement_id: programId,
-      pattern_key: input.acceptedPatternKey,
+      pattern_key: acceptedPatternKey,
       match_confidence: null,
       match_context_jsonb: {
         use_case: input.useCase,
@@ -301,7 +309,7 @@ export async function originateProgram(
     new_state: "completed",
     changed_by_user_id: ctx.userId,
     context_jsonb: {
-      pattern_key: input.acceptedPatternKey,
+      pattern_key: acceptedPatternKey,
       origin: input.originSource,
     },
   });
@@ -650,6 +658,18 @@ export async function signOffDeliverable(
   deliverableId: string,
   opts: {
     supabase?: SupabaseClient;
+    /** Validated lineage for a generated artifact accepted as this deliverable. */
+    approvalLineage?: {
+      source: "generated_artifact_acceptance" | "moves_program_generate";
+      generatedArtifactId?: string;
+      evidenceSnapshotHash: string;
+      phaseEvidenceSnapshotHash?: string;
+      evidenceSnapshotScope?: "phase";
+      approvalMode:
+        | "client_approved_replacement"
+        | "accept_ai_draft_as_authoritative"
+        | "approve_generated_deliverable_as_is";
+    };
     /**
      * Set when the client approved by uploading an edited replacement
      * (move_artifacts row, artifact_family=generated_deliverable) rather
@@ -670,6 +690,7 @@ export async function signOffDeliverable(
       warnings?: string[];
       generationLineage?: Record<string, unknown>;
     };
+    approvalRationale?: string | null;
   } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
@@ -678,7 +699,7 @@ export async function signOffDeliverable(
 
   const { data: existing, error: readError } = await sb
     .from("deliverables_v2")
-    .select("current_version, signed_off_version")
+    .select("current_version, signed_off_version, structured_data")
     .eq("id", deliverableId)
     .eq("engagement_id", programId)
     .maybeSingle();
@@ -687,6 +708,7 @@ export async function signOffDeliverable(
   const existingPointer = existing as {
     current_version: number | null;
     signed_off_version: number | null;
+    structured_data?: Record<string, unknown> | null;
   };
   const currentVersion = existingPointer.current_version ?? 0;
   const priorAuthoritativeVersion = existingPointer.signed_off_version ?? null;
@@ -738,6 +760,14 @@ export async function signOffDeliverable(
       authoritative_lifecycle_state: "human_approved",
       authoritative_flag_source: "normal_flow",
       requires_revalidation: false,
+      ...(opts.approvalLineage
+        ? {
+            structured_data: {
+              ...(existingPointer.structured_data ?? {}),
+              ...opts.approvalLineage,
+            },
+          }
+        : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", deliverableId)
@@ -803,6 +833,7 @@ export async function signOffDeliverable(
     approvalScope: approvedContent
       ? "Approved client-uploaded replacement."
       : "Approved AI-generated draft as-is.",
+    comments: opts.approvalRationale?.trim() || null,
     decision: "approved",
     decidedAt: new Date().toISOString(),
   });
@@ -1167,7 +1198,7 @@ export async function completeDeliverable(
           input.signOff === false ? undefined : "human_approved",
         authoritative_flag_source:
           input.signOff === false ? undefined : "normal_flow",
-        requires_revalidation: input.signOff === false ? undefined : false,
+        requires_revalidation: false,
         updated_at: now,
       })
       .eq("id", deliverableId)

@@ -91,6 +91,7 @@ export function cxoText(text: string): string {
     .replace(/\bprojection\b/gi, "view")
     .replace(/\bserving view\b/gi, "readout")
     .replace(/\bloaded rows?\b/gi, "records")
+    .replace(/\bloaded\b/gi, "current")
     .replace(/\bcanonical entit(?:y|ies)\b/gi, "governed record")
     .replace(/\bECL payload\b/gi, "governed evidence packet")
     .replace(/\bprojection payload\b/gi, "view evidence packet")

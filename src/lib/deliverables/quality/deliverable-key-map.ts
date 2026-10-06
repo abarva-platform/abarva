@@ -15,6 +15,12 @@ import type { OutputFormat } from "@/lib/deliverables/orchestrator/types";
 /** Orchestrator deliverableType → profiled DeliverableKey. */
 const ORCH_TYPE_TO_KEY: Readonly<Record<string, DeliverableKey>> = {
   charter: "charter",
+  discovery_plan: "discovery_plan",
+  evidence_request_pack: "discovery_plan",
+  design_workshop_guide: "design_workshop_guide",
+  planning_workshop_guide: "planning_workshop_guide",
+  mobilization_workshop_guide: "mobilization_workshop_guide",
+  execution_kickoff_guide: "execution_kickoff_guide",
   discovery_report: "discovery_report",
   root_cause: "root_cause_worksheet",
   root_cause_worksheet: "root_cause_worksheet",
@@ -72,6 +78,65 @@ function renderedExhibitsFromDoc(doc: RenderableDeliverable): ExhibitId[] {
   return ids;
 }
 
+const P2_DECK_SLIDE_EXHIBIT_MAP: Readonly<
+  Partial<Record<DeliverableKey, Readonly<Record<string, readonly ExhibitId[]>>>>
+> = {
+  discovery_report: {
+    current_state: ["process_pain_map"],
+    what_is_not_working: ["issue_tree"],
+    root_causes: ["issue_tree"],
+    metrics_evidence: ["heatmap"],
+    readiness: ["capability_maturity"],
+  },
+  root_cause_worksheet: {
+    what_is_not_working: ["symptom_cause_table"],
+    root_causes: ["root_cause_tree"],
+  },
+};
+
+function renderedExhibitsFromDeckSlides(
+  doc: RenderableDeliverable,
+  deliverableKey: DeliverableKey,
+): ExhibitId[] {
+  const bySlideKey = P2_DECK_SLIDE_EXHIBIT_MAP[deliverableKey];
+  if (!bySlideKey) return [];
+  const ids: ExhibitId[] = [];
+  for (const slide of doc.deckSlides ?? []) {
+    if (!slide.key) continue;
+    ids.push(...(bySlideKey[slide.key] ?? []));
+    if (slide.exhibitKey && VALID_EXHIBITS.has(slide.exhibitKey)) {
+      ids.push(slide.exhibitKey as ExhibitId);
+    }
+  }
+  return ids;
+}
+
+function renderedWorkflowGuideExhibits(
+  doc: RenderableDeliverable,
+  deliverableKey: DeliverableKey,
+): ExhibitId[] {
+  const profile = DELIVERABLE_PROFILES[deliverableKey];
+  if (!profile.requiredExhibits.includes("open_inputs_required")) return [];
+  const hasOpenInputsTable = doc.tables.some(
+    (table) => table.key === "open_inputs_required" && table.rows.length > 0,
+  );
+  const hasChecklist = doc.clientCompleteChecklist.length > 0;
+  return hasOpenInputsTable || hasChecklist ? ["open_inputs_required"] : [];
+}
+
+export function renderedContractExhibitsFromDocument(
+  doc: RenderableDeliverable,
+  deliverableKey: DeliverableKey,
+): ExhibitId[] {
+  return Array.from(
+    new Set([
+      ...renderedExhibitsFromDoc(doc),
+      ...renderedExhibitsFromDeckSlides(doc, deliverableKey),
+      ...renderedWorkflowGuideExhibits(doc, deliverableKey),
+    ]),
+  );
+}
+
 const PLACEHOLDER_RE =
   /\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b/gi;
 
@@ -104,7 +169,7 @@ export function buildContractInput(args: {
   );
 
   const renderedExhibits = [
-    ...renderedExhibitsFromDoc(doc),
+    ...renderedContractExhibitsFromDocument(doc, args.deliverableKey),
     ...(args.additionalExhibits ?? []),
   ];
 

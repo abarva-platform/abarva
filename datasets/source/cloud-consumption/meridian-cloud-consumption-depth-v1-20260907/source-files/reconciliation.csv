@@ -1,0 +1,11 @@
+check,row_count,pass,plain_english_result
+Cloud contracts,2,PASS,"Two cloud contracts have stable IDs, owners, terms, and annual/actual values."
+Monthly spend,24,PASS,Twelve AP-reconciled monthly rows per contract.
+Service usage,192,PASS,"Monthly service-level usage rows by provider, account, app, service, region, and tags."
+Commitments,6,PASS,Commitments include EDP/EA and reservation/Savings Plan records.
+Coverage months,24,PASS,Twelve coverage/utilization rows per contract.
+Resources,84,PASS,"Resources carry utilization, rightsize signal, owner/app tags, and monthly spend."
+Tag quality,24,PASS,Monthly tag coverage exposes accountable and blocked spend.
+AP reconciliation,24,PASS,Cloud billing export and AP-paid amount reconcile at invoice month grain.
+Optimization actions,8,PASS,Actions remain candidate/control states. Finance confirmation is not asserted.
+Evidence policy,10,PASS,Every evidence file is marked synthetic demo evidence only.

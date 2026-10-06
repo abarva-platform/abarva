@@ -18,7 +18,7 @@ import {
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
-import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getTenantSystemBlock } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import {
@@ -88,14 +88,26 @@ function movesDomainPhrase(tenantKey: string): string {
   return "execution";
 }
 
-function buildNexusSynthesisPrompt(userContextBlock: string): string {
+// `tenantKey` is the CANONICAL active-tenant key — the same value the instance
+// fence below compares against — so the demo context the model is handed and the
+// tenant the route authorised are decided from one input rather than two.
+function buildNexusSynthesisPrompt(
+  userContextBlock: string,
+  tenantKey: string,
+): string {
   // F0.2 + F0.3: role/voice → user context (Layer 0) → reasoning + scope
   // + integrity instructions → demo/knowledge block.
   return [
     NEXUS_SYNTHESIS_VOICE_AND_TASK,
     userContextBlock,
     FOUR_LAYER_REASONING_INSTRUCTIONS,
-    AGENT_DEMO_SYSTEM_BLOCK,
+    // Scoped, not unconditional. The fixture tenant keeps its rich demo block;
+    // every other tenant gets the platform context only. Before this, a tenant
+    // whose V6 pack resolved was handed the fixture tenant's programme, pattern,
+    // pressure and sourcing-event inventory in its own system prompt — and the
+    // only thing preventing that was the absence of a dataset directory, which
+    // is a data-loading accident rather than a control.
+    getTenantSystemBlock(tenantKey),
   ]
     .filter((s) => s && s.trim().length > 0)
     .join("\n\n");
@@ -219,7 +231,12 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = programInstanceStateHash(instance);
-  const cacheKey = `${instance.id}:${stateHash}:${instance.patternVersion}:nexus:${MODULE_V6_ANSWER_CONTRACT_VERSION}`;
+  // The tenant is part of the key because the system prompt above is now a
+  // function of it — and on this route the collision is reachable rather than
+  // theoretical: `buildV6ProgramInstanceForTenant` takes `instance.id` from the
+  // dataset row (`program_id` / `record_id`), so two tenants declaring the same
+  // programme id would otherwise share one cache entry.
+  const cacheKey = `${activeTenantKey}:${instance.id}:${stateHash}:${instance.patternVersion}:nexus:${MODULE_V6_ANSWER_CONTRACT_VERSION}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
@@ -330,7 +347,7 @@ export async function POST(request: Request) {
     workflow: "programs-synthesis",
     model: "claude-sonnet-4-6",
     prompt: [
-      buildNexusSynthesisPrompt(userContextBlock),
+      buildNexusSynthesisPrompt(userContextBlock, activeTenantKey),
       groundedUserMessage,
     ].join("\n\n"),
     dataClass: "confidential",
@@ -347,7 +364,7 @@ export async function POST(request: Request) {
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 150,
-    system: buildNexusSynthesisPrompt(userContextBlock),
+    system: buildNexusSynthesisPrompt(userContextBlock, activeTenantKey),
     messages: [{ role: "user", content: groundedUserMessage }],
   });
 

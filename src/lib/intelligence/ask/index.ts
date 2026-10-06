@@ -79,6 +79,7 @@ import {
   productTruthGroundingText,
   sanitizeSuggestedQuestions,
 } from "@/lib/agent/product-truth";
+import { buildSourceContract360PromptBlock } from "@/lib/source/ava/portfolio-fallback-answer";
 
 export type {
   AskIntent,
@@ -652,6 +653,12 @@ export async function* askIntelligence(
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     const currentStateAsk = isBroadCurrentStateQuestion(trimmed);
+    const sourceContract360PromptBlock = buildSourceContract360PromptBlock(
+      opts.surfaceContext as Record<string, unknown> | null | undefined,
+      opts.tenant?.displayName ??
+        opts.surfaceContext?.activeClient ??
+        "the active tenant",
+    );
 
     // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
     //
@@ -684,6 +691,7 @@ export async function* askIntelligence(
       conversationContextBlock:
         [
           skyHarborCtoPromptAddendum,
+          sourceContract360PromptBlock,
           opts.conversationContextBlock,
           handoff
             ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`

@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { resolveSourceLifecycleRoute } from "../../../src/lib/source/lifecycle-routing-guard";
 
 test.describe("Source lifecycle routing guard", () => {
@@ -28,6 +30,52 @@ test.describe("Source lifecycle routing guard", () => {
     expect(action).toEqual({
       type: "redirect",
       destination: "/source/events/apex-retail-ams-outsourcing-2026?stage=bafo",
+      status: 302,
+    });
+  });
+
+  test("completed events route to an implemented read-only Value summary", () => {
+    const eventId = "apex-retail-ams-outsourcing-2026";
+    const action = resolveSourceLifecycleRoute({
+      eventId,
+      lifecycleState: "completed",
+      currentStageKey: "value",
+      pathname: `/source/events/${eventId}`,
+    });
+
+    expect(action).toEqual({
+      type: "redirect",
+      destination: `/source/events/${eventId}/summary`,
+      status: 302,
+    });
+
+    const summaryPagePath = join(
+      process.cwd(),
+      "src/app/(maestro)/source/events/[eventId]/summary/page.tsx",
+    );
+    expect(existsSync(summaryPagePath), summaryPagePath).toBe(true);
+
+    const summaryPage = readFileSync(summaryPagePath, "utf8");
+    expect(summaryPage).toContain('requested.stage === "string"');
+    expect(summaryPage).toContain(': "value"');
+    expect(summaryPage).toContain('requested.workspace === "string"');
+    expect(summaryPage).toContain(': "approvals"');
+    expect(summaryPage).toContain("SourceEventDetailPage");
+  });
+
+  test("completed-event historical stage links retain their requested view", () => {
+    const action = resolveSourceLifecycleRoute({
+      eventId: "apex-retail-ams-outsourcing-2026",
+      lifecycleState: "completed",
+      currentStageKey: "value",
+      pathname: "/source/events/apex-retail-ams-outsourcing-2026",
+      search: "?stage=evaluation&workspace=steps",
+    });
+
+    expect(action).toEqual({
+      type: "redirect",
+      destination:
+        "/source/events/apex-retail-ams-outsourcing-2026/summary?stage=evaluation&workspace=steps",
       status: 302,
     });
   });

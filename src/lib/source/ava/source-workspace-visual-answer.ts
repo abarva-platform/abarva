@@ -1,4 +1,8 @@
 import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
+import {
+  displaySourceLeverTitle,
+  displaySourceLeverTiming,
+} from "@/lib/source/data-model/source-lever-order";
 import type {
   AvaArtifact,
   AvaCaveat,
@@ -25,15 +29,21 @@ interface SourceContractContext {
   vendorName: string;
   contractName: string;
   annualValueUsd: number | null;
+  annualValueConflict?: boolean;
+  annualValueProvenance?: string | null;
+  committedAnnualSpendUsd: number | null;
   actualAnnualSpendUsd: number | null;
   totalCommittedValueUsd: number | null;
   contractedToActualVarianceUsd: number | null;
   endDate: string | null;
   noticeDate: string | null;
+  noticePeriodDays: number | null;
   autoRenew: boolean | null;
   renewalOwnerRef: string | null;
   scopeSummary: string | null;
   scopeRowCount: number | null;
+  performanceObservationCount: number | null;
+  documentExtractionCount: number | null;
 }
 
 interface SourceLedgerLine {
@@ -55,12 +65,25 @@ interface SourceOpportunityLine {
   label: string;
   amount: string;
   amountUsd: number | null;
+  statedAmountUsd?: number | null;
+  amountTraceState?: string | null;
+  amountTraceLabel?: string | null;
   state: string;
+  stage: string;
+  confidence: string;
   evidenceClass: string;
+  evidenceGrade: string;
   evidence: string;
+  blockingGap: string;
   nextAction: string;
   owner: string | null;
   sourceRefs: string[];
+  buyerAsk: string | null;
+  negotiationLanguage: string | null;
+  vendorConcession: string | null;
+  timingDependency: string | null;
+  priority: string | null;
+  riskIfIgnored: string | null;
 }
 
 interface SourceConnection {
@@ -70,6 +93,12 @@ interface SourceConnection {
   extract: string;
   fields: string[];
   outcome: string;
+}
+
+interface SourceCommercialPostureLine {
+  label: string;
+  value: string;
+  detail: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -83,7 +112,12 @@ function stringValue(value: unknown): string | null {
 }
 
 function numberValue(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().replace(/,/g, "");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function booleanValue(value: unknown): boolean | null {
@@ -224,6 +258,85 @@ function contractIdFromQuery(query: string): string | null {
   return match ? match[0].toUpperCase() : null;
 }
 
+function nameAppearsInQuery(query: string, name: string): boolean {
+  const normalizedName = name.trim().replace(/\s+/g, " ").toLowerCase();
+  const escaped = normalizedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const normalizedQuery = query.replace(/\s+/g, " ").toLowerCase();
+  return new RegExp(`(^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`).test(
+    normalizedQuery,
+  );
+}
+
+function hasExplicitUnmatchedName(query: string): boolean {
+  const namedPhrase = query
+    .match(/\b(?:for|about|with|under|summari[sz]e)\s+([^?.!,;]+)/i)?.[1]
+    ?.trim();
+  if (!namedPhrase) return false;
+  return !/^(?:this|that|the|a|an|our|current|selected|it|renewal|comparison)\b/i.test(
+    namedPhrase,
+  );
+}
+
+function rowMatchesContextScope(
+  row: Record<string, unknown>,
+  context: AskSurfaceContext,
+): boolean {
+  const declaredKeys = [
+    ...(Object.hasOwn(row, "tenantKey") ? [row.tenantKey] : []),
+    ...(Object.hasOwn(row, "clientKey") ? [row.clientKey] : []),
+  ];
+  if (declaredKeys.length === 0) return true;
+  const contextKey = stringValue(context.clientKey)?.toLowerCase();
+  return Boolean(
+    contextKey &&
+    declaredKeys.every((key) => stringValue(key)?.toLowerCase() === contextKey),
+  );
+}
+
+function namedContractFromQuery(
+  context: AskSurfaceContext,
+  query: string,
+): { contract: SourceContractContext | null; ambiguous: boolean } | null {
+  const source = sourceV4(context);
+  const rows: Record<string, unknown>[] = [];
+  const direct = directContractContextFrom(context);
+  if (isRecord(source?.selectedContract)) rows.push(source.selectedContract);
+  if (Array.isArray(source?.contractDirectory)) {
+    rows.push(...source.contractDirectory.filter(isRecord));
+  }
+  const candidates = [
+    ...(direct ? [{ contract: direct, inScope: true }] : []),
+    ...rows.flatMap((row) => {
+      const contract = contractContextFromRecord(row);
+      return contract
+        ? [{ contract, inScope: rowMatchesContextScope(row, context) }]
+        : [];
+    }),
+  ];
+  const agreementMatches = candidates.filter(({ contract }) =>
+    nameAppearsInQuery(query, contract.contractName),
+  );
+  const matches =
+    agreementMatches.length > 0
+      ? agreementMatches
+      : candidates.filter(({ contract }) =>
+          nameAppearsInQuery(query, contract.vendorName),
+        );
+  if (matches.length === 0) {
+    return hasExplicitUnmatchedName(query)
+      ? { contract: null, ambiguous: false }
+      : null;
+  }
+  const authorized = matches.filter(({ inScope }) => inScope);
+  const ids = new Set(
+    authorized.map(({ contract }) => contract.contractId.toUpperCase()),
+  );
+  return {
+    contract: ids.size === 1 ? authorized[0].contract : null,
+    ambiguous: ids.size > 1,
+  };
+}
+
 function contractContextFromRecord(
   raw: Record<string, unknown>,
 ): SourceContractContext | null {
@@ -235,7 +348,14 @@ function contractContextFromRecord(
     contractId,
     vendorName,
     contractName,
-    annualValueUsd: numberValue(raw.annualValueUsd),
+    annualValueUsd:
+      booleanValue(raw.annualValueConflict) === true &&
+      stringValue(raw.annualValueProvenance) !== "contract_360_stated_conflict"
+        ? null
+        : numberValue(raw.annualValueUsd),
+    annualValueConflict: booleanValue(raw.annualValueConflict) === true,
+    annualValueProvenance: stringValue(raw.annualValueProvenance),
+    committedAnnualSpendUsd: numberValue(raw.committedAnnualSpendUsd),
     actualAnnualSpendUsd: numberValue(raw.actualAnnualSpendUsd),
     totalCommittedValueUsd: numberValue(raw.totalCommittedValueUsd),
     contractedToActualVarianceUsd: numberValue(
@@ -243,10 +363,41 @@ function contractContextFromRecord(
     ),
     endDate: stringValue(raw.endDate),
     noticeDate: stringValue(raw.noticeDate),
+    noticePeriodDays: numberValue(raw.noticePeriodDays),
     autoRenew: booleanValue(raw.autoRenew),
     renewalOwnerRef: stringValue(raw.renewalOwnerRef),
     scopeSummary: stringValue(raw.scopeSummary),
     scopeRowCount: numberValue(raw.scopeRowCount),
+    performanceObservationCount: numberValue(raw.performanceObservationCount),
+    documentExtractionCount: numberValue(raw.documentExtractionCount),
+  };
+}
+
+function directContractContextFrom(
+  context: AskSurfaceContext,
+): SourceContractContext | null {
+  if (context.sourceContract360Mode !== true) return null;
+  const contractId = stringValue(context.contractId);
+  if (!contractId) return null;
+
+  return {
+    contractId,
+    vendorName: stringValue(context.vendorName) ?? "Requested contract",
+    contractName: stringValue(context.contractName) ?? "Contract 360 record",
+    annualValueUsd: numberValue(context.annualValue),
+    committedAnnualSpendUsd: null,
+    actualAnnualSpendUsd: numberValue(context.actualAnnualSpend),
+    totalCommittedValueUsd: null,
+    contractedToActualVarianceUsd: null,
+    endDate: stringValue(context.endDate),
+    noticeDate: null,
+    noticePeriodDays: null,
+    autoRenew: null,
+    renewalOwnerRef: null,
+    scopeSummary: stringValue(context.evidencePosture),
+    scopeRowCount: null,
+    performanceObservationCount: null,
+    documentExtractionCount: null,
   };
 }
 
@@ -254,12 +405,58 @@ function selectedContractFrom(
   context: AskSurfaceContext,
   query?: string,
 ): SourceContractContext | null {
+  const direct = directContractContextFrom(context);
   const source = sourceV4(context);
-  const requestedContractId = query ? contractIdFromQuery(query) : null;
   const raw = isRecord(source?.selectedContract)
     ? source.selectedContract
     : null;
-  const selected = raw ? contractContextFromRecord(raw) : null;
+  const selected =
+    raw && rowMatchesContextScope(raw, context)
+      ? contractContextFromRecord(raw)
+      : null;
+  const requestedContractId = query ? contractIdFromQuery(query) : null;
+  if (query && !requestedContractId) {
+    const named = namedContractFromQuery(context, query);
+    if (named) return named.contract;
+  }
+  if (
+    direct &&
+    (!requestedContractId ||
+      direct.contractId.toUpperCase() === requestedContractId)
+  ) {
+    if (
+      selected &&
+      selected.contractId.toUpperCase() === direct.contractId.toUpperCase()
+    ) {
+      return {
+        ...selected,
+        contractId: direct.contractId,
+        vendorName: direct.vendorName,
+        contractName: direct.contractName,
+        annualValueUsd: selected.annualValueConflict
+          ? selected.annualValueUsd
+          : (direct.annualValueUsd ?? selected.annualValueUsd),
+        annualValueConflict: selected.annualValueConflict,
+        annualValueProvenance: selected.annualValueProvenance,
+        committedAnnualSpendUsd:
+          selected.committedAnnualSpendUsd ?? direct.committedAnnualSpendUsd,
+        actualAnnualSpendUsd:
+          direct.actualAnnualSpendUsd ?? selected.actualAnnualSpendUsd,
+        totalCommittedValueUsd:
+          direct.totalCommittedValueUsd ?? selected.totalCommittedValueUsd,
+        contractedToActualVarianceUsd:
+          direct.contractedToActualVarianceUsd ??
+          selected.contractedToActualVarianceUsd,
+        endDate: direct.endDate ?? selected.endDate,
+        noticeDate: direct.noticeDate ?? selected.noticeDate,
+        noticePeriodDays: direct.noticePeriodDays ?? selected.noticePeriodDays,
+        autoRenew: direct.autoRenew ?? selected.autoRenew,
+        renewalOwnerRef: direct.renewalOwnerRef ?? selected.renewalOwnerRef,
+        scopeSummary: selected.scopeSummary ?? direct.scopeSummary,
+      };
+    }
+    return direct;
+  }
   if (
     selected &&
     (!requestedContractId ||
@@ -273,12 +470,72 @@ function selectedContractFrom(
   const directoryMatch = directory.find(
     (item) =>
       isRecord(item) &&
+      rowMatchesContextScope(item, context) &&
       stringValue(item.contractId)?.toUpperCase() === requestedContractId,
   );
   if (isRecord(directoryMatch))
     return contractContextFromRecord(directoryMatch);
+  const opportunityMatch = requestedContractId
+    ? contractContextFromOpportunityRows(source, requestedContractId, context)
+    : null;
+  if (opportunityMatch) return opportunityMatch;
   if (requestedContractId) return null;
   return selected;
+}
+
+export function resolveSourceWorkspaceContractId(input: {
+  query: string;
+  surfaceContext: AskSurfaceContext;
+}): string | null {
+  return (
+    selectedContractFrom(input.surfaceContext, input.query)?.contractId ?? null
+  );
+}
+
+function contractContextFromOpportunityRows(
+  source: Record<string, unknown> | null,
+  contractId: string,
+  context: AskSurfaceContext,
+): SourceContractContext | null {
+  const opportunities = isRecord(source?.optimizationOpportunities)
+    ? source.optimizationOpportunities
+    : null;
+  const richRows = Array.isArray(opportunities?.opportunities)
+    ? opportunities.opportunities
+    : [];
+  const directoryRows = Array.isArray(source?.contractOpportunityDirectory)
+    ? source.contractOpportunityDirectory
+    : [];
+  const rows = [...directoryRows, ...richRows];
+  const match = rows.find(
+    (row) =>
+      isRecord(row) &&
+      rowMatchesContextScope(row, context) &&
+      lineMatchesContract(row, contractId),
+  );
+  if (!isRecord(match)) return null;
+  return {
+    contractId,
+    vendorName: stringValue(match.vendorName) ?? "Selected vendor",
+    contractName:
+      stringValue(match.contractName) ?? "Contract optimization case",
+    annualValueUsd: numberValue(match.annualValueUsd),
+    committedAnnualSpendUsd: numberValue(match.committedAnnualSpendUsd),
+    actualAnnualSpendUsd: numberValue(match.actualAnnualSpendUsd),
+    totalCommittedValueUsd: numberValue(match.totalCommittedValueUsd),
+    contractedToActualVarianceUsd: numberValue(
+      match.contractedToActualVarianceUsd,
+    ),
+    endDate: stringValue(match.endDate),
+    noticeDate: stringValue(match.noticeDate),
+    noticePeriodDays: numberValue(match.noticePeriodDays),
+    autoRenew: typeof match.autoRenew === "boolean" ? match.autoRenew : null,
+    renewalOwnerRef: stringValue(match.renewalOwnerRef),
+    scopeSummary: stringValue(match.scopeSummary),
+    scopeRowCount: numberValue(match.scopeRowCount),
+    performanceObservationCount: numberValue(match.performanceObservationCount),
+    documentExtractionCount: numberValue(match.documentExtractionCount),
+  };
 }
 
 function buildMissingContractAnswer(
@@ -328,6 +585,23 @@ function buildMissingContractAnswer(
   };
 }
 
+function buildUnresolvedNamedContractAnswer(
+  ambiguous: boolean,
+): SourceWorkspaceVisualAnswer {
+  return {
+    directAnswer: ambiguous
+      ? "More than one contract matches that name in the current Source context. Specify the agreement name or contract ID before I use contract-specific facts."
+      : "That named contract is not available in the current Source contract packet. I cannot use the open contract's facts to answer it.",
+    artifacts: [],
+    citations: [],
+    factsUsed: [],
+    metricsUsed: [],
+    relationshipsUsed: [],
+    caveats: [],
+    nextSteps: [],
+  };
+}
+
 function ledgerLinesFrom(context: AskSurfaceContext): SourceLedgerLine[] {
   const source = sourceV4(context);
   const ledger = isRecord(source?.optimizationLedger)
@@ -373,32 +647,66 @@ function opportunityLinesFrom(
   const mapped = rawOpportunities.flatMap(
     (opportunity): SourceOpportunityLine[] => {
       if (!isRecord(opportunity)) return [];
-      if (!lineMatchesContract(opportunity, contractId)) {
+      if (
+        !rowMatchesContextScope(opportunity, context) ||
+        !lineMatchesContract(opportunity, contractId)
+      ) {
         return [];
       }
       const id = stringValue(opportunity.id);
-      const label = stringValue(opportunity.label);
+      const rawLabel = stringValue(opportunity.label);
+      const label = rawLabel ? displaySourceLeverTitle(rawLabel) : null;
       if (!id || !label) return [];
+      const traceState = stringValue(opportunity.amountTraceState);
+      const unverified = traceState === "untraced" || traceState === "restated";
+      const notSized = traceState === "not_sized";
       return [
         {
           id,
           kind: stringValue(opportunity.valueType) ?? "commercial_opportunity",
           label,
           amount: stringValue(opportunity.amount) ?? "Not established",
-          amountUsd: numberValue(opportunity.amountUsd),
+          amountUsd:
+            unverified || notSized ? null : numberValue(opportunity.amountUsd),
+          statedAmountUsd: unverified
+            ? (numberValue(opportunity.statedAmountUsd) ??
+              numberValue(opportunity.amountUsd))
+            : notSized
+              ? null
+              : numberValue(opportunity.statedAmountUsd),
+          amountTraceState: traceState,
+          amountTraceLabel: stringValue(opportunity.amountTraceLabel),
           state:
             stringValue(opportunity.stageRaw) ??
             stringValue(opportunity.stage) ??
             "Not established",
+          stage:
+            stringValue(opportunity.stage) ??
+            stringValue(opportunity.stageRaw) ??
+            "Not established",
+          confidence: confidenceLabel(opportunity.confidence),
           evidenceClass: stringValue(opportunity.grade) ?? "Not established",
+          evidenceGrade: stringValue(opportunity.grade) ?? "Not established",
           evidence:
+            stringValue(opportunity.amountTraceLabel) ??
             stringValue(opportunity.blockingGap) ??
-            "Governed Source opportunity row with calculation and evidence references.",
+            "Governed Source opportunity row with evidence references.",
+          blockingGap:
+            [
+              unverified ? stringValue(opportunity.amountTraceLabel) : null,
+              stringValue(opportunity.blockingGap),
+            ].filter(Boolean).join("; ") || "Not established",
           nextAction:
             stringValue(opportunity.nextAction) ??
             "Confirm evidence owner and decision path.",
           owner: stringValue(opportunity.owner),
           sourceRefs: stringArray(opportunity.sourceRefs),
+          buyerAsk: stringValue(opportunity.buyerAsk),
+          negotiationLanguage: stringValue(opportunity.negotiationLanguage),
+          vendorConcession: stringValue(opportunity.vendorConcession),
+          timingDependency: stringValue(opportunity.timingDependency),
+          priority: stringValue(opportunity.priority),
+          riskIfIgnored: stringValue(opportunity.riskIfIgnored),
         },
       ];
     },
@@ -408,7 +716,10 @@ function opportunityLinesFrom(
     : [];
   const directoryLines = directory.flatMap((line): SourceOpportunityLine[] => {
     if (!isRecord(line)) return [];
-    if (!lineMatchesContract(line, contractId)) {
+    if (
+      !rowMatchesContextScope(line, context) ||
+      !lineMatchesContract(line, contractId)
+    ) {
       return [];
     }
     const id = stringValue(line.id);
@@ -425,19 +736,37 @@ function opportunityLinesFrom(
             : currencyLabel(numberValue(line.amountUsd)),
         amountUsd: numberValue(line.amountUsd),
         state: stringValue(line.state) ?? "Not established",
+        stage:
+          stringValue(line.stage) ??
+          stringValue(line.stageRaw) ??
+          stringValue(line.state) ??
+          "Not established",
+        confidence: confidenceLabel(line.confidence),
         evidenceClass: stringValue(line.evidenceClass) ?? "Not established",
+        evidenceGrade:
+          stringValue(line.evidenceGrade) ??
+          stringValue(line.grade) ??
+          stringValue(line.evidenceClass) ??
+          "Not established",
         evidence:
           "Governed Source action-candidate row tied to the named contract.",
+        blockingGap: stringValue(line.blockingGap) ?? "Not established",
         nextAction:
           stringValue(line.nextAction) ??
           "Confirm evidence owner and decision path.",
         owner: null,
         sourceRefs: stringArray(line.sourceRefs),
+        buyerAsk: stringValue(line.buyerAsk),
+        negotiationLanguage: stringValue(line.negotiationLanguage),
+        vendorConcession: stringValue(line.vendorConcession),
+        timingDependency: stringValue(line.timingDependency),
+        priority: stringValue(line.priority),
+        riskIfIgnored: stringValue(line.riskIfIgnored),
       },
     ];
   });
-  if (directoryLines.length > 0) return directoryLines.slice(0, 8);
   if (mapped.length > 0) return mapped.slice(0, 8);
+  if (directoryLines.length > 0) return directoryLines.slice(0, 8);
   return ledgerLinesFrom(context)
     .filter(
       (line) =>
@@ -445,7 +774,17 @@ function opportunityLinesFrom(
     )
     .map((line) => ({
       ...line,
+      stage: line.state,
+      confidence: "Not established",
+      evidenceGrade: line.evidenceClass,
+      blockingGap: line.evidence,
       owner: null,
+      buyerAsk: null,
+      negotiationLanguage: null,
+      vendorConcession: null,
+      timingDependency: null,
+      priority: null,
+      riskIfIgnored: null,
     }));
 }
 
@@ -478,8 +817,35 @@ function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
     .slice(0, 6);
 }
 
+function commercialPostureLinesFrom(
+  context: AskSurfaceContext,
+): SourceCommercialPostureLine[] {
+  const source = sourceV4(context);
+  const posture = isRecord(source?.commercialPosture)
+    ? source.commercialPosture
+    : null;
+  const items = Array.isArray(posture?.items) ? posture.items : [];
+  return items
+    .flatMap((item): SourceCommercialPostureLine[] => {
+      if (!isRecord(item)) return [];
+      const label = stringValue(item.label);
+      const value = stringValue(item.value);
+      if (!label || !value) return [];
+      return [
+        {
+          label,
+          value,
+          detail:
+            stringValue(item.detail) ??
+            "No additional posture detail was supplied.",
+        },
+      ];
+    })
+    .slice(0, 8);
+}
+
 function wantsSourceVisualAnswer(query: string): boolean {
-  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|outside[-\s]?in|industry|actionable|actionability|why.*action|optimi[sz]e|opportunit(?:y|ies)|claim value|claim savings|realized? value|what.*missing|missing.*before|before.*claim)\b/i.test(
+  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|contract details?|contract facts?|summari[sz]e|summary|safely say|what can (?:we|i) say|tell me about.*contract|what(?:'s| is).*contract|what (?:are|did) we buy(?:ing)?|agreement|paid|payment|invoice(?:d|s)?|commitment|committed|unused|drawn on|support(?: fee| rate| target)?|renewal|notice period|auto[-\s]?renew|annual value|actual spend|vendor|lever(?:s)?|outside[-\s]?in|industry|actionable|actionability|why.*action|optimi[sz]e|opportunit(?:y|ies)|claim value|claim savings|realized? value|what.*missing|missing.*before|before.*claim)\b/i.test(
     query,
   );
 }
@@ -490,11 +856,17 @@ export function canBuildSourceWorkspaceVisualAnswer(input: {
 }): boolean {
   const context = input.surfaceContext;
   const requestedContractId = contractIdFromQuery(input.query);
+  const named =
+    context && !requestedContractId
+      ? namedContractFromQuery(context, input.query)
+      : null;
   return Boolean(
     context &&
     stringValue(context.module)?.toLowerCase() === "source" &&
     wantsSourceVisualAnswer(input.query) &&
-    (selectedContractFrom(context, input.query) || requestedContractId),
+    (selectedContractFrom(context, input.query) ||
+      requestedContractId ||
+      named),
   );
 }
 
@@ -509,25 +881,416 @@ function currencyLabel(value: number | null): string {
   return `${sign}$${abs.toFixed(0)}`;
 }
 
+function confidenceLabel(value: unknown): string {
+  const numeric = numberValue(value);
+  if (numeric != null) {
+    if (numeric >= 0 && numeric <= 1) {
+      return `${numeric.toFixed(2)} (${(numeric * 100).toFixed(0)}%)`;
+    }
+    if (numeric > 1 && numeric <= 100) {
+      return `${(numeric / 100).toFixed(2)} (${numeric.toFixed(0)}%)`;
+    }
+    return numeric.toString();
+  }
+  return stringValue(value) ?? "Not established";
+}
+
 function opportunityClassName(kind: string): string {
   return kind
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function sentenceFragment(value: string): string {
+  return value.trim().replace(/[.!?]+$/g, "");
+}
+
+function lineCount(value: number): string {
+  return `${value} ${value === 1 ? "line" : "lines"}`;
+}
+
+function leverCount(value: number): string {
+  return `${value} ${value === 1 ? "lever" : "levers"}`;
+}
+
+function signalStageClause(value: number): string {
+  return `${leverCount(value)} ${value === 1 ? "is" : "are"} signal-stage`;
+}
+
+function isSignalStage(stage: string): boolean {
+  return /\bsignal\b/i.test(stage);
+}
+
 function buildOpportunityRows(lines: SourceOpportunityLine[]) {
   return lines.map((line) => ({
     class: opportunityClassName(line.kind),
     opportunity: line.label,
-    value: line.amountUsd == null ? line.amount : currencyLabel(line.amountUsd),
-    valueUsd: line.amountUsd,
+    value:
+      line.statedAmountUsd != null
+        ? `stated ${currencyLabel(line.statedAmountUsd)}; not calculation-reconciled`
+        : isNotSizedLine(line)
+          ? "Not sized"
+          : currencyLabel(line.amountUsd),
+    valueUsd: isNotSizedLine(line) ? null : line.amountUsd,
     state: line.state,
+    stage: line.stage,
     evidence: line.evidenceClass,
+    evidenceGrade: isNotSizedLine(line)
+      ? `${line.evidenceGrade}; sizing not established`
+      : line.evidenceGrade,
+    blockingGap: line.blockingGap,
     owner: line.owner ?? "Not established",
     sourceRefs:
       publicEvidenceRefs(line.sourceRefs).join(", ") || "Not established",
     nextAction: line.nextAction,
   }));
+}
+
+function markdownTableCell(value: string): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized.length > 0
+    ? normalized.replace(/\|/g, "\\|")
+    : "Not established";
+}
+
+function opportunityEvidenceGate(
+  row: ReturnType<typeof buildOpportunityRows>[number],
+): string {
+  const status = isSignalStage(row.stage)
+    ? "Signal-stage; not sized until evidence closes"
+    : `Stage ${row.stage}`;
+  return `${status}; evidence ${row.evidenceGrade}; gate ${sentenceFragment(row.blockingGap)}`;
+}
+
+function buildExecutiveLeverTable(
+  rows: ReturnType<typeof buildOpportunityRows>,
+): string {
+  const header =
+    "| Lever | Action | Value | Owner | Status / evidence gate |\n| --- | --- | ---: | --- | --- |";
+  const body = rows
+    .slice(0, 8)
+    .map(
+      (row) =>
+        `| ${markdownTableCell(row.opportunity)} | ${markdownTableCell(
+          sentenceFragment(row.nextAction),
+        )} | ${markdownTableCell(row.value)} | ${markdownTableCell(
+          row.owner,
+        )} | ${markdownTableCell(opportunityEvidenceGate(row))} |`,
+    )
+    .join("\n");
+  return `${header}\n${body}`;
+}
+
+function wantsContractOptimizationExport(query: string): boolean {
+  return (
+    /\b(optimi[sz]e|lever(?:s)?|negotiat(?:e|ion|ing)|client\s+sample|pdf|export|memo|report)\b/i.test(
+      query,
+    ) && !/\b(chart|graph|map|visuali[sz]e|relationship\s+map)\b/i.test(query)
+  );
+}
+
+function exportEvidenceBasis(line: SourceOpportunityLine): string {
+  const refs = publicEvidenceRefs(line.sourceRefs);
+  return [
+    refs.join(", "),
+    line.evidenceGrade,
+    isNotSizedLine(line) ? "sizing evidence not established" : null,
+    line.priority ? `priority ${line.priority}` : null,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join("; ");
+}
+
+function isNotSizedLine(line: SourceOpportunityLine): boolean {
+  return (
+    isSignalStage(line.stage) ||
+    line.amountUsd == null ||
+    /\bnot\s*sized\b/i.test(line.amount)
+  );
+}
+
+function exportValueState(line: SourceOpportunityLine): string {
+  if (line.statedAmountUsd != null) {
+    return `stated ${currencyLabel(line.statedAmountUsd)}; not calculation-reconciled`;
+  }
+  if (isNotSizedLine(line)) {
+    return "Not sized - needs evidence before it carries a number";
+  }
+  return `${currencyLabel(line.amountUsd)} candidate; not finance-confirmed`;
+}
+
+function exportOwnerTiming(line: SourceOpportunityLine): string {
+  return [
+    line.owner,
+    line.timingDependency
+      ? displaySourceLeverTiming(line.timingDependency)
+      : null,
+    line.nextAction && !line.timingDependency ? line.nextAction : null,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join(" / ");
+}
+
+function exportDoNotClaim(line: SourceOpportunityLine): string {
+  return [
+    "Do not call this realized or finance-confirmed",
+    isNotSizedLine(line)
+      ? "do not attach value until the evidence gate is loaded"
+      : null,
+    line.blockingGap && !/not established/i.test(line.blockingGap)
+      ? line.blockingGap
+      : null,
+    line.riskIfIgnored,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join("; ");
+}
+
+function authoredVendorRationale(line: SourceOpportunityLine): string | null {
+  const haystack = [
+    line.id,
+    line.label,
+    line.buyerAsk,
+    line.negotiationLanguage,
+    line.nextAction,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (/carry[-_\s]?forward|unused/i.test(haystack)) {
+    return "Carry-forward preserves the vendor relationship and future revenue while avoiding a forced competitive review over unused first-year capacity.";
+  }
+  if (/commit[-_\s]?ramp|ramp schedule|re-time/i.test(haystack)) {
+    return "The vendor keeps the long-term platform commitment, but the Year 2 drawdown moves to the production pace the buyer can actually consume.";
+  }
+  if (/support[-_\s]?rebase|support fee/i.test(haystack)) {
+    return "The support tier can stay intact while the fee basis follows observed consumption and support demand instead of unused committed capacity.";
+  }
+  if (/marketplace|private offer|edp/i.test(haystack)) {
+    return "Databricks still captures the future commitment while the buyer tests whether private-offer routing improves broader cloud portfolio economics.";
+  }
+  if (/serverless|classic|compute mode/i.test(haystack)) {
+    return "The vendor can preserve committed-discount economics across the migrated workload if the buyer proves the per-SKU serverless and classic comparison first.";
+  }
+  if (/discount|re[-_\s]?price|pricing band/i.test(haystack)) {
+    return "The vendor can evaluate repricing after an accepted comparable is loaded; holding this ask back avoids opening with an unsupported rate demand.";
+  }
+  return null;
+}
+
+function buildOptimizationExportRows(lines: SourceOpportunityLine[]) {
+  return lines.slice(0, 8).map((line, index) => ({
+    sequence: String(index + 1),
+    lever: line.label,
+    action:
+      [line.buyerAsk, line.negotiationLanguage]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join(" ") || line.nextAction,
+    vendorRationale:
+      line.vendorConcession ??
+      authoredVendorRationale(line) ??
+      "Not established in the governed opportunity detail.",
+    evidenceBasis: exportEvidenceBasis(line) || "Not established",
+    valueState: exportValueState(line),
+    ownerTiming: exportOwnerTiming(line) || "Not established",
+    doNotClaim: exportDoNotClaim(line),
+  }));
+}
+
+function buildOptimizationExportMarkdownTable(
+  rows: ReturnType<typeof buildOptimizationExportRows>,
+): string {
+  const header = [
+    "| Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet |",
+    "| ---: | --- | --- | --- | --- | --- | --- | --- |",
+  ].join("\n");
+  const body = rows
+    .map(
+      (row) =>
+        `| ${markdownTableCell(row.sequence)} | ${markdownTableCell(row.lever)} | ${markdownTableCell(row.action)} | ${markdownTableCell(row.vendorRationale)} | ${markdownTableCell(row.evidenceBasis)} | ${markdownTableCell(row.valueState)} | ${markdownTableCell(row.ownerTiming)} | ${markdownTableCell(row.doNotClaim)} |`,
+    )
+    .join("\n");
+  return `${header}\n${body}`;
+}
+
+export function canBuildSourceContractOptimizationExportAnswer(input: {
+  query: string;
+  surfaceContext?: AskSurfaceContext | null;
+}): boolean {
+  const context = input.surfaceContext;
+  const requestedContractId = contractIdFromQuery(input.query);
+  const named =
+    context && !requestedContractId
+      ? namedContractFromQuery(context, input.query)
+      : null;
+  return Boolean(
+    context &&
+    stringValue(context.module)?.toLowerCase() === "source" &&
+    wantsContractOptimizationExport(input.query) &&
+    (selectedContractFrom(context, input.query) ||
+      requestedContractId ||
+      named),
+  );
+}
+
+export function buildSourceContractOptimizationExportAnswer(input: {
+  query: string;
+  surfaceContext: AskSurfaceContext;
+}): SourceWorkspaceVisualAnswer | null {
+  const requestedContractId = contractIdFromQuery(input.query);
+  const contract = selectedContractFrom(input.surfaceContext, input.query);
+  if (!contract) {
+    const named = !requestedContractId
+      ? namedContractFromQuery(input.surfaceContext, input.query)
+      : null;
+    if (named) return buildUnresolvedNamedContractAnswer(named.ambiguous);
+    return requestedContractId
+      ? buildMissingContractAnswer(requestedContractId)
+      : null;
+  }
+
+  const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
+  const rows = buildOptimizationExportRows(lines);
+  const sizedRows = lines.filter((line) => !isNotSizedLine(line));
+  const signalRows = lines.filter((line) => isNotSizedLine(line));
+  const sizedTotalUsd = sizedRows.reduce(
+    (total, line) => total + (line.amountUsd ?? 0),
+    0,
+  );
+  const tableMarkdown =
+    rows.length > 0
+      ? buildOptimizationExportMarkdownTable(rows)
+      : "No governed optimization levers are loaded for this contract.";
+  const contractCitationId = "source-contract-context";
+  const opportunityCitationId = "source-contract-lever-export";
+  const sizingPosture =
+    sizedRows.length > 0
+      ? `Work the ${sizedRows.length} sized ${sizedRows.length === 1 ? "lever" : "levers"} first (${currencyLabel(sizedTotalUsd)} candidate value). ${signalRows.length > 0 ? `${signalRows.length} ${signalRows.length === 1 ? "other lever remains" : "other levers remain"} unsized until the named evidence gates close.` : ""}`
+      : lines.length > 0
+        ? `All ${lines.length} ${lines.length === 1 ? "lever is" : "levers are"} unsized. Supported candidate value is not established until the named evidence gates close.`
+        : "No governed optimization levers are loaded for this contract.";
+  const directAnswer = [
+    lines.length === 0
+      ? `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) has no governed optimization levers in this packet; actionability and candidate value are not established. Review contract-specific evidence before preparing a client action memo.`
+      : `${sizedRows.length === 0 ? "No supported savings total can be added from these levers." : "Executive read:"} ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. ${sizingPosture} Finance-confirmed realized value cannot be inferred from these candidate rows.`,
+    tableMarkdown,
+  ].join("\n\n");
+
+  return {
+    directAnswer,
+    artifacts:
+      rows.length > 0
+        ? [
+            {
+              artifact: "table",
+              id: "source-contract-optimization-export-table",
+              title: "Contract Optimization Lever Table",
+              columns: [
+                { key: "sequence", label: "Sequence", align: "right" },
+                { key: "lever", label: "Lever" },
+                { key: "action", label: "Action / buyer ask" },
+                {
+                  key: "vendorRationale",
+                  label: "Why vendor can agree",
+                },
+                { key: "evidenceBasis", label: "Evidence basis" },
+                { key: "valueState", label: "Value state" },
+                { key: "ownerTiming", label: "Owner / timing" },
+                {
+                  key: "doNotClaim",
+                  label: "What not to claim yet",
+                },
+              ],
+              rows,
+              note: "Rows are governed Source opportunity rows. Signal-stage rows deliberately carry no dollar value until the named evidence gate closes.",
+              citationIds: [opportunityCitationId],
+            },
+          ]
+        : [],
+    citations: [
+      {
+        id: contractCitationId,
+        label: `${contract.vendorName} ${contract.contractName}`,
+        sourceClass: "tenant-fact",
+        recordId: contract.contractId,
+        excerpt:
+          "Selected contract facts come from the governed Source Contract 360 surface context.",
+        confidence: "high",
+      },
+      {
+        id: opportunityCitationId,
+        label: "Contract optimization opportunity rows",
+        sourceClass: "tenant-fact",
+        recordId: contract.contractId,
+        excerpt:
+          rows.length > 0
+            ? "Lever, ask, rationale, owner, timing, value state, and evidence gates are read from governed Source opportunity rows."
+            : "No governed contract-specific optimization lever is present in the current Source packet.",
+        confidence: rows.length > 0 ? "high" : "medium",
+      },
+    ],
+    factsUsed: [
+      {
+        id: "selected-contract",
+        label: "Selected contract",
+        value: `${contract.contractId} ${contract.vendorName}`,
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "optimization-lever-count",
+        label: "Governed optimization levers",
+        value: rows.length,
+        citationIds: [opportunityCitationId],
+      },
+    ],
+    metricsUsed: [
+      {
+        id: "sized-candidate-total",
+        label: "Sized candidate value",
+        value: sizedRows.length > 0 ? sizedTotalUsd : "Not established",
+        unit: sizedRows.length > 0 ? "USD" : undefined,
+        citationIds: [opportunityCitationId],
+      },
+      {
+        id: "signal-stage-levers",
+        label: "Signal-stage levers",
+        value: signalRows.length,
+        unit: "levers",
+        citationIds: [opportunityCitationId],
+      },
+    ],
+    relationshipsUsed: [],
+    caveats: [
+      {
+        id: "candidate-not-realized",
+        label: "Candidate value only",
+        detail:
+          "The memo may show candidate and signal-stage opportunities, but it must not call any amount realized or finance-confirmed until Finance/Tower confirmation is loaded.",
+      },
+      {
+        id: "no-extra-market-benchmark",
+        label: "No invented benchmarks",
+        detail:
+          "The answer must not invent market discount percentages, pricing benchmarks, page quotes, or missing scope.",
+      },
+    ],
+    nextSteps: [
+      rows.length > 0
+        ? {
+            id: "export-client-memo",
+            label: "Export the governed lever table as a client memo",
+            rationale:
+              "The answer packet is structured as one table plus a short executive read so it can be rendered directly to PDF.",
+            targetSurface: "source",
+          }
+        : {
+            id: "review-contract-evidence",
+            label: "Review contract-specific evidence",
+            rationale:
+              "A governed lever and its evidence must exist before preparing a client action memo.",
+            targetSurface: "source",
+          },
+    ],
+  };
 }
 
 export function buildSourceWorkspaceVisualAnswer(input: {
@@ -537,12 +1300,36 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   const requestedContractId = contractIdFromQuery(input.query);
   const contract = selectedContractFrom(input.surfaceContext, input.query);
   if (!contract) {
+    const named = !requestedContractId
+      ? namedContractFromQuery(input.surfaceContext, input.query)
+      : null;
+    if (named) return buildUnresolvedNamedContractAnswer(named.ambiguous);
     return requestedContractId
       ? buildMissingContractAnswer(requestedContractId)
       : null;
   }
   const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
-  const connections = connectionsFrom(input.surfaceContext);
+  const source = sourceV4(input.surfaceContext);
+  const rawSelected = isRecord(source?.selectedContract)
+    ? source.selectedContract
+    : null;
+  const openContractId =
+    directContractContextFrom(input.surfaceContext)?.contractId ??
+    (rawSelected && rowMatchesContextScope(rawSelected, input.surfaceContext)
+      ? stringValue(rawSelected.contractId)
+      : null);
+  const isOpenContract =
+    openContractId?.toUpperCase() === contract.contractId.toUpperCase();
+  const connections = isOpenContract
+    ? connectionsFrom(input.surfaceContext)
+    : [];
+  const commercialPostureLines =
+    isOpenContract &&
+    lines.length > 0 &&
+    !contract.annualValueConflict &&
+    !lines.some((line) => line.statedAmountUsd != null)
+      ? commercialPostureLinesFrom(input.surfaceContext)
+      : [];
   const contractMismatch =
     requestedContractId &&
     contract.contractId.toUpperCase() !== requestedContractId;
@@ -557,9 +1344,10 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       label: `${contract.vendorName} ${contract.contractName}`,
       sourceClass: "tenant-fact",
       recordId: contract.contractId,
-      excerpt:
-        "Selected contract facts come from the governed Source Contract 360 surface context.",
-      confidence: "high",
+      excerpt: contract.annualValueConflict
+        ? "Selected contract facts come from Source Contract 360; annual value is its stated field while the baseline disagreement remains unresolved."
+        : "Selected contract facts come from the governed Source Contract 360 surface context.",
+      confidence: contract.annualValueConflict ? "medium" : "high",
     },
     {
       id: opportunityCitationId,
@@ -592,13 +1380,14 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   ];
 
   const opportunityRows = buildOpportunityRows(lines);
-  const numericRows = opportunityRows
+  const sizedRows = opportunityRows
     .filter((row) => typeof row.valueUsd === "number")
     .map((row) => ({
       opportunity: row.opportunity,
       valueUsd: row.valueUsd as number,
       state: row.state,
     }));
+  const signalRows = opportunityRows.filter((row) => isSignalStage(row.stage));
 
   const artifacts: AvaArtifact[] = [
     {
@@ -610,7 +1399,10 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         { key: "opportunity", label: "Opportunity" },
         { key: "value", label: "Value", format: "currency", align: "right" },
         { key: "state", label: "State" },
+        { key: "stage", label: "Stage" },
         { key: "evidence", label: "Evidence" },
+        { key: "evidenceGrade", label: "Evidence grade" },
+        { key: "blockingGap", label: "Blocking gap" },
         { key: "owner", label: "Owner" },
         { key: "sourceRefs", label: "Evidence basis" },
         { key: "nextAction", label: "Next action" },
@@ -620,7 +1412,10 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         opportunity: row.opportunity,
         value: row.value,
         state: row.state,
+        stage: row.stage,
         evidence: row.evidence,
+        evidenceGrade: row.evidenceGrade,
+        blockingGap: row.blockingGap,
         owner: row.owner,
         sourceRefs: row.sourceRefs,
         nextAction: row.nextAction,
@@ -650,10 +1445,17 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         })),
         {
           id: "opportunities",
-          label: "Commercial opportunities",
-          kind: "opportunity set",
+          label:
+            lines.length > 0
+              ? "Commercial opportunities"
+              : "Opportunity evidence missing",
+          kind: lines.length > 0 ? "opportunity set" : "evidence gap",
         },
-        { id: "door1", label: "Door 1 action", kind: "workflow" },
+        {
+          id: "door1",
+          label: lines.length > 0 ? "Door 1 action" : "Action blocked",
+          kind: "workflow",
+        },
       ],
       edges: [
         { from: "contract", to: "scope", label: "defines scope" },
@@ -662,63 +1464,148 @@ export function buildSourceWorkspaceVisualAnswer(input: {
           to: "opportunities",
           label: connection.ledgers.join(", ") || "feeds evidence",
         })),
-        { from: "contract", to: "opportunities", label: "anchors values" },
-        { from: "opportunities", to: "door1", label: "gates action" },
+        {
+          from: "contract",
+          to: "opportunities",
+          label: lines.length > 0 ? "anchors values" : "needs evidence",
+        },
+        {
+          from: "opportunities",
+          to: "door1",
+          label: lines.length > 0 ? "gates action" : "blocks action",
+        },
       ],
       citationIds: [contractCitationId, graphCitationId],
     },
   ];
 
-  if (numericRows.length >= 2) {
+  if (sizedRows.length >= 2) {
     artifacts.splice(1, 0, {
       artifact: "chart",
       id: "source-contract-opportunity-value-chart",
       kind: "horizontal-bar",
-      title: "Commercial Opportunities With Quantified Evidence",
-      subtitle: "Only numeric, governed opportunity values are plotted.",
+      title: "Sized Commercial Opportunities",
+      subtitle:
+        "Signal-stage levers are listed as evidence gates, not plotted.",
       data: {
         type: "horizontal-bar",
-        data: numericRows,
+        data: sizedRows,
         xKey: "opportunity",
         yKey: "valueUsd",
         unit: "USD",
-        note: "Chart excludes opportunities without a governed numeric value rather than rendering them as zero.",
+        note: "Chart excludes signal-stage opportunities and rows without a governed numeric value rather than rendering them as zero.",
       },
       builder: "inlineChart",
       xKey: "opportunity",
       yKey: "valueUsd",
       unit: "USD",
       sourceNote:
-        "Numeric values come from governed Source opportunity rows for the selected contract.",
+        "Sized values come from governed Source opportunity rows for the selected contract; signal-stage rows remain evidence gates.",
       citationIds: [opportunityCitationId],
     });
   }
 
-  const evidenceReadyCount = lines.filter((line) =>
-    /quantified|validated|evidenced/i.test(
+  const evidencePresentCount = lines.filter((line) =>
+    /\bpresent\b|quantified|validated|evidenced/i.test(
       `${line.state} ${line.evidenceClass}`,
     ),
   ).length;
-  const gapCount = lines.filter((line) =>
-    /baseline_conflict|evidence_required|workflow_required|missing|needs evidence|not established|requires_/i.test(
-      `${line.state} ${line.evidenceClass} ${line.nextAction}`,
-    ),
+  const gapCount = lines.filter(
+    (line) =>
+      isSignalStage(line.stage) ||
+      /baseline_conflict|evidence_required|workflow_required|review_required|finance_confirmation_required|finance confirmation required|not_confirmed|not confirmed|missing|needs evidence|not established|requires_|approval.*required|required.*approval/i.test(
+        `${line.state} ${line.evidenceClass} ${line.blockingGap} ${line.nextAction}`,
+      ),
   ).length;
-  const quantified = numericRows.length;
+  const sizedCount = sizedRows.length;
+  const candidateTotalUsd = sizedRows.reduce(
+    (total, row) => total + row.valueUsd,
+    0,
+  );
   const topOpportunity =
-    lines.find((line) => line.amountUsd != null) ?? lines[0] ?? null;
+    lines.find(
+      (line) => line.amountUsd != null && !isSignalStage(line.stage),
+    ) ??
+    lines[0] ??
+    null;
   const topOpportunityValue =
     topOpportunity?.amountUsd == null
-      ? (topOpportunity?.amount ?? "Not established")
+      ? topOpportunity?.statedAmountUsd != null
+        ? `stated ${currencyLabel(topOpportunity.statedAmountUsd)}; not calculation-reconciled`
+        : (topOpportunity?.amount ?? "Not established")
       : currencyLabel(topOpportunity.amountUsd);
   const topOpportunitySummary = topOpportunity
-    ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${topOpportunity.nextAction}.`
-    : " No governed opportunity row is tied to this contract in the current Source aVa packet; treat actionability and value as not established until the contract-specific evidence is loaded or opened.";
+    ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${sentenceFragment(topOpportunity.nextAction)}.`
+    : ` No governed opportunity row is tied to this contract in the current Source aVa packet, so candidate opportunity value is not established; treat actionability and value as missing until the contract-specific evidence is loaded or opened.${contract.scopeSummary ? ` Evidence posture: ${contract.scopeSummary}.` : ""}`;
+  const postureSummary =
+    commercialPostureLines.length > 0
+      ? ` Commercial posture: ${commercialPostureLines
+          .map((line) => `${line.label} = ${line.value}`)
+          .join("; ")}.`
+      : "";
+  const postureDetailSummary =
+    commercialPostureLines.length > 0
+      ? ` Contract 360 posture detail: ${commercialPostureLines
+          .map(
+            (line) =>
+              `${line.label} = ${line.value} (${sentenceFragment(line.detail)})`,
+          )
+          .join("; ")}.`
+      : "";
+  const leverTableSummary =
+    opportunityRows.length > 0
+      ? `Lever table:\n${buildExecutiveLeverTable(opportunityRows)}`
+      : "Lever table: no governed contract-specific opportunity rows are loaded.";
+
+  const loadedContractFacts = [
+    `vendor ${contract.vendorName}`,
+    `contract ID ${contract.contractId}`,
+    `recorded annual value ${currencyLabel(contract.annualValueUsd)}${contract.annualValueConflict ? " (Contract 360 stated value; annual-value conflict unresolved, not a reconciled baseline)" : ""}`,
+    `annual committed spend ${currencyLabel(contract.committedAnnualSpendUsd)}`,
+    `full-term committed value ${currencyLabel(contract.totalCommittedValueUsd)}`,
+    `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
+    contract.contractedToActualVarianceUsd == null
+      ? "annual committed capacity not drawn on not established"
+      : `${currencyLabel(contract.contractedToActualVarianceUsd)} of annual committed capacity not drawn on`,
+    `end date ${contract.endDate ?? "not established"}`,
+    `notice date ${contract.noticeDate ?? "not established"}`,
+    `notice period ${
+      contract.noticePeriodDays == null
+        ? "not established"
+        : `${contract.noticePeriodDays} days`
+    }`,
+    `auto-renew ${
+      contract.autoRenew == null
+        ? "not established"
+        : contract.autoRenew
+          ? "yes"
+          : "no"
+    }`,
+    `renewal owner ${contract.renewalOwnerRef ?? "not assigned"}`,
+    contract.scopeRowCount == null
+      ? "scope coverage not established"
+      : `${contract.scopeRowCount} scope rows`,
+    contract.performanceObservationCount == null
+      ? "performance coverage not established"
+      : `${contract.performanceObservationCount} active performance observations`,
+  ].join(", ");
+  const candidateSummary =
+    sizedCount > 0
+      ? `${sizedCount} sized ${sizedCount === 1 ? "line" : "lines"} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
+      : `There are no sized contract-specific candidate commercial opportunity lines with governed numeric values. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
+  const negotiationStance =
+    topOpportunity && opportunityRows.length > 0
+      ? `Negotiation stance: lead with ${topOpportunity.label} because it is the clearest governed lever in the current packet; ask the owner to ${sentenceFragment(topOpportunity.nextAction).toLowerCase()}. ${postureSummary}${postureDetailSummary}`
+      : `Negotiation stance: do not make a commercial ask until a contract-specific opportunity row is loaded. ${postureSummary}${postureDetailSummary}`;
 
   return {
-    directAnswer:
-      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${contractMismatch ? "is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "is bound from the governed Source contract context. "}There are ${quantified} contract-specific commercial opportunity line(s) with governed numeric values, ${evidenceReadyCount} line(s) marked evidence-ready, and ${gapCount} line(s) that still require explicit workflow, review, or evidence. ` +
-      `${topOpportunitySummary} The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
+    directAnswer: [
+      `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${lines.length > 0 ? "has governed commercial opportunity rows, but they are not realized savings without finance-confirmed outcome evidence" : "has no governed commercial opportunity row in the current packet; actionability and value are not established"}. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
+      `Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}`,
+      leverTableSummary,
+      negotiationStance,
+      "Caveat: Annual contract value is not the total committed value. Actual spend does not by itself establish that invoices were paid. Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.",
+    ].join("\n\n"),
     artifacts,
     citations,
     factsUsed: [
@@ -744,11 +1631,54 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         citationIds: [contractCitationId],
       },
       {
+        id: "committed-annual-spend",
+        label: "Annual committed spend",
+        value: contract.committedAnnualSpendUsd ?? "Not established",
+        unit: contract.committedAnnualSpendUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "total-committed-value",
+        label: "Full-term committed value",
+        value: contract.totalCommittedValueUsd ?? "Not established",
+        unit: contract.totalCommittedValueUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "undrawn-annual-commitment",
+        label: "Annual committed capacity not drawn on",
+        value: contract.contractedToActualVarianceUsd ?? "Not established",
+        unit:
+          contract.contractedToActualVarianceUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+      {
         id: "actual-annual-spend",
         label: "Actual annual spend",
         value: contract.actualAnnualSpendUsd ?? "Not established",
         unit: contract.actualAnnualSpendUsd == null ? undefined : "USD",
         citationIds: [contractCitationId],
+      },
+      {
+        id: "scope-row-count",
+        label: "Contract scope rows",
+        value: contract.scopeRowCount ?? "Not established",
+        unit: contract.scopeRowCount == null ? undefined : "rows",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "performance-observation-count",
+        label: "Active performance observations",
+        value: contract.performanceObservationCount ?? "Not established",
+        unit: contract.performanceObservationCount == null ? undefined : "rows",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "candidate-opportunity-total",
+        label: "Sized candidate opportunity total",
+        value: sizedCount > 0 ? candidateTotalUsd : "Not established",
+        unit: sizedCount > 0 ? "USD" : undefined,
+        citationIds: [opportunityCitationId],
       },
     ],
     relationshipsUsed: connections.map((connection) => ({
@@ -766,7 +1696,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         detail:
           "Industry context is pattern guidance only. It cannot create recoverable leakage, avoided future spend, negotiated improvement, or finance-confirmed value without governed evidence.",
       },
-      ...(numericRows.length < 2
+      ...(sizedRows.length < 2
         ? [
             {
               id: "chart-evidence-threshold",
@@ -778,13 +1708,21 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         : []),
     ],
     nextSteps: [
-      {
-        id: "door1",
-        label: "Open Door 1 with the current evidence pack",
-        rationale:
-          "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and finance proof.",
-        targetSurface: "source",
-      },
+      lines.length > 0
+        ? {
+            id: "door1",
+            label: "Open Door 1 with the current evidence pack",
+            rationale:
+              "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and finance proof.",
+            targetSurface: "source",
+          }
+        : {
+            id: "review-evidence",
+            label: "Review contract-specific opportunity evidence",
+            rationale:
+              "No governed opportunity row is loaded for this contract, so do not open a value case on inferred levers.",
+            targetSurface: "source",
+          },
     ],
   };
 }

@@ -9,12 +9,15 @@ const CHECKS = [
     key: "smoke_home_requires_dense_ecl_counts",
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
+      "function homeRoutePath()",
+      "ROUTE_MODE === \"default_routes\") return `/home?",
       "/home/preview?tenant=",
       "provider=ecl_projection_db",
+      "diagnosticsPath(",
       "/750\\s+applications/i",
-      "/1350\\s+data\\s+flows/i",
+      "/1350\\s+data\\s+flows|Current-state data flow\\s+1350/i",
       "/230\\s+contracts/i",
-      "/220\\s+(?:infra|infrastructure)/i",
+      "/220\\s+(?:infra|infrastructure)|Infrastructure & Platforms\\s+220/i",
     ],
   },
   {
@@ -33,7 +36,7 @@ const CHECKS = [
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
       "eclPath(\"/tower\")",
-      "/IT INVESTMENT TOWER|Tower/i",
+      "/IT INVESTMENT TOWER|Tower|Today's verdict/i",
       "/Value Proof/i",
       "/Decision Lanes/i",
       "/AI Portfolio/i",
@@ -60,12 +63,12 @@ const CHECKS = [
   },
   {
     key: "home_route_uses_ecl_provider",
-    file: "src/app/(maestro)/home/preview/page.tsx",
+    file: "src/app/(maestro)/home/page.tsx",
     mustContain: [
       "tenant?: string",
       "provider?: string",
       "resolveEclProductProvider(provider)",
-      "getHomeEclProjectionBundle(tenantKey)",
+      "getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)",
     ],
   },
   {
@@ -248,6 +251,21 @@ const COMMAND_CHECKS = [
       "scripts/ecl/run_product_ecl_browser_smoke.mjs",
       "--validate-demo-findings-contract",
     ],
+    expectedReport: { accepted: true, route_mode: "provider_opt_in" },
+  },
+  {
+    // The live proof runs the smoke with --default-routes, and the route table
+    // differs by mode, so the contract is checked in the mode that actually runs
+    // as well as the opt-in one above. The report has to name that mode: an exit
+    // code alone is also what a misspelled flag or a CLI body that never ran returns.
+    key: "demo_findings_browser_contract_default_routes",
+    command: [
+      "node",
+      "scripts/ecl/run_product_ecl_browser_smoke.mjs",
+      "--default-routes",
+      "--validate-demo-findings-contract",
+    ],
+    expectedReport: { accepted: true, route_mode: "default_routes" },
   },
   {
     key: "intelligence_ava_eval_contract",
@@ -266,16 +284,30 @@ function expectFileContains({ key, file, mustContain }) {
   };
 }
 
-function runCommand({ key, command }) {
+function reportMismatches(stdout, expectedReport) {
+  let report;
+  try {
+    report = JSON.parse(stdout);
+  } catch {
+    return ["stdout is not a JSON report"];
+  }
+  return Object.entries(expectedReport)
+    .filter(([field, expected]) => report?.[field] !== expected)
+    .map(([field, expected]) => `${field} is ${JSON.stringify(report?.[field])}, expected ${JSON.stringify(expected)}`);
+}
+
+function runCommand({ key, command, expectedReport }) {
   const result = spawnSync(command[0], command.slice(1), {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
+  const reportIssues = expectedReport ? reportMismatches(result.stdout, expectedReport) : [];
   return {
     key,
     command: command.join(" "),
-    accepted: result.status === 0,
+    accepted: result.status === 0 && reportIssues.length === 0,
     status: result.status,
+    report_issues: reportIssues,
     stdout_excerpt: result.stdout.trim().slice(-2000),
     stderr_excerpt: result.stderr.trim().slice(-2000),
   };
@@ -289,7 +321,10 @@ const issues = [
   ),
   ...commandResults
     .filter((result) => !result.accepted)
-    .map((result) => `${result.key}: command failed (${result.command})`),
+    .map((result) => [
+      `${result.key}: command failed (${result.command})`,
+      ...result.report_issues,
+    ].join("; ")),
 ];
 
 const summary = {

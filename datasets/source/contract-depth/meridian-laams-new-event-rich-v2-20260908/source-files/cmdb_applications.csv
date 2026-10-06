@@ -1,0 +1,49 @@
+tenant_key,dataset_version,application_ref,application_name,business_function,criticality,hosting_model,lifecycle_state,source_system,source_record_id,as_of_date,confidence
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-001,Enterprise SQL Reporting Mart 1,Finance Analytics,Tier 1,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-001,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-002,Claims Analytics Mart 1,Claims Operations,Tier 2,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-002,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-003,Provider Quality Mart 1,Clinical Quality,Tier 2,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-003,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-004,Member Experience Dashboard Hub 1,Provider Network,Tier 3,SAS,active,synthetic_cmdb_extract,APP-LAAMS-004,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-005,Tableau Server Legacy Cluster 1,Member Experience,Tier 1,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-005,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-006,Power BI Gateway Farm 1,Finance Analytics,Tier 2,AWS,active,synthetic_cmdb_extract,APP-LAAMS-006,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-007,SAS Claims Model Scheduler 1,Claims Operations,Tier 2,Databricks,active,synthetic_cmdb_extract,APP-LAAMS-007,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-008,Regulatory Reporting Store 1,Clinical Quality,Tier 3,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-008,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-009,Enterprise SQL Reporting Mart 2,Provider Network,Tier 1,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-009,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-010,Claims Analytics Mart 2,Member Experience,Tier 2,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-010,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-011,Provider Quality Mart 2,Finance Analytics,Tier 2,SAS,active,synthetic_cmdb_extract,APP-LAAMS-011,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-012,Member Experience Dashboard Hub 2,Claims Operations,Tier 3,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-012,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-013,Tableau Server Legacy Cluster 2,Clinical Quality,Tier 1,AWS,active,synthetic_cmdb_extract,APP-LAAMS-013,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-014,Power BI Gateway Farm 2,Provider Network,Tier 2,Databricks,active,synthetic_cmdb_extract,APP-LAAMS-014,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-015,SAS Claims Model Scheduler 2,Member Experience,Tier 2,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-015,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-016,Regulatory Reporting Store 2,Finance Analytics,Tier 3,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-016,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-017,Enterprise SQL Reporting Mart 3,Claims Operations,Tier 1,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-017,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-018,Claims Analytics Mart 3,Clinical Quality,Tier 2,SAS,active,synthetic_cmdb_extract,APP-LAAMS-018,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-019,Provider Quality Mart 3,Provider Network,Tier 2,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-019,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-020,Member Experience Dashboard Hub 3,Member Experience,Tier 3,AWS,active,synthetic_cmdb_extract,APP-LAAMS-020,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-021,Tableau Server Legacy Cluster 3,Finance Analytics,Tier 1,Databricks,active,synthetic_cmdb_extract,APP-LAAMS-021,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-022,Power BI Gateway Farm 3,Claims Operations,Tier 2,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-022,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-023,SAS Claims Model Scheduler 3,Clinical Quality,Tier 2,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-023,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-024,Regulatory Reporting Store 3,Provider Network,Tier 3,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-024,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-025,Enterprise SQL Reporting Mart 4,Member Experience,Tier 1,SAS,active,synthetic_cmdb_extract,APP-LAAMS-025,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-026,Claims Analytics Mart 4,Finance Analytics,Tier 2,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-026,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-027,Provider Quality Mart 4,Claims Operations,Tier 2,AWS,active,synthetic_cmdb_extract,APP-LAAMS-027,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-028,Member Experience Dashboard Hub 4,Clinical Quality,Tier 3,Databricks,active,synthetic_cmdb_extract,APP-LAAMS-028,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-029,Tableau Server Legacy Cluster 4,Provider Network,Tier 1,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-029,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-030,Power BI Gateway Farm 4,Member Experience,Tier 2,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-030,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-031,SAS Claims Model Scheduler 4,Finance Analytics,Tier 2,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-031,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-032,Regulatory Reporting Store 4,Claims Operations,Tier 3,SAS,active,synthetic_cmdb_extract,APP-LAAMS-032,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-033,Enterprise SQL Reporting Mart 5,Clinical Quality,Tier 1,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-033,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-034,Claims Analytics Mart 5,Provider Network,Tier 2,AWS,active,synthetic_cmdb_extract,APP-LAAMS-034,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-035,Provider Quality Mart 5,Member Experience,Tier 2,Databricks,active,synthetic_cmdb_extract,APP-LAAMS-035,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-036,Member Experience Dashboard Hub 5,Finance Analytics,Tier 3,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-036,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-037,Tableau Server Legacy Cluster 5,Claims Operations,Tier 1,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-037,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-038,Power BI Gateway Farm 5,Clinical Quality,Tier 2,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-038,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-039,SAS Claims Model Scheduler 5,Provider Network,Tier 2,SAS,active,synthetic_cmdb_extract,APP-LAAMS-039,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-040,Regulatory Reporting Store 5,Member Experience,Tier 3,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-040,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-041,Enterprise SQL Reporting Mart 6,Finance Analytics,Tier 1,AWS,active,synthetic_cmdb_extract,APP-LAAMS-041,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-042,Claims Analytics Mart 6,Claims Operations,Tier 2,Databricks,active,synthetic_cmdb_extract,APP-LAAMS-042,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-043,Provider Quality Mart 6,Clinical Quality,Tier 2,SQL Server,active,synthetic_cmdb_extract,APP-LAAMS-043,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-044,Member Experience Dashboard Hub 6,Provider Network,Tier 3,Tableau,active,synthetic_cmdb_extract,APP-LAAMS-044,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-045,Tableau Server Legacy Cluster 6,Member Experience,Tier 1,Power BI,active,synthetic_cmdb_extract,APP-LAAMS-045,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-046,Power BI Gateway Farm 6,Finance Analytics,Tier 2,SAS,active,synthetic_cmdb_extract,APP-LAAMS-046,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-047,SAS Claims Model Scheduler 6,Claims Operations,Tier 2,SSIS,active,synthetic_cmdb_extract,APP-LAAMS-047,2027-06-30,0.90
+meridian-health,meridian-laams-new-event-rich-v2-20260908,APP-LAAMS-048,Regulatory Reporting Store 6,Clinical Quality,Tier 3,AWS,active,synthetic_cmdb_extract,APP-LAAMS-048,2027-06-30,0.90

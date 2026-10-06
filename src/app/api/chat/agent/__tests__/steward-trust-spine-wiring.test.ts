@@ -20,8 +20,8 @@ describe('Agent route — Steward TrustSpine wiring', () => {
   );
 
   it('imports the steward TrustSpine context helpers', () => {
-    expect(routeSource).toContain(
-      "from '@/lib/admin/steward-trust-spine-context'",
+    expect(routeSource).toMatch(
+      /from ["']@\/lib\/admin\/steward-trust-spine-context["']/,
     );
     expect(routeSource).toContain('buildStewardTrustSpineBlock');
     expect(routeSource).toContain('shouldInjectStewardTrustSpine');

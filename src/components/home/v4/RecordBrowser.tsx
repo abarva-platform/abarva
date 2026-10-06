@@ -2,7 +2,12 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 
-import type { TechObjectType, TechRecordType } from "@/lib/home/preview/types";
+import { constantColumnsForRecord } from "@/lib/home/preview/bundle-normalization";
+import type {
+  ConstantColumn,
+  TechObjectType,
+  TechRecordType,
+} from "@/lib/home/preview/types";
 import { cellText } from "./cxo-language";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -30,6 +35,92 @@ interface Dimension {
 }
 
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
+  business_segment: [
+    { key: "segmentName", label: "Segment", width: 260, priority: "core" },
+    {
+      key: "revenueSharePct",
+      label: "Revenue share %",
+      width: 145,
+      align: "right",
+    },
+    { key: "revenueUsd", label: "Revenue", width: 150, kind: "money" },
+    { key: "pnlOwnerRole", label: "P&L owner", width: 240 },
+    { key: "classificationBasis", label: "Basis", width: 230, kind: "muted" },
+  ],
+  business_function: [
+    { key: "functionName", label: "Function", width: 270, priority: "core" },
+    { key: "businessSegment", label: "Segment", width: 220 },
+    { key: "executiveOwner", label: "Executive owner", width: 220 },
+    { key: "criticality", label: "Criticality", width: 110, kind: "pill" },
+    { key: "fteCount", label: "FTE", width: 100, align: "right" },
+  ],
+  workforce_role: [
+    { key: "personaOrRole", label: "Role", width: 270, priority: "core" },
+    { key: "functionName", label: "Function", width: 230 },
+    { key: "roleCount", label: "Count", width: 100, align: "right" },
+    { key: "employmentType", label: "Employment", width: 150 },
+    { key: "vendorSupported", label: "Vendor supported", width: 150 },
+  ],
+  operational_process: [
+    { key: "processName", label: "Process", width: 290, priority: "core" },
+    { key: "businessFunction", label: "Function", width: 230 },
+    { key: "processOwner", label: "Owner", width: 220 },
+    { key: "systemsUsed", label: "Systems", width: 250 },
+    {
+      key: "controlPoints",
+      label: "Control points",
+      width: 240,
+      kind: "muted",
+    },
+  ],
+  // Read as a sentence, left to right: this object, this verb, that object. The verb sits between
+  // its endpoints rather than after them, because a grid that lists both names then the type makes
+  // a reader hold two things in mind before learning what connects them.
+  relationship_edge: [
+    { key: "fromObjectName", label: "From", width: 250, priority: "core" },
+    {
+      key: "relationshipType",
+      label: "Relationship",
+      width: 150,
+      kind: "pill",
+    },
+    { key: "toObjectName", label: "To", width: 250 },
+    { key: "toObjectType", label: "To kind", width: 130, kind: "muted" },
+    {
+      key: "relationshipStrength",
+      label: "Strength",
+      width: 110,
+      kind: "pill",
+    },
+    {
+      key: "evidenceBasis",
+      label: "Basis",
+      width: 190,
+      priority: "wide",
+      kind: "muted",
+    },
+  ],
+  // The response itself is the widest column because it is the thing being read. What the response
+  // NAMES -- a system, a risk -- sits beside it, because that is what makes an opinion checkable
+  // against the rest of the record rather than a quotation to be taken on trust.
+  executive_interview: [
+    { key: "executiveArea", label: "Area", width: 210, priority: "core" },
+    { key: "stakeholderRole", label: "Role", width: 190 },
+    { key: "priorityTheme", label: "Theme", width: 130, kind: "pill" },
+    { key: "response", label: "What they said", width: 380, kind: "muted" },
+    {
+      key: "systemOrVendorMentioned",
+      label: "System named",
+      width: 180,
+      priority: "wide",
+    },
+    {
+      key: "riskOrControlMentioned",
+      label: "Risk named",
+      width: 200,
+      priority: "wide",
+    },
+  ],
   metric_outcome: [
     { key: "metricName", label: "Metric", width: 260, priority: "core" },
     { key: "businessFunction", label: "Function", width: 190 },
@@ -293,6 +384,41 @@ const FALLBACK_COLUMNS: Column[] = [
 ];
 
 const DETAIL_FIELDS: Partial<Record<TechObjectType, string[]>> = {
+  relationship_edge: [
+    "fromObjectName",
+    "fromObjectType",
+    "relationshipType",
+    "toObjectName",
+    "toObjectType",
+    "relationshipStrength",
+    "evidenceBasis",
+    "currentStateOrTargetState",
+    "confidence",
+    "knownGaps",
+    "originalRowId",
+  ],
+  executive_interview: [
+    "executiveArea",
+    "stakeholderRole",
+    "interviewGroup",
+    "priorityTheme",
+    "question",
+    "response",
+    "responseBasis",
+    "businessPriority",
+    "painPoint",
+    "knownChallenge",
+    "keyInitiative",
+    "systemOrVendorMentioned",
+    "dataDomainMentioned",
+    "metricMentioned",
+    "riskOrControlMentioned",
+    "decisionSupported",
+    "evidenceNeeded",
+    "interviewDate",
+    "confidence",
+    "originalRowId",
+  ],
   application_system: [
     "systemName",
     "systemCategory",
@@ -401,28 +527,32 @@ const PILL_TONE: Record<string, { bg: string; fg: string }> = {
  * a file reaches a model. One detector, two uses: it compresses the prompt and it reports the
  * quality problem, because they are the same observation.
  */
-function constantColumnsOf(
-  rows: RecordRow[],
-  columns: string[],
-): Array<{ column: string; value: string }> {
-  if (rows.length < 2) return [];
-  const out: Array<{ column: string; value: string }> = [];
-  for (const column of columns) {
-    const values = new Set(rows.map((row) => String(row[column] ?? "").trim()));
-    values.delete("");
-    if (
-      values.size === 1 &&
-      rows.every((row) => String(row[column] ?? "").trim())
-    ) {
-      out.push({ column, value: [...values][0] });
-    }
-  }
-  return out;
+function constantColumnsOf(recordType: TechRecordType): ConstantColumn[] {
+  // Read from the record, not recomputed here. Three surfaces ask this question -- this browser,
+  // the exposure band and the decision queue -- and three independent answers is how one of them
+  // ends up asserting a condition it is not actually applying.
+  //
+  // The loader also examines keys the column declaration omits, which this local version could not:
+  // a field present on every row but missing from `columns` was invisible to it.
+  return recordType.constantColumns ?? constantColumnsForRecord(recordType);
+}
+
+/**
+ * An exact match on one field, named by what the reader calls it.
+ *
+ * A figure counted by joining on a declared identifier opens its rows by that identifier. The
+ * identifier is how the rows are found; the label is what the banner says.
+ */
+export interface RecordRowMatch {
+  field: string;
+  value: string;
+  label: string;
 }
 
 export function RecordBrowser({
   recordType,
   initialQuery,
+  initialMatch,
 }: {
   recordType: TechRecordType;
   /**
@@ -434,8 +564,13 @@ export function RecordBrowser({
    * filtered view without being told.
    */
   initialQuery?: string;
+  /** A match the browser opens already applied. Stated in the same banner, by its label. */
+  initialMatch?: RecordRowMatch;
 }) {
   const [query, setQuery] = useState(initialQuery ?? "");
+  const [match, setMatch] = useState<RecordRowMatch | null>(
+    initialMatch ?? null,
+  );
   const [sliceField, setSliceField] = useState<string | null>(null);
   const [sliceValue, setSliceValue] = useState("all");
   const [diceField, setDiceField] = useState("none");
@@ -446,8 +581,8 @@ export function RecordBrowser({
     () => (recordType.rows ?? []) as RecordRow[],
     [recordType.rows],
   );
-  const indexedRows = useMemo(
-    () => rows.map((row, index) => ({ row, index, key: rowKey(row, index) })),
+  const { indexedRows, identityCollisions } = useMemo(
+    () => indexRows(rows),
     [rows],
   );
   const columns = useMemo(() => columnsFor(recordType), [recordType]);
@@ -481,6 +616,7 @@ export function RecordBrowser({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return indexedRows.filter(({ row }) => {
+      if (match && String(row[match.field] ?? "") !== match.value) return false;
       if (
         activeSlice &&
         sliceValue !== "all" &&
@@ -494,10 +630,15 @@ export function RecordBrowser({
       )
         return false;
       if (!q) return true;
-      return (recordType.columns ?? Object.keys(row)).some((field) =>
-        String(row[field] ?? "")
-          .toLowerCase()
-          .includes(q),
+      // Searched over the row's own keys, not the declared column list. A reader who can see a
+      // value in the detail panel and cannot find it by typing it has been told the search is
+      // broken, and they are right. Bookkeeping is excluded for the same reason it is not shown.
+      return Object.keys(row).some(
+        (field) =>
+          !PROVENANCE_FIELDS.has(field) &&
+          String(row[field] ?? "")
+            .toLowerCase()
+            .includes(q),
       );
     });
   }, [
@@ -505,6 +646,7 @@ export function RecordBrowser({
     activeSlice,
     diceValue,
     indexedRows,
+    match,
     query,
     recordType.columns,
     sliceValue,
@@ -528,10 +670,12 @@ export function RecordBrowser({
   const activeFilterCount =
     Number(sliceValue !== "all") +
     Number(diceValue !== "all") +
-    Number(Boolean(query.trim()));
+    Number(Boolean(query.trim())) +
+    Number(Boolean(match));
 
   function clearFilters() {
     setQuery("");
+    setMatch(null);
     setSliceValue("all");
     setDiceValue("all");
   }
@@ -671,7 +815,7 @@ export function RecordBrowser({
         </div>
       </div>
 
-      {initialQuery && query === initialQuery ? (
+      {match || (initialQuery && query === initialQuery) ? (
         <div
           data-record-arrived-filtered
           style={{
@@ -689,11 +833,14 @@ export function RecordBrowser({
         >
           <span style={{ fontFamily: SANS, fontSize: 13.5, lineHeight: 1.45 }}>
             Showing the rows behind a figure you came from — filtered to{" "}
-            <strong style={{ fontWeight: 600 }}>{initialQuery}</strong>.
+            <strong style={{ fontWeight: 600 }}>
+              {match ? match.label : initialQuery}
+            </strong>
+            .
           </span>
           <button
             type="button"
-            onClick={() => setQuery("")}
+            onClick={() => (match ? setMatch(null) : setQuery(""))}
             style={{
               fontFamily: MONO,
               fontSize: 11,
@@ -710,7 +857,7 @@ export function RecordBrowser({
       ) : null}
 
       {(() => {
-        const constants = constantColumnsOf(rows, recordType.columns);
+        const constants = constantColumnsOf(recordType);
         if (constants.length === 0) return null;
         return (
           <div
@@ -744,15 +891,55 @@ export function RecordBrowser({
               {constants
                 .map(
                   (c) =>
-                    `${c.column} reads "${cellText(c.value)}" on all ${rows.length.toLocaleString()} rows`,
+                    `${c.label} reads "${cellText(c.value)}" on all ${c.rowCount.toLocaleString()} rows`,
                 )
                 .join("; ")}
               . A value that never varies is a default rather than an
-              assessment, so nothing here should be read as a clean result.
+              assessment, so nothing here should be read as a clean result, and
+              none of these is used as a filter or a decision predicate.
             </p>
           </div>
         );
       })()}
+
+      {identityCollisions > 0 ? (
+        <div
+          data-testid="record-identity-collision"
+          data-record-identity-collisions={identityCollisions}
+          style={{
+            margin: "0 0 16px",
+            background: V4.surface,
+            border: `1px solid ${V4.rule}`,
+            borderLeft: `3px solid ${V4.amber}`,
+            padding: "13px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+          }}
+        >
+          <span style={eyebrow(V4.amber)}>
+            {identityCollisions.toLocaleString()} of{" "}
+            {rows.length.toLocaleString()} records share an identifier
+          </span>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SANS,
+              fontSize: 13.5,
+              lineHeight: 1.5,
+              color: V4.inkSoft,
+              maxWidth: "82ch",
+            }}
+          >
+            Each of these records is listed and openable in its own right, so
+            nothing here is hidden or merged. But the identifier they share is
+            the one a reader would quote to take a record back to the file it
+            came from, and for these that identifier does not single out one
+            record — so treat it as unresolved until it is corrected in the
+            file, not in this view.
+          </p>
+        </div>
+      ) : null}
 
       <div data-record-layout style={layoutStyle}>
         <section style={{ minWidth: 0 }}>
@@ -840,7 +1027,8 @@ export function RecordBrowser({
               recordType={recordType.objectType}
               row={selected.row}
               ordinal={selected.index + 1}
-              fieldCount={fieldCount}
+              declaredColumns={recordType.columns}
+              sourceRefs={recordType.rowSourceRefs?.[selected.index]}
             />
           ) : null}
         </aside>
@@ -853,15 +1041,28 @@ function columnsFor(recordType: TechRecordType): Column[] {
   const available = new Set(
     recordType.columns ?? Object.keys(recordType.rows?.[0] ?? {}),
   );
+  // A column with the same value on every row costs a column's width to say one thing, and reads
+  // as an assessment that came back identical every time. It is stated once above the table
+  // instead, where it is a fact about the record rather than a result about each row.
+  // Through the same accessor the notice uses, so the column a reader is told carries no
+  // information is exactly the column that was withheld. Two answers here would be worse than none.
+  const constant = new Set(
+    constantColumnsOf(recordType).map((column) => column.key),
+  );
   const preset = COLUMN_PRESETS[recordType.objectType] ?? FALLBACK_COLUMNS;
-  const columns = preset.filter((column) => available.has(column.key));
+  const columns = preset.filter(
+    (column) => available.has(column.key) && !constant.has(column.key),
+  );
   if (columns.length) return columns;
-  return [...available].slice(0, 8).map((field, index) => ({
-    key: field,
-    label: labelFor(field),
-    width: index === 0 ? 240 : 160,
-    priority: index === 0 ? "core" : undefined,
-  }));
+  return [...available]
+    .filter((field) => !constant.has(field))
+    .slice(0, 8)
+    .map((field, index) => ({
+      key: field,
+      label: labelFor(field),
+      width: index === 0 ? 240 : 160,
+      priority: index === 0 ? "core" : undefined,
+    }));
 }
 
 function buildMetrics(
@@ -896,6 +1097,22 @@ function buildMetrics(
           .filter((v) => v !== "(not specified)"),
       ).size
     : 0;
+
+  if (objectType === "risk_control") {
+    const highOrCritical = rows.filter((row) =>
+      ["high", "critical"].includes(String(row.severity ?? "").toLowerCase()),
+    ).length;
+    const controlState = (row: RecordRow) =>
+      String(row.controlStatus ?? "").toLowerCase().replaceAll(" ", "_");
+    const partial = rows.filter((row) => controlState(row) === "partially_effective").length;
+    const unknown = rows.filter((row) => controlState(row) === "unknown").length;
+    return [
+      { label: "risks", value: rows.length.toLocaleString() },
+      { label: "high or critical", value: highOrCritical.toLocaleString(), tone: highOrCritical ? V4.red : undefined },
+      { label: "partial control", value: partial.toLocaleString(), tone: partial ? V4.amber : undefined },
+      { label: "control state unknown", value: unknown.toLocaleString(), tone: unknown ? V4.amber : undefined },
+    ];
+  }
 
   if (objectType === "vendor_contract") {
     const autoRenew = rows.filter((row) => isTruthy(row.autoRenewFlag)).length;
@@ -986,6 +1203,10 @@ function buildMetrics(
     ];
   }
 
+  if (objectType !== "application_system") {
+    return [{ label: "records", value: rows.length.toLocaleString() }];
+  }
+
   return [
     { label: "applications", value: rows.length.toLocaleString() },
     {
@@ -1013,11 +1234,35 @@ function buildDimensions(
   primaryDimension?: string,
 ): Dimension[] {
   const preferred: Partial<Record<TechObjectType, string[]>> = {
+    relationship_edge: [
+      "relationshipType",
+      "fromObjectType",
+      "toObjectType",
+      "relationshipStrength",
+    ],
+    executive_interview: [
+      "priorityTheme",
+      "stakeholderRole",
+      "interviewGroup",
+      "systemOrVendorMentioned",
+    ],
+    // Ordered by the question each answers, not by how the intake happens to list them. The
+    // filter below drops any that this record does not vary, so a facet costs nothing where a
+    // tenant has not filled the column in.
+    //
+    // The four added here are ones the chapter findings already talk about -- regulatory exposure,
+    // replacement candidacy, recovery objective, debt -- and which a reader could not filter to.
+    // Naming a concentration in prose while leaving the reader unable to select the rows behind it
+    // is the difference between a claim and evidence.
     application_system: [
       "lifecycleState",
       "criticality",
       "deploymentModel",
       "vendor",
+      "dataClassification",
+      "replacementCandidate",
+      "technicalDebtScore",
+      "rtoHours",
     ],
     vendor_contract: [
       "riskRating",
@@ -1053,6 +1298,8 @@ function buildDimensions(
       counts: countsFor(rows, field),
     }))
     .filter((dimension) => dimension.counts.length > 1);
+  // Note: a constant field already fails this filter -- one distinct value is not more than one.
+  // The hold-out above is about the table's columns, which have no such test of their own.
 }
 
 function countsFor(rows: RecordRow[], field: string): Array<[string, number]> {
@@ -1363,6 +1610,74 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * Fields that describe how a row got here, not what it says.
+ *
+ * A reader opening a record wants the business object. Load ids, fingerprints, source paths and
+ * packet names are how the loader tracks its own work -- and one of them on the current snapshot is
+ * an absolute filesystem path carrying a home directory. None belongs in front of an executive.
+ *
+ * Kept as a denylist rather than an allowlist because the allowlist was the problem: the detail
+ * panel enumerated the fields it would show, so every column the intake added afterwards was
+ * invisible until somebody remembered to add it. Twelve fields the record declares, populates and
+ * varies were reachable from no surface at all. A denylist grows only when the loader adds
+ * bookkeeping; an allowlist has to grow every time the business record does.
+ */
+const PROVENANCE_FIELDS = new Set([
+  "originalSourceFile",
+  "originalPacket",
+  "originalRowNumber",
+  "sourceFingerprint",
+  "sourceClassification",
+  "consolidationRuleUsed",
+  "conflictStatus",
+  "loadRunId",
+  "sourceFile",
+  "sourceRowId",
+  "recordId",
+  "entityId",
+  "evidenceId",
+  "systemId",
+  "vendorId",
+  "platformId",
+  "riskId",
+  "metricId",
+  "contractId",
+  "orgUnitId",
+  "useCaseId",
+  "relationshipId",
+  // The identifiers one record names another by. They are how a figure finds its rows; the row
+  // already shows the name each one stands for.
+  "functionId",
+  "priorityId",
+  "sponsorFunctionId",
+  "segmentId",
+  "businessFunctionId",
+]);
+
+/**
+ * The fields a record's detail panel shows: everything the row carries that is not bookkeeping,
+ * in the order the source declared its columns.
+ *
+ * `originalRowId` survives on purpose -- it is the one identifier a reader uses, to take a row back
+ * to the file it came from.
+ */
+function detailFieldsFor(
+  recordType: TechObjectType,
+  row: RecordRow,
+  columns: string[] | undefined,
+): string[] {
+  const declared = (columns ?? []).filter((field) => field in row);
+  const rest = Object.keys(row).filter((field) => !declared.includes(field));
+  const curated = DETAIL_FIELDS[recordType] ?? [];
+  const ordered = [...declared, ...rest];
+  return [
+    // The curated order leads where one exists, so the fields a reader looks for first stay first.
+    ...curated.filter((field) => field in row),
+    ...ordered.filter((field) => !curated.includes(field)),
+  ].filter((field) => !PROVENANCE_FIELDS.has(field));
+}
+
 function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
   const candidates: Record<
     TechObjectType,
@@ -1374,8 +1689,88 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
       right: string;
     }>
   > = {
+    business_segment: [
+      {
+        key: "segment-owner",
+        title: "Segments and accountable owners",
+        caption: "The ownership declared for each business segment.",
+        left: "segmentName",
+        right: "pnlOwnerRole",
+      },
+    ],
+    business_function: [
+      {
+        key: "segment-criticality",
+        title: "Function criticality by segment",
+        caption:
+          "How declared function criticality is distributed across segments.",
+        left: "businessSegment",
+        right: "criticality",
+      },
+      {
+        key: "segment-owner",
+        title: "Function ownership by segment",
+        caption: "Which executive roles own the functions in each segment.",
+        left: "businessSegment",
+        right: "executiveOwner",
+      },
+    ],
+    workforce_role: [
+      {
+        key: "function-employment",
+        title: "Workforce mix by function",
+        caption: "Employment types declared for each function's roles.",
+        left: "functionName",
+        right: "employmentType",
+      },
+    ],
+    operational_process: [
+      {
+        key: "function-owner",
+        title: "Process ownership by function",
+        caption: "Who is recorded as owning work in each function.",
+        left: "businessFunction",
+        right: "processOwner",
+      },
+    ],
     // Each pairing is a question someone actually asks of this record type, not every column
     // against every other. A crossing nobody would ask for is noise with a title on it.
+    relationship_edge: [
+      {
+        key: "kind-kind",
+        title: "What connects to what",
+        caption:
+          "The shape of the declared graph, before any individual edge is read.",
+        left: "fromObjectType",
+        right: "toObjectType",
+      },
+      {
+        key: "verb-strength",
+        title: "Which kinds of connection the record calls critical",
+        caption:
+          "Strength is declared per edge, so this is the record's own weighting rather than ours.",
+        left: "relationshipType",
+        right: "relationshipStrength",
+      },
+    ],
+    executive_interview: [
+      {
+        key: "area-theme",
+        title: "Where each function's leadership puts its weight",
+        caption:
+          "Agreement is a theme every area raises; a divide is one only some do.",
+        left: "executiveArea",
+        right: "priorityTheme",
+      },
+      {
+        key: "theme-system",
+        title: "Which systems each theme keeps returning to",
+        caption:
+          "A system named under several themes is carrying more than one argument.",
+        left: "priorityTheme",
+        right: "systemOrVendorMentioned",
+      },
+    ],
     metric_outcome: [
       {
         key: "readiness-function",
@@ -1398,7 +1793,7 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
         key: "severity-control",
         title: "Severity against control state",
         caption:
-          "Where the register records a serious risk and no operating control.",
+          "How recorded severity and control effectiveness intersect; unknown is not uncontrolled.",
         left: "severity",
         right: "controlStatus",
       },
@@ -1637,16 +2032,21 @@ function SelectedRecord({
   recordType,
   row,
   ordinal,
-  fieldCount,
+  declaredColumns,
+  sourceRefs,
 }: {
   recordType: TechObjectType;
   row: RecordRow;
   ordinal: number;
-  fieldCount: number;
+  /** The source's own column order, so the detail reads in the shape the file declared. */
+  declaredColumns?: string[];
+  sourceRefs?: string[];
 }) {
-  const fields = (DETAIL_FIELDS[recordType] ?? Object.keys(row)).filter(
-    (field) => field in row,
-  );
+  const fields = detailFieldsFor(recordType, row, declaredColumns);
+  // Counted from the row, not from the declared column list. Those differ -- the row can carry keys
+  // the declaration omits -- so measuring the shown fields against the declared count produced
+  // "20 of 15 fields", which reads as a bug in front of the reader whether or not it is one.
+  const carried = Object.keys(row).length;
   const title = titleForSelected(recordType, row);
   return (
     <section style={selectedStyle}>
@@ -1665,10 +2065,60 @@ function SelectedRecord({
       </div>
       <h2 style={selectedTitleStyle}>{title}</h2>
       <div style={selectedMetaStyle}>
-        {fieldCount.toLocaleString()} fields in the source record
+        {fields.length.toLocaleString()} of {carried.toLocaleString()} fields on
+        this record; the rest record how the row was loaded
       </div>
+      {sourceRefs ? (
+        <div
+          data-record-source-link={sourceRefs.length ? "verified" : "missing"}
+          style={{
+            borderTop: `1px solid ${V4.rule}`,
+            padding: "12px 0",
+            fontFamily: SANS,
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: V4.inkSoft,
+          }}
+        >
+          <strong style={{ color: sourceRefs.length ? V4.green : V4.amber }}>
+            {sourceRefs.length
+              ? "Source record ID matched"
+              : "Source record link not established"}
+          </strong>
+          {sourceRefs.length ? (
+            <>
+              <div>
+                The row ID is linked; this does not establish source-file
+                acceptance or claim review.
+              </div>
+              <details>
+                <summary style={{ cursor: "pointer" }}>
+                  {sourceRefs.length.toLocaleString()} source record ID
+                  {sourceRefs.length === 1 ? "" : "s"}
+                </summary>
+                <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                  {sourceRefs.map((ref) => (
+                    <li
+                      key={ref}
+                      style={{ fontFamily: MONO, overflowWrap: "anywhere" }}
+                    >
+                      {ref}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </>
+          ) : (
+            <div>No governed source record was verified for this row.</div>
+          )}
+        </div>
+      ) : null}
+      {/* Every field the row carries that is not bookkeeping. This used to stop at eighteen, and
+          the curated list filled all eighteen -- so a dozen fields the record declares and varies
+          were unreachable from anywhere, the cap silently deciding which. A record with more to say
+          makes a longer panel, which is what a detail panel is for. */}
       <dl style={detailGridStyle}>
-        {fields.slice(0, 18).map((field) => (
+        {fields.map((field) => (
           <div key={field} style={{ display: "grid", gap: 3 }}>
             <dt style={detailLabelStyle}>{labelFor(field)}</dt>
             <dd style={detailValueStyle}>{formatByField(field, row[field])}</dd>
@@ -1709,17 +2159,45 @@ function headlineFor(objectType: TechObjectType, count: number): string {
   return `${count.toLocaleString()} records.`;
 }
 
+const SELECTED_TITLE_FIELD: Record<TechObjectType, string> = {
+  business_segment: "segmentName",
+  business_function: "functionName",
+  workforce_role: "personaOrRole",
+  operational_process: "processName",
+  application_system: "systemName",
+  vendor_contract: "contractName",
+  infrastructure_platform: "platformName",
+  data_asset_or_integration: "dataAssetName",
+  metric_outcome: "metricName",
+  risk_control: "riskOrControlName",
+  program_initiative: "programName",
+  organization_ownership: "orgUnit",
+  ai_use_case: "useCaseName",
+  executive_interview: "question",
+  relationship_edge: "fromObjectName",
+};
+
 function titleForSelected(objectType: TechObjectType, row: RecordRow): string {
-  const fieldByType: Partial<Record<TechObjectType, string>> = {
-    application_system: "systemName",
-    vendor_contract: "contractName",
-    infrastructure_platform: "platformName",
-    data_asset_or_integration: "dataAssetName",
-  };
-  return humanise(row[fieldByType[objectType] ?? "name"]);
+  if (objectType === "relationship_edge") {
+    const from = humanise(row.fromObjectName);
+    const to = humanise(row.toObjectName);
+    if (from !== "—" && to !== "—") return `${from} to ${to}`;
+  }
+  const title = humanise(
+    row[SELECTED_TITLE_FIELD[objectType]] ?? row.name ?? row.originalRowId,
+  );
+  return title === "—" ? "Unnamed record" : title;
 }
 
-function rowKey(row: RecordRow, index: number): string {
+/**
+ * The identifier the record itself declares, read in the order a reader would trust it.
+ *
+ * This is an identifier the record *asserts*, not one this view can guarantee, and the difference
+ * is the whole reason `indexRows` exists below: one governed tenant's infrastructure estate asserts
+ * the same stamp on fourteen of its forty-seven platforms. So nothing may key a rendered row on
+ * this value directly.
+ */
+function declaredRowId(row: RecordRow, index: number): string {
   return String(
     row.originalRowId ??
       row.systemId ??
@@ -1728,6 +2206,56 @@ function rowKey(row: RecordRow, index: number): string {
       row.dataAssetId ??
       `${titleForSelected("application_system", row)}-${index}`,
   );
+}
+
+/**
+ * One key per row, guaranteed distinct, plus a count of the records that had to be separated.
+ *
+ * Keying on the declared identifier put fourteen platforms under one key. React states that
+ * behaviour is unsupported and that children may be duplicated or omitted, but the reader-visible
+ * failure needs no help from React and appears in a production build: selection resolves by key, so
+ * clicking the thirty-fourth platform opened the first platform's detail panel under the first
+ * platform's ordinal, and the panel gave no sign it had answered about a different record.
+ *
+ * A repeated identifier takes an occurrence suffix rather than being replaced outright, so a record
+ * whose identifier is already unique -- which is every record on the other governed tenant, and
+ * every other record type on this one -- keys exactly as before and its selection survives a
+ * re-render. The count comes back so the surface can say a correction is owed at source instead of
+ * quietly absorbing it: a view that silently works around a duplicated identifier hides the defect
+ * from the only people who can fix it.
+ */
+function indexRows(rows: RecordRow[]): {
+  indexedRows: { row: RecordRow; index: number; key: string }[];
+  identityCollisions: number;
+} {
+  const declared = rows.map((row, index) => declaredRowId(row, index));
+  const timesDeclared = new Map<string, number>();
+  for (const id of declared)
+    timesDeclared.set(id, (timesDeclared.get(id) ?? 0) + 1);
+
+  // Every carrier of a repeated identifier, the first one included. The first is not innocent here:
+  // until something separates them it is indistinguishable from the other thirteen, and it is the
+  // one whose detail panel the other thirteen were opening.
+  const identityCollisions = declared.filter(
+    (id) => (timesDeclared.get(id) ?? 0) > 1,
+  ).length;
+
+  const taken = new Set<string>();
+  const indexedRows = rows.map((row, index) => {
+    const id = declared[index];
+    let key = id;
+    // Only a repeated identifier is altered, so a record that was already unique keeps the exact key
+    // it had and its selection survives a re-render. The loop is what makes "distinct" a fact rather
+    // than an assumption: a suffixed key could in principle equal some other record's declared one.
+    if ((timesDeclared.get(id) ?? 0) > 1) {
+      key = `${id}#${index + 1}`;
+      while (taken.has(key)) key = `${key}#`;
+    }
+    taken.add(key);
+    return { row, index, key };
+  });
+
+  return { indexedRows, identityCollisions };
 }
 
 function bucket(value: unknown): string {

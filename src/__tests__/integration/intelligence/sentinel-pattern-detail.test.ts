@@ -1,3 +1,10 @@
+import * as nodeFs from 'fs';
+import * as nodePath from 'path';
+
+import {
+  resolvePathStatus,
+  SHARED_PATH_DISPOSITIONS,
+} from '@/lib/qa/path-disposition';
 // I3 · Sentinel pattern detail / evidence trail tests.
 //
 // Pure deterministic coverage of the I3 view helper that produces the
@@ -388,81 +395,88 @@ describe('module hygiene · sentinel-pattern-view.ts (I3 extension)', () => {
 // Module hygiene · component
 // ---------------------------------------------------------------------
 
-describe('module hygiene · SentinelPatternDetail.tsx', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+// Retired · SentinelPatternDetail.tsx
+//
+// A describe block here read src/components/intelligence/SentinelPatternDetail.tsx with
+// fs.readFileSync in its body. The legacy surface sunset at 0c6a86c51 deleted
+// that file, so the read threw during COLLECTION -- and a throw there takes
+// the whole file with it. Every block above this point stopped running too,
+// and jest reported "0 tests", which does not read as a failure the way a red
+// count does.
+//
+// Recorded as retired rather than deleted, and checked against the register,
+// so what the sunset cost stays visible and the claim cannot rot unnoticed.
+describe('retired · SentinelPatternDetail.tsx (module hygiene · SentinelPatternDetail.tsx)', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
+  const RETIRED_PATH = 'src/components/intelligence/SentinelPatternDetail.tsx';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../components/intelligence/SentinelPatternDetail.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
+  it('is absent, and the register names the commit that removed it', () => {
+    const abs = nodePath.resolve(__dirname, '../../../../', RETIRED_PATH);
+    expect(nodeFs.existsSync(abs)).toBe(false);
 
-  it('imports the I3 view types', () => {
-    expect(codeOnly).toMatch(/SentinelPatternDetailView/);
-    expect(codeOnly).toMatch(/from '@\/lib\/intelligence\/sentinel-pattern-view'/);
+    const resolved = resolvePathStatus(
+      RETIRED_PATH,
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('does not import Sentinel runtime, Atlas, Nexus, or agent runtime', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
-  });
-
-  it('does not import Source UI, legacy /programs routes, mock.ts, or auth', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/\(maestro\)\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/programs\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/programs\/mock'/);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/auth\//);
+  it('does not accept an absence nobody declared', () => {
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 });
-
 // ---------------------------------------------------------------------
 // Module hygiene · route page
 // ---------------------------------------------------------------------
 
-describe('module hygiene · pattern detail route page', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+// Retired · patterns/[patternKey]/page.tsx
+//
+// A describe block here read src/components/intelligence/patterns/[patternKey]/page.tsx with
+// fs.readFileSync in its body. The legacy surface sunset at 0c6a86c51 deleted
+// that file, so the read threw during COLLECTION -- and a throw there takes
+// the whole file with it. Every block above this point stopped running too,
+// and jest reported "0 tests", which does not read as a failure the way a red
+// count does.
+//
+// Recorded as retired rather than deleted, and checked against the register,
+// so what the sunset cost stays visible and the claim cannot rot unnoticed.
+describe('retired · patterns/[patternKey]/page.tsx (module hygiene · pattern detail route page)', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
+  const RETIRED_PATH = 'src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
+  it('is absent, and the register names the commit that removed it', () => {
+    const abs = nodePath.resolve(__dirname, '../../../../', RETIRED_PATH);
+    expect(nodeFs.existsSync(abs)).toBe(false);
 
-  it('uses assertTenantAccess and findTenantByRouteSlug', () => {
-    expect(codeOnly).toMatch(/assertTenantAccess/);
-    expect(codeOnly).toMatch(/findTenantByRouteSlug/);
+    const resolved = resolvePathStatus(
+      RETIRED_PATH,
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('falls back to notFound when tenant or detection is missing', () => {
-    expect(codeOnly).toMatch(/notFound\(\)/);
-  });
-
-  it('renders the SentinelPatternDetail component for canonical pattern keys', () => {
-    expect(codeOnly).toMatch(/SentinelPatternDetail/);
-    expect(codeOnly).toMatch(/isSentinelPatternKey/);
-  });
-
-  it('does not import Sentinel runtime, Atlas runtime, Nexus runtime, or agent runtime', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
+  it('does not accept an absence nobody declared', () => {
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 });
-
 // ---------------------------------------------------------------------
 // Helper: strip comments before hygiene checks
 // ---------------------------------------------------------------------

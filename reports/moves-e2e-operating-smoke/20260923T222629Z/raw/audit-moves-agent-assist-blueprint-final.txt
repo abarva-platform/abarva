@@ -1,0 +1,5 @@
+
+> abarva@0.1.0 audit:moves-agent-assist-blueprint
+> node scripts/audit/moves-agent-assist-blueprint.mjs
+
+PASS audit:moves-agent-assist-blueprint

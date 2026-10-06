@@ -37,8 +37,8 @@ describe("Source artifact lifecycle matrix", () => {
     expect(summary.quality.reviewRequiredCount).toBe(0);
     expect(summary.quality.contentScoredCount).toBe(0);
     expect(summary.quality.contentBlockerCount).toBe(0);
-    expect(summary.quality.consultingGateRequiredCount).toBe(5);
-    expect(summary.quality.consultingGatePendingCount).toBe(5);
+    expect(summary.quality.consultingGateRequiredCount).toBe(6);
+    expect(summary.quality.consultingGatePendingCount).toBe(6);
     expect(summary.quality.consultingGatePassedCount).toBe(0);
     expect(summary.quality.consultingGateFailedCount).toBe(0);
     expect(summary.quality.label).toBe("Hard fails present");

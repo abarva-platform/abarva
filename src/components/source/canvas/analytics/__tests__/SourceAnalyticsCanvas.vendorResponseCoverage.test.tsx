@@ -155,6 +155,50 @@ describe("SourceAnalyticsCanvas — vendor response coverage (Responses step bod
     ).toBeInTheDocument();
   });
 
+  it("renders persisted normalized-response quality without implying vendor merit", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="responses"
+        tenantName="Healthcare Demo"
+        stageView={SAMPLE_RESPONSES_STAGE}
+        normalizedResponsePackages={[
+          {
+            artifactId: "artifact-1",
+            originalName: "example-response.xlsx",
+            receivedAt: "2026-09-08T00:00:00.000Z",
+            vendorId: "example-services",
+            vendorName: "Example Services",
+            rows: [],
+            parserWarnings: [],
+            analytics: {
+              requirementCount: 42,
+              requirementCoverageScore: 93,
+              mandatoryCompletenessScore: 88,
+              evidenceCoverageScore: 81,
+              pricingTraceabilityScore: 100,
+              slaTraceabilityScore: 76,
+              exceptionDisclosureScore: 100,
+              criterionLinkageScore: 95,
+              readyForEvaluation: "conditional",
+              nonConformances: ["REQ-SLA-004: SLA reference is missing."],
+              clarificationQuestions: ["Provide the SLA commitment row."],
+            },
+          },
+        ]}
+      />,
+    );
+
+    const panel = screen.getByTestId("source-normalized-response-quality");
+    expect(
+      within(panel).getByText("Requirement-level comparability"),
+    ).toBeInTheDocument();
+    expect(within(panel).getByText("Example Services")).toBeInTheDocument();
+    expect(within(panel).getByText("Conditional")).toBeInTheDocument();
+    expect(within(panel).getByText("93%")).toBeInTheDocument();
+    expect(within(panel).queryByText(/recommended vendor/i)).not.toBeInTheDocument();
+  });
+
   it("renders real per-vendor coverage rows when the insight is genuinely live", () => {
     const liveInsight: ResponseCoverageInsightView = {
       kind: "response_coverage",

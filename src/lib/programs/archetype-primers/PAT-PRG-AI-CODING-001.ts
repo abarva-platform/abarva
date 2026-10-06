@@ -87,7 +87,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
   templates: [
     {
       id: 'ai-coding-first-cohort-workshop-guide',
-      title: 'AI Coding first-cohort + workflow inventory workshop facilitator guide',
+      title:
+        'AI Coding first-cohort + workflow inventory workshop facilitator guide',
       kind: 'workshop_facilitator_guide',
       description:
         'Run-of-show + prompts for the Day 1 session: forces a single-function or single-repo-set first cohort decision, surfaces the top workflows where the tool will be evaluated (boilerplate, refactor, new feature, debug), and seeds the PR-cycle-time baseline scope before any seat is provisioned.',
@@ -110,7 +111,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'repo-indexing-audit-template',
-      title: 'Repo-indexing audit + sensitivity classification capture template',
+      title:
+        'Repo-indexing audit + sensitivity classification capture template',
       kind: 'capture_template',
       description:
         'Per-repo rows for sensitivity classification (public / internal / proprietary / regulated), indexing posture (will-index / index-with-redaction / exclude), branch-protection rules, secrets-scanning coverage, copyleft-dependency exposure, and the named owner with target attestation date — required before any AI tool sees the cohort’s code.',
@@ -199,7 +201,7 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
       id: 'dissenter-and-readiness-validation',
       title: 'Dissenter interview + P2 readiness validation (Day 3)',
       description:
-        'Two-hour synthesis-prep session: Senior Tech Lead (dissenter) is interviewed on the defect-rate, review-burden, and IP concerns; Engineering Manager confirms the cohort definition still holds against Day 1–2 evidence; CISO / AppSec Sponsor signs off on the indexing posture. Closes with a draft P2 readiness recommendation (proceed / re-scope cohort / remediate-first / stop) and the dissenter’s concerns logged with proposed mitigations.',
+        'Two-hour synthesis-prep session: Senior Tech Lead (dissenter) is interviewed on defect-rate, review-burden, and IP concerns; Engineering Manager confirms the cohort definition still holds against Day 1–2 evidence; CISO / AppSec provides security review input on the indexing posture. The authorized workspace user records the P2 readiness decision (proceed / re-scope cohort / remediate-first / stop) with the dissenter’s concerns and proposed mitigations.',
       durationHours: 2,
       attendees: [
         'Senior Tech Lead — likely dissenter',
@@ -216,7 +218,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
   dataAssets: [
     {
       id: 'first-cohort-workflow-inventory',
-      label: 'First cohort top-workflow inventory (boilerplate / refactor / new feature / debug)',
+      label:
+        'First cohort top-workflow inventory (boilerplate / refactor / new feature / debug)',
       rationale:
         'Anchors the rest of P1 in named workflow types from a single engineering function rather than a generic "developer productivity" hypothesis; without this artifact the PR-cycle baseline has no scope and value attribution post-rollout becomes a rhetorical exercise.',
       format: 'spreadsheet',
@@ -224,7 +227,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'repo-indexing-audit-findings',
-      label: 'Repo-indexing audit findings with sensitivity classification + named owners',
+      label:
+        'Repo-indexing audit findings with sensitivity classification + named owners',
       rationale:
         'Required to make the Synthesis (P2) "index-with-redaction vs. excluded-repos vs. proceed" decision honestly; once the AI tool is enabled in the cohort’s repos the indexing surface determines what the model has seen, and proprietary-code segregation cannot be retrofitted after the first generation.',
       format: 'PDF',
@@ -232,7 +236,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'pr-cycle-time-baseline',
-      label: 'PR cycle-time baseline (last 90 days, by repo / team / PR size bucket)',
+      label:
+        'PR cycle-time baseline (last 90 days, by repo / team / PR size bucket)',
       rationale:
         'Grain matters — a 200-LOC PR with 4-hour median cycle time that drops to 2.5 hours is a different program than a 50-LOC PR with 30-minute cycle dropping to 22 minutes; aggregate "26% PR cycle-time reduction" claims (the Apex broker bundle’s headline number) fail the quarterly value-realisation review without the per-bucket grain to defend them.',
       format: 'spreadsheet',
@@ -240,7 +245,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'suggestion-acceptance-baseline',
-      label: 'Suggestion acceptance-rate baseline (if any prior Copilot / Cursor / Claude Code pilot exists)',
+      label:
+        'Suggestion acceptance-rate baseline (if any prior Copilot / Cursor / Claude Code pilot exists)',
       rationale:
         'The Apex broker bundle shows ~450 engineers on GitHub Copilot at 79% WAU — surfacing the actual acceptance-rate by language, by file type, and by workflow turns the dissenter’s "AI generates buggy code" objection into a measurable one and informs the P2 cohort-vs-tenant scope decision.',
       format: 'spreadsheet',
@@ -248,7 +254,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'license-posture-attestation',
-      label: 'License-posture attestation from Legal (AI-generated code, copyleft, proprietary segregation)',
+      label:
+        'License-posture attestation from Legal (AI-generated code, copyleft, proprietary segregation)',
       rationale:
         'Legal sign-off in P1 prevents the P2 charter being rebuilt after the first audit finding; the attestation locks copyleft attribution risk, proprietary-code-segregation posture, and training-data-inheritance citation before any seat is provisioned.',
       format: 'PDF',
@@ -256,7 +263,8 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
     },
     {
       id: 'devex-telemetry-export',
-      label: 'DevEx telemetry export (DX, LinearB, Code Climate Velocity, GitHub Insights)',
+      label:
+        'DevEx telemetry export (DX, LinearB, Code Climate Velocity, GitHub Insights)',
       rationale:
         'Names the system-of-record for cycle time, review wait, and deploy frequency; without an explicit telemetry source the baseline triggers the wishlist-baseline anti-pattern and the metric must be flagged as not yet decision-grade.',
       format: 'structured-export',
@@ -267,43 +275,50 @@ export const AI_CODING_PRIMER: ArchetypePrimer = {
   prepChecklist: [
     {
       id: 'confirm-first-cohort-bounded',
-      label: 'Confirm first cohort is bounded — one engineering function or one repo set, not the whole engineering org',
+      label:
+        'Confirm first cohort is bounded — one engineering function or one repo set, not the whole engineering org',
       rationale:
         'The "everywhere-charter" anti-pattern ("give it to all 5,000 engineers at once") is the dominant AI Coding failure pattern; a Day 1 that opens with "we want every engineer more productive" produces a thin discovery report rather than a defensible cohort decision, and the P1 anti-pattern detector will flag it at the gate.',
     },
     {
       id: 'engage-repo-architect-before-enablement',
-      label: 'Engage the Repo / Source Control Architect BEFORE the AI tool is enabled in the cohort’s repos',
+      label:
+        'Engage the Repo / Source Control Architect BEFORE the AI tool is enabled in the cohort’s repos',
       rationale:
         'Indexing posture is the privacy floor — Copilot / Cursor / Claude Code index private repos differently than public code, and proprietary-code segregation cannot be retrofitted after the model has seen the code. Engaging the Architect mid-pilot is too late; the audit has to scope the indexing surface against a measured baseline, not in response to incidents.',
     },
     {
       id: 'confirm-legal-counsel-license-posture',
-      label: 'Confirm Legal Counsel sign-off on AI-generated code license posture (copyleft, proprietary segregation, training-data inheritance)',
+      label:
+        'Confirm Legal Counsel sign-off on AI-generated code license posture (copyleft, proprietary segregation, training-data inheritance)',
       rationale:
         'License posture is a data-processing decision under most IP regimes; Legal sign-off in P1 prevents the P2 charter being rebuilt after the first audit finding and locks copyleft attribution citation before any AI-generated code merges to main.',
     },
     {
       id: 'identify-the-dissenter',
-      label: 'Identify the dissenter — usually the senior tech lead who will surface defect-rate concerns',
+      label:
+        'Identify the dissenter — usually the senior tech lead who will surface defect-rate concerns',
       rationale:
         'Stakeholder maps without a dissenter are department RACIs; the "AI generates buggy code" objection is the single most common reason AI Coding programs stall at P3/P4. Surfacing the dissenter on Day 3 with documented mitigations turns a quiet blocker into a tractable conversation and the kill-criterion anchor.',
     },
     {
       id: 'author-falsifiable-cycle-time-hypothesis',
-      label: 'Author a falsifiable hypothesis: which workflow type (boilerplate, refactor, new feature, debug) will show the largest PR-cycle-time delta?',
+      label:
+        'Author a falsifiable hypothesis: which workflow type (boilerplate, refactor, new feature, debug) will show the largest PR-cycle-time delta?',
       rationale:
         'Anti-confirmation discipline. Workshops without a stated hypothesis and falsifiers entering Day 1 become confirmation work; the PR-cycle baseline on Day 2 inherits the confirmation bias and the P2 readiness recommendation becomes a foregone conclusion. The hypothesis also frames the dissenter’s falsifiable counter-claim (e.g. "defect rate will rise more than cycle time falls").',
     },
     {
       id: 'schedule-hr-engineering-skills-day-2-afternoon',
-      label: 'Schedule HR / Engineering Skills Lead for Day 2 afternoon — prompt-literacy + AI-PR-review training plan cannot be deferred to P5',
+      label:
+        'Schedule HR / Engineering Skills Lead for Day 2 afternoon — prompt-literacy + AI-PR-review training plan cannot be deferred to P5',
       rationale:
         'Curriculum authoring has 4–6 week lead time; deferring it to P5 produces "seats provisioned, no curriculum, acceptance rates plateau" — the licence-push-without-backlog failure mode. Locking the HR / Engineering Skills slot at P1 kickoff is the difference between adoption that compounds and adoption that flat-lines.',
     },
     {
       id: 'capture-existing-ai-coding-footprint',
-      label: 'Capture existing Copilot / Cursor / Claude Code usage telemetry before Day 3',
+      label:
+        'Capture existing Copilot / Cursor / Claude Code usage telemetry before Day 3',
       rationale:
         'Most engineering orgs already have an unsanctioned AI Coding footprint or a prior pilot; surfacing actual WAU, acceptance rate, and PR-cycle deltas (the Apex broker bundle shows ~450 engineers on Copilot at 79% WAU and 26% PR cycle-time reduction) makes the dissenter’s objections answerable with data rather than rhetoric and informs the cohort-vs-tenant scope decision.',
     },

@@ -28,6 +28,7 @@ import {
   notifyApprovalSubmitted,
 } from "@/lib/programs/approval-notifications";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { assertP0SourceEvidenceReady } from "@/lib/programs/p0-source-evidence";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -400,6 +401,62 @@ export async function decideApprovalRequest(
 
   const sb = getAzureWriteFluentClient();
 
+  if (input.decision === "approved") {
+    const { data: pending, error: pendingError } = await sb
+      .from("program_approval_requests")
+      .select("program_id, tenant_key, brief_snapshot")
+      .eq("id", input.requestId)
+      .eq("request_status", "pending")
+      .maybeSingle();
+    if (pendingError) {
+      throw wrapDbError(
+        "decideApprovalRequest: pending request lookup failed",
+        pendingError,
+        { input },
+      );
+    }
+    if (pending) {
+      const request = pending as {
+        program_id?: unknown;
+        tenant_key?: unknown;
+        brief_snapshot?: unknown;
+      };
+      const programId =
+        typeof request.program_id === "string" ? request.program_id : "";
+      const tenantKey =
+        typeof request.tenant_key === "string" ? request.tenant_key : "";
+      const briefSnapshot =
+        request.brief_snapshot &&
+        typeof request.brief_snapshot === "object" &&
+        !Array.isArray(request.brief_snapshot)
+          ? (request.brief_snapshot as Record<string, unknown>)
+          : {};
+      const requestPhase = readBriefString(briefSnapshot, "phase", "");
+      let isP0Request = requestPhase === "0";
+      if (!requestPhase) {
+        const { data: engagement, error: engagementError } = await sb
+          .from("engagements")
+          .select("current_phase")
+          .eq("id", programId)
+          .maybeSingle();
+        if (engagementError || !engagement) {
+          throw wrapDbError(
+            "decideApprovalRequest: engagement phase lookup failed",
+            engagementError ?? new Error("engagement not found"),
+            { input, programId },
+          );
+        }
+        const currentPhase = (engagement as { current_phase?: unknown })
+          .current_phase;
+        isP0Request =
+          currentPhase === 0 || currentPhase === "0" || currentPhase === null;
+      }
+      if (isP0Request) {
+        await assertP0SourceEvidenceReady({ tenantKey, moveId: programId });
+      }
+    }
+  }
+
   // Conditional update — only succeeds if the row is still 'pending'.
   // This protects against double-decision races.
   const { data, error } = await sb
@@ -482,9 +539,8 @@ export async function decideApprovalRequest(
     },
   );
 
-  // One approval closes P0 (founder spec 2026-06-11): the sponsor's approval
-  // of the origination request IS the origination-brief sign-off, and the Move
-  // advances P0→P1 through the governed gate in the same act. Best-effort —
+  // One authorized workspace-user approval closes P0 and advances the Move
+  // through the governed gate in the same act. Best-effort —
   // a failure logs loudly and leaves the Move at P0 with the approval intact.
   if (request.requestStatus === "approved") {
     try {

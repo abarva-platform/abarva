@@ -1,0 +1,17 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "contracted_annual_value": "7850000",
+    "total_committed_value": "7620000",
+    "committed_annual_spend": "7620000",
+    "actual_annual_spend": "8335000",
+    "linked_budget_amount": "7620000",
+    "linked_forecast_amount": "7850000",
+    "linked_actual_amount": "8335000",
+    "linked_committed_amount": "7620000",
+    "linked_budget_lines": "12"
+  }
+]

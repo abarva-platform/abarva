@@ -437,6 +437,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:9px 10px;border-bottom:1px solid #e5e1d8;text-align:left;vertical-align:top}
 th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;background:#faf9f5}
 .note,.builder{color:#6b7280;font-size:12px}
+.scope-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#7c2d12;font-size:12px;line-height:1.5;margin:0 0 18px;padding:10px 12px}
 .graph{padding-left:18px;line-height:1.6}
 ul{margin:0;padding-left:20px;line-height:1.55}
 footer{border-top:1px solid #d8d5cc;color:#6b7280;font-size:11px;margin-top:30px;padding-top:14px}
@@ -450,8 +451,9 @@ footer{border-top:1px solid #d8d5cc;color:#6b7280;font-size:11px;margin-top:30px
 <h1>${esc(title)}</h1>
 <div class="meta">${metaHtml}</div>
 </header>
+<section class="scope-note" aria-label="Export scope">This export contains the aVa answer or chat session only. It is not a full workspace or Home walkthrough export.</section>
 ${bodyHtml}
-<footer>AbarVa aVa export. Decision-support artifact; accountable owners remain responsible for review, approval, and external use.</footer>
+<footer>AbarVa aVa export. Chat-session artifact only; accountable owners remain responsible for review, approval, and external use.</footer>
 </main>
 </body>
 </html>`;

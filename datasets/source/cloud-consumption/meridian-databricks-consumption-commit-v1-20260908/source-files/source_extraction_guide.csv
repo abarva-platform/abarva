@@ -1,0 +1,7 @@
+source_owner,source_system,extraction_method,workbook_tab,what_to_collect,likely_owner_role,nexus_rule
+Procurement,CLM / contract repository,Order form export,cloud_contract_register,"Contract headers, commitments, renewal dates, notice windows, support basis",Procurement owner,"Identity and terms are declared, not inferred."
+Finance,AP / ERP,Invoice and payment extract,monthly_spend,"Invoice amount, paid amount, actual monthly drawdown and reconciliation state",Technology finance,No realized-value claim without finance confirmation.
+Cloud platform,Databricks account console,Usage export,cloud_service_usage_monthly,"Usage by workspace, service, application, region and owner tag",Data platform owner,"Native usage is evidence, not final sourcing judgment."
+Cloud platform,Databricks system tables,Metering extract,cloud_commitment_coverage_monthly,"Commitment utilization, covered spend and candidate re-timing value",Cloud FinOps,Nexus connects utilization to commercial terms.
+Architecture,CMDB / app portfolio,Application scope extract,cmdb_application_scope,Active and planned workloads tied to Databricks dependency,Enterprise architecture,Only explicit/reviewed scope should appear as covered.
+Sourcing,AWS Marketplace / EDP tracker,Private offer feasibility note,optimization_opportunities,Whether future commitment routing is available,Cloud FinOps,Marketplace routing is a candidate action until confirmed.

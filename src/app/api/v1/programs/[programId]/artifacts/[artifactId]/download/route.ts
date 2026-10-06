@@ -17,6 +17,8 @@ const MIME: Record<string, string> = {
   html: "text/html; charset=utf-8",
   md: "text/markdown; charset=utf-8",
   pdf: "application/pdf",
+  csv: "text/csv; charset=utf-8",
+  txt: "text/plain; charset=utf-8",
 };
 
 export async function GET(
@@ -24,9 +26,9 @@ export async function GET(
   { params }: { params: Promise<{ programId: string; artifactId: string }> },
 ) {
   try {
-    const { artifactId } = await params;
+    const { artifactId, programId } = await params;
     const ctx = await requireTenancy();
-    const file = await downloadArtifactBytes(ctx, artifactId);
+    const file = await downloadArtifactBytes(ctx, artifactId, programId);
     if (!file) {
       return Response.json(
         {

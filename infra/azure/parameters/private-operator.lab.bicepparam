@@ -18,8 +18,25 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param migrationJobName = 'job-abarva-private-operator-eus'
-param imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9'
+param imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:ce60321e5adff81773a2121d1cde5d77599597a0ff485cfe6aa0e69b9e8dc14d'
 param registryServer = 'acrabarvalab001.azurecr.io'
+param replicaTimeout = 1800
+param workloadProfileName = 'Consumption'
+
+param preservedManagedIdentities = {
+  '/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-airdn-lab-eus2-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-airdn-admin-lab-001': {}
+  '/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-foundation-v2-golden-slice-reader-lab-001': {}
+  '/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-foundation-v2-golden-slice-writer-lab-001': {}
+  '/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-foundation-v2-healthcare-gs-reader-lab-001': {}
+  '/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-foundation-v2-healthcare-gs-writer-lab-001': {}
+}
+
+param additionalEnvironmentBindings = [
+  {
+    envName: 'ABARVA_AZURE_DATABASE_URL'
+    secretRef: 'azure-postgres-control-database-url'
+  }
+]
 
 param keyVaultSecretRefs = [
   {

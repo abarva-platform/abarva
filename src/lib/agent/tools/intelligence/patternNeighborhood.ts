@@ -31,7 +31,7 @@ import { resolveSentinelTenant } from './_shared';
 type NeighborhoodEdgeType = 'co_applies_with' | 'contradicts' | 'depends_on' | 'precedes';
 
 interface PatternNeighborhoodInput {
-  /** Pattern id (e.g. 'pattern_ai_use_case_portfolio') or slug. */
+  /** Pattern id or slug, as returned by search_patterns. */
   patternId: string;
   /** Edge-traversal depth, default 1, max 3. */
   depth?: number;
@@ -56,7 +56,16 @@ export const patternNeighborhoodTool: AgentTool<PatternNeighborhoodInput> = {
     properties: {
       patternId: {
         type: 'string',
-        description: "Pattern id (e.g. 'pattern_ai_use_case_portfolio') or slug.",
+        // No worked example id here on purpose. This description is
+        // handed verbatim to the model by toAnthropicToolDefinition, so
+        // an id written here is an instruction the model will follow.
+        // The example that used to sit here was retired from the corpus
+        // when it was re-keyed, and the model was still being told to
+        // use it. Ids come from search_patterns, which reads the live
+        // manifest and cannot go stale.
+        description:
+          'Pattern id or slug. Call search_patterns first and pass an id it returned, ' +
+          'rather than an id recalled from memory.',
       },
       depth: {
         type: 'number',

@@ -19,7 +19,7 @@ The public app entry now behaves like a request-access-only surface, while the a
 ## Client Applicability
 
 - All clients: protected by the same launch access gate.
-- Specific clients: current static test mappings cover Apex, First Capital, Meridian, SkyHarbor, and Lakeshore.
+- Specific clients: current static test mappings cover the declared demo client keys.
 - Internal only: admin access is limited to the approved AbarVa admin identities plus runtime env-provisioned admin emails.
 - Public/demo only: `/` remains public marketing/request-access; `/sign-in` redirects back to public marketing for signed-out users.
 - Feature flag: none.
@@ -32,7 +32,7 @@ The public app entry now behaves like a request-access-only surface, while the a
 - Updated proxy redirects and public route contract.
 - Removed visible sign-in CTAs from public marketing navigation defaults.
 - Removed secondary public marketing navigation/actions so the visible launch surface has only Request access.
-- Added Lakeshore as a first-class client key for auth/client inference.
+- Added a declared client key as a first-class auth/client inference target.
 - Added a real `/access-denied` route so signed-in but launch-unapproved sessions land on a clear access-denied page instead of a 404. The legacy `/forbidden` path now redirects there because `forbidden.tsx` is a reserved Next special file.
 
 ## QA / Validation
@@ -43,7 +43,9 @@ The public app entry now behaves like a request-access-only surface, while the a
 - PASS: local browser sanity check on `http://localhost:3000` — `/` rendered request-access marketing, `/sign-in` redirected to `/`, and `/access` rendered the private sign-in form.
 - PASS: local browser sanity check after launch-surface tightening — `/` visible nav contained only `Request access`, visible links list was empty, and `/sign-in` still redirected back to `/`.
 - PASS: local browser sanity check for `/signed-out` — route returned a 307 redirect to `/`, then rendered the request-access-only public surface.
-- PASS: local API sanity check — `anand.sundaram+meridian@thesundaram.com` returned 200 with `clientKey=meridian`; `cdio@meridian-health.example.com` and `random@example.com` returned 403 `access_not_provisioned`.
+- PASS: local API sanity check — an approved exact email returned 200 with its
+  pinned client key; an unapproved client-domain address and an unrelated
+  address returned 403 `access_not_provisioned`.
 - PASS: live incident check before patch — `/` returned 200 and ACA was healthy, but `/forbidden` returned 404. The outage symptom was an access-denied route gap for signed-in/blocked sessions, not a down container.
 - PASS: focused regression after patch — `npx jest src/__tests__/unit/proxy-public-routes.test.ts src/lib/auth/__tests__/launch-access.test.ts src/__tests__/integration/demo-code-sign-in-route.test.ts --runInBand` — 3 suites / 22 tests passed. Jest emitted pre-existing duplicate manual mock warnings.
 - PASS: focused lint after patch — `npx eslint src/app/access-denied/page.tsx src/proxy.ts src/__tests__/unit/proxy-public-routes.test.ts` — 0 errors.
@@ -51,7 +53,9 @@ The public app entry now behaves like a request-access-only surface, while the a
 
 ## Rollout Plan
 
-Merge to the controlled release branch, build the production container, deploy the app runtime, and set runtime allowlist env vars for the real Kiran/Surekha/KK emails:
+Merge to the controlled release branch, build the production container, deploy the
+app runtime, and set runtime allowlist environment variables for the approved
+exact email entries:
 
 - `ABARVA_LAUNCH_MERIDIAN_EMAILS`
 - `ABARVA_LAUNCH_LAKESHORE_EMAILS`
@@ -84,4 +88,6 @@ Not applicable.
 
 ## Known Gaps
 
-The exact real emails for Kiran Mysore, Surekha, and KK are not present in the repository. The code supports them through runtime allowlist env vars; production must set those exact email values before launch.
+The remaining runtime allowlist entries are intentionally externalized; production
+must set the approved exact email values before launch. No domain-level fallback is
+allowed.

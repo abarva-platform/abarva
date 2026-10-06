@@ -1,11 +1,45 @@
-import fs from "node:fs";
-import path from "node:path";
 import {
+  MODULE_V6_ANSWER_CONTRACT_VERSION,
   buildModuleV6PacketContract,
   buildModuleV6VisibleOutputAudit,
   moduleV6PacketPromptBlock,
   validateModuleV6VisibleSections,
 } from "../module-v6-answer-contract";
+
+// Item T-744. Only the four boundaries that would otherwise leave the process
+// are replaced: the active-client lookup, the audited AI egress preflight, the
+// Clerk-backed user-context block and the feature-flag read. Everything the
+// cases below assert on -- the header spread, the packet contract and the
+// prompt block -- is the routes' own code, running.
+jest.mock("@/lib/active-client", () => ({ getActiveClientRow: jest.fn() }));
+jest.mock("@/lib/integrations/ai-egress", () => ({
+  preflightAnthropicDirectClient: jest.fn(),
+}));
+jest.mock("@/lib/agent/userContext", () => ({
+  getUserContextPromptBlock: jest.fn(),
+}));
+jest.mock("@/lib/features/is-feature-enabled", () => ({
+  isFeatureEnabled: jest.fn(),
+}));
+
+const { getActiveClientRow } = jest.requireMock("@/lib/active-client") as {
+  getActiveClientRow: jest.Mock;
+};
+const { preflightAnthropicDirectClient } = jest.requireMock(
+  "@/lib/integrations/ai-egress",
+) as { preflightAnthropicDirectClient: jest.Mock };
+const { getUserContextPromptBlock } = jest.requireMock(
+  "@/lib/agent/userContext",
+) as { getUserContextPromptBlock: jest.Mock };
+const { isFeatureEnabled } = jest.requireMock(
+  "@/lib/features/is-feature-enabled",
+) as { isFeatureEnabled: jest.Mock };
+
+// Imported statically, below the mocks: `jest.mock` is hoisted above every
+// import in the file, so these two route modules resolve the four boundaries
+// above to the same spies these handles point at.
+import { POST as postSourceSynthesis } from "@/app/api/source/synthesis/route";
+import { POST as postMovesSynthesis } from "@/app/api/programs/synthesis/route";
 
 describe("module V6 answer contract", () => {
   it("builds an explicit packet and visible-output prompt block", () => {
@@ -93,25 +127,101 @@ describe("module V6 answer contract", () => {
     );
   });
 
-  it("keeps Source and Moves synthesis caches versioned by the V6 contract", () => {
-    const repoRoot = path.resolve(__dirname, "../../../..");
-    const routeSources = [
-      fs.readFileSync(
-        path.join(repoRoot, "src/app/api/source/synthesis/route.ts"),
-        "utf8",
-      ),
-      fs.readFileSync(
-        path.join(repoRoot, "src/app/api/programs/synthesis/route.ts"),
-        "utf8",
-      ),
-    ];
+  // Item T-744. This case used to `readFileSync` both synthesis routes and
+  // assert five string tokens appeared in them. Its SUBJECT was route
+  // behaviour -- the headers a response carries and the prompt block the route
+  // sends -- and that subject is executable, so byte-matching was a proxy for
+  // it rather than the thing itself: a rename or a refactor that kept the
+  // strings and dropped the behaviour passed. Both routes are invoked here and
+  // read off the Response and off the egress call.
+  describe("Source and Moves synthesis routes carry the V6 contract on the wire", () => {
+    const SURFACES = [
+      {
+        surface: "source",
+        post: postSourceSynthesis,
+        url: "http://localhost/api/source/synthesis",
+        body: { instanceId: "apex-retail-ams-outsourcing-2026" },
+      },
+      {
+        surface: "moves",
+        post: postMovesSynthesis,
+        url: "http://localhost/api/programs/synthesis",
+        body: {},
+      },
+    ] as const;
 
-    for (const source of routeSources) {
-      expect(source).toContain("MODULE_V6_ANSWER_CONTRACT_VERSION");
-      expect(source).toContain("X-AbarVa-V6-Contract");
-      expect(source).toContain("X-AbarVa-Renderer-Policy");
-      expect(source).toContain("placement-only");
-      expect(source).toContain("moduleV6PacketPromptBlock");
-    }
+    const request = (url: string, body: unknown) =>
+      new Request(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+    // Deliberately NOT `jest.resetModules()`. Resetting the registry re-runs
+    // the `jest.mock` factories, so the routes would then import a DIFFERENT
+    // `jest.fn()` from the one these handles point at -- the egress spy reads
+    // zero calls while the route is calling its own copy, which looks exactly
+    // like a route that stopped sending the prompt. Neither route caches
+    // anything on the paths these cases take, so there is nothing to reset.
+    beforeEach(() => {
+      getActiveClientRow.mockReset();
+      preflightAnthropicDirectClient.mockReset();
+      getUserContextPromptBlock.mockReset();
+      getUserContextPromptBlock.mockResolvedValue("");
+      isFeatureEnabled.mockReset();
+      isFeatureEnabled.mockResolvedValue(false);
+    });
+
+    // The V6 contract headers are read OFF THE RESPONSE. The no-active-client
+    // branch is used because it is the cheapest response either route can
+    // produce, and it goes through the same header spread as the streaming
+    // 200: a route that stopped attaching them would fail here too.
+    it.each(SURFACES)(
+      "$surface answers with the contract version and the placement-only renderer policy",
+      async ({ post, url, body }) => {
+        getActiveClientRow.mockResolvedValue(null);
+
+        const response = await post(request(url, body));
+
+        expect(response.headers.get("X-AbarVa-V6-Contract")).toBe(
+          MODULE_V6_ANSWER_CONTRACT_VERSION,
+        );
+        expect(response.headers.get("X-AbarVa-Renderer-Policy")).toBe(
+          "placement-only",
+        );
+      },
+    );
+
+    // The prompt block is read off WHAT THE ROUTE SENDS. `preflight` is the
+    // single audited egress boundary both routes pass every prompt through,
+    // so capturing its argument is capturing the real payload; it is refused
+    // so nothing reaches Anthropic.
+    it.each(SURFACES)(
+      "$surface sends the V6 packet prompt block to the audited egress boundary",
+      async ({ post, url, body }) => {
+        getActiveClientRow.mockResolvedValue({
+          id: "tenant-apex-retail",
+          key: "apex-retail",
+          name: "Apex Retail",
+        });
+        preflightAnthropicDirectClient.mockResolvedValue({
+          ok: false,
+          reason: "refused by test boundary",
+        });
+
+        const response = await post(request(url, body));
+
+        expect(response.status).toBe(403);
+        expect(preflightAnthropicDirectClient).toHaveBeenCalledTimes(1);
+
+        const sent = preflightAnthropicDirectClient.mock.calls[0][0].prompt as string;
+        // Not a substring of the route file: the exact text this module
+        // generates for the contract the route built.
+        expect(sent).toContain(
+          "Claude must produce every user-visible answer word",
+        );
+        expect(sent).toContain("placement_only");
+      },
+    );
   });
 });

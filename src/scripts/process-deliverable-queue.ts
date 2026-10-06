@@ -40,7 +40,9 @@ import {
 } from "@/lib/deliverables/orchestrator/runs-repository";
 import { getProgramById } from "@/lib/programs/queries";
 import { getGeneratedArtifactById } from "@/lib/artifacts/repository";
+import { phaseForOrchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { countSolutionContextEvidenceSignals } from "@/lib/programs/solution-context";
 import type {
   AudienceRole,
   DeliverableModule,
@@ -104,6 +106,34 @@ async function runMovesPremiumArtifact(
 ): Promise<void> {
   const ctx = workerCtxForRun(run);
   try {
+    const {
+      isApprovedMoveEvidenceBasisCurrent,
+      approvedMoveEvidenceRevisionForPhase,
+      loadApprovedMoveEvidenceSnapshot,
+    } =
+      await import("@/lib/programs/approved-move-evidence-snapshot");
+    const evidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: run.tenantKey,
+      moveId: payload.sourceArtifactRef,
+    });
+    const evidenceBasisIsCurrent = isApprovedMoveEvidenceBasisCurrent({
+      snapshot: evidenceSnapshot,
+      phase: payload.phase,
+      recordedRevision:
+        payload.phaseEvidenceSnapshotHash ?? payload.evidenceSnapshotHash ?? null,
+      scope: payload.phaseEvidenceSnapshotHash ? "phase" : null,
+      generatedAt: run.createdAt,
+    });
+    if (!evidenceBasisIsCurrent || !evidenceSnapshot) {
+      await completeDeliverableRun(run.id, {
+        status: "blocked",
+        error: "stale_approved_evidence_snapshot",
+        blockers: [
+          "Approved Move evidence changed after this build was queued. Re-run the build from the current evidence set.",
+        ],
+      }).catch(() => {});
+      return;
+    }
     await updateDeliverableRunProgress(run.id, {
       pct: 5,
       label: "Claimed by private operator",
@@ -157,6 +187,9 @@ async function runMovesPremiumArtifact(
       return;
     }
     if (result.status === "blocked_quality") {
+      const retrievedEvidence = countSolutionContextEvidenceSignals(
+        result.context,
+      );
       await completeDeliverableRun(run.id, {
         status: "blocked",
         blockers: result.goldenBar.reasons,
@@ -164,8 +197,10 @@ async function runMovesPremiumArtifact(
           `golden_bar_pass=false`,
           `word_count=${result.goldenBar.wordCount}`,
           `svg_count=${result.goldenBar.svgCount}`,
+          `governed_context_evidence=${retrievedEvidence}`,
         ],
         sectionCount: result.goldenBar.wordCount,
+        retrievedEvidence,
         error: "golden bar failed",
       }).catch(() => {});
       return;
@@ -185,17 +220,24 @@ async function runMovesPremiumArtifact(
       artifact: payload.artifact,
       title: payload.title,
       result,
+      evidenceSnapshotHash: evidenceSnapshot.revision,
+      phaseEvidenceSnapshotHash:
+        approvedMoveEvidenceRevisionForPhase(evidenceSnapshot, payload.phase),
     });
+    const retrievedEvidence = countSolutionContextEvidenceSignals(
+      result.context,
+    );
 
     await completeDeliverableRun(run.id, {
       status: "succeeded",
       artifactId: persisted.artifactId,
       sectionCount: result.goldenBar.wordCount,
-      retrievedEvidence: result.goldenBar.svgCount,
+      retrievedEvidence,
       warnings: [
         `golden_bar_pass=${result.goldenBar.pass}`,
         `word_count=${result.goldenBar.wordCount}`,
         `svg_count=${result.goldenBar.svgCount}`,
+        `governed_context_evidence=${retrievedEvidence}`,
         `artifact_version=${persisted.artifactVersion}`,
         `artifact_blob_stored=${persisted.artifactBlobStored}`,
         ...(result.draftOnly ? ["draft_only=true"] : []),
@@ -248,6 +290,14 @@ async function runClaimed(
       return;
     }
 
+    const phase =
+      orchestratorPayload.phase ??
+      (orchestratorPayload.module === "moves"
+        ? (phaseForOrchestratorDeliverableType(
+            orchestratorPayload.deliverableTypeKey ??
+              orchestratorPayload.deliverableType,
+          ) ?? undefined)
+        : undefined);
     if (orchestratorPayload.decisionLineage) {
       const { loadApprovedSolutionApproach } =
         await import("@/lib/programs/approved-solution-approach");
@@ -278,6 +328,7 @@ async function runClaimed(
       });
       if (
         !freshness ||
+        freshness.freshnessStatus !== "fresh" ||
         freshness.evidenceFingerprint !==
           orchestratorPayload.decisionLineage.contextSnapshotHash
       ) {
@@ -286,6 +337,48 @@ async function runClaimed(
           error: "stale_context_snapshot",
           blockers: [
             "Move evidence changed after this architecture batch was queued. Refresh the Context Extract and rebuild from the approved evidence snapshot.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+    }
+
+    if (orchestratorPayload.module === "moves") {
+      if (phase === undefined) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "moves_deliverable_phase_unresolved",
+          blockers: [
+            "The canonical phase for this Moves deliverable could not be resolved, so unscoped evidence was not sent to generation.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+      const {
+        isApprovedMoveEvidenceBasisCurrent,
+        loadApprovedMoveEvidenceSnapshot,
+      } =
+        await import("@/lib/programs/approved-move-evidence-snapshot");
+      const snapshot = await loadApprovedMoveEvidenceSnapshot({
+        tenantKey: run.tenantKey,
+        moveId: orchestratorPayload.sourceArtifactRef,
+      });
+      const evidenceBasisIsCurrent = isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase,
+        recordedRevision:
+          orchestratorPayload.phaseEvidenceSnapshotHash ??
+          orchestratorPayload.evidenceSnapshotHash ??
+          null,
+        scope: orchestratorPayload.phaseEvidenceSnapshotHash ? "phase" : null,
+        generatedAt: run.createdAt,
+      });
+      if (!evidenceBasisIsCurrent) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "stale_approved_evidence_snapshot",
+          blockers: [
+            "Approved Move evidence changed after this build was queued. Re-run Approve & Build from the current evidence set.",
           ],
         }).catch(() => {});
         return;
@@ -346,11 +439,15 @@ async function runClaimed(
         .join("\n\n"),
       approvedSolutionApproach: orchestratorPayload.approvedSolutionApproach,
       decisionLineage: orchestratorPayload.decisionLineage,
+      evidenceSnapshotHash: orchestratorPayload.evidenceSnapshotHash,
+      phaseEvidenceSnapshotHash:
+        orchestratorPayload.phaseEvidenceSnapshotHash,
       clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
       initiativeDisplayName:
         orchestratorPayload.initiativeDisplayName ||
         orchestratorPayload.useCaseArchetype,
       sourceArtifactRef: orchestratorPayload.sourceArtifactRef,
+      ...(phase !== undefined ? { phase } : {}),
       evidenceQuery: orchestratorPayload.evidenceQuery,
       outputFormats: orchestratorPayload.outputFormats as
         | OutputFormat[]
@@ -395,12 +492,14 @@ async function runClaimed(
             artifactId: result.artifactId ?? null,
             sectionCount: result.sectionCount ?? null,
             retrievedEvidence: result.retrievedEvidence ?? null,
+            contextCoverage: result.contextCoverage ?? null,
             warnings: result.warnings ?? [],
           }
         : {
             status: "blocked",
             blockers: result.blockers ?? [],
             retrievedEvidence: result.retrievedEvidence ?? null,
+            contextCoverage: result.contextCoverage ?? null,
             sectionCount: result.sectionCount ?? null,
             error: result.blockedReason ?? null,
           },

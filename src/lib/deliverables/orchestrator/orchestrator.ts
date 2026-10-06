@@ -1,7 +1,7 @@
 // Deliverable Intelligence Orchestrator — the multi-pass driver.
 //
-// Sequences: resolve brief → architect (plan) → validate plan → evidence grounding →
-// full draft → red-team critique → board-grade rewrite → render package → quality gate.
+// Sequences: resolve brief → architect → validate plan → draft sections → targeted
+// charter repair when needed → synthesize document fields → quality gate.
 //
 // The model is injected as a `ModelCaller` so the loop is testable with a stub and
 // PR-3 can plug in the audited Anthropic egress unchanged. High-stakes deliverables
@@ -23,6 +23,11 @@ import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildGenerationProgress, type GenerationProgress } from "./progress";
 import { buildPassPrompt } from "./prompt-builder";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import {
+  countBodyWords,
+  sectionShareOfFloor,
+} from "@/lib/deliverables/shared/body-word-count";
 import {
   sanitizeGenerationPlan,
   validateGenerationPlan,
@@ -31,6 +36,7 @@ import { validateDeliverableQuality } from "./quality-validator";
 import {
   mapWithConcurrency,
   extractUnsupportedFigureClaims,
+  repairEvidenceBackedUncitedFigures,
   repairUncitedFigures,
   summariseSection,
   assembleDeliverable,
@@ -220,15 +226,19 @@ export async function runDeliverableOrchestration(
   const outlineSummary = plan.sectionPlan
     .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ""}`)
     .join("\n");
-  // architect (1) + one call per planned section + synthesis (1) → the band denominator.
-  const expectedTotal = plan.sectionPlan.length + 2;
+  // Reserve bounded repair calls per planned section so progress reflects retries.
+  const isMovesCharter =
+    req.module === "moves" && req.deliverableType === "charter";
+  const maxRepairRounds = isMovesCharter ? 2 : 1;
+  const expectedTotal =
+    plan.sectionPlan.length + 2 + plan.sectionPlan.length * maxRepairRounds;
   const concurrency = (() => {
     const v = Number(process.env.ABARVA_DOCGEN_SECTION_CONCURRENCY);
     return Number.isFinite(v) && v > 0 ? v : 5;
   })();
   const validCitation = new Set(evidence.map((e) => e.citationNumber));
   const unsupportedFigureClaims: UnsupportedFigureClaim[] = [];
-  const sections: RenderableSection[] = await mapWithConcurrency(
+  let sections: RenderableSection[] = await mapWithConcurrency(
     plan.sectionPlan,
     concurrency,
     async (s) => {
@@ -252,7 +262,11 @@ export async function runDeliverableOrchestration(
       const parsed = extractJson<RenderableSection>(res.text);
       const body =
         parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
-      const unsupported = extractUnsupportedFigureClaims(body);
+      const citationRepairedBody = repairEvidenceBackedUncitedFigures(
+        body,
+        evidence,
+      );
+      const unsupported = extractUnsupportedFigureClaims(citationRepairedBody);
       for (const claim of unsupported) {
         unsupportedFigureClaims.push({
           sectionKey: s.key,
@@ -275,15 +289,155 @@ export async function runDeliverableOrchestration(
       return {
         key: s.key,
         title: (parsed && parsed.title) || s.title,
-        bodyMarkdown: repairUncitedFigures(body),
-        // Keep what the model actually wrote, so the quality gate judges the
-        // original claim rather than the repaired one — see RenderableSection.
-        rawBodyMarkdown: body,
+        bodyMarkdown: repairUncitedFigures(citationRepairedBody),
+        // Keep the evidence-backed citation repair visible to validation while
+        // leaving invented/transformed figures unsupported.
+        rawBodyMarkdown: citationRepairedBody,
         groundingMode: s.groundingMode,
         citationsUsed,
       };
     },
   );
+
+  // Repair below-floor sections with the same counting rule the quality gate
+  // uses. Charters get one bounded follow-up because a partial first repair
+  // must not leave a known, fixable shortfall for the user to rediscover by
+  // rerunning the entire build. The floor itself is unchanged and remains a
+  // hard blocker if evidence cannot support a complete document.
+  const excludeNonProse = isMovesCharter
+    ? true
+    : req.qualityBar.excludeNonProseFromBody === true;
+  for (let repairRound = 0; repairRound < maxRepairRounds; repairRound++) {
+    if (
+      countBodyWords(sections, { excludeNonProse }) >=
+      req.qualityBar.minBodyWords
+    ) {
+      break;
+    }
+
+    const targetByKey = isMovesCharter
+      ? new Map(
+          CHARTER_CONTRACT.sections
+            .filter((section) => (section.targetProseWords ?? 0) > 0)
+            .map((section) => [section.key, section.targetProseWords!]),
+        )
+      : new Map(
+          sections.map((section) => [
+            section.key,
+            sectionShareOfFloor(req.qualityBar.minBodyWords, sections.length),
+          ]),
+        );
+    const repairs = sections.flatMap((section) => {
+      const targetProseWords = targetByKey.get(section.key);
+      const plannedSection = plan.sectionPlan.find(
+        (planned) => planned.key === section.key,
+      );
+      const currentWordCount = countBodyWords([section], {
+        excludeNonProse,
+      });
+      return targetProseWords &&
+        plannedSection &&
+        currentWordCount < targetProseWords
+        ? [{ section, plannedSection, currentWordCount, targetProseWords }]
+        : [];
+    });
+
+    if (repairs.length === 0) break;
+
+    const repaired = await mapWithConcurrency(
+      repairs,
+      concurrency,
+      async ({
+        section,
+        plannedSection,
+        currentWordCount,
+        targetProseWords,
+      }) => {
+        const assignedEvidence = evidence.filter((item) =>
+          plannedSection.evidenceCitations.includes(item.citationNumber),
+        );
+        const res = await call(
+          modelCall,
+          buildPassPrompt("section_repair", {
+            req,
+            brief,
+            evidence: assignedEvidence,
+            section: plannedSection,
+            outlineSummary,
+            sectionRepair: {
+              currentBodyMarkdown: section.bodyMarkdown,
+              currentWordCount,
+              targetProseWords,
+            },
+          }),
+          req,
+          trace,
+          opts.onProgress,
+          expectedTotal,
+        );
+        const parsed = extractJson<RenderableSection>(res.text);
+        const citationRepairedBody = repairEvidenceBackedUncitedFigures(
+          (parsed && parsed.bodyMarkdown) || res.text,
+          evidence,
+        );
+        const unsupportedClaims = extractUnsupportedFigureClaims(
+          citationRepairedBody,
+        ).map((claim) => ({
+          sectionKey: section.key,
+          sectionTitle: (parsed && parsed.title) || section.title,
+          claim,
+          treatment:
+            req.deliverableType === "business_case" ||
+            req.deliverableType === "estimate_model" ||
+            req.deliverableType === "financial_model" ||
+            req.deliverableType === "value_measurement_contract"
+              ? ("open_input_required" as const)
+              : ("assumption_to_validate" as const),
+        }));
+        const citationsUsed = (
+          parsed && Array.isArray(parsed.citationsUsed)
+            ? parsed.citationsUsed
+            : section.citationsUsed
+        ).filter((n) => validCitation.has(n));
+        const repairedSection = {
+          ...section,
+          title: (parsed && parsed.title) || section.title,
+          bodyMarkdown: repairUncitedFigures(citationRepairedBody),
+          rawBodyMarkdown: citationRepairedBody,
+          citationsUsed,
+        };
+        // A repair exists to add substance. One that comes back no longer
+        // than the draft (an empty or malformed response included) is not
+        // taken, so a failed repair can never shorten the document.
+        const grew =
+          countBodyWords([repairedSection], { excludeNonProse }) >
+          currentWordCount;
+        return grew ? { section: repairedSection, unsupportedClaims } : null;
+      },
+    );
+    const accepted = repaired.filter(
+      (result): result is NonNullable<typeof result> => result !== null,
+    );
+
+    const repairedByKey = new Map(
+      accepted.map((result) => [result.section.key, result.section]),
+    );
+    const repairedKeys = new Set(repairedByKey.keys());
+    for (let index = unsupportedFigureClaims.length - 1; index >= 0; index--) {
+      if (repairedKeys.has(unsupportedFigureClaims[index].sectionKey)) {
+        unsupportedFigureClaims.splice(index, 1);
+      }
+    }
+    unsupportedFigureClaims.push(
+      ...accepted.flatMap((result) => result.unsupportedClaims),
+    );
+    sections = sections.map(
+      (section) => repairedByKey.get(section.key) ?? section,
+    );
+    opts.onProgress?.(
+      buildGenerationProgress("section_repair", trace.length, trace.length + 1),
+    );
+  }
 
   // Synthesis — the doc-level structured fields the quality gate checks (recommendation,
   // risk/issues/dependencies table, client-to-complete checklist).
@@ -298,7 +452,7 @@ export async function runDeliverableOrchestration(
     req,
     trace,
     opts.onProgress,
-    expectedTotal,
+    trace.length + 1,
   );
   const synth = extractJson<SynthesisResult>(synthRes.text) ?? {};
   const document: RenderableDeliverable = assembleDeliverable(
@@ -312,8 +466,12 @@ export async function runDeliverableOrchestration(
     },
   );
 
-  // Quality gate
-  const quality = validateDeliverableQuality(document, req);
+  // Quality gate. The brief is passed so the gate can count the exhibits it
+  // asked for against the ones that arrived (C-514) — the request side lives
+  // only here, and the gate cannot recover it from `req`.
+  const quality = validateDeliverableQuality(document, req, {
+    expectedExhibits: brief.expectedExhibits,
+  });
   const ok = enforceQualityGate ? quality.pass : true;
   return {
     ok,

@@ -81,10 +81,7 @@ beforeEach(() => {
 });
 
 describe("advance_phase tool", () => {
-  // SECURITY (audit 2026-05-22, P2-8): the agent never SATISFIES a gate
-  // approval. Even with gate-approval rights it only ever CREATES a
-  // pending approval request; self-approval is a deterministic UI action.
-  it("creates an approval request — never self-approves — when a gate requires approval", async () => {
+  it("leaves a ready gate for an authorized workspace user to approve in Moves", async () => {
     const result = await advancePhaseTool.handler(
       {
         program_id: "program-1",
@@ -96,18 +93,11 @@ describe("advance_phase tool", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("approval_required");
-    expect(requestFounderApprovalMock).toHaveBeenCalledWith(
-      tenancy,
-      "program-1",
-      expect.objectContaining({
-        requestType: "phase_gate",
-        headline: "Approve phase 3 → 4 gate",
-      }),
-    );
+    expect(requestFounderApprovalMock).not.toHaveBeenCalled();
     expect(advancePhaseMutationMock).not.toHaveBeenCalled();
   });
 
-  it("creates the sponsor approval request when no override is requested", async () => {
+  it("does not create a sponsor approval request when no override is requested", async () => {
     const result = await advancePhaseTool.handler(
       {
         program_id: "program-1",
@@ -120,18 +110,12 @@ describe("advance_phase tool", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("approval_required");
-    expect(requestFounderApprovalMock).toHaveBeenCalledWith(
-      tenancy,
-      "program-1",
-      expect.objectContaining({
-        requestType: "phase_gate",
-        headline: "Approve phase 3 → 4 gate",
-      }),
-    );
+    expect(requestFounderApprovalMock).not.toHaveBeenCalled();
     expect(advancePhaseMutationMock).not.toHaveBeenCalled();
   });
 
   it("refuses a gate bypass when the session lacks gate approval rights", async () => {
+    requireTenancyMock.mockResolvedValue({ ...tenancy, role: "founder" });
     loadUserProgramAccessPolicyMock.mockResolvedValue({
       programIdsAllowed: null,
       canApproveGates: false,

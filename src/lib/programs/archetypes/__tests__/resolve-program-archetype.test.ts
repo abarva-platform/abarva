@@ -9,6 +9,7 @@ import {
   CONTACT_CENTER_AGENT_ASSIST,
   IT_SOURCING_EVENT,
 } from "../registry";
+import { ANALYSIS_METHODS } from "../method-library";
 import { resolveArchetypeRequirements } from "../resolver";
 import { emptyProfile } from "@/lib/programs/current-state-readiness";
 
@@ -242,6 +243,35 @@ describe("ANALYTICS_CAPABILITY_REPATRIATION — registry shape", () => {
     );
   });
 
+  it("resolves its distinct control-readiness and parity-traceability methods", () => {
+    const controlReadiness =
+      ANALYSIS_METHODS.strategic_control_repatriation_readiness;
+    const parityTraceability =
+      ANALYSIS_METHODS.capability_parity_traceability;
+
+    expect(controlReadiness).toMatchObject({
+      key: "strategic_control_repatriation_readiness",
+      producesArtifact: "repatriation_readiness_assessment",
+    });
+    expect(parityTraceability).toMatchObject({
+      key: "capability_parity_traceability",
+      producesArtifact: "capability_parity_trace",
+    });
+    expect(controlReadiness.label).not.toBe(parityTraceability.label);
+    expect(controlReadiness.consumesFamilies).toEqual(
+      expect.arrayContaining([
+        "analytics_capability_inventory",
+        "contract_ip_data_return_exit",
+      ]),
+    );
+    expect(parityTraceability.consumesFamilies).toEqual(
+      expect.arrayContaining([
+        "business_rules_measure_logic",
+        "data_quality_identity_conformance",
+      ]),
+    );
+  });
+
   it("business case prohibits simplistic vendor-spend-minus-platform-cost savings", () => {
     const businessCase = ANALYTICS_CAPABILITY_REPATRIATION.deliverablePack.find(
       (d) => d.key === "business_case",
@@ -294,6 +324,13 @@ describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
       diagnose.requiredEvidence.map((r) => [r.family, r.severity]),
     );
     expect(byFamily["solution_delivery_estimation_context"]).toBe("soft");
+  });
+
+  it("accepts structured CSV workflow maps for member-service process evidence", () => {
+    const processMap = CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies.find(
+      (family) => family.key === "member_service_process_map",
+    );
+    expect(processMap?.acceptedFormats).toContain("csv");
   });
 
   it("renders soft P2 delivery-estimation rationale as optional, not required", () => {

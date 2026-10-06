@@ -8,6 +8,10 @@
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../../_auth";
 import { decideEvidenceReview } from "@/lib/programs/current-state-doc-ingest";
+import { getProgramById } from "@/lib/programs/queries";
+import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
+import { normalizeReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,18 +23,42 @@ export async function POST(
   try {
     const { programId, evidenceId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase("mutation");
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
+      return Response.json({ error: "forbidden" }, { status: 403 });
+    }
 
     const body = (await req.json().catch(() => ({}))) as {
       decision?: string;
       rationale?: string;
+      reviewedExtraction?: unknown;
     };
     const decision = body.decision === "rejected" ? "rejected" : "approved";
+    const reviewedExtraction =
+      decision === "approved"
+        ? normalizeReviewedEvidenceExtraction(body.reviewedExtraction)
+        : undefined;
+    if (decision === "approved" && !reviewedExtraction) {
+      return Response.json(
+        { error: "reviewed_extraction_required" },
+        { status: 400 },
+      );
+    }
 
     const result = await decideEvidenceReview(ctx, {
       moveId: programId,
       evidenceId,
       decision,
       rationale: body.rationale,
+      reviewedExtraction: reviewedExtraction ?? undefined,
     });
 
     if (!result.ok) {

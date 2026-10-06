@@ -206,6 +206,8 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:migrate:dry \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -220,6 +222,8 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:migrate:ci \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -234,11 +238,29 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:azure:verify \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --out-dir audit-artifacts/db-migration-lab/readback \
             | tee audit-artifacts/db-migration-lab/readback.log
+
+      - name: Moves current-state schema readback
+        id: moves_current_state_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
+            --script db:verify:moves-current-state-schema \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/moves-current-state-readback \
+            | tee audit-artifacts/db-migration-lab/moves-current-state-readback.log
 
       # Database-version half of the audit chain: the schema_migrations
       # ledger itself (name, sha256, applied_at for every applied
@@ -260,6 +282,8 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:migrate:ledger \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -278,6 +302,8 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:verify:source-stage-guidebooks \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -297,11 +323,68 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:verify:source-artifact-acceptances \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --out-dir audit-artifacts/db-migration-lab/artifact-acceptances-readback \
             | tee audit-artifacts/db-migration-lab/artifact-acceptances-readback.log
+
+      # Source approval route core persistence check: creates a synthetic
+      # non-client event, runs applyApproval + updateStage through the Azure
+      # Source write adapter, then reads the approval receipt through the
+      # ledger loader. This catches the class of failure where the table exists
+      # in migration history but the approval button's database contract still
+      # cannot persist or display the receipt.
+      - name: Repository readback — event approvals
+        id: event_approvals_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-event-approvals \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/event-approvals-readback \
+            | tee audit-artifacts/db-migration-lab/event-approvals-readback.log
+
+      # The canvas can render virtual fallback rows when physical state tables
+      # are absent, so a health check alone cannot detect this drift. Exercise
+      # the actual Azure read/write seams against a synthetic fixture and
+      # remove it in the same transaction before declaring migration success.
+      - name: Repository readback — Source canvas substrate
+        id: source_canvas_substrate_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-canvas-substrate \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/source-canvas-substrate-readback \
+            | tee audit-artifacts/db-migration-lab/source-canvas-substrate-readback.log
+
+      # Parsed evidence must be physically present before an accepted upload
+      # can become chunks, facts, requirements, pricing, or reasoning context.
+      # This catches migration-ledger drift without writing any tenant rows.
+      - name: Repository readback — Source artifact substrate
+        id: source_artifact_substrate_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-artifact-substrate \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/source-artifact-substrate-readback \
+            | tee audit-artifacts/db-migration-lab/source-artifact-substrate-readback.log
 
       # Affected-feature verification: confirm the deployed application is
       # still healthy after the schema change. This is a coarse signal
@@ -386,7 +469,7 @@ jobs:
             echo
             if [[ "${{ inputs.mode }}" == "apply" ]]; then
               echo "Applied via the ACA operator job (advisory-locked, sha256 drift-checked)."
-              echo "Sequence completed: schema readback -> migration ledger -> repository readback -> affected-feature health -> audit chain."
+              echo "Sequence completed: schema readback -> Moves current-state readback -> migration ledger -> repository readback -> affected-feature health -> audit chain."
               echo
               if [[ -f audit-artifacts/db-migration-lab/audit-chain.json ]]; then
                 echo "### Audit chain"

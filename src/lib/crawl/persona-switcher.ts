@@ -6,6 +6,12 @@ import {
   createClerkTestingTokenForCrawl,
   installClerkTestingTokenInterceptor,
 } from "@/lib/crawl/clerk-testing-token";
+import {
+  classifyCrawlAuthFailure,
+  formatCrawlAuthVerdictLine,
+  clerkMintUrlHost,
+  type CrawlAuthMintOutcome,
+} from "@/lib/crawl/clerk-auth-cause";
 
 export interface CrawlPersona {
   key: string;
@@ -289,30 +295,21 @@ async function signInPersonaWithClerkTicket(
   const secretKey = process.env.CLERK_SECRET_KEY?.trim();
   if (!secretKey) throw new Error("Missing CLERK_SECRET_KEY");
 
-  const clerk = createClerkClient({ secretKey });
-  const users = await withTimeout(
-    clerk.users.getUserList({
-      emailAddress: [persona.email],
-      limit: 1,
-    }),
-    20_000,
-    `crawl_clerk_ticket_user_lookup_timeout:${persona.key}`,
+  // C-639: the mint is observed SEPARATELY from the redemption, because
+  // `This ticket is invalid` alone cannot say whether the secret names the
+  // wrong Clerk instance (an operator provisions it) or the crawl redeems
+  // wrongly (this lane fixes it). Neither stage is allowed to pass silently.
+  const { mint, ticketToken, mintedAt } = await mintClerkTicket(
+    secretKey,
+    persona,
   );
-  const user = users.data[0];
-  if (!user) {
-    throw new Error(`crawl_clerk_ticket_user_not_found:${persona.email}`);
-  }
 
-  const token = await withTimeout(
-    clerk.signInTokens.createSignInToken({
-      userId: user.id,
-      expiresInSeconds: 300,
-    }),
-    20_000,
-    `crawl_clerk_ticket_create_timeout:${persona.key}`,
-  );
   const testingToken = await createClerkTestingTokenForCrawl();
-  await installClerkTestingTokenInterceptor(page, testingToken);
+  await installClerkTestingTokenInterceptor(
+    page,
+    testingToken,
+    options.baseUrl,
+  );
   if (testingToken) {
     console.log(`crawl_clerk_testing_token_installed:${persona.key}`);
   }
@@ -330,6 +327,117 @@ async function signInPersonaWithClerkTicket(
     null,
     { timeout: 30_000 },
   );
+  try {
+    await redeemClerkTicketInBrowser(page, ticketToken);
+  } catch (error) {
+    const verdict = classifyCrawlAuthFailure({
+      mint,
+      redeem: {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        elapsedMsSinceMint: Date.now() - mintedAt,
+      },
+      publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    });
+    const line = formatCrawlAuthVerdictLine(persona.key, verdict);
+    console.warn(line);
+    throw new Error(line);
+  }
+
+  await page.context().addCookies([
+    {
+      name: "abarva_active_client",
+      value: persona.tenantKey,
+      domain: new URL(options.baseUrl).hostname,
+      path: "/",
+      sameSite: "Lax",
+      secure: options.baseUrl.startsWith("https://"),
+    },
+  ]);
+}
+
+const TICKET_EXPIRY_SECONDS = 300;
+
+/**
+ * Mints the sign-in ticket and reports that stage on its own. A refusal here is
+ * upstream of the browser, so it is classified and thrown as such rather than
+ * being allowed to arrive later disguised as a redemption failure.
+ */
+async function mintClerkTicket(
+  secretKey: string,
+  persona: CrawlPersona,
+): Promise<{
+  mint: CrawlAuthMintOutcome;
+  ticketToken: string;
+  mintedAt: number;
+}> {
+  const clerk = createClerkClient({ secretKey });
+  const mint: CrawlAuthMintOutcome = {
+    ok: false,
+    expiresInSeconds: TICKET_EXPIRY_SECONDS,
+  };
+
+  try {
+    const users = await withTimeout(
+      clerk.users.getUserList({
+        emailAddress: [persona.email],
+        limit: 1,
+      }),
+      20_000,
+      `crawl_clerk_ticket_user_lookup_timeout:${persona.key}`,
+    );
+    const user = users.data[0];
+    if (!user) {
+      throw new Error(`crawl_clerk_ticket_user_not_found:${persona.email}`);
+    }
+
+    const token = await withTimeout(
+      clerk.signInTokens.createSignInToken({
+        userId: user.id,
+        expiresInSeconds: TICKET_EXPIRY_SECONDS,
+      }),
+      20_000,
+      `crawl_clerk_ticket_create_timeout:${persona.key}`,
+    );
+    mint.ok = true;
+    mint.ticket = token.token;
+    // C-640: the rest of the real `SignInToken`. `url` is served by the
+    // MINTING instance and is the mint-side identity now that the ticket is
+    // known to carry no decodable `iss` live (run `37155858207`).
+    mint.url = token.url;
+    mint.status = token.status;
+    mint.tokenId = token.id;
+    console.log(`crawl_auth_mint_ok:${persona.key}`);
+    // Logged verbatim and ahead of any verdict, because one run of this may
+    // settle the question outright. The HOST only: `url` carries the live
+    // ticket in `__clerk_ticket`, and a CI log is readable by anyone with
+    // repository read, so printing the url itself would publish a credential.
+    console.log(
+      `crawl_auth_mint_identity:${persona.key}` +
+        `:status=${token.status || "unreadable"}` +
+        `:token_id=${token.id || "unreadable"}` +
+        `:url_host=${clerkMintUrlHost(token.url) ?? "unreadable"}`,
+    );
+    return { mint, ticketToken: token.token, mintedAt: Date.now() };
+  } catch (error) {
+    mint.error = error instanceof Error ? error.message : String(error);
+    const line = formatCrawlAuthVerdictLine(
+      persona.key,
+      classifyCrawlAuthFailure({
+        mint,
+        redeem: { ok: false, error: "not attempted" },
+        publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      }),
+    );
+    console.warn(line);
+    throw new Error(line);
+  }
+}
+
+async function redeemClerkTicketInBrowser(
+  page: Page,
+  ticketToken: string,
+): Promise<void> {
   await page.evaluate(async (ticket) => {
     const clerk = (
       window as unknown as {
@@ -356,23 +464,12 @@ async function signInPersonaWithClerkTicket(
       );
     }
     await clerk?.setActive?.({ session: result.createdSessionId });
-  }, token.token);
+  }, ticketToken);
   await page.waitForFunction(
     () => document.cookie.includes("__session="),
     null,
     { timeout: 20_000 },
   );
-
-  await page.context().addCookies([
-    {
-      name: "abarva_active_client",
-      value: persona.tenantKey,
-      domain: new URL(options.baseUrl).hostname,
-      path: "/",
-      sameSite: "Lax",
-      secure: options.baseUrl.startsWith("https://"),
-    },
-  ]);
 }
 
 async function withTimeout<T>(

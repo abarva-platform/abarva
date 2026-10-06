@@ -1,11 +1,14 @@
 import { buildAvaSourceContractGrounding } from "../ava-contract-grounding-context";
 
 const getContract360 = jest.fn();
+const getContractIntelligence = jest.fn();
 const getContractOptimizationOpportunitySet = jest.fn();
 const getContractOptimizationEvidencePack = jest.fn();
 
 jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContract360: (...args: unknown[]) => getContract360(...args),
+  getContractIntelligence: (...args: unknown[]) =>
+    getContractIntelligence(...args),
   getContractOptimizationOpportunitySet: (...args: unknown[]) =>
     getContractOptimizationOpportunitySet(...args),
   getContractOptimizationEvidencePack: (...args: unknown[]) =>
@@ -64,13 +67,27 @@ function opportunity(overrides: Record<string, unknown> = {}) {
 }
 
 function opportunitySet(overrides: Record<string, unknown> = {}) {
+  const opportunities =
+    (overrides.opportunities as ReturnType<typeof opportunity>[] | undefined) ??
+    [opportunity()];
   return {
     tenantKey: "skyharbor-air",
     datasetVersion: "v1",
     contractId: "CTR-090",
     baseline: { status: "missing" },
     selectedOpportunityId: "CTR-090:rate-variance",
-    opportunities: [opportunity()],
+    opportunities,
+    claims: opportunities.map((row) => ({
+      claimId: `${row.opportunityId}:sizing`,
+      opportunityId: row.opportunityId,
+      contractId: row.contractId,
+      role: "sizing",
+      basis: "calculated",
+      evidenceStatus: "supported",
+      amountUsd: row.amountUsd,
+      calculationRunId: row.calculation ? `run:${row.opportunityId}` : null,
+      sourceRefs: [{ tableName: "source.calculation_input" }],
+    })),
     financeRealizations: [],
     approvalRequests: [],
     negotiatedOutcomes: [],
@@ -86,6 +103,7 @@ function opportunitySet(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   getContract360.mockResolvedValue(contractRow());
+  getContractIntelligence.mockResolvedValue(null);
   getContractOptimizationOpportunitySet.mockImplementation(
     (_tenantKey: string, contractId: string) =>
       Promise.resolve(
@@ -101,9 +119,9 @@ describe("buildAvaSourceContractGrounding", () => {
       block: "",
       hasLiveNumbers: false,
     });
-    expect(await buildAvaSourceContractGrounding("skyharbor-air", "  ")).toEqual(
-      { block: "", hasLiveNumbers: false },
-    );
+    expect(
+      await buildAvaSourceContractGrounding("skyharbor-air", "  "),
+    ).toEqual({ block: "", hasLiveNumbers: false });
   });
 
   it("returns nothing for an unknown contract rather than guessing", async () => {
@@ -151,7 +169,9 @@ describe("buildAvaSourceContractGrounding", () => {
     );
     expect(block).toContain('Exact vendor display name: "Salesforce"');
     expect(block).toContain("Annual value: $43.5M");
-    expect(block).toContain("Contract-grain grounding IS available for CTR-090");
+    expect(block).toContain(
+      "Contract-grain grounding IS available for CTR-090",
+    );
   });
 
   it("grounds the contract with baseline, readiness, and traceability", async () => {
@@ -172,6 +192,60 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("0 of 8 required evidence families");
     expect(block).toContain("Missing:");
     expect(block).toContain("Rate variance");
+    expect(block).toContain(
+      "Annual value is the contract header value, not an annual commitment",
+    );
+    expect(block).toContain(
+      "never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status",
+    );
+  });
+
+  it("never emits a blank contract or vendor display name", async () => {
+    getContract360.mockResolvedValue(
+      contractRow({ contract_name: "  ", vendor_name: "" }),
+    );
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({ contractName: "", vendorName: "" }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain('Exact contract display name: "Contract CTR-090"');
+    expect(block).toContain(
+      'Exact vendor display name: "Vendor not established"',
+    );
+  });
+
+  it("includes the governed contract-intelligence record without rewriting it", async () => {
+    getContractIntelligence.mockResolvedValue({
+      contract_id: "CTR-090",
+      intelligence_record: {
+        model_version: "source-contract-intelligence-v1",
+        contract: { archetype_key: "cloud_consumption" },
+        anatomy: {
+          plain_english: "A cloud commitment tied to governed workloads.",
+        },
+        education: {
+          headline: "Manage the commitment against real workload demand.",
+        },
+        industry_intelligence: { state: "missing_benchmark" },
+      },
+    });
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain("LOAD-TIME CONTRACT INTELLIGENCE RECORD");
+    expect(block).toContain("cloud_consumption");
+    expect(block).toContain("A cloud commitment tied to governed workloads.");
+    expect(block).toContain(
+      "Explain it, but do not add facts, relationships, benchmarks, or amounts outside it.",
+    );
   });
 
   it("grounds Contract 360 lineage questions with source systems, fields, grain, history, and update frequency", async () => {
@@ -180,7 +254,9 @@ describe("buildAvaSourceContractGrounding", () => {
       "CTR-090",
     );
 
-    expect(block).toContain("Source-system evidence map for this contract view");
+    expect(block).toContain(
+      "Source-system evidence map for this contract view",
+    );
     expect(block).toContain("CLM / contract repository");
     expect(block).toContain("AP / ERP / financial subledger");
     expect(block).toContain("ITSM / service management");
@@ -260,8 +336,18 @@ describe("buildAvaSourceContractGrounding", () => {
           opportunity({
             opportunityId: "CTR-090:negotiated",
             shortLabel: "Price and term improvement",
-            valueType: "negotiable_improvement",
+            valueType: "negotiated_improvement",
             amountUsd: 1_300_000,
+            negotiationDetail: {
+              buyerAsk: "Reset the Year 2 commitment ramp.",
+              negotiationLanguage:
+                "Tie commitment step-up to production workload gates.",
+              vendorConcession: "Accept milestone-based consumption growth.",
+              timingDependency: "Before renewal lock-in.",
+              ownerRole: "Strategic sourcing",
+              priority: "P0",
+              riskIfIgnored: "Shelfware commitment persists.",
+            },
             calculation: {
               ruleId: "terms",
               ruleVersion: "1",
@@ -296,9 +382,93 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain(
       "Largest reproducible non-realized ledger for chart narration: Recoverable leakage at $3.1M.",
     );
+    expect(block).toContain("buyer ask: Reset the Year 2 commitment ramp.");
+    expect(block).toContain(
+      "negotiation language: Tie commitment step-up to production workload gates.",
+    );
     expect(block).toContain(
       "If the user asks for a chart, graph, or table, use the chart-safe ledger totals above",
     );
+  });
+
+  it("gives aVa copy-ready export rows with owner, timing, and signal-stage limits", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        opportunities: [
+          opportunity({
+            opportunityId: "CTR-090:retime",
+            shortLabel: "Re-time commitment",
+            valueType: "negotiated_improvement",
+            amountUsd: 1_480_000,
+            calculation: {
+              ...opportunity().calculation,
+              calculatedAmountUsd: 1_480_000,
+            },
+            amountState: "exact",
+            stage: "quantified",
+            evidenceGrade: "document_evidenced",
+            negotiationDetail: {
+              buyerAsk: "Move the Year 2 commitment to match production gates.",
+              negotiationLanguage:
+                "Re-time annual commitment to program delivery pace.",
+              vendorConcession:
+                "Preserves the account while aligning payment to adoption.",
+              timingDependency: "Before Year 2 lock-in.",
+              ownerRole: "VP Technology Sourcing",
+              priority: "P0",
+              riskIfIgnored: "Auto-renew preserves unused capacity.",
+            },
+          }),
+          opportunity({
+            opportunityId: "CTR-090:discount",
+            shortLabel: "Discount band review",
+            valueType: "negotiated_improvement",
+            amountUsd: null,
+            amountState: "not_sized",
+            stage: "signal",
+            confidence: 0.35,
+            evidenceGrade: "missing",
+            blockingGap: "Benchmark comparable not loaded",
+            negotiationDetail: {
+              buyerAsk:
+                "Review the discount band after a benchmark comparable is loaded.",
+              negotiationLanguage:
+                "Do not re-open price until a comparable is accepted.",
+              vendorConcession:
+                "Vendor can agree once the buyer proves comparable market terms.",
+              timingDependency: "Hold back until benchmark evidence is ready.",
+              ownerRole: "Strategic Sourcing",
+              priority: "P5",
+              riskIfIgnored: "Premature pricing ask reopens term length.",
+            },
+          }),
+        ],
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain("CONTRACT OPTIMIZATION EXPORT ROWS");
+    expect(block).toContain(
+      "Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet",
+    );
+    expect(block).toContain("Lever: Re-time commitment");
+    expect(block).toContain("Value state: $1.5M");
+    expect(block).toContain(
+      "Owner / timing: VP Technology Sourcing / Before Year 2 lock-in.",
+    );
+    expect(block).toContain("Lever: Discount band review");
+    expect(block).toContain(
+      "Value state: Not sized - needs evidence before it carries a number",
+    );
+    expect(block).toContain("blocking gap: Benchmark comparable not loaded");
+    expect(block).toContain(
+      "answer with only a short executive read and the required lever table",
+    );
+    expect(block).toContain("Do not add sections named VISUALS");
   });
 
   it("separates reproducible value from value nothing can rebuild", async () => {
@@ -329,6 +499,90 @@ describe("buildAvaSourceContractGrounding", () => {
       "Stated value with no reproducible calculation run: $2.4M",
     );
     expect(block).toContain("amount cannot be reproduced");
+    expect(block).toContain(
+      "Scope reduction · avoided cost · stated $2.4M; no reproducible calculation run",
+    );
+    expect(block).not.toContain("Value state: $2.4M");
+  });
+
+  it("does not treat descriptive fallback calculations as persisted runs", async () => {
+    const fallback = opportunitySet();
+    fallback.claims[0].calculationRunId = null;
+    getContractOptimizationOpportunitySet.mockResolvedValue(fallback);
+
+    const { block } = await buildAvaSourceContractGrounding("skyharbor-air", "CTR-090");
+    expect(block).toContain("Opportunity value that a calculation run can reproduce: not established");
+    expect(block).toContain("Stated value with no reproducible calculation run: $365K");
+    expect(block).toContain("Value state: stated $365K; no reproducible calculation run");
+  });
+
+  it("keeps partial and mismatched sizing claims out of the reproducible total", async () => {
+    for (const change of [
+      (set: ReturnType<typeof opportunitySet>) => { set.claims[0].evidenceStatus = "partial"; },
+      (set: ReturnType<typeof opportunitySet>) => { set.claims[0].amountUsd = 300_000; },
+      (set: ReturnType<typeof opportunitySet>) => { set.opportunities[0].calculation.calculatedAmountUsd = 300_000; },
+    ]) {
+      const set = opportunitySet();
+      change(set);
+      getContractOptimizationOpportunitySet.mockResolvedValue(set);
+      const { block } = await buildAvaSourceContractGrounding("skyharbor-air", "CTR-090");
+      expect(block).toContain("Opportunity value that a calculation run can reproduce: not established");
+      expect(block).toContain("Stated value with no reproducible calculation run: $365K");
+    }
+  });
+
+  it("quotes the Contract 360 stated value with an unresolved 43.5/44/42 conflict", async () => {
+    getContract360.mockResolvedValue(
+      contractRow({
+        annual_value: 43_500_000,
+        resolved_annual_value: 44_000_000,
+        annual_value_conflict_flag: true,
+      }),
+    );
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        baseline: { status: "conflict", annualValueUsd: 42_000_000 },
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+    expect(block).toContain("Annual value: $43.5M");
+    expect(block).toContain("conflict is unresolved");
+    expect(block).toContain("not a reconciled baseline");
+    expect(block).not.toContain("Annual value: $44M");
+    expect(block).not.toContain("Annual value: $42M");
+  });
+
+  it("labels a claim/output mismatch as unreconciled in answer and export rows", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        opportunities: [opportunity({ amountUsd: 500_000 })],
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+    expect(block).toContain("stated $500K; no reproducible calculation run");
+    expect(block).not.toContain("Value state: $500K");
+    expect(block).toContain(
+      "Opportunity value that a calculation run can reproduce: not established",
+    );
+  });
+
+  it("does not total a numeric compatibility field marked not sized", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(opportunitySet({
+      opportunities: [opportunity({ amountUsd: 500_000, amountState: "not_sized" })],
+    }));
+
+    const { block } = await buildAvaSourceContractGrounding("skyharbor-air", "CTR-090");
+    expect(block).toContain("Opportunity value that a calculation run can reproduce: not established");
+    expect(block).toContain("Value state: Not sized");
+    expect(block).not.toContain("Opportunity rows:\n- Rate variance · recoverable leakage · $500K");
   });
 
   it("cancels the portfolio block's deflection for this contract", async () => {
@@ -336,11 +590,13 @@ describe("buildAvaSourceContractGrounding", () => {
       "skyharbor-air",
       "CTR-090",
     );
-    expect(block).toContain("Contract-grain grounding IS available for CTR-090");
+    expect(block).toContain(
+      "Contract-grain grounding IS available for CTR-090",
+    );
     expect(block).toContain("do NOT deflect them to Contract 360");
   });
 
-  it("quotes the resolved value when the stated annual value is in conflict", async () => {
+  it("keeps the stated header value when extraction conflicts", async () => {
     getContract360.mockResolvedValue(
       contractRow({
         annual_value: 43_500_000,
@@ -353,9 +609,9 @@ describe("buildAvaSourceContractGrounding", () => {
       "skyharbor-air",
       "CTR-090",
     );
-    expect(block).toContain("$41M");
-    expect(block).not.toContain("Annual value: $43.5M");
-    expect(block).toContain("disagreed");
+    expect(block).toContain("Annual value: $43.5M");
+    expect(block).not.toContain("Annual value: $41M");
+    expect(block).toContain("not a reconciled baseline");
   });
 
   it("states approved realized value only from Finance/Tower approval", async () => {
@@ -421,8 +677,6 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("Approved realized value: $0 until");
     expect(block).toContain("Approved realized value $0");
     expect(block).not.toContain("Finance-confirmed realized value: $940K");
-    expect(block).toContain(
-      "do not say Finance has confirmed",
-    );
+    expect(block).toContain("do not say Finance has confirmed");
   });
 });

@@ -1,0 +1,31 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "contract_name": "Databricks Enterprise Agreement — Platform, Support & Committed Purchase",
+    "vendor_name": "Databricks, Inc.",
+    "vendor_ref": "MER-VEN-DATABRICKS",
+    "category": "cloud_data_platform_subscription",
+    "archetype": "consumption_commit",
+    "start_date": "2025-10-15",
+    "end_date": "2030-10-14",
+    "business_owner": "VP Technology & Data",
+    "source_confidence": "high",
+    "termination_rights": "for_cause_only",
+    "notice_period_days": "90",
+    "benchmarking_clause": "absent",
+    "alternatives_available": "true",
+    "annual_value_usd": "1550000",
+    "committed_annual_spend_usd": "1550000",
+    "actual_annual_spend_usd": "66100",
+    "total_committed_usd": "7750000",
+    "term_years": "5",
+    "auto_renew": "true",
+    "synthetic_policy": "synthetic_demo_only_not_client_truth",
+    "source_row_id": "SRC-CTR-001",
+    "adapter_name": "contract_register_adapter",
+    "adapter_row_number": "1",
+    "adapter_version": "source-contract-depth-v1"
+  }
+]

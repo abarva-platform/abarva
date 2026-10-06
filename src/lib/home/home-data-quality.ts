@@ -195,7 +195,11 @@ export function normalizeHomeQualityTenantKey(
     normalized === "skyharbor-air" ||
     normalized === "skyharbor-global"
   ) {
-    return "skyharbor_global";
+    // The canonical key, declared in the tenant alias table. "skyharbor_global" is an ALIAS of it,
+    // and this function returning the alias made it the one output here that was not canonical --
+    // every other branch already returns one. It also silently killed the branch below, which
+    // compared against the canonical key and could therefore never be true.
+    return "skyharbor-air";
   }
   if (normalized === "lakeshore" || normalized === "lakeshore-industries") {
     return "lakeshore-holdings";
@@ -441,8 +445,10 @@ export function buildHomeDataQualityModel(
     ),
     candidatePreview,
     caveats,
+    // Compared against the normaliser's own output rather than a key written out here. A literal on
+    // one side of a comparison whose other side is computed is a branch waiting to go dead.
     skyHarborRegression:
-      tenantKey === "skyharbor-air"
+      tenantKey === normalizeHomeQualityTenantKey("skyharbor")
         ? {
             sourceRichCandidateThin,
             answerability: answerability.status,

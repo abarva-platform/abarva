@@ -2,14 +2,20 @@
 import {
   mapWithConcurrency,
   extractUnsupportedFigureClaims,
+  repairEvidenceBackedUncitedFigures,
   repairUncitedFigures,
   buildSourceRegister,
   assembleDeliverable,
   consolidateOpenInputPlaceholders,
+  exhibitRejectionReason,
   type SynthesisResult,
 } from "../section-generation";
+import { validateDeliverableQuality } from "../quality-validator";
+import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
-import type { RenderableSection } from "../types";
+import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import type { GovernedEvidenceItem, RenderableSection } from "../types";
 
 describe("mapWithConcurrency", () => {
   it("preserves order and never exceeds the concurrency limit", async () => {
@@ -54,6 +60,56 @@ describe("repairUncitedFigures", () => {
   });
 });
 
+describe("repairEvidenceBackedUncitedFigures", () => {
+  const evidence: GovernedEvidenceItem[] = [
+    {
+      citationNumber: 4,
+      label: "Open care gaps",
+      statement: "Open care gaps: 1,142,000.",
+      evidenceFamily: "baseline_metric",
+      confidence: "high",
+      disclosureTier: "internal_only",
+      provenanceRef: "test:open-care-gaps",
+    },
+  ];
+
+  it("adds a citation for an uncited exact governed number", () => {
+    const repaired = repairEvidenceBackedUncitedFigures(
+      "Their causal weight on the 1,142,000 count is selected, not measured.",
+      evidence,
+    );
+
+    expect(repaired).toContain(
+      "1,142,000 count is selected, not measured [4].",
+    );
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([]);
+  });
+
+  it("does not mask an invented number", () => {
+    const repaired = repairEvidenceBackedUncitedFigures(
+      "Their causal weight on the 9,999 count is selected, not measured.",
+      evidence,
+    );
+
+    expect(repaired).not.toContain("[4]");
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([
+      "Their causal weight on the 9,999 count is selected, not measured.",
+    ]);
+  });
+
+  it("does not mask an invented number when a governed number is also present", () => {
+    const repaired = repairEvidenceBackedUncitedFigures(
+      "The 1,142,000 gap count should not be reduced to 9,999 without evidence.",
+      evidence,
+    );
+
+    expect(repaired).not.toContain("[4]");
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([
+      "The 1,142,000 gap count should not be reduced to 9,999 without evidence.",
+    ]);
+  });
+});
+
 describe("buildSourceRegister", () => {
   it("includes only evidence actually cited across the sections", () => {
     const req = amsRfpRequest();
@@ -78,6 +134,108 @@ describe("buildSourceRegister", () => {
         (r) => r.citationNumber,
       ),
     ).toEqual([1]);
+  });
+
+  it("normalizes an under-authored P2 discovery deck to the governed slide contract", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "discovery_report",
+      outputFormats: ["pptx"],
+      qualityBar: {
+        ...resolveQualityBar("moves", "discovery_report"),
+        minBodyWords: 0,
+        requiresSourceRegister: false,
+      },
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "exec_summary",
+        title: "Executive Summary",
+        bodyMarkdown:
+          "The member-service workflow can proceed to design only if tool, policy, and human-approval gaps remain explicit [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+      {
+        key: "current_state",
+        title: "Current-State Findings",
+        bodyMarkdown:
+          "Agents move between CRM, eligibility, claims, prior authorization, knowledge, and supervisor channels during one member contact [2].",
+        groundingMode: "governed_facts",
+        citationsUsed: [2],
+      },
+      {
+        key: "maturity_gaps",
+        title: "Maturity, Benchmark & Gaps",
+        bodyMarkdown:
+          "The highest-risk gaps are disposition quality, knowledge ownership, and inconsistent handoff evidence [3].",
+        groundingMode: "mixed",
+        citationsUsed: [3],
+      },
+      {
+        key: "readiness_implications",
+        title: "Readiness & Implications",
+        bodyMarkdown:
+          "Design must preserve human approval for coverage, payment, prior authorization, appeal, grievance, clinical, and pharmacy decisions [4].",
+        groundingMode: "mixed",
+        citationsUsed: [4],
+      },
+      {
+        key: "recommendation",
+        title: "Recommended Move & Next Steps",
+        bodyMarkdown:
+          "Proceed to design with retrieval, citation, and approval controls; defer autonomy and writeback [5].",
+        groundingMode: "mixed",
+        citationsUsed: [5],
+      },
+    ];
+    const synth: SynthesisResult = {
+      recommendation:
+        "Proceed to design with explicit controls and no autonomous member-impacting decisions.",
+      nextActions: ["Review the design boundary with the sponsor."],
+      deckSlides: [
+        {
+          key: "executive_answer",
+          title: "Executive Answer",
+          governingMessage: "Proceed, but only with controls.",
+        },
+        {
+          key: "current_state",
+          title: "Current State",
+          governingMessage: "The workflow is fragmented.",
+        },
+        {
+          key: "root_causes",
+          title: "Root Causes",
+          governingMessage: "The root causes are operational.",
+        },
+        {
+          key: "proceed_hold_stop",
+          title: "Proceed, Hold or Stop",
+          governingMessage: "Proceed to design.",
+        },
+      ],
+      tables: [],
+    };
+
+    const doc = assembleDeliverable(req, sections, synth, []);
+
+    expect(doc.deckSlides).toHaveLength(10);
+    expect(doc.deckSlides?.map((slide) => slide.key)).toEqual([
+      "executive_answer",
+      "what_we_assessed",
+      "current_state",
+      "what_is_working",
+      "what_is_not_working",
+      "root_causes",
+      "metrics_evidence",
+      "implications",
+      "readiness",
+      "proceed_hold_stop",
+    ]);
+    expect(validateDeliverableQuality(doc, req).blockers.join(" ")).not.toMatch(
+      /slides.*needs at least/i,
+    );
   });
 });
 
@@ -121,6 +279,101 @@ describe("assembleDeliverable", () => {
     expect(doc.clientDisplayName).toBe(req.clientDisplayName);
   });
 
+  it("does not fabricate profile-required exhibits when the synthesis pass omits real diagram content", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "solution_design",
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "solution_design",
+        title: "Solution Design",
+        bodyMarkdown:
+          "The design needs a workflow view, but the synthesis pass did not provide diagram-ready exhibit content [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {},
+      req.governedEvidenceBundle,
+    );
+
+    expect(doc.exhibits).toHaveLength(0);
+  });
+
+  it("keeps only synthesis-provided exhibits with diagram-ready content", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "solution_design",
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "solution_design",
+        title: "Solution Design",
+        bodyMarkdown: "The design view is evidence-backed [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        exhibits: [
+          {
+            key: "experience_flow",
+            title: "End-to-End Experience Flow",
+            kind: "flow",
+            description:
+              "Care manager reviews reconciled care-gap queue; AI resolves provider-plan source authority and ranks advisory signals; named clinical owner approves before any outreach action",
+            targetFormat: "pptx",
+            data: {
+              kind: "flow",
+              nodes: [
+                {
+                  id: "review",
+                  label: "Care manager reviews reconciled care-gap queue",
+                },
+                {
+                  id: "resolve",
+                  label: "AI resolves provider-plan source authority",
+                },
+                {
+                  id: "approve",
+                  label: "Named clinical owner approves outreach action",
+                },
+              ],
+              edges: [
+                { from: "review", to: "resolve" },
+                { from: "resolve", to: "approve" },
+              ],
+            },
+          },
+          {
+            key: "agent_workflow",
+            title: "Agent Workflow",
+            kind: "flow",
+            description:
+              "Profile-required view for Solution Design; populated from cited evidence, assumptions, and open inputs.",
+            targetFormat: "pptx",
+          },
+        ],
+      },
+      req.governedEvidenceBundle,
+    );
+
+    expect(doc.exhibits).toHaveLength(1);
+    expect(doc.exhibits[0]).toMatchObject({
+      key: "experience_flow",
+      title: "End-to-End Experience Flow",
+    });
+  });
+
   it("adds conservative recommendation and risk-table fallbacks for concise Moves charters", () => {
     const req = amsRfpRequest({
       module: "moves",
@@ -130,10 +383,10 @@ describe("assembleDeliverable", () => {
     });
     const sections: RenderableSection[] = [
       {
-        key: "authorization_next_steps",
-        title: "Authorization & Immediate Next Steps",
+        key: "charter_decision",
+        title: "Charter Decision & Immediate Next Steps",
         bodyMarkdown:
-          "Approve P2 Discovery with the charter scope, evidence families, and caveats carried forward as the governed source of truth.",
+          "Approve Discovery with the charter scope, authorization conditions, evidence families, and caveats carried forward.",
         groundingMode: "mixed",
         citationsUsed: [],
       },
@@ -153,6 +406,92 @@ describe("assembleDeliverable", () => {
     ).toMatchObject({
       key: "risk_register",
       title: "Risk / Issues / Dependencies",
+    });
+  });
+
+  it("does not pad a thin canonical Moves charter with boilerplate", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "charter",
+      missingEvidence: [],
+      clientCompleteItems: [],
+      qualityBar: {
+        ...amsRfpRequest().qualityBar,
+        minSections: 7,
+        minBodyWords: 700,
+        requiresSourceRegister: false,
+      },
+    });
+    const thinBody =
+      "Sponsor alignment, evidence acceptance, decision rights, scope control, owner attendance, value discipline, review cadence, and caveat handling are confirmed for discovery.";
+    const sections: RenderableSection[] = CHARTER_CONTRACT.sections.map(
+      (section) => ({
+        key: section.key,
+        title: section.title,
+        bodyMarkdown: thinBody,
+        groundingMode: "mixed",
+        citationsUsed: [],
+      }),
+    );
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {},
+      req.governedEvidenceBundle,
+    );
+    const wordCount = countBodyWords(doc.generatedSections, {
+      excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
+    });
+
+    expect(doc.generatedSections).toHaveLength(
+      CHARTER_CONTRACT.sections.length,
+    );
+    expect(wordCount).toBeLessThan(700);
+    expect(doc.generatedSections.map((section) => section.key)).toEqual(
+      CHARTER_CONTRACT.sections.map((section) => section.key),
+    );
+    expect(
+      doc.generatedSections.map((section) => section.bodyMarkdown).join(" "),
+    ).not.toContain("Discovery authorization should preserve");
+  });
+
+  it("adds a risk-table fallback for Moves target architecture when synthesis omits it", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "target_state_architecture",
+      missingEvidence: [],
+      clientCompleteItems: [],
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "architecture_decision",
+        title: "Architecture Decision",
+        bodyMarkdown:
+          "The target-state architecture should be reviewed before roadmap commitments are made.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        recommendation:
+          "We recommend approving the governed target architecture for roadmap planning, subject to named owners and evidence review.",
+      },
+      req.governedEvidenceBundle,
+    );
+
+    expect(
+      doc.tables.find((t) => /risk|issue|dependenc/i.test(t.title)),
+    ).toMatchObject({
+      key: "risk_register",
+      title: "Risk / Issues / Dependencies",
+      rows: expect.arrayContaining([
+        expect.arrayContaining(["Evidence-to-decision traceability"]),
+      ]),
     });
   });
 
@@ -446,5 +785,49 @@ describe("consolidateOpenInputPlaceholders", () => {
       consolidateOpenInputPlaceholders(sections);
     expect(cleaned[0]).toBe(sections[0]);
     expect(harvested).toHaveLength(0);
+  });
+});
+
+describe("exhibitRejectionReason", () => {
+  const kept = {
+    key: "raci",
+    title: "Handoff RACI",
+    kind: "matrix",
+    description:
+      "Shows who is accountable for each handoff item. Three items have no named owner; those block launch.",
+    targetFormat: "docx",
+    data: {
+      kind: "matrix",
+      axes: { x: "Role", y: "Work" },
+      cells: [
+        { x: "Sponsor", y: "Scope", label: "A" },
+        { x: "Data owner", y: "Access", label: "A" },
+      ],
+    },
+  } as never;
+
+  it("keeps an exhibit with typed data and a description of three statements", () => {
+    expect(exhibitRejectionReason(kept)).toBeNull();
+  });
+
+  it("says why an exhibit is not kept", () => {
+    expect(
+      exhibitRejectionReason({ ...(kept as object), data: {} } as never),
+    ).toMatch(/not a supported payload kind/);
+    expect(
+      exhibitRejectionReason({
+        ...(kept as object),
+        data: { kind: "matrix", cells: [{ x: "a", y: "b" }] },
+      } as never),
+    ).toMatch(/below that kind's minimum content/);
+    expect(
+      exhibitRejectionReason({
+        ...(kept as object),
+        description: "Shows who is accountable.",
+      } as never),
+    ).toBe("description has fewer than three distinct statements");
+    expect(
+      exhibitRejectionReason({ ...(kept as object), title: " " } as never),
+    ).toBe("key, title or description is empty");
   });
 });

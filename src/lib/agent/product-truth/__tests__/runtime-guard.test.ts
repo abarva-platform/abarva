@@ -5,6 +5,24 @@ import {
 } from "../runtime-guard";
 
 describe("applyProductTruthRuntimeGuard", () => {
+  it("repairs Moves claims that assign approval to sponsors", () => {
+    for (const claim of [
+      "Moves approves phase movement after sponsor review.",
+      "Accountable sponsors approve phase movement.",
+    ]) {
+      const result = applyProductTruthRuntimeGuard(claim, {
+        tenantKey: "tenant-a",
+        tenantName: "Tenant A",
+        surface: "moves",
+      });
+
+      expect(result.text).toContain(
+        "Moves checks readiness; an authorized workspace user records the approval",
+      );
+      expect(result.text).toContain("sponsors are progress contacts only");
+    }
+  });
+
   it("replaces raw internal retired-fact errors with a client-safe fallback", () => {
     const result = applyProductTruthRuntimeGuard(
       "[error] retired_fact_violation: old_alias_lakeshore_industries@surfaceContext",
@@ -66,7 +84,7 @@ describe("applyProductTruthRuntimeGuard", () => {
     );
 
     expect(result.text).toContain("P0 Originate");
-    expect(result.text).toContain("P5 Prepare to Execute");
+    expect(result.text).toContain("P5 Mobilize & Handoff");
     expect(result.text).toContain("Tower Track Outcomes");
     expect(result.text).not.toContain("Charter / Diagnose / Decide / Commit");
     expect(result.violations.map((v) => v.category)).toContain(
@@ -98,6 +116,21 @@ describe("applyProductTruthRuntimeGuard", () => {
     );
 
     expect(result.text).toContain("CTR-090");
+    expect(result.text).not.toMatch(/\bBASE-007\b/);
+  });
+
+  it("keeps multi-part public Source contract ids visible while removing other raw codes", () => {
+    const result = applyProductTruthRuntimeGuard(
+      "Databricks contract MER-TECH-DBX-001 has a renewal opportunity; BASE-007 stays internal.",
+      {
+        tenantKey: "meridian-health",
+        tenantName: "Meridian Health",
+        surface: "source",
+      },
+    );
+
+    expect(result.text).toContain("MER-TECH-DBX-001");
+    expect(result.text).not.toMatch(/\bMER-\s*(?:\)|,|\.|$)/);
     expect(result.text).not.toMatch(/\bBASE-007\b/);
   });
 

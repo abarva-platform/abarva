@@ -14,9 +14,17 @@ import type {
   SourceGenerationContext,
 } from "./types";
 import { buildAppInventoryPromptBlock } from "./app-inventory";
+import {
+  formatStructuredApplicationInventory,
+  formatStructuredEvidenceOverview,
+  formatStructuredOperationalEvidence,
+} from "./structured-evidence";
 import { formatRequiredSectionsForPrompt } from "./section-conformance";
 import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/source-documentation-standards";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
+import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
+import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { buildD09VendorDraftContext } from "./d09-vendor-context";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -239,6 +247,10 @@ Write like an expert, not a machine:
 Integrity is what makes you credible, not generic — keep it, but in an advisor's voice:
 - Never fabricate. If an input is missing, say so plainly and treat it as a gap to close — phrased as advice ("we don't yet have the current SLA baseline; until we do, treat the savings target as directional"), not as a bare "asserted / unknown" tag.
 - Separate what the evidence supports from what is still a working assumption — woven into the reasoning, not bolted on as audit labels.
+- Treat the intake "value at stake" as a candidate opportunity or validation target. It is not contract annual value, total contract value, spend baseline, savings realized, or a finance-approved commitment unless bound evidence explicitly establishes that meaning.
+- Do not introduce market conditions, vendor capabilities, comparable-event outcomes, benchmark percentages, typical timelines, savings rates, or commercial norms as facts unless the bound evidence names the source. Expert judgment may recommend what to test or negotiate, but it may not manufacture a factual basis.
+- Use only source-bound dates. Do not invent a document date, review calendar, due date, or elapsed-time statement. If the evidence supports a contract date or notice period but not a complete schedule, state the dependency and leave the calendar open.
+- Preserve numeric semantics. A candidate opportunity stays candidate; a contract baseline stays baseline; a vendor proposal stays proposed; measured value stays measured; realized value requires the stated finance authority.
 - No hedging-by-listing, no generic procurement boilerplate, no restating the prompt. If a section has nothing decision-relevant to say, say less.
 
 Client-facing language:
@@ -259,6 +271,28 @@ Any productivity, automation, transformation, service-level, transition, cost-re
 The buyer reserves the right to treat unsupported claims, incomplete pricing fields, missing assumptions, undocumented exclusions, or non-compliant response formats as evaluation risks and/or grounds for clarification before scoring.`;
 
 const VENDOR_RESPONSE_CONTROL_SECTIONS = [
+  {
+    title: "Requirement Response Matrix",
+    purpose:
+      "Give every issued requirement a stable identifier and a normalized vendor answer shape that survives completeness, evaluation, pricing, BAFO, and decision review.",
+    columns: [
+      "Requirement ID",
+      "Requirement Category",
+      "RFP Section",
+      "Requirement Statement",
+      "Mandatory / Scored / Informational",
+      "Response Type",
+      "Vendor Response: Comply / Partially Comply / Exception / Not Applicable",
+      "Response Narrative",
+      "Evidence Required",
+      "Evidence Reference",
+      "Pricing Linkage",
+      "SLA / KPI Linkage",
+      "Assumption / Exception Reference",
+      "Evaluation Criterion ID",
+      "Vendor Owner",
+    ],
+  },
   {
     title: "Vendor Claim Register",
     purpose: "Force vendors to declare major claims in a structured way.",
@@ -866,6 +900,7 @@ function formatGovernanceReviewFields(): string {
 // without this block the draft is blind to evidence it is graded on.
 function formatDraftEvidenceContext(
   ctx: SourceGenerationContext,
+  options?: { completeShortChunk?: boolean; ticketExcerptCoverage?: boolean },
 ): string | null {
   const guidebookBlock = formatStageGuidebookContext(ctx);
   const items = ctx.uploadedEvidence ?? [];
@@ -875,17 +910,101 @@ function formatDraftEvidenceContext(
       : [
           "Uploaded evidence for this event — CITE these by filename where they support a claim,",
           "and do not invent figures beyond what they state:",
-          ...items.slice(0, 8).map((a) => {
+          ...items.slice(0, 16).map((a) => {
             const facts = a.factSummaries?.length
               ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
               : "";
-            const excerpt = a.chunkExcerpts?.length
-              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
-              : "";
+            const excerptLimit =
+              options?.completeShortChunk === true &&
+              a.chunkExcerpts?.length === 1 &&
+              a.chunkExcerpts[0].length <= 1_800
+                ? 1_800
+                : 500;
+            const ticketExcerpts =
+              options?.ticketExcerptCoverage === true &&
+              a.stageKey === "scope" &&
+              a.sourceFormat.toLowerCase() === "csv"
+                ? a.chunkExcerpts.slice(0, 5).join("\n    Continuation: ")
+                : null;
+            const excerpt = ticketExcerpts
+              ? `\n    Excerpts may be incomplete; verify row coverage before totals: ${ticketExcerpts.slice(0, 3_000)}${ticketExcerpts.length > 3_000 ? " [TRUNCATED]" : ""}`
+              : a.chunkExcerpts?.length
+                ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, excerptLimit)}`
+                : "";
             return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
           }),
         ].join("\n");
-  return [guidebookBlock, evidenceBlock].filter(Boolean).join("\n\n") || null;
+  const structuredEvidenceBlock = formatStructuredEvidenceOverview(ctx);
+  return [guidebookBlock, structuredEvidenceBlock, evidenceBlock]
+    .filter(Boolean)
+    .join("\n\n") || null;
+}
+
+export function resolveStrategyEvidenceGateRole(args: {
+  requirementId: string;
+  approvalPolicyCode: string | null | undefined;
+  applicabilityStatus?: "applicable" | "not_applicable";
+}): {
+  level: "required" | "recommended" | "unknown";
+  policyApplies: boolean;
+  gateBlocking: boolean;
+} {
+  const level = evidenceById(args.requirementId)?.level ?? "unknown";
+  const policyApplies = sourceEvidenceAppliesToApprovalPolicy(
+    args.requirementId,
+    args.approvalPolicyCode,
+  );
+  return {
+    level,
+    policyApplies,
+    gateBlocking:
+      level === "required" &&
+      policyApplies &&
+      args.applicabilityStatus !== "not_applicable",
+  };
+}
+
+function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
+  const evidence = ctx.evidence
+    .filter((item) => item.stage === "strategy")
+    .map((item) => {
+      const role = resolveStrategyEvidenceGateRole({
+        requirementId: item.requirementId,
+        approvalPolicyCode: ctx.event.approvalPolicyCode,
+        applicabilityStatus: item.applicabilityStatus,
+      });
+      return [
+        `- ${item.requirementId}`,
+        `applicability=${item.applicabilityStatus ?? "applicable"}`,
+        `level=${role.level}`,
+        `policy_applies=${role.policyApplies}`,
+        `gate_blocking=${role.gateBlocking}`,
+        `state=${resolveGenerationEvidenceState(ctx, item)}`,
+        item.applicabilityStatus === "not_applicable" && item.applicabilityReason
+          ? `audited_reason=${item.applicabilityReason}`
+          : null,
+      ].filter(Boolean).join("; ");
+    });
+  const criteria = ctx.gateCriteria
+    .filter((item) => item.fromStage === "strategy")
+    .map((item) => `- ${item.criterionId}; state=${item.state}`);
+  return [
+    "— CURRENT STRATEGY GOVERNANCE STATE —",
+    `approval_policy=${ctx.event.approvalPolicyCode ?? "unknown"}`,
+    ctx.event.approvalPolicyCode === "self_v1"
+      ? "The Event Owner records the decision under SELF policy. Sponsor commitment is excluded from this event's gate: do not request it, waive it, or list it as an open gate action."
+      : "Do not assume Event Owner self-approval; follow the recorded policy and gate evidence.",
+    "An audited not-applicable decision is an absence decision, not a missing request or a supplied contract/spend fact.",
+    "Recommended evidence is optional and cannot become a gate prerequisite. Do not request or waive it as a condition of gate closure. Only applicable, policy-relevant required evidence can block the gate.",
+    "An available gate evidence file still needs explicit human review when the criterion is pending; availability alone is not a reviewed decision.",
+    "Do not say all open evidence gaps must close or be formally deferred before the gate; recommended evidence may remain open without blocking. Limit pass conditions to the applicable required evidence and actual gate criteria.",
+    "When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead. A pending or unread criterion does not authorize a claim that the gate is ready to advance.",
+    "Do not tell the decision owner to record approval or advance the event while any Strategy criterion is pending. A review may record approval only after each applicable criterion is actually met and recorded; until then, ask for the decision and name unresolved criteria without predicting the outcome.",
+    "Strategy evidence requirements:",
+    ...(evidence.length ? evidence : ["- no evidence states read back"]),
+    "Strategy gate criteria:",
+    ...(criteria.length ? criteria : ["- no gate criteria read back"]),
+  ].join("\n");
 }
 
 function formatStageGuidebookContext(
@@ -925,7 +1044,7 @@ function formatStageGuidebookContext(
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
     artifactCode: "d01_strategy_memo",
-    version: 1,
+    version: 5,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: [],
@@ -937,7 +1056,7 @@ You are drafting the Sourcing Strategy Memo. This is the foundational document f
 Required structural sections:
 ${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
-This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the value at stake, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band when the intake supports one (and say plainly when it does not, rather than manufacturing precision). Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material savings claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
+This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Cite evidence by its business filename only. Never invent or expose a bracketed hash, shortened identifier, artifact id, or chunk id as a citation. Any causal interpretation drawn from a trend or correlation must be labeled as a working hypothesis and registered with a validation owner, action, and downstream impact. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids). A pending gate is not an approval; do not call the event ready to advance until its criteria and required client-final artifacts are actually cleared. Make human review of available trigger evidence an explicit gate-session agenda action before any criterion outcome is recorded. Strategy approval advances only to Define/Scope, not directly to RFP or market release. Treat regulatory or legal obligations as questions for the accountable reviewer unless bound evidence establishes their application to this scope.`,
     buildUserMessage: (ctx) => {
       return [
         `Company: ${ctx.tenantName}`,
@@ -947,7 +1066,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
         ctx.event.estimatedValueUsd
-          ? `Estimated value: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          ? `Candidate opportunity / validation target from intake (not contract value or realized savings): $${ctx.event.estimatedValueUsd.toLocaleString()}`
           : null,
         "",
         `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided in intake)"}`,
@@ -955,7 +1074,8 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         `Scope description from intake:`,
         ctx.event.scopeDescription || "(not provided)",
         "",
-        formatDraftEvidenceContext(ctx),
+        formatStrategyGovernanceContext(ctx),
+        formatDraftEvidenceContext(ctx, { completeShortChunk: true }),
         "",
         ctx.archetypeAdvisory
           ? `— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —\n\n${ctx.archetypeAdvisory}\n`
@@ -969,14 +1089,14 @@ This memo is your recommendation to the CIO on whether and how to take this to m
 
   d02_value_target: {
     artifactCode: "d02_value_target",
-    version: 3,
+    version: 4,
     model: BOARD_GRADE_MODEL,
     maxTokens: BOARD_GRADE_MAX_TOKENS,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
-You are drafting the Value Target Brief (artifact d02_value_target). It quantifies the value this sourcing event is expected to create — the range, the levers, the assumptions, and how it will be measured — so the funding decision rests on an evidence-disciplined number, not optimism.
+You are drafting the Value Target Brief (artifact d02_value_target). It records the value hypothesis, the levers, the assumptions, and how value could be measured. Quantify a range only when bound evidence supports its low, base, and high amounts; an unsized hypothesis is a valid answer when the baseline is absent.
 
 Required structural sections:
 ## §1 · Value thesis
@@ -986,10 +1106,16 @@ Required structural sections:
 ## §5 · Realization and measurement
 
 Requirements:
-- State the value target as a RANGE (low / base / high) with an explicit confidence band (low / medium / high) and the basis for each bound.
+- Show low / base / high amount cells and a confidence band only to the extent that bound evidence supports them. If no bound baseline supports low/base/high amounts, write not established in all three amount cells and name the specific evidence and owner needed to size them. Do not infer a confidence band for an unestablished range.
+- Do not create illustrative, proxy, or synthetic spend baselines or sensitivity amounts to fill the table. A scenario with an invented dollar starting point is still an unsupported financial claim even when labelled illustrative.
+- The intake candidate opportunity is a validation hypothesis, not the base case or a sizing input. Show it separately, with its intake source and unvalidated status; do not multiply it into sensitivity cases.
+- Treat the intake value estimate as a candidate opportunity / validation target. Do not relabel it as contract value, spend baseline, TCV, savings realized, or a finance-approved commitment.
 - Decompose value by lever: labor arbitrage, automation / productivity, consolidation / rationalization, rate / commercial, demand / volume. Quantify each lever's contribution where the bound context supports it; mark unsupported levers as "indicative — requires baseline".
-- Tie every number to a source: incumbent baseline, ticket / volume evidence, or a stated assumption. Never fabricate a baseline. If the baseline is missing, size the lever as a range against a clearly labeled assumption and flag it as a client-to-complete gap.
-- Name the realization owner and the first measurement window. Separate projected → committed → measured value.
+- Tie every number to a named bound source: incumbent baseline, ticket / volume evidence, or a client-supplied assumption already present in the event record. Never invent an assumption to complete the arithmetic. If the baseline is missing, leave the lever unquantified and identify the exact evidence needed.
+- Do not apply generic benchmark percentages or comparable-event savings rates unless a named bound source provides them. If evidence cannot support low/base/high amounts yet, preserve the intake target as a validation hypothesis and make the range "not established" pending the named inputs.
+- Do not turn an audited absence decision into a missing request, assume a current incumbent arrangement, or describe an unreviewed upstream draft as approved evidence. Pending Strategy criteria are not a funding mandate.
+- Put planning-only and unvalidated status in the sizing table header or adjacent caption so the warning remains visible when the table is copied alone. Only applicable required evidence and actual Strategy criteria may appear as gate pass conditions; a recommended market scan may remain open without a waiver or formal deferral.
+- Name the realization owner only when bound evidence identifies one; otherwise name the accountable role needed to assign it. Leave the first measurement window client-to-set unless its dates and owner are present in bound evidence. Separate projected → committed → measured value.
 - 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
     buildUserMessage: (ctx, upstream) => {
       return [
@@ -997,18 +1123,23 @@ Requirements:
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
         ctx.event.estimatedValueUsd
-          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
-          : `Intake value estimate: (not provided)`,
+          ? `Candidate opportunity / validation target from intake (not contract value or realized savings): $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : `Candidate opportunity / validation target from intake: (not provided)`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
         "",
         `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
         `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
         "",
-        upstream.d01_strategy_memo
-          ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — anchor the value thesis to it:\n${upstream.d01_strategy_memo}`
-          : `(Strategy memo d01 not yet authored — derive the thesis from the intake and flag the dependency as a gap.)`,
+        upstream.d01_strategy_memo &&
+        ctx.artifactStates.some(
+          (item) => item.artifactCode === "d01_strategy_memo" &&
+            (item.status === "approved" || item.status === "locked"),
+        )
+          ? `Reviewed Sourcing Strategy Memo (d01_strategy_memo) — use its supported claims only; reconcile with current evidence and gate state:\n${upstream.d01_strategy_memo}`
+          : "Strategy memo is not yet approved — derive the thesis from current intake and governed evidence; do not inherit claims from an unreviewed draft.",
         "",
-        formatDraftEvidenceContext(ctx),
+        formatStrategyGovernanceContext(ctx),
+        formatDraftEvidenceContext(ctx, { completeShortChunk: true }),
         "",
         `Draft the Value Target Brief per the system prompt requirements.`,
       ]
@@ -1200,7 +1331,7 @@ When no inventory is supplied, produce the §2 table framework (headers + a plac
 
   d05_scope_memo: {
     artifactCode: "d05_scope_memo",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -1218,6 +1349,10 @@ Tone: precise, business-facing, list-heavy, and operational. Start with an execu
         `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        ctx.event.triggerDescription
+          ? `Approved event trigger / why-now: ${ctx.event.triggerDescription}`
+          : "Approved event trigger / why-now: (not provided)",
+        `Approved event scope and intake facts: ${ctx.event.scopeDescription || "(not provided)"}`,
         "",
         "— UPSTREAM CONTEXT —",
         "",
@@ -1239,6 +1374,13 @@ Tone: precise, business-facing, list-heavy, and operational. Start with an execu
           "Ticket History Synthesis (d07_ticket_synth) — informs SLA / hours-of-coverage:",
         );
         lines.push(upstream.d07_ticket_synth);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push("— UPLOADED / PARSED SCOPE EVIDENCE —");
+        lines.push(evidenceBlock);
         lines.push("");
       }
 
@@ -1430,19 +1572,20 @@ Writing and format requirements:
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 11,
+    version: 14,
     model: BOARD_GRADE_MODEL,
     maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
-    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+    systemPrompt: `You are a procurement writer drafting a vendor-facing RFP package, not an internal sourcing memo. The only case facts you may use are in the bounded vendor-draft context. Prior-stage artifacts, buyer evidence-room files, workflow approvals, release holds, owner names, private cost or value targets, and negotiation strategy are not approved for bidder disclosure merely because Source holds them. Never reproduce or infer them.
 
-You are drafting the RFP Package (artifact d09_rfp_pack) — the flagship vendor-facing solicitation document. Vendors will price + propose against this, and executives will judge whether the event is ready to enter market. It must read like a real procurement RFP for a large-enterprise sourcing event: formal, complete, unambiguous, quantified, evidence-aware, and structured so vendor responses are comparable downstream.
+If a release state is shown, it must say Draft — Not issued. Never label a draft an initial or structural issuance or claim that vendors have received it. Addenda and delivery remain future actions until separately authorized and evidenced.
 
-North-star workflow principle:
-Keep the sourcing-user workflow simple. The default generated RFP pack is one vendor-facing RFP document plus one vendor response workbook. Do not create a file-management burden in the document. Refer to workbook tabs, schedules, and exhibits inside the pack rather than asking the sourcing lead to manage many standalone files.
+The buyer name or industry is not evidence of patient-facing or clinical-support workloads, healthcare data environments, regulations, certifications, or supplier obligations. Use those details only when explicitly present in the bounded vendor-disclosable context; otherwise mark them Not issued. Do not list example obligations as if they apply.
 
-Required structural sections:
+Use formal, concise procurement language. Do not invent names, dates, volumes, baseline amounts, evaluation weights, service levels, issued exhibits, legal terms, or approvals. Mark any unavailable detail as "Not issued" in the relevant vendor-facing table. Do not create an internal source register, release-hold table, gap-closure register, approval checklist, or owner action list. This is an incomplete draft until the release boundary separately approves the full package.
+
+Required sections:
 ## §1 · Executive summary and decision context
 ## §2 · Enterprise current-state baseline
 ## §3 · Scope, service towers, and exclusions
@@ -1453,134 +1596,22 @@ Required structural sections:
 ## §8 · Vendor response instructions and mandatory submission tables
 ## §9 · Evaluation framework, weights, and disqualification rules
 ## §10 · Risk register, transition controls, and failure modes
-## §11 · Source register, assumptions, and client-to-complete gaps
+## §11 · Vendor exhibits and response assumptions
 
-Mandatory response-compliance language for §8:
+Preserve sections §7–§11 and Never stop after a partial table. Use compact tables for service scope, current-state baseline, service levels, transition, pricing, evaluation, and vendor-facing response requirements. Cite friendly exhibit labels only when an exhibit is explicitly identified as vendor-disclosable in the bounded context; otherwise say "Not issued". Evaluation Criterion ID and requirement IDs must be stable only when supplied; do not invent an approved scoring system.
+
+The default vendor response uses one Vendor Response Workbook with these tabs: Guide, Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist. Capture Comply | Partially Comply | Exception | Not Applicable dispositions. Do not assert that a workbook or template has been legally approved or released.
+
+Mandatory response language for §8:
 ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
-Mandatory response-control components to reference in §8:
-${formatVendorResponseControlSections()}
-
-Mandatory tables:
-- In-scope / out-of-scope service tower matrix.
-- Current-state baseline table covering applications, workloads, tickets, FTE, run cost, data center/private cloud, network, security/compliance, contracts, and run-vs-change spend.
-- SLA and operational obligations table.
-- Transition constraints and blackout calendar table.
-- Pricing and volume-basis instruction table.
-- Vendor response control table covering the single Vendor Response Workbook and its required tabs: Guide, Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist.
-- Evaluation weights and evidence-required scoring table.
-- Risk, issue, dependency, and mitigation table.
-- Process timeline table using governed dates from evidence or explicit gate-relative anchors when dates are genuinely missing.
-- Source register separating locked uploaded evidence, upstream draft artifacts, working assumptions, and client-to-complete gaps.
-- Client-to-complete / vendor-to-confirm register with accountable role, target date or gate-relative trigger, why it matters, and downstream impact.
-
-Tone: formal procurement style, but executive-polished. Vendor-facing draft — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and compact enough to complete in one synchronous generation: target 3,500-5,500 words. Quote scope from d05 only where needed. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as an issue-to-release gap in §11, not as a vendor instruction.
-
-Vendor/internal separation:
-This artifact is vendor-facing. Do not expose model/provider names, prompt details, raw parser status, confidence scores, internal gate IDs, quality-review blockers, negotiation targets, benchmark deltas, or private legal fallback positions. Those belong in the internal review and negotiation workbook, not the RFP.
-
-Source discipline requirement: treat parsed uploaded evidence as governed draft evidence. Assign friendly exhibit labels such as Exhibit 01 — Run/Change Financial Baseline and cite those labels in the body. Do not expose artifact_id, chunk_id, raw table names, or other internal ids. If an evidence row is parsed_uncited, mark it as "Available parsed evidence — citation review pending" in the source register instead of ignoring it.
-
-Hard output budget and completion requirement: every required section and mandatory table must be present, even if concise. Never stop after a partial table or omit downstream sections. Preserve sections §7–§11; they are more important than long prose in §2–§6. If token budget feels tight, shorten narrative first; use exhibit references instead of restating full datasets; keep every table to 4–8 rows unless the row is mandatory. Do not end mid-sentence. The final line must be: "RFP package draft complete — pending client closure of registered gaps."
-
-Section budget:
-- §1: 250 words max plus a 5-row decision table.
-- §2: 300 words max plus one current-state baseline table, 6 rows max.
-- §3: 250 words max plus one tower matrix, 6 rows max.
-- §4: 250 words max plus one estate table, 6 rows max.
-- §5: 250 words max plus one obligations table, 6 rows max.
-- §6: 300 words max plus one transition/blackout table, 6 rows max.
-- §7: must include commercial terms and pricing instructions table.
-- §8: must include the response-compliance mandate above, vendor response/submission requirements table, and explicit completion instructions for every required tab in the single Vendor Response Workbook.
-- §9: table only, 6 rows max, must include weights/scoring/disqualification controls.
-- §10: table only, 8 rows max, must include accountable risk roles/mitigations from Exhibits 07, 13, and 14.
-- §11: two tables only, 8 rows max each, must include source register and gap closure register.
-
-Compact required appendix block:
-After §8, use compact tables instead of long prose for the remaining governance material:
-- §9 table: Evaluation area | Weight | Scoring basis | Disqualification / red flag | Evidence source.
-- §10 table: Risk ID | Failure mode | Evidence source | Accountable role | Mitigation | Blocking gate.
-- §11A table: Source | Status | Used in sections | Remaining action.
-- §11B table: Gap ID | Item | Accountable role | Target date / trigger | Blocking gate | Downstream impact.
-
-Required compact section skeleton:
-## §1 · Executive summary and decision context
-## §2 · Enterprise current-state baseline
-## §3 · Scope, service towers, and exclusions
-## §4 · Application, workload, infrastructure, network, and cloud estate
-## §5 · Service-level, operational, and security obligations
-## §6 · Transition approach, blackout constraints, and risk controls
-## §7 · Commercial model, run/change baseline, and pricing instructions
-## §8 · Vendor response instructions and mandatory submission tables
-## §9 · Evaluation framework, weights, and disqualification rules
-## §10 · Risk register, transition controls, and failure modes
-## §11 · Source register, assumptions, and client-to-complete gaps
-
-Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as an issue-to-release gap with accountable role/action. Include practical mitigations for risks; do not merely flag them. Do not use bracketed client fill-in markers. If exact names or dates are not loaded, provide the accountable role and a gate-relative target date or trigger in the §11 closure table with blocking gate and downstream impact.`,
-    buildUserMessage: (ctx, upstream) => {
-      const lines: string[] = [
-        `Company: ${ctx.tenantName}`,
-        `Event: ${ctx.event.name} (${ctx.event.code})`,
-        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
-        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
-        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+Do not use bracketed client fill-in markers. Absence of vendor-approved facts cannot be repaired with generic invented numbers or buyer-internal closure actions.`,
+    buildUserMessage: (ctx) =>
+      [
+        buildD09VendorDraftContext(ctx),
         "",
-        "— UPSTREAM CONTEXT —",
-        "",
-        "Approved Sourcing Strategy Memo (d01_strategy_memo):",
-        upstream.d01_strategy_memo ??
-          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
-        "",
-        "Approved Scope Memo (d05_scope_memo):",
-        upstream.d05_scope_memo ??
-          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
-        "",
-        "— GOVERNED EVIDENCE STATE SUMMARY (NORMALIZED FOR D09) —",
-        formatEvidenceStates(ctx),
-        "",
-        "— PARSED UPLOADED EVIDENCE EXCERPTS —",
-        formatUploadedEvidence(ctx),
-        "",
-      ].filter((line): line is string => line !== null);
-
-      if (upstream.d02_value_target) {
-        lines.push("Value Target Brief (d02_value_target):");
-        lines.push(upstream.d02_value_target);
-        lines.push("");
-      }
-      if (upstream.d04_app_inv) {
-        lines.push("Application Inventory (d04_app_inv) — drives §3:");
-        lines.push(upstream.d04_app_inv);
-        lines.push("");
-      }
-      if (upstream.d07_ticket_synth) {
-        lines.push(
-          "Ticket History Synthesis (d07_ticket_synth) — drives §4 SLA expectations:",
-        );
-        lines.push(upstream.d07_ticket_synth);
-        lines.push("");
-      }
-
-      lines.push(
-        "— D09 RFP EVIDENCE COVERAGE MAP —",
-        formatD09RfpEvidenceCoverage(ctx),
-        "",
-      );
-
-      if (ctx.archetypeAdvisory) {
-        lines.push(
-          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
-          "",
-          ctx.archetypeAdvisory,
-          "",
-        );
-      }
-
-      lines.push(
-        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the issue-to-release register with accountable role/action/why-it-matters instead of filling with generic text. Keep the vendor workflow simple: reference one Vendor Response Workbook with tabs, not many standalone response files. This is a governed vendor-facing draft, not an issued final; do not use bracketed client fill-in markers. If exact human names or calendar dates are missing, use accountable role names and gate-relative target triggers. Keep the draft section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with accountable role, target date or trigger, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
-      );
-      return lines.join("\n");
-    },
+        "Draft only from the bounded vendor-draft context. Keep unsupported fields marked Not issued.",
+      ].join("\n"),
   },
 
   d10_rfi_summary: {
@@ -1780,7 +1811,7 @@ Writing and format requirements:
 
   d11_response_checklist: {
     artifactCode: "d11_response_checklist",
-    version: 2,
+    version: 3,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
@@ -1805,16 +1836,17 @@ ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
 Required structural sections:
 ## §1 · Response compliance mandate
-## §2 · Vendor Claim Register
-## §3 · Automation / Productivity Commitment Table
-## §4 · Pricing Response Tab
-## §5 · Staffing and Location Model
-## §6 · SLA Commitment Table
-## §7 · Assumptions and Exclusions Log
-## §8 · Transition Plan Template
-## §9 · Commercial Exceptions Table
-## §10 · Commercial leverage readiness checks enabled
-## §11 · Completion, submission, and clarification rules
+## §2 · Requirement Response Matrix
+## §3 · Vendor Claim Register
+## §4 · Automation / Productivity Commitment Table
+## §5 · Pricing Response Tab
+## §6 · Staffing and Location Model
+## §7 · SLA Commitment Table
+## §8 · Assumptions and Exclusions Log
+## §9 · Transition Plan Template
+## §10 · Commercial Exceptions Table
+## §11 · Commercial leverage readiness checks enabled
+## §12 · Completion, submission, and clarification rules
 
 Required response-control components:
 ${formatVendorResponseControlSections()}
@@ -1832,7 +1864,9 @@ Writing and format requirements:
 - Open with a short procurement-ready explanation of why this pack exists: to make vendor proposals comparable, evidence-backed, and negotiation-ready.
 - Include the response-compliance mandate in §1.
 - For every required component, include a table specification with purpose, required columns, required completion rule, and how Source will use it later.
-- Specify the single Vendor Response Workbook tab set. The first tab must be Guide. Required tabs must include Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location, SLA Commitments, Transition Plan, Assumptions and Exclusions, Commercial Exceptions, and Evidence Checklist.
+- Specify the single Vendor Response Workbook tab set. The first tab must be Guide. Required tabs must include Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location, SLA Commitments, Transition Plan, Assumptions and Exclusions, Commercial Exceptions, and Evidence Checklist.
+- Require vendors to preserve every issued Requirement ID and normalized requirement category. Each response must use exactly one disposition: Comply, Partially Comply, Exception, or Not Applicable. Require evidence, pricing, SLA/KPI, claim, assumption/exception, and Evaluation Criterion ID references wherever the issued requirement calls for them.
+- Explain how Source uses the same identifiers to calculate completeness, detect unsupported claims and commercial exceptions, normalize pricing, preserve scoring evidence, generate BAFO questions, and explain the final decision. Do not permit free-text-only answers for mandatory or scored requirements.
 - For the Pricing Response tab, name every required cost section: one-time costs, recurring run costs, transition costs, transformation costs, tooling costs, governance costs, pass-through costs, optional services, change-order unit rates, retained client cost assumptions, volume-based pricing, productivity credits, SLA credits, assumptions.
 - For the Automation / Productivity Commitment Table, state that it is required whenever the vendor claims AI, automation, productivity, transformation, or efficiency.
 - For the Transition Plan Template, require named transition lead, knowledge-transfer plan, dependency list, cutover criteria, service-readiness criteria, early-life support plan, and transition-fee milestone linkage.
@@ -1918,7 +1952,7 @@ Writing and format requirements:
 
   d13_vendor_responses: {
     artifactCode: "d13_vendor_responses",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d09_rfp_pack", "d11_response_checklist"],
@@ -1946,6 +1980,7 @@ Writing and format requirements:
 - §1 opens with a crisp status call: ready for completeness review / partial intake / blocked.
 - §2 must include a vendor table: Vendor | Receipt status | Files received | Checklist status | Pricing workbook | Evidence pointers | Exceptions submitted | Nonconformance flags.
 - §3 must flag missing mandatory response sections, missing pricing workbook fields, missing signatures, late/nonconforming files, and unsupported claims. Do not mark a vendor complete because a narrative response exists.
+- §3 must reconcile each vendor submission to the issued Requirement IDs and normalized categories, preserving Comply / Partially Comply / Exception / Not Applicable dispositions and flagging missing, duplicate, unknown, or free-text-only rows.
 - §4 must summarize key vendor claims by type and evidence status; never promote unsupported productivity, AI, automation, transformation, or SLA claims as facts.
 - §5 must list every declared assumption, exclusion, commercial exception, and change-order exposure that should flow to d15, d19, d20, and d22.
 - §6 maps friendly evidence file names to the response areas they support. If evidence is not available, show the gap with owner/action rather than inventing evidence.
@@ -2000,6 +2035,9 @@ Writing and format requirements:
       }
 
       lines.push(
+        "— NORMALIZED VENDOR RESPONSE PACKAGES (CONTROLLING INTAKE EVIDENCE) —",
+        formatNormalizedVendorResponsePackages(ctx),
+        "",
         "— PARSED UPLOADED RESPONSE EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
@@ -2088,10 +2126,16 @@ Writing and format requirements:
       }
 
       lines.push(
-        "— UPLOADED Q&A / ADDENDUM EVIDENCE —",
+        "— NORMALIZED VENDOR RESPONSE CLARIFICATIONS —",
+        formatNormalizedVendorResponsePackages(ctx),
+        "",
+        "— CONTROLLING PARSED BIDDER Q&A EVIDENCE —",
+        formatResponseQaEvidence(ctx),
+        "",
+        "— OTHER UPLOADED Q&A / ADDENDUM EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
-        "Draft the Q&A Parity Log per the system prompt. If no vendor-question evidence is present, create the controlled log shell with explicit missing question/answer inputs and publication controls; do not invent vendor questions or authoritative answers.",
+        "Draft the Q&A Parity Log per the system prompt. When controlling parsed bidder Q&A evidence is present, reproduce those question IDs, questions, and authoritative answers faithfully; do not replace them with inferred questions from vendor exceptions. If no vendor-question evidence is present, create the controlled log shell with explicit missing question/answer inputs and publication controls; do not invent vendor questions or authoritative answers.",
       );
       return lines.join("\n");
     },
@@ -2099,7 +2143,7 @@ Writing and format requirements:
 
   d15_response_completeness: {
     artifactCode: "d15_response_completeness",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d11_response_checklist", "d13_vendor_responses"],
@@ -2122,7 +2166,8 @@ ${formatResponseCompletenessDimensions()}
 
 Writing and format requirements:
 - §1 makes a direct gate call: all vendors ready / selected vendors conditionally ready / blocked until gaps close.
-- §2 must include a table: Vendor | Overall completeness | Mandatory sections | Pricing workbook | Claim evidence | SLA commitments | Exceptions | Assumptions/exclusions | Clarifications open | Gate disposition.
+- §2 must include a table: Vendor | Requirement IDs received | Mandatory requirements complete | Normalized dispositions valid | Pricing workbook | Claim evidence | SLA commitments | Exceptions | Assumptions/exclusions | Clarifications open | Gate disposition.
+- Preserve Requirement IDs and categories from the issued RFP. Report missing, duplicate, unknown, or free-text-only requirement responses explicitly; do not collapse them into an overall percentage.
 - §3 lists missing mandatory fields by vendor and source requirement. Do not convert unknowns into passes.
 - §4 separates unsupported claims from merely missing evidence pointers. Unsupported transformation, AI, automation, productivity, SLA, or cost-reduction claims must remain gaps until evidenced.
 - §5 names the pricing/commercial fields that d19 and d20 need. If missing, show downstream impact on pricing normalization and trap detection.
@@ -2173,6 +2218,9 @@ Writing and format requirements:
       }
 
       lines.push(
+        "— NORMALIZED VENDOR RESPONSE PACKAGES (CONTROLLING INTAKE EVIDENCE) —",
+        formatNormalizedVendorResponsePackages(ctx),
+        "",
         "— UPLOADED RESPONSE EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
@@ -2289,7 +2337,7 @@ Writing and format requirements:
 
   d16_scorecard: {
     artifactCode: "d16_scorecard",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: [
@@ -2322,7 +2370,8 @@ ${formatEvaluationScorecardRequirements()}
 Writing and format requirements:
 - §1 leads with an evidence-limited answer: ranked / conditionally ranked / blocked. Name the exact reason if ranking is blocked.
 - §2 must mirror d17 locked criteria and weights. Do not change weights in d16; disputed weights go back to d17.
-- §3 must include a table: Vendor | Criterion | Weight | Score | Weighted score | Evidence citation | Evaluator rationale | Pass/fail flags | Confidence.
+- §3 must include a table: Vendor | Requirement ID | Response category | Criterion ID | Weight | Score | Weighted score | Evidence citation | Evaluator rationale | Pass/fail flags | Confidence.
+- Preserve issued Requirement IDs, normalized response categories, and locked Criterion IDs. Every material score, exception, price impact, and BAFO challenge must remain traceable to the vendor's structured response row; free-text proposal narrative may support a score but cannot replace that row.
 - §4 preserves evaluator rationale and calls out where the second rater is missing or deviations exceed the governance threshold.
 - §5 cites source files, artifact names, or uploaded evidence for every material score. No evidence means no scored claim.
 - §6 summarizes final rank only for vendors admitted by d15 and not excluded by d18. Conditional vendors must be labeled conditional.
@@ -2523,7 +2572,7 @@ Writing and format requirements:
 
   d04_app_inv: {
     artifactCode: "d04_app_inv",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -2540,7 +2589,7 @@ Required structural sections:
 ## §5 · Coverage gaps and assumptions
 
 Requirements:
-- §1 must include a table: Application/System | Type | Technology stack | Department/function | Current support model | Annual incident volume (if known) | Disposition. Derive the list from the scope memo, strategy memo, and uploaded evidence. If no application list is available, construct a representative draft from the event context and mark each row as [ASSUMED — client to validate].
+- §1 must include a table: Application/System | Type | Technology stack | Department/function | Current support model | Annual incident volume (if known) | Disposition. Derive the list only from the event-scoped application inventory, scope memo, strategy memo, and uploaded evidence. If no application list is available, render an empty framework and a named collection action; never invent representative applications.
 - §2 classifies each application by criticality tier (Mission Critical / Business Critical / Standard) and risk dimension (compliance, data sensitivity, integration breadth, age/tech debt). Use a compact table.
 - §3 captures key integration touch-points, upstream/downstream dependencies, and data flows relevant to sourcing scope decisions. Focus on dependencies that create transition risk or scope-split ambiguity.
 - §4 recommends a disposition per application: retain current support model / include in scope / carve out / rationalize / retire. Ground recommendations in evidence where available; flag assumptions explicitly.
@@ -2579,6 +2628,14 @@ Requirements:
       lines.push(buildAppInventoryPromptBlock(ctx.enterpriseAppInventory));
       lines.push("");
 
+      const structuredApplicationInventory =
+        formatStructuredApplicationInventory(ctx);
+      if (structuredApplicationInventory) {
+        lines.push("— EVENT-SCOPED CONTRACT APPLICATION INVENTORY —");
+        lines.push(structuredApplicationInventory);
+        lines.push("");
+      }
+
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
         lines.push(evidenceBlock);
@@ -2586,7 +2643,7 @@ Requirements:
       }
 
       lines.push(
-        "Draft the Application and System Inventory per the system prompt requirements. Where the company's application inventory above is provided, build the in-scope application table directly from it (verbatim IDs and names). Any application row NOT supported by that inventory or by uploaded evidence must be marked [ASSUMED — client to validate]. Do not expose internal product terms.",
+        "Draft the Application and System Inventory per the system prompt requirements. When the event-scoped contract application inventory is present, it is the controlling list: use every row, preserve its exact application ID and name, and do not substitute the broader enterprise inventory. Do not add any application row unsupported by that inventory or uploaded evidence. Do not expose internal product terms.",
       );
       return lines.join("\n");
     },
@@ -2594,7 +2651,7 @@ Requirements:
 
   d07_ticket_synth: {
     artifactCode: "d07_ticket_synth",
-    version: 1,
+    version: 3,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -2611,7 +2668,7 @@ Required structural sections:
 ## §5 · SLA and operational implications for the RFP
 
 Requirements:
-- §1 must include a demand table: Period | Total tickets | P1 | P2 | P3/P4 | Monthly average | Peak month | Channel split. Derive from uploaded ITSM/ticket evidence or SLA reports. Where evidence is missing, construct a representative baseline from the event context and mark every row [ASSUMED — client to validate].
+- §1 must include a demand table derived from the loaded event-scoped ITSM rows. Show the loaded ticket classes honestly; do not relabel P2 as P1 and do not invent a channel split. If a requested breakdown is not loaded, state that it is not established and assign a collection owner.
 - §2 must include an SLA performance table: Severity | SLA target | Actual performance | Breach count | Breach penalty (if stated) | Root cause trend. Cite uploaded SLA performance evidence by filename.
 - §3 breaks ticket volume by service tower (e.g. MDR/SOC, endpoint, IAM, PAM, OT security for a cybersecurity event; or service desk, infrastructure, application ops for a managed services event). Use a workload-by-tower table: Tower | Volume | % of total | Primary driver | SLA tier.
 - §4 identifies demand trends, seasonality peaks, and structural shifts that the vendor must price for. Note any incident patterns (recurring root causes, growing categories) that signal scope risk.
@@ -2643,14 +2700,23 @@ Requirements:
         lines.push("");
       }
 
-      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      const evidenceBlock = formatDraftEvidenceContext(ctx, {
+        ticketExcerptCoverage: true,
+      });
       if (evidenceBlock) {
         lines.push(evidenceBlock);
         lines.push("");
       }
 
+      const structuredOperationalEvidence =
+        formatStructuredOperationalEvidence(ctx);
+      if (structuredOperationalEvidence) {
+        lines.push(structuredOperationalEvidence);
+        lines.push("");
+      }
+
       lines.push(
-        "Draft the Ticket History Synthesis per the system prompt requirements. Prioritize uploaded SLA performance, incident log, and ITSM evidence; where that evidence exists, derive every SLA figure and volume from it. Where it is absent, construct a plausible baseline from the event context and mark every row [ASSUMED — client to validate]. Do not expose internal product terms.",
+        "Draft the Ticket History Synthesis per the system prompt requirements. Use only loaded event-scoped ITSM and SLA rows for every period, volume, target, actual result, breach, and credit. Keep ticket classes separate when their resolution measures are not comparable. Where evidence is absent, say not established and name the collection action; never construct a plausible baseline. Do not expose internal product terms.",
       );
       return lines.join("\n");
     },
@@ -2784,7 +2850,7 @@ Writing requirements:
 
   d19_pricing_workbook: {
     artifactCode: "d19_pricing_workbook",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d21_assumption_set"],
@@ -2820,6 +2886,7 @@ Writing requirements:
 - §3 must be a table: Vendor | Submitted TCO | Normalized TCO | One-time | Run | Transition | Transformation/tooling | Retained/pass-through | Adjustments | Confidence.
 - §4 must bridge submitted price to normalized TCO by cost category; include "not provided" rather than guessing.
 - §5 must explain each adjustment with rationale, evidence basis, owner, and whether it is a correction, assumption alignment, or commercial challenge.
+- Preserve the Requirement ID, pricing linkage, claim ID, and assumption/exception reference behind every submitted price, normalization adjustment, and commercial gap so the price comparison remains traceable to the issued RFP and structured vendor response.
 - §6 must include scenario sensitivity: base case, volume downside/upside, escalator/FX exposure, transition overrun, productivity-credit realization.
 - §7 must produce BAFO-ready commercial questions for every material gap or trap.
 - Never invent vendor names, vendor prices, TCO, rates, FX, or savings. Use only upstream/vendor-response/uploaded evidence; otherwise state the gap and what must be collected.`,
@@ -2925,7 +2992,7 @@ Writing requirements:
 
   d20_trap_log: {
     artifactCode: "d20_trap_log",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d21_assumption_set", "d19_pricing_workbook"],
@@ -2955,6 +3022,7 @@ Writing requirements:
 - §2 must be a table: Trap ID | Vendor | Category | Severity P0/P1/P2 | Evidence basis | Estimated materiality | Decision impact | Resolution path | Owner | Status.
 - P0 means materially changes ranking or award viability; P1 means meaningful BAFO/commercial impact; P2 means monitor or contract-control item.
 - Every trap must tie to the pricing workbook, locked assumption set, vendor response evidence, or an explicit missing evidence gap. No unsupported traps.
+- Every trap must also carry the originating Requirement ID and vendor response, pricing, claim, or exception reference where available; preserve those identifiers in the BAFO handoff.
 - §4 maps each open P0/P1 trap to a precise BAFO question or commercial ask.
 - §5 names traps that should become contract controls if accepted rather than resolved.`,
     buildUserMessage: (ctx, upstream) => {
@@ -3039,7 +3107,7 @@ Writing requirements:
 
   d22_bafo_question_pack: {
     artifactCode: "d22_bafo_question_pack",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d20_trap_log"],
@@ -3068,7 +3136,7 @@ ${formatBafoQuestionFields()}
 
 Writing and format requirements:
 - §1 states whether the BAFO pack is ready to issue / conditionally ready / blocked. If no Pricing Trap Log exists, this artifact should not be generated.
-- §2 must be a vendor-specific table: Question ID | Vendor/finalist | Trap or gap reference | Question text | Commercial ask | Required response format | Proof requested | Walk-away or evaluation impact | Owner | Due date.
+- §2 must be a vendor-specific table: Question ID | Vendor/finalist | Requirement ID | Trap or gap reference | Question text | Commercial ask | Required response format | Proof requested | Walk-away or evaluation impact | Owner | Due date.
 - Every P0/P1 trap from the Pricing Trap Log must have a targeted BAFO question or an explicit rationale for why it is accepted rather than challenged.
 - Do not invent finalists, vendors, prices, concessions, walk-away positions, due dates, or legal terms. If a vendor, trap, or price delta is not evidenced, mark the row as blocked and name the owner action.
 - Vendor-facing language must be clean and neutral. Do not expose internal labels such as P0/P1, scoring rationale, walk-away economics, tenant ids, database table names, routing keys, model/provider names, or implementation labels in the vendor-facing body.
@@ -3262,7 +3330,7 @@ Writing and format requirements:
 
   d24_decision_brief: {
     artifactCode: "d24_decision_brief",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     // The Decision Brief names a recommended vendor — it must not be draftable before the
@@ -3291,6 +3359,7 @@ Required structural sections:
 Ground every claim in the bound upstream artifacts and uploaded evidence, cited by code and source-file name:
 - §1 leads with the recommendation, stated conditionally (which vendor, conditional on what — e.g. security uplift, a priced assumption, a transition milestone).
 - §4 finalist comparison must draw normalized TCO from the pricing workbook (d19) and the capability / security / transition scores from the evaluation scorecard (d16), and present them as a comparison table. Do NOT invent vendor names, scores, or prices that are not present in the bound upstream — if a finalist's number is missing, show it as a gap to close, not a guess.
+- For every material score, price difference, exception, and unresolved condition in the recommendation, preserve the Requirement ID, Criterion ID, pricing row, or BAFO question that supports it. The brief may summarize the chain, but it may not sever it.
 - §3 tradeoff card frames value posture from the value target (d02), open risks with residual exposure, and the transition window; scope boundaries come from d05; the mandate from d01.
 - §5 states the runner-up's case honestly so the brief is a real decision, not a one-sided pitch.
 - §6 lists the sign-offs required to advance to Selection (sponsor commitment, Steward sign-off, Sentinel risk attestation).
@@ -4470,25 +4539,66 @@ function shortPromptProfileCode(artifactCode: string): string {
 
 function formatEvidenceStates(ctx: SourceGenerationContext): string {
   if (ctx.evidence.length === 0) return "(no evidence states recorded)";
-  const d09SatisfiedIds = getD09RfpSatisfiedRequirementIds(ctx);
   return ctx.evidence
     .map((item) => {
-      const state =
-        item.currentState === "Not Requested" &&
-        d09SatisfiedIds.has(item.requirementId)
-          ? "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)"
-          : item.currentState;
+      const state = resolveGenerationEvidenceState(ctx, item);
       return [
         `- ${item.requirementId}`,
         `stage=${item.stage}`,
         `state=${state}`,
-        item.sourceArtifactId ? `artifact=${item.sourceArtifactId}` : null,
+        item.sourceArtifactId ? "source=linked evidence record" : null,
         item.notes ? `notes=${item.notes}` : null,
       ]
         .filter(Boolean)
         .join("; ");
     })
     .join("\n");
+}
+
+export function resolveGenerationEvidenceState(
+  ctx: SourceGenerationContext,
+  item: SourceGenerationContext["evidence"][number],
+  includeD09Coverage = true,
+): string {
+  if (item.applicabilityStatus === "not_applicable") {
+    return "Not applicable — audited owner decision";
+  }
+  if (item.currentState !== "Not Requested") return item.currentState;
+  if (
+    item.requirementId === "EVID-SRC-STR-TRIGGER" &&
+    Boolean(ctx.event.triggerDescription?.trim())
+  ) {
+    return "Available in approved event intake";
+  }
+  if (
+    item.requirementId === "EVID-SRC-STR-INCUMBENT" &&
+    (ctx.uploadedEvidence ?? []).some(
+      (artifact) =>
+        artifact.parseStatus === "parsed" &&
+        /(?:^|[_\s-])(msa|sow|contract|agreement)(?:[_\s.-]|$)/i.test(
+          artifact.originalName,
+        ),
+    )
+  ) {
+    const hasBoundFacts = (ctx.uploadedEvidence ?? []).some(
+      (artifact) =>
+        artifact.parseStatus === "parsed" &&
+        /(?:^|[_\s-])(msa|sow|contract|agreement)(?:[_\s.-]|$)/i.test(
+          artifact.originalName,
+        ) &&
+        (artifact.chunkExcerpts.length > 0 || artifact.factSummaries.length > 0),
+    );
+    return hasBoundFacts
+      ? "Available parsed evidence — file-level citation and structured facts bound; page/row locator review pending"
+      : "Available parsed evidence — citation review pending";
+  }
+  if (
+    includeD09Coverage &&
+    getD09RfpSatisfiedRequirementIds(ctx).has(item.requirementId)
+  ) {
+    return "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)";
+  }
+  return item.currentState;
 }
 
 function formatUploadedEvidence(ctx: SourceGenerationContext): string {
@@ -4498,7 +4608,7 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
     .map((artifact) => {
       const lines = [
         `### ${artifact.originalName}`,
-        `artifact_id=${artifact.id}; family=${artifact.artifactFamily}; format=${artifact.sourceFormat}; parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
+        `family=${artifact.artifactFamily}; format=${artifact.sourceFormat}; parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
       ];
       const excerpts = artifact.chunkExcerpts.slice(0, 2);
       if (excerpts.length > 0) {
@@ -4513,6 +4623,109 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
       return lines.join("\n");
     })
     .join("\n\n");
+}
+
+function formatResponseQaEvidence(ctx: SourceGenerationContext): string {
+  const evidence = (ctx.uploadedEvidence ?? []).filter((artifact) =>
+    /(?:bidder|vendor)[-_\s]*(?:qa|q&a)|(?:qa|q&a)[-_\s]*(?:log|clarification)|clarification[-_\s]*log/i.test(
+      artifact.originalName,
+    ),
+  );
+  if (evidence.length === 0) {
+    return "(no parsed bidder Q&A evidence available)";
+  }
+  return evidence
+    .map((artifact) => {
+      const lines = [
+        `### ${artifact.originalName}`,
+        `parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
+      ];
+      if (artifact.chunkExcerpts.length > 0) {
+        lines.push("Authoritative parsed content:");
+        lines.push(...artifact.chunkExcerpts.map((excerpt) => `- ${excerpt}`));
+      } else {
+        lines.push("(file is registered but no parsed content is available)");
+      }
+      return lines.join("\n");
+    })
+    .join("\n\n");
+}
+
+function formatNormalizedVendorResponsePackages(
+  ctx: SourceGenerationContext,
+): string {
+  const packages = ctx.normalizedVendorResponsePackages ?? [];
+  if (packages.length === 0) {
+    return "(no normalized vendor response packages available)";
+  }
+
+  const lines = [
+    "Use these latest-per-vendor normalized packages as the controlling intake record when an older uploaded file summary conflicts with them.",
+  ];
+  for (const responsePackage of packages) {
+    const rows = responsePackage.rows;
+    const dispositionCounts = new Map<string, number>();
+    for (const row of rows) {
+      const key = row.responseDisposition ?? "Missing";
+      dispositionCounts.set(key, (dispositionCounts.get(key) ?? 0) + 1);
+    }
+    const counts = [...dispositionCounts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, count]) => `${key}=${count}`)
+      .join(", ");
+    const mandatoryRows = rows.filter(
+      (row) => row.requirementLevel === "Mandatory",
+    );
+    const citedRows = rows.filter(
+      (row) => (row.evidenceRefs?.length ?? 0) > 0,
+    );
+    const pricingRows = rows.filter((row) => Boolean(row.pricingRef));
+    const slaRows = rows.filter((row) => Boolean(row.slaRef));
+    const exceptionRows = rows.filter(
+      (row) =>
+        row.responseDisposition === "Exception" || Boolean(row.exceptionRef),
+    );
+    const issueRows = rows
+      .filter(
+        (row) =>
+          row.responseDisposition === "Partially Comply" ||
+          row.responseDisposition === "Exception" ||
+          row.responseDisposition === null,
+      )
+      .slice(0, 20);
+
+    lines.push(
+      "",
+      `### ${responsePackage.vendorName} (${responsePackage.vendorId})`,
+      `file=${responsePackage.originalName}; requirements=${rows.length}; mandatory=${mandatoryRows.length}; dispositions=${counts || "none"}`,
+      `quality: requirement=${responsePackage.analytics.requirementCoverageScore}%; mandatory=${responsePackage.analytics.mandatoryCompletenessScore}%; evidence=${responsePackage.analytics.evidenceCoverageScore}%; pricing=${responsePackage.analytics.pricingTraceabilityScore}%; SLA=${responsePackage.analytics.slaTraceabilityScore}%; exceptions=${responsePackage.analytics.exceptionDisclosureScore}%; criteria=${responsePackage.analytics.criterionLinkageScore}%; ready=${responsePackage.analytics.readyForEvaluation}`,
+      `traceability: cited_rows=${citedRows.length}; pricing_rows=${pricingRows.length}; SLA_rows=${slaRows.length}; exception_rows=${exceptionRows.length}`,
+    );
+    if (responsePackage.analytics.nonConformances.length > 0) {
+      lines.push(
+        "Nonconformances:",
+        ...responsePackage.analytics.nonConformances.map((item) => `- ${item}`),
+      );
+    }
+    if (responsePackage.analytics.clarificationQuestions.length > 0) {
+      lines.push(
+        "Clarifications:",
+        ...responsePackage.analytics.clarificationQuestions.map(
+          (item) => `- ${item}`,
+        ),
+      );
+    }
+    if (issueRows.length > 0) {
+      lines.push(
+        "Exception/partial/missing rows:",
+        ...issueRows.map(
+          (row) =>
+            `- ${row.requirementId} | ${row.responseDisposition ?? "Missing"} | ${row.responseNarrative ?? "No response narrative"} | evidence=${(row.evidenceRefs ?? []).join(", ") || "none"} | pricing=${row.pricingRef ?? "none"} | SLA=${row.slaRef ?? "none"} | exception=${row.exceptionRef ?? "none"}`,
+        ),
+      );
+    }
+  }
+  return lines.join("\n");
 }
 
 /**

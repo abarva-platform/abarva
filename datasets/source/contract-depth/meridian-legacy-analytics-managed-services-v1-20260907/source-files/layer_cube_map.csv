@@ -1,0 +1,15 @@
+source_file,layer_2_adapter,layer_3_object,layer_4_cube_or_view,plain_english_use
+contracts.csv,contract_register_adapter,"source.contract, source.vendor","source.contract_360, source.vendor_contract_portfolio",contract identity and commercial header
+cmdb_application_scope.csv,contract_scope_adapter,source.contract_scope,source.contract_application_scope,application and system scope
+resource_model.csv,contract_resource_adapter,source.contract_resource_model,source.contract_operational_performance,staffing pyramid and delivery mix
+pricing_bridge.csv,contract_pricing_bridge_adapter,source.contract_pricing_bridge,source.contract_financial_exposure,resource bill rate and annual value reconciliation
+monthly_spend.csv,contract_consumption_adapter,source.contract_consumption_observation,consumption.sourcing_spend_monthly_v1,invoice and spend trend
+invoice_line_detail.csv,invoice_line_adapter,source.contract_invoice_line,source.contract_financial_exposure,"AP invoice lines, PO, GL, cost center, and invoice tie-out"
+ticket_volumetrics.csv,contract_performance_adapter,source.contract_ticket_volume,source.contract_operational_performance,ticket volume and backlog
+batch_job_volumetrics.csv,batch_operations_adapter,source.contract_batch_observation,source.contract_operational_performance,"batch jobs, failures, restarts, and late completion"
+sla_performance.csv,contract_performance_adapter,"source.contract_performance_observation, source.contract_service_credit",consumption.sourcing_performance_v1,SLA history and unclaimed credits
+change_orders.csv,change_order_adapter,source.contract_change_order,source.contract_action_candidate_v1,scope leakage and recurring change
+qbr_scorecards.csv,qbr_adapter,source.contract_qbr_observation,"source.vendor_position_v1, source.page_storyline_v1",run-vs-transform and value narrative
+optimization_opportunities.csv,optimization_opportunity_adapter,source.optimization_opportunity,"consumption.sourcing_opportunity_v1, source.contract_claim_card_v1",Optimize candidate action queue
+contract_page_text.csv,contract_page_text_adapter,source.canonical_fact_assertion,Evidence tab and aVa citation bundle,searchable parsed text for each evidence document
+evidence_manifest.csv,evidence_document_adapter,source.source_record_snapshot,Evidence tab and aVa citation bundle,document inventory and source ownership

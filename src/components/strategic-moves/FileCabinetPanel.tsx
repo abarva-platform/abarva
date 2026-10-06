@@ -8,6 +8,12 @@
 // lineage. Reads /api/v1/programs/:id/artifacts (no browser-only files).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  EvidenceReviewEditor,
+  type PendingEvidenceReview,
+} from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
+import { getPhaseLabel, TOTAL_PHASES } from "@/lib/programs/phase-labels";
 
 interface Artifact {
   artifactId: string;
@@ -42,6 +48,7 @@ interface Artifact {
   pairedVisualCompanionArtifactId?: string | null;
   visualCompanionArtifactType?: string | null;
   contextExtract?: MoveContextExtractReview | null;
+  evidenceSnapshotStatus?: "current" | "stale" | "unverified";
   downloadUrl: string;
 }
 
@@ -70,6 +77,10 @@ interface MoveContextExtractReview {
   suggestedContextItems?: MoveContextExtractReviewItem[];
   excludedContextItems?: MoveContextExtractReviewItem[];
   gapItems?: MoveContextExtractReviewItem[];
+  freshness?: {
+    freshnessStatus?: "fresh" | "stale" | "rebuild_required";
+    currentApprovedEvidenceCount?: number;
+  };
 }
 
 interface ContextExtractReviewModel {
@@ -83,14 +94,17 @@ interface ContextExtractReviewModel {
   gatheredMessage: string;
   nextPhaseMessage: string;
   coverageItems: string[];
+  freshnessStatus: "fresh" | "stale" | "rebuild_required";
+  currentApprovedEvidenceCount: number | null;
 }
 
-type SponsorReviewDecision =
+type WorkspaceReviewDecision =
   | "approve_for_p3_draft"
   | "request_revisions"
   | "hold_for_evidence";
 
-interface SponsorReviewState {
+interface WorkspaceReviewState {
+  canRecordDecision: boolean;
   reviewPackage: {
     reviewedArtifactId: string;
     htmlVisualCompanionArtifactId: string | null;
@@ -109,7 +123,7 @@ interface SponsorReviewState {
     p3Implication: string;
   };
   latestDecision: {
-    decision: SponsorReviewDecision;
+    decision: WorkspaceReviewDecision;
     rationale: string;
     created_at: string;
   } | null;
@@ -122,12 +136,12 @@ interface SponsorReviewState {
   };
 }
 
-interface SponsorReviewPostResponse extends SponsorReviewState {
+interface WorkspaceReviewPostResponse extends WorkspaceReviewState {
   ok?: boolean;
   error?: string;
   detail?: string;
   decision?: {
-    decision: SponsorReviewDecision;
+    decision: WorkspaceReviewDecision;
     rationale: string;
     created_at: string;
   };
@@ -166,7 +180,7 @@ export function artifactStatusLabel(status: string): string {
     .replace(/_/g, " ");
 }
 
-export function supportsSponsorReviewDecisionArtifact(
+export function supportsWorkspaceReviewDecisionArtifact(
   artifact: Pick<
     Artifact,
     "artifactType" | "downloadUrl" | "family" | "lifecycleState" | "phase"
@@ -193,6 +207,7 @@ export function supportsGeneratedClientApproval(
     | "lifecycleState"
     | "outputRole"
     | "status"
+    | "evidenceSnapshotStatus"
   >,
 ): boolean {
   return (
@@ -201,8 +216,79 @@ export function supportsGeneratedClientApproval(
     artifact.downloadUrl.startsWith("/api/v1/artifacts/") &&
     artifact.fileFormat !== "html" &&
     artifact.outputRole !== "html_visual_review_companion" &&
-    artifact.status !== "approved"
+    artifact.status !== "approved" &&
+    artifact.evidenceSnapshotStatus === "current"
   );
+}
+
+export function supportsReviewRegeneration(
+  artifact: Pick<Artifact, "downloadUrl">,
+): boolean {
+  return !artifact.downloadUrl.startsWith("/api/v1/artifacts/");
+}
+
+const REVIEW_READY_STATUSES = new Set(["approved", "board_ready", "ready"]);
+
+export function isGeneratedExportArtifact(
+  artifact: Pick<
+    Artifact,
+    "downloadUrl" | "family" | "outputRole" | "provenanceCategory"
+  >,
+): boolean {
+  if (artifact.family !== "generated_deliverable") return false;
+  if (artifact.outputRole === "html_visual_review_companion") return false;
+  return (
+    artifact.provenanceCategory === "abarva_generated_deliverable" ||
+    artifact.downloadUrl.startsWith("/api/v1/artifacts/")
+  );
+}
+
+export function fileCabinetDownloadSummary(
+  artifacts: ReadonlyArray<
+    Pick<
+      Artifact,
+      | "downloadUrl"
+      | "family"
+      | "fileFormat"
+      | "lifecycleState"
+      | "outputRole"
+      | "provenanceCategory"
+      | "status"
+    >
+  >,
+): string {
+  const current = artifacts.filter((a) => a.lifecycleState === "current");
+  const deliverables = current.filter(isGeneratedExportArtifact);
+  const reviewReady = deliverables.filter(
+    (a) =>
+      (a.fileFormat === "docx" || a.fileFormat === "pptx") &&
+      REVIEW_READY_STATUSES.has(a.status),
+  ).length;
+  const needsReview = deliverables.filter((a) => {
+    const label = artifactStatusLabel(a.status);
+    return (
+      label.includes("needs review") ||
+      label.includes("draft") ||
+      label.includes("blocked") ||
+      label.includes("quarantined")
+    );
+  }).length;
+  const models = deliverables.filter((a) => a.fileFormat === "xlsx").length;
+
+  const parts = [`${current.length} current files`];
+  if (reviewReady > 0) {
+    parts.push(`${reviewReady} review-ready DOCX/PPTX exports`);
+  }
+  if (needsReview > 0) {
+    parts.push(
+      `${needsReview} deliverable${needsReview === 1 ? " needs" : "s need"} review`,
+    );
+  }
+  if (models > 0) {
+    parts.push(`${models} model${models === 1 ? "" : "s"}`);
+  }
+
+  return `${parts.join(" · ")}.`;
 }
 
 function fmtBytes(n: number | null): string {
@@ -295,16 +381,22 @@ export function buildContextExtractReviewModel(
   const coverageItems = [...coverageCounts.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([family, count]) => `${metaLabel(family)}: ${count}`);
+  const freshnessStatus =
+    extract.freshness?.freshnessStatus ?? "rebuild_required";
   const gatheredMessage =
-    extract.sourceMode === "candidate_preview"
-      ? "AbarVa reviewed an explicitly acknowledged candidate preview. It is visible for review, not treated as active runtime truth."
-      : `AbarVa reviewed active Move evidence and active module context for P${phase}. Candidate preview data stayed out of the default path.`;
+    freshnessStatus !== "fresh"
+      ? "This is a saved context snapshot, not a live view of approved evidence. Its attached-evidence count and content may be out of date."
+      : extract.sourceMode === "candidate_preview"
+        ? "AbarVa reviewed an explicitly acknowledged candidate preview. It is visible for review, not treated as active runtime truth."
+        : `AbarVa reviewed active Move evidence and active module context for P${phase}. Candidate preview data stayed out of the default path.`;
   const nextPhaseMessage =
-    gaps.length > 0
-      ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
-      : attached.length > 0
-        ? `P${targetPhase} has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
-        : `No agent-ready evidence is attached yet. Upload or approve source-backed evidence before using this extract for P${targetPhase}.`;
+    freshnessStatus !== "fresh"
+      ? "Rebuild the context snapshot and phase outputs from the current approved evidence before relying on them for a phase decision."
+      : gaps.length > 0
+        ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
+        : attached.length > 0
+          ? `P${targetPhase} has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
+          : `No agent-ready evidence is attached yet. Upload or approve source-backed evidence before using this extract for P${targetPhase}.`;
   return {
     artifact,
     sourceModeLabel,
@@ -316,6 +408,11 @@ export function buildContextExtractReviewModel(
     gatheredMessage,
     nextPhaseMessage,
     coverageItems,
+    freshnessStatus,
+    currentApprovedEvidenceCount:
+      typeof extract.freshness?.currentApprovedEvidenceCount === "number"
+        ? extract.freshness.currentApprovedEvidenceCount
+        : null,
   };
 }
 
@@ -496,13 +593,38 @@ function ContextExtractReviewPanel({
           }}
         >
           <strong style={{ display: "block", color: "#0F172A", fontSize: 12 }}>
-            {model.attached.length} attached
+            {model.freshnessStatus === "fresh"
+              ? `${model.attached.length} attached`
+              : `Last snapshot: ${model.attached.length} attached`}
           </strong>
           {model.sourceModeLabel}
           <br />
           {model.generatedLabel}
         </div>
       </div>
+
+      {model.freshnessStatus !== "fresh" && (
+        <div
+          role="alert"
+          style={{
+            marginTop: 12,
+            border: "1px solid #e7c98c",
+            borderRadius: 6,
+            background: "#fffaf0",
+            color: "#704b12",
+            padding: "9px 11px",
+            fontSize: 12,
+            lineHeight: 1.45,
+          }}
+        >
+          <strong>Snapshot out of date.</strong> This is the evidence set
+          captured when it was generated, not the current approved set
+          {model.currentApprovedEvidenceCount != null
+            ? ` (${model.currentApprovedEvidenceCount} currently approved)`
+            : ""}
+          . Rebuild before using it for a phase decision.
+        </div>
+      )}
 
       <div
         style={{
@@ -566,98 +688,104 @@ function ContextExtractReviewPanel({
   );
 }
 
-// Fetch an artifact with a short retry on 503 (transient tenant-lookup outage). A bare
-// <a href> top-level navigation that hit a one-off 503 previously dead-ended Open/Download;
-// fetching the bytes here lets us retry, then open/save via an object URL so the file is
-// reliably delivered regardless of format/cookie quirks.
-async function fetchArtifact(url: string): Promise<Blob> {
-  const backoffMs = [250, 700];
-  let res = await fetch(url, { credentials: "include" });
-  for (let i = 0; res.status === 503 && i < backoffMs.length; i += 1) {
-    await new Promise((r) => setTimeout(r, backoffMs[i]));
-    res = await fetch(url, { credentials: "include" });
+export function artifactFinalDownloadUrl(
+  artifact: Pick<Artifact, "downloadUrl" | "fileFormat" | "outputRole">,
+): string {
+  if (!artifact.downloadUrl.startsWith("/api/v1/artifacts/")) {
+    return artifact.downloadUrl;
   }
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.blob();
+  const format = artifactFinalDownloadFormat(artifact);
+  return `${artifact.downloadUrl}${artifact.downloadUrl.includes("?") ? "&" : "?"}format=${format}`;
+}
+
+function artifactFinalDownloadFormat(
+  artifact: Pick<Artifact, "fileFormat" | "outputRole">,
+): "docx" | "pptx" | "xlsx" {
+  if (artifact.fileFormat === "pptx" || artifact.outputRole === "pptx_final") {
+    return "pptx";
+  }
+  if (artifact.fileFormat === "xlsx") return "xlsx";
+  return "docx";
+}
+
+export function artifactInlinePreviewUrl(
+  artifact: Pick<Artifact, "downloadUrl">,
+): string {
+  const params = artifact.downloadUrl.startsWith("/api/v1/artifacts/")
+    ? "format=html&inline=1"
+    : "inline=1";
+  return `${artifact.downloadUrl}${artifact.downloadUrl.includes("?") ? "&" : "?"}${params}`;
+}
+
+function artifactDownloadFileName(
+  artifact: Pick<
+    Artifact,
+    "downloadUrl" | "fileName" | "fileFormat" | "outputRole" | "title"
+  >,
+): string {
+  if (artifact.fileName) return artifact.fileName;
+  const extension = artifact.downloadUrl.startsWith("/api/v1/artifacts/")
+    ? artifactFinalDownloadFormat(artifact)
+    : artifact.fileFormat || "bin";
+  return `${artifact.title.replace(/[\\/:*?"<>|]+/g, "_")}.${extension}`;
+}
+
+function textFromArtifactPreview(html: string): string {
+  try {
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    return (parsed.body.textContent ?? "").replace(/\s+/g, " ").trim();
+  } catch {
+    return html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 }
 
 function ArtifactRow({
   a,
   moveId,
   onChanged,
+  canApproveGates,
 }: {
   a: Artifact;
   moveId: string;
   onChanged: () => Promise<void>;
+  canApproveGates: boolean;
 }) {
   const stored = a.stored === "azure_blob";
-  const [busy, setBusy] = useState<null | "open" | "download">(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
   const [packetLoading, setPacketLoading] = useState(false);
-  const [sponsorReview, setSponsorReview] = useState<SponsorReviewState | null>(
-    null,
-  );
+  const [workspaceReview, setWorkspaceReview] =
+    useState<WorkspaceReviewState | null>(null);
   const [decisionRationale, setDecisionRationale] = useState("");
   const [missingEvidenceText, setMissingEvidenceText] = useState("");
   const [clientApprovalReason, setClientApprovalReason] = useState("");
   const [clientApprovalBusy, setClientApprovalBusy] = useState(false);
+  const [draftPreviewText, setDraftPreviewText] = useState<string | null>(null);
+  const [draftPreviewLoading, setDraftPreviewLoading] = useState(false);
+  const [draftPreviewError, setDraftPreviewError] = useState<string | null>(
+    null,
+  );
   const [actionErr, setActionErr] = useState<string | null>(null);
   const reviewPanelRef = useRef<HTMLDivElement | null>(null);
   const approvedFileInputRef = useRef<HTMLInputElement | null>(null);
   const roleLabel = artifactOutputRoleLabel(a);
-  const canLoadSponsorReview = supportsSponsorReviewDecisionArtifact(a, moveId);
-  const canApproveGeneratedDraft = supportsGeneratedClientApproval(a);
+  const canLoadWorkspaceReview = supportsWorkspaceReviewDecisionArtifact(
+    a,
+    moveId,
+  );
+  const canApproveGeneratedDraft =
+    canApproveGates && supportsGeneratedClientApproval(a);
   const previewOnly =
     a.fileFormat === "html" || a.outputRole === "html_visual_review_companion";
   const isGeneratedArtifactRoute =
     a.downloadUrl.startsWith("/api/v1/artifacts/");
-
-  const openArtifact = useCallback(async () => {
-    setBusy("open");
-    setActionErr(null);
-    try {
-      const openParams = isGeneratedArtifactRoute
-        ? "format=html&inline=1"
-        : "inline=1";
-      const inlineUrl = `${a.downloadUrl}${a.downloadUrl.includes("?") ? "&" : "?"}${openParams}`;
-      const win = window.open(
-        inlineUrl,
-        `moves-artifact-${a.artifactId}`,
-        "noopener,noreferrer",
-      );
-      if (!win) {
-        setActionErr("Browser blocked the artifact tab. Use Download instead.");
-      }
-    } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "open failed");
-    } finally {
-      setBusy(null);
-    }
-  }, [a.artifactId, a.downloadUrl, isGeneratedArtifactRoute]);
-
-  const downloadArtifact = useCallback(async () => {
-    setBusy("download");
-    setActionErr(null);
-    try {
-      const blob = await fetchArtifact(a.downloadUrl);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download =
-        a.fileName ||
-        `${a.title.replace(/[\\/:*?"<>|]+/g, "_")}.${a.fileFormat || "bin"}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "download failed");
-    } finally {
-      setBusy(null);
-    }
-  }, [a.downloadUrl, a.fileName, a.title, a.fileFormat]);
+  const canRegenerateReview = supportsReviewRegeneration(a);
 
   const submitReviewFeedback = useCallback(async () => {
     const text = feedbackText.trim();
@@ -692,8 +820,8 @@ function ArtifactRow({
     }
   }, [a.artifactId, feedbackText, moveId, onChanged, reviewBusy]);
 
-  const loadSponsorReview = useCallback(async () => {
-    if (!reviewOpen || !canLoadSponsorReview) return;
+  const loadWorkspaceReview = useCallback(async () => {
+    if (!reviewOpen || !canLoadWorkspaceReview) return;
     setPacketLoading(true);
     setActionErr(null);
     try {
@@ -704,11 +832,12 @@ function ArtifactRow({
       const json = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
-      } & SponsorReviewState;
+      } & WorkspaceReviewState;
       if (!res.ok || !json.ok) {
         throw new Error(json.error || `HTTP ${res.status}`);
       }
-      setSponsorReview({
+      setWorkspaceReview({
+        canRecordDecision: json.canRecordDecision,
         reviewPackage: json.reviewPackage,
         packet: json.packet,
         latestDecision: json.latestDecision,
@@ -716,32 +845,74 @@ function ArtifactRow({
       });
     } catch (e) {
       setActionErr(e instanceof Error ? e.message : "review packet failed");
-      setSponsorReview(null);
+      setWorkspaceReview(null);
     } finally {
       setPacketLoading(false);
     }
-  }, [a.artifactId, canLoadSponsorReview, moveId, reviewOpen]);
+  }, [a.artifactId, canLoadWorkspaceReview, moveId, reviewOpen]);
 
   useEffect(() => {
-    void loadSponsorReview();
-  }, [loadSponsorReview]);
+    void loadWorkspaceReview();
+  }, [loadWorkspaceReview]);
 
   useEffect(() => {
     if (!reviewOpen) return;
-    window.requestAnimationFrame(() => {
-      reviewPanelRef.current?.scrollIntoView({
+    const frame = window.requestAnimationFrame(() => {
+      // Guard the method, not just the ref: jsdom and some embedded webviews
+      // do not implement scrollIntoView (U-550).
+      const panel = reviewPanelRef.current;
+      if (typeof panel?.scrollIntoView !== "function") return;
+      panel.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [reviewOpen]);
 
-  const submitSponsorDecision = useCallback(
-    async (decision: SponsorReviewDecision) => {
+  useEffect(() => {
+    let cancelled = false;
+    setDraftPreviewText(null);
+    setDraftPreviewError(null);
+    if (!reviewOpen || !canApproveGeneratedDraft || !isGeneratedArtifactRoute) {
+      setDraftPreviewLoading(false);
+      return;
+    }
+    setDraftPreviewLoading(true);
+    void fetch(artifactInlinePreviewUrl(a), { credentials: "include" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then((html) => {
+        if (cancelled) return;
+        const text = textFromArtifactPreview(html);
+        if (!text) {
+          throw new Error("Draft preview has no readable body.");
+        }
+        setDraftPreviewText(text.slice(0, 6000));
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setDraftPreviewError(
+            err instanceof Error ? err.message : "Draft preview failed",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDraftPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [a, canApproveGeneratedDraft, isGeneratedArtifactRoute, reviewOpen]);
+
+  const submitReviewDecision = useCallback(
+    async (decision: WorkspaceReviewDecision) => {
       if (reviewBusy) return;
       const defaultRationale =
         decision === "approve_for_p3_draft"
-          ? "P2 diagnostic accepted as sufficient to begin P3 draft shaping; final sponsor/signoff gates remain required."
+          ? "P2 diagnostic accepted as sufficient to begin P3 draft shaping; final authorized-user approval gates remain required."
           : decision === "request_revisions"
             ? "Reviewer requested changes before proceeding to P3."
             : "Reviewer requires missing evidence before proceeding to P3.";
@@ -763,21 +934,22 @@ function ArtifactRow({
               decision,
               rationale,
               carriedForwardCaveats:
-                sponsorReview?.packet.knownLimitations ?? [],
+                workspaceReview?.packet.knownLimitations ?? [],
               missingEvidence:
                 missingEvidence.length > 0
                   ? missingEvidence
-                  : (sponsorReview?.packet.missingEvidence ?? []),
+                  : (workspaceReview?.packet.missingEvidence ?? []),
             }),
           },
         );
         const json = (await res
           .json()
-          .catch(() => ({}))) as SponsorReviewPostResponse;
+          .catch(() => ({}))) as WorkspaceReviewPostResponse;
         if (!res.ok || !json.ok) {
           throw new Error(json.detail || json.error || `HTTP ${res.status}`);
         }
-        setSponsorReview({
+        setWorkspaceReview({
+          canRecordDecision: json.canRecordDecision ?? true,
           reviewPackage: json.reviewPackage,
           packet: json.packet,
           latestDecision: json.decision
@@ -803,12 +975,18 @@ function ArtifactRow({
       moveId,
       onChanged,
       reviewBusy,
-      sponsorReview,
+      workspaceReview,
     ],
   );
 
   const acceptGeneratedDraft = useCallback(async () => {
-    if (!canApproveGeneratedDraft || clientApprovalBusy) return;
+    if (
+      !canApproveGeneratedDraft ||
+      clientApprovalBusy ||
+      (isGeneratedArtifactRoute && !draftPreviewText)
+    ) {
+      return;
+    }
     setClientApprovalBusy(true);
     setActionErr(null);
     try {
@@ -845,6 +1023,8 @@ function ArtifactRow({
     canApproveGeneratedDraft,
     clientApprovalBusy,
     clientApprovalReason,
+    draftPreviewText,
+    isGeneratedArtifactRoute,
     moveId,
     onChanged,
   ]);
@@ -995,6 +1175,27 @@ function ArtifactRow({
               </span>
             )}
             <StatusChip status={a.status} />
+            {a.evidenceSnapshotStatus &&
+              a.evidenceSnapshotStatus !== "current" && (
+                <span
+                  role="status"
+                  title="Approved evidence changed after this artifact was built, or its evidence revision cannot be verified. Rebuild and review before phase close."
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 750,
+                    color: "#8a5712",
+                    background: "#fff3d6",
+                    border: "1px solid #ead09d",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {a.evidenceSnapshotStatus === "stale"
+                    ? "Evidence stale"
+                    : "Evidence unverified"}
+                </span>
+              )}
             {previewOnly && (
               <span
                 title="HTML is a browser preview only. Client-final artifacts must be DOCX or PPTX."
@@ -1076,9 +1277,10 @@ function ArtifactRow({
           >
             Review
           </button>
-          <button
-            onClick={openArtifact}
-            disabled={busy !== null}
+          <a
+            href={artifactInlinePreviewUrl(a)}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               fontSize: 11.5,
               fontWeight: 600,
@@ -1088,28 +1290,30 @@ function ArtifactRow({
               borderRadius: 5,
               padding: "5px 11px",
               whiteSpace: "nowrap",
-              cursor: busy ? "default" : "pointer",
+              textDecoration: "none",
+              cursor: "pointer",
             }}
           >
-            {busy === "open" ? "Opening…" : "Open"}
-          </button>
-          <button
-            onClick={downloadArtifact}
-            disabled={busy !== null}
+            Open
+          </a>
+          <a
+            href={artifactFinalDownloadUrl(a)}
+            download={artifactDownloadFileName(a)}
             style={{
               fontSize: 11.5,
               fontWeight: 600,
               color: "#fff",
-              background: busy ? "#9AA3B2" : "#1B2B5C",
+              background: "#1B2B5C",
               border: "none",
               borderRadius: 5,
               padding: "5px 11px",
               whiteSpace: "nowrap",
-              cursor: busy ? "default" : "pointer",
+              textDecoration: "none",
+              cursor: "pointer",
             }}
           >
-            {busy === "download" ? "Downloading…" : "Download"}
-          </button>
+            Download
+          </a>
         </div>
       </div>
       {hasReviewSignals && (
@@ -1206,7 +1410,7 @@ function ArtifactRow({
                   {artifactFormatLabel(a.fileFormat)} · {metaLabel(a.family)} ·{" "}
                   {metaLabel(a.status)}
                 </p>
-                {sponsorReview ? (
+                {workspaceReview ? (
                   <p
                     style={{
                       margin: "8px 0 0",
@@ -1215,9 +1419,10 @@ function ArtifactRow({
                       color: "#334155",
                     }}
                   >
-                    This artifact also has a sponsor-review packet. You can
-                    approve it for draft shaping, request revisions, or hold for
-                    missing evidence without bypassing final phase gates.
+                    This artifact has a review packet. An authorized workspace
+                    user can approve it for draft shaping, request revisions, or
+                    hold for missing evidence. This does not bypass final phase
+                    gates.
                   </p>
                 ) : null}
               </div>
@@ -1227,7 +1432,7 @@ function ArtifactRow({
                 </span>
               )}
             </div>
-            {sponsorReview && (
+            {workspaceReview && (
               <div
                 style={{
                   display: "grid",
@@ -1243,35 +1448,59 @@ function ArtifactRow({
                     Diagnostic thesis
                   </strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
-                    {sponsorReview.packet.diagnosticThesis}
+                    {workspaceReview.packet.diagnosticThesis}
                   </p>
                 </div>
                 <div>
                   <strong style={{ color: "#0F172A" }}>Quantified facts</strong>
-                  <BulletList items={sponsorReview.packet.quantifiedFacts} />
+                  {workspaceReview.packet.quantifiedFacts.length ? (
+                    <BulletList
+                      items={workspaceReview.packet.quantifiedFacts}
+                    />
+                  ) : (
+                    <p style={{ margin: "6px 0 0", color: "#64748B" }}>
+                      No quantified facts were explicitly supplied for this
+                      review.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>
+                    Strongest evidence
+                  </strong>
+                  {workspaceReview.packet.strongestEvidence.length ? (
+                    <BulletList
+                      items={workspaceReview.packet.strongestEvidence}
+                    />
+                  ) : (
+                    <p style={{ margin: "6px 0 0", color: "#64748B" }}>
+                      No strongest-evidence items were explicitly supplied for
+                      this review.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <strong style={{ color: "#0F172A" }}>
                     Known limitations
                   </strong>
-                  <BulletList items={sponsorReview.packet.knownLimitations} />
+                  <BulletList items={workspaceReview.packet.knownLimitations} />
                 </div>
                 <div>
                   <strong style={{ color: "#0F172A" }}>P3 implication</strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
-                    {sponsorReview.packet.p3Implication}
+                    {workspaceReview.packet.p3Implication}
                   </p>
                 </div>
                 <div>
                   <strong style={{ color: "#0F172A" }}>Review package</strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
                     HTML companion:{" "}
-                    {sponsorReview.reviewPackage.htmlVisualCompanionArtifactId
+                    {workspaceReview.reviewPackage.htmlVisualCompanionArtifactId
                       ? "linked"
                       : "not linked"}
                     <br />
                     Editable Word record:{" "}
-                    {sponsorReview.reviewPackage.docxEditableArtifactId
+                    {workspaceReview.reviewPackage.docxEditableArtifactId
                       ? "linked"
                       : "not linked"}
                   </p>
@@ -1280,24 +1509,24 @@ function ArtifactRow({
                   <strong style={{ color: "#0F172A" }}>Gate status</strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
                     P3 draft readiness:{" "}
-                    {sponsorReview.readiness.readyForP3Draft
+                    {workspaceReview.readiness.readyForP3Draft
                       ? "ready"
                       : "blocked"}
                     <br />
                     P3 final readiness:{" "}
-                    {sponsorReview.readiness.readyForP3Final
+                    {workspaceReview.readiness.readyForP3Final
                       ? "ready"
                       : "blocked"}
                     <br />
                     P2 final approval:{" "}
-                    {sponsorReview.readiness.p2FinalApproved
+                    {workspaceReview.readiness.p2FinalApproved
                       ? "approved"
                       : "not final"}
                   </p>
                 </div>
               </div>
             )}
-            {sponsorReview?.latestDecision && (
+            {workspaceReview?.latestDecision && (
               <div
                 style={{
                   marginTop: 12,
@@ -1311,12 +1540,12 @@ function ArtifactRow({
               >
                 Latest decision:{" "}
                 <strong>
-                  {metaLabel(sponsorReview.latestDecision.decision)}
+                  {metaLabel(workspaceReview.latestDecision.decision)}
                 </strong>
-                . {sponsorReview.readiness.reason}
+                . {workspaceReview.readiness.reason}
               </div>
             )}
-            {sponsorReview && (
+            {canApproveGates && workspaceReview?.canRecordDecision ? (
               <>
                 <textarea
                   value={decisionRationale}
@@ -1365,7 +1594,7 @@ function ArtifactRow({
                 >
                   <button
                     onClick={() =>
-                      void submitSponsorDecision("hold_for_evidence")
+                      void submitReviewDecision("hold_for_evidence")
                     }
                     disabled={reviewBusy}
                     style={{
@@ -1382,7 +1611,7 @@ function ArtifactRow({
                   </button>
                   <button
                     onClick={() =>
-                      void submitSponsorDecision("request_revisions")
+                      void submitReviewDecision("request_revisions")
                     }
                     disabled={reviewBusy}
                     style={{
@@ -1399,7 +1628,7 @@ function ArtifactRow({
                   </button>
                   <button
                     onClick={() =>
-                      void submitSponsorDecision("approve_for_p3_draft")
+                      void submitReviewDecision("approve_for_p3_draft")
                     }
                     disabled={reviewBusy}
                     style={{
@@ -1416,7 +1645,12 @@ function ArtifactRow({
                   </button>
                 </div>
               </>
-            )}
+            ) : workspaceReview ? (
+              <p style={{ margin: "12px 0 0", color: "#64748B", fontSize: 12 }}>
+                Review decisions are available to authorized workspace users.
+                Sponsors are listed contacts and do not approve in Nexus.
+              </p>
+            ) : null}
           </div>
           {canApproveGeneratedDraft ? (
             <div
@@ -1437,7 +1671,7 @@ function ArtifactRow({
                   letterSpacing: "0.06em",
                 }}
               >
-                Client approval
+                Workspace approval
               </div>
               <p
                 style={{
@@ -1448,14 +1682,54 @@ function ArtifactRow({
                 }}
               >
                 This is an AI-prepared draft. It can inform the gate only after
-                a human reviewer accepts it as authoritative or uploads an
-                edited client-approved final.
+                the authorized workspace user accepts it as authoritative or
+                uploads an edited final version.
               </p>
+              {isGeneratedArtifactRoute && (
+                <div
+                  style={{
+                    border: "1px solid #D7EFE5",
+                    borderRadius: 7,
+                    background: "#FFFFFF",
+                    padding: 10,
+                    marginBottom: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: "#0F766E",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Draft body
+                  </div>
+                  <div
+                    style={{
+                      maxHeight: 180,
+                      overflow: "auto",
+                      whiteSpace: "pre-wrap",
+                      fontSize: 12,
+                      lineHeight: 1.45,
+                      color: "#334155",
+                    }}
+                  >
+                    {draftPreviewLoading
+                      ? "Loading draft preview..."
+                      : draftPreviewError
+                        ? `Preview unavailable: ${draftPreviewError}`
+                        : draftPreviewText}
+                  </div>
+                </div>
+              )}
               <textarea
                 value={clientApprovalReason}
                 onChange={(e) => setClientApprovalReason(e.target.value)}
                 rows={2}
-                placeholder="Approval rationale, e.g. Sponsor reviewed the charter and approved this version for P1 gate closure."
+                placeholder="Approval rationale, e.g. reviewed the current version and evidence before approving the gate."
                 style={{
                   width: "100%",
                   resize: "vertical",
@@ -1487,12 +1761,19 @@ function ArtifactRow({
               >
                 <button
                   onClick={acceptGeneratedDraft}
-                  disabled={clientApprovalBusy}
+                  disabled={
+                    clientApprovalBusy ||
+                    (isGeneratedArtifactRoute && !draftPreviewText)
+                  }
                   style={{
                     fontSize: 11.5,
                     fontWeight: 700,
                     color: "#fff",
-                    background: clientApprovalBusy ? "#9AA3B2" : "#166534",
+                    background:
+                      clientApprovalBusy ||
+                      (isGeneratedArtifactRoute && !draftPreviewText)
+                        ? "#9AA3B2"
+                        : "#166534",
                     border: "none",
                     borderRadius: 5,
                     padding: "7px 12px",
@@ -1520,34 +1801,38 @@ function ArtifactRow({
               </div>
             </div>
           ) : null}
-          <label
-            style={{
-              display: "block",
-              fontSize: 11.5,
-              fontWeight: 700,
-              color: "#5A6472",
-              marginBottom: 6,
-            }}
-          >
-            Paste review notes to create the next version
-          </label>
-          <textarea
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            rows={4}
-            placeholder="Example: Add the missing AP exception aging caveat, keep this preliminary, and show what the client must upload before final approval."
-            style={{
-              width: "100%",
-              resize: "vertical",
-              border: "1px solid #D5DAE2",
-              borderRadius: 6,
-              padding: 8,
-              fontSize: 12,
-              lineHeight: 1.45,
-              color: "#1A1A18",
-              background: "#fff",
-            }}
-          />
+          {canRegenerateReview && (
+            <>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "#5A6472",
+                  marginBottom: 6,
+                }}
+              >
+                Paste review notes to create the next version
+              </label>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                rows={4}
+                placeholder="Example: Add the missing AP exception aging caveat, keep this preliminary, and show what the client must upload before final approval."
+                style={{
+                  width: "100%",
+                  resize: "vertical",
+                  border: "1px solid #D5DAE2",
+                  borderRadius: 6,
+                  padding: 8,
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                  color: "#1A1A18",
+                  background: "#fff",
+                }}
+              />
+            </>
+          )}
           <div
             style={{
               display: "flex",
@@ -1571,22 +1856,24 @@ function ArtifactRow({
             >
               Cancel
             </button>
-            <button
-              onClick={submitReviewFeedback}
-              disabled={!feedbackText.trim() || reviewBusy}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 600,
-                color: "#fff",
-                background:
-                  !feedbackText.trim() || reviewBusy ? "#9AA3B2" : "#1B2B5C",
-                border: "none",
-                borderRadius: 5,
-                padding: "5px 11px",
-              }}
-            >
-              {reviewBusy ? "Creating version…" : "Create next version"}
-            </button>
+            {canRegenerateReview && (
+              <button
+                onClick={submitReviewFeedback}
+                disabled={!feedbackText.trim() || reviewBusy}
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "#fff",
+                  background:
+                    !feedbackText.trim() || reviewBusy ? "#9AA3B2" : "#1B2B5C",
+                  border: "none",
+                  borderRadius: 5,
+                  padding: "5px 11px",
+                }}
+              >
+                {reviewBusy ? "Creating version..." : "Create next version"}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1598,12 +1885,30 @@ export function FileCabinetPanel({
   moveId,
   phase = 0,
   presentationMode = false,
+  canApproveGates = false,
+  onEvidenceChanged,
+  evidenceFamilies = [],
 }: {
   moveId: string;
   phase?: number;
   presentationMode?: boolean;
+  canApproveGates?: boolean;
+  onEvidenceChanged?: () => void;
+  /**
+   * The evidence families this phase requires. When supplied, the uploader
+   * can say which one a file covers instead of leaving it to inference.
+   */
+  evidenceFamilies?: ReadonlyArray<{ id: string; label: string }>;
 }) {
+  const [declaredFamily, setDeclaredFamily] = useState("");
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [pendingEvidenceReviews, setPendingEvidenceReviews] = useState<
+    PendingEvidenceReview[]
+  >([]);
+  const [evidenceReviewAvailable, setEvidenceReviewAvailable] = useState(true);
+  const [reviewingEvidenceId, setReviewingEvidenceId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [family, setFamily] = useState<string>("all");
@@ -1613,6 +1918,18 @@ export function FileCabinetPanel({
     "idle" | "uploading" | "error"
   >("idle");
   const [uploadMsg, setUploadMsg] = useState<string>("");
+  const [uploadFamily, setUploadFamily] = useState<
+    "uploaded_evidence" | "session_artifact"
+  >("uploaded_evidence");
+  const [uploadPhase, setUploadPhase] = useState(phase);
+
+  const onUploadPhaseChange = useCallback(
+    (nextPhase: number) => {
+      setUploadPhase(nextPhase);
+      if (nextPhase !== phase) setDeclaredFamily("");
+    },
+    [phase],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1624,12 +1941,60 @@ export function FileCabinetPanel({
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
       setArtifacts(Array.isArray(j.artifacts) ? j.artifacts : []);
+      setPendingEvidenceReviews(
+        Array.isArray(j.pendingEvidenceReviews) ? j.pendingEvidenceReviews : [],
+      );
+      setEvidenceReviewAvailable(j.evidenceReviewStatus !== "unavailable");
     } catch (e) {
       setError(e instanceof Error ? e.message : "load failed");
     } finally {
       setLoading(false);
     }
   }, [moveId]);
+
+  const decideEvidenceReview = useCallback(
+    async (
+      review: PendingEvidenceReview,
+      decision: "approved" | "rejected",
+      extraction?: ReviewedEvidenceExtraction,
+    ) => {
+      setReviewingEvidenceId(review.evidenceId);
+      setError(null);
+      try {
+        const response = await fetch(
+          `/api/v1/programs/${moveId}/current-state/evidence/${review.evidenceId}/approve`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              decision,
+              reviewedExtraction: extraction,
+              rationale:
+                decision === "approved"
+                  ? "Reviewer approved the corrected evidence extraction."
+                  : "Reviewer rejected the parsed evidence.",
+            }),
+          },
+        );
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) {
+          throw new Error(
+            result.detail || result.error || `HTTP ${response.status}`,
+          );
+        }
+        await load();
+        onEvidenceChanged?.();
+      } catch (cause) {
+        setError(
+          cause instanceof Error ? cause.message : "Evidence review failed",
+        );
+      } finally {
+        setReviewingEvidenceId(null);
+      }
+    },
+    [load, moveId, onEvidenceChanged],
+  );
 
   const onUpload = useCallback(
     async (file: File) => {
@@ -1638,8 +2003,11 @@ export function FileCabinetPanel({
       try {
         const fd = new FormData();
         fd.append("file", file);
-        fd.append("phase", String(phase));
-        fd.append("family", "uploaded_evidence");
+        fd.append("phase", String(uploadPhase));
+        fd.append("family", uploadFamily);
+        if (uploadFamily === "uploaded_evidence" && declaredFamily) {
+          fd.append("evidenceFamily", declaredFamily);
+        }
         const r = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
           method: "POST",
           credentials: "include",
@@ -1647,23 +2015,55 @@ export function FileCabinetPanel({
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.ok)
-          throw new Error(j.error || j.detail || `HTTP ${r.status}`);
-        setUploadState("idle");
+          throw new Error(
+            j.error === "sensitive_data_quarantined"
+              ? `${file.name} was not uploaded. It appears to contain personal or regulated identifiers, so nothing was stored. Remove the identifiers and upload again.`
+              : j.error || j.detail || `HTTP ${r.status}`,
+          );
+        const evidence = j.evidence as
+          | {
+              status?: string;
+              reviewStatus?: string;
+              parseMethod?: string;
+              warning?: string;
+            }
+          | undefined;
+        const notCaptured = evidence?.status === "not_captured";
+        setUploadState(notCaptured ? "error" : "idle");
         setUploadMsg(
-          `Uploaded ${file.name}${j.blobStored ? " → Azure Blob" : ""}.`,
+          notCaptured
+            ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
+            : evidence?.reviewStatus
+              ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
+              : `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}${j.blobStored ? " to secure storage" : ""}.`,
         );
+        if (!notCaptured) setUploadPhase(phase);
         await load();
+        onEvidenceChanged?.();
       } catch (e) {
         setUploadState("error");
         setUploadMsg(e instanceof Error ? e.message : "upload failed");
       }
     },
-    [moveId, phase, load],
+    [
+      moveId,
+      phase,
+      uploadPhase,
+      load,
+      uploadFamily,
+      declaredFamily,
+      onEvidenceChanged,
+    ],
   );
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setUploadPhase(phase);
+    setDeclaredFamily("");
+  }, [phase]);
 
   const visible = useMemo(
     () =>
@@ -1702,6 +2102,10 @@ export function FileCabinetPanel({
   const totalCurrent = artifacts.filter(
     (a) => a.lifecycleState === "current",
   ).length;
+  const downloadSummary = useMemo(
+    () => fileCabinetDownloadSummary(artifacts),
+    [artifacts],
+  );
 
   return (
     <div style={{ padding: "0 4px" }}>
@@ -1726,12 +2130,120 @@ export function FileCabinetPanel({
             Downloads
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            Client-final DOCX/PPTX files and HTML previews for review.{" "}
-            {totalCurrent} current.
+            Current Move files, review-ready exports, and review items.{" "}
+            {downloadSummary || `${totalCurrent} current files.`}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "end",
+            flexWrap: "wrap",
+          }}
+        >
+          <label
+            style={{
+              display: "grid",
+              gap: 3,
+              color: "#5A6472",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            <span>Upload type</span>
+            <select
+              aria-label="File Cabinet upload type"
+              onChange={(event) =>
+                setUploadFamily(event.target.value as typeof uploadFamily)
+              }
+              value={uploadFamily}
+              style={{
+                minHeight: 32,
+                border: "1px solid #D5DAE2",
+                borderRadius: 5,
+                background: "#fff",
+                color: "#1A1A18",
+                fontSize: 11.5,
+                padding: "5px 8px",
+              }}
+            >
+              <option value="uploaded_evidence">Evidence</option>
+              <option value="session_artifact">Workshop / session notes</option>
+            </select>
+          </label>
+          <label
+            style={{
+              display: "grid",
+              gap: 3,
+              color: "#5A6472",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            <span>Evidence applies to phase</span>
+            <select
+              aria-label="Evidence applies to phase"
+              onChange={(event) =>
+                onUploadPhaseChange(Number(event.target.value))
+              }
+              value={uploadPhase}
+              style={{
+                minHeight: 32,
+                border: "1px solid #D5DAE2",
+                borderRadius: 5,
+                background: "#fff",
+                color: "#1A1A18",
+                fontSize: 11.5,
+                padding: "5px 8px",
+              }}
+            >
+              {Array.from({ length: TOTAL_PHASES }, (_, value) => (
+                <option key={value} value={value}>
+                  {getPhaseLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {evidenceFamilies.length > 0 &&
+          uploadPhase === phase &&
+          uploadFamily === "uploaded_evidence" ? (
+            <label
+              style={{
+                display: "grid",
+                gap: 3,
+                color: "#5A6472",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              <span>Covers required evidence</span>
+              <select
+                aria-label="Required evidence this file covers"
+                onChange={(event) => setDeclaredFamily(event.target.value)}
+                value={declaredFamily}
+                style={{
+                  minHeight: 32,
+                  maxWidth: 260,
+                  border: "1px solid #D5DAE2",
+                  borderRadius: 5,
+                  background: "#fff",
+                  color: "#1A1A18",
+                  fontSize: 11.5,
+                  padding: "5px 8px",
+                }}
+              >
+                <option value="">Not stated</option>
+                {evidenceFamilies.map((family) => (
+                  <option key={family.id} value={family.id}>
+                    {family.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <input
+            aria-label="Upload Move file"
             ref={fileRef}
             type="file"
             style={{ display: "none" }}
@@ -1755,7 +2267,11 @@ export function FileCabinetPanel({
               cursor: uploadState === "uploading" ? "default" : "pointer",
             }}
           >
-            {uploadState === "uploading" ? "Uploading…" : "Upload evidence"}
+            {uploadState === "uploading"
+              ? "Uploading…"
+              : uploadFamily === "session_artifact"
+                ? "Upload session file"
+                : "Upload evidence"}
           </button>
           <button
             onClick={() => void load()}
@@ -1784,6 +2300,84 @@ export function FileCabinetPanel({
         >
           {uploadMsg}
         </div>
+      )}
+
+      {!evidenceReviewAvailable && (
+        <div
+          role="alert"
+          style={{
+            margin: "8px 0",
+            padding: "8px 10px",
+            border: "1px solid #e6b5b1",
+            borderRadius: 6,
+            background: "#fff7f6",
+            color: "#9b2c24",
+            fontSize: 12,
+          }}
+        >
+          Evidence review status is unavailable. Do not use newly uploaded files
+          for phase decisions until the review state can be loaded.
+        </div>
+      )}
+
+      {pendingEvidenceReviews.length > 0 && (
+        <section
+          aria-label="Evidence awaiting review"
+          style={{
+            margin: "10px 0 14px",
+            padding: 12,
+            border: "1px solid #e5c792",
+            borderRadius: 6,
+            background: "#fffdf8",
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 14, color: "#5d431a" }}>
+            {pendingEvidenceReviews.length} evidence item
+            {pendingEvidenceReviews.length === 1 ? "" : "s"} awaiting review
+          </h3>
+          <p style={{ margin: "4px 0 8px", fontSize: 12, color: "#655b4a" }}>
+            {canApproveGates
+              ? "Check the parser’s facts against the original text, correct them, then approve. Pending and rejected evidence is excluded from phase generation."
+              : "Pending evidence is excluded from phase generation until an authorized workspace user reviews it."}
+          </p>
+          <div style={{ display: "grid", gap: 8 }}>
+            {canApproveGates
+              ? pendingEvidenceReviews.map((review) => (
+                  <EvidenceReviewEditor
+                    key={review.evidenceId}
+                    review={review}
+                    programId={moveId}
+                    busy={reviewingEvidenceId === review.evidenceId}
+                    disabled={reviewingEvidenceId !== null}
+                    onDecision={(decision, extraction) =>
+                      void decideEvidenceReview(review, decision, extraction)
+                    }
+                  />
+                ))
+              : pendingEvidenceReviews.map((review) => (
+                  <div
+                    key={review.evidenceId}
+                    style={{
+                      border: "1px solid #e5c792",
+                      borderRadius: 6,
+                      padding: 10,
+                      background: "#fff",
+                    }}
+                  >
+                    <strong style={{ fontSize: 12 }}>{review.title}</strong>
+                    <p
+                      style={{
+                        margin: "4px 0 0",
+                        fontSize: 12,
+                        color: "#655b4a",
+                      }}
+                    >
+                      Awaiting review by an authorized workspace user.
+                    </p>
+                  </div>
+                ))}
+          </div>
+        </section>
       )}
 
       {contextExtractReview && (
@@ -1899,6 +2493,7 @@ export function FileCabinetPanel({
                     a={a}
                     moveId={moveId}
                     onChanged={load}
+                    canApproveGates={canApproveGates}
                   />
                 ))}
               </div>

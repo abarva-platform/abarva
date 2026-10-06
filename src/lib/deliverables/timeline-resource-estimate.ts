@@ -16,12 +16,12 @@ export function buildTimelineResourceEstimateModuleContent(): ModuleContent {
   const commitment = summarizeCommitmentRisk(estimate);
 
   return {
-    summary: `${MORRISON_SEED.programName} carries a dual-ledger estimate with a locked ${estimate.sponsor_approval.approval_percentile_commitment} commitment, explicit decision-hour budgeting, and Genome-calibrated bands across all work units.`,
+    summary: `${MORRISON_SEED.programName} carries a dual-ledger estimate with a locked ${estimate.workspace_approval.approval_percentile_commitment} commitment, explicit decision-hour budgeting, and Genome-calibrated bands across all work units.`,
     formFields: [
       { label: 'Program', value: MORRISON_SEED.programName },
       { label: 'Client', value: MORRISON_SEED.clientName },
-      { label: 'Locked commitment', value: `${estimate.sponsor_approval.approval_percentile_commitment} · ${estimate.summary.total_calendar_weeks_p80} weeks` },
-      { label: 'Approval', value: `${estimate.sponsor_approval.approval_signature_method} on ${estimate.sponsor_approval.approval_date}` },
+      { label: 'Locked commitment', value: `${estimate.workspace_approval.approval_percentile_commitment} · ${estimate.summary.total_calendar_weeks_p80} weeks` },
+      { label: 'Approval', value: `${estimate.workspace_approval.approval_record_method} on ${estimate.workspace_approval.approval_date}` },
     ],
     narrativeBlocks: [
       {

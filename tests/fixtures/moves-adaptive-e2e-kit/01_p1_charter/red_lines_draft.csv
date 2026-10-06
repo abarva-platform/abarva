@@ -1,0 +1,7 @@
+redline_id,restriction,why_it_matters,allowed_alternative,proposed_owner_role,status
+RL-01,No raw member identifiers or PHI in model prompts or demo uploads,Protect sensitive data,Use synthetic or approved de-identified examples,Privacy Officer,proposed_not_approved
+RL-02,Assistant must not decide clinical eligibility coverage claims or prior authorization,High-stakes decisions remain human-owned,Retrieve authorized status and cite source; agent decides next action,Operations and Compliance,proposed_not_approved
+RL-03,No production writeback or member communication without explicit human confirmation,Prevent unreviewed action,Draft for agent; human confirms through approved workflow,Product Owner,proposed_not_approved
+RL-04,No savings ROI or workforce reduction claim without Finance-validated baseline and capacity model,Prevent unsupported value claims,Show measurement plan and scenarios labeled assumption,Finance Value Owner,proposed_not_approved
+RL-05,No vendor reuse or model training on restricted data,Protect data rights,Require isolated approved environment and documented retention terms,Vendor Risk Owner,proposed_not_approved
+RL-06,No stale or conflicting knowledge presented as authoritative,Protect answer accuracy,Show source/freshness or abstain and escalate,Knowledge Owner,proposed_not_approved

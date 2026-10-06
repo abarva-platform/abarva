@@ -50,6 +50,38 @@ export const ACTIVE_ADMIN_SUBROUTES = new Set<string>([
   "/admin/knowledge-preview",
 ] as const);
 
+// Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation, and the
+// 2026-06-14 Admin/Setup sunset that followed it. These two maps are the whole
+// retired-route contract, and they are exported for one reason: three suites
+// used to assert them by reading this file as text and matching the target
+// string with its surrounding quote characters. That form fails when a quote
+// style changes and passes when a redirect target changes, which is backwards.
+// Assert against the maps themselves.
+
+export const HOME_TO_ADMIN_REDIRECTS: Readonly<Record<string, string>> = {
+  "/home/admin": "/admin",
+  "/home/data-loads": "/admin",
+  "/home/data-trust": "/admin",
+  "/home/agent-readiness": "/admin",
+  "/home/connectors": "/admin",
+  "/home/configuration": "/admin",
+  "/home/tenant-profile": "/admin",
+  "/home/decision": "/intelligence",
+  "/home/source": "/source",
+  "/home/training": "/home/learn",
+  "/home/ai-initiatives": "/home",
+};
+
+export const RETIRED_ADMIN_ROUTE_REDIRECTS: Readonly<Record<string, string>> = {
+  "/admin/data-load": "/admin",
+  "/admin/data-loads": "/admin",
+  "/admin/users": "/admin",
+  "/admin/invite": "/admin",
+  "/admin/agents/atlas": "/admin",
+  "/admin/atlas/traces": "/admin",
+  "/admin/tenant": "/admin",
+};
+
 export function shouldBlanketStripClientParamFromProtectedTree(args: {
   pathname: string;
   role: string | null | undefined;
@@ -102,6 +134,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
   "/api/auth/access-eligibility(.*)",
+  "/api/auth/launch-user(.*)",
   // Private browser proof helper is self-guarded by an opt-in env flag and
   // bearer token, and returns 404 unless explicitly enabled on an isolated
   // proof revision.
@@ -136,6 +169,9 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // route returns 503 (misconfigured) rather than accepting unsigned
   // payloads.
   "/api/webhooks/resend(.*)",
+  // DocuSign demo callbacks are reachable without Clerk. The route verifies
+  // its HMAC before any tenant-scoped envelope or file access.
+  "/api/webhooks/esign",
   // Private-preview lead capture from the public marketing landing page.
   // POST /api/request-access must be reachable without a Clerk session.
   "/api/request-access(.*)",
@@ -546,23 +582,12 @@ const clerkProtectedProxy = clerkMiddleware(
     // data trust, agent readiness, and tenant profile stay canonical
     // under /admin.
     //
-    // Wave 1 PR-3 (2026-05-30) · `/home/tenant-profile` now lands on the
-    // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
-    // was demoted to a tab inside /admin Overview — see AdminTenantTab).
-    const homeToAdminMap: Record<string, string> = {
-      "/home/admin": "/admin",
-      "/home/data-loads": "/admin",
-      "/home/data-trust": "/admin",
-      "/home/agent-readiness": "/admin",
-      "/home/connectors": "/admin",
-      "/home/configuration": "/admin",
-      "/home/tenant-profile": "/admin",
-      "/home/decision": "/intelligence",
-      "/home/source": "/source",
-      "/home/training": "/home/learn",
-      "/home/ai-initiatives": "/home",
-    };
-    const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname];
+    // Wave 1 PR-3 (2026-05-30) demoted the standalone `/admin/tenant` route to
+    // a tab and pointed `/home/tenant-profile` at `/admin?tab=tenant`; the
+    // 2026-06-14 sunset then collapsed every one of these onto `/admin` itself.
+    // The query-merging branch below is kept because a target MAY carry its own
+    // params, not because one currently does — see HOME_TO_ADMIN_REDIRECTS.
+    const exactHomeMatch = HOME_TO_ADMIN_REDIRECTS[request.nextUrl.pathname];
     if (exactHomeMatch) {
       // Wave 1 PR-3 (2026-05-30) · Targets may carry their own canonical
       // query params (e.g. `/admin?tab=tenant`). Merge any incoming search
@@ -610,17 +635,8 @@ const clerkProtectedProxy = clerkMiddleware(
     // /admin. Legacy /admin/* UI pages remain in the repo only as retired
     // implementation detail while the route tree is drained. Keep APIs
     // under /api/admin/* untouched; this branch handles browser pages only.
-    const adminRouteConsolidationMap: Record<string, string> = {
-      "/admin/data-load": "/admin",
-      "/admin/data-loads": "/admin",
-      "/admin/users": "/admin",
-      "/admin/invite": "/admin",
-      "/admin/agents/atlas": "/admin",
-      "/admin/atlas/traces": "/admin",
-      "/admin/tenant": "/admin",
-    };
     const consolidationMatch =
-      adminRouteConsolidationMap[request.nextUrl.pathname];
+      RETIRED_ADMIN_ROUTE_REDIRECTS[request.nextUrl.pathname];
     if (consolidationMatch) {
       const url = new URL(consolidationMatch, request.url);
       if (!consolidationMatch.includes("?")) {

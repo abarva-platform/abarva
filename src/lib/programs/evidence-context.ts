@@ -1,8 +1,12 @@
-import 'server-only';
+import "server-only";
 
-import { canReadProgram } from '@/lib/auth/program-access-policy';
-import { azureRead } from '@/lib/data-plane/azureRead';
-import type { TenancyCtx } from './types.db';
+import { canReadProgram } from "@/lib/auth/program-access-policy";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import type { TenancyCtx } from "./types.db";
+import {
+  reviewedExtractionFromStoredSourceRef,
+  toStoredReviewedStructured,
+} from "./evidence-review-contract";
 
 export interface ProgramEvidenceCitation {
   quote: string;
@@ -28,11 +32,13 @@ export interface ProgramEvidencePromptItem {
 }
 
 function asString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function readParseMethod(value: unknown): string | null {
-  if (!value || typeof value !== 'object') return null;
+  if (!value || typeof value !== "object") return null;
   return asString((value as { parse_method?: unknown }).parse_method);
 }
 
@@ -45,7 +51,7 @@ function readStringList(value: unknown): string[] {
 }
 
 function readStructuredSignals(value: unknown): string[] {
-  if (!value || typeof value !== 'object') return [];
+  if (!value || typeof value !== "object") return [];
   const structured = value as Record<string, unknown>;
   const candidates = [
     ...readStringList(structured.baseline_candidates),
@@ -65,36 +71,36 @@ function readStructuredSignals(value: unknown): string[] {
 }
 
 function readFlexibleField(value: unknown, field: string): string[] {
-  if (!value || typeof value !== 'object') return [];
+  if (!value || typeof value !== "object") return [];
   const flexible = (value as Record<string, unknown>).flexible;
-  if (!flexible || typeof flexible !== 'object') return [];
+  if (!flexible || typeof flexible !== "object") return [];
   return readStringList((flexible as Record<string, unknown>)[field]);
 }
 
 function readObservations(value: unknown): string[] {
-  return readFlexibleField(value, 'observations');
+  return readFlexibleField(value, "observations");
 }
 
 function readCitations(value: unknown): ProgramEvidenceCitation[] {
-  if (!value || typeof value !== 'object') return [];
+  if (!value || typeof value !== "object") return [];
   const flexible = (value as Record<string, unknown>).flexible;
-  if (!flexible || typeof flexible !== 'object') return [];
+  if (!flexible || typeof flexible !== "object") return [];
   const raw = (flexible as Record<string, unknown>).citations;
   if (!Array.isArray(raw)) return [];
   return raw
     .map((c) => {
-      if (!c || typeof c !== 'object') return null;
+      if (!c || typeof c !== "object") return null;
       const quote = asString((c as Record<string, unknown>).quote);
       const locator = asString((c as Record<string, unknown>).locator);
-      return quote ? { quote, locator: locator ?? 'source file' } : null;
+      return quote ? { quote, locator: locator ?? "source file" } : null;
     })
     .filter((c): c is ProgramEvidenceCitation => c !== null)
     .slice(0, 10);
 }
 
 function compactLine(value: string | null | undefined, limit = 420): string {
-  const text = (value ?? '').replace(/\s+/g, ' ').trim();
-  if (!text) return 'No text preview available.';
+  const text = (value ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return "No text preview available.";
   return text.length > limit ? `${text.slice(0, limit)}...` : text;
 }
 
@@ -125,97 +131,110 @@ export async function listProgramEvidenceForPrompt(
   // an unfiltered "most recent" query. A file that is uploaded but still
   // pending human review (or rejected) must never appear in generation
   // context, no matter how recent it is.
-  const tenantKey = ctx.clientKey ?? '';
+  const tenantKey = ctx.clientKey ?? "";
   const reviewRows = await azureRead.select<Record<string, unknown>>({
-    table: 'program_evidence_reviews',
-    columns: ['evidence_id', 'reviewed_at', 'updated_at'],
+    table: "program_evidence_reviews",
+    columns: ["evidence_id", "reviewed_at", "updated_at", "source_ref"],
     where: {
       tenant_key: tenantKey,
       program_id: programId,
-      decision: 'approved',
+      decision: "approved",
     },
-    orderBy: { column: 'updated_at', direction: 'desc' },
+    orderBy: { column: "updated_at", direction: "desc" },
     limit: EVIDENCE_QUERY_SAFETY_CEILING,
   });
-  const approvedAtByEvidenceId = new Map<string, string | null>();
+  const approvedReviewByEvidenceId = new Map<
+    string,
+    { approvedAt: string | null; sourceRef: unknown }
+  >();
   for (const row of reviewRows) {
     const evidenceId = asString(row.evidence_id);
     if (!evidenceId) continue;
-    approvedAtByEvidenceId.set(
-      evidenceId,
-      asString(row.reviewed_at) ?? asString(row.updated_at),
-    );
+    approvedReviewByEvidenceId.set(evidenceId, {
+      approvedAt: asString(row.reviewed_at) ?? asString(row.updated_at),
+      sourceRef: row.source_ref,
+    });
   }
-  const approvedEvidenceIds = Array.from(approvedAtByEvidenceId.keys());
+  const approvedEvidenceIds = Array.from(approvedReviewByEvidenceId.keys());
   if (approvedEvidenceIds.length === 0) return [];
 
   const rows = await azureRead.select<Record<string, unknown>>({
-    table: 'program_evidence_items',
+    table: "program_evidence_items",
     columns: [
-      'id',
-      'title',
-      'evidence_type',
-      'phase',
-      'summary',
-      'extracted_text',
-      'extracted_structured',
-      'created_at',
+      "id",
+      "title",
+      "evidence_type",
+      "phase",
+      "summary",
+      "extracted_text",
+      "extracted_structured",
+      "created_at",
     ],
     where: {
+      tenant_key: tenantKey,
       program_id: programId,
-      id: { op: 'in', value: approvedEvidenceIds },
+      id: { op: "in", value: approvedEvidenceIds },
       ...(phase !== undefined ? { phase } : {}),
     },
-    orderBy: { column: 'created_at', direction: 'desc' },
+    orderBy: { column: "created_at", direction: "desc" },
     limit: EVIDENCE_QUERY_SAFETY_CEILING,
   });
-  return rows.map((row) => ({
-    id: String(row.id),
-    title: asString(row.title) ?? 'Untitled evidence',
-    evidenceType: asString(row.evidence_type) ?? 'evidence',
-    phase: typeof row.phase === 'number' ? row.phase : null,
-    summary: asString(row.summary),
-    parseMethod: readParseMethod(row.extracted_structured),
-    structuredSignals: readStructuredSignals(row.extracted_structured),
-    extractedText: asString(row.extracted_text),
-    createdAt: asString(row.created_at) ?? '',
-    approvedAt: approvedAtByEvidenceId.get(String(row.id)) ?? null,
-    observations: readObservations(row.extracted_structured),
-    assumptions: readFlexibleField(row.extracted_structured, 'assumptions'),
-    openQuestions: readFlexibleField(row.extracted_structured, 'openQuestions'),
-    citations: readCitations(row.extracted_structured),
-  }));
+  return rows.map((row) => {
+    const review = approvedReviewByEvidenceId.get(String(row.id));
+    const reviewed = reviewedExtractionFromStoredSourceRef(review?.sourceRef);
+    const structured = reviewed
+      ? toStoredReviewedStructured(reviewed, row.extracted_structured)
+      : row.extracted_structured;
+    return {
+      id: String(row.id),
+      title: asString(row.title) ?? "Untitled evidence",
+      evidenceType: asString(row.evidence_type) ?? "evidence",
+      phase: typeof row.phase === "number" ? row.phase : null,
+      summary: reviewed?.summary ?? asString(row.summary),
+      parseMethod: readParseMethod(structured),
+      structuredSignals: readStructuredSignals(structured),
+      extractedText: reviewed ? null : asString(row.extracted_text),
+      createdAt: asString(row.created_at) ?? "",
+      approvedAt: review?.approvedAt ?? null,
+      observations: readObservations(structured),
+      assumptions: readFlexibleField(structured, "assumptions"),
+      openQuestions: readFlexibleField(structured, "openQuestions"),
+      citations: readCitations(structured),
+    };
+  });
 }
 
 export function formatProgramEvidenceForPrompt(
   items: readonly ProgramEvidencePromptItem[],
 ): string {
-  if (items.length === 0) return '';
-  const lines = ['PROGRAM EVIDENCE LEDGER (uploaded/captured, approved only):'];
+  if (items.length === 0) return "";
+  const lines = ["PROGRAM EVIDENCE LEDGER (uploaded/captured, approved only):"];
   for (const item of items) {
     lines.push(
-      `- ${item.title} (${item.evidenceType}; ${item.parseMethod ?? 'parser unknown'}; ${item.createdAt})`,
+      `- ${item.title} (${item.evidenceType}; ${item.parseMethod ?? "parser unknown"}; ${item.createdAt})`,
       `  Summary: ${compactLine(item.summary)}`,
       item.structuredSignals.length
         ? `  Structured signals: ${item.structuredSignals
             .map((signal) => compactLine(signal, 240))
-            .join(' | ')}`
-        : '  Structured signals: none captured.',
+            .join(" | ")}`
+        : "  Structured signals: none captured.",
       item.observations.length
         ? `  Observations: ${item.observations
             .map((observation) => compactLine(observation, 240))
-            .join(' | ')}`
-        : '  Observations: none captured.',
+            .join(" | ")}`
+        : "  Observations: none captured.",
       item.citations.length
         ? `  Citations: ${item.citations
             .map((c) => `"${compactLine(c.quote, 160)}" (${c.locator})`)
-            .join(' | ')}`
-        : '  Citations: none captured.',
-      `  Text preview: ${compactLine(item.extractedText)}`,
+            .join(" | ")}`
+        : "  Citations: none captured.",
+      item.extractedText
+        ? `  Original extracted text: ${compactLine(item.extractedText)}`
+        : "  Source text is not sent as an unreviewed fact; use only the approved summary, structured signals, and quoted source references above.",
     );
   }
   lines.push(
-    'Use this ledger as captured, human-approved program evidence — cite these items and their citations directly instead of a generic evidence label. Do not say there are zero uploaded items when entries are listed here.',
+    "Use the approved summary and structured signals as the authoritative extracted facts. Cite the named evidence item and its quoted page/slide/section references; do not elevate unreviewed source text into a fact. Do not say there are zero uploaded items when entries are listed here.",
   );
-  return lines.join('\n');
+  return lines.join("\n");
 }

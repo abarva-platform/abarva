@@ -1,6 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { computeRouteReachability } from "./lib/route-reachability.mjs";
+
 const ROOT = process.cwd();
 const REPORT_DIR = path.join(ROOT, "reports/candidate-invisibility-guard");
 
@@ -179,7 +181,46 @@ function main() {
     };
   });
 
+  const { reachable } = computeRouteReachability(ROOT);
+
+  /**
+   * A check with no live subject is worse than a failing one: it reads as
+   * protection while testing nothing.
+   *
+   * Two ways that happened here. `readRel` returns "" for a file that no
+   * longer exists, and `activePointerQuery` opens with
+   * `if (!text.includes("tenant_pack_runs")) return true` — so three checks
+   * went green when the files they guard were deleted. And one check ran
+   * against a component that still exists but which no route mounts, so its
+   * pass said nothing about what a user can see.
+   */
+  function subjectState(file) {
+    if (file === "src") return { state: "live" };
+    if (!existsSync(path.join(ROOT, file))) {
+      return {
+        state: "missing",
+        note: "the file this check guards no longer exists, so the check has no subject",
+      };
+    }
+    if (file.startsWith("src/components/") && !reachable.has(path.join(ROOT, file))) {
+      return {
+        state: "unreachable",
+        note: "no route mounts this component, so a pass says nothing about what a user can see",
+      };
+    }
+    return { state: "live" };
+  }
+
   const testRows = tests.map((test) => {
+    const subject = subjectState(test.file);
+    if (subject.state !== "live") {
+      return {
+        id: test.id,
+        file: test.file,
+        status: "VACUOUS",
+        evidence: `${test.evidence} — NOT PROVEN: ${subject.note}`,
+      };
+    }
     const text = test.file === "src" ? "" : readRel(test.file);
     const passed = test.check(text);
     return {
@@ -191,8 +232,9 @@ function main() {
   });
 
   const previewRows = testRows.filter((row) => row.id.includes("candidate") || row.id.includes("preview"));
-  const failures = testRows.filter((row) => row.status !== "PASS");
-  const status = failures.length ? "FAIL" : "PASS";
+  const failures = testRows.filter((row) => row.status === "FAIL");
+  const vacuous = testRows.filter((row) => row.status === "VACUOUS");
+  const status = failures.length || vacuous.length ? "FAIL" : "PASS";
 
   writeCsv("reader-audit.csv", readerRows);
   writeCsv("default-read-tests.csv", testRows.filter((row) => !row.id.includes("preview")));
@@ -215,6 +257,12 @@ Generated: ${new Date().toISOString()}
 ## Failures
 
 ${failures.length ? failures.map((row) => `- ${row.id}: ${row.file}`).join("\n") : "- None"}
+
+## Checks with no live subject
+
+A vacuous check reads as protection and tests nothing. Counted as a failure.
+
+${vacuous.length ? vacuous.map((row) => `- ${row.id}: ${row.file} — ${row.evidence.split("NOT PROVEN: ")[1] ?? ""}`).join("\n") : "- None"}
 `;
   writeFileSync(path.join(REPORT_DIR, "summary.md"), summary);
 
@@ -247,8 +295,22 @@ ${failures.length ? failures.map((row) => `- ${row.id}: ${row.file}`).join("\n")
 `;
   writeFileSync(path.join(REPORT_DIR, "proof.html"), html);
 
-  if (failures.length) {
-    console.error(`candidate invisibility guard failed: ${failures.length} failure(s)`);
+  if (failures.length || vacuous.length) {
+    console.error(
+      `candidate invisibility guard failed: ${failures.length} failure(s), ${vacuous.length} check(s) with no live subject`,
+    );
+    for (const row of failures) {
+      console.error(`- FAIL     ${row.id}: ${row.file}`);
+    }
+    for (const row of vacuous) {
+      console.error(
+        `- VACUOUS  ${row.id}: ${row.file} — ${row.evidence.split("NOT PROVEN: ")[1] ?? "no live subject"}`,
+      );
+    }
+    console.error(
+      `\n${testRows.length - failures.length - vacuous.length} of ${testRows.length} checks are testing live code.`,
+    );
+    console.error(`Report: ${path.relative(ROOT, REPORT_DIR)}`);
     process.exit(1);
   }
   console.log(`candidate invisibility guard passed; wrote ${path.relative(ROOT, REPORT_DIR)}`);

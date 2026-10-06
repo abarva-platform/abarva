@@ -9,14 +9,15 @@ import { inferClientKeyFromEmail } from "@/lib/client-config";
 import {
   classifySentinelIntent,
   runSentinelReasoning,
-} from "@/lib/agents/sentinel-reasoning";
-import type { SentinelCitation } from "@/lib/agents/sentinel-reasoning";
+} from "@/lib/agent/sentinel-reasoning";
+import type { SentinelCitation } from "@/lib/agent/sentinel-reasoning";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { assembleUserContextBlock } from "@/lib/agent/prompts/_shared/user-context";
 import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";
 import {
   buildAvaTrace,
   emitAgentContextTraceAsync,
+  hashModelInput,
   type RawAskSource,
 } from "@/lib/agent-trace";
 import { randomUUID } from "node:crypto";
@@ -35,13 +36,15 @@ import {
   advisorRequiredArtifactForQuery,
   withAdvisorSupportSources,
 } from "@/lib/intelligence/ask/advisor-composer";
-import { buildIndustrialCioBackofficeNativeCanvasBlock } from "@/lib/intelligence/ask/industrial-cio-backoffice-source";
 import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "@/lib/intelligence/ask/skyharbor-cto-readiness-source";
 import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
-import { createStructuredFenceStreamFilter } from "@/lib/intelligence/answer/structured-fence-stream-filter";
+import {
+  createStructuredFenceStreamFilter,
+  stripGovernedArtifactPayloadsFromText,
+} from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import { parseIntelligenceTabbedResponse } from "@/lib/intelligence/tabbed-response";
 import { applyCxoAnswerModeFallbacks } from "@/lib/intelligence/ask/answer-mode-registry";
 import { classifyAbarvaAnswerMode } from "@/lib/intelligence/ask/response-policy";
@@ -71,9 +74,12 @@ import {
   productTruthGroundingText,
 } from "@/lib/agent/product-truth";
 import {
+  buildSourceContractOptimizationExportAnswer,
   buildSourceWorkspaceVisualAnswer,
+  canBuildSourceContractOptimizationExportAnswer,
   canBuildSourceWorkspaceVisualAnswer,
 } from "@/lib/source/ava/source-workspace-visual-answer";
+import { buildServerSourceAnswerContext } from "@/lib/source/ava/server-contract-answer-context";
 import {
   buildTenantFenceAnswer,
   shouldFenceForeignTenantQuery,
@@ -115,6 +121,18 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
+  const sourceExportRequested = canBuildSourceContractOptimizationExportAnswer({
+    query,
+    surfaceContext,
+  });
+  const sourceVisualRequested = canBuildSourceWorkspaceVisualAnswer({
+    query,
+    surfaceContext,
+  });
+  const sourceContractRequested = sourceExportRequested || sourceVisualRequested;
+  const untrustedContractContext =
+    readString(surfaceContext?.module)?.toLowerCase() === "source" ||
+    hasContractBearingFields(surfaceContext);
   const routeTrace = createIntelligenceLatencyTrace({
     requestId: randomUUID(),
   });
@@ -226,9 +244,16 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
     role: "user",
     content: query,
     metadata: {
-      client: requestedOrSurfaceClient,
+      client: untrustedContractContext ? tenantClientKey : requestedOrSurfaceClient,
       tabId: memory?.tabId ?? payload.tabId,
-      surfaceContext,
+      unverifiedContractContext: untrustedContractContext,
+      surfaceContext: untrustedContractContext
+        ? {
+            module: surfaceContext?.module,
+            activeTab: surfaceContext?.activeTab,
+            contractId: surfaceContext?.contractId,
+          }
+        : surfaceContext,
     },
   }).catch((err) => console.warn("[ask.session-memory.user-turn]", err));
   capturePreStreamTiming(
@@ -254,6 +279,16 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
+      let sourceAnswerContext: AskSurfaceContext | null = null;
+      const trustedSurfaceContext = (): AskSurfaceContext | null =>
+        untrustedContractContext
+          ? sourceAnswerContext ?? {
+              module: surfaceContext?.module,
+              clientKey: tenantClientKey ?? undefined,
+              activeClient: tenant?.displayName,
+              activeTab: surfaceContext?.activeTab,
+            }
+          : surfaceContext;
       const structuredFenceStreamFilter = createStructuredFenceStreamFilter();
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
@@ -284,8 +319,8 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             tenant?.canonicalKey ??
             tenant?.appClientKey ??
             null,
-          tenantName: tenant?.displayName ?? surfaceContext?.activeClient,
-          surfaceContext,
+          tenantName: tenant?.displayName ?? trustedSurfaceContext()?.activeClient,
+          surfaceContext: trustedSurfaceContext(),
           sources: input.sources,
           textBlocks: input.textBlocks,
         });
@@ -316,11 +351,11 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           tenant?.canonicalKey ??
           tenant?.appClientKey ??
           null,
-        tenantName: tenant?.displayName ?? surfaceContext?.activeClient,
+        tenantName: tenant?.displayName ?? trustedSurfaceContext()?.activeClient,
         surface: input?.surface ?? surfaceContext?.activeTab ?? "intelligence",
         query,
         groundingText: productTruthGroundingText([
-          surfaceContext,
+          trustedSurfaceContext(),
           input?.groundingParts ?? [],
         ]),
       });
@@ -341,16 +376,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             ),
           );
         }
-        const activeTenantAliasesForFence =
-          signedInTenantAliases.length > 0
-            ? signedInTenantAliases
-            : [
-                tenantInventoryKey,
-                tenantClientKey,
-                requestedOrSurfaceClient,
-                surfaceContext?.clientKey,
-                surfaceContext?.activeClient,
-              ].filter(Boolean);
+        // Only server-resolved tenant identity may widen the foreign-tenant
+        // fence. resolveTenant already honours a body-supplied tenant for
+        // operator roles, and deliberately discards it for tenant-locked roles
+        // (`client`, `maestro`). Feeding the raw surfaceContext fields in here
+        // would reinstate exactly what that locked branch just refused, letting
+        // a request body switch off the fence for a tenant the caller has no
+        // claim to. The signed-in aliases are merged rather than used as a
+        // fallback, so the authenticated identity is always part of the check.
+        const activeTenantAliasesForFence = [
+          tenantInventoryKey,
+          tenantClientKey,
+          tenant?.displayName,
+          ...signedInTenantAliases,
+        ].filter(Boolean);
         const surfaceModule = readString(surfaceContext?.module)?.toLowerCase();
         const answerSurface =
           surfaceModule === "source"
@@ -373,10 +412,8 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                   ? "SOURCE"
                   : "ANALYZE",
             activeTenantDisplayName:
-              sessionTenant?.displayName ??
               tenant?.displayName ??
-              surfaceContext?.activeClient ??
-              requestedOrSurfaceClient ??
+              sessionTenant?.displayName ??
               "the signed-in tenant",
           });
           answer = applyProductTruthToAvaAnswer(
@@ -425,15 +462,151 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           return;
         }
         if (blockRetiredFacts({})) return;
+        if (sourceContractRequested) {
+          sourceAnswerContext =
+            sessionUserId && tenantClientKey
+              ? await buildServerSourceAnswerContext({
+                  query,
+                  requestContext: surfaceContext as AskSurfaceContext,
+                  tenantKey: tenantClientKey,
+                  tenantDisplayName: tenant?.displayName ?? "Current tenant",
+                })
+              : null;
+          if (!sourceAnswerContext) {
+            const answer = composeAvaAnswer({
+              surface: "source",
+              mode: "ANALYZE",
+              tenantKey: tenantInventoryKey ?? tenantClientKey ?? "unknown",
+              question: query,
+              intent: "source_contract_unavailable",
+              status: "no_data",
+              directAnswer:
+                "I cannot verify that contract from the current authorized Source records. Please select a contract available to this signed-in tenant.",
+              citations: [],
+              retrievalSummary: {
+                substrate: "none",
+                sourceCount: 0,
+                hasTenantFacts: false,
+                hasCorpus: false,
+                hasExperts: false,
+              },
+            });
+            assistantText = answer.directAnswer;
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: "agent-answer", answer }) + "\n"),
+            );
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: "done" }) + "\n"),
+            );
+            return;
+          }
+        }
         if (
+          sourceExportRequested &&
+          canBuildSourceContractOptimizationExportAnswer({
+            query,
+            surfaceContext: sourceAnswerContext,
+          })
+        ) {
+          const sourceExportAnswer = buildSourceContractOptimizationExportAnswer({
+            query,
+            surfaceContext: sourceAnswerContext as AskSurfaceContext,
+          });
+          if (sourceExportAnswer) {
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "context-summary",
+                }) + "\n",
+              ),
+            );
+            const answer = composeAvaAnswer({
+              surface: "source",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: "source_contract_optimization_export",
+              status: "answered",
+              directAnswer: sourceExportAnswer.directAnswer,
+              factsUsed: sourceExportAnswer.factsUsed,
+              metricsUsed: sourceExportAnswer.metricsUsed,
+              relationshipsUsed: sourceExportAnswer.relationshipsUsed,
+              artifacts: sourceExportAnswer.artifacts,
+              citations: sourceExportAnswer.citations,
+              caveats: sourceExportAnswer.caveats,
+              nextSteps: sourceExportAnswer.nextSteps,
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: sourceExportAnswer.citations.length,
+                hasTenantFacts: true,
+                hasCorpus: false,
+                hasExperts: false,
+              },
+            });
+            const guardedAnswer = applyProductTruthToAvaAnswer(
+              answer,
+              productTruthContext({
+                surface: "source",
+                groundingParts: [sourceAnswerContext, sourceExportAnswer],
+              }),
+              { preserveModelOutput: true },
+            );
+            if (
+              blockRetiredFacts({
+                textBlocks: [
+                  {
+                    location: "route.source_contract_optimization_export.answer",
+                    text: JSON.stringify(guardedAnswer),
+                  },
+                ],
+              })
+            )
+              return;
+            assistantText = guardedAnswer.directAnswer;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "agent-answer",
+                  answer: guardedAnswer,
+                }) + "\n",
+              ),
+            );
+            const event = recordIntelligenceTelemetry({
+              startedAt,
+              tenantId,
+              instanceId:
+                memory?.sessionId ??
+                memory?.tabId ??
+                requestedOrSurfaceClient ??
+                "source-contract-optimization-export-ask",
+              patternId: "source-contract-optimization-export",
+              citationCount: sourceExportAnswer.citations.length,
+            });
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "done",
+                  telemetryEventId: event.id,
+                }) + "\n",
+              ),
+            );
+            return;
+          }
+        }
+        if (
+          sourceVisualRequested &&
           canBuildSourceWorkspaceVisualAnswer({
             query,
-            surfaceContext,
+            surfaceContext: sourceAnswerContext,
           })
         ) {
           const sourceVisualAnswer = buildSourceWorkspaceVisualAnswer({
             query,
-            surfaceContext: surfaceContext as AskSurfaceContext,
+            surfaceContext: sourceAnswerContext as AskSurfaceContext,
           });
           if (sourceVisualAnswer) {
             controller.enqueue(
@@ -496,7 +669,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               agentAnswer,
               productTruthContext({
                 surface: "source",
-                groundingParts: [surfaceContext, sourceVisualAnswer],
+                groundingParts: [sourceAnswerContext, sourceVisualAnswer],
               }),
               { preserveModelOutput: true },
             );
@@ -541,14 +714,43 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             return;
           }
         }
-        if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
-          const homeTenant = sessionTenant ?? tenant;
-          const homeTenantAliases =
-            signedInTenantAliases.length > 0
-              ? signedInTenantAliases
-              : (homeTenant?.aliases ?? []);
+        if (sourceContractRequested) {
+          const answer = composeAvaAnswer({
+            surface: "source",
+            mode: "ANALYZE",
+            tenantKey: tenantInventoryKey ?? tenantClientKey ?? "unknown",
+            question: query,
+            intent: "source_contract_unavailable",
+            status: "no_data",
+            directAnswer:
+              "I cannot verify a Source answer for that contract from the current authorized records.",
+            citations: [],
+            retrievalSummary: {
+              substrate: "none",
+              sourceCount: 0,
+              hasTenantFacts: false,
+              hasCorpus: false,
+              hasExperts: false,
+            },
+          });
+          controller.enqueue(
+            encoder.encode(JSON.stringify({ type: "agent-answer", answer }) + "\n"),
+          );
+          controller.enqueue(encoder.encode(JSON.stringify({ type: "done" }) + "\n"));
+          return;
+        }
+        if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext: trustedSurfaceContext() })) {
+          const homeTenant = tenant ?? sessionTenant;
+          const homeTenantAliases = [
+            homeTenant?.canonicalKey,
+            homeTenant?.appClientKey,
+            homeTenant?.displayName,
+            ...signedInTenantAliases,
+          ].filter(Boolean);
           const requestedHomeAliases = tenantAliasesFor(
-            tenantClientKey ?? requestedOrSurfaceClient,
+            tenantClientKey ??
+              homeTenant?.appClientKey ??
+              homeTenant?.canonicalKey,
           );
           const foreignTenantAliases =
             homeTenantAliases.length > 0
@@ -566,9 +768,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             let answer = buildHomeKnowTenantFenceAnswer({
               activeTenantDisplayName:
                 homeTenant?.displayName ??
-                tenant?.displayName ??
-                surfaceContext?.activeClient ??
-                requestedOrSurfaceClient ??
+                sessionTenant?.displayName ??
                 "the signed-in tenant",
             });
             if (
@@ -733,7 +933,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           query,
           clientId: sentinelClientId,
           tenantKey: tenantInventoryKey ?? tenantClientKey,
-          activeClient: surfaceContext?.activeClient,
+          activeClient: tenant?.displayName,
           userId,
         });
         classificationForMemory = {
@@ -762,8 +962,8 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             query,
             clientId: sentinelClientId,
             userId,
-            surfaceContext,
-            conversationContextBlock: memory?.contextBlock,
+            surfaceContext: trustedSurfaceContext(),
+            conversationContextBlock: untrustedContractContext ? "" : memory?.contextBlock,
             intelligenceSessionId: memory?.sessionId ?? null,
           })) {
             const stageSources = intelligenceSourcesFromCitations(
@@ -939,12 +1139,15 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           answerOnlyStreaming,
           userId,
           tenantInventoryKey,
-          surfaceContext,
+          surfaceContext: trustedSurfaceContext(),
           companionCanvasEnabled,
-          conversationContextBlock: memory?.contextBlock,
+          conversationContextBlock: untrustedContractContext ? "" : memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
           traceEnabled: payload.traceEnabled,
+          onModelInput: (parts) => {
+            traceModelInputHash = hashModelInput(parts);
+          },
           traceSession: payload.traceEnabled
             ? {
                 tenant,
@@ -1177,6 +1380,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 tabbedExhibits.prose.trim() || tabbedResponse.mainAnswer,
               artifacts: tabbedArtifacts,
               citations: tabbedExhibits.citations,
+              nextSteps: tabbedExhibits.followups.map((label, index) => ({
+                id: `followup-${index + 1}`,
+                label,
+              })),
               corpusUsed: tabbedResponse.tabs.some(
                 (tab) =>
                   tab.grounding === "industry-context" ||
@@ -1230,6 +1437,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             )
               return;
+            assistantText = guardedAgentAnswer.directAnswer;
             enqueueTiming(
               routeTrace.finish("route.answer_compose.done", composeStartedAt, {
                 artifactCount: tabbedArtifacts.length,
@@ -1262,13 +1470,13 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             routing: answerRouting,
             sources: advisorSources,
           });
-          const sourceVisualAnswer = canBuildSourceWorkspaceVisualAnswer({
+          const sourceVisualAnswer = sourceAnswerContext && canBuildSourceWorkspaceVisualAnswer({
             query,
-            surfaceContext,
+            surfaceContext: sourceAnswerContext,
           })
             ? buildSourceWorkspaceVisualAnswer({
                 query,
-                surfaceContext: surfaceContext as AskSurfaceContext,
+                surfaceContext: sourceAnswerContext,
               })
             : null;
           const sourceVisualArtifacts = sourceVisualAnswer?.artifacts ?? [];
@@ -1286,11 +1494,14 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               },
             ),
           );
-          if (
+          const hasStructuredPayload =
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
-            sourceVisualArtifacts.length > 0
-          ) {
+            exhibits.followups.length > 0 ||
+            sourceVisualArtifacts.length > 0;
+          const cleanDirectAnswer =
+            sourceVisualAnswer?.directAnswer ?? exhibits.prose.trim();
+          if (hasStructuredPayload || cleanDirectAnswer) {
             const agentAnswer = composeAvaAnswer({
               surface: sourceVisualAnswer ? "source" : "intelligence",
               mode: "ANALYZE",
@@ -1302,7 +1513,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               question: query,
               intent: answerRouting.outputShape,
               status: "answered",
-              directAnswer: sourceVisualAnswer?.directAnswer ?? exhibits.prose,
+              directAnswer: cleanDirectAnswer,
               factsUsed: sourceVisualAnswer?.factsUsed,
               metricsUsed: sourceVisualAnswer?.metricsUsed,
               relationshipsUsed: sourceVisualAnswer?.relationshipsUsed,
@@ -1387,6 +1598,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             )
               return;
+            assistantText = guardedAgentAnswer.directAnswer;
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -1440,7 +1652,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           role: "assistant",
           content: assistantMemoryText(assistantText),
           metadata: {
-            client: requestedOrSurfaceClient,
+            client: untrustedContractContext ? tenantClientKey : requestedOrSurfaceClient,
             classification: classificationForMemory,
           },
         }).catch((err) =>
@@ -1500,19 +1712,39 @@ export function displaySafeIntelligenceDelta(text: string): string {
   const protocolStart = text.search(/<<<TAB:/);
   if (protocolStart >= 0) {
     const visiblePrefix = text.slice(0, protocolStart).trimEnd();
-    if (visiblePrefix) return visiblePrefix;
+    if (visiblePrefix) {
+      return maybeStripGovernedArtifactPayloads(visiblePrefix);
+    }
   }
 
+  const artifactSafeText = maybeStripGovernedArtifactPayloads(text);
   if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
-    return text;
+    return artifactSafeText;
   }
 
-  const parsed = parseIntelligenceTabbedResponse(text);
+  const parsed = parseIntelligenceTabbedResponse(artifactSafeText);
   if (parsed.mainAnswer.trim()) {
     return parsed.mainAnswer;
   }
 
-  return text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+  return artifactSafeText.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+}
+
+function maybeStripGovernedArtifactPayloads(text: string): string {
+  if (
+    !/`{1,3}\s*(?:abarva-canvas|chart|decision-table|followups)\b/i.test(
+      text,
+    ) &&
+    !/\b(?:abarva-canvas|chart|decision-table|followups)\s*[\[{]/i.test(
+      text,
+    ) &&
+    !/"(?:initiative|valueScore|complexityScore|readinessScore|evidenceBasis|nextAction|directional|canvasType|xKey|yKey|sourceNote|records|rows|data)"\s*:/i.test(
+      text,
+    )
+  ) {
+    return text;
+  }
+  return stripGovernedArtifactPayloadsFromText(text);
 }
 
 function numberFromPath(value: unknown, path: readonly string[]): number {
@@ -2035,6 +2267,25 @@ function parseSurfaceContext(raw: string | null): AskSurfaceContext | null {
   }
 }
 
+function hasContractBearingFields(context: AskSurfaceContext | null): boolean {
+  return Boolean(
+    context &&
+      (context.sourceV4 !== undefined ||
+        context.sourceContract360Mode ||
+        context.contractId ||
+        context.contractName ||
+        context.vendorName ||
+        context.annualValue != null ||
+        context.actualAnnualSpend != null ||
+        context.endDate ||
+        context.evidencePosture ||
+        context.nextAction ||
+        context.contractDatasetSummary ||
+        context.contractCubeSummary ||
+        context.contractTopVendorSummary),
+  );
+}
+
 function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
@@ -2045,6 +2296,18 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
     module: readString(record.module),
     provider: readString(record.provider),
     sourceProvider: readString(record.sourceProvider),
+    sourceContract360Mode: readBoolean(record.sourceContract360Mode),
+    contractId: readString(record.contractId),
+    contractName: readString(record.contractName),
+    vendorName: readString(record.vendorName),
+    annualValue: readNumber(record.annualValue),
+    actualAnnualSpend: readNumber(record.actualAnnualSpend),
+    endDate: readString(record.endDate),
+    evidencePosture: readString(record.evidencePosture),
+    nextAction: readString(record.nextAction),
+    contractDatasetSummary: readString(record.contractDatasetSummary),
+    contractCubeSummary: readString(record.contractCubeSummary),
+    contractTopVendorSummary: readString(record.contractTopVendorSummary),
     evaluationCaseId: readString(record.evaluationCaseId),
     evalCaseId: readString(record.evalCaseId),
     caseId: readString(record.caseId),
@@ -2072,6 +2335,10 @@ function readString(value: unknown): string | null {
 
 function readBoolean(value: unknown): boolean {
   return value === true || value === "true" || value === "1";
+}
+
+function readNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function readPlainObject(value: unknown): Record<string, unknown> | undefined {
@@ -2245,16 +2512,6 @@ function buildRouteNativeCanvasBlock(args: {
   tenantClientKey: string | null;
   tenantId: string | null;
 }): string {
-  if (
-    args.sources.some(
-      (source) => source.id === "industrial-cio-backoffice-readiness",
-    )
-  ) {
-    return buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
-      args.tenantClientKey,
-      args.tenantId,
-    ]);
-  }
   if (args.sources.some((source) => source.id === "skyharbor-cto-readiness")) {
     return buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
       args.tenantClientKey,

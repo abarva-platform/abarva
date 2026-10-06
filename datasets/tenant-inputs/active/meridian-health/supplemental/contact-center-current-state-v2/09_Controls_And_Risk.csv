@@ -1,0 +1,6 @@
+control,requirement,status,why_it_blocks,provenance
+PHI handling in transcripts,Approved retention and access posture before any grounding,NOT VALIDATED,Home lists this as a priority gap; Agent Assist cannot be safely grounded without it,Home insight packet
+Human-in-the-loop,"Advisory only, no autonomous execution",IN PLACE,Active record states output is advisory and logged for audit,Active record
+Model output audit logging,Every advisory output logged,IN PLACE,Active record,Active record
+Production-readiness validation of the target data platform,Design before production,NOT VALIDATED,Databricks is evaluation-stage only in the active record,Active record + Home
+Finance-confirmed value definition,Baseline and actuals agreed with Finance,NOT IN PLACE,No value claim may be made until this exists,Home insight packet

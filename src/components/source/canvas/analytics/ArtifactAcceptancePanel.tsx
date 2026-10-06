@@ -10,6 +10,7 @@ import {
 } from "@/lib/source/contracts/blocker-copy";
 import { ArtifactBlockerList } from "../ArtifactBlockerList";
 import type { SourceArtifactOperation } from "@/lib/source/artifact-operations";
+import { containsUuidDisplayValue } from "@/lib/source/display-identifiers";
 
 // SOURCE-SHELL-004 — the "Artifact status" panel: an explicit, reasoned
 // "accept this artifact as authoritative" action, distinct from the stage
@@ -25,6 +26,7 @@ interface ArtifactAcceptancePanelProps {
   operation?: SourceArtifactOperation | null;
   artifactRole?: "authoritative" | "evidence";
   parseStatus?: string | null;
+  sourceOrigin?: string | null;
   embeddingStatus?: string | null;
   graphStatus?: string | null;
   needsComplianceReview?: boolean;
@@ -61,8 +63,9 @@ export function ArtifactAcceptancePanel({
   artifactName,
   latestAcceptance,
   operation,
-  artifactRole = "evidence",
+  artifactRole = "authoritative",
   parseStatus = null,
+  sourceOrigin = null,
   embeddingStatus = null,
   graphStatus = null,
   needsComplianceReview = false,
@@ -74,10 +77,25 @@ export function ArtifactAcceptancePanel({
   const [authority, setAuthority] = useState<ArtifactAuthorityDecision | null>(
     null,
   );
+  const canAccept = parseStatus === "parsed" || sourceOrigin === "generated";
+  const acceptedByLabel = latestAcceptance
+    ? containsUuidDisplayValue(latestAcceptance.acceptedBy)
+      ? "Recorded user; name unresolved"
+      : latestAcceptance.acceptedBy
+    : null;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setBlockers([]);
+    if (!canAccept) {
+      setBlockers([
+        {
+          code: "artifact_not_reviewable",
+          detail: "Parse uploaded evidence before accepting it as authoritative.",
+        },
+      ]);
+      return;
+    }
     const form = event.currentTarget;
     const formData = new FormData(form);
     const approvalRationale = String(
@@ -144,6 +162,7 @@ export function ArtifactAcceptancePanel({
         latestAcceptance={latestAcceptance}
         operation={operation}
         parseStatus={parseStatus}
+        sourceOrigin={sourceOrigin}
         embeddingStatus={embeddingStatus}
         graphStatus={graphStatus}
         needsComplianceReview={needsComplianceReview}
@@ -188,7 +207,7 @@ export function ArtifactAcceptancePanel({
             </span>
           </div>
           <div style={{ color: ANALYTICS.INK_2 }}>
-            Accepted by {latestAcceptance.acceptedBy} on{" "}
+            Accepted by {acceptedByLabel} on{" "}
             {new Date(latestAcceptance.acceptedAt).toLocaleDateString()}
           </div>
           <div style={{ color: ANALYTICS.MUTED, lineHeight: 1.4 }}>
@@ -231,20 +250,49 @@ export function ArtifactAcceptancePanel({
           operation={operation}
         />
       ) : null}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen((v) => !v);
-          setBlockers([]);
-        }}
-        data-testid={`source-shell-artifact-accept-toggle-${artifactCode}`}
-        style={TOGGLE_STYLE}
-      >
-        {latestAcceptance
-          ? "Re-accept with a new reason"
-          : "Accept as authoritative"}
-      </button>
-      {open ? (
+      {artifactRole === "authoritative" ? (
+        <>
+          <button
+            type="button"
+            disabled={!canAccept}
+            onClick={() => {
+              setOpen((v) => !v);
+              setBlockers([]);
+            }}
+            data-testid={`source-shell-artifact-accept-toggle-${artifactCode}`}
+            style={
+              canAccept
+                ? TOGGLE_STYLE
+                : { ...TOGGLE_STYLE, opacity: 0.5, cursor: "not-allowed" }
+            }
+          >
+            {latestAcceptance
+              ? "Re-accept with a new reason"
+              : "Accept as authoritative"}
+          </button>
+          {!canAccept ? (
+            <div
+              style={{ marginTop: 5, color: ANALYTICS.MUTED, fontSize: 11.5 }}
+            >
+              Parse uploaded evidence before accepting it.
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <div
+          data-testid={`source-shell-artifact-supporting-${artifactCode}`}
+          style={{
+            marginTop: 8,
+            color: ANALYTICS.MUTED,
+            fontSize: 11.5,
+            lineHeight: 1.4,
+          }}
+        >
+          Supporting evidence is ready for local workflow use when parsed. It
+          cannot replace or become the client-final deliverable for this stage.
+        </div>
+      )}
+      {artifactRole === "authoritative" && open && canAccept ? (
         <form
           onSubmit={handleSubmit}
           data-testid={`source-shell-artifact-accept-form-${artifactCode}`}
@@ -349,6 +397,7 @@ function ArtifactQualityGate({
   latestAcceptance,
   operation,
   parseStatus,
+  sourceOrigin,
   embeddingStatus,
   graphStatus,
   needsComplianceReview,
@@ -358,20 +407,28 @@ function ArtifactQualityGate({
   latestAcceptance: ArtifactAcceptanceRecord | null;
   operation?: SourceArtifactOperation | null;
   parseStatus: string | null;
+  sourceOrigin: string | null;
   embeddingStatus: string | null;
   graphStatus: string | null;
   needsComplianceReview: boolean;
 }) {
+  const generatedReview =
+    sourceOrigin === "generated" && parseStatus !== "parsed";
+  const parseLabel = generatedReview
+    ? "rendered draft"
+    : parseStatus === "failed"
+      ? "failed"
+      : parseStatus === "parsed"
+        ? "parsed"
+        : "not parsed";
   const rows = [
     readinessLine(
       "Parse",
-      parseStatus === "parsed",
-      parseStatus === "failed"
-        ? "failed"
-        : parseStatus === "parsed"
-          ? "parsed"
-          : "not parsed",
-      "Run parser before this artifact influences scoring, aVa, or approval.",
+      parseStatus === "parsed" || generatedReview,
+      parseLabel,
+      generatedReview
+        ? "Review the rendered document before accepting it; parse before model use."
+        : "Run parser before this uploaded evidence influences scoring, aVa, or approval.",
     ),
     readinessLine(
       "Human acceptance",
@@ -600,10 +657,14 @@ const LABEL_STYLE: CSSProperties = {
 const INPUT_STYLE: CSSProperties = {
   border: `1px solid ${ANALYTICS.LINE}`,
   borderRadius: ANALYTICS.RADIUS_SM,
+  boxSizing: "border-box",
+  maxWidth: "100%",
+  minWidth: 0,
   padding: "6px 8px",
   fontSize: 12,
   fontFamily: ANALYTICS.SANS,
   color: ANALYTICS.INK,
+  width: "100%",
 };
 
 const TEXTAREA_STYLE: CSSProperties = {

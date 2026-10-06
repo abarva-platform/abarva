@@ -40,6 +40,7 @@ import type {
   OptimizationNegotiatedOutcomeRead,
 } from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
+  classifyOpportunityTrace,
   summarizeOpportunityTraceability,
   type OpportunityTraceabilitySummary,
 } from "@/lib/source/data-model/contract-optimization-traceability";
@@ -48,6 +49,7 @@ import {
   type OptimizeWorkflowPosition,
   type OptimizeWorkflowStep,
 } from "@/lib/source/data-model/contract-optimization-workflow-step";
+import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 
 interface SourceOptimizeContractPageProps {
@@ -56,7 +58,7 @@ interface SourceOptimizeContractPageProps {
   spine: ContractOptimizationSpine;
   opportunitySet: ContractOptimizationOpportunitySet | null;
   evidencePack?: ContractOptimizationEvidencePack | null;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 }
 
 export function SourceOptimizeContractPage({
@@ -65,7 +67,7 @@ export function SourceOptimizeContractPage({
   spine,
   opportunitySet,
   evidencePack = null,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: SourceOptimizeContractPageProps) {
   const selected = spine.selected;
   const [dockOpen, setDockOpen] = useState(false);
@@ -234,6 +236,7 @@ export function SourceOptimizeContractPage({
           asOfDateIso={asOfDateIso}
           selected={selected}
           selectedOpportunity={selectedOpportunity}
+          canViewFinancialValues={canViewFinancialValues}
         />
         <SourceWorkflowFrame
           testId="source-optimize-contract-frame"
@@ -366,10 +369,12 @@ function ModuleHeader({
   asOfDateIso,
   selected,
   selectedOpportunity,
+  canViewFinancialValues,
 }: {
   asOfDateIso: string;
   selected: ContractOptimizationCandidate | null;
   selectedOpportunity: ContractOptimizationOpportunity | null;
+  canViewFinancialValues: boolean;
 }) {
   return (
     <header style={HEADER_STYLE}>
@@ -382,7 +387,7 @@ function ModuleHeader({
         </h1>
         <p style={SUBLINE_STYLE}>
           {selected
-            ? `${selected.contractName} · ${formatUsd(selected.annualValue)} annual value · focused 7-step incumbent-contract path.`
+            ? `${selected.contractName} · ${formatSourceFinancialValue(selected.annualValue, canViewFinancialValues)} annual value · focused 7-step incumbent-contract path.`
             : "Select one governed contract first. This is the focused incumbent-contract path, not the 11-stage sourcing event intake."}
         </p>
         <div style={META_ROW_STYLE}>
@@ -399,14 +404,12 @@ function ModuleHeader({
         <Link
           href={
             selected
-              ? `/source/workspace?contractId=${encodeURIComponent(
-                  selected.contractId,
-                )}`
-              : "/source/workspace"
+              ? `/source?contractId=${encodeURIComponent(selected.contractId)}`
+              : "/source"
           }
           style={GHOST_BUTTON_STYLE}
         >
-          Source workspace
+          Source
         </Link>
         <Link href="/source/new" style={GHOST_BUTTON_STYLE}>
           New 11-stage event
@@ -1070,14 +1073,44 @@ function StrategyApprovalPacket({
       </strong>
       <div style={STRATEGY_PACKET_GRID_STYLE}>
         <StrategyPacketItem label="Target ask" value={opportunity.nextAction} />
+        {opportunity.negotiationDetail?.buyerAsk ? (
+          <StrategyPacketItem
+            label="Buyer ask"
+            value={opportunity.negotiationDetail.buyerAsk}
+          />
+        ) : null}
+        {opportunity.negotiationDetail?.negotiationLanguage ? (
+          <StrategyPacketItem
+            label="Negotiation language"
+            value={opportunity.negotiationDetail.negotiationLanguage}
+          />
+        ) : null}
         <StrategyPacketItem
           label="Value basis"
-          value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelAmountState(opportunity.amountState)}`}
+          value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelOpportunityAmountBasis(opportunity)}`}
         />
         <StrategyPacketItem
           label="Evidence basis"
           value={`${labelEvidenceGrade(opportunity.evidenceGrade)} · ${sourceSystems}`}
         />
+        {opportunity.negotiationDetail?.vendorConcession ? (
+          <StrategyPacketItem
+            label="Vendor concession"
+            value={opportunity.negotiationDetail.vendorConcession}
+          />
+        ) : null}
+        {opportunity.negotiationDetail?.timingDependency ? (
+          <StrategyPacketItem
+            label="Timing"
+            value={opportunity.negotiationDetail.timingDependency}
+          />
+        ) : null}
+        {opportunity.negotiationDetail?.riskIfIgnored ? (
+          <StrategyPacketItem
+            label="Risk if ignored"
+            value={opportunity.negotiationDetail.riskIfIgnored}
+          />
+        ) : null}
         <StrategyPacketItem
           label="Approval guardrail"
           value="Controlled outreach only; Finance/Tower still controls realized value."
@@ -2017,15 +2050,21 @@ function labelLedger(value: string): string {
 function labelValueType(value: string): string {
   if (value === "recoverable_leakage") return "Recoverable leakage";
   if (value === "avoided_cost") return "Avoided cost";
-  if (value === "negotiable_improvement") return "Negotiated improvement";
+  if (value === "negotiated_improvement" || value === "negotiable_improvement")
+    return "Negotiated improvement";
   return value;
 }
 
-function labelAmountState(value: string): string {
-  if (value === "exact") return "calculation run present";
-  if (value === "range") return "range estimate";
-  if (value === "not_sized") return "not sized";
-  return value;
+export function labelOpportunityAmountBasis(
+  opportunity: ContractOptimizationOpportunity,
+): string {
+  const trace = classifyOpportunityTrace(opportunity);
+  if (trace.state === "traced") return "Reproducible from calculation run";
+  if (trace.state === "restated") return "Amount disagrees with calculation run";
+  if (trace.state === "not_sized") return "Not sized";
+  return opportunity.amountState === "range"
+    ? "Range stated; calculation not verified"
+    : "Amount stated; calculation not verified";
 }
 
 function labelEvidenceGrade(value: string): string {

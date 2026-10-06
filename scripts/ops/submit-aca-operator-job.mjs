@@ -8,8 +8,6 @@ import path from "node:path";
 const DEFAULT_RESOURCE_GROUP = "rg-abarva-controlplane-lab-eastus";
 const DEFAULT_JOB = "job-abarva-private-operator-eus";
 const DEFAULT_CONTAINER = "db-migrate";
-const DEFAULT_IDLE_IMAGE =
-  "acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9";
 // The documented idle contract for the shared operator job. restoreIdle()
 // writes these; verifyIdle() reads them back and fails loudly on any drift
 // (e.g. a caller passing a --container name that doesn't exist on the job
@@ -42,13 +40,18 @@ Options:
   --secret-env KEY=NAME    Secret reference override for this execution. Repeatable.
   --out-dir <path>         Local proof/log output folder.
   --poll-seconds <n>       Poll interval. Default: 15
+  --update-retry-seconds <n>
+                           If an ACA job update is rejected because another
+                           provisioning operation is active, retry up to this
+                           many seconds before failing. Default: 300.
   --idle-verify-wait-seconds <n>
                            If restore verification only fails because another
                            execution on this shared job is still running, wait
                            up to this many seconds before failing. Default: 0.
   --no-wait                Start and return without polling.
   --no-restore-idle        Do not restore the job command/image after submission.
-  --idle-image <image>     Idle image used when restoring. Env: ACA_OPERATOR_IDLE_IMAGE.
+  --idle-image <image>     Idle image used when restoring. Defaults to --image.
+                            Env: ACA_OPERATOR_IDLE_IMAGE.
   --plan-only              Build and write the intended az command args to plan.json without
                             calling az at all. Never authenticates, never touches Azure. Use
                             this to validate argument construction (e.g. in CI) for inputs
@@ -73,11 +76,12 @@ function parseArgs(argv) {
     memory: process.env.ACA_OPERATOR_MEMORY || "4Gi",
     timeout: process.env.ACA_OPERATOR_TIMEOUT || "7200",
     pollSeconds: Number(process.env.ACA_OPERATOR_POLL_SECONDS || 15),
+    updateRetrySeconds: Number(process.env.ACA_OPERATOR_UPDATE_RETRY_SECONDS || 300),
     idleVerifyWaitSeconds: Number(process.env.ACA_OPERATOR_IDLE_VERIFY_WAIT_SECONDS || 0),
     outDir: "",
     wait: true,
     restoreIdle: process.env.ACA_OPERATOR_RESTORE_IDLE !== "false",
-    idleImage: process.env.ACA_OPERATOR_IDLE_IMAGE || DEFAULT_IDLE_IMAGE,
+    idleImage: process.env.ACA_OPERATOR_IDLE_IMAGE || "",
     planOnly: false,
     selfTest: false,
     help: false,
@@ -105,18 +109,23 @@ function parseArgs(argv) {
     else if (arg === "--memory") parsed.memory = next();
     else if (arg === "--timeout") parsed.timeout = next();
     else if (arg === "--env") parsed.env.push(next());
+    else if (arg === "--idle-image") parsed.idleImage = next();
     else if (arg === "--secret-env") {
       const value = next();
       const [key, secret] = splitKeyValue(value, "--secret-env");
       parsed.secretEnv.push(`${key}=secretref:${secret}`);
     } else if (arg === "--out-dir") parsed.outDir = next();
     else if (arg === "--poll-seconds") parsed.pollSeconds = Number(next());
+    else if (arg === "--update-retry-seconds") parsed.updateRetrySeconds = Number(next());
     else if (arg === "--idle-verify-wait-seconds") parsed.idleVerifyWaitSeconds = Number(next());
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
   if (!parsed.outDir) {
     parsed.outDir = path.join(os.tmpdir(), `abarva-aca-operator-job-${stamp()}`);
+  }
+  if (!parsed.idleImage) {
+    parsed.idleImage = parsed.image;
   }
   return parsed;
 }
@@ -155,6 +164,42 @@ function runAz(args, options = {}) {
     throw new Error(`az ${redactArgs(args).join(" ")} failed (${result.status})\n${stderr || stdout}`);
   }
   return { stdout, stderr };
+}
+
+function isProvisioningOperationInProgress(error) {
+  return /ContainerAppsJobOperationInProgress|active provisioning operation in progress/i.test(
+    String(error?.message || error),
+  );
+}
+
+function runAzWithProvisioningRetry(args, options = {}) {
+  const retrySeconds = Number(options.updateRetrySeconds || 0);
+  const pollSeconds = Math.max(1, Number(options.pollSeconds || 15));
+  const deadline = Date.now() + retrySeconds * 1000;
+  const attempts = [];
+
+  while (true) {
+    try {
+      const result = runAz(args, options.spawnOptions);
+      if (attempts.length > 0) {
+        console.log(`az update succeeded after ${attempts.length + 1} attempt(s).`);
+      }
+      return { ...result, attempts };
+    } catch (error) {
+      const retryable = isProvisioningOperationInProgress(error);
+      attempts.push({
+        at: new Date().toISOString(),
+        retryable,
+        error: String(error?.message || error),
+      });
+      if (!retryable || retrySeconds <= 0 || Date.now() >= deadline) {
+        error.updateAttempts = attempts;
+        throw error;
+      }
+      const remainingMs = Math.max(0, deadline - Date.now());
+      sleep(Math.min(pollSeconds * 1000, remainingMs));
+    }
+  }
 }
 
 function redactArgs(args) {
@@ -434,7 +479,132 @@ function extractStructuredEvents(logText, outDir) {
   };
 }
 
-function extractProofBundle(logText, outDir) {
+function extractServiceNowRequestSummary(lines, outDir) {
+  const prefix = "__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__";
+  const line = lines.map((rawLine) => stripLogPrefix(rawLine).trim())
+    .findLast((value) => value.startsWith(prefix));
+  if (!line) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(line.slice(prefix.length));
+  } catch {
+    return { extracted: false, reason: "Invalid Source ServiceNow request proof summary JSON." };
+  }
+  const keys = [
+    "schemaVersion", "event", "mode", "requestCount", "archetypeCount",
+    "requiredFactGapCount", "missingArchetypeCount", "inputSha256",
+    "inputSourceVersion", "inserted", "committed", "authority",
+  ];
+  const authorityKeys = [
+    "requestVersionsOnly", "mappingDecisionsWritten", "eventsCreated", "suppliersContacted",
+  ];
+  const validKeys = (value, expected) =>
+    value && typeof value === "object" && !Array.isArray(value) &&
+    Object.keys(value).length === expected.length &&
+    expected.every((key) => Object.hasOwn(value, key));
+  const nonnegativeInteger = (value) => Number.isSafeInteger(value) && value >= 0;
+  const valid =
+    validKeys(parsed, keys) &&
+    parsed.schemaVersion === 1 &&
+    parsed.event === "source_servicenow_request_import_proof_summary" &&
+    ["dry_run", "apply"].includes(parsed.mode) &&
+    nonnegativeInteger(parsed.requestCount) &&
+    nonnegativeInteger(parsed.archetypeCount) &&
+    nonnegativeInteger(parsed.requiredFactGapCount) &&
+    nonnegativeInteger(parsed.missingArchetypeCount) &&
+    nonnegativeInteger(parsed.inserted) &&
+    /^[a-f0-9]{64}$/.test(parsed.inputSha256) &&
+    typeof parsed.inputSourceVersion === "string" &&
+    parsed.inputSourceVersion.length > 0 &&
+    typeof parsed.committed === "boolean" &&
+    validKeys(parsed.authority, authorityKeys) &&
+    parsed.authority.requestVersionsOnly === true &&
+    parsed.authority.mappingDecisionsWritten === false &&
+    parsed.authority.eventsCreated === false &&
+    parsed.authority.suppliersContacted === false &&
+    (parsed.mode !== "dry_run" || (parsed.inserted === 0 && parsed.committed === false)) &&
+    (parsed.mode !== "apply" || parsed.committed === true);
+  if (!valid) {
+    return { extracted: false, reason: "Invalid Source ServiceNow request proof summary contract." };
+  }
+  const summaryPath = path.join(outDir, "05-source-servicenow-proof-summary.json");
+  writeJson(summaryPath, parsed);
+  return {
+    extracted: true,
+    extractionKind: "source_servicenow_request_summary",
+    proofBundleExtracted: false,
+    summaryPath,
+    summary: parsed,
+  };
+}
+
+function extractCandidateSupplierSummary(lines, outDir) {
+  const prefix = "__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__";
+  const line = lines.map((rawLine) => stripLogPrefix(rawLine).trim())
+    .findLast((value) => value.startsWith(prefix));
+  if (!line) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(line.slice(prefix.length));
+  } catch {
+    return { extracted: false, reason: "Invalid Source candidate supplier proof summary JSON." };
+  }
+  const keys = [
+    "schemaVersion", "event", "mode", "rowCount", "supplierCount",
+    "archetypeCount", "failClosedControlCount", "inputSha256",
+    "inputSourceVersion", "inserted", "committed", "authority",
+  ];
+  const authorityKeys = [
+    "dryRunDefault", "supplierRegistryRowsOnly", "candidateSupplierAuthoritiesWritten",
+    "eventsCreated", "suppliersContacted", "emailsSent",
+  ];
+  const validKeys = (value, expected) =>
+    value && typeof value === "object" && !Array.isArray(value) &&
+    Object.keys(value).length === expected.length &&
+    expected.every((key) => Object.hasOwn(value, key));
+  const nonnegativeInteger = (value) => Number.isSafeInteger(value) && value >= 0;
+  const valid =
+    validKeys(parsed, keys) &&
+    parsed.schemaVersion === 1 &&
+    parsed.event === "source_candidate_supplier_registry_import_proof_summary" &&
+    ["dry_run", "apply"].includes(parsed.mode) &&
+    nonnegativeInteger(parsed.rowCount) &&
+    nonnegativeInteger(parsed.supplierCount) &&
+    nonnegativeInteger(parsed.archetypeCount) &&
+    nonnegativeInteger(parsed.failClosedControlCount) &&
+    parsed.supplierCount > 0 && parsed.archetypeCount > 0 &&
+    parsed.rowCount === parsed.supplierCount + parsed.failClosedControlCount &&
+    nonnegativeInteger(parsed.inserted) &&
+    /^[a-f0-9]{64}$/.test(parsed.inputSha256) &&
+    typeof parsed.inputSourceVersion === "string" &&
+    parsed.inputSourceVersion.length > 0 &&
+    typeof parsed.committed === "boolean" &&
+    validKeys(parsed.authority, authorityKeys) &&
+    parsed.authority.dryRunDefault === true &&
+    parsed.authority.supplierRegistryRowsOnly === true &&
+    parsed.authority.candidateSupplierAuthoritiesWritten === false &&
+    parsed.authority.eventsCreated === false &&
+    parsed.authority.suppliersContacted === false &&
+    parsed.authority.emailsSent === false &&
+    (parsed.mode !== "dry_run" || (parsed.inserted === 0 && parsed.committed === false)) &&
+    (parsed.mode !== "apply" || parsed.committed === true);
+  if (!valid) {
+    return { extracted: false, reason: "Invalid Source candidate supplier proof summary contract." };
+  }
+  const summaryPath = path.join(outDir, "05-source-candidate-supplier-proof-summary.json");
+  writeJson(summaryPath, parsed);
+  return {
+    extracted: true,
+    extractionKind: "source_candidate_supplier_summary",
+    proofBundleExtracted: false,
+    summaryPath,
+    summary: parsed,
+  };
+}
+
+export function extractProofBundle(logText, outDir) {
   const markerPairs = [
     {
       begin: "__SEMANTIC2_PROOF_TGZ_BEGIN__",
@@ -458,9 +628,13 @@ function extractProofBundle(logText, outDir) {
     },
   ];
   const lines = logText.split(/\r?\n/);
+  const sourceSummary = extractServiceNowRequestSummary(lines, outDir) ??
+    extractCandidateSupplierSummary(lines, outDir);
+  if (sourceSummary && !sourceSummary.extracted) return sourceSummary;
   const payload = [];
   let activeMarker = null;
   let collecting = false;
+  let complete = false;
   for (const rawLine of lines) {
     const line = stripLogPrefix(rawLine).trim();
     if (!collecting) {
@@ -471,11 +645,18 @@ function extractProofBundle(logText, outDir) {
         continue;
       }
     }
-    if (collecting && activeMarker && line === activeMarker.end) break;
+    if (collecting && activeMarker && line === activeMarker.end) {
+      complete = true;
+      break;
+    }
     if (collecting && line) payload.push(line);
   }
+  if (collecting && !complete) {
+    return sourceSummary ?? { extracted: false, reason: "Proof bundle marker incomplete in logs." };
+  }
   if (!payload.length) {
-    return extractStructuredEvents(logText, outDir) ?? { extracted: false, reason: "No proof bundle marker found in logs." };
+    return sourceSummary ?? extractStructuredEvents(logText, outDir) ??
+      { extracted: false, reason: "No proof bundle marker found in logs." };
   }
 
   const tarPath = path.join(outDir, "proof.tgz");
@@ -487,9 +668,21 @@ function extractProofBundle(logText, outDir) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0) {
-    return { extracted: false, tarPath, reason: result.stderr || result.stdout || "tar extraction failed" };
+    return sourceSummary ??
+      { extracted: false, tarPath, reason: result.stderr || result.stdout || "tar extraction failed" };
   }
-  return { extracted: true, tarPath, extractDir, marker: activeMarker?.marker ?? "unknown" };
+  return {
+    extracted: true,
+    tarPath,
+    extractDir,
+    marker: activeMarker?.marker ?? "unknown",
+    ...(sourceSummary ? {
+      extractionKind: "proof_bundle",
+      proofBundleExtracted: true,
+      summaryPath: sourceSummary.summaryPath,
+      summary: sourceSummary.summary,
+    } : {}),
+  };
 }
 
 function restoreIdle(options, outDir) {
@@ -518,9 +711,10 @@ function restoreIdle(options, outDir) {
     "--output",
     "json",
   ];
-  const result = runAz(args);
+  const result = runAzWithProvisioningRetry(args, options);
   fs.writeFileSync(path.join(outDir, "99-restore-idle.json"), result.stdout);
-  return { restored: true, idleImage: options.idleImage };
+  writeJson(path.join(outDir, "99a-restore-idle-update-attempts.json"), result.attempts);
+  return { restored: true, idleImage: options.idleImage, updateAttempts: result.attempts };
 }
 
 // Fixed expectations for the manual-trigger shape of this job. Unlike
@@ -782,8 +976,10 @@ function planOnly(options) {
     resourceGroup: options.resourceGroup,
     container: options.container,
     image: options.image,
+    idleImage: options.idleImage,
     script: options.script,
     pollSeconds: options.pollSeconds,
+    updateRetrySeconds: options.updateRetrySeconds,
     idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
     env: sanitizedEnv(effectiveEnv),
     commands: {
@@ -907,6 +1103,9 @@ async function main() {
   if (!Number.isFinite(options.pollSeconds) || options.pollSeconds <= 0) {
     throw new Error("--poll-seconds must be a positive number");
   }
+  if (!Number.isFinite(options.updateRetrySeconds) || options.updateRetrySeconds < 0) {
+    throw new Error("--update-retry-seconds must be a non-negative number");
+  }
   if (!Number.isFinite(options.idleVerifyWaitSeconds) || options.idleVerifyWaitSeconds < 0) {
     throw new Error("--idle-verify-wait-seconds must be a non-negative number");
   }
@@ -935,6 +1134,7 @@ async function main() {
     wait: options.wait,
     restoreIdle: options.restoreIdle,
     idleImage: options.idleImage,
+    updateRetrySeconds: options.updateRetrySeconds,
     idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
     env: sanitizedEnv(effectiveEnv),
     startedAt: new Date().toISOString(),
@@ -950,8 +1150,9 @@ async function main() {
   let failed = null;
 
   try {
-    const update = runAz(buildTimeoutUpdateArgs(options));
+    const update = runAzWithProvisioningRetry(buildTimeoutUpdateArgs(options), options);
     fs.writeFileSync(path.join(options.outDir, "01-timeout-update.json"), update.stdout);
+    writeJson(path.join(options.outDir, "01b-timeout-update-attempts.json"), update.attempts);
 
     const start = runAz(buildStartArgs(options, effectiveEnv));
     fs.writeFileSync(path.join(options.outDir, "02-start.json"), start.stdout);

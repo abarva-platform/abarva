@@ -5,6 +5,7 @@ import type {
   EnterpriseLandscapeViewModel,
   LandscapeSection,
 } from "@/lib/home/enterprise-landscape-view-model";
+import { buildEnterpriseContextSpine } from "@/lib/intelligence/enterprise-context-spine";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type {
@@ -19,6 +20,13 @@ type AssistantMessage = {
   role: "assistant";
   question: string;
   answer: string;
+  /**
+   * Every `delta` received so far, unstripped. The visible `answer` is derived
+   * from it on each chunk. Stripping the visible text and appending the next
+   * chunk to that loses a payload opener the strip already removed, and trims
+   * the whitespace a chunk ended on (item U-549).
+   */
+  rawAnswer?: string;
   agentAnswer?: AvaAnswerPacket | null;
   status: "thinking" | "streaming" | "done" | "error";
   sources: AskSource[];
@@ -87,6 +95,26 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
  * native renderer; the visible chat should preserve Claude-authored advisory
  * prose rather than rewrite it after generation.
  */
+/**
+ * Governed artifact payloads are stripped from the visible answer in
+ * `resolveAssistantAnswerText`, which only runs in the `agent-answer` branch.
+ * An answer that completes without a packet keeps the raw streamed
+ * accumulation, which has passed through nothing but label cleanup -- and that
+ * text is the only thing the reader ever sees. Finalising every stream through
+ * the same strip means a governed fence cannot reach the rail on any path.
+ * Stripping already-clean text is a no-op, so the packet branch is unaffected.
+ */
+export function finalizeAssistantMessage<
+  T extends { status: string; answer: string; streamStatus?: string },
+>(message: T): T {
+  return {
+    ...message,
+    status: message.status === "error" ? "error" : "done",
+    answer: stripGovernedArtifactPayloadsFromText(message.answer),
+    streamStatus: undefined,
+  };
+}
+
 export function resolveAssistantAnswerText(
   rawStreamedAnswer: string,
   packetBody: string,
@@ -132,6 +160,7 @@ export function AdvisoryIntelligencePage({
       role: "assistant",
       question: trimmed,
       answer: "",
+      rawAnswer: "",
       status: "thinking",
       streamStatus: "Gathering client context...",
       sources: [],
@@ -183,11 +212,7 @@ export function AdvisoryIntelligencePage({
       setMessages((c) =>
         c.map((m) =>
           m.id === assistantId && m.role === "assistant"
-            ? {
-                ...m,
-                status: m.status === "error" ? "error" : "done",
-                streamStatus: undefined,
-              }
+            ? finalizeAssistantMessage(m)
             : m,
         ),
       );
@@ -223,15 +248,15 @@ export function AdvisoryIntelligencePage({
         if (m.id !== assistantId || m.role !== "assistant") return m;
         if (event.type === "delta") {
           const delta = eventText(event);
-          return delta
-            ? {
-                ...m,
-                answer: stripGovernedArtifactPayloadsFromText(
-                  `${m.answer}${delta}`,
-                ),
-                streamStatus: undefined,
-              }
-            : { ...m, streamStatus: "Writing the executive read..." };
+          if (!delta)
+            return { ...m, streamStatus: "Writing the executive read..." };
+          const rawAnswer = `${m.rawAnswer ?? ""}${delta}`;
+          return {
+            ...m,
+            rawAnswer,
+            answer: stripGovernedArtifactPayloadsFromText(rawAnswer),
+            streamStatus: undefined,
+          };
         }
         if (event.type === "context-summary") {
           return {
@@ -377,13 +402,25 @@ export function AdvisoryIntelligencePage({
   );
 }
 
-function buildStarterPrompts(
+/**
+ * Starters are the clearest statement of what this surface is for, so each one
+ * points at a different executive job: understand the enterprise, decide where
+ * to invest, see what is coming, and pressure-test the strategy against it.
+ *
+ * Wording is not cosmetic here. The answer-mode classifier is lexical, so a
+ * starter phrased without an outlook or ranking signal falls through to the
+ * general mode and comes back less specific than the question deserves.
+ * `intelligence-starter-prompts.test.ts` pins the mode each starter reaches --
+ * change the wording there too, or the guard will tell you what you lost.
+ */
+export function buildStarterPrompts(
   viewModel: EnterpriseLandscapeViewModel,
 ): string[] {
   return [
-    `What are the top AI opportunities for ${viewModel.tenantName}, grounded only in the loaded context?`,
-    `Which current-state technology, data, or operating-model gaps should a CXO care about first?`,
-    `What can aVa safely say today, what is inferred, and what still needs evidence?`,
+    `What should the executive team know about ${viewModel.tenantName}'s current state that is most consequential right now?`,
+    `What are the top 5 AI opportunities for ${viewModel.tenantName}, and which should we invest in now versus validate first?`,
+    `Which trends in our industry matter most over the next 12-24 months, and what do they mean for us specifically?`,
+    `Where does our current strategy appear out of step with our capabilities, evidence, or industry direction?`,
   ];
 }
 
@@ -391,31 +428,11 @@ function buildSurfaceContext(
   viewModel: EnterpriseLandscapeViewModel,
   sectionList: LandscapeSection[],
 ) {
-  const first = sectionList[0];
   return {
     activeTab: "intelligence",
     activeClient: viewModel.tenantName,
     clientKey: viewModel.clientKey,
-    pageFacts: [
-      `${viewModel.tenantName} Intelligence briefing — industry & estate context`,
-      first?.executiveSummary ?? "",
-      first?.leadershipRead ?? "",
-    ],
-    tenantFacts: [
-      ...sectionList
-        .slice(0, 3)
-        .flatMap((s) =>
-          s.currentState.slice(0, 3).map((r) => `${r.area}: ${r.assessment}`),
-        ),
-    ],
-    qualityFacts: sectionList
-      .flatMap((s) => s.maturity)
-      .slice(0, 8)
-      .map((m) => `${m.label}: ${m.score}%`),
-    sourceFacts: sectionList
-      .flatMap((s) => s.sources)
-      .slice(0, 6)
-      .map((s) => `${s.title}: ${s.detail}`),
+    ...buildEnterpriseContextSpine(viewModel, sectionList),
   };
 }
 

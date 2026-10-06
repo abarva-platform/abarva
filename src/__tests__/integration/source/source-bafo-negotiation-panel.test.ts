@@ -1,3 +1,4 @@
+import '@/test/source-integration-tenant';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
@@ -54,7 +55,7 @@ describe('Source BAFO negotiation panel', () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildOralsBafoEvent(sourceEvent!);
 
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event, canViewFinancialValues: true }));
 
     expect(html).toContain('BAFO negotiation');
     expect(html).toContain('Event negotiation readiness');

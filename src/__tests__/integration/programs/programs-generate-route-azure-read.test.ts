@@ -11,6 +11,7 @@ const generateArtifact = jest.fn();
 const createMovesGenerateArtifactDeps = jest.fn();
 const draftModuleDeliverable = jest.fn();
 const saveMoveArtifact = jest.fn();
+const loadApprovedMoveEvidenceSnapshot = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy,
@@ -57,6 +58,11 @@ jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
   saveMoveArtifact,
 }));
 
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
+  loadApprovedMoveEvidenceSnapshot,
+}));
+
 function makeRequest(body: unknown): Request {
   return new Request("http://localhost/api/v1/programs/program_1/generate", {
     method: "POST",
@@ -76,6 +82,26 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
     });
     tenancyErrorResponse.mockImplementation((err: unknown) => {
       throw err;
+    });
+    loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "approved-evidence-revision-1",
+      approvedEvidenceCount: 1,
+      rows: [],
+      revisionByPhase: {
+        1: "approved-evidence-revision-1",
+        2: "approved-evidence-revision-1",
+        3: "approved-evidence-revision-1",
+        4: "approved-evidence-revision-1",
+        5: "approved-evidence-revision-1",
+      },
+      latestEvidenceActivityAt: null,
+      latestEvidenceActivityAtByPhase: {
+        1: null,
+        2: null,
+        3: null,
+        4: null,
+        5: null,
+      },
     });
     getProgramById.mockResolvedValue({
       id: "program_1",
@@ -292,8 +318,7 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
           reviewStatus: "pre_gate_review_required",
           preliminaryCaveat: expect.stringContaining("not final or board-ready"),
           openItems: expect.arrayContaining([
-            "Sponsor assignment required before final approval.",
-            "Charter signoff required before final approval.",
+            "Confirm the listed sponsor contact and progress-email preference; sponsor approval is not required.",
             "Phase gate approval required before final generation.",
           ]),
         }),

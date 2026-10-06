@@ -6,7 +6,7 @@ import {
 import { buildFeedForwardPack } from '../feed-forward';
 import { computeWhatChanged } from '../what-changed';
 
-const feedForward = buildFeedForwardPack(2, 'P3 Choose the Approach', {
+const feedForward = buildFeedForwardPack(2, 'P3 Design Future State', {
   gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
   hardGaps: ['System of record unconfirmed'],
   softGaps: [],
@@ -24,7 +24,7 @@ describe('buildApprovedInputsPack — Move-scoped, never promoted', () => {
     moveId: 'm1',
     sourcePhase: 2,
     targetPhase: 3,
-    targetPhaseLabel: 'P3 Choose the Approach',
+    targetPhaseLabel: 'P3 Design Future State',
     approvedBy: 'person-123',
     approvedAt: '2026-07-08T00:00:00.000Z',
     sourceUploadId: 'decision.md',

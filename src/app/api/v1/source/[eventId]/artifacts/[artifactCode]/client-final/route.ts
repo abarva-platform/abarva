@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/_intel-auth";
 import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import {
@@ -17,6 +18,7 @@ import {
   registerSourceArtifactUpload,
 } from "@/lib/source/artifact-registry";
 import { sourceArtifactFormatFromMime } from "@/lib/source/artifact-registry/upload-contract";
+import { extractSourceUploadText } from "@/lib/source/artifact-registry/upload-text-extraction";
 import {
   artifactStateRowToView,
   type SourceEventArtifactStateRow,
@@ -38,6 +40,7 @@ import type {
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type { SourceStageKey } from "@/lib/source/types";
+import { findD09VendorDisclosureViolations } from "@/lib/source/agent-generation/vendor-pack-disclosure";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -164,6 +167,18 @@ export async function POST(request: Request, { params }: RouteContext) {
   const event = await getPersistedSourceEventRow(client.key, eventId);
   if (!event) return jsonError(403, "forbidden_event");
 
+  const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: client.key,
+    sourceEventId: event.id,
+  }).catch(() => null);
+  if (!accessPolicy?.canUploadSourceArtifacts || !accessPolicy.canApproveSourceStages) {
+    return jsonError(
+      403,
+      "approval_rights_required",
+      "Source artifact upload and stage approval rights are required to accept a client-final artifact.",
+    );
+  }
+
   const artifactState = await getArtifactState({
     eventId: event.id,
     tenantKey,
@@ -206,6 +221,9 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const note = parseOptionalString(formData.get("note"));
+  if (!note) {
+    return jsonError(400, "approval_rationale_required");
+  }
   const reviewMeetingDate = parseOptionalDate(
     formData.get("reviewMeetingDate"),
   );
@@ -214,6 +232,10 @@ export async function POST(request: Request, { params }: RouteContext) {
   );
   const acceptedAt = new Date().toISOString();
   const buffer = Buffer.from(await file.arrayBuffer());
+  const extractedClientFinal = await extractSourceUploadText({
+    buffer,
+    mimeType,
+  });
 
   const dataProtection = evaluateSensitiveUpload({
     filename,
@@ -223,6 +245,28 @@ export async function POST(request: Request, { params }: RouteContext) {
   });
   if (dataProtection.decision === "quarantine") {
     return sensitiveUploadRejectedResponse(dataProtection);
+  }
+  if (!extractedClientFinal.text?.trim()) {
+    return jsonError(
+      422,
+      "unreadable_client_final",
+      "This file has no readable text. Upload a text-readable final; an image-only scan cannot become the authoritative artifact.",
+    );
+  }
+
+  if (artifactCode === "d09_rfp_pack") {
+    const violations = findD09VendorDisclosureViolations(extractedClientFinal.text);
+    if (violations.length > 0) {
+      return Response.json(
+        {
+          ok: false,
+          error: "vendor_disclosure_violation",
+          detail: "Remove buyer-private targets and internal workflow material before accepting a vendor package.",
+          violations: violations.map(({ code }) => code),
+        },
+        { status: 422 },
+      );
+    }
   }
 
   let siblingArtifacts: SourceArtifactRecord[];
@@ -235,12 +279,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     siblingArtifacts = allArtifacts.filter(
       (artifact) => artifact.artifactType === artifactCode,
     );
+    // The first Client Final supersedes its draft; later revisions still need that provenance.
     previousGenerated =
-      resolveAuthoritativeArtifact(
-        siblingArtifacts.filter(
-          (artifact) => artifact.artifactGroup === "generated",
-        ),
-      ) ?? null;
+      siblingArtifacts.find((artifact) => artifact.artifactGroup === "generated") ?? null;
     previousAuthoritative = resolveAuthoritativeArtifact(siblingArtifacts);
   } catch (error) {
     return jsonError(
@@ -413,21 +454,32 @@ export async function POST(request: Request, { params }: RouteContext) {
       note,
       reviewMeetingDate,
       stakeholderGroup,
+      textExtraction: {
+        method: extractedClientFinal.method,
+        bodyAvailable: true,
+        warnings: extractedClientFinal.warnings,
+      },
       sourceGeneratedArtifactId:
         previousGenerated?.id ?? artifactState.linked_artifact_id,
       governanceMessage: CLIENT_FINAL_GOVERNANCE_MESSAGE,
     };
-    const updatedMetadata = {
+    const updatedMetadata: Record<string, unknown> = {
       ...previousMetadata,
       clientFinal: clientFinalMetadata,
       clientFinalChangeSummary: changeSummary,
     };
+    // A review of the previous draft or final cannot certify new uploaded bytes.
+    delete updatedMetadata.qualityGate;
     const updateResult = await selectSourceWriteAdapter(
       undefined,
       client.key,
     ).updateArtifactBody({
       artifactRowId: artifactState.id,
       columns: {
+        body: extractedClientFinal.text,
+        body_format: "markdown",
+        body_authored_by: tenancy.userId,
+        body_updated_at: acceptedAt,
         linked_artifact_id: artifact.id,
         status: "approved",
         tier: "rich",

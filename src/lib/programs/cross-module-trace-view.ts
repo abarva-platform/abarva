@@ -20,6 +20,7 @@
 import type { StrategicMove } from "./types.ui";
 import type { OutcomeLedgerRow } from "@/lib/tower/outcome-ledger/types";
 import type { ControlEvalMatrix } from "@/lib/programs/controls/control-eval-matrix";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import {
   buildSr117ControlDeliverable,
   isSr117RegulatedTenant,
@@ -135,6 +136,8 @@ const SHAPING_TYPE_KEYS = [
 export interface CrossModuleTraceInput {
   /** The anchor Move, read through the programs query seam. */
   readonly move: StrategicMove;
+  /** The phase resolved from current evidence and gate approvals. */
+  readonly effectivePhase: number;
   /**
    * Source events for the tenant, read through the source-events
    * adapter seam. The trace ID-joins on `linkedProgramId === move.id`.
@@ -154,6 +157,25 @@ export interface CrossModuleTraceInput {
    * and the SR 11-7 deliverable simply does not appear.
    */
   readonly controlMatrix?: ControlEvalMatrix;
+}
+
+export function projectMoveAtEffectivePhase(
+  move: StrategicMove,
+  effectivePhase: number,
+): StrategicMove {
+  if (move.currentPhase === effectivePhase) return move;
+
+  return {
+    ...move,
+    currentPhase: effectivePhase,
+    phaseLabel: getPhaseLabel(effectivePhase),
+    status: {
+      ...move.status,
+      text: "Gate review required",
+      description:
+        "The stored phase is ahead of the phase confirmed by current gate and evidence checks.",
+    },
+  };
 }
 
 function intelligenceStep(move: StrategicMove): TraceStep {
@@ -335,12 +357,18 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
 export function buildCrossModuleTrace(
   input: CrossModuleTraceInput,
 ): CrossModuleTrace {
-  const { move } = input;
+  const projectedMove = projectMoveAtEffectivePhase(
+    input.move,
+    input.effectivePhase,
+  );
+  const projectedInput =
+    projectedMove === input.move ? input : { ...input, move: projectedMove };
+  const { move } = projectedInput;
   const steps: TraceStep[] = [
     intelligenceStep(move),
-    moveStep(input),
-    sourceStep(input),
-    towerStep(input),
+    moveStep(projectedInput),
+    sourceStep(projectedInput),
+    towerStep(projectedInput),
   ];
 
   const linkedCount = steps.filter((s) => s.linkState === "linked").length;

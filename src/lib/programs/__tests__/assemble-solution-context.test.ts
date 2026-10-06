@@ -182,4 +182,40 @@ describe("assembleMoveSolutionContext (Slice 1)", () => {
       ]),
     );
   });
+
+  it("re-promotes carried P2 baseline metrics for terminal phase artifacts", async () => {
+    const out = await assembleMoveSolutionContext(
+      { moveId: "m1", tenantKey: "meridian", targetPhase: 5 },
+      sources({
+        loadPriorDigests: async () => [
+          {
+            useCase: "close care gaps with governed AI-assisted outreach",
+            kpis: [{ name: "care-gap closure", domain: "clinical" }],
+            roadmap: "P4 roadmap approved for mobilization.",
+            baselineMetrics: {
+              "Care-gap closure rate": "41.2% [quality_measures.csv]",
+              "Unmonitored interfaces":
+                "33 of 86 plus 18 partial [interface_inventory.csv]",
+            },
+            gaps: ["Interface control coverage incomplete"],
+          },
+        ],
+        retrieveCurrentState: async () => "",
+      }),
+    );
+
+    expect(out.readiness.ready).toBe(true);
+    expect(out.context.metricsThatMatter).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Care-gap closure rate",
+          value: "41.2% [quality_measures.csv]",
+        }),
+        expect.objectContaining({
+          label: "Unmonitored interfaces",
+          value: "33 of 86 plus 18 partial [interface_inventory.csv]",
+        }),
+      ]),
+    );
+  });
 });

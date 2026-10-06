@@ -51,6 +51,10 @@ export interface SourceContractVendor360Row extends ConflictFlagged {
   readonly contract_archetype?: string | null;
   readonly contract_name: string;
   readonly scope_summary: string | null;
+  readonly purpose_summary?: string | null;
+  readonly commercial_thesis?: string | null;
+  readonly relationship_summary?: string | null;
+  readonly evidence_boundary_summary?: string | null;
   readonly annual_value: number | null;
   readonly total_committed_value: number | null;
   readonly committed_annual_spend: number | null;
@@ -352,6 +356,77 @@ export interface SourceContractSpendMonthlyRow {
   readonly load_run_id: string | null;
 }
 
+export interface SourceCloudCommitmentCoverageRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly coverage_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_id: string;
+  readonly vendor_name: string | null;
+  readonly cloud_provider: string | null;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly eligible_stable_workload_spend_usd: number | null;
+  readonly commitment_covered_spend_usd: number | null;
+  readonly on_demand_eligible_spend_usd: number | null;
+  readonly commitment_coverage_pct: number | null;
+  readonly commitment_utilization_pct: number | null;
+  readonly recommended_step_up_usd: number | null;
+  readonly expected_discount_pct: number | null;
+  readonly candidate_monthly_savings_usd: number | null;
+  readonly evidence_reference: string | null;
+  readonly source_file_id: string | null;
+  readonly confidence: number | null;
+  readonly quality_state: string | null;
+  readonly load_run_id: string | null;
+}
+
+/**
+ * When a governed package load last completed for a tenant.
+ *
+ * Both package loaders write a run row and stamp `completed_at` with `now()`
+ * on a terminal status. Nothing read it, so the portfolio's freshness control
+ * inferred a date by pattern-matching load run identifiers instead — and
+ * reported a package's version date as the refresh date.
+ */
+export interface SourceLoadRunCompletionRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly load_run_id: string;
+  readonly source_table: string;
+  readonly completed_at: string;
+}
+
+/**
+ * Monthly tag-quality observation for a cloud consumption contract.
+ *
+ * Coverage percentages are stored 0-100 by the loader, which normalises a
+ * fractional intake value on the way in.
+ */
+export interface SourceCloudTagQualityRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly tag_quality_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string | null;
+  readonly cloud_provider: string | null;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly total_spend_usd: number | null;
+  readonly owner_tagged_spend_usd: number | null;
+  readonly application_tagged_spend_usd: number | null;
+  readonly untagged_spend_usd: number | null;
+  readonly owner_tag_coverage_pct: number | null;
+  readonly application_tag_coverage_pct: number | null;
+  readonly data_quality_state: string | null;
+  readonly source_file_id: string | null;
+  readonly confidence: number | null;
+  readonly quality_state: string | null;
+  readonly load_run_id: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic Source impact layer
 //
@@ -476,6 +551,44 @@ export interface SourcePageStorylineRow {
   readonly primary_metric_value: string;
   readonly blocker_if_missing: string | null;
   readonly citation_basis_json: Record<string, unknown> | null;
+}
+
+export interface SourceContractTabIntelligenceRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string | null;
+  readonly vendor_name: string | null;
+  readonly contract_name: string | null;
+  readonly tab_key: string;
+  readonly sort_order: number;
+  readonly headline: string;
+  readonly allowed_executive_statement: string;
+  readonly supporting_evidence_summary: string;
+  readonly missing_evidence_summary: string | null;
+  readonly action_prompt: string | null;
+  readonly source_basis: string;
+  readonly confidence_level: "high" | "medium" | "low" | "unverified";
+  readonly confidence_rationale: string;
+  readonly review_status: string;
+  readonly provenance: Record<string, unknown> | null;
+  readonly derived_from_load_run_id: string | null;
+}
+
+/** One governed, load-time contract-intelligence record shared by tabs and aVa. */
+export interface SourceContractIntelligenceRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string | null;
+  readonly vendor_name: string | null;
+  readonly contract_name: string | null;
+  readonly archetype_key: string;
+  readonly archetype_label: string;
+  readonly industry_key: string;
+  readonly playbook_review_status: string;
+  readonly review_status: string;
+  readonly intelligence_record: Record<string, unknown>;
+  readonly provenance: Record<string, unknown> | null;
+  readonly derived_from_load_run_id: string | null;
 }
 
 export interface SourceAvaGroundingBundleRow {
@@ -647,6 +760,22 @@ export interface DocExtractionRow {
   readonly source_page: number | null;
   readonly source_section: string | null;
   readonly extracted_at: string;
+}
+
+export interface DocFileRow {
+  readonly file_id: string;
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly file_name: string | null;
+  readonly media_type: string | null;
+  readonly page_count: number | null;
+  readonly load_run_id: string;
+  readonly document_role: string | null;
+  readonly document_type: string | null;
+  readonly contract_ref: string | null;
+  readonly visibility_class: string;
+  readonly content_authenticity: string;
+  readonly uploaded_at: string | null;
+  readonly metadata_json: Record<string, unknown> | null;
 }
 
 /**

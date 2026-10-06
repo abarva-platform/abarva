@@ -5,6 +5,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { Client } from "pg";
 
+import { CANONICAL_TENANT_KEYS } from "../../src/config/tenants/CANONICAL_TENANTS";
 import {
   buildCanonicalTenantDataReport,
   writeCanonicalTenantDataReport,
@@ -13,9 +14,12 @@ import {
 import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/contracts/canonical-ingestion";
 import { RELATIONSHIP_TYPE_DICTIONARY } from "../../src/lib/enterprise-data/contracts/layer3-validation";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
+import { augmentDeclaredSegmentGraph } from "./declared-segment-graph";
+import { assertSegmentWriteManifest } from "./segment-write-manifest-gate";
+import { type CurrentRowConflict, upsertCurrentRowColumns } from "./runtime-layer-upsert";
 
-const APPROVED_TENANTS = new Set(["meridian-health", "skyharbor-air"]);
-const DEFAULT_TENANTS = ["meridian-health", "skyharbor-air"];
+const APPROVED_TENANTS = new Set<string>(CANONICAL_TENANT_KEYS);
+const DEFAULT_TENANTS: string[] = [...CANONICAL_TENANT_KEYS];
 const CONTRACT_VERSION = "enterprise-intelligence-template-pack-v6-runtime-baseline";
 const DEFAULT_OUT_DIR = "reports/runtime-layer-refresh/latest";
 const TRUE_VALUES = new Set(["1", "true", "yes"]);
@@ -296,6 +300,8 @@ async function buildInputs(args: Args, repoRoot: string): Promise<{
   nodes: CsvRow[];
   edges: CsvRow[];
   quarantine: CsvRow[];
+  acceptedSegmentEdges: number;
+  quarantinedSegmentEdges: number;
 }> {
   const canonical = await buildCanonicalTenantDataReport({
     repoRoot,
@@ -303,11 +309,26 @@ async function buildInputs(args: Args, repoRoot: string): Promise<{
   });
   await writeCanonicalTenantDataReport(repoRoot, path.join(args.outDir, "canonical-build"), canonical);
   await runGraphReconciliation(args, repoRoot);
-  return {
-    canonical,
+  const graph = augmentDeclaredSegmentGraph({
+    records: canonical.canonicalRecords,
+    relationships: canonical.relationshipCandidates,
     nodes: parseCsv(fs.readFileSync(tablePath(path.resolve(repoRoot, args.outDir), "graph-node-index.csv"), "utf8")),
     edges: parseCsv(fs.readFileSync(tablePath(path.resolve(repoRoot, args.outDir), "graph-edge-candidates.csv"), "utf8")),
     quarantine: parseCsv(fs.readFileSync(tablePath(path.resolve(repoRoot, args.outDir), "graph-quarantine.csv"), "utf8")),
+  });
+  writeJson(path.join(path.resolve(repoRoot, args.outDir), "declared-segment-graph.json"), {
+    acceptedSegmentEdges: graph.acceptedSegmentEdges,
+    quarantinedSegmentEdges: graph.quarantinedSegmentEdges,
+    edges: graph.edges.filter((edge) => edge.normalizedRelationshipType === "BELONGS_TO_SEGMENT"),
+    quarantine: graph.quarantine.filter((edge) => edge.normalizedRelationshipType === "BELONGS_TO_SEGMENT"),
+  });
+  return {
+    canonical,
+    nodes: graph.nodes,
+    edges: graph.edges,
+    quarantine: graph.quarantine,
+    acceptedSegmentEdges: graph.acceptedSegmentEdges,
+    quarantinedSegmentEdges: graph.quarantinedSegmentEdges,
   };
 }
 
@@ -316,9 +337,10 @@ async function insertRows(
   table: string,
   columns: string[],
   rows: unknown[][],
-  conflict: string,
+  conflict: string | CurrentRowConflict,
 ): Promise<void> {
   if (rows.length === 0) return;
+  const conflictSql = typeof conflict === "string" ? conflict : upsertCurrentRowColumns(columns, conflict);
   const batchSize = 250;
   for (let offset = 0; offset < rows.length; offset += batchSize) {
     const batch = rows.slice(offset, offset + batchSize);
@@ -333,7 +355,7 @@ async function insertRows(
       })
       .join(",");
     await client.query(
-      `INSERT INTO ${table} (${columns.join(",")}) VALUES ${placeholders} ${conflict}`,
+      `INSERT INTO ${table} (${columns.join(",")}) VALUES ${placeholders} ${conflictSql}`,
       values,
     );
   }
@@ -343,12 +365,22 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
   if (process.env.RUNTIME_LAYER_REFRESH_WRITE_APPROVED !== "true") {
     throw new Error("Refusing write: set RUNTIME_LAYER_REFRESH_WRITE_APPROVED=true in the governed ACA job.");
   }
+  const acceptedRecords = input.canonical.canonicalRecords.filter((record) => record.qualityStatus !== "quarantined");
+  assertSegmentWriteManifest({
+    repoRoot: path.resolve(__dirname, "../.."),
+    tenantKeys: args.tenants,
+    segmentRecordCount: acceptedRecords.filter((record) => record.objectType === "business_segment").length,
+    segmentObjectCount: acceptedRecords.filter((record) =>
+      record.objectType === "business_segment" || record.objectType === "business_function",
+    ).length,
+    segmentCandidateCount: input.acceptedSegmentEdges + input.quarantinedSegmentEdges,
+    manifestId: process.env.RUNTIME_LAYER_REFRESH_SEGMENT_MANIFEST_ID,
+  });
   const client = new Client({
     ...postgresClientOptions(databaseUrl(), "abarva-runtime-layer-refresh"),
   });
   const ratio = quarantineRatio(input.edges.length, input.quarantine.length);
   const runKey = `runtime-layer-refresh:${sha256(args.idempotencyKey)}`;
-  const acceptedRecords = input.canonical.canonicalRecords.filter((record) => record.qualityStatus !== "quarantined");
   const nodeIdsUsed = new Set(input.edges.flatMap((edge) => [edge.fromNodeId, edge.toNodeId]).filter(Boolean));
   const materializedNodes = uniqueRowsBy(
     input.nodes.filter((node) => nodeIdsUsed.has(node.nodeId)),
@@ -463,12 +495,10 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         ratio,
         JSON.stringify({ validationFindings: record.validationFindings ?? [] }),
       ]),
-      `ON CONFLICT (tenant_key, contract_version, object_type, source_object_id)
-       DO UPDATE SET build_version=excluded.build_version, input_source_version=excluded.input_source_version,
-         idempotency_key=excluded.idempotency_key,
-         attributes=excluded.attributes, relationships=excluded.relationships, source_evidence_refs=excluded.source_evidence_refs,
-         quality_status=excluded.quality_status, fact_status=excluded.fact_status, blocked_claims=excluded.blocked_claims,
-         quarantine_ratio=excluded.quarantine_ratio, metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["tenant_key", "contract_version", "object_type", "source_object_id"],
+        immutable: ["record_key"],
+      },
     );
 
     await insertRows(
@@ -499,13 +529,15 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         node.displayName.trim().toLowerCase(),
         node.sourceFile,
         Number(node.sourceRowNumber) || null,
-        JSON.stringify([]),
+        JSON.stringify([node.sourceEvidenceKey].filter(Boolean)),
         "medium",
         "v6_business_record",
         JSON.stringify({ mappingProfile: node.mappingProfile, buildVersion: args.buildVersion, quarantineRatio: ratio }),
       ]),
-      `ON CONFLICT (node_key) DO UPDATE SET business_display_name=excluded.business_display_name,
-       canonical_name=excluded.canonical_name, metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["node_key"],
+        immutable: ["tenant_key", "contract_version", "node_id"],
+      },
     );
 
     await insertRows(
@@ -548,19 +580,17 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         edge.normalizedRelationshipType,
         confidence(edge.confidence),
         edge.evidenceBasis,
-        `${edge.tenantKey}/current/12_relationships.csv`,
+        edge.sourceFile ?? `${edge.tenantKey}/current/12_relationships.csv`,
         Number(edge.sourceRowNumber) || null,
         JSON.stringify([edge.evidenceBasis].filter(Boolean)),
         "resolved",
         ratio,
         JSON.stringify({ fromNodeId: edge.fromNodeId, toNodeId: edge.toNodeId, rawRelationshipType: edge.rawRelationshipType }),
       ]),
-      `ON CONFLICT (tenant_key, contract_version, relationship_id, source_file, source_row_number)
-       DO UPDATE SET build_version=excluded.build_version, input_source_version=excluded.input_source_version,
-       idempotency_key=excluded.idempotency_key,
-       relationship_type=excluded.relationship_type, evidence_basis=excluded.evidence_basis,
-       node_resolution_state=excluded.node_resolution_state, quarantine_ratio=excluded.quarantine_ratio,
-       metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["tenant_key", "contract_version", "relationship_id", "source_file", "source_row_number"],
+        immutable: ["edge_key"],
+      },
     );
 
     await insertRows(
@@ -606,15 +636,16 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         edge.evidenceBasis,
         edge.rawRelationshipType,
         edge.relationshipId,
-        `${edge.tenantKey}/current/12_relationships.csv`,
+        edge.sourceFile ?? `${edge.tenantKey}/current/12_relationships.csv`,
         Number(edge.sourceRowNumber) || null,
         JSON.stringify([edge.evidenceBasis].filter(Boolean)),
         "resolved",
         JSON.stringify({ buildVersion: args.buildVersion, quarantineRatio: ratio, knownGaps: edge.knownGaps }),
       ]),
-      `ON CONFLICT (tenant_key, contract_version, relationship_id, source_file, source_row_number)
-       DO UPDATE SET relationship_type=excluded.relationship_type, evidence_basis=excluded.evidence_basis,
-       node_resolution_state=excluded.node_resolution_state, metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["tenant_key", "contract_version", "relationship_id", "source_file", "source_row_number"],
+        immutable: ["edge_key"],
+      },
     );
 
     for (const tenant of args.tenants) {
@@ -800,6 +831,8 @@ async function main(): Promise<void> {
     ).length,
     graphEdgesWritten: input.edges.length,
     quarantinedRelationships: input.quarantine.length,
+    declaredSegmentEdges: input.acceptedSegmentEdges,
+    withheldSegmentEdges: input.quarantinedSegmentEdges,
     validationFailures: 0,
   };
   const written = args.write ? await writeToDatabase(args, input) : planned;
@@ -821,6 +854,8 @@ async function main(): Promise<void> {
     graphNodesPlanned: planned.graphNodesWritten,
     graphEdgesWritten: args.write ? written.graphEdgesWritten : 0,
     graphEdgesPlanned: planned.graphEdgesWritten,
+    declaredSegmentEdges: input.acceptedSegmentEdges,
+    withheldSegmentEdges: input.quarantinedSegmentEdges,
     quarantinedRelationships: input.quarantine.length,
     quarantineRatio: ratio,
     graphTablesWritten: args.write,

@@ -33,14 +33,14 @@ import type { SourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v
 interface SourcePortfolioBookPageProps {
   events: SourcingEventSummary[];
   tenantName: string;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
   governedSnapshot?: SourceV4WorkspaceSnapshot | null;
 }
 
 export function SourcePortfolioBookPage({
   events,
   tenantName,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
   governedSnapshot = null,
 }: SourcePortfolioBookPageProps) {
   const visibleEvents = useMemo(
@@ -98,11 +98,11 @@ function BookHeader({ tenantName }: { tenantName: string }) {
       </div>
       <div style={HEADER_ACTIONS_STYLE}>
         <Link
-          href="/source/workspace"
+          href="/source"
           style={GHOST_BTN_STYLE}
           data-testid="source-book-vendor-portfolio"
         >
-          Source workspace
+          Source
         </Link>
         <Link
           href="/source/optimize"

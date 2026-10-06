@@ -41,48 +41,30 @@ jest.mock('@/lib/active-client', () => ({
   getActiveClientRow: (...args: unknown[]) => getActiveClientRowMock(...args),
 }));
 
-interface QueryState {
+type MaybeSingleResult = { data: unknown; error: { message: string } | null };
+
+interface ReadQueryState {
   table: string;
-  upsertPayload: Record<string, unknown> | null;
-  insertPayload: Record<string, unknown> | null;
-  updatePayload: Record<string, unknown> | null;
   selectColumns: string | null;
   filters: Array<{ column: string; value: unknown }>;
-  singleResult: { data: unknown; error: unknown };
-  maybeSingleResult: { data: unknown; error: unknown };
-  directResult: { data: unknown; error: unknown };
+  maybeSingleResult: MaybeSingleResult;
 }
 
-const queryLog: QueryState[] = [];
-const pendingResults: Array<Partial<QueryState>> = [];
+const readQueryLog: ReadQueryState[] = [];
+const pendingReadResults: MaybeSingleResult[] = [];
 
-function makeQueryBuilder(table: string) {
-  const state: QueryState = {
+function makeReadBuilder(table: string) {
+  if (!['engagements', 'engagement_participants'].includes(table)) {
+    throw new Error(`Unexpected read table: ${table}`);
+  }
+  const state: ReadQueryState = {
     table,
-    upsertPayload: null,
-    insertPayload: null,
-    updatePayload: null,
     selectColumns: null,
     filters: [],
-    singleResult: { data: null, error: null },
-    maybeSingleResult: { data: null, error: null },
-    directResult: { data: null, error: null },
+    maybeSingleResult: pendingReadResults.shift() ?? { data: null, error: null },
   };
-  Object.assign(state, pendingResults.shift() ?? {});
-  queryLog.push(state);
+  readQueryLog.push(state);
   const qb = {
-    upsert(payload: Record<string, unknown>) {
-      state.upsertPayload = payload;
-      return qb;
-    },
-    insert(payload: Record<string, unknown>) {
-      state.insertPayload = payload;
-      return qb;
-    },
-    update(payload: Record<string, unknown>) {
-      state.updatePayload = payload;
-      return qb;
-    },
     select(cols: string) {
       state.selectColumns = cols;
       return qb;
@@ -91,23 +73,31 @@ function makeQueryBuilder(table: string) {
       state.filters.push({ column, value });
       return qb;
     },
-    single() {
-      return Promise.resolve(state.singleResult);
-    },
     maybeSingle() {
       return Promise.resolve(state.maybeSingleResult);
-    },
-    then(resolve: (v: { data: unknown; error: unknown }) => unknown) {
-      resolve(state.directResult);
     },
   };
   return qb;
 }
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    from: (table: string) => makeQueryBuilder(table),
-  }),
+const getAzureReadFluentClientMock = jest.fn(() => ({
+  from: (table: string) => makeReadBuilder(table),
+}));
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureReadFluentClient: () => getAzureReadFluentClientMock(),
+}));
+
+const upsertPersonMock = jest.fn();
+const upsertMembershipMock = jest.fn();
+const upsertParticipantMock = jest.fn();
+const selectAdminWriteAdapterMock = jest.fn(() => ({
+  name: 'supabase',
+  upsertPerson: (...args: unknown[]) => upsertPersonMock(...args),
+  upsertMembership: (...args: unknown[]) => upsertMembershipMock(...args),
+  upsertParticipant: (...args: unknown[]) => upsertParticipantMock(...args),
+}));
+jest.mock('@/lib/data-plane/write-adapters/adminWriteAdapter', () => ({
+  selectAdminWriteAdapter: () => selectAdminWriteAdapterMock(),
 }));
 
 import { POST } from '../route';
@@ -121,13 +111,18 @@ function request(body: unknown): Request {
 }
 
 beforeEach(() => {
-  queryLog.length = 0;
-  pendingResults.length = 0;
+  readQueryLog.length = 0;
+  pendingReadResults.length = 0;
   requireTenancyMock.mockReset();
   loadUserProgramAccessPolicyMock.mockReset();
   writeProgramAuditLogBestEffortMock.mockReset();
   createInvitationMock.mockReset();
   getActiveClientRowMock.mockReset();
+  getAzureReadFluentClientMock.mockClear();
+  selectAdminWriteAdapterMock.mockClear();
+  upsertPersonMock.mockReset();
+  upsertMembershipMock.mockReset();
+  upsertParticipantMock.mockReset();
   requireTenancyMock.mockResolvedValue({
     clientId: 'client-1',
     userId: 'admin-1',
@@ -138,44 +133,43 @@ beforeEach(() => {
   });
   getActiveClientRowMock.mockResolvedValue({
     id: 'client-1',
-    key: 'meridian',
-    name: 'Meridian Health System',
+    key: 'client-demo',
+    name: 'Example Client',
     industry_code: 'HEALTHCARE_IDN',
   });
   createInvitationMock.mockResolvedValue({
     id: 'invite-1',
-    emailAddress: 'sarah.chen@northstar.example',
+    emailAddress: 'user.one@example.test',
     status: 'pending',
   });
-  pendingResults.push({
-    singleResult: { data: { id: 'person-1' }, error: null },
-  });
+  upsertPersonMock.mockResolvedValue({ ok: true, data: { id: 'person-1' } });
+  upsertMembershipMock.mockResolvedValue({ ok: true, data: undefined });
+  upsertParticipantMock.mockResolvedValue({ ok: true, data: undefined });
 });
 
 describe('POST /api/admin/users/provision', () => {
-  it('requires client-admin user-management rights', async () => {
+  it('requires client-admin user-management rights before constructing data-plane clients', async () => {
     loadUserProgramAccessPolicyMock.mockResolvedValue({ canAdminUsers: false });
 
-    const res = await POST(request({ email: 'sarah@example.com' }) as never);
+    const res = await POST(request({ email: 'user@example.test' }) as never);
 
     expect(res.status).toBe(403);
-    expect(queryLog).toHaveLength(0);
+    expect(getAzureReadFluentClientMock).not.toHaveBeenCalled();
+    expect(selectAdminWriteAdapterMock).not.toHaveBeenCalled();
+    expect(createInvitationMock).not.toHaveBeenCalled();
   });
 
-  it('provisions client-pinned Programs user and assigns programs', async () => {
-    pendingResults.push(
-      {},
-      { maybeSingleResult: { data: { id: 'program-1' }, error: null } },
-      { maybeSingleResult: { data: null, error: null } },
-      {},
-      { maybeSingleResult: { data: { id: 'program-2' }, error: null } },
-      { maybeSingleResult: { data: null, error: null } },
-      {},
+  it('provisions client-pinned Programs user and assigns programs through the admin write adapter', async () => {
+    pendingReadResults.push(
+      { data: { id: 'program-1' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'program-2' }, error: null },
+      { data: { id: 'participant-2' }, error: null },
     );
 
     const res = await POST(request({
-      email: 'sarah.chen@northstar.example',
-      name: 'Sarah Chen',
+      email: 'User.One@Example.test',
+      name: 'User One',
       accessLevel: 'program_member',
       programIds: ['program-1', 'program-2'],
       financialVisibility: false,
@@ -189,46 +183,109 @@ describe('POST /api/admin/users/provision', () => {
     expect(body).toMatchObject({
       ok: true,
       personId: 'person-1',
+      email: 'user.one@example.test',
       accessLevel: 'program_member',
       canCreatePrograms: true,
       financialVisibility: false,
     });
 
-    const person = queryLog.find((q) => q.table === 'persons');
-    expect(person?.upsertPayload).toMatchObject({
-      email: 'sarah.chen@northstar.example',
-      name: 'Sarah Chen',
+    expect(upsertPersonMock).toHaveBeenCalledWith({
+      graphNodeId: 'person:client-1:user.one@example.test',
+      email: 'user.one@example.test',
+      name: 'User One',
       role: 'program_member',
+      organization: 'client-1',
+    });
+    expect(upsertMembershipMock).toHaveBeenCalledWith({
+      personId: 'person-1',
+      clientId: 'client-1',
+      accessLevel: 'program_member',
+      financialVisibility: false,
+      canAdminUsers: false,
+      canCreatePrograms: true,
+      canApproveGates: false,
+    });
+    expect(upsertParticipantMock).toHaveBeenNthCalledWith(1, {
+      existingId: null,
+      payload: {
+        engagement_id: 'program-1',
+        user_id: 'person-1',
+        user_name: 'User One',
+        role: 'contributor',
+        notify_on: ['phase_gate', 'approval'],
+        approval_authority: 'contributor',
+        program_access_level: 'program_member',
+        can_view_financial: false,
+        can_upload: true,
+        can_generate_deliverables: true,
+        can_publish_deliverables: false,
+        can_approve_phase_gates: false,
+      },
+    });
+    expect(upsertParticipantMock).toHaveBeenNthCalledWith(2, {
+      existingId: 'participant-2',
+      payload: {
+        engagement_id: 'program-2',
+        user_id: 'person-1',
+        user_name: 'User One',
+        role: 'contributor',
+        notify_on: ['phase_gate', 'approval'],
+        approval_authority: 'contributor',
+        program_access_level: 'program_member',
+        can_view_financial: false,
+        can_upload: true,
+        can_generate_deliverables: true,
+        can_publish_deliverables: false,
+        can_approve_phase_gates: false,
+      },
     });
 
-    const membership = queryLog.find((q) => q.table === 'person_client_memberships');
-    expect(membership?.upsertPayload).toMatchObject({
-      person_id: 'person-1',
-      client_id: 'client-1',
-      access_level: 'program_member',
-      financial_visibility: false,
-      can_create_programs: true,
-    });
-
-    const assignments = queryLog.filter((q) => q.table === 'engagement_participants');
-    expect(assignments).toHaveLength(4);
-    expect(assignments[1].insertPayload).toMatchObject({
-      engagement_id: 'program-1',
-      user_id: 'person-1',
-      program_access_level: 'program_member',
-      can_view_financial: false,
-      can_upload: true,
-      can_generate_deliverables: true,
-    });
+    expect(readQueryLog).toEqual([
+      {
+        table: 'engagements',
+        selectColumns: 'id',
+        filters: [
+          { column: 'id', value: 'program-1' },
+          { column: 'client_id', value: 'client-1' },
+        ],
+        maybeSingleResult: { data: { id: 'program-1' }, error: null },
+      },
+      {
+        table: 'engagement_participants',
+        selectColumns: 'id',
+        filters: [
+          { column: 'engagement_id', value: 'program-1' },
+          { column: 'user_id', value: 'person-1' },
+        ],
+        maybeSingleResult: { data: null, error: null },
+      },
+      {
+        table: 'engagements',
+        selectColumns: 'id',
+        filters: [
+          { column: 'id', value: 'program-2' },
+          { column: 'client_id', value: 'client-1' },
+        ],
+        maybeSingleResult: { data: { id: 'program-2' }, error: null },
+      },
+      {
+        table: 'engagement_participants',
+        selectColumns: 'id',
+        filters: [
+          { column: 'engagement_id', value: 'program-2' },
+          { column: 'user_id', value: 'person-1' },
+        ],
+        maybeSingleResult: { data: { id: 'participant-2' }, error: null },
+      },
+    ]);
     expect(writeProgramAuditLogBestEffortMock).toHaveBeenCalledTimes(1);
+    expect(createInvitationMock).not.toHaveBeenCalled();
   });
 
-  it('can send a Clerk invite pinned to the active client and Programs module', async () => {
-    pendingResults.push({});
-
+  it('can send a mocked Clerk invite pinned to the active client and Programs module', async () => {
     const res = await POST(request({
-      email: 'sarah.chen@northstar.example',
-      name: 'Sarah Chen',
+      email: 'user.one@example.test',
+      name: 'User One',
       accessLevel: 'program_member',
       canCreatePrograms: true,
       financialVisibility: false,
@@ -240,18 +297,16 @@ describe('POST /api/admin/users/provision', () => {
     expect(body.invitation).toEqual({
       status: 'sent',
       invitationId: 'invite-1',
-      email: 'sarah.chen@northstar.example',
+      email: 'user.one@example.test',
       clerkStatus: 'pending',
     });
-    expect(createInvitationMock).toHaveBeenCalledWith(expect.objectContaining({
-      emailAddress: 'sarah.chen@northstar.example',
-      redirectUrl: 'https://app.abarva.ai/auth-redirect',
-      notify: true,
-      publicMetadata: expect.objectContaining({
+    expect(createInvitationMock).toHaveBeenCalledWith({
+      emailAddress: 'user.one@example.test',
+      publicMetadata: {
         role: 'client',
-        clientId: 'meridian',
-        defaultClientId: 'meridian',
-        clientName: 'Meridian Health System',
+        clientId: 'client-demo',
+        defaultClientId: 'client-demo',
+        clientName: 'Example Client',
         clientLocked: true,
         accountType: 'program_user_invited',
         person_id: 'person-1',
@@ -259,19 +314,22 @@ describe('POST /api/admin/users/provision', () => {
         programScope: 'assigned_programs_only',
         canCreatePrograms: true,
         financialVisibility: false,
-      }),
+      },
+      redirectUrl: 'https://app.abarva.ai/auth-redirect',
+      notify: true,
+    });
+    expect(upsertPersonMock).toHaveBeenCalledWith(expect.objectContaining({
+      graphNodeId: 'person:client-1:user.one@example.test',
+      organization: 'client-1',
     }));
   });
 
   it('does not assign a program outside the active client', async () => {
-    pendingResults.push(
-      {},
-      { maybeSingleResult: { data: null, error: null } },
-    );
+    pendingReadResults.push({ data: null, error: null });
 
     const res = await POST(request({
-      email: 'sarah.chen@northstar.example',
-      name: 'Sarah Chen',
+      email: 'user.one@example.test',
+      name: 'User One',
       accessLevel: 'program_member',
       programIds: ['apex-program-1'],
       canCreatePrograms: true,
@@ -286,6 +344,18 @@ describe('POST /api/admin/users/provision', () => {
         detail: 'program_not_found_for_active_client',
       },
     ]);
-    expect(queryLog.filter((q) => q.table === 'engagement_participants')).toHaveLength(0);
+    expect(readQueryLog).toEqual([
+      {
+        table: 'engagements',
+        selectColumns: 'id',
+        filters: [
+          { column: 'id', value: 'apex-program-1' },
+          { column: 'client_id', value: 'client-1' },
+        ],
+        maybeSingleResult: { data: null, error: null },
+      },
+    ]);
+    expect(upsertParticipantMock).not.toHaveBeenCalled();
+    expect(createInvitationMock).not.toHaveBeenCalled();
   });
 });

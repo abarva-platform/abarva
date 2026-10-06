@@ -184,6 +184,57 @@ export interface ContextReadiness {
   missing: string[];
 }
 
+function addCountedSignal(seen: Set<string>, parts: readonly unknown[]): void {
+  const key = parts
+    .map((part) => (typeof part === "string" ? part.trim().toLowerCase() : ""))
+    .filter(Boolean)
+    .join("::");
+  if (key) seen.add(key);
+}
+
+/**
+ * Count the governed evidence signals actually available to a generated Move
+ * artifact. This is deliberately about evidence-bearing context, not rendered
+ * artifact features such as diagrams or tables.
+ */
+export function countSolutionContextEvidenceSignals(
+  ctx: SolutionContext,
+): number {
+  const seen = new Set<string>();
+
+  for (const [label, value] of Object.entries(ctx.baselineMetrics ?? {})) {
+    addCountedSignal(seen, ["baseline", label, value]);
+  }
+  for (const metric of ctx.metricsThatMatter ?? []) {
+    addCountedSignal(seen, ["metric", metric.label, metric.value]);
+  }
+  for (const item of ctx.evidenceTaxonomy ?? []) {
+    addCountedSignal(seen, [
+      "taxonomy",
+      item.category,
+      item.volume,
+      item.rate,
+      item.averageResolutionDays,
+      item.manualTouchHours,
+      item.riskLevel,
+      item.owner,
+    ]);
+  }
+  for (const item of ctx.evidenceMap ?? []) {
+    addCountedSignal(seen, ["map", item.claim, item.source]);
+  }
+  for (const packet of ctx.evidencePackets ?? []) {
+    addCountedSignal(seen, [
+      "packet",
+      packet.evidenceId,
+      packet.title,
+      packet.summary,
+    ]);
+  }
+
+  return seen.size;
+}
+
 /** Is the SolutionContext rich enough for this phase to generate? */
 export function contextReadyForPhase(
   ctx: SolutionContext,

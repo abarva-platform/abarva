@@ -1,0 +1,6 @@
+tenant_key,application_ref,application_name,business_function,criticality,hosting_model,lifecycle_state
+meridian-health,APP-MER-SERVICENOW,ServiceNow ITSM,IT Operations,Tier 1,SaaS,active
+meridian-health,APP-MER-IDENTITY,Enterprise Identity and Access,Cybersecurity,Tier 1,Hybrid,active
+meridian-health,APP-MER-EHR-INT,Clinical Integration Engine,Enterprise Integration,Tier 1,Hybrid,active
+meridian-health,APP-MER-DATALAKE-OPS,Cloud Operations Data Lake,IT Operations Analytics,Tier 2,AWS,active
+meridian-health,APP-MER-ENDPOINT-MGMT,Endpoint Management Platform,End User Computing,Tier 2,SaaS,active

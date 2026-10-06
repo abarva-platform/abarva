@@ -7,6 +7,7 @@ import type {
   VendorResponseAnalytics,
   VendorResponseMveInput,
 } from "./types";
+import { analyzeNormalizedResponseQuality } from "./normalized-response-quality";
 
 export function calculateResponseCompleteness(
   sections: VendorResponseMveInput["sections"],
@@ -81,6 +82,9 @@ export function buildVendorResponseAnalytics(
   const transitionReadinessScore = calculateTransitionReadiness(input.transition);
   const slaStrengthScore = calculateSlaStrength(input.sla);
   const staffingCoverageRiskScore = calculateStaffingCoverageRisk(input.staffing);
+  const normalizedResponseQuality = input.requirementResponses
+    ? analyzeNormalizedResponseQuality(input.requirementResponses)
+    : null;
   const findings = buildFindings(input, {
     unsupportedClaims,
     pricingComparabilityScore,
@@ -88,6 +92,38 @@ export function buildVendorResponseAnalytics(
     slaStrengthScore,
     staffingCoverageRiskScore,
   });
+  if (
+    normalizedResponseQuality &&
+    normalizedResponseQuality.readyForEvaluation !== "yes"
+  ) {
+    findings.push({
+      id: `${input.vendorId}.normalized_response_quality`,
+      title: "Normalized requirement responses are not evaluation-ready",
+      category: "response_quality",
+      severity:
+        normalizedResponseQuality.readyForEvaluation === "no"
+          ? "high"
+          : "medium",
+      finding: `${normalizedResponseQuality.nonConformances.length} normalized response control issue(s) require resolution before merit scoring.`,
+      evidenceUsed: input.evidenceRefs,
+      evidenceMissing: ["vendor_response_narrative"],
+      confidence: "high",
+      assumptions: [],
+      recommendedAction:
+        "Resolve requirement-level disposition, evidence, pricing, SLA, exception, owner, and criterion-linkage gaps before evaluator scoring.",
+      sourcingStage: "responses",
+      businessImpact: ["risk", "vendor_accountability"],
+    });
+  }
+
+  const legacyReadyForEvaluation =
+    readiness.mode === "evidence_rich" &&
+    responseCompletenessScore >= 85 &&
+    unsupportedClaims.length === 0
+      ? "yes"
+      : responseCompletenessScore >= 60
+        ? "conditional"
+        : "no";
 
   return {
     vendorId: input.vendorId,
@@ -99,15 +135,11 @@ export function buildVendorResponseAnalytics(
     transitionReadinessScore,
     slaStrengthScore,
     staffingCoverageRiskScore,
+    normalizedResponseQuality,
     readyForEvaluation:
-      readiness.mode === "evidence_rich" &&
-      responseCompletenessScore >= 85 &&
-      unsupportedClaims.length === 0
-        ? "yes"
-        : responseCompletenessScore >= 60
-          ? "conditional"
-          : "no",
+      normalizedResponseQuality?.readyForEvaluation ?? legacyReadyForEvaluation,
     clarificationQuestions: [
+      ...(normalizedResponseQuality?.clarificationQuestions ?? []),
       ...unsupportedClaims.map(
         (claim) => `Provide exhibit-backed support and commercial commitment for: ${claim}`,
       ),

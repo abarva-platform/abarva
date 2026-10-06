@@ -1,0 +1,831 @@
+"use client";
+
+import type {
+  SourceContract360Row,
+  SourceContractApplicationScopeRow,
+  SourceContractEvidenceCoverageRow,
+  SourceContractTabIntelligenceRow,
+} from "@/lib/source/data-model/types";
+import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { asSentence, fmtDate, money } from "./viewModel";
+import type { SourceWorkspaceVM } from "./buildViewModel";
+import { countOrDash } from "./contractPopulations";
+import { contractPurposeSummary } from "./WorkspaceExecutiveShell";
+import { isGeneratedPurposeHeadline } from "@/lib/source/contract-purpose-refusal";
+import {
+  evidenceLede,
+  relationshipLede,
+  scopeLede,
+  storyLede,
+} from "./contract360Ledes";
+
+/**
+ * Contract 360 — the per-tab briefing surfaces.
+ *
+ * Transcribed from the Claude Design contract "Source Contract 360.dc.html".
+ * Every figure resolves to a governed row; where the design carried an
+ * illustrative number the model does not hold, these render the refusal rather
+ * than the design's placeholder. The design wins on form, the canonical model
+ * wins on fact.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* shared                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `Open Optimize` is a handoff into the dedicated Optimize journey, not a tab
+ * switch (C-610). It used to call `select("contract", id, "Optimize")`, which
+ * moved the Contract 360 tab row and left the seven-step journey at
+ * `/source/optimize` reachable only by typing its URL — so the one visible
+ * command for "optimize this contract" never carried the contract into it.
+ *
+ * The href comes from `vm.optCtaHref`, the same governed journey URL the
+ * contract header action uses; this component builds no URL of its own, so
+ * there is one place where the handoff's shape is decided. It is a real anchor
+ * rather than a button with a navigating handler, so Back is the browser's and
+ * returns to the contract the workspace already mirrors into the address bar.
+ *
+ * No href means no affordance. A contract-less `/source/optimize` would open
+ * the journey on nothing, which reads as the command having failed silently.
+ */
+export function ContractCaseThreadStrip({
+  vm,
+  isOptimizeTab = false,
+}: {
+  vm: SourceWorkspaceVM;
+  isOptimizeTab?: boolean;
+}) {
+  const caseThread = vm.opportunityView?.caseThread;
+  if (caseThread === undefined) return null;
+  const optimizeHref = vm.optCtaHref?.trim() ? vm.optCtaHref : null;
+
+  return (
+    <div className="sw-c3-case-thread" role="region" aria-label="Optimization case">
+      <div>
+        <span className="sw-c3-eyebrow">
+          {caseThread && caseThread.caseCount > 1
+            ? `Latest of ${caseThread.caseCount} cases`
+            : "Optimization case"}
+        </span>
+        <strong>{caseThread === null ? "No case opened" : caseThread.state}</strong>
+        {caseThread?.owner ? <span>{caseThread.owner}</span> : null}
+      </div>
+      <p>{caseThread?.nextAction ?? "Review the contract evidence before opening a case."}</p>
+      {isOptimizeTab || !optimizeHref ? null : (
+        <a href={optimizeHref}>Open Optimize</a>
+      )}
+    </div>
+  );
+}
+
+type Coverage = SourceContractEvidenceCoverageRow | null | undefined;
+
+/** A count that was never loaded is a dash, not a zero. */
+function laneCount(coverage: Coverage, field: keyof SourceContractEvidenceCoverageRow) {
+  if (!coverage) return null;
+  return numberFromDb(coverage[field] as never);
+}
+
+function sentenceCase(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  return trimmed[0].toUpperCase() + trimmed.slice(1);
+}
+
+function tabIntelligence(
+  vm: SourceWorkspaceVM,
+  tabKey: string,
+): SourceContractTabIntelligenceRow | null {
+  const rows = vm.detail?.contractTabIntelligence ?? [];
+  return (
+    rows.find(
+      (row) => row.tab_key.toLowerCase() === tabKey.toLowerCase(),
+    ) ?? null
+  );
+}
+
+/**
+ * How close the notice deadline has to be before the header raises it in alarm.
+ *
+ * The chip is the loudest element on the page. Rendering "notice window — 1404
+ * days" in red said something benign in the most urgent treatment available,
+ * which trains a reader to ignore it by the time it matters. Beyond this
+ * horizon the same fact is stated quietly.
+ */
+const NOTICE_URGENT_DAYS = 120;
+
+/* -------------------------------------------------------------------------- */
+/* Header                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The contract headline.
+ *
+ * The design opens every contract with a sentence rather than a label: the
+ * subject in full weight, the commercial question after it in grey. The notice
+ * window is the only chip, because it is the only fact on the header that
+ * expires.
+ */
+export function ContractBriefingHeader({
+  contract,
+  vm,
+  noticeDays,
+  onBack,
+}: {
+  contract: SourceContract360Row;
+  vm: SourceWorkspaceVM;
+  noticeDays: number | null;
+  onBack: () => void;
+}) {
+  const story = tabIntelligence(vm, "Story");
+  /*
+   * The design pairs the contract name with a short second clause in grey.
+   * The governed `headline` is long-form prose — on a real contract it runs to
+   * several sentences — so using it whole turned the page heading into a
+   * paragraph. Take it only when it is genuinely one short clause, and let the
+   * Story tab carry the full text where it belongs.
+   */
+  const shortClause =
+    story?.headline &&
+    story.headline.length <= 60 &&
+    !/\b(?:not (?:yet )?reviewed|not established|not loaded|unresolved)\b/i.test(
+      story.headline,
+    ) &&
+    // The phrasing blocklist above went stale: migration `20260911150000`
+    // reworded the generated fallback to "requires reviewed context", which
+    // no listed phrase matches and which is 58 characters for a short vendor
+    // name, so it passed both conditions and rendered as the page heading.
+    // This control keys on the generator's shape instead of its wording.
+    !isGeneratedPurposeHeadline(story.headline, contract.vendor_name)
+      ? story.headline
+      : null;
+  const archetype = vm.contractEducation?.archetypeLabel ?? null;
+  const committed = numberFromDb(
+    (contract as unknown as { committed_value?: unknown }).committed_value,
+  );
+
+  const subline = [
+    archetype,
+    vm.optWorkflow ? `step ${vm.optWorkflow.currentIndex} of 7` : null,
+    committed ? `${money(committed)} committed` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <div className="sw-c3-head">
+      <div className="sw-c3-crumb">
+        <button className="sw-c3-crumb-back" onClick={onBack} type="button">
+          ← All contracts
+        </button>
+        <span className="sw-c3-eyebrow">
+          {contract.vendor_name} · {contract.contract_id}
+        </span>
+      </div>
+      <div className="sw-c3-head-row">
+        <div className="sw-c3-head-main">
+          <h1 className="sw-c3-title">
+            {contract.contract_name}
+            {shortClause ? (
+              <span className="sw-c3-title-dim"> {shortClause}</span>
+            ) : null}
+          </h1>
+          {subline ? <p className="sw-c3-note">{sentenceCase(subline)}</p> : null}
+        </div>
+        {noticeDays != null && noticeDays <= NOTICE_URGENT_DAYS ? (
+          <span className="sw-c3-pill-alert">
+            <span className="sw-c3-dot" />
+            Notice window — {noticeDays} days
+          </span>
+        ) : noticeDays != null ? (
+          <span className="sw-c3-pill-quiet">
+            Notice window opens in {noticeDays} days
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Register-only tier                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A contract in the book with no evidence package behind it.
+ *
+ * The design withholds the tabs rather than rendering seven empty ones, and
+ * says what loading would unlock. An empty tab reads as a product that does not
+ * work; a withheld tab reads as a product that knows what it does not have.
+ */
+export function ContractRegisterOnly({
+  contract,
+  onBack,
+}: {
+  contract: SourceContract360Row;
+  onBack: () => void;
+}) {
+  const depthPath = [
+    {
+      what: "Load contract facts",
+      who: "Contract manager · clause and pricing extraction",
+      unlocks: "Story · Scope",
+    },
+    {
+      what: "Reconcile spend and usage",
+      who: "Accounts payable · platform admin",
+      unlocks: "Economics",
+    },
+    {
+      what: "Load service performance rows",
+      who: "Service delivery",
+      unlocks: "Performance",
+    },
+    {
+      what: "Raise the optimization case",
+      who: "Category manager",
+      unlocks: "Optimize",
+    },
+  ];
+
+  return (
+    <div className="sw-c3-split">
+      <section className="sw-c3-card sw-c3-card-lead sw-c3-card-rule">
+        <div className="sw-c3-eyebrow">Register only · no evidence package</div>
+        <p className="sw-c3-sparse-lede">
+          This contract is in the book. It has not been reconciled to evidence.
+        </p>
+        <p className="sw-c3-prose">
+          Header facts are governed and shown below. Story, Scope, Economics,
+          Performance, Relationship and Optimize each need loaded rows that do
+          not exist for this contract yet, so those tabs are withheld rather
+          than rendered empty.
+        </p>
+        <div className="sw-c3-tiles" style={{ ["--sw-c3-tile-count" as string]: 3 }}>
+          <div className="sw-c3-tile">
+            <div className="sw-c3-tile-label">Annual value</div>
+            <div className="sw-c3-tile-value">
+              {money(numberFromDb(contract.annual_value))}
+            </div>
+          </div>
+          <div className="sw-c3-tile">
+            <div className="sw-c3-tile-label">Evidence</div>
+            <div className="sw-c3-tile-state">
+              <span className="sw-c3-dot sw-c3-dot-hollow" />
+              Not loaded
+            </div>
+          </div>
+          <div className="sw-c3-tile">
+            <div className="sw-c3-tile-label">Contract type</div>
+            <div className="sw-c3-tile-state">Not declared</div>
+          </div>
+        </div>
+        <p className="sw-c3-note">
+          <button className="sw-c3-crumb-back" onClick={onBack} type="button">
+            ← Back to all contracts
+          </button>
+        </p>
+      </section>
+      <section className="sw-c3-card">
+        <div className="sw-c3-eyebrow">What evidence would unlock</div>
+        <div className="sw-c3-rows sw-c3-depth-path">
+          {depthPath.map((step) => (
+            <div className="sw-c3-row" key={step.what}>
+              <span className="sw-c3-row-main">
+                <span className="sw-c3-row-title">{step.what}</span>
+                <span className="sw-c3-row-note">{step.who}</span>
+              </span>
+              <span className="sw-c3-row-aside sw-c3-mono">{step.unlocks}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Story                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export function ContractStoryBriefing({
+  contract,
+  coverage,
+  scopeRows,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  coverage: Coverage;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  vm: SourceWorkspaceVM;
+}) {
+  const story = tabIntelligence(vm, "Story");
+  const purpose = contractPurposeSummary(contract, coverage, scopeRows);
+  const committed = laneCount(coverage, "committed_spend_usd");
+  const actual = laneCount(coverage, "actual_spend_usd");
+  const workflow = vm.optWorkflow;
+  const evidenceSummary = story?.supporting_evidence_summary
+    ?.split(";")
+    .map((part) => part.trim())
+    .filter((part) =>
+      contractFacetRequired(vm, "Performance") ||
+      !(/\b(sla|service performance)\b/i.test(part) && /missing|not loaded/i.test(part)),
+    )
+    .filter(Boolean)
+    .join("; ");
+
+  const evidenceState: {
+    name: string;
+    state: string;
+    tone: string;
+    required: boolean;
+  }[] = [
+    {
+      name: "Scope rows",
+      value: laneCount(coverage, "scope_rows"),
+      required: true,
+    },
+    {
+      name: "Spend months",
+      value: laneCount(coverage, "spend_rows"),
+      required: true,
+    },
+    {
+      name: "Service performance",
+      value: laneCount(coverage, "performance_rows"),
+      required: contractFacetRequired(vm, "Performance"),
+    },
+    {
+      name: "Document page text",
+      value: laneCount(coverage, "document_page_text_rows"),
+      required: true,
+    },
+    {
+      // Item U-518. This counts governed action-candidate rows LOADED as
+      // evidence -- `opportunity_rows` is count(*) over
+      // source.contract_action_candidate_v1. It is not the contract's
+      // optimization opportunity set, which the rest of the page counts from
+      // `vm.opportunityView.opportunities` (source.optimization_opportunity, or
+      // a fallback derived from source.golden_contract_*). The two populations
+      // legitimately differ, so the lane says which one it is rather than
+      // printing a second number under the same word.
+      name: "Opportunity evidence rows",
+      value: laneCount(coverage, "opportunity_rows"),
+      required: true,
+    },
+  ].map((lane) => ({
+    // A not-required lane carries no count. Appending "· 0" to it reintroduces
+    // exactly the zero the state is there to replace.
+    name:
+      !lane.required || lane.value == null
+        ? lane.name
+        : `${lane.name} · ${lane.value}`,
+    state: !lane.required
+      ? "Not required"
+      : lane.value == null
+        ? "Not loaded"
+        : lane.value > 0
+          ? "Loaded"
+          : "None found",
+    tone: !lane.required
+      ? "transparent"
+      : lane.value != null && lane.value > 0
+        ? "var(--sw-c3-green)"
+        : "var(--sw-c3-stone)",
+    required: lane.required,
+  }));
+
+  return (
+    <div className="sw-c3-split">
+      <div className="sw-c3-stack">
+        {/*
+          The design opens Story with this card. It previously lived inside the
+          shared narrative block, which has been removed from the tab body, so
+          it moves here — rendered once, from the same governed summary.
+        */}
+        <section className="sw-c3-card sw-c3-card-lead sw-c3-story-purpose">
+          <div className="sw-c3-eyebrow sw-c3-eyebrow-accent">
+            {purpose.heading}
+          </div>
+          <p className="sw-c3-display">{purpose.body}</p>
+          <p className="sw-c3-note">{purpose.evidence}</p>
+        </section>
+        <section className="sw-c3-card sw-c3-story-thesis">
+          <div className="sw-c3-eyebrow">Commercial position</div>
+          {/*
+            The position stated as a finding, computed from the same figures in
+            the tiles below it, so the sentence and the numbers cannot disagree.
+          */}
+          {storyLede(
+            contract,
+            coverage,
+            vm.contractEducation?.archetypeLabel ?? null,
+          ) ? (
+            <p className="sw-c3-display sw-c3-display-sm sw-c3-story-position">
+              {storyLede(
+                contract,
+                coverage,
+                vm.contractEducation?.archetypeLabel ?? null,
+              )}
+            </p>
+          ) : null}
+          <p className="sw-c3-prose" style={{ marginTop: 10 }}>
+            {evidenceSummary
+              ? `Evidence basis: ${evidenceSummary}.`
+              : "No supporting evidence summary is recorded for this contract."}
+          </p>
+          <div className="sw-c3-tiles">
+            <div className="sw-c3-tile">
+              <div className="sw-c3-tile-label">Contract annual value</div>
+              <div className="sw-c3-tile-value">
+                {money(numberFromDb(contract.annual_value))}
+              </div>
+            </div>
+            <div className="sw-c3-tile">
+              <div className="sw-c3-tile-label">Actual annual spend</div>
+              <div className="sw-c3-tile-value sw-c3-tile-value-alert">
+                {actual == null ? "Not loaded" : money(actual)}
+              </div>
+            </div>
+            <div className="sw-c3-tile">
+              <div className="sw-c3-tile-label">Committed</div>
+              <div className="sw-c3-tile-value">
+                {committed == null ? "Not recorded" : money(committed)}
+              </div>
+            </div>
+            <div className="sw-c3-tile">
+              <div className="sw-c3-tile-label">Renewal</div>
+              <div className="sw-c3-tile-state">{fmtDate(contract.end_date)}</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="sw-c3-stack">
+        {workflow ? (
+          <section className="sw-c3-card-dark">
+            <div className="sw-c3-eyebrow">Action posture</div>
+            <p className="sw-c3-display sw-c3-display-sm">
+              {workflow.primaryAction}
+            </p>
+            <p className="sw-c3-prose">{workflow.primaryActionDetail}</p>
+          </section>
+        ) : null}
+
+        <section className="sw-c3-card">
+          <div className="sw-c3-eyebrow">Evidence state</div>
+          <div className="sw-c3-evidence-state">
+            {evidenceState.map((lane) => (
+              <div className="sw-c3-evidence-state-row" key={lane.name}>
+                <span
+                  className={
+                    lane.required
+                      ? "sw-c3-dot"
+                      : "sw-c3-dot sw-c3-dot-hollow"
+                  }
+                  style={{ ["--sw-c3-tone" as string]: lane.tone }}
+                />
+                <span className="sw-c3-evidence-state-name">{lane.name}</span>
+                <span className="sw-c3-mono sw-c3-evidence-state-value">
+                  {lane.state}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function contractFacetRequired(vm: SourceWorkspaceVM, facet: "Performance") {
+  return vm.contractEducation?.facetRequirements[facet]?.state !== "not_required";
+}
+
+/* -------------------------------------------------------------------------- */
+/* Scope                                                                      */
+/* -------------------------------------------------------------------------- */
+
+const CRITICALITY_TONE: Record<string, string> = {
+  "business critical": "var(--sw-c3-red)",
+  critical: "var(--sw-c3-red)",
+  "tier 1": "var(--sw-c3-red)",
+  important: "var(--sw-c3-amber)",
+  "tier 2": "var(--sw-c3-amber)",
+};
+
+export function ContractScopeBriefing({
+  scopeRows,
+  vm,
+}: {
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  vm: SourceWorkspaceVM;
+}) {
+  const scope = tabIntelligence(vm, "Scope");
+  const functions = [
+    ...new Set(scopeRows.map((row) => row.business_function).filter(Boolean)),
+  ];
+
+  return (
+    <div className="sw-c3-split">
+      <section className="sw-c3-card sw-c3-card-lead">
+        <div className="sw-c3-eyebrow sw-c3-eyebrow-accent">
+          What is actually in scope
+        </div>
+        {/*
+          A computed finding, not a restatement of the row count. The governed
+          headline reads "4 scoped application or service rows are loaded",
+          which is true and is the builder's sentence; this says what the rows
+          mean. Falls back to the governed narrative when they support no claim.
+        */}
+        <p className="sw-c3-display">
+          {scopeLede(scopeRows, vm.detail?.spendMonths ?? []) ??
+            scope?.headline ??
+            `${scopeRows.length} declared workload scope${scopeRows.length === 1 ? "" : "s"}.`}
+        </p>
+        <p className="sw-c3-note">
+          {`${scopeRows.length} scope row${scopeRows.length === 1 ? "" : "s"}`}
+          {functions.length ? ` · ${functions.join(", ")}` : ""}
+        </p>
+        <div className="sw-c3-rows sw-c3-scope-group">
+          {scopeRows.map((row) => {
+            const criticality = row.criticality?.trim() ?? "";
+            return (
+              <div className="sw-c3-row" key={row.application_ref}>
+                <span className="sw-c3-row-main">
+                  <span className="sw-c3-row-title sw-c3-row-title-serif">
+                    {row.application_name}
+                  </span>
+                  <span className="sw-c3-row-note">
+                    {row.business_function ?? "Business function not recorded"}
+                    {row.annual_run_cost != null
+                      ? ` · ${money(numberFromDb(row.annual_run_cost))} annual run cost`
+                      : " · annual run cost not loaded"}
+                  </span>
+                </span>
+                <span className="sw-c3-row-aside">
+                  <span className="sw-c3-scope-hosting">
+                    {row.hosting_model ?? "Hosting not recorded"}
+                  </span>
+                  {criticality ? (
+                    <span className="sw-c3-scope-crit">
+                      <span
+                        className="sw-c3-dot"
+                        style={{
+                          ["--sw-c3-tone" as string]:
+                            CRITICALITY_TONE[criticality.toLowerCase()] ??
+                            "var(--sw-c3-stone)",
+                        }}
+                      />
+                      {criticality}
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="sw-c3-card sw-c3-card-rule sw-c3-scope-boundary">
+        <div className="sw-c3-eyebrow">The boundary</div>
+        <p className="sw-c3-display sw-c3-display-sm">
+          Declared scope, not enterprise-wide dependency coverage.
+        </p>
+        <p className="sw-c3-prose">
+          {scope?.allowed_executive_statement ??
+            "These are the rows the contract record declares. Source does not infer a wider dependency footprint from them."}
+        </p>
+        {scope?.missing_evidence_summary ? (
+          <p className="sw-c3-note">
+            {asSentence(scope.missing_evidence_summary)}
+          </p>
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Relationship                                                               */
+/* -------------------------------------------------------------------------- */
+
+export function ContractRelationshipBriefing({
+  contract,
+  scopeRows,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  vm: SourceWorkspaceVM;
+}) {
+  const relationship = tabIntelligence(vm, "Relationship");
+  const functions = [
+    ...new Set(scopeRows.map((row) => row.business_function).filter(Boolean)),
+  ];
+  const hosting = [
+    ...new Set(scopeRows.map((row) => row.hosting_model).filter(Boolean)),
+  ];
+  const opportunities = vm.opportunityView?.opportunities?.length ?? null;
+
+  const rows = [
+    {
+      kind: "Vendor",
+      name: contract.vendor_name,
+      note: "Commercial counterparty on the executed agreement",
+    },
+    {
+      kind: "Contract",
+      name: contract.contract_id,
+      note: contract.contract_name,
+    },
+    {
+      kind: "Covered work",
+      name:
+        scopeRows.length > 0
+          ? scopeRows.map((row) => row.application_name).join(" · ")
+          : "No scope rows loaded",
+      note: `${scopeRows.length} declared scope row${scopeRows.length === 1 ? "" : "s"}`,
+    },
+    {
+      kind: "Business functions",
+      name: functions.length ? functions.join(" · ") : "Not recorded",
+      note: "Read from the loaded scope rows",
+    },
+    {
+      kind: "Hosting",
+      name: hosting.length ? hosting.join(" · ") : "Not recorded",
+      note: "Declared on the scope rows, not inferred from a CMDB",
+    },
+    ...(opportunities != null
+      ? [
+          {
+            kind: "Optimization case",
+            name: `${opportunities} opportunit${opportunities === 1 ? "y" : "ies"}`,
+            note: vm.optWorkflow
+              ? `Currently at step ${vm.optWorkflow.currentIndex} of 7 · ${vm.optWorkflow.currentLabel}`
+              : "No workflow position derived",
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <div className="sw-c3-split">
+      <section className="sw-c3-card sw-c3-card-lead">
+        <div className="sw-c3-eyebrow sw-c3-eyebrow-accent">
+          Declared relationships
+        </div>
+        <p className="sw-c3-display">
+          {relationshipLede(scopeRows) ??
+            relationship?.headline ??
+            "One vendor, one agreement, and the work it covers."}
+        </p>
+        <p className="sw-c3-note">
+          Everything below is declared on the contract record or its scope rows.
+          Nothing is inferred.
+        </p>
+        <div className="sw-c3-rows">
+          {rows.map((row) => (
+            <div className="sw-c3-row" key={row.kind}>
+              <span className="sw-c3-row-kind">{row.kind}</span>
+              <span className="sw-c3-row-main">
+                <span className="sw-c3-row-title">{row.name}</span>
+                <span className="sw-c3-row-note">{row.note}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+    <section className="sw-c3-card sw-c3-card-rule sw-c3-rel-boundary">
+        <div className="sw-c3-eyebrow">What this does not claim</div>
+        <p className="sw-c3-prose" style={{ marginTop: 10 }}>
+          No dependency graph and no initiative links appear here. Those
+          relationships would be inferred, and an inferred dependency in front of
+          an executive reads as a fact.
+        </p>
+        <p className="sw-c3-prose">
+          When application inventory is loaded with a declared relationship
+          method and a confidence, this tab gains a scope map — and says which
+          method produced each edge.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Evidence                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Evidence families.
+ *
+ * A family the archetype does not require renders `n/a` and says so, rather
+ * than a zero sitting in the same column as a real count. The two states mean
+ * opposite things and the design refuses to spell them the same way.
+ */
+export function ContractEvidenceFamilies({
+  coverage,
+  vm,
+}: {
+  coverage: Coverage;
+  vm: SourceWorkspaceVM;
+}) {
+  const evidence = tabIntelligence(vm, "Evidence");
+  const performanceRequired = contractFacetRequired(vm, "Performance");
+
+  const families = [
+    {
+      name: "Invoices, payments and usage",
+      note: "Committed, invoiced, paid and actual amounts by month.",
+      count: laneCount(coverage, "spend_rows"),
+      system: "finance ledger",
+      required: true,
+    },
+    {
+      name: "Named workloads and functions",
+      note: "The declared workloads and business functions this contract covers.",
+      count: laneCount(coverage, "scope_rows"),
+      system: "contract record",
+      required: true,
+    },
+    {
+      // The number here counts proof rows drawn out of the contract documents,
+      // not the documents themselves. Naming it "documents" put it beside a
+      // file inventory of a different size and made two true numbers read as a
+      // contradiction.
+      name: "Contract document proof rows",
+      note: "Page spans and proof text behind a clause-level claim. Counts proof rows, not files.",
+      count: laneCount(coverage, "document_page_text_rows"),
+      system: "contract document · restricted",
+      required: true,
+    },
+    {
+      name: "Changes to the agreement",
+      note: "Scope and commercial drift against the original agreement.",
+      count: laneCount(coverage, "change_order_rows"),
+      system: "contract record",
+      required: true,
+    },
+    {
+      name: "Service levels and credits",
+      note: performanceRequired
+        ? "Service levels achieved, breaches, and credits calculated against them."
+        : "Not required by this contract type. Its absence blocks no claim here.",
+      count: laneCount(coverage, "performance_rows"),
+      system: performanceRequired ? "service management" : "—",
+      required: performanceRequired,
+    },
+  ];
+
+  return (
+    <div className="sw-c3-stack">
+      <section className="sw-c3-card sw-c3-card-lead">
+        <p className="sw-c3-display">
+          {evidenceLede(coverage, performanceRequired ? 0 : 1) ??
+            evidence?.headline ??
+            "Every figure on this contract resolves to a loaded row."}
+        </p>
+        {evidence?.supporting_evidence_summary ? (
+          <p className="sw-c3-note">
+            {asSentence(evidence.supporting_evidence_summary)}
+          </p>
+        ) : null}
+
+        <div className="sw-c3-rows sw-c3-evidence-family">
+          {families.map((family) => (
+            <div className="sw-c3-row" key={family.name}>
+              <span className="sw-c3-row-main">
+                <span className="sw-c3-row-title sw-c3-row-title-serif">
+                  {family.name}
+                </span>
+                <span className="sw-c3-row-note">{family.note}</span>
+              </span>
+              <span className="sw-c3-row-aside">
+                {family.required ? (
+                  <>
+                    <span className="sw-c3-family-count">
+                      {countOrDash(family.count)}
+                    </span>
+                    <span className="sw-c3-family-system">{family.system}</span>
+                  </>
+                ) : (
+                  <span className="sw-c3-na">Not required</span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <p className="sw-c3-note sw-c3-evidence-footer">
+          A dash means the lane was never loaded; a zero means it was loaded and
+          holds nothing. Raw source documents stay in the system of record —
+          Source renders the assertions drawn from them, each with its load run.
+        </p>
+      </section>
+    </div>
+  );
+}

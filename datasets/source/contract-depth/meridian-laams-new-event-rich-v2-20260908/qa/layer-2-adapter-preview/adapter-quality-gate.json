@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "tenantKey": "meridian-health",
+  "datasetVersion": "meridian-laams-new-event-rich-v2-20260908",
+  "failures": [],
+  "rowCounts": {
+    "contractRegisterAdapter": 1,
+    "contractClauseAdapter": 56,
+    "changeOrderAdapter": 12,
+    "contractPageTextAdapter": 45,
+    "cmdbApplicationAdapter": 48,
+    "contractScopeAdapter": 48,
+    "spendAdapter": 12,
+    "usageAdapter": 0,
+    "ticketVolumeAdapter": 72,
+    "performanceAdapter": 72,
+    "resourceModelAdapter": 30,
+    "pricingBridgeAdapter": 5,
+    "invoiceLineAdapter": 72,
+    "batchOperationsAdapter": 96,
+    "qbrAdapter": 4,
+    "optimizationAdapter": 4,
+    "evidenceDocumentAdapter": 45
+  },
+  "richness": {
+    "contractsWithTwelveSpendMonths": 1,
+    "contractsWithDocuments": 1,
+    "contractsWithScope": 1,
+    "contractsWithOpportunities": 1,
+    "contractsWithChangeOrders": 1,
+    "contractsWithPageText": 1,
+    "contractsWithRecurringChangeOrders": 1,
+    "managedServiceContractsWithResourceModel": 1,
+    "managedServiceContractsWithInvoiceLines": 1,
+    "managedServiceContractsWithBatchVolumetrics": 1,
+    "managedServiceContractsWithQbrScorecards": 1,
+    "managedServiceContractsWithSlaEvidence": 1,
+    "distinctVendors": 1,
+    "distinctCategories": 1
+  }
+}

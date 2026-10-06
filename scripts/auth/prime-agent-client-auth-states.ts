@@ -177,7 +177,11 @@ async function signInWithTicket(page: Page, baseUrl: string, userId: string): Pr
     userId,
     expiresInSeconds: 300,
   });
-  await installClerkTestingTokenInterceptor(page, await createClerkTestingTokenForCrawl());
+  await installClerkTestingTokenInterceptor(
+    page,
+    await createClerkTestingTokenForCrawl(),
+    baseUrl,
+  );
 
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(

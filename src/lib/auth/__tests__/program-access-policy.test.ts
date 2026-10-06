@@ -94,6 +94,46 @@ describe("program access policy", () => {
     await expect(canReadProgram(ctx, "program-b")).resolves.toBe(false);
   });
 
+  it("does not grant a listed sponsor product access or approval authority", async () => {
+    setupRows({
+      person_client_memberships: null,
+      engagement_participants: [
+        {
+          engagement_id: "program-a",
+          role: "Sponsor",
+          approval_authority: "contributor",
+          program_access_level: "program_member",
+          can_upload: true,
+          can_generate_deliverables: true,
+          can_approve_phase_gates: true,
+        },
+        {
+          engagement_id: "program-a",
+          approval_authority: "sponsor",
+          program_access_level: "program_member",
+          can_approve_phase_gates: true,
+        },
+      ],
+    });
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
+
+    const policy = await loadUserProgramAccessPolicy(
+      {
+        clientId: "client-1",
+        userId: "00000000-0000-4000-8000-000000000001",
+        role: "client_viewer",
+      },
+      { programId: "program-a" },
+    );
+
+    expect(policy.programIdsAllowed).toEqual([]);
+    expect(policy.accessLevel).toBe("no_program_access");
+    expect(policy.canApproveGates).toBe(false);
+    expect(policy.canUploadArtifacts).toBe(false);
+    expect(policy.canGenerateDeliverables).toBe(false);
+  });
+
   it("allows client admins to see all client programs but keeps financial hidden unless explicitly granted", async () => {
     setupRows({
       person_client_memberships: {
@@ -246,7 +286,7 @@ describe("program access policy", () => {
     expect(fromMock).not.toHaveBeenCalled();
   });
 
-  it("keeps canonical client-admin emails as all-program Moves admins after JIT person provisioning resolves a UUID user id", async () => {
+  it("does not grant client-admin access from a tenant-looking email domain alone", async () => {
     setupRows({});
     const { loadUserProgramAccessPolicy, canReadProgram } =
       await import("../program-access-policy");
@@ -261,17 +301,15 @@ describe("program access policy", () => {
 
     const policy = await loadUserProgramAccessPolicy(ctx);
 
-    expect(policy.accessLevel).toBe("client_admin");
-    expect(policy.programScope).toBe("all_client_programs");
-    expect(policy.programIdsAllowed).toBeNull();
-    expect(policy.canCreatePrograms).toBe(true);
-    expect(policy.canApproveGates).toBe(true);
-    expect(policy.canGenerateDeliverables).toBe(true);
+    expect(policy.accessLevel).toBe("no_program_access");
+    expect(policy.programScope).toBe("assigned_programs_only");
+    expect(policy.programIdsAllowed).toEqual([]);
+    expect(policy.canCreatePrograms).toBe(false);
+    expect(policy.canApproveGates).toBe(false);
+    expect(policy.canGenerateDeliverables).toBe(false);
     expect(policy.canViewFinancialData).toBe(false);
-    await expect(canReadProgram(ctx, "lakeshore-move-any")).resolves.toBe(
-      true,
-    );
-    expect(fromMock).not.toHaveBeenCalled();
+    await expect(canReadProgram(ctx, "tenant-move-any")).resolves.toBe(false);
+    expect(fromMock).toHaveBeenCalled();
   });
 
   it("does not grant an automation agent access to a different active tenant", async () => {

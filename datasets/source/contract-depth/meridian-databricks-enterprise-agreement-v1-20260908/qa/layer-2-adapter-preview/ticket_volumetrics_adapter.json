@@ -1,0 +1,54 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "month": "2025-11",
+    "ticket_count": "2",
+    "severity_mix": "sev4",
+    "category": "platform_configuration",
+    "source_row_id": "SRC-TKT-001",
+    "adapter_name": "ticket_volumetrics_adapter",
+    "adapter_row_number": "1",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "month": "2026-01",
+    "ticket_count": "1",
+    "severity_mix": "sev4",
+    "category": "cluster_policy_setup",
+    "source_row_id": "SRC-TKT-002",
+    "adapter_name": "ticket_volumetrics_adapter",
+    "adapter_row_number": "2",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "month": "2026-04",
+    "ticket_count": "1",
+    "severity_mix": "sev3",
+    "category": "sso_configuration",
+    "source_row_id": "SRC-TKT-003",
+    "adapter_name": "ticket_volumetrics_adapter",
+    "adapter_row_number": "3",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "month": "2026-07",
+    "ticket_count": "1",
+    "severity_mix": "sev4",
+    "category": "cost_alert_threshold",
+    "source_row_id": "SRC-TKT-004",
+    "adapter_name": "ticket_volumetrics_adapter",
+    "adapter_row_number": "4",
+    "adapter_version": "source-contract-depth-v1"
+  }
+]

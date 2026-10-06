@@ -40,9 +40,11 @@ const METRIC_UNITS = new Map([
   ["readiness_score", "score_0_100"],
   ["linked_business_case_count", "count"],
   ["rollout_target_users", "users"],
+  ["enabled_users", "users"],
   ["monthly_active_users", "users"],
   ["adoption_target_pct", "percent"],
   ["adoption_actual_pct", "percent"],
+  ["adoption_gap_pct", "percent"],
   ["sponsor_claimed_value_usd", "USD"],
   ["finance_reviewed_value_usd", "USD"],
   ["finance_validated_value_usd", "USD"],
@@ -101,6 +103,9 @@ function parseArgs(argv) {
     // this field exists to retire.
     builtAt: new Date().toISOString(),
     purgeOnly: argv.includes("--purge-only") || envFlag("TOWER_LAYER4_PURGE_ONLY"),
+    sourceBridgeReapplyApproved: envFlag(
+      "TOWER_LAYER4_SOURCE_BRIDGE_REAPPLY_APPROVED",
+    ),
     emitProofBundle:
       argv.includes("--emit-proof-bundle") ||
       envFlag("TOWER_LAYER4_EMIT_PROOF_BUNDLE"),
@@ -545,18 +550,28 @@ function buildRows(options) {
       page_key: "decision_lanes",
       business_case_id: row.business_case_id,
       project_id: row.project_id,
+      initiative_name: row.initiative_name,
+      initiative_classification: row.initiative_classification,
       domain_name: project?.domain_name ?? row.domain_key,
+      domain_key: row.domain_key,
       business_value_type: row.business_value_type,
+      business_value_story: row.business_value_story ?? null,
       primary_tool_or_platform: row.primary_tool_or_platform,
+      vendor_name: row.vendor_name ?? null,
       promised_value_usd: num(row.projected_annual_value_low_usd),
+      projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
       projected_annual_value_high_usd: num(row.projected_annual_value_high_usd),
       sponsor_claimed_value_usd: actual.sponsorClaimed,
       finance_reviewed_value_usd: actual.financeReviewed,
       finance_validated_value_usd: actual.financeValidated,
       board_claimable_value_usd: actual.boardClaimable,
+      finance_validated_ytd_usd: num(row.finance_validated_ytd_usd),
+      board_claimable_ytd_usd: num(row.board_claimable_ytd_usd),
       roi_low_multiple: numOrNull(row.roi_low_multiple),
       roi_high_multiple: numOrNull(row.roi_high_multiple),
       finance_status: row.finance_status,
+      cfo_approval_date: row.cfo_approval_date || null,
+      committee_decision: row.committee_decision ?? null,
       // Decision attributes. gating_constraint is the load-bearing one: across the portfolio it is
       // what separates a validated case from a blocked one, where readiness score does not.
       gating_constraint: row.gating_constraint ?? null,
@@ -584,8 +599,16 @@ function buildRows(options) {
       // label with nothing behind it.
       metric_baseline_value: numOrNull(row.baseline_value),
       metric_target_value: numOrNull(row.target_value),
+      baseline_value: numOrNull(row.baseline_value),
+      target_value: numOrNull(row.target_value),
       metric_unit: row.metric_unit ?? null,
       benefit_realization_lag_months: numOrNull(row.benefit_realization_lag_months),
+      value_tracking_cadence: row.value_tracking_cadence ?? null,
+      source_system: row.source_system ?? null,
+      source_record_id: row.source_record_id ?? null,
+      extract_date: row.extract_date || null,
+      as_of_date: row.as_of_date || null,
+      source_quality_state: row.quality_state ?? null,
       // The observation series behind the value waterfall, so the drawer can show when each step
       // happened rather than only its total.
       value_observation_months: observations
@@ -905,15 +928,30 @@ function buildRows(options) {
   for (const tool of data.tools) {
     const toolObjectId = objectUuid(options, "ai_tool", tool.canonical_tool_id);
     const refs = [sourceRef(options, tool, { tool_rollout_id: tool.tool_rollout_id })];
+    const linkedBusinessCaseCount = numOrNull(tool.linked_business_case_count);
+    const rolloutTargetUsers = numOrNull(tool.rollout_target_users);
+    const enabledUsers = numOrNull(tool.enabled_users);
+    const monthlyActiveUsers = numOrNull(tool.monthly_active_users);
+    const adoptionTargetPct = numOrNull(tool.adoption_target_pct);
+    const adoptionActualPct = numOrNull(tool.adoption_actual_pct);
+    const adoptionGapPct =
+      adoptionTargetPct === null || adoptionActualPct === null
+        ? null
+        : Math.max(0, adoptionTargetPct - adoptionActualPct);
     const payload = {
       page_key: "adoption_lens",
       tool_rollout_id: tool.tool_rollout_id,
+      tool_name: tool.tool_name,
+      vendor_name: tool.vendor_name,
+      domain_key: tool.domain_key,
       rollout_goal: tool.rollout_goal,
-      linked_business_case_count: num(tool.linked_business_case_count),
-      rollout_target_users: num(tool.rollout_target_users),
-      monthly_active_users: num(tool.monthly_active_users),
-      adoption_target_pct: num(tool.adoption_target_pct),
-      adoption_actual_pct: num(tool.adoption_actual_pct),
+      linked_business_case_count: linkedBusinessCaseCount,
+      rollout_target_users: rolloutTargetUsers,
+      enabled_users: enabledUsers,
+      monthly_active_users: monthlyActiveUsers,
+      adoption_target_pct: adoptionTargetPct,
+      adoption_actual_pct: adoptionActualPct,
+      adoption_gap_pct: adoptionGapPct,
       item_kind: "usage_benefit",
       ai_spend_category: "AI tool rollout",
       funding_status: tool.rollout_stage,
@@ -921,7 +959,14 @@ function buildRows(options) {
       // blocker is a control review or a telemetry gap that nobody has scheduled.
       control_blocker: tool.control_blocker ?? null,
       business_owner_role: tool.business_owner_role ?? null,
+      finance_partner_role: tool.finance_partner_role ?? null,
       rollout_stage: tool.rollout_stage ?? null,
+      source_system: tool.source_system ?? null,
+      source_record_id: tool.source_record_id ?? null,
+      extract_date: tool.extract_date ?? null,
+      as_of_date: tool.as_of_date ?? null,
+      refresh_cadence: tool.refresh_cadence ?? null,
+      source_quality_state: tool.quality_state ?? null,
       layer4_build_version: options.buildVersion,
     };
     const entry = addProjectionRow(ctx, "adoption_lens", tool.tool_rollout_id, "ai_tool_rollout", payload, refs);
@@ -942,13 +987,13 @@ function buildRows(options) {
       business_function: sqlText(tool.domain_key),
       licensed_users: sqlNum(tool.rollout_target_users),
       active_users: sqlNum(tool.monthly_active_users),
-      usage_events: sqlNum(num(tool.monthly_active_users) * 20),
+      usage_events: sqlNum(monthlyActiveUsers === null ? null : monthlyActiveUsers * 20),
       monthly_cost_usd: "null",
       adoption_rate_percent: sqlNum(tool.adoption_actual_pct),
       value_state: sqlText("known"),
       quality_state: sqlText("passed"),
       review_state: sqlText("reviewed"),
-      metric_keys_json: sqlJson(["rollout_target_users", "monthly_active_users", "adoption_actual_pct"]),
+      metric_keys_json: sqlJson(["linked_business_case_count", "rollout_target_users", "enabled_users", "monthly_active_users", "adoption_target_pct", "adoption_actual_pct", "adoption_gap_pct"]),
       source_refs_json: sqlJson(refs),
       gap_flags_json: sqlJson([]),
       display_payload_json: sqlJson(payload),
@@ -1144,16 +1189,47 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
       "business_case",
       objectId,
       {
+        business_case_id: row.business_case_id,
+        project_id: row.project_id,
+        initiative_name: row.initiative_name,
+        initiative_classification: row.initiative_classification,
+        domain_key: row.domain_key,
         domain_name: row.domain_name,
         business_value_type: row.business_value_type,
+        business_value_story: row.business_value_story ?? null,
+        primary_tool_or_platform: row.primary_tool_or_platform ?? null,
+        vendor_name: row.vendor_name ?? null,
         finance_status: row.finance_status,
+        cfo_approval_date: row.cfo_approval_date || null,
         committee_decision: row.committee_decision,
+        success_metric: row.success_metric ?? null,
+        baseline_value: row.baseline_value || null,
+        target_value: row.target_value || null,
+        metric_unit: row.metric_unit || null,
+        proof_needed: row.proof_needed ?? null,
+        business_sponsor_role: row.business_sponsor_role ?? null,
+        finance_partner_role: row.finance_partner_role ?? null,
+        confidence_level: row.confidence_level ?? null,
+        gating_constraint: row.gating_constraint ?? null,
+        value_tracking_cadence: row.value_tracking_cadence ?? null,
+        source_system: row.source_system ?? null,
+        source_record_id: row.source_record_id ?? null,
+        extract_date: row.extract_date || null,
+        as_of_date: row.as_of_date || null,
+        quality_state: row.quality_state ?? null,
       },
       {
         approved_investment_usd: num(row.approved_investment_usd),
+        cost_to_build_low_usd: numOrNull(row.cost_to_build_low_usd),
+        cost_to_build_high_usd: numOrNull(row.cost_to_build_high_usd),
         projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
         projected_annual_value_high_usd: num(row.projected_annual_value_high_usd),
         board_claimable_ytd_usd: num(row.board_claimable_ytd_usd),
+        finance_validated_ytd_usd: num(row.finance_validated_ytd_usd),
+        roi_low_multiple: numOrNull(row.roi_low_multiple),
+        roi_high_multiple: numOrNull(row.roi_high_multiple),
+        payback_months_target: numOrNull(row.payback_months_target),
+        benefit_realization_lag_months: numOrNull(row.benefit_realization_lag_months),
         readiness_score: num(row.readiness_score),
       },
       [
@@ -1184,6 +1260,16 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
   for (const tool of data.tools) {
     const objectId = objectUuid(options, "ai_tool", tool.canonical_tool_id);
     const refs = [sourceRef(options, tool, { tool_rollout_id: tool.tool_rollout_id })];
+    const linkedBusinessCaseCount = numOrNull(tool.linked_business_case_count);
+    const rolloutTargetUsers = numOrNull(tool.rollout_target_users);
+    const enabledUsers = numOrNull(tool.enabled_users);
+    const monthlyActiveUsers = numOrNull(tool.monthly_active_users);
+    const adoptionTargetPct = numOrNull(tool.adoption_target_pct);
+    const adoptionActualPct = numOrNull(tool.adoption_actual_pct);
+    const adoptionGapPct =
+      adoptionTargetPct === null || adoptionActualPct === null
+        ? null
+        : Math.max(0, adoptionTargetPct - adoptionActualPct);
     const sliceId = addCubeSlice(
       ctx,
       "ai_portfolio_cube",
@@ -1191,22 +1277,52 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
       "tool_rollout",
       objectId,
       {
+        tool_rollout_id: tool.tool_rollout_id,
         vendor_name: tool.vendor_name,
+        tool_name: tool.tool_name,
+        domain_key: tool.domain_key,
         rollout_stage: tool.rollout_stage,
         rollout_goal: tool.rollout_goal,
+        control_blocker: tool.control_blocker ?? null,
+        business_owner_role: tool.business_owner_role ?? null,
+        finance_partner_role: tool.finance_partner_role ?? null,
+        source_system: tool.source_system ?? null,
+        source_record_id: tool.source_record_id ?? null,
+        extract_date: tool.extract_date || null,
+        as_of_date: tool.as_of_date || null,
+        refresh_cadence: tool.refresh_cadence ?? null,
+        quality_state: tool.quality_state ?? null,
       },
       {
-        rollout_target_users: num(tool.rollout_target_users),
-        monthly_active_users: num(tool.monthly_active_users),
-        adoption_target_pct: num(tool.adoption_target_pct),
-        adoption_actual_pct: num(tool.adoption_actual_pct),
+        linked_business_case_count: linkedBusinessCaseCount,
+        rollout_target_users: rolloutTargetUsers,
+        enabled_users: enabledUsers,
+        monthly_active_users: monthlyActiveUsers,
+        adoption_target_pct: adoptionTargetPct,
+        adoption_actual_pct: adoptionActualPct,
+        adoption_gap_pct: adoptionGapPct,
       },
-      ["rollout_target_users", "monthly_active_users", "adoption_actual_pct"],
+      ["linked_business_case_count", "rollout_target_users", "enabled_users", "monthly_active_users", "adoption_target_pct", "adoption_actual_pct", "adoption_gap_pct"],
       refs,
     );
-    addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "rollout_target_users", tool, { scenario: "target" }), "rollout_target_users", "primary");
-    addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "monthly_active_users", tool, { scenario: "actual" }), "monthly_active_users", "display");
-    addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "adoption_actual_pct", tool, { scenario: "actual" }), "adoption_actual_pct", "display");
+    if (linkedBusinessCaseCount !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "linked_business_case_count", tool, { scenario: "current" }), "linked_business_case_count", "display");
+    }
+    if (rolloutTargetUsers !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "rollout_target_users", tool, { scenario: "target" }), "rollout_target_users", "primary");
+    }
+    if (enabledUsers !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "enabled_users", tool, { scenario: "current" }), "enabled_users", "display");
+    }
+    if (monthlyActiveUsers !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "monthly_active_users", tool, { scenario: "actual" }), "monthly_active_users", "display");
+    }
+    if (adoptionTargetPct !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "adoption_target_pct", tool, { scenario: "target" }), "adoption_target_pct", "display");
+    }
+    if (adoptionActualPct !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "adoption_actual_pct", tool, { scenario: "actual" }), "adoption_actual_pct", "display");
+    }
   }
 
   for (const row of data.proofQueue) {
@@ -1286,9 +1402,38 @@ function projectionDeletes(options) {
   ];
 }
 
+function sourceBridgeRefreshGuardSql(options) {
+  if (options.sourceBridgeReapplyApproved) {
+    return "-- Source bridge removal approved; bridge jobs must run after this Layer 4 refresh.";
+  }
+  const tenant = sqlText(options.tenantKey);
+  const assessment = sqlText(options.assessmentId);
+  return `do $source_bridge_refresh_guard$
+begin
+  if exists (
+    select 1
+      from ecl_projection.tower_command_center
+     where tenant_key = ${tenant}
+       and assessment_id = ${assessment}
+       and (
+         row_key like 'source_cloud:%'
+         or row_key like 'source_contract_depth:%'
+       )
+  ) then
+    raise exception 'tower_layer4_source_bridge_reapply_required';
+  end if;
+end
+$source_bridge_refresh_guard$;`;
+}
+
 /** The deletes alone, so Layer 3 can be replaced. Carries the same approval gate as a write. */
 function writePurgeSql(outPath, options) {
-  const sql = ["begin;", ...projectionDeletes(options), "commit;"].join("\n");
+  const sql = [
+    "begin;",
+    sourceBridgeRefreshGuardSql(options),
+    ...projectionDeletes(options),
+    "commit;"
+  ].join("\n");
   fs.writeFileSync(outPath, sql, "utf8");
 }
 
@@ -1342,6 +1487,7 @@ $lifecycle$;`;
 function writeLoadSql(outPath, options, rows) {
   const sql = [
     "begin;",
+    sourceBridgeRefreshGuardSql(options),
     ...projectionDeletes(options),
     insertSql("ecl_context.snapshot", ["id", "tenant_key", "assessment_id", "snapshot_key", "snapshot_type", "source_hash", "context_hash", "created_by_job", "quality_state", "proof_uri"], [rows.snapshot]),
     insertSql("ecl_projection.projection_manifest", ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_key", "projection_version", "rebuild_command", "source_hash", "projection_hash", "row_count", "quality_state", "admission_status", "admission_gate_results_json", "gated_claim_count", "proof_uri"], rows.projectionManifests),
@@ -1391,6 +1537,164 @@ select jsonb_build_object(
     'tower_cost_lens', (select count(*) from serving.tower_cost_lens where tenant_key = ${tenant}),
     'tower_risk_lens', (select count(*) from serving.tower_risk_lens where tenant_key = ${tenant}),
     'tower_adoption_lens', (select count(*) from serving.tower_adoption_lens where tenant_key = ${tenant})
+  ),
+  'ai_case_field_survival', (
+    select jsonb_build_object(
+      'surface_rows', count(*),
+      'business_case_id', count(*) filter (where display_payload_json ? 'business_case_id'),
+      'project_id', count(*) filter (where display_payload_json ? 'project_id'),
+      'initiative_name', count(*) filter (where display_payload_json ? 'initiative_name'),
+      'initiative_classification', count(*) filter (where display_payload_json ? 'initiative_classification'),
+      'primary_tool_or_platform', count(*) filter (where display_payload_json ? 'primary_tool_or_platform'),
+      'vendor_name', count(*) filter (where display_payload_json ? 'vendor_name'),
+      'domain_key', count(*) filter (where display_payload_json ? 'domain_key'),
+      'business_value_type', count(*) filter (where display_payload_json ? 'business_value_type'),
+      'business_value_story', count(*) filter (where display_payload_json ? 'business_value_story'),
+      'cost_to_build_low_usd', count(*) filter (where display_payload_json ? 'cost_to_build_low_usd'),
+      'cost_to_build_high_usd', count(*) filter (where display_payload_json ? 'cost_to_build_high_usd'),
+      'projected_annual_value_low_usd', count(*) filter (where display_payload_json ? 'projected_annual_value_low_usd'),
+      'projected_annual_value_high_usd', count(*) filter (where display_payload_json ? 'projected_annual_value_high_usd'),
+      'roi_low_multiple', count(*) filter (where display_payload_json ? 'roi_low_multiple'),
+      'roi_high_multiple', count(*) filter (where display_payload_json ? 'roi_high_multiple'),
+      'payback_months_target', count(*) filter (where display_payload_json ? 'payback_months_target'),
+      'benefit_realization_lag_months', count(*) filter (where display_payload_json ? 'benefit_realization_lag_months'),
+      'success_metric', count(*) filter (where display_payload_json ? 'success_metric'),
+      'baseline_value', count(*) filter (where display_payload_json ? 'baseline_value'),
+      'target_value', count(*) filter (where display_payload_json ? 'target_value'),
+      'metric_unit', count(*) filter (where display_payload_json ? 'metric_unit'),
+      'proof_needed', count(*) filter (where display_payload_json ? 'proof_needed'),
+      'business_sponsor_role', count(*) filter (where display_payload_json ? 'business_sponsor_role'),
+      'finance_partner_role', count(*) filter (where display_payload_json ? 'finance_partner_role'),
+      'finance_status', count(*) filter (where display_payload_json ? 'finance_status'),
+      'cfo_approval_date', count(*) filter (where display_payload_json ? 'cfo_approval_date'),
+      'committee_decision', count(*) filter (where display_payload_json ? 'committee_decision'),
+      'readiness_score', count(*) filter (where display_payload_json ? 'readiness_score'),
+      'confidence_level', count(*) filter (where display_payload_json ? 'confidence_level'),
+      'gating_constraint', count(*) filter (where display_payload_json ? 'gating_constraint'),
+      'value_tracking_cadence', count(*) filter (where display_payload_json ? 'value_tracking_cadence'),
+      'board_claimable_ytd_usd', count(*) filter (where display_payload_json ? 'board_claimable_ytd_usd'),
+      'finance_validated_ytd_usd', count(*) filter (where display_payload_json ? 'finance_validated_ytd_usd'),
+      'source_system', count(*) filter (where display_payload_json ? 'source_system'),
+      'source_record_id', count(*) filter (where display_payload_json ? 'source_record_id'),
+      'extract_date', count(*) filter (where display_payload_json ? 'extract_date'),
+      'quality_state', count(*) filter (where display_payload_json ? 'source_quality_state')
+    )
+    from ecl_projection.tower_ai_portfolio
+    where tenant_key = ${tenant} and assessment_id = ${assessment}
+      and projection_version = ${PROJECTION_VERSION}
+      and display_payload_json ->> 'page_key' = 'ai_portfolio'
+  ),
+  'ai_tool_field_survival', (
+    select jsonb_build_object(
+      'surface_rows', count(*),
+      'tool_rollout_id', count(*) filter (where display_payload_json ? 'tool_rollout_id'),
+      'tool_name', count(*) filter (where display_payload_json ? 'tool_name'),
+      'vendor_name', count(*) filter (where display_payload_json ? 'vendor_name'),
+      'domain_key', count(*) filter (where display_payload_json ? 'domain_key'),
+      'rollout_goal', count(*) filter (where display_payload_json ? 'rollout_goal'),
+      'linked_business_case_count', count(*) filter (where display_payload_json ? 'linked_business_case_count'),
+      'rollout_target_users', count(*) filter (where display_payload_json ? 'rollout_target_users'),
+      'enabled_users', count(*) filter (where display_payload_json ? 'enabled_users'),
+      'monthly_active_users', count(*) filter (where display_payload_json ? 'monthly_active_users'),
+      'adoption_target_pct', count(*) filter (where display_payload_json ? 'adoption_target_pct'),
+      'adoption_actual_pct', count(*) filter (where display_payload_json ? 'adoption_actual_pct'),
+      'adoption_gap_pct', count(*) filter (where display_payload_json ? 'adoption_gap_pct'),
+      'rollout_stage', count(*) filter (where display_payload_json ? 'rollout_stage'),
+      'control_blocker', count(*) filter (where display_payload_json ? 'control_blocker'),
+      'business_owner_role', count(*) filter (where display_payload_json ? 'business_owner_role'),
+      'finance_partner_role', count(*) filter (where display_payload_json ? 'finance_partner_role'),
+      'source_system', count(*) filter (where display_payload_json ? 'source_system'),
+      'source_record_id', count(*) filter (where display_payload_json ? 'source_record_id'),
+      'extract_date', count(*) filter (where display_payload_json ? 'extract_date'),
+      'as_of_date', count(*) filter (where display_payload_json ? 'as_of_date'),
+      'refresh_cadence', count(*) filter (where display_payload_json ? 'refresh_cadence'),
+      'quality_state', count(*) filter (where display_payload_json ? 'source_quality_state')
+    )
+    from ecl_projection.tower_ai_portfolio
+    where tenant_key = ${tenant} and assessment_id = ${assessment}
+      and projection_version = ${PROJECTION_VERSION}
+      and display_payload_json ->> 'page_key' = 'adoption_lens'
+  ),
+  'ai_case_cube_field_survival', (
+    select jsonb_build_object(
+      'cube_rows', count(*),
+      'business_case_id', count(*) filter (where dimensions_json ? 'business_case_id'),
+      'project_id', count(*) filter (where dimensions_json ? 'project_id'),
+      'initiative_name', count(*) filter (where dimensions_json ? 'initiative_name'),
+      'initiative_classification', count(*) filter (where dimensions_json ? 'initiative_classification'),
+      'primary_tool_or_platform', count(*) filter (where dimensions_json ? 'primary_tool_or_platform'),
+      'vendor_name', count(*) filter (where dimensions_json ? 'vendor_name'),
+      'domain_key', count(*) filter (where dimensions_json ? 'domain_key'),
+      'business_value_type', count(*) filter (where dimensions_json ? 'business_value_type'),
+      'business_value_story', count(*) filter (where dimensions_json ? 'business_value_story'),
+      'finance_status', count(*) filter (where dimensions_json ? 'finance_status'),
+      'cfo_approval_date', count(*) filter (where dimensions_json ? 'cfo_approval_date'),
+      'committee_decision', count(*) filter (where dimensions_json ? 'committee_decision'),
+      'success_metric', count(*) filter (where dimensions_json ? 'success_metric'),
+      'baseline_value', count(*) filter (where dimensions_json ? 'baseline_value'),
+      'target_value', count(*) filter (where dimensions_json ? 'target_value'),
+      'metric_unit', count(*) filter (where dimensions_json ? 'metric_unit'),
+      'proof_needed', count(*) filter (where dimensions_json ? 'proof_needed'),
+      'business_sponsor_role', count(*) filter (where dimensions_json ? 'business_sponsor_role'),
+      'finance_partner_role', count(*) filter (where dimensions_json ? 'finance_partner_role'),
+      'confidence_level', count(*) filter (where dimensions_json ? 'confidence_level'),
+      'gating_constraint', count(*) filter (where dimensions_json ? 'gating_constraint'),
+      'value_tracking_cadence', count(*) filter (where dimensions_json ? 'value_tracking_cadence'),
+      'source_system', count(*) filter (where dimensions_json ? 'source_system'),
+      'source_record_id', count(*) filter (where dimensions_json ? 'source_record_id'),
+      'extract_date', count(*) filter (where dimensions_json ? 'extract_date'),
+      'as_of_date', count(*) filter (where dimensions_json ? 'as_of_date'),
+      'quality_state', count(*) filter (where dimensions_json ? 'quality_state'),
+      'cost_to_build_low_usd', count(*) filter (where measures_json ? 'cost_to_build_low_usd'),
+      'cost_to_build_high_usd', count(*) filter (where measures_json ? 'cost_to_build_high_usd'),
+      'approved_investment_usd', count(*) filter (where measures_json ? 'approved_investment_usd'),
+      'projected_annual_value_low_usd', count(*) filter (where measures_json ? 'projected_annual_value_low_usd'),
+      'projected_annual_value_high_usd', count(*) filter (where measures_json ? 'projected_annual_value_high_usd'),
+      'board_claimable_ytd_usd', count(*) filter (where measures_json ? 'board_claimable_ytd_usd'),
+      'finance_validated_ytd_usd', count(*) filter (where measures_json ? 'finance_validated_ytd_usd'),
+      'roi_low_multiple', count(*) filter (where measures_json ? 'roi_low_multiple'),
+      'roi_high_multiple', count(*) filter (where measures_json ? 'roi_high_multiple'),
+      'payback_months_target', count(*) filter (where measures_json ? 'payback_months_target'),
+      'benefit_realization_lag_months', count(*) filter (where measures_json ? 'benefit_realization_lag_months'),
+      'readiness_score', count(*) filter (where measures_json ? 'readiness_score')
+    )
+    from ecl_projection.cube_slice
+    where tenant_key = ${tenant} and assessment_id = ${assessment}
+      and cube_version = ${CUBE_VERSION}
+      and cube_key = 'ai_portfolio_cube'
+      and grain_key = 'business_case'
+  ),
+  'ai_tool_cube_field_survival', (
+    select jsonb_build_object(
+      'cube_rows', count(*),
+      'tool_rollout_id', count(*) filter (where dimensions_json ? 'tool_rollout_id'),
+      'tool_name', count(*) filter (where dimensions_json ? 'tool_name'),
+      'vendor_name', count(*) filter (where dimensions_json ? 'vendor_name'),
+      'domain_key', count(*) filter (where dimensions_json ? 'domain_key'),
+      'rollout_goal', count(*) filter (where dimensions_json ? 'rollout_goal'),
+      'rollout_stage', count(*) filter (where dimensions_json ? 'rollout_stage'),
+      'control_blocker', count(*) filter (where dimensions_json ? 'control_blocker'),
+      'business_owner_role', count(*) filter (where dimensions_json ? 'business_owner_role'),
+      'finance_partner_role', count(*) filter (where dimensions_json ? 'finance_partner_role'),
+      'source_system', count(*) filter (where dimensions_json ? 'source_system'),
+      'source_record_id', count(*) filter (where dimensions_json ? 'source_record_id'),
+      'extract_date', count(*) filter (where dimensions_json ? 'extract_date'),
+      'as_of_date', count(*) filter (where dimensions_json ? 'as_of_date'),
+      'refresh_cadence', count(*) filter (where dimensions_json ? 'refresh_cadence'),
+      'quality_state', count(*) filter (where dimensions_json ? 'quality_state'),
+      'linked_business_case_count', count(*) filter (where measures_json ? 'linked_business_case_count'),
+      'rollout_target_users', count(*) filter (where measures_json ? 'rollout_target_users'),
+      'enabled_users', count(*) filter (where measures_json ? 'enabled_users'),
+      'monthly_active_users', count(*) filter (where measures_json ? 'monthly_active_users'),
+      'adoption_target_pct', count(*) filter (where measures_json ? 'adoption_target_pct'),
+      'adoption_actual_pct', count(*) filter (where measures_json ? 'adoption_actual_pct'),
+      'adoption_gap_pct', count(*) filter (where measures_json ? 'adoption_gap_pct')
+    )
+    from ecl_projection.cube_slice
+    where tenant_key = ${tenant} and assessment_id = ${assessment}
+      and cube_version = ${CUBE_VERSION}
+      and cube_key = 'ai_portfolio_cube'
+      and grain_key = 'tool_rollout'
   ),
   'source_ref_missing', (
     select count(*) from (
@@ -1455,6 +1759,152 @@ function validateReadback(readback, expected) {
   for (const [surface, count] of Object.entries(expected.serving)) {
     if (Number(readback.serving_counts?.[surface]) !== Number(count)) {
       issues.push(`serving_${surface}_expected_${count}_got_${readback.serving_counts?.[surface]}`);
+    }
+  }
+  const expectedAiCases = Number(expected.serving.tower_ai_portfolio ?? 0);
+  const expectedAiTools = Number(expected.serving.tower_adoption_lens ?? 0);
+  for (const key of [
+    "business_case_id",
+    "project_id",
+    "initiative_name",
+    "initiative_classification",
+    "primary_tool_or_platform",
+    "vendor_name",
+    "domain_key",
+    "business_value_type",
+    "business_value_story",
+    "cost_to_build_low_usd",
+    "cost_to_build_high_usd",
+    "projected_annual_value_low_usd",
+    "projected_annual_value_high_usd",
+    "roi_low_multiple",
+    "roi_high_multiple",
+    "payback_months_target",
+    "benefit_realization_lag_months",
+    "success_metric",
+    "baseline_value",
+    "target_value",
+    "metric_unit",
+    "proof_needed",
+    "business_sponsor_role",
+    "finance_partner_role",
+    "finance_status",
+    "cfo_approval_date",
+    "committee_decision",
+    "readiness_score",
+    "confidence_level",
+    "gating_constraint",
+    "value_tracking_cadence",
+    "board_claimable_ytd_usd",
+    "finance_validated_ytd_usd",
+    "source_system",
+    "source_record_id",
+    "extract_date",
+    "quality_state",
+  ]) {
+    if (Number(readback.ai_case_field_survival?.[key] ?? 0) !== expectedAiCases) {
+      issues.push(`ai_case_surface_field_${key}_expected_${expectedAiCases}_got_${readback.ai_case_field_survival?.[key] ?? 0}`);
+    }
+  }
+  for (const key of [
+    "tool_rollout_id",
+    "tool_name",
+    "vendor_name",
+    "domain_key",
+    "rollout_goal",
+    "linked_business_case_count",
+    "rollout_target_users",
+    "enabled_users",
+    "monthly_active_users",
+    "adoption_target_pct",
+    "adoption_actual_pct",
+    "adoption_gap_pct",
+    "rollout_stage",
+    "control_blocker",
+    "business_owner_role",
+    "finance_partner_role",
+    "source_system",
+    "source_record_id",
+    "extract_date",
+    "as_of_date",
+    "refresh_cadence",
+    "quality_state",
+  ]) {
+    if (Number(readback.ai_tool_field_survival?.[key] ?? 0) !== expectedAiTools) {
+      issues.push(`ai_tool_surface_field_${key}_expected_${expectedAiTools}_got_${readback.ai_tool_field_survival?.[key] ?? 0}`);
+    }
+  }
+  for (const key of [
+    "business_case_id",
+    "project_id",
+    "initiative_name",
+    "initiative_classification",
+    "primary_tool_or_platform",
+    "vendor_name",
+    "domain_key",
+    "business_value_type",
+    "business_value_story",
+    "finance_status",
+    "cfo_approval_date",
+    "committee_decision",
+    "success_metric",
+    "baseline_value",
+    "target_value",
+    "metric_unit",
+    "proof_needed",
+    "business_sponsor_role",
+    "finance_partner_role",
+    "confidence_level",
+    "gating_constraint",
+    "value_tracking_cadence",
+    "source_system",
+    "source_record_id",
+    "extract_date",
+    "as_of_date",
+    "quality_state",
+    "cost_to_build_low_usd",
+    "cost_to_build_high_usd",
+    "approved_investment_usd",
+    "projected_annual_value_low_usd",
+    "projected_annual_value_high_usd",
+    "board_claimable_ytd_usd",
+    "finance_validated_ytd_usd",
+    "roi_low_multiple",
+    "roi_high_multiple",
+    "payback_months_target",
+    "benefit_realization_lag_months",
+    "readiness_score",
+  ]) {
+    if (Number(readback.ai_case_cube_field_survival?.[key] ?? 0) !== expectedAiCases) {
+      issues.push(`ai_case_cube_field_${key}_expected_${expectedAiCases}_got_${readback.ai_case_cube_field_survival?.[key] ?? 0}`);
+    }
+  }
+  for (const key of [
+    "tool_rollout_id",
+    "tool_name",
+    "vendor_name",
+    "domain_key",
+    "rollout_goal",
+    "rollout_stage",
+    "control_blocker",
+    "business_owner_role",
+    "finance_partner_role",
+    "source_system",
+    "source_record_id",
+    "extract_date",
+    "as_of_date",
+    "refresh_cadence",
+    "quality_state",
+    "linked_business_case_count",
+    "rollout_target_users",
+    "enabled_users",
+    "monthly_active_users",
+    "adoption_target_pct",
+    "adoption_actual_pct",
+    "adoption_gap_pct",
+  ]) {
+    if (Number(readback.ai_tool_cube_field_survival?.[key] ?? 0) !== expectedAiTools) {
+      issues.push(`ai_tool_cube_field_${key}_expected_${expectedAiTools}_got_${readback.ai_tool_cube_field_survival?.[key] ?? 0}`);
     }
   }
   for (const key of [
@@ -1544,6 +1994,7 @@ function main() {
       build_version: options.buildVersion,
       input_source_version: options.inputSourceVersion,
       idempotency_key: options.idempotencyKey,
+      source_bridge_reapply_approved: options.sourceBridgeReapplyApproved,
       operator_identity: process.env.USER ?? "unknown",
       git_sha: gitSha(),
       image_digest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,

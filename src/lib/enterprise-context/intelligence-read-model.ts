@@ -1,10 +1,7 @@
 
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant/aliases';
-import {
-  getDerivedEnterpriseReadForTenant,
-  type DerivedEnterpriseReadSummary,
-} from '@/lib/enterprise-context/derived-enterprise-read';
+import type { DerivedEnterpriseReadSummary } from '@/lib/enterprise-context/derived-enterprise-read';
 export interface EnterpriseContextRecordRow {
   record_type: string;
   title: string;
@@ -132,7 +129,20 @@ export async function getEnterpriseContextOverviewForTenant(
 ): Promise<EnterpriseContextOverview | null> {
   const normalizedTenantKey = canonicalTenantKey(tenantKey?.trim());
   if (!normalizedTenantKey) return null;
-  const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(normalizedTenantKey);
+  // RETIRED from live composition (backlog T-613). The local V4 derived
+  // enterprise read resolved to files that no longer exist: canonical-input
+  // commit `4a7ebcd85` archived them and purge commit `617585f80` deleted
+  // them, and the loader's bare `catch` turned that into a silent `null`
+  // rather than an error. It was measured returning `null` for all six
+  // configured tenant spellings before this change, so removing the call
+  // is behaviour-preserving by construction -- every consumer below is
+  // null-guarded and already took its fallback branch on every request.
+  //
+  // Restore this ONLY by binding a governed Layer 3 derived-enterprise-read
+  // source that can be read per tenant with provenance, evidence status and
+  // agent-readiness enforcement. The architecture constitution forbids
+  // substituting Layer 1 intake files for the missing Layer 3 projection.
+  const derivedEnterpriseRead: DerivedEnterpriseReadSummary | null = null;
 
   try {
     const counts = await countEnterpriseContextRows(normalizedTenantKey);
@@ -253,20 +263,21 @@ export function summarizeEnterpriseContextRows(input: {
     recordsByType.set(row.record_type, bucket);
   }
 
-  const applications = recordsByType.get('cmdb_applications_services') ?? [];
-  const orgRows = recordsByType.get('org_decision_rights') ?? [];
-  const businessUnitRows = recordsByType.get('facilities_business_units') ?? [];
-  const incidents = recordsByType.get('incidents') ?? [];
-  const problems = recordsByType.get('problems') ?? [];
-  const changes = recordsByType.get('changes') ?? [];
-  const renewals = recordsByType.get('renewal_calendar') ?? [];
-  const contracts = recordsByType.get('vendors_contract_inventory') ?? [];
-  const spendRows = recordsByType.get('spend_baseline') ?? [];
-  const kpis = recordsByType.get('kpi_metric') ?? recordsByType.get('financial_kpis') ?? [];
-  const policies = recordsByType.get('policies_procedures') ?? [];
-  const initiatives = recordsByType.get('initiative_portfolio') ?? [];
-  const dataDomains = recordsByType.get('data_domains_stewardship') ?? [];
-  const risks = recordsByType.get('risk_compliance_register') ?? [];
+  const recordsFor = (...types: string[]) => types.flatMap((type) => recordsByType.get(type) ?? []);
+  const applications = recordsFor('cmdb_applications_services', 'cmdb_application', 'cmdb_service');
+  const orgRows = recordsFor('org_decision_rights', 'org_role', 'decision_right');
+  const businessUnitRows = recordsFor('facilities_business_units', 'facility', 'business_unit');
+  const incidents = recordsFor('incidents', 'incident');
+  const problems = recordsFor('problems', 'problem');
+  const changes = recordsFor('changes', 'change');
+  const renewals = recordsFor('renewal_calendar', 'renewal');
+  const contracts = recordsFor('vendors_contract_inventory', 'contract');
+  const spendRows = recordsFor('spend_baseline');
+  const kpis = recordsFor('kpi_metric', 'financial_kpis');
+  const policies = recordsFor('policies_procedures', 'policy', 'procedure');
+  const initiatives = recordsFor('initiative_portfolio', 'initiative');
+  const dataDomains = recordsFor('data_domains_stewardship', 'data_domain');
+  const risks = recordsFor('risk_compliance_register', 'risk', 'compliance_finding');
   const slaBreaches = incidents.filter((row) => row.payload.breach_sla === 'true' || row.payload.breach_sla === true).length;
   const tierOneApps = applications.filter((row) => String(row.payload.criticality ?? '').toLowerCase().includes('tier 1')).length;
   const highRenewals = renewals.filter((row) => String(row.payload.renewal_risk ?? '').toLowerCase() === 'high').length;
@@ -302,7 +313,7 @@ export function summarizeEnterpriseContextRows(input: {
       // CMDB/ITSM narrative; rename the card itself to match.
       key: "platform-and-service-reliability",
       title: "Platform and service reliability",
-      whatWeKnow: `${applications.length} systems/services loaded; ${tierOneApps} are Tier 1. ServiceNow contributes ${incidents.length} incidents, ${problems.length} problems, and ${changes.length} changes.`,
+      whatWeKnow: `${applications.length} application/service record${applications.length === 1 ? '' : 's'} loaded; ${tierOneApps} marked Tier 1. ServiceNow contributes ${incidents.length} incidents, ${problems.length} problems, and ${changes.length} changes.`,
       whyItMatters:
         "This turns CMDB and ITSM data into a practical dependency map before approving AI, sourcing, or platform work.",
       owner:
@@ -342,7 +353,7 @@ export function summarizeEnterpriseContextRows(input: {
     {
       key: "contract-renewal-exposure",
       title: "Contract renewal exposure",
-      whatWeKnow: `${contracts.length} vendor/contracts and ${renewals.length} renewals are loaded; ${highRenewals} renewals are high risk. Estimated renewal exposure is ${formatUsd(renewalExposure)}.`,
+      whatWeKnow: `${contracts.length} vendor/contract record${contracts.length === 1 ? '' : 's'} and ${renewals.length} renewals are loaded; ${highRenewals} renewals are high risk. Estimated renewal exposure is ${formatUsd(renewalExposure)}.`,
       whyItMatters:
         "Source can prioritize events from renewal exposure instead of waiting for a procurement escalation.",
       owner: topOwner([...contracts, ...renewals]) ?? "IT Sourcing",
@@ -392,7 +403,7 @@ export function summarizeEnterpriseContextRows(input: {
     {
       key: "initiative-dependency-map",
       title: "Initiative dependency map",
-      whatWeKnow: `${initiatives.length} initiatives and ${dataDomains.length} data-domain stewardship records are loaded against ${input.counts.relationships} CI relationships.`,
+      whatWeKnow: `${initiatives.length} initiatives and ${dataDomains.length} data-domain/stewardship records are loaded against ${input.counts.relationships} CI relationships.`,
       whyItMatters:
         "Moves and Tower can see collisions across systems, contracts, data domains, and owners before approvals proceed.",
       owner: topOwner([...initiatives, ...dataDomains]) ?? "Enterprise PMO",
@@ -420,10 +431,10 @@ export function summarizeEnterpriseContextRows(input: {
       `Sentinel rule: lead with the Derived Enterprise Read before internal substrate counts; use raw context counts only as supporting proof.`,
     ] : []),
     `${input.tenantName} Enterprise Context: ${input.counts.records} records, ${input.counts.facts} facts, ${input.counts.relationships} CI relationships, and ${input.counts.evidence} evidence rows are loaded from internal context sources.`,
-    `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), systems/services (${applications.length}), vendors/contracts (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data domains/capabilities (${dataDomains.length}), and risks/compliance (${risks.length}).`,
+    `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), application/service records (${applications.length}), vendor/contract records (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data-domain/stewardship records (${dataDomains.length}), and risks/compliance (${risks.length}).`,
     `Evidence posture: ${evidenceUsableCount}/${input.counts.evidence} evidence rows are currently usable; ${input.counts.qualityIssues} quality issues and ${input.counts.stewardshipTasks} stewardship tasks remain open.`,
     `Operational posture: ${incidents.length} incidents, ${problems.length} problems, ${changes.length} changes, and ${slaBreaches} SLA-breaching incidents are available for current-state guidance.`,
-    `Commercial posture: ${contracts.length} contracts, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
+    `Commercial posture: ${contracts.length} vendor/contract record${contracts.length === 1 ? '' : 's'}, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
     ...contextInsights.slice(0, 8).map((insight) =>
       `CIO insight ${insight.domain}: ${insight.headline}. So what: ${insight.so_what} Action: ${insight.action ?? 'review evidence'}. Evidence: ${insight.evidence ?? 'context insights'}.`,
     ),
@@ -483,10 +494,17 @@ function buildVendorSpendRows(input: {
         contract.payload.ttm_spend_usd,
         contract.payload.run_rate_usd,
         contract.payload.contract_value_usd,
+        // `annual_value_usd` is the key Admin-structured vendor contracts carry.
+        // PR #3316 added both of these reads; a bad merge left the pre-#3316 copy
+        // of this function live and a post-#3316 copy orphaned in dead code, and
+        // deleting the dead code removed the last copy of the binding. Restored
+        // 2026-09-24 under item T-756, in #3316's own position in the chain.
+        contract.payload.annual_value_usd,
         contract.payload.estimated_annual_value_usd,
         contract.payload.estimated_value_usd,
         renewal?.payload.estimated_value_usd,
         renewal?.payload.contract_value_usd,
+        renewal?.payload.annual_value_usd,
       );
       const health = healthFor(contract, renewal);
       return {

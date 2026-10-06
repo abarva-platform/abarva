@@ -1,0 +1,31 @@
+name: Integration test CI visibility
+
+on:
+  pull_request:
+    paths:
+      - "src/__tests__/integration/**"
+      - ".github/workflows/**"
+      - "package.json"
+      - "scripts/quality/check-integration-ci-visibility.mjs"
+      - "scripts/quality/check-integration-ci-visibility.test.mjs"
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Changed integration suites have a CI owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify checker behavior
+        run: node --test scripts/quality/check-integration-ci-visibility.test.mjs
+
+      - name: Verify changed integration suites are registered
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: node scripts/quality/check-integration-ci-visibility.mjs --base "origin/${BASE_REF:-main}"

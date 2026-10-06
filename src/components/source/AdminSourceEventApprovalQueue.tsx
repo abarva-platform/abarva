@@ -43,7 +43,30 @@ const CONFIRMATION_LABELS: { key: keyof Confirmations; label: string }[] = [
 
 type ActionResult = 'approved' | 'rejected' | 'sent back';
 
-export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) {
+/**
+ * Whether the person reading this row is the person who created the event.
+ *
+ * The approve route derives the same fact from the stored creator and marks the
+ * append-only record with "Self-approval notice: the approver is the recorded
+ * event creator." The screen cannot be the authority on it — it states what the
+ * record will say. `unknown` is a real third case rather than a default: with no
+ * viewer identity the screen must not assert the absence of a self-approval,
+ * because the server will still mark one.
+ */
+type ApproverRelationship = 'self' | 'peer' | 'unknown';
+
+function approverRelationship(
+  creatorUserId: string | null | undefined,
+  viewerUserId: string | null | undefined,
+): ApproverRelationship {
+  if (!creatorUserId || !viewerUserId) return 'unknown';
+  return creatorUserId === viewerUserId ? 'self' : 'peer';
+}
+
+export function AdminSourceEventApprovalQueue({
+  events: initialEvents,
+  currentUserId,
+}: Props) {
   const [events, setEvents] = useState(initialEvents);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [confirmations, setConfirmations] = useState<Record<string, Confirmations>>({});
@@ -144,9 +167,17 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
           const busy = processing[ev.id];
           const isOpen = expanded[ev.id] ?? false;
           const conf = confirmationsFor(ev.id);
+          // The server requires a rationale of this length for EVERY lifecycle
+          // decision on this event, not only for approve. Send back and reject
+          // are gated on the same minimum here so the queue states the
+          // requirement instead of letting the route refuse the click.
           const commentReady =
             (comments[ev.id]?.trim().length ?? 0) >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
           const canApprove = allConfirmed(ev.id) && commentReady && !busy;
+          const canDecide = commentReady && !busy;
+          const reasonBlocker = commentReady
+            ? undefined
+            : `Enter at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters of rationale first`;
 
           return (
             <div key={ev.id} style={{ borderBottom: '1px solid #f5efc8' }}>
@@ -247,7 +278,23 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                   >
                     Approving confirms your review of the strategy memo, value target, and archetype +
                     rigor. On approval the event moves to Scope.{' '}
-                    <strong>Self-approval notice:</strong> this is your accountable human approval decision.{' '}
+                    <strong>Accountable decision:</strong> this approval is recorded against you as the
+                    accountable human decision.{' '}
+                    {(() => {
+                      const relationship = approverRelationship(
+                        ev.created_by_user_id,
+                        currentUserId,
+                      );
+                      if (relationship === 'peer') return null;
+                      return (
+                        <>
+                          <strong>Self-approval notice:</strong>{' '}
+                          {relationship === 'self'
+                            ? 'you are the recorded creator of this event, so the approval record is marked as a self-approval.'
+                            : 'the approver on this screen is not identified; if you created this event, the approval record is marked as a self-approval.'}{' '}
+                        </>
+                      );
+                    })()}
                     <a
                       href={`/source/events/${ev.id}?stage=Strategy`}
                       target="_blank"
@@ -294,7 +341,7 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                     value={comments[ev.id] ?? ''}
                     onChange={(e) => setComments((c) => ({ ...c, [ev.id]: e.target.value }))}
                     data-testid={`source-event-approval-reason-${ev.id}`}
-                    placeholder={`Approval reason (minimum ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}
+                    placeholder={`Decision reason — approve, send back or reject (minimum ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}
                     rows={2}
                     style={{
                       width: '100%',
@@ -355,7 +402,9 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                     </button>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={!canDecide}
+                      title={reasonBlocker}
+                      data-testid={`source-event-send-back-${ev.id}`}
                       onClick={() => void handleAction(ev.id, 'send_back')}
                       style={{
                         padding: '7px 16px',
@@ -368,15 +417,17 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                         fontWeight: 700,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        cursor: busy ? 'not-allowed' : 'pointer',
-                        opacity: busy ? 0.6 : 1,
+                        cursor: canDecide ? 'pointer' : 'not-allowed',
+                        opacity: canDecide ? 1 : 0.6,
                       }}
                     >
                       Send back
                     </button>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={!canDecide}
+                      title={reasonBlocker}
+                      data-testid={`source-event-reject-${ev.id}`}
                       onClick={() => void handleAction(ev.id, 'reject')}
                       style={{
                         padding: '7px 14px',
@@ -389,8 +440,8 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                         fontWeight: 700,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        cursor: busy ? 'not-allowed' : 'pointer',
-                        opacity: busy ? 0.6 : 1,
+                        cursor: canDecide ? 'pointer' : 'not-allowed',
+                        opacity: canDecide ? 1 : 0.6,
                       }}
                     >
                       Reject

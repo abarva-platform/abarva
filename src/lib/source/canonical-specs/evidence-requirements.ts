@@ -157,6 +157,43 @@ const STRATEGY: SourceEvidenceRequirement[] = [
   }),
 ];
 
+const WORKFLOW_DECISIONS: readonly SourceEvidenceRequirement[] = [
+  req({
+    requirementId: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION",
+    stage: "scope",
+    label: "Scope exclusions and accountable owner decision",
+    evidenceClass: "scope",
+    sourceLabel: "Event Owner decision based on current scope evidence or audited absence",
+    sourceSystems: ["Source decision workflow"],
+    acceptedFileTypes: [],
+    recordGrain: "one accountable exclusion decision per event and source revision",
+    criticalFields: ["excluded_work", "responsible_owner", "rationale", "actor", "decided_at"],
+    filenameTokens: [],
+    qualityChecks: ["Excluded work and accountable owner are explicit", "Current SOW source or audited absence is retained"],
+    minimumState: "Available",
+    level: "recommended",
+    description: "The Event Owner's reviewed exclusions. This does not amend or create an agreement.",
+    unlocks: "The Scope exclusions workflow step after current-scope evidence is ready.",
+  }),
+  req({
+    requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+    stage: "scope",
+    label: "Retained and vendor responsibility decision",
+    evidenceClass: "scope",
+    sourceLabel: "Event Owner decision based on workforce and SLA evidence",
+    sourceSystems: ["Source decision workflow"],
+    acceptedFileTypes: [],
+    recordGrain: "one accountable responsibility split per event and source revision",
+    criticalFields: ["retained_responsibilities", "vendor_responsibilities", "rationale", "actor", "decided_at"],
+    filenameTokens: [],
+    qualityChecks: ["Both sides are explicit", "Current workforce and SLA source identities are retained"],
+    minimumState: "Available",
+    level: "recommended",
+    description: "The Event Owner's reviewed responsibility split. This is a decision, not a supplier commitment or contract.",
+    unlocks: "The Scope retained/vendor workflow step after source evidence is ready.",
+  }),
+];
+
 // Stage 2 - Scope
 const SCOPE: SourceEvidenceRequirement[] = [
   req({
@@ -168,13 +205,13 @@ const SCOPE: SourceEvidenceRequirement[] = [
     sourceSystems: ["ServiceNow CMDB", "LeanIX", "Mega HOPEX", "Apptio", "Excel portfolio inventory"],
     acceptedFileTypes: ["xlsx", "csv"],
     recordGrain: "one application, service, or platform per row",
-    criticalFields: ["application_id", "application_name", "business_function", "criticality", "hosting_model", "lifecycle_state", "support_vendor", "annual_run_cost"],
+    criticalFields: ["service_id", "service_name", "scope_boundary", "criticality", "lifecycle_state", "service_owner", "source_basis", "as_of_date"],
     filenameTokens: ["application", "app_inventory", "cmdb", "portfolio", "service_catalog"],
-    qualityChecks: ["Every row has a stable application or service id", "Criticality and lifecycle are explicit where known"],
+    qualityChecks: ["Every row has a stable application or service id and source basis", "Criticality, lifecycle, owner and scope boundary are explicit"],
     minimumState: "Usable Evidence",
     level: "required",
-    description: "The operational scope being sourced, including applications, platforms, services, cost, and criticality.",
-    unlocks: "Scope memo economics, exclusion logic, retained-cost model, and application/vendor dependency map.",
+    description: "The operational services, applications or platforms being sourced, with stable identities, boundaries, ownership and criticality. Cost may remain unknown.",
+    unlocks: "Scope boundary and exclusion review; separate finance evidence is required for cost and value claims.",
   }),
   req({
     requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
@@ -357,7 +394,7 @@ const RFP: SourceEvidenceRequirement[] = [
     evidenceClass: "risk_control",
     sourceLabel: "Procurement policy, event rules, and communications plan",
     sourceSystems: ["Coupa Sourcing", "Ariba Sourcing", "Jaggaer", "SharePoint procurement playbook"],
-    acceptedFileTypes: ["docx", "pdf", "xlsx"],
+    acceptedFileTypes: ["docx", "pdf", "xlsx", "csv"],
     recordGrain: "one event rule, timeline, communication rule, or scoring protocol per row/section",
     criticalFields: ["rule_name", "applies_to", "deadline", "communication_channel", "disqualification_condition", "owner_role"],
     filenameTokens: ["sourcing_rules", "process", "timeline", "communications"],
@@ -1082,5 +1119,6 @@ export function requiredEvidenceForStage(stage: SourceStageKey): SourceEvidenceR
 }
 
 export function evidenceById(id: string): SourceEvidenceRequirement | undefined {
-  return SOURCE_EVIDENCE_REQUIREMENTS.find((e) => e.requirementId === id);
+  return SOURCE_EVIDENCE_REQUIREMENTS.find((e) => e.requirementId === id) ??
+    WORKFLOW_DECISIONS.find((e) => e.requirementId === id);
 }

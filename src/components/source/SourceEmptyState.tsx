@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
@@ -98,7 +99,7 @@ export function SourceEmptyState({ tenantName }: SourceEmptyStateProps = {}) {
             sourcing event below, or see the new-tenant onboarding runbook for
             how to wire the ingest pipeline that populates this queue.
           </p>
-          <a
+          <Link
             href="/source/new"
             data-testid="source-empty-start-event"
             style={{
@@ -119,7 +120,7 @@ export function SourceEmptyState({ tenantName }: SourceEmptyStateProps = {}) {
             }}
           >
             Start IT sourcing event
-          </a>
+          </Link>
         </div>
 
         <div

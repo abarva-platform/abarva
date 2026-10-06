@@ -94,6 +94,18 @@ export interface AskSurfaceContext {
   module?: string | null;
   provider?: string | null;
   sourceProvider?: string | null;
+  sourceContract360Mode?: boolean;
+  contractId?: string | null;
+  contractName?: string | null;
+  vendorName?: string | null;
+  annualValue?: number | null;
+  actualAnnualSpend?: number | null;
+  endDate?: string | null;
+  evidencePosture?: string | null;
+  nextAction?: string | null;
+  contractDatasetSummary?: string | null;
+  contractCubeSummary?: string | null;
+  contractTopVendorSummary?: string | null;
   evaluationCaseId?: string | null;
   evalCaseId?: string | null;
   caseId?: string | null;
@@ -110,4 +122,8 @@ export interface AskSurfaceContext {
   sourceFacts?: string[];
   qualityFacts?: string[];
   facts?: string[];
+  groundingStatus?: unknown;
+  claimContract?: unknown;
+  capabilities?: unknown;
+  refusalExamples?: unknown;
 }

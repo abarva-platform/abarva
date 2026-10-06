@@ -1,0 +1,21 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "contract_id": "MER-TECH-DBX-001",
+    "vendor_ref": "MER-VEN-DATABRICKS",
+    "vendor_name": "Databricks, Inc.",
+    "sla_summary": "0 breached SLA periods; 0.00 credits earned; 0.00 recovered.",
+    "scoped_application_count": "4",
+    "critical_application_count": "0",
+    "cloud_sev1_sev2_incidents": "0",
+    "avg_cloud_change_failure_rate": "",
+    "service_credits_earned": "0",
+    "service_credits_claimed": "0",
+    "batch_failed_jobs": "0",
+    "batch_manual_restarts": "0",
+    "latest_qbr_run_percent": "78",
+    "latest_qbr_transform_percent": "22",
+    "latest_qbr_report_retirement_candidates": "0",
+    "evidence_gap": "false"
+  }
+]

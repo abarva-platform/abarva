@@ -15,7 +15,7 @@ const artifact: MoveArtifactRow = {
   file_name: "p2.html",
   file_format: "html",
   blob_container: "context-drops",
-  blob_path: "moves/lakeshore/p2.html",
+  blob_path: "moves/test-tenant/p2.html",
   file_size: 42000,
   version: 7,
   status: "review_required",
@@ -56,31 +56,73 @@ describe("artifact review decisions", () => {
     });
   });
 
-  it("extracts a P2 sponsor-review packet from evidence-bound artifact text", () => {
-    const packet = buildP2ReviewPacket({
-      artifact,
-      artifactHtml: `
-        <html><body>
-          <p>1,872 monthly exceptions and 2,345 manual touch hours per month.</p>
-          <p>Average resolution takes 7.4 days. Payment hold and duplicate-payment controls are implicated.</p>
-          <p>AI can assist triage, classification, routing, and duplicate detection, with human approval.</p>
-        </body></html>
-      `,
-    });
+  it("uses only explicitly supplied review facts and evidence metadata", () => {
+    const operationalArtifact: MoveArtifactRow = {
+      ...artifact,
+      title: "Operational Throughput Diagnostic",
+      metadata: {
+        ...artifact.metadata,
+        diagnosticThesis: "A throughput gap is driving manual handling.",
+        quantifiedFacts: [
+          "1,872 monthly work items",
+          "2,345 manual touch hours per month",
+          "7.4 average processing days",
+        ],
+        strongestEvidence: ["The cited work extract covers the review period."],
+        missingEvidence: ["Operations owner confirmation"],
+      },
+    };
+    const packet = buildP2ReviewPacket({ artifact: operationalArtifact });
 
-    expect(packet.quantifiedFacts).toEqual(
-      expect.arrayContaining([
-        "1,872 monthly invoice exceptions",
-        "2,345 manual touch hours per month",
-        "7.4 average resolution days",
-      ]),
+    expect(packet.quantifiedFacts).toEqual([
+      "1,872 monthly work items",
+      "2,345 manual touch hours per month",
+      "7.4 average processing days",
+    ]);
+    expect(packet.strongestEvidence).toEqual([
+      "The cited work extract covers the review period.",
+    ]);
+    expect(packet.diagnosticThesis).toBe(
+      "A throughput gap is driving manual handling.",
     );
-    expect(packet.knownLimitations.join(" ")).toContain("not final");
+    expect(packet.knownLimitations.join(" ")).toContain(
+      "does not satisfy final P2 approval by an authorized workspace user",
+    );
     expect(packet.approvalOptions.map((option) => option.decision)).toEqual([
       "approve_for_p3_draft",
       "request_revisions",
       "hold_for_evidence",
     ]);
+  });
+
+  it("does not inject another use case's facts, risks, or evidence requests", () => {
+    const memberServiceArtifact: MoveArtifactRow = {
+      ...artifact,
+      title: "Service Operations Diagnostic",
+      metadata: {
+        openItems: ["Production interface validation remains open."],
+      },
+    };
+
+    const packet = buildP2ReviewPacket({ artifact: memberServiceArtifact });
+
+    expect(packet.diagnosticThesis).toContain(memberServiceArtifact.title);
+    expect(packet.quantifiedFacts).toEqual([]);
+    expect(packet.missingEvidence).toContain(
+      "Production interface validation remains open.",
+    );
+    expect(packet.missingEvidence.join(" ").toLowerCase()).not.toMatch(
+      /payment|invoice|accounts payable/,
+    );
+    expect(
+      [
+        packet.diagnosticThesis,
+        ...packet.strongestEvidence,
+        ...packet.knownLimitations,
+      ]
+        .join(" ")
+        .toLowerCase(),
+    ).not.toMatch(/payment|invoice|accounts payable|duplicate-payment/);
   });
 
   it("approves only P3 draft readiness, not P2 final or P3 final", () => {
@@ -93,7 +135,11 @@ describe("artifact review decisions", () => {
   });
 
   it("keeps P3 blocked for revision or evidence hold decisions", () => {
-    expect(readinessForDecision("request_revisions").readyForP3Draft).toBe(false);
-    expect(readinessForDecision("hold_for_evidence").readyForP3Draft).toBe(false);
+    expect(readinessForDecision("request_revisions").readyForP3Draft).toBe(
+      false,
+    );
+    expect(readinessForDecision("hold_for_evidence").readyForP3Draft).toBe(
+      false,
+    );
   });
 });

@@ -1,0 +1,6 @@
+Source file tab,Layer 2 adapter output,Layer 3 canonical/evidence object,Layer 4 cube/read model,Dashboard or Optimize use
+Contracts,contract_register_adapter,"source.contract, source.vendor, source.contract_term",source.contract_360; source.contract_vendor_360,"Contract 360 header, vendor rollup, renewal posture"
+Contract Clauses,contract_clause_adapter,source.contract_term; doc.extraction,source.contract_pdf_clause_extractions; doc.extraction,"Clauses detail, benchmarking, auto-renew, termination, service-credit basis"
+Monthly Spend,contract_consumption_adapter,source.contract_consumption_observation,consumption.sourcing_spend_monthly_v1,"Spend trend, actual annual spend, invoice variance"
+SLA Performance + Tickets,contract_performance_adapter; ticket_volumetrics_adapter,source.contract_performance_observation; source.contract_service_credit,consumption.sourcing_performance_v1,"SLA misses, service-credit leakage, operational proof"
+Change Orders,change_order_adapter,source.canonical_fact_assertion; source.optimization_opportunity,consumption.sourcing_opportunity_v1,Recurring run-scope leakage and New Event baseline

@@ -21,6 +21,7 @@ import {
 } from "@/lib/source/facts/template-fact-map";
 import {
   mapTemplateUploadToFacts,
+  coerceNumericCell,
   type ParsedTemplateUpload,
 } from "@/lib/source/facts/extraction/structured-map";
 import { resolveValueArchetype } from "@/lib/source/facts/view/stage-analytics-builder";
@@ -35,6 +36,50 @@ export interface IngestScope {
   readonly eventId: string;
   /** The caller's effective client key (tenant scope). */
   readonly clientKey: string;
+}
+
+type SourceFileProof = { readonly name: string; readonly sha256: string };
+
+function validateTicketHistory(
+  upload: ParsedTemplateUpload,
+  sourceFile: SourceFileProof | undefined,
+): string | null {
+  if (!sourceFile || !/\.(csv|xlsx)$/i.test(sourceFile.name) ||
+      !/^[a-f0-9]{64}$/i.test(sourceFile.sha256)) {
+    return "Ticket history requires a parsed CSV/XLSX file and its byte hash.";
+  }
+  const required = ["Service Tower", "Support Tier", "Month", "Time Window",
+    "Ticket Count", "SLA Breach Count", "Source Basis"];
+  const absent = required.filter((header) => !upload.headers.includes(header));
+  if (absent.length > 0) return `Missing ticket-history columns: ${absent.join(", ")}.`;
+  if (upload.rows.length === 0) return "Ticket history has no rows.";
+
+  const tiers = new Set<string>();
+  const cohorts = new Set<string>();
+  for (const [index, row] of upload.rows.entries()) {
+    const tower = String(row["Service Tower"] ?? "").trim();
+    const tier = String(row["Support Tier"] ?? "").trim().toUpperCase();
+    const month = String(row["Month"] ?? "").trim();
+    const window = String(row["Time Window"] ?? "").trim();
+    const sourceBasis = String(row["Source Basis"] ?? "").trim();
+    const count = coerceNumericCell(row["Ticket Count"]);
+    const breaches = coerceNumericCell(row["SLA Breach Count"]);
+    if (!tower || !sourceBasis || !window || !/^(L2|L3)$/.test(tier) ||
+        !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) ||
+        count === null || !Number.isSafeInteger(count) || count < 0 ||
+        breaches === null || !Number.isSafeInteger(breaches) || breaches < 0 ||
+        breaches > count) {
+      return `Invalid ticket-history row ${index + 1}: tower, L2/L3 tier, YYYY-MM month, time window, source basis, and non-negative integer counts are required; breaches cannot exceed tickets.`;
+    }
+    const cohort = [tower.toLowerCase(), tier, month, window.toLowerCase()].join("::");
+    if (cohorts.has(cohort)) return `Duplicate ticket-history cohort at row ${index + 1}.`;
+    cohorts.add(cohort);
+    tiers.add(tier);
+  }
+  if (!tiers.has("L2") || !tiers.has("L3")) {
+    return "Ticket history must include both L2 and L3 cohorts for this gate.";
+  }
+  return null;
 }
 
 /**
@@ -58,6 +103,8 @@ export type IngestTemplateUploadResult =
       /** Machine code → HTTP status: unknown_template=400, not_found=404, … */
       readonly code:
         | "unknown_template"
+        | "invalid_upload"
+        | "archetype_not_ready"
         | "lookup_failed"
         | "not_found"
         | "write_failed";
@@ -93,6 +140,7 @@ export async function ingestTemplateUpload(
     readonly templateCode: string;
     readonly upload: ParsedTemplateUpload;
     readonly scope: IngestScope;
+    readonly sourceFile?: SourceFileProof;
   },
   deps: IngestTemplateUploadDeps = {},
 ): Promise<IngestTemplateUploadResult> {
@@ -121,7 +169,7 @@ export async function ingestTemplateUpload(
   const lookupId = resolvedEventId ?? args.scope.eventId;
   const { data: persistedEvent, error: fetchError } = await supabase
     .from("source_events")
-    .select("id, client_key")
+    .select("id, client_key, event_type, classified_category")
     .eq("id", lookupId)
     .maybeSingle();
 
@@ -139,15 +187,28 @@ export async function ingestTemplateUpload(
     };
   }
 
-  // For a COMPOSITE template whose entity_ref carries a canonical lever key (e.g.
-  // RESPONSE_COVERAGE_V1's Vendor::Lever Key), resolve the archetype's lever-key
-  // set so the structured map can reject a non-canonical lever loudly. Resolved
-  // the same way the insight builder does (first archetype with value-lever rules
-  // today — AMS); a phantom lever never enters the model. Non-composite templates
-  // pass no set and are unaffected.
+  if (template.templateCode === "TICKET_HISTORY_V1") {
+    const issue = validateTicketHistory(args.upload, args.sourceFile);
+    if (issue) return { ok: false, code: "invalid_upload", detail: issue };
+  }
+
+  // For a COMPOSITE template whose entity_ref carries a canonical lever key,
+  // resolve this event's own archetype. Never validate one event's rows against
+  // another archetype merely because that archetype has authored rules.
   let validLeverKeys: ReadonlySet<string> | undefined;
   if ((template.entityRefColumns?.length ?? 0) > 0) {
-    const archetype = resolveValueArchetype(undefined);
+    const archetype = resolveValueArchetype(
+      persistedEvent.event_type,
+      persistedEvent.classified_category,
+    );
+    if (!archetype) {
+      return {
+        ok: false,
+        code: "archetype_not_ready",
+        detail:
+          "This event has no authored deterministic value-lever rules for its resolved archetype.",
+      };
+    }
     const keys = (archetype?.valueLeverRules ?? []).map((r) => r.key);
     validLeverKeys = new Set<string>(keys);
   }
@@ -157,6 +218,7 @@ export async function ingestTemplateUpload(
     sourceEventId: persistedEvent.id,
     clientKey: args.scope.clientKey,
     validLeverKeys,
+    sourceFile: args.sourceFile,
   });
 
   // Persist through the data-plane write seam (RLS-scoped by client_key).
@@ -186,6 +248,8 @@ export function ingestFailureStatus(
 ): number {
   switch (code) {
     case "unknown_template":
+    case "invalid_upload":
+    case "archetype_not_ready":
       return 400;
     case "not_found":
       return 404;

@@ -33,6 +33,27 @@ function record(
   };
 }
 
+function summarizeAliasRows(records: EnterpriseContextRecordRow[]) {
+  return summarizeEnterpriseContextRows({
+    tenantKey: "test-tenant",
+    tenantName: "Test tenant",
+    counts: {
+      sources: 0,
+      records: records.length,
+      facts: 0,
+      relationships: 0,
+      evidence: 0,
+      qualityIssues: 0,
+      stewardshipTasks: 0,
+      chunkQueue: 0,
+    },
+    records,
+    sources: [],
+    qualityRows: [],
+    evidenceRows: [],
+  });
+}
+
 describe("enterprise context Intelligence read model", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -203,6 +224,37 @@ describe("enterprise context Intelligence read model", () => {
     });
   });
 
+  // Re-baselined 2026-09-24 (item T-756) as a whole case, not one string. It
+  // failed at its first assertion from `8fe274ed8` (#7795, 2026-09-18) onward,
+  // so the thirteen assertions after that line had not run since, and seven of
+  // the fourteen were wrong. Six are behind #7795's deliberate change and are
+  // re-baselined here; the seventh was a regression and is fixed in the read
+  // model rather than re-baselined. What #7795 changed, and why each expectation
+  // moved:
+  //
+  //  - `configuration_item` is deliberately no longer counted as an application
+  //    or service, so the fixture's CI plus one application reads 1, not 2. The
+  //    sibling case "does not count a configuration item as an application or
+  //    service" is #7795's own assertion of that decision.
+  //  - `data_asset` and `business_capability` are no longer counted as
+  //    data-domain/stewardship rows. #7795's record states the decision as
+  //    "exclude adjacent but distinct record types from application/service,
+  //    vendor/contract, and data-domain/stewardship counts", and its alias table
+  //    pairs `data_domains_stewardship` with `data_domain` only, so the fixture's
+  //    data asset plus business capability reads 0, not 2.
+  //  - the card and fact copy was renamed to say "records" rather than implying
+  //    distinct entities: "systems/services" became "application/service
+  //    record(s)", "vendors/contracts" became "vendor/contract record(s)",
+  //    "N are Tier 1" became "N marked Tier 1", and "data-domain stewardship"
+  //    gained its slash. The counts are of source rows across aliases and are
+  //    not de-duplicated, which is what the rename exists to stop overstating.
+  //
+  // The vendor-spend assertion below is NOT re-baselined. It asserts $1.8M sized
+  // from `annual_value_usd`, which PR #3316 (`b46b5e82f`, 2026-06-08) bound for
+  // exactly that reason; the binding was lost as collateral of a bad merge and
+  // is restored in `buildVendorSpendRows`. See the focused case
+  // "sizes a vendor spend row from a contract's annual_value_usd" below, which
+  // pins it independently of this composite fixture.
   it("groups Admin-promoted record types into Enterprise Context cards", () => {
     const records: EnterpriseContextRecordRow[] = [
       record({
@@ -300,19 +352,21 @@ describe("enterprise context Intelligence read model", () => {
     );
     const facts = overview.sentinelFacts.join("\n");
 
-    expect(platformCard?.whatWeKnow).toContain("2 systems/services loaded");
-    expect(platformCard?.whatWeKnow).toContain("1 are Tier 1");
-    expect(contractCard?.whatWeKnow).toContain("1 vendor/contracts");
+    expect(platformCard?.whatWeKnow).toContain(
+      "1 application/service record loaded",
+    );
+    expect(platformCard?.whatWeKnow).toContain("1 marked Tier 1");
+    expect(contractCard?.whatWeKnow).toContain("1 vendor/contract record");
     expect(initiativeCard?.whatWeKnow).toContain(
-      "1 initiatives and 2 data-domain stewardship records",
+      "1 initiatives and 0 data-domain/stewardship records",
     );
     expect(facts).toContain("org and decision rights (1)");
     expect(facts).toContain("facilities/business units (2)");
-    expect(facts).toContain("systems/services (2)");
-    expect(facts).toContain("vendors/contracts (1)");
+    expect(facts).toContain("application/service records (1)");
+    expect(facts).toContain("vendor/contract records (1)");
     expect(facts).toContain("KPIs/metrics (1)");
     expect(facts).toContain("initiatives (1)");
-    expect(facts).toContain("data domains/capabilities (2)");
+    expect(facts).toContain("data-domain/stewardship records (0)");
     expect(facts).toContain("risks/compliance (1)");
     expect(facts).toContain(
       "answer Lakeshore Holdings current-state questions",
@@ -324,6 +378,138 @@ describe("enterprise context Intelligence read model", () => {
       spendLabel: "$1.8M",
       health: "watch",
     });
+  });
+
+  it.each([
+    ["org_decision_rights", "org_role", "org and decision rights (2)"],
+    ["org_decision_rights", "decision_right", "org and decision rights (2)"],
+    ["facilities_business_units", "facility", "facilities/business units (2)"],
+    ["facilities_business_units", "business_unit", "facilities/business units (2)"],
+    ["cmdb_applications_services", "cmdb_application", "application/service records (2)"],
+    ["cmdb_applications_services", "cmdb_service", "application/service records (2)"],
+    ["incidents", "incident", "incidents (2)"],
+    ["problems", "problem", "problems (2)"],
+    ["changes", "change", "changes (2)"],
+    ["renewal_calendar", "renewal", "renewals (2)"],
+    ["vendors_contract_inventory", "contract", "vendor/contract records (2)"],
+    ["financial_kpis", "kpi_metric", "KPIs/metrics (2)"],
+    ["policies_procedures", "policy", "policies/procedures (2)"],
+    ["policies_procedures", "procedure", "policies/procedures (2)"],
+    ["initiative_portfolio", "initiative", "initiatives (2)"],
+    ["data_domains_stewardship", "data_domain", "data-domain/stewardship records (2)"],
+    ["risk_compliance_register", "risk", "risks/compliance (2)"],
+    ["risk_compliance_register", "compliance_finding", "risks/compliance (2)"],
+  ])("counts %s and %s as recorded rows", (legacyType, promotedType, expectedFact) => {
+    const overview = summarizeAliasRows([
+      record({ record_type: legacyType, title: "Legacy row" }),
+      record({ record_type: promotedType, title: "Promoted row" }),
+    ]);
+
+    expect(overview.sentinelFacts.join("\n")).toContain(expectedFact);
+    expect(overview.recordTypeCounts).toMatchObject({
+      [legacyType]: 1,
+      [promotedType]: 1,
+    });
+  });
+
+  // Added 2026-09-24 (item T-756). PR #3316 (`b46b5e82f`, 2026-06-08) added
+  // `annual_value_usd` to the spend key chain in `buildVendorSpendRows` so
+  // structured vendor contracts promoted through Admin would size rather than
+  // render "Not sized". The 1,223-file squash `6ebe6d4a9` (2026-07-07) left the
+  // pre-#3316 copy of that function live and a post-#3316 copy orphaned inside
+  // `countEnterpriseContextRows`; `70874ff0e`, twenty minutes later, correctly
+  // deleted the orphan as dead code and took the last copy of the binding with
+  // it. The composite case above asserted the sized value and would have caught
+  // it, but from 2026-09-18 it failed at its first assertion, and the suite runs
+  // in no CI job. This case pins each contract-side key on its own so a single
+  // key lost from the chain fails here by name rather than inside a fixture that
+  // is asserting fourteen other things.
+  it.each([
+    ["annual_spend_usd"],
+    ["annualized_spend_usd"],
+    ["ttm_spend_usd"],
+    ["run_rate_usd"],
+    ["contract_value_usd"],
+    ["annual_value_usd"],
+    ["estimated_annual_value_usd"],
+    ["estimated_value_usd"],
+  ])("sizes a vendor spend row from a contract's %s", (spendKey) => {
+    const overview = summarizeAliasRows([
+      record({
+        record_type: "contract",
+        title: "Kyriba contract",
+        payload: { vendor_name: "Kyriba", [spendKey]: "1800000" },
+      }),
+    ]);
+
+    expect(overview.vendorSpendRows).toHaveLength(1);
+    expect(overview.vendorSpendRows[0]).toMatchObject({
+      vendor: "Kyriba",
+      spendUsdM: 1.8,
+      spendLabel: "$1.8M",
+    });
+  });
+
+  it("reads a renewal row's annual_value_usd when the contract carries no spend", () => {
+    const overview = summarizeAliasRows([
+      record({
+        record_type: "contract",
+        title: "Kyriba contract",
+        payload: { vendor_name: "Kyriba" },
+      }),
+      record({
+        record_type: "renewal",
+        title: "Kyriba renewal",
+        payload: { vendor_name: "Kyriba", annual_value_usd: "1800000" },
+      }),
+    ]);
+
+    expect(overview.vendorSpendRows).toHaveLength(1);
+    expect(overview.vendorSpendRows[0]).toMatchObject({
+      vendor: "Kyriba",
+      spendUsdM: 1.8,
+      spendLabel: "$1.8M",
+    });
+  });
+
+  it("leaves a contract with no recognized spend key unsized rather than guessing", () => {
+    const overview = summarizeAliasRows([
+      record({
+        record_type: "contract",
+        title: "Kyriba contract",
+        payload: { vendor_name: "Kyriba", annual_value_eur: "1800000" },
+      }),
+    ]);
+
+    expect(overview.vendorSpendRows[0]).toMatchObject({
+      vendor: "Kyriba",
+      spendUsdM: 0,
+      spendLabel: "Not sized",
+    });
+  });
+
+  it("does not count a configuration item as an application or service", () => {
+    const overview = summarizeAliasRows([
+      record({ record_type: "cmdb_application", title: "Application", payload: { ci_id: "CI-1" } }),
+      record({ record_type: "configuration_item", title: "Underlying CI", payload: { ci_id: "CI-1" } }),
+    ]);
+
+    expect(overview.cards.find((card) => card.key === "platform-and-service-reliability")?.whatWeKnow)
+      .toContain("1 application/service record loaded");
+    expect(overview.sentinelFacts.join("\n")).toContain("application/service records (1)");
+  });
+
+  it("does not present vendor and data-asset rows as contracts or data domains", () => {
+    const overview = summarizeAliasRows([
+      record({ record_type: "contract", title: "Agreement" }),
+      record({ record_type: "vendor", title: "Supplier" }),
+      record({ record_type: "data_domain", title: "Finance domain" }),
+      record({ record_type: "data_asset", title: "Finance dataset" }),
+    ]);
+
+    expect(overview.sentinelFacts.join("\n")).toContain("vendor/contract records (1)");
+    expect(overview.sentinelFacts.join("\n")).toContain("Commercial posture: 1 vendor/contract record");
+    expect(overview.sentinelFacts.join("\n")).toContain("data-domain/stewardship records (1)");
   });
 
   it("loads overview tables sequentially to avoid session-mode pool bursts", async () => {
@@ -499,6 +685,11 @@ describe("enterprise context Intelligence read model", () => {
       "enterprise_context_sources:rows",
       "enterprise_context_quality_issues:rows",
       "enterprise_context_evidence:rows",
+      // Added by the Intelligence executive briefing surface (6ebe6d4a9),
+      // which introduced the context_insights read. The expected sequence was
+      // not updated with it, so this case has been red ever since -- unseen,
+      // because no workflow reaches this directory.
+      "context_insights:rows",
     ]);
 
     async function runQuery(

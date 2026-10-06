@@ -609,6 +609,26 @@ const UNIVERSAL_EXCEPTION_METADATA: ReadonlyArray<
   },
 ];
 
+const DOCUMENT_EXCEPTION_METADATA: ReadonlyArray<
+  Omit<TemplateExceptionMetadataRequirement, "requiredForFormats">
+> = [
+  {
+    key: "document_purpose",
+    label: "Document purpose",
+    purpose: "State the business purpose and decision context of the document.",
+  },
+  {
+    key: "authoritative_sections",
+    label: "Authoritative sections",
+    purpose: "Name the sections that are authoritative for extraction.",
+  },
+  {
+    key: "metric_dictionary",
+    label: "Metric dictionary",
+    purpose: "Define the metrics, units, periods, and calculation conventions used.",
+  },
+];
+
 // Format-specific anchor requirement: where inside the file the relevant data lives.
 const FORMAT_ANCHOR_METADATA: Partial<
   Record<
@@ -668,6 +688,17 @@ export function buildExceptionMetadataRequirements(
       ...item,
       requiredForFormats: exceptionFormats,
     }));
+  const documentMetadataFormats = SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter((format) =>
+    ["pdf", "docx", "pptx"].includes(format),
+  );
+  if (documentMetadataFormats.length > 0) {
+    requirements.push(
+      ...DOCUMENT_EXCEPTION_METADATA.map((item) => ({
+        ...item,
+        requiredForFormats: documentMetadataFormats,
+      })),
+    );
+  }
   for (const format of exceptionFormats) {
     const anchor = FORMAT_ANCHOR_METADATA[format];
     if (anchor) {

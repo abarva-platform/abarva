@@ -1,0 +1,35 @@
+name: Source component suites
+
+# The Source component directory contains workflow, evidence, approval, and
+# agent-facing behavior. Run the directory as one owned unit so a new sibling
+# suite is covered on the first pull request that introduces it.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  source-component-suites:
+    name: Source component suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Source component suites
+        run: npx jest src/components/source/__tests__ --no-coverage --ci

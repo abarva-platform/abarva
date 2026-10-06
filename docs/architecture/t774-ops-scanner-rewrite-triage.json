@@ -1,0 +1,261 @@
+{
+  "item": "T-774",
+  "title": "Three of the five source-text scanners in src/__tests__/integration/ops rewritten as behaviour. The directory is NOT wired and cannot be on this evidence.",
+  "recordedAt": "2026-09-28T01:20:00.000Z",
+  "base": "ec4a2c28c923afadc4ea73ba58cfbc856aed36fd",
+  "directory": "src/__tests__/integration/ops",
+  "scope": [
+    "Three suites of the five T-771 declared as source-text scanners in this directory. The other two -- hygiene-gate-contract.test.ts and the one describe block in agent-dispatch-queue.test.ts -- keep their T-771 verdicts and are untouched.",
+    "T-774's acceptance makes the DIRECTORY the wiring unit, and the directory is NOT wired here: two of its fourteen files are red and two more are source-text scanners. The three rewritten suites are wired by NAMED FILE PATH, which is a different operation and the one the repo's own workflow header sanctions -- a colliding directory is silent and drags in every sibling written later, while a named file is loud and enumerated. They are wired rather than left dark because scripts/quality/check-integration-ci-visibility.mjs requires a changed integration suite to have an executable CI owner, and it FAILED this pull request until they did. A rewrite nobody runs proves nothing, so the gate is right and the item's prose was written for the closing change.",
+    "This record exists so the T-770 control resolves these three paths' classification from the LATEST record rather than from the T-771 draw, which is left as the historical draw it is."
+  ],
+  "method": [
+    "Re-verified on origin/main ec4a2c28c9 by RUNNING the directory, not by reading it: 14 files, 379 cases, 12 green / 2 red, 30 failing -- exactly as T-774 filed it, and all five declared scanner scopes present.",
+    "Every byte assertion was DELETED rather than sharpened, per the acceptance. A tighter regular expression over the same source text is the same defect with a longer fuse.",
+    "Each subject is an executable script, so each replacement drives the real script over fixtures in a per-case tmp dir and asserts its stdout, its JSON envelope and its exit code.",
+    "The import/network prohibitions were given a LANE, as the acceptance requires: a runtime observation, not a lint rule and not a packaging check. ESLint does not lint Python, and these one-off ops scripts carry no package manifest to check against, so the only instrument that answers the question is a run.",
+    "Thirteen mutations across the three subjects, each ASSERTED to have changed the file before the suite ran. One mutation was refused by that guard rather than reported as a survivor, and was re-anchored.",
+    "Each mutation was also run against the DELETED code, restored from a snapshot rather than from HEAD, so the claim that the rewrite is an improvement is measured in both directions rather than argued."
+  ],
+  "counts": {
+    "suites": 3,
+    "wired": 3,
+    "heldUnwired": 0,
+    "repaired": 3,
+    "deleted": 0,
+    "scannerCasesDeleted": 13,
+    "behaviouralCasesAdded": 17
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/integration/ops/demo-pack-report-validator.test.ts",
+      "subject": "scripts/integration/validate_demo_pack_report.py",
+      "collected": true,
+      "green": true,
+      "totalTests": 28,
+      "failedTests": 0,
+      "priorTotalTests": 14,
+      "priorGreen": true,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "readsSubjectSource": false,
+      "verdict": "rewritten_as_behavior_and_wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-774",
+      "priorVerdict": {
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-774",
+        "sourceTextScanner": true,
+        "scannerScope": "eight cases, each re-reading the validator script's own source and asserting a substring of it"
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "Eight cases read the Python source and asserted a substring of it. Four MORE tested `mirrorValidate`, a TypeScript re-implementation of the validator defined in the test file, which asserted nothing about the subject at all -- and had already drifted from it: the mirror accepted a PR number as /[#]?\\d+/, which matches the digits inside a commit sha, while the script requires #\\d+|PR\\s*\\d+|pull request\\s*\\d+. A report the mirror called valid is rejected by the thing that runs, and no case in the file could see it. The replacement drives the real script: the help output must name every required section; each of the eleven required sections gets a case that removes it and requires exit 1 naming that section; the PR-number pattern is asserted in both directions including the sha-digits report the mirror got wrong; hygiene, metrics and word-count findings are asserted as warnings that do not fail the run; and non-mutation is proved by hashing the input across three runs instead of pattern-matching for a write mode.",
+      "fixtureGuard": "withoutSection() throws if the substring it claims to have removed is still present in the report it returns, so a missing-section case cannot pass while asserting the fixture rather than the validator.",
+      "wiredInThisItem": true,
+      "wiredAs": "named FILE path, not the directory"
+    },
+    {
+      "path": "src/__tests__/integration/ops/duplicate-slice-preflight.test.ts",
+      "subject": "scripts/integration/check_duplicate_slices.py",
+      "collected": true,
+      "green": true,
+      "totalTests": 11,
+      "failedTests": 0,
+      "priorTotalTests": 11,
+      "priorGreen": true,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "readsSubjectSource": false,
+      "verdict": "rewritten_as_behavior_and_wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-774",
+      "priorVerdict": {
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-774",
+        "sourceTextScanner": true,
+        "scannerScope": "one case, a static check that the python script imports only stdlib and makes no network call, parsed out of its source lines"
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "One case, replaced by one case -- the other ten were already behavioural and are untouched. The deleted case matched import lines against an allow-list and asserted the words urllib, requests, http.client and socket appeared nowhere in the file. It is blind where it matters and loud where it does not: a dependency pulled in by __import__ has no import line to match, an import inside one branch is invisible to a whole-file verdict, and a comment mentioning sockets fails the suite. The replacement runs the script over all six of its branches under observe_python_run.py and requires an empty non-stdlib module set and an empty network-attempt list from each. Six observations rather than one, because the defect being replaced cannot see a branch.",
+      "alsoRemoved": "The file's dead import island: execFileSync and mkdirSync were imported and referenced only by a trailing `void`, which is what let them survive no-unused-vars, and the header comment naming execFileSync was already wrong.",
+      "wiredInThisItem": true,
+      "wiredAs": "named FILE path, not the directory"
+    },
+    {
+      "path": "src/__tests__/integration/ops/worktree-cleanup-report.test.ts",
+      "subject": "scripts/integration/worktree_cleanup_report.py",
+      "collected": true,
+      "green": true,
+      "totalTests": 12,
+      "failedTests": 0,
+      "priorTotalTests": 12,
+      "priorGreen": true,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "readsSubjectSource": false,
+      "verdict": "rewritten_as_behavior_and_wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-774",
+      "priorVerdict": {
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-774",
+        "sourceTextScanner": true,
+        "scannerScope": "one read of the report script's own source"
+      },
+      "priorVerdictStatus": "discharged_here",
+      "scopeCorrection": "T-771 recorded this as ONE read. The single readFileSync was shared by a four-case describe block -- file non-empty, shebang, no destructive git verb on any subprocess line, and an import allow-list -- so four cases were byte assertions, not one. The count is corrected here rather than silently; the verdict T-771 assigned was right either way.",
+      "rationale": "The destructive-command case was the one that mattered and the one least able to answer. It is a per-LINE scan for a two-token literal, so an argv assembled in a variable or built from parts reads as clean; and it was vacuous where it counts, because every other case in the file drives --fixture mode, which exists precisely to avoid shelling out, so the default path -- the only one that runs git -- was executed by no case in the file. The replacement puts a recording `git` stub first on PATH, runs the script in its DEFAULT mode, and compares every argv it invoked against a declared list of read-only invocations. A separate guardrail case asserts the stub was reached and git was invoked at all, so 'no destructive command ran' cannot become true because nothing ran.",
+      "fourthCase": "The import allow-list is replaced by observe_python_run.py over three invocations, on the same terms as the sibling suite.",
+      "wiredInThisItem": true,
+      "wiredAs": "named FILE path, not the directory"
+    }
+  ],
+  "newInstrument": {
+    "path": "scripts/integration/observe_python_run.py",
+    "why": "The 'stdlib only, no network' contract appears in two of these three suites and was asserted both times by a regular expression over the script's bytes. The question is about a run, so it is answered by a run.",
+    "how": "Executes a target script as __main__, snapshots sys.modules around it, reports every top-level module the run added that is not in sys.stdlib_module_names, and replaces the socket entry points with recorders that refuse the call so an attempt is NAMED rather than merely absent. Exits with the target's own exit code.",
+    "writesObservationOnCrash": "The observation file is written even when the target raises, because 'it crashed' and 'it imported something it should not have' are different findings and a missing file cannot tell them apart.",
+    "knownPositive": "A copy of check_duplicate_slices.py given `__import__('vendorlib')` -- a third-party dependency with no import statement to match -- passes the DELETED byte scan completely, and the observation names vendorlib. Re-run against the same mutated file, the deleted scan reports nothing."
+  },
+  "mutations": [
+    {
+      "subject": "validate_demo_pack_report.py",
+      "mutation": "drop 'Run Metrics' from REQUIRED_SECTIONS",
+      "newSuite": "5 of 28 failed",
+      "oldSuite": "0 of 14 failed"
+    },
+    {
+      "subject": "validate_demo_pack_report.py",
+      "mutation": "PR-number regex -> the deleted mirror's /[#]?\\d+/",
+      "newSuite": "1 of 28 failed",
+      "oldSuite": "0 of 14 failed",
+      "note": "Caught by exactly one case, so no added assertion is redundant with another."
+    },
+    {
+      "subject": "validate_demo_pack_report.py",
+      "mutation": "short-report warning promoted to an error",
+      "newSuite": "5 of 28 failed",
+      "oldSuite": "0 of 14 failed"
+    },
+    {
+      "subject": "validate_demo_pack_report.py",
+      "mutation": "append to the report after reading it",
+      "newSuite": "1 of 28 failed",
+      "oldSuite": "0 of 14 failed"
+    },
+    {
+      "subject": "validate_demo_pack_report.py",
+      "mutation": "hygiene-field warning promoted to an error",
+      "newSuite": "1 of 28 failed",
+      "oldSuite": "0 of 14 failed"
+    },
+    {
+      "subject": "validate_demo_pack_report.py",
+      "mutation": "report only the FIRST missing section",
+      "newSuite": "1 of 28 failed",
+      "oldSuite": "0 of 14 failed"
+    },
+    {
+      "subject": "check_duplicate_slices.py",
+      "mutation": "third-party module loaded by __import__, no import statement",
+      "newSuite": "1 of 11 failed",
+      "oldSuite": "0 of 11 failed"
+    },
+    {
+      "subject": "check_duplicate_slices.py",
+      "mutation": "network call through an aliased socket",
+      "newSuite": "1 of 11 failed",
+      "oldSuite": "0 of 11 failed"
+    },
+    {
+      "subject": "check_duplicate_slices.py",
+      "mutation": "the same third-party load on the --json branch ALONE",
+      "newSuite": "1 of 11 failed",
+      "oldSuite": "0 of 11 failed",
+      "note": "This is the mutation that proves the six-invocation loop earns its keep."
+    },
+    {
+      "subject": "check_duplicate_slices.py",
+      "mutation": "lazy import placed at `if args.json:` -- FIRST ANCHOR",
+      "newSuite": "not run",
+      "oldSuite": "not run",
+      "note": "REFUSED BY THE GUARD, not reported as a survivor: the replacement text did not match, so the file was unchanged and the assertion stopped the run. Re-anchored on `if args.emit_json:` and then caught. A no-op mutation reads exactly like a surviving one."
+    },
+    {
+      "subject": "worktree_cleanup_report.py",
+      "mutation": "`git worktree remove --force` with the verb assembled in a variable",
+      "newSuite": "1 of 12 failed",
+      "oldSuite": "0 of 12 failed"
+    },
+    {
+      "subject": "worktree_cleanup_report.py",
+      "mutation": "third-party module loaded by __import__",
+      "newSuite": "1 of 12 failed",
+      "oldSuite": "0 of 12 failed"
+    },
+    {
+      "subject": "worktree_cleanup_report.py",
+      "mutation": "broken shebang",
+      "newSuite": "2 of 12 failed",
+      "oldSuite": "1 of 12 failed",
+      "note": "Both catch it. Recorded because a mutation both sides catch is evidence about what the rewrite did NOT cost."
+    },
+    {
+      "subject": "worktree_cleanup_report.py",
+      "mutation": "`git push --force` written as a plain one-line literal",
+      "newSuite": "1 of 12 failed",
+      "oldSuite": "1 of 12 failed",
+      "note": "Both catch it, and that is the point: the deleted scan sees a destructive verb spelled as a literal on one line and nothing else. It caught 2 of 4 here, and is blind to exactly the two the rewrite exists for."
+    }
+  ],
+  "measurementCorrection": {
+    "what": "The first pass at the worktree_cleanup_report mutation table restored the rewritten suite with `git checkout -- <path>` between mutations.",
+    "why it was wrong": "That path was unstaged, so the checkout restored HEAD -- the suite being replaced -- and the two runs labelled 'new suite' for the third-party-import and shebang mutations were in fact the OLD suite run twice. The third-party mutation appeared to SURVIVE.",
+    "how it was fixed": "Every mutation was re-run with both suites restored from snapshots taken outside the working tree, so each row above names which code was actually executing. The re-measured result is the opposite of the first: the new suite catches it, the old one does not."
+  },
+  "controlEffect": {
+    "control": "src/__tests__/behaviors/t770-scanner-wiring-refusal.test.ts",
+    "liveDeclaredScannersBefore": 34,
+    "liveDeclaredScannersAfter": 31,
+    "floor": 25,
+    "opsScannersBefore": 5,
+    "opsScannersAfter": 2,
+    "remainingOpsScanners": [
+      "src/__tests__/integration/ops/hygiene-gate-contract.test.ts",
+      "src/__tests__/integration/ops/agent-dispatch-queue.test.ts"
+    ]
+  },
+  "notEnforcedHere": [
+    "CORRECTED WHILE SHIPPING. An earlier draft of this record said deleting it would turn no gate red, because nothing here was wired. That was true when written and is now FALSE: the three suites are wired, so a declared scanner that IS reached is a breach. PROVEN BY EXECUTION, not argued -- with this file removed, t770-scanner-wiring-refusal.test.ts goes 2 failed / 5 passed and names all three paths together with the exact selecting command; restored, 7 passed. The record and the wiring now hold each other up.",
+    "Still true: no gate asserts that a suite declared sourceTextScanner:false has actually stopped scanning source text. The evidence for that claim is the mutation table below, where each deleted block was restored and re-run against the same mutated subjects."
+  ],
+  "directoryStillUnwired": {
+    "why": "Two of the fourteen files are red and two source-text scanners remain. Either alone forbids wiring, and the acceptance forbids wiring file by file.",
+    "measuredOnThisBase": "14 files, 393 cases, 12 green / 2 red, 30 failing -- the same two suites failing as before this change, neither touched here. The case count rose from 379 because the demo-pack rewrite replaced 14 cases with 28.",
+    "remainingBlockers": [
+      "hygiene-gate-contract.test.ts -- the heaviest scanner, most cases re-reading a shell script's source. Unclaimed.",
+      "agent-dispatch-queue.test.ts -- one describe block is an import prohibition over the module's own source. The same file is ALSO red, 22 of 32, and that half is a decision, not a defect: docs/build/agent-dispatch-queue.json declares a five-state lifecycle and all 20 of its rows carry a sixth state that neither the file's own array nor the module's alias table admits. The data file and the module arrived in the SAME commit, so the pair shipped disagreeing. Repairing the seed's 20 rows and widening the declared lifecycle are both coherent, and which is right is a judgement about operator vocabulary. T-774's acceptance says do not guess.",
+      "build-wave-progress.test.ts -- red, 8 of 61, and NOT a scanner. Its acceptance is prescribed rather than open: assert the stamp's shape and monotonicity rather than its value, and derive the wave set rather than counting it. Claimable by anyone; untouched here only for scope."
+    ],
+    "consequence": "T-774 cannot be CLOSED by an agent on today's evidence, whatever else is rewritten, because one of its two reds is gated on an owner decision. That is recorded on the item so the next run does not rediscover it."
+  },
+  "wiring": {
+    "workflow": ".github/workflows/integration-suites.yml",
+    "namedAs": "three exact FILE paths in their own step, never the directory",
+    "suitesWired": 3,
+    "casesWired": 51,
+    "whyNotTheDirectory": "Naming src/__tests__/integration/ops would also select the two red suites and the two remaining source-text scanners. The T-770 control refuses a wired declared scanner, so a directory sweep would turn it red -- correctly.",
+    "forcedBy": "check-integration-ci-visibility.mjs failed this PR with exactly these three paths before the step existed. The gate and the item's 'wiring unit is the DIRECTORY' sentence are in direct tension for ANY per-file slice of this item; the named-file form is what satisfies both the gate and the reason behind the sentence.",
+    "censusEffect": "docs/architecture/test-ci-coverage-census.json refreshed in the same change: the directory moves uncovered -> partial, covered test files 2181 -> 2184, uncovered 347 -> 344."
+  },
+  "ratchetLowered": {
+    "control": "src/__tests__/behaviors/t771-nda-suite-wiring.test.ts",
+    "whatHappened": "Wiring these three turned that control RED: it asserts every path T-771 judged and did not wire is still unreached, so it inverts the moment a later item legitimately wires one. Red because the corpus improved.",
+    "measured": "3 failed of 32 before the control was updated.",
+    "howItWasLowered": "NOT by exempting three paths. NOT_WIRED now subtracts any path a STRICTLY LATER triage record declares wiredInThisItem, resolved by recordedAt -- the same supersession rule t770-scanner-wiring-refusal.test.ts already documents and for the same reason. The freed set is read from the records, so a later item cannot free a path by editing the control.",
+    "whyItIsNotAWeakening": "A new case makes each freed path pay for its exemption twice: a later record must NAME it, and a command in a required job must actually SELECT it. A path that went quiet, or a record claiming a wiring nobody performed, fails that case instead of vanishing from the list. The other judged paths are unchanged."
+  }
+}

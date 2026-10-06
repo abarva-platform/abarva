@@ -64,9 +64,11 @@ const METRIC_DEFINITIONS = [
   ["readiness_score", "Readiness score", "Execution readiness score derived from source discovery fields.", "score_0_100", "higher_is_better", "point_in_time", "avg"],
   ["linked_business_case_count", "Linked business cases", "Business cases linked to a tool rollout.", "count", "higher_is_better", "point_in_time", "sum"],
   ["rollout_target_users", "Rollout target users", "Target users for an AI tool rollout.", "users", "higher_is_better", "point_in_time", "sum"],
+  ["enabled_users", "Enabled users", "Users provisioned or enabled for an AI tool rollout.", "users", "higher_is_better", "point_in_time", "sum"],
   ["monthly_active_users", "Monthly active users", "Active users observed in the latest tool usage source.", "users", "higher_is_better", "monthly", "sum"],
   ["adoption_target_pct", "Adoption target percent", "Target adoption percent for a tool rollout.", "percent", "higher_is_better", "point_in_time", "avg"],
   ["adoption_actual_pct", "Adoption actual percent", "Observed adoption percent for a tool rollout.", "percent", "higher_is_better", "monthly", "avg"],
+  ["adoption_gap_pct", "Adoption gap percent", "Difference between target and observed adoption for a tool rollout.", "percent", "lower_is_better", "monthly", "avg"],
   ["sponsor_claimed_value_usd", "Sponsor claimed value", "Value claimed by the business sponsor for a reporting month.", "USD", "higher_is_better", "monthly", "sum"],
   ["finance_reviewed_value_usd", "Finance reviewed value", "Value reviewed by Finance for a reporting month.", "USD", "higher_is_better", "monthly", "sum"],
   ["finance_validated_value_usd", "Finance validated value", "Value Finance has validated for a reporting month.", "USD", "higher_is_better", "monthly", "sum"],
@@ -457,6 +459,7 @@ function buildCanonicalRows(options) {
     objects.push(objectRow(options, "ai_tool", row.canonical_tool_id, row.tool_name, row, row, row.domain_key, "in_review"));
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "linked_business_case_count", row.linked_business_case_count, row, { scenario: "current" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "rollout_target_users", row.rollout_target_users, row, { scenario: "target" }, "known", "usable", "in_review");
+    addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "enabled_users", row.enabled_users, row, { scenario: "current" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "monthly_active_users", row.monthly_active_users, row, { scenario: "actual" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "adoption_target_pct", row.adoption_target_pct, row, { scenario: "target" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "adoption_actual_pct", row.adoption_actual_pct, row, { scenario: "actual" }, "known", "usable", "in_review");
@@ -673,6 +676,65 @@ with readback as (
         group by canonical_semantic_type
       ) counts
     ),
+    'ai_case_field_survival', (
+      select jsonb_build_object(
+        'rows', count(*),
+        'business_case_id', count(*) filter (where attributes_json ? 'business_case_id'),
+        'project_id', count(*) filter (where attributes_json ? 'project_id'),
+        'initiative_classification', count(*) filter (where attributes_json ? 'initiative_classification'),
+        'business_value_story', count(*) filter (where attributes_json ? 'business_value_story'),
+        'business_value_type', count(*) filter (where attributes_json ? 'business_value_type'),
+        'primary_tool_or_platform', count(*) filter (where attributes_json ? 'primary_tool_or_platform'),
+        'vendor_name', count(*) filter (where attributes_json ? 'vendor_name'),
+        'cost_to_build_high_usd', count(*) filter (where attributes_json ? 'cost_to_build_high_usd'),
+        'benefit_realization_lag_months', count(*) filter (where attributes_json ? 'benefit_realization_lag_months'),
+        'finance_status', count(*) filter (where attributes_json ? 'finance_status'),
+        'value_tracking_cadence', count(*) filter (where attributes_json ? 'value_tracking_cadence'),
+        'gating_constraint', count(*) filter (where attributes_json ? 'gating_constraint'),
+        'as_of_date', count(*) filter (where attributes_json ? 'as_of_date')
+      )
+      from ecl_context.object
+      where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
+        and canonical_semantic_type = 'ai_use_case'
+    ),
+    'ai_tool_field_survival', (
+      select jsonb_build_object(
+        'rows', count(*),
+        'tool_rollout_id', count(*) filter (where attributes_json ? 'tool_rollout_id'),
+        'rollout_goal', count(*) filter (where attributes_json ? 'rollout_goal'),
+        'vendor_name', count(*) filter (where attributes_json ? 'vendor_name'),
+        'enabled_users', count(*) filter (where attributes_json ? 'enabled_users'),
+        'monthly_active_users', count(*) filter (where attributes_json ? 'monthly_active_users'),
+        'rollout_target_users', count(*) filter (where attributes_json ? 'rollout_target_users'),
+        'adoption_target_pct', count(*) filter (where attributes_json ? 'adoption_target_pct'),
+        'adoption_actual_pct', count(*) filter (where attributes_json ? 'adoption_actual_pct'),
+        'control_blocker', count(*) filter (where attributes_json ? 'control_blocker'),
+        'linked_business_case_count', count(*) filter (where attributes_json ? 'linked_business_case_count'),
+        'refresh_cadence', count(*) filter (where attributes_json ? 'refresh_cadence'),
+        'as_of_date', count(*) filter (where attributes_json ? 'as_of_date')
+      )
+      from ecl_context.object
+      where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
+        and canonical_semantic_type = 'ai_tool'
+    ),
+    'ai_tool_measure_survival', (
+      select coalesce(jsonb_object_agg(metric_key, row_count), '{}'::jsonb)
+      from (
+        select m.metric_key, count(*) as row_count
+        from ecl_context.measure m
+        join ecl_context.object o
+          on o.tenant_key = m.tenant_key
+         and o.assessment_id = m.assessment_id
+         and o.id = m.subject_object_id
+        where m.tenant_key = ${tenant} and m.assessment_id = ${assessment}
+          and m.attributes_json ->> 'layer3_build_version' = ${buildVersion}
+          and o.canonical_semantic_type = 'ai_tool'
+          and m.metric_key in ('linked_business_case_count','rollout_target_users','enabled_users','monthly_active_users','adoption_target_pct','adoption_actual_pct')
+        group by m.metric_key
+      ) counts
+    ),
     'objects_missing_semantic_type', (
       select count(*) from ecl_context.object
       where tenant_key = ${tenant} and assessment_id = ${assessment}
@@ -776,6 +838,57 @@ function validateReadback(readback, expected) {
   for (const [semanticType, count] of Object.entries(expected.objects_by_semantic_type)) {
     if (Number(readback.objects_by_semantic_type?.[semanticType] ?? 0) !== Number(count)) {
       issues.push(`semantic_type_${semanticType}_expected_${count}_got_${readback.objects_by_semantic_type?.[semanticType] ?? 0}`);
+    }
+  }
+  const expectedAiCases = Number(expected.objects_by_semantic_type.ai_use_case ?? 0);
+  const expectedAiTools = Number(expected.objects_by_semantic_type.ai_tool ?? 0);
+  for (const key of [
+    "business_case_id",
+    "project_id",
+    "initiative_classification",
+    "business_value_story",
+    "business_value_type",
+    "primary_tool_or_platform",
+    "vendor_name",
+    "cost_to_build_high_usd",
+    "benefit_realization_lag_months",
+    "finance_status",
+    "value_tracking_cadence",
+    "gating_constraint",
+    "as_of_date",
+  ]) {
+    if (Number(readback.ai_case_field_survival?.[key] ?? 0) !== expectedAiCases) {
+      issues.push(`ai_case_field_${key}_expected_${expectedAiCases}_got_${readback.ai_case_field_survival?.[key] ?? 0}`);
+    }
+  }
+  for (const key of [
+    "tool_rollout_id",
+    "rollout_goal",
+    "vendor_name",
+    "enabled_users",
+    "monthly_active_users",
+    "rollout_target_users",
+    "adoption_target_pct",
+    "adoption_actual_pct",
+    "control_blocker",
+    "linked_business_case_count",
+    "refresh_cadence",
+    "as_of_date",
+  ]) {
+    if (Number(readback.ai_tool_field_survival?.[key] ?? 0) !== expectedAiTools) {
+      issues.push(`ai_tool_field_${key}_expected_${expectedAiTools}_got_${readback.ai_tool_field_survival?.[key] ?? 0}`);
+    }
+  }
+  for (const key of [
+    "linked_business_case_count",
+    "rollout_target_users",
+    "enabled_users",
+    "monthly_active_users",
+    "adoption_target_pct",
+    "adoption_actual_pct",
+  ]) {
+    if (Number(readback.ai_tool_measure_survival?.[key] ?? 0) !== expectedAiTools) {
+      issues.push(`ai_tool_measure_${key}_expected_${expectedAiTools}_got_${readback.ai_tool_measure_survival?.[key] ?? 0}`);
     }
   }
   if (Number(readback.objects_missing_semantic_type ?? 1) !== 0) issues.push("objects_missing_semantic_type");

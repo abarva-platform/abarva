@@ -1,4 +1,6 @@
 rule,file,reason
+synthetic-v-folder-reference,.github/workflows/source-candidate-supplier-registry-import-job.yml,non-loader historical reference
+synthetic-v-folder-reference,.github/workflows/source-servicenow-request-import-job.yml,non-loader historical reference
 synthetic-v-folder-reference,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
 legacy-v-dimension-token,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
 legacy-v-file-name,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
@@ -6,6 +8,10 @@ synthetic-v-folder-reference,datasets/enterprise-profile-foundation-v1/active-te
 legacy-v-dimension-token,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 legacy-v-file-name,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 v6-v7-current-state,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
+synthetic-v-folder-reference,datasets/source/candidate-supplier-registry-synthetic-v2/FIELD_GUIDE.md,non-loader historical reference
+synthetic-v-folder-reference,docs/architecture/item26-draw16-stale-suite-triage.json,non-loader historical reference
+synthetic-v-folder-reference,docs/architecture/item26-draw17-stale-suite-triage.json,non-loader historical reference
+synthetic-v-folder-reference,docs/architecture/t475-stale-suite-triage.json,non-loader historical reference
 v6-v7-current-state,docs/architecture/V3_DATA_ARCHITECTURE_STATUS_AND_V6V7_SUNSET_2026-07-17.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/BRAIN_CONTRACT_CODEX_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/CODEX_STREAMS_D_E_F_2026-05-26.md,non-loader historical reference
@@ -40,6 +46,9 @@ synthetic-v-folder-reference,docs/governance/dataset-manifests/first-capital-ric
 v6-v7-current-state,docs/governance/dataset-manifests/meridian-health-v6-v7-current-state-v1.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-rich-synthetic-v3-candidate-20260717.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-synthetic-v2.json,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/source-candidate-supplier-registry-synthetic-v1.json,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/source-candidate-supplier-registry-synthetic-v2.json,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/source-servicenow-sourcing-requests-synthetic-v1.json,non-loader historical reference
 synthetic-v-folder-reference,docs/intelligence-v6/SKYHARBOR_CTO_AIRLINE_DEMO_PACKAGE_2026-06-30.md,non-loader historical reference
 legacy-v-dimension-token,docs/intelligence-v6/SKYHARBOR_V6_CTO_DEMO_DESIGN_AUDIT_2026-06-30.md,non-loader historical reference
 synthetic-v-folder-reference,docs/intelligence-v6/V6_TENANT_PACK_VALIDATION_2026-06-30.json,non-loader historical reference
@@ -111,6 +120,8 @@ current-state-pack,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md
 v6-v7-current-state,docs/releases/records/2026-07-16-multi-tenant-v3-cxo-context.md,release record
 legacy-v-dimension-token,docs/releases/records/2026-08-19-v6-v7-dead-code-sweep.md,release record
 legacy-v-file-name,docs/releases/records/2026-08-19-v6-v7-dead-code-sweep.md,release record
+synthetic-v-folder-reference,docs/releases/records/2026-09-22-source-ai-engineering-archetype-pack.md,release record
+synthetic-v-folder-reference,docs/releases/records/2026-09-22-source-candidate-supplier-registry-synthetic-v1.md,release record
 synthetic-v-folder-reference,docs/skyharbor/AZURE_PRIVATE_LOAD_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SOURCE_CONTEXT_BUNDLE_TRACE_PROOF_2026-06.md,non-loader historical reference
@@ -346,6 +357,7 @@ legacy-v-dimension-token,reports/skyharbor-compatibility-snapshot/skyharbor-comp
 legacy-v-file-name,reports/skyharbor-compatibility-snapshot/skyharbor-compatibility-snapshot.json,generated/historical report
 legacy-v-dimension-token,reports/skyharbor-compatibility-snapshot/skyharbor-compatibility-snapshot.md,generated/historical report
 legacy-v-file-name,reports/skyharbor-compatibility-snapshot/skyharbor-compatibility-snapshot.md,generated/historical report
+synthetic-v-folder-reference,reports/source/servicenow-request-acceptance-matrix.json,generated/historical report
 synthetic-v-folder-reference,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.csv,generated/historical report
 v6-v7-current-state,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.csv,generated/historical report
 synthetic-v-folder-reference,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.json,generated/historical report
@@ -433,6 +445,7 @@ legacy-v-dimension-token,scripts/data-build/__tests__/run-evidence-v4-migration-
 legacy-v-file-name,scripts/data-build/__tests__/run-evidence-v4-migration-tests.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/data-build/evidence-v4-migration-dry-run.mjs,non-loader historical reference
 legacy-v-file-name,scripts/data-build/evidence-v4-migration-dry-run.mjs,non-loader historical reference
+synthetic-v-folder-reference,scripts/ecl/__tests__/test_synthetic_enterprise_home_promotion.ts,non-loader historical reference
 synthetic-v-folder-reference,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 legacy-v-file-name,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
@@ -499,6 +512,10 @@ synthetic-v-folder-reference,scripts/skyharbor/stages/07_verify/coverage_report.
 synthetic-v-folder-reference,scripts/skyharbor/stages/07_verify/fact_fingerprint_check.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/skyharbor/verify-airline-pattern-overlay.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/skyharbor/verify-skyharbor-substrate.mjs,non-loader historical reference
+synthetic-v-folder-reference,scripts/source/__tests__/candidate-supplier-registry-package.test.ts,non-loader historical reference
+synthetic-v-folder-reference,scripts/source/load-candidate-supplier-registry.ts,non-loader historical reference
+synthetic-v-folder-reference,scripts/source/load-servicenow-sourcing-requests.ts,non-loader historical reference
+synthetic-v-folder-reference,scripts/source/validate-candidate-supplier-registry-package.ts,non-loader historical reference
 v6-v7-current-state,scripts/tenant-v3/audit-home-v3-runtime-reachability.ts,non-loader historical reference
 v6-v7-current-state,scripts/tenant-v3/configs/meridian-health.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/tenant-v3/generate-rich-synthetic-tenant.mjs,non-loader historical reference
@@ -509,12 +526,18 @@ synthetic-v-folder-reference,scripts/verify/apex-sentinel-canonical.mjs,non-load
 synthetic-v-folder-reference,scripts/verify/meridian-context-showcase.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/meridian-data-pack-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/northstar-context-layer-scaffold.mjs,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/behaviors/source-servicenow-request-acceptance-harness.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-import-workflow.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-loader.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/integration/source/source-servicenow-request-loader.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/unit/source-candidate-supplier-archetype-coverage.test.ts,non-loader historical reference
 old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,non-loader historical reference
 legacy-v-dimension-token,src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts,non-loader historical reference
-synthetic-v-folder-reference,src/app/api/admin/context-layer/manifest-load/route.ts,non-loader historical reference
 legacy-v-dimension-token,src/app/api/intelligence/ask/route.ts,non-loader historical reference
 legacy-v-file-name,src/app/api/intelligence/ask/route.ts,non-loader historical reference
-synthetic-v-folder-reference,src/components/admin/context-layer/__tests__/CsvUploadConnector.test.tsx,non-loader historical reference
+legacy-v-dimension-token,src/app/api/programs/synthesis/__tests__/route.invariants.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/app/api/programs/synthesis/__tests__/route.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/app/api/reasoning/stage-synthesis/__tests__/route.invariants.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-dimension-token,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-file-name,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
@@ -525,7 +548,6 @@ legacy-v-dimension-token,src/lib/admin/tenant-manifest-projection-audit.ts,non-l
 legacy-v-file-name,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/ava-answer/__tests__/public-answer-scrub.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/ava-answer/__tests__/public-answer-scrub.test.ts,non-loader historical reference
-synthetic-v-folder-reference,src/lib/context-ingestion/__tests__/csv-upload-connector.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/demo/demo-dataset-registry.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/enterprise-context/derived-enterprise-read.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/enterprise-data/candidate-generation/tenant-candidate-version-generator.ts,non-loader historical reference
@@ -553,19 +575,8 @@ legacy-v-file-name,src/lib/home/know/home-know-agent-answer.ts,non-loader histor
 synthetic-v-folder-reference,src/lib/home/v6-context-browser.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/v6-context-browser.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/v6-context-browser.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/intelligence/__tests__/industrial-cio-backoffice-readiness.test.ts,non-loader historical reference
-legacy-v-file-name,src/lib/intelligence/__tests__/industrial-cio-backoffice-readiness.test.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts,non-loader historical reference
-legacy-v-file-name,src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts,non-loader historical reference
-synthetic-v-folder-reference,src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/intelligence/ask/tenant-safety-policy.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/intelligence/binding/all-tenants.json,non-loader historical reference
-synthetic-v-folder-reference,src/lib/intelligence/industrial-cio-backoffice-readiness.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/intelligence/industrial-cio-backoffice-readiness.ts,non-loader historical reference
-legacy-v-file-name,src/lib/intelligence/industrial-cio-backoffice-readiness.ts,non-loader historical reference
-synthetic-v-folder-reference,src/lib/intelligence/skyharbor-cto-readiness.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/intelligence/skyharbor-cto-readiness.ts,non-loader historical reference
-legacy-v-file-name,src/lib/intelligence/skyharbor-cto-readiness.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/knowledge-corpus/fixtures/skyharbor-airline.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/module-v6/demo-tenant-packs.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/module-v6/demo-tenant-packs.ts,non-loader historical reference
@@ -578,6 +589,8 @@ legacy-v-file-name,src/lib/programs/__tests__/move-context-extract.test.ts,non-l
 current-state-pack,src/lib/programs/__tests__/move-context-extract.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/semantic-dossiers/build-universal-dimension-dossier.ts,non-loader historical reference
+synthetic-v-folder-reference,src/lib/source/intake/__tests__/servicenow-request-event-handoff.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/lib/source/intake/__tests__/servicenow-sourcing-request-dataset.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/source/vendor-inference-economics.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/lakeshore/load-cio-tower-facts.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/setup-data/load-apex-p18-data-pack.ts,non-loader historical reference

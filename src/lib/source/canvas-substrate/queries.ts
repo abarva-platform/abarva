@@ -31,9 +31,10 @@ export async function listArtifactStatesForEvent(
   try {
     // Physical read goes through the data-plane seam (Supabase default,
     // Azure Postgres opt-in via ABARVA_DATA_PLANE).
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
+        sourceEventId,
+      );
     return rows.map(artifactStateRowToView);
   } catch (error) {
     // An unconfigured env (tests, local dev without DB) or a query error —
@@ -46,15 +47,101 @@ export async function listArtifactStatesForEvent(
   }
 }
 
+export async function listArtifactStatesForEventStage(
+  sourceEventId: string,
+  stageKey: string,
+): Promise<SourceEventArtifactState[]> {
+  try {
+    const adapter = selectSourceCanvasSubstrateReadAdapter();
+    const rows = await adapter.listArtifactStateMetadataRows(
+      sourceEventId,
+      stageKey,
+    );
+    let reviewRows: Awaited<
+      ReturnType<typeof adapter.listArtifactStateReviewRows>
+    > = [];
+    try {
+      reviewRows = await adapter.listArtifactStateReviewRows(
+        sourceEventId,
+        stageKey,
+      );
+    } catch (error) {
+      console.error(
+        '[listArtifactStatesForEventStage:review]',
+        error instanceof Error ? error.message : error,
+      );
+    }
+    const reviewsById = new Map(
+      reviewRows.map((row) => [row.id, row.body_generation_metadata]),
+    );
+    return rows.map((row) =>
+      artifactStateRowToView({
+        ...row,
+        body: null,
+        body_generation_metadata: currentReviewReceipt(
+          reviewsById.get(row.id),
+        ),
+      }),
+    );
+  } catch (error) {
+    console.error(
+      '[listArtifactStatesForEventStage]',
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
+}
+
+function currentReviewReceipt(
+  metadata: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (
+    !metadata ||
+    typeof metadata.qualityGate !== 'object' ||
+    !metadata.qualityGate ||
+    Array.isArray(metadata.qualityGate)
+  ) {
+    return null;
+  }
+  const generatedAt =
+    typeof metadata.generatedAt === 'string'
+      ? Date.parse(metadata.generatedAt)
+      : NaN;
+  if (metadata.humanEditedAt != null) {
+    const humanEditedAt =
+      typeof metadata.humanEditedAt === 'string'
+        ? Date.parse(metadata.humanEditedAt)
+        : NaN;
+    if (
+      !Number.isFinite(generatedAt) ||
+      !Number.isFinite(humanEditedAt) ||
+      humanEditedAt > generatedAt
+    ) {
+      return null;
+    }
+  }
+  const gate = metadata.qualityGate as Record<string, unknown>;
+  return {
+    qualityGate: {
+      passed: gate.passed === true,
+      overallScore: gate.overallScore,
+      finalSummary: gate.finalSummary,
+      unsupportedClaims: gate.unsupportedClaims,
+      missingEvidence: gate.missingEvidence,
+    },
+  };
+}
+
 export async function listGateCriterionStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventGateCriterion[]> {
   try {
     // Physical read goes through the data-plane seam (Supabase default,
     // Azure Postgres opt-in via ABARVA_DATA_PLANE).
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listGateCriterionStateRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listGateCriterionStateRows(
+        sourceEventId,
+      );
     return rows.map(gateCriterionStateRowToView);
   } catch (error) {
     // An unconfigured env (tests, local dev without DB) or a query error —
@@ -73,9 +160,10 @@ export async function listEvidenceStatesForEvent(
   try {
     // Physical read goes through the data-plane seam (Supabase default,
     // Azure Postgres opt-in via ABARVA_DATA_PLANE).
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listEvidenceStateRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listEvidenceStateRows(
+        sourceEventId,
+      );
     return rows.map(evidenceStateRowToView);
   } catch (error) {
     // An unconfigured env (tests, local dev without DB) or a query error —
@@ -92,9 +180,10 @@ export async function listEventFactsForEvent(
   sourceEventId: string,
 ): Promise<SourceEventFactRow[]> {
   try {
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listEventFactRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listEventFactRows(
+        sourceEventId,
+      );
     return rows;
   } catch (error) {
     console.error(
@@ -162,7 +251,9 @@ export function countGateProgress(
   fromStage: string,
 ): { met: number; total: number; allMet: boolean } {
   const slice = criteria.filter((c) => c.fromStage === fromStage);
-  const met = slice.filter((c) => c.state === 'met' || c.state === 'waived').length;
+  const met = slice.filter(
+    (c) => c.state === 'met' || c.state === 'waived',
+  ).length;
   const total = slice.length;
   return { met, total, allMet: total > 0 && met === total };
 }

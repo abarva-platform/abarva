@@ -41,6 +41,117 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # shellcheck is preinstalled on ubuntu-latest. `bash -n` catches syntax
+      # and nothing else, and three of the last four defects in this script
+      # family were shell semantics: a pipe swallowing an exit status, a
+      # substring test standing in for a comparison, a variable hiding a path
+      # from a resolver. Every one was found by a person noticing a
+      # construction.
+      #
+      # This starts clean rather than with a waiver list. Measured before it
+      # was proposed: 15 shell files under scripts/, 0 errors, 2 warnings, 6
+      # findings in total, and all six were fixed or answered rather than
+      # baselined. A gate that arrives already failing teaches people to
+      # ignore it.
+      #
+      # -x so a sourced sibling is followed instead of reported as unreadable.
+      - name: Shellcheck scripts/
+        run: |
+          shellcheck --version
+          find scripts -name '*.sh' -type f -print0 | xargs -0 shellcheck -x
+
+      # C-593. The repository's own CI helper suites under `scripts/ci/`.
+      #
+      # Wired for the same reason as the sweep below, which is item T-457's
+      # lesson restated: a suite that runs in no required job cannot fail a
+      # merge, and this one guards a branch where BOTH wrong answers are
+      # silent. `scripts/ci/snapshot-pr.mjs` decides whether a failed
+      # `gh pr create` is this repository refusing Actions the capability or a
+      # real error. Classify everything as the refusal and a genuine break is
+      # green forever; classify the refusal as a break and the job is red
+      # forever, which is where `ai-cost-daily.yml` sat for all 73 of its
+      # scheduled runs.
+      #
+      # By GLOB, not file by file, so a suite written beside it tomorrow blocks
+      # a merge the day it lands rather than the day somebody edits a list —
+      # and `nullglob` is not assumed: an empty directory would otherwise make
+      # `node` run against the literal pattern and fail for the wrong reason.
+      #
+      # Each path is echoed before it runs so the BLOCKING run carries a
+      # quotable line per suite, and every suite runs even after one fails.
+      - name: Prove the CI helper contracts can fail a merge
+        run: |
+          status=0
+          for suite in scripts/ci/*.test.mjs; do
+            [ -e "$suite" ] || continue
+            echo "--- $suite"
+            node "$suite" || status=1
+          done
+          exit "$status"
+
+      # C-582. The execution-queue toolchain's own behavioural contracts.
+      #
+      # All fifteen of them -- the claim gate, the queue generator, the register
+      # time-authority control, the provenance guard, the sweep-hazard
+      # preflight -- were wired only in `execution-queue-toolchain.yml`, whose
+      # job `Execution queue behavioral contract` is required by NO ruleset.
+      # Read by name against the rulesets API on 2026-10-04, `main` carried 19
+      # required contexts and that was not one of them. It triggers on
+      # `scripts/exec/**` and it is advisory when it goes red, which is item
+      # T-457's own lesson one layer up: a job that passes may be required by
+      # nothing. Those suites are the tools every other item's ownership and
+      # evidence rest on, so they are the last ones in this repository that
+      # should run where a red cannot stop a merge.
+      #
+      # Wired HERE rather than by adding a twentieth required context: adding
+      # one is a change to GitHub repository settings, which no pull request can
+      # make, and AGENTS.md records that the required list was deliberately
+      # trimmed for speed mode.
+      #
+      # And wired here rather than into `Behavior coverage floor`, which was the
+      # first choice and was wrong on a ground only measurement shows. Read from
+      # the Actions API rather than from the `timeout-minutes` written in the
+      # YAML, the floor job runs ~20m07s against its own 25-minute timeout,
+      # while this job runs ~4m59s against 15. A `timeout-minutes` kill reports
+      # CANCELLED, not failed, so spending a quarter of the thinnest remaining
+      # margin in the repository would have introduced a FALSE STATE on a
+      # required check rather than an honest red -- the opposite of the item.
+      # This job also already owns the repository's own tooling under
+      # `scripts/`: it shellchecks the tree above and runs a script out of
+      # `scripts/integration/`, so these contracts sit with their own kind.
+      #
+      # `node`, not jest: these are plain Node suites and nothing here measures
+      # coverage. The directory is swept by GLOB rather than listed file by
+      # file, so a suite written beside the others tomorrow blocks a merge the
+      # day it lands instead of the day somebody remembers to edit a list.
+      #
+      # Each suite's path is echoed before it runs, so the BLOCKING run has a
+      # quotable line per suite. That is item T-595's distinction applied here
+      # rather than rediscovered later: the advisory workflow still names these
+      # suites in individual steps, and if the only named line lived there, a
+      # closure note quoting it would be a true sentence about a run that cannot
+      # gate anything.
+      #
+      # Every suite runs even after one fails, and the step fails at the end.
+      # `set -e` would stop at the first red and hide the rest; measured on a
+      # deliberate one-line break, three contracts go red, so stopping early
+      # would report one defect where there are three.
+      #
+      # The contract that this sweep exists at all is
+      # `src/__tests__/behaviors/exec-toolchain-requiredness.test.ts`: it reads
+      # the required contexts from `docs/ci/required-status-checks.json`, expands
+      # this glob against the real directory, and fails if any suite on disk is
+      # run by no required job. Red first with this step absent: 2 failed / 8
+      # passed, the failure naming all fifteen suites.
+      - name: Prove the execution-queue toolchain contracts can fail a merge
+        run: |
+          status=0
+          for suite in scripts/exec/*.test.mjs; do
+            echo "--- $suite"
+            node "$suite" || status=1
+          done
+          exit "$status"
+
       - name: Make hygiene gate executable
         run: chmod +x scripts/integration/hygiene_gate.sh
 

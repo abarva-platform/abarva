@@ -141,6 +141,16 @@ const V4_SNAPSHOT: SourceV4WorkspaceSnapshot = {
     autoRenewCount: 12,
     notice90DayCount: 74,
   },
+  contextCoverage: {
+    vendors: 60,
+    contracts: 100,
+    annualValue: 1480500000,
+    scopeRows: 5200,
+    invoiceLines: 175000,
+    saasUsageRows: 24480,
+    cloudRows: 1200,
+    performanceRows: 7200,
+  },
   scopeConfidence: {
     rowCount: 5200,
     explicitScopeCount: 2600,
@@ -174,6 +184,7 @@ const WORKSPACE_DIAGNOSTICS = {
   datasetVersion: "v4",
   analyticsProvider: "CubeSourceProvider",
   activeLoadRunId: "source-v4-load-20260803",
+  lastCompletedLoadAtIso: null,
   asOfDateIso: "2027-06-30T00:00:00Z",
   v4ContractCount: 100,
   v4VendorCount: 60,
@@ -407,17 +418,202 @@ describe("buildViewModel numeric coercion", () => {
         };
         financeConfirmed: string;
       };
+      commercialPosture: {
+        items: Array<{ label: string; value: string; detail: string }>;
+      };
+      avaSuggestedActions: Array<{ id: string; label: string; body: string }>;
+      avaSurfaceContext: {
+        sourceV4: {
+          commercialPosture: {
+            items: Array<{ label: string; value: string; detail: string }>;
+          };
+        };
+      };
     };
 
     expect(built.opportunityView.potential.recoverable).toBe("Not sized");
     expect(built.opportunityView.potential.total).toBe("Not sized");
     expect(built.opportunityView.financeConfirmed).toBe("Not established");
+    expect(built.commercialPosture.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Commitment posture",
+          value: "Commitment aligned",
+        }),
+        expect.objectContaining({
+          label: "Value type",
+          value: "No sized opportunity",
+        }),
+        expect.objectContaining({
+          label: "Top lever",
+          value: "Commercial baseline conflict",
+        }),
+        expect.objectContaining({
+          label: "Evidence depth",
+          value: "Partial",
+        }),
+      ]),
+    );
+    expect(
+      built.avaSurfaceContext.sourceV4.commercialPosture.items.map(
+        (item) => item.label,
+      ),
+    ).toContain("Commitment posture");
+    expect(built.avaSuggestedActions.map((action) => action.label)).toEqual(
+      expect.arrayContaining([
+        "Compare this contract's commercial posture with the portfolio.",
+        "Which levers are negotiable, avoidable, or recoverable?",
+        "What can I safely say to a CFO?",
+        "What would we ask the vendor for next?",
+      ]),
+    );
     expect(built.compactItems).toEqual(
       expect.arrayContaining([
         { label: "potential recoverable", value: "Not sized" },
         { label: "finance confirmed", value: "Not established" },
       ]),
     );
+  });
+
+  it("keeps signal-stage opportunities out of selected-contract posture totals", () => {
+    const vm = buildVm();
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.tabs.contract = "Optimize";
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
+      optimizationOpportunitySet: {
+        tenantKey: "skyharbor_global",
+        datasetVersion: "v4-golden-evidence",
+        contractId: "c1",
+        vendorId: "vendor-one",
+        vendorName: "Vendor One",
+        contractName: "Default Contract",
+        recommendation: "Build an optimization plan.",
+        recommendationDetail: "Line-level opportunity evidence is available.",
+        actionState: "validate_opportunity",
+        baseline: {
+          status: "ready",
+          headline: "Commercial baseline loaded",
+          detail: "Annual value is available.",
+          annualValueUsd: 50_000_000,
+          pricingScheduleAnnualValueUsd: null,
+          actualAnnualSpendUsd: 48_000_000,
+          totalCommittedValueUsd: 150_000_000,
+          conflictAmountUsd: null,
+          sourceRefs: ["source.contract_360"],
+        },
+        selectedOpportunityId: "c1:commitment-ramp",
+        opportunities: [
+          {
+            opportunityId: "c1:commitment-ramp",
+            contractId: "c1",
+            label: "Re-time annual commitment",
+            shortLabel: "Commitment ramp",
+            valueType: "negotiated_improvement",
+            amountUsd: 620_000,
+            amountState: "exact",
+            stage: "quantified",
+            evidenceGrade: "document_evidenced",
+            confidence: 0.82,
+            deadline: null,
+            owner: "Commercial owner",
+            blockingGap: "Finance confirmation is required.",
+            nextAction: "Propose milestone-based ramp schedule.",
+            sourceSystems: ["CLM / contract repository"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "Included only in negotiated improvement to avoid double counting.",
+            approvalState: "needs_review",
+            narrative: "Commitment ramp evidence is document-backed.",
+          },
+          {
+            opportunityId: "c1:discount-signal",
+            contractId: "c1",
+            label: "Discount-band signal",
+            shortLabel: "Discount signal",
+            valueType: "negotiated_improvement",
+            amountUsd: 330_000,
+            amountState: "range",
+            stage: "signal",
+            evidenceGrade: "system_evidenced",
+            confidence: 0.3,
+            deadline: null,
+            owner: "Strategic sourcing",
+            blockingGap:
+              "Benchmark comparable required before discount-band value can be treated as supported.",
+            nextAction: "Load benchmark comparable before sizing the ask.",
+            sourceSystems: ["Benchmark gap register"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "Excluded from sized totals until the evidence gate closes.",
+            approvalState: "needs_review",
+            narrative: "Discount signal remains advisory.",
+          },
+        ],
+        financeRealizations: [],
+        evidenceRequirements: ["Finance confirmation evidence is required."],
+        potentialRecoverableUsd: 0,
+        potentialAvoidableUsd: 0,
+        potentialNegotiableUsd: 950_000,
+        financeConfirmedUsd: 0,
+      },
+    };
+
+    const built = buildViewModel(vm) as {
+      opportunityView: {
+        potential: {
+          negotiable: string;
+          total: string;
+        };
+      };
+      commercialPosture: {
+        items: Array<{ label: string; value: string; detail: string }>;
+      };
+      avaSurfaceContext: {
+        sourceV4: {
+          commercialPosture: {
+            items: Array<{ label: string; value: string; detail: string }>;
+          };
+        };
+      };
+    };
+    const valueType = built.commercialPosture.items.find(
+      (item) => item.label === "Value type",
+    );
+    const avaValueType =
+      built.avaSurfaceContext.sourceV4.commercialPosture.items.find(
+        (item) => item.label === "Value type",
+      );
+
+    expect(built.opportunityView.potential.negotiable).toBe("$620K");
+    expect(built.opportunityView.potential.total).toBe("$620K");
+    expect(valueType?.detail).toContain("$620K negotiable");
+    expect(valueType?.detail).not.toContain("$950K negotiable");
+    expect(avaValueType?.detail).toContain("$620K negotiable");
+    expect(avaValueType?.detail).not.toContain("$950K negotiable");
   });
 
   it("labels invoice billing-rate variance separately from rate-card evidence", () => {
@@ -509,6 +705,13 @@ describe("buildViewModel numeric coercion", () => {
             sourceRefs: [],
           },
         ],
+        optimizationCase: {
+          caseId: "case-1",
+          door1EventId: null,
+          caseState: "evidence_review",
+          owner: "Category Management",
+          nextAction: "Attach reviewed pricing evidence.",
+        },
         evidenceRequirements: ["No recoverable leakage evidence gap remains."],
         potentialRecoverableUsd: 365_000,
         potentialAvoidableUsd: 0,
@@ -519,6 +722,7 @@ describe("buildViewModel numeric coercion", () => {
 
     const built = buildViewModel(vm) as {
       opportunityView: {
+        caseThread: { state: string; owner: string; nextAction: string };
         selectedOpportunity: {
           label: string;
           shortLabel: string;
@@ -535,6 +739,12 @@ describe("buildViewModel numeric coercion", () => {
       };
     };
 
+    expect(built.opportunityView.caseThread).toEqual({
+      state: "Evidence Review",
+      caseCount: 1,
+      owner: "Category Management",
+      nextAction: "Attach reviewed pricing evidence.",
+    });
     expect(built.opportunityView.selectedOpportunity).toMatchObject({
       label: "Invoice billing-rate variance",
       shortLabel: "Invoice billing-rate variance",
@@ -684,6 +894,7 @@ describe("buildViewModel numeric coercion", () => {
       "Relationship",
       "Evidence",
       "Optimize",
+      "Education",
     ]);
     expect(built.cOverview).toBe(true);
     expect(built.cRelationship).toBe(false);
@@ -942,6 +1153,89 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.thesis).not.toContain("Not established actual spend");
   });
 
+  it("prefers positive detail spend over a stale zero on the contract summary row", () => {
+    const selectedContract = contractRow({
+      contract_id: "c1",
+      vendor_ref: "vendor-one",
+      vendor_name: "Vendor One",
+      actual_annual_spend: 0,
+    });
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        sel: { kind: "contract", id: "c1" },
+        tabs: { ...INITIAL_STATE.tabs, contract: "Story" },
+        contractDetail: {
+          c1: {
+            contract: selectedContract,
+            financialExposure: null,
+            operationalPerformance: null,
+            initiativeDependencies: [],
+            scopeTiers: {
+              explicit: [],
+              reviewed: [],
+              vendorInferred: [],
+              unresolved: [],
+              totalCount: 0,
+            },
+            towerObservations: [],
+            towerValueClaims: [],
+            hasTowerOverlay: false,
+            docExtractions: [],
+            optimizationEvidence: null,
+            optimizationOpportunitySet: null,
+            evidenceOverview: null,
+            evidenceScope: [],
+            evidencePricing: [],
+            evidencePerformance: null,
+            performancePeriods: [],
+            spendMonths: [
+              {
+                tenant_key: "test_tenant",
+                observation_id: "spend-1",
+                contract_id: "c1",
+                service_id: "claims-processing",
+                business_unit: "Ops",
+                cost_center: "ops",
+                month: "2026-01-01",
+                period_start: "2026-01-01",
+                period_end: "2026-01-31",
+                committed_amount: null,
+                invoice_amount: null,
+                paid_amount: null,
+                actual_spend: 8588000,
+                currency: "USD",
+                source_system: "governed_source_depth_loader",
+                source_record_id: "spend-1",
+                as_of_date: "2026-08-01",
+                quality_state: "reviewed",
+                evidence_reference: "source_contract_depth:test",
+                load_run_id: "test",
+              },
+            ],
+          },
+        },
+      },
+      () => undefined,
+      {
+        ...PORTFOLIO,
+        contracts: [selectedContract],
+      },
+      "Airline Demo",
+      () => undefined,
+    );
+
+    const built = buildViewModel(vm) as {
+      c: { spend: string } | null;
+      valueStrip: Array<{ label: string; value: string }>;
+    };
+    expect(built.c?.spend).toBe("$8.6M");
+    expect(
+      built.valueStrip.find((item) => item.label === "Actual annual spend")
+        ?.value,
+    ).toBe("$8.6M");
+  });
+
   it("keeps the Source v4 semantic catalog on the workspace payload", () => {
     expect(PORTFOLIO.semanticLayer.datasetId).toBe("source-v4-cube-ui-catalog");
     expect(
@@ -960,6 +1254,23 @@ describe("buildViewModel numeric coercion", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as {
       avaSurfaceContext: {
+        claimContract: {
+          forbiddenClaims: string[];
+          requiredEvidenceForClaims: string[];
+          refusalTriggers: string[];
+        };
+        capabilities: {
+          source360: { canAnswer: string[] };
+          optimize: { rule: string };
+          newEvent: { rule: string };
+        };
+        groundingStatus: {
+          contractRows: number;
+          vendorRows: number;
+          actionCandidates: number;
+          claimCards: number;
+          avaGroundingBundles: number;
+        };
         sourceV4: {
           executivePortfolio: { contracts: number; annualValue: string };
           contractDirectory: Array<{ contractId: string }>;
@@ -973,6 +1284,38 @@ describe("buildViewModel numeric coercion", () => {
       };
     };
 
+    expect(built.avaSurfaceContext.groundingStatus.contractRows).toBe(100);
+    expect(built.avaSurfaceContext.groundingStatus.vendorRows).toBe(60);
+    expect(built.avaSurfaceContext.groundingStatus.actionCandidates).toBe(
+      IMPACT.actionCandidates.length,
+    );
+    expect(built.avaSurfaceContext.groundingStatus.claimCards).toBe(
+      IMPACT.claimCards.length,
+    );
+    expect(built.avaSurfaceContext.groundingStatus.avaGroundingBundles).toBe(
+      IMPACT.avaGroundingBundles.length,
+    );
+    expect(
+      built.avaSurfaceContext.claimContract.forbiddenClaims.join(" "),
+    ).toMatch(/realized savings.*finance confirmation/i);
+    expect(
+      built.avaSurfaceContext.claimContract.forbiddenClaims.join(" "),
+    ).toMatch(/another tenant/i);
+    expect(
+      built.avaSurfaceContext.claimContract.requiredEvidenceForClaims.join(" "),
+    ).toMatch(/Service-credit claim: SLA period rows/i);
+    expect(
+      built.avaSurfaceContext.claimContract.refusalTriggers.join(" "),
+    ).toMatch(/Award recommendation requested before the evaluation/i);
+    expect(built.avaSurfaceContext.capabilities.optimize.rule).toMatch(
+      /must not call them realized value/i,
+    );
+    expect(
+      built.avaSurfaceContext.capabilities.source360.canAnswer.join(" "),
+    ).toMatch(/action candidates/i);
+    expect(built.avaSurfaceContext.capabilities.newEvent.rule).toMatch(
+      /portfolio alone is not enough/i,
+    );
     expect(built.avaSurfaceContext.sourceV4.executivePortfolio.contracts).toBe(
       100,
     );
@@ -1044,18 +1387,144 @@ describe("buildViewModel numeric coercion", () => {
         ],
       },
     });
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
+      optimizationOpportunitySet: {
+        tenantKey: "skyharbor_global",
+        datasetVersion: "v4-golden-evidence",
+        contractId: "c1",
+        vendorId: "vendor-one",
+        vendorName: "Vendor One",
+        contractName: "Default Contract",
+        recommendation: "Prepare service-credit claim.",
+        recommendationDetail: "Service-credit claim evidence is available.",
+        actionState: "validate_opportunity",
+        baseline: {
+          status: "ready",
+          headline: "Commercial baseline loaded",
+          detail: "Annual value is available.",
+          annualValueUsd: 50_000_000,
+          pricingScheduleAnnualValueUsd: null,
+          actualAnnualSpendUsd: 48_000_000,
+          totalCommittedValueUsd: 150_000_000,
+          conflictAmountUsd: null,
+          sourceRefs: ["source.contract_360"],
+        },
+        selectedOpportunityId: "c1:sla-credit-recovery",
+        opportunities: [
+          {
+            opportunityId: "c1:sla-credit-recovery",
+            contractId: "c1",
+            label: "Unclaimed service credits",
+            shortLabel: "Service credits",
+            valueType: "recoverable_leakage",
+            amountUsd: 43_000,
+            amountState: "exact",
+            stage: "workflow_required",
+            evidenceGrade: "document_evidenced",
+            confidence: 0.81,
+            deadline: null,
+            owner: "Sourcing lead",
+            blockingGap: "Finance confirmation evidence is not complete.",
+            nextAction: "Prepare service-credit claim.",
+            sourceSystems: ["CLM / contract repository"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "Included only in recoverable leakage to avoid double counting.",
+            approvalState: "needs_review",
+            narrative: "Service credits were earned and not claimed.",
+            negotiationDetail: {
+              buyerAsk: "Apply the earned credit.",
+              negotiationLanguage:
+                "Apply the credit to the next governed invoice.",
+              vendorConcession:
+                "The vendor can credit the next invoice without reopening delivery scope.",
+              timingDependency: "Before the next invoice cycle.",
+              ownerRole: "Sourcing lead",
+              riskIfIgnored: "The credit can age out.",
+              priority: "P0",
+            },
+          },
+        ],
+        financeRealizations: [],
+        evidenceRequirements: ["Finance confirmation evidence is required."],
+        potentialRecoverableUsd: 43_000,
+        potentialAvoidableUsd: 0,
+        potentialNegotiableUsd: 0,
+        financeConfirmedUsd: 0,
+      },
+    };
     const built = buildViewModel(vm) as {
       avaSurfaceContext: {
         sourceV4: {
-          contractOpportunityDirectory: Array<{ sourceRefs: string[] }>;
+          optimizationOpportunities: {
+            opportunities: Array<{
+              buyerAsk: string | null;
+              contractId: string | null;
+              vendorConcession: string | null;
+            }>;
+          };
+          contractOpportunityDirectory: Array<{
+            blockingGap: string;
+            buyerAsk: string | null;
+            confidence: number | null;
+            evidenceGrade: string;
+            owner: string | null;
+            vendorConcession: string | null;
+            sourceRefs: string[];
+            stage: string | null;
+          }>;
         };
       };
     };
-    const refs =
-      built.avaSurfaceContext.sourceV4.contractOpportunityDirectory[0]
-        .sourceRefs;
+    const row =
+      built.avaSurfaceContext.sourceV4.contractOpportunityDirectory[0];
+    const refs = row.sourceRefs;
     const refsText = refs.join(" | ");
 
+    expect(row.stage).toBe("workflow_required");
+    expect(row.confidence).toBe(0.81);
+    expect(row.evidenceGrade).toBe("document_evidenced");
+    expect(row.blockingGap).toBe(
+      "Finance confirmation evidence is not complete.",
+    );
+    expect(row.owner).toBe("Sourcing lead");
+    expect(row.buyerAsk).toBe("Apply the earned credit.");
+    expect(row.vendorConcession).toBe(
+      "The vendor can credit the next invoice without reopening delivery scope.",
+    );
+    expect(
+      built.avaSurfaceContext.sourceV4.optimizationOpportunities
+        .opportunities[0],
+    ).toMatchObject({
+      contractId: "c1",
+      buyerAsk: "Apply the earned credit.",
+      vendorConcession:
+        "The vendor can credit the next invoice without reopening delivery scope.",
+    });
     expect(refsText).toContain("Contract record");
     expect(refsText).toContain("Opportunity record");
     expect(refsText).toContain("Finance confirmation not complete");

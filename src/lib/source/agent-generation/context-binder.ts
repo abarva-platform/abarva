@@ -29,6 +29,12 @@ import { buildArchetypeAdvisoryBlock } from "./archetype-advisory";
 import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposals/vendor-proposal-facts";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
+import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
+import {
+  loadContractEvidenceGenerationRecords,
+  loadContractEvidenceRuntimeSummary,
+} from "@/lib/source/contract-evidence/read-model";
 import type { SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
 import type {
   SourceAppInventoryEntry,
@@ -106,15 +112,24 @@ export async function buildSourceGenerationContext(
     gateCriteria,
     evidence,
     uploadedEvidence,
+    normalizedVendorResponsePackages,
     authoritativeVendorProposalFacts,
     currentStageGuidebook,
     nextStageGuidebook,
+    structuredContractEvidenceSummary,
+    structuredContractEvidenceRecords,
   ] = await Promise.all([
     listArtifactStatesForEvent(substrateEventId),
     listGateCriterionStatesForEvent(substrateEventId),
     listEvidenceStatesForEvent(substrateEventId),
     activeClient?.key
       ? listUploadedEvidenceForGeneration(substrateEventId, activeClient.key)
+      : Promise.resolve([]),
+    activeClient?.key
+      ? readNormalizedVendorResponsePackages({
+          eventId: substrateEventId,
+          tenantKey: activeClient.key,
+        }).catch(() => [])
       : Promise.resolve([]),
     activeClient?.key
       ? getAuthoritativeVendorProposalFacts(
@@ -137,6 +152,20 @@ export async function buildSourceGenerationContext(
           activeClient.key,
         ).catch(() => null)
       : Promise.resolve(null),
+    activeClient?.key
+      ? loadContractEvidenceRuntimeSummary({
+          db: getAzureReadFluentClient(),
+          tenantKey: activeClient.key,
+          sourceEventId: substrateEventId,
+        })
+      : Promise.resolve(null),
+    activeClient?.key
+      ? loadContractEvidenceGenerationRecords({
+          db: getAzureReadFluentClient(),
+          tenantKey: activeClient.key,
+          sourceEventId: substrateEventId,
+        })
+      : Promise.resolve([]),
   ]);
 
   // Pull the company's application inventory through the sanctioned broker seam
@@ -185,18 +214,32 @@ export async function buildSourceGenerationContext(
       classifiedCategory: event.classifiedCategory ?? null,
       rigor: event.rigor ?? null,
       currentStageKey: event.currentStageKey,
+      approvalPolicyCode: event.approvalPolicyCode ?? null,
       statusLabel: event.statusLabel,
       owner: event.owner ?? null,
-      // SourcingEventDetail exposes synopsis + problemStatement which
-      // capture the trigger + scope narrative produced at intake time.
-      triggerDescription: extractTrigger(event.problemStatement) ?? null,
-      scopeDescription: event.problemStatement ?? null,
+      // Bind the persisted intake fields independently. `problemStatement`
+      // remains a compatibility fallback for seed events that predate the
+      // explicit trigger/scope fields; it must never be reused as scope.
+      triggerDescription:
+        event.triggerDescription ??
+        extractTrigger(event.problemStatement) ??
+        event.problemStatement ??
+        null,
+      scopeDescription:
+        event.scopeDescription ?? event.synopsis ?? null,
       estimatedValueUsd: event.valueAtStakeUsd ?? null,
     },
     artifactStates,
     gateCriteria,
     evidence,
     uploadedEvidence,
+    normalizedVendorResponsePackages,
+    structuredContractEvidence: structuredContractEvidenceSummary
+      ? {
+          summary: structuredContractEvidenceSummary,
+          records: structuredContractEvidenceRecords,
+        }
+      : undefined,
     archetypeAdvisory,
     enterpriseAppInventory,
     authoritativeVendorProposalFacts,
@@ -282,20 +325,22 @@ export function sanitizeArtifactBodyForExport(body: string): string {
 }
 
 /**
- * Pluck approved-or-richer bodies from the substrate, keyed by code.
- * The prompt builder uses this to bind upstream artifacts into the
- * user message. Pre-approval-status bodies are still included if a
- * body exists — the user may have authored content but not yet flipped
- * the status pill, and the agent should still consume what's there.
+ * Pluck upstream bodies from the substrate, keyed by code. Most callers
+ * can use draft context; financial companion artifacts can require a
+ * reviewed upstream to avoid laundering an AI draft into authority.
  */
 export function collectUpstreamBodies(
   ctx: SourceGenerationContext,
   codes: string[],
+  options: { approvedOnly?: boolean } = {},
 ): Record<string, string> {
   const out: Record<string, string> = {};
   for (const code of codes) {
     const row = ctx.artifactStates.find((a) => a.artifactCode === code);
-    if (row?.body && row.body.trim().length > 0) {
+    if (
+      row?.body && row.body.trim().length > 0 &&
+      (!options.approvedOnly || row.status === "approved" || row.status === "locked")
+    ) {
       out[code] = sanitizeArtifactBodyForExport(row.body);
     }
   }
@@ -333,13 +378,14 @@ async function listUploadedEvidenceForGeneration(
   tenantKey: string,
 ): Promise<SourceGenerationUploadedArtifact[]> {
   const supabase = getAzureReadFluentClient();
+  const tenantAliases = tenantAliasesFor(tenantKey);
   const { data: artifactRows, error: artifactError } = await supabase
     .from("source_artifacts")
     .select(
       "id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin",
     )
     .eq("source_event_id", sourceEventId)
-    .eq("tenant_key", tenantKey)
+    .in("tenant_key", tenantAliases)
     .eq("source_origin", "uploaded")
     .order("created_at", { ascending: false })
     .limit(200);
@@ -377,19 +423,29 @@ async function listUploadedEvidenceForGeneration(
       .from("source_artifact_chunks")
       .select("artifact_id, chunk_text, chunk_kind, confidence")
       .in("artifact_id", artifactIds)
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantAliases)
       .order("confidence", { ascending: false })
-      .limit(160),
+      .limit(400),
     supabase
       .from("source_artifact_facts")
       .select("artifact_id, fact_type, fact_key, fact_value, confidence")
       .in("artifact_id", artifactIds)
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantAliases)
       .order("confidence", { ascending: false })
       .limit(160),
   ]);
 
   const chunksByArtifact = new Map<string, string[]>();
+  const responseQaArtifactIds = new Set(
+    latestArtifactRows
+      .filter((row) =>
+        /(?:bidder|vendor)[-_\s]*(?:qa|q&a)|(?:qa|q&a)[-_\s]*(?:log|clarification)|clarification[-_\s]*log/i.test(
+          String((row as { original_name?: unknown }).original_name ?? ""),
+        ),
+      )
+      .map((row) => String((row as { id?: unknown }).id ?? ""))
+      .filter(Boolean),
+  );
   for (const row of chunksResult.data ?? []) {
     const artifactId = String(
       (row as { artifact_id?: unknown }).artifact_id ?? "",
@@ -399,8 +455,15 @@ async function listUploadedEvidenceForGeneration(
       .trim();
     if (!artifactId || !chunkText) continue;
     const list = chunksByArtifact.get(artifactId) ?? [];
-    if (list.length < 5) {
-      list.push(chunkText.slice(0, 900));
+    const isResponseQaArtifact = responseQaArtifactIds.has(artifactId);
+    const chunkLimit = isResponseQaArtifact ? 24 : 5;
+    if (list.length < chunkLimit) {
+      // The text parser emits chunks up to 1,800 characters. Controlled bidder
+      // Q&A records often contain two complete entries in one chunk, so the
+      // generic 900-character prompt excerpt can silently drop the second
+      // authoritative answer. Keep raw chunks until the prompt budget is
+      // allocated below, where ordinary single- and multi-chunk files differ.
+      list.push(chunkText);
       chunksByArtifact.set(artifactId, list);
     }
   }
@@ -438,6 +501,12 @@ async function listUploadedEvidenceForGeneration(
       evidence_state: string | null;
       stage_key: SourceGenerationUploadedArtifact["stageKey"];
     };
+    const chunks = chunksByArtifact.get(typed.id) ?? [];
+    const chunkExcerpts = responseQaArtifactIds.has(typed.id)
+      ? chunks
+      : chunks.length === 1
+        ? [chunks[0].slice(0, 1_800)]
+        : chunks.map((chunk) => chunk.slice(0, 900));
     return {
       id: typed.id,
       originalName: typed.original_name ?? typed.id,
@@ -446,7 +515,7 @@ async function listUploadedEvidenceForGeneration(
       parseStatus: typed.parse_status ?? "pending",
       evidenceState: typed.evidence_state ?? "unparsed",
       stageKey: typed.stage_key ?? "strategy",
-      chunkExcerpts: chunksByArtifact.get(typed.id) ?? [],
+      chunkExcerpts,
       factSummaries: factsByArtifact.get(typed.id) ?? [],
     };
   });

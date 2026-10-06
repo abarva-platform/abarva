@@ -35,8 +35,13 @@ import { buildContractOptimizationEvidenceReadiness } from "@/lib/source/data-mo
 import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract-optimization-workflow-step";
 import type { OptimizationOpportunityValueType } from "@/lib/source/data-model/contract-optimization-opportunity";
+import type {
+  ContractOptimizationOpportunity,
+  ContractOpportunityClaim,
+} from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
   getContract360,
+  getContractIntelligence,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
 } from "@/lib/source/data-model/read-adapter";
@@ -53,66 +58,127 @@ function fmtUsd(value: number | null | undefined): string {
   return USD_COMPACT.format(value);
 }
 
+function fmtPct(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "not established";
+  return `${Math.round(value * 100)}%`;
+}
+
+function firstNonBlank(
+  ...values: readonly (string | null | undefined)[]
+): string | null {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
 const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   recoverable_leakage: "Recoverable leakage",
   avoided_cost: "Avoided cost",
-  negotiable_improvement: "Negotiated improvement",
+  negotiated_improvement: "Negotiated improvement",
 };
+
+export function opportunityForAvaTrace(
+  opportunity: ContractOptimizationOpportunity,
+  claims: readonly ContractOpportunityClaim[] = [],
+): ContractOptimizationOpportunity {
+  // The persisted read adapter verifies the claim-to-run ID before emitting a
+  // sized amount. The aVa read checks the exposed claim and output as well.
+  const sizingClaim = claims.find(
+    (claim) =>
+      claim.role === "sizing" &&
+      claim.opportunityId === opportunity.opportunityId &&
+      claim.contractId === opportunity.contractId &&
+      claim.basis === "calculated" &&
+      claim.evidenceStatus === "supported" &&
+      Boolean(claim.calculationRunId?.trim()) &&
+      claim.sourceRefs.length > 0 &&
+      claim.amountUsd != null &&
+      opportunity.amountUsd != null &&
+      Math.abs(claim.amountUsd - opportunity.amountUsd) <= 1 &&
+      opportunity.calculation != null &&
+      Number.isFinite(opportunity.calculation.calculatedAmountUsd) &&
+      Math.abs(
+        claim.amountUsd - opportunity.calculation.calculatedAmountUsd,
+      ) <= 1,
+  );
+  return {
+    ...opportunity,
+    amountUsd:
+      opportunity.amountState === "not_sized" ? null : opportunity.amountUsd,
+    calculation: sizingClaim ? opportunity.calculation : null,
+  };
+}
 
 const CONTRACT_SOURCE_EVIDENCE_MAP = [
   {
     sourceSystem: "CLM / contract repository",
-    extracts: "Executed agreement, SOW, order forms, pricing schedules, renewal and termination clauses",
+    extracts:
+      "Executed agreement, SOW, order forms, pricing schedules, renewal and termination clauses",
     fields:
       "annual value, total committed value, end date, notice period, auto-renew flag, benchmark rights, exit rights",
     grain: "contract document, clause, order form, pricing schedule line",
-    history: "current executed terms plus amended versions/change orders when supplied",
-    updateFrequency: "on contract upload, amendment, order-form change, or renewal package update",
+    history:
+      "current executed terms plus amended versions/change orders when supplied",
+    updateFrequency:
+      "on contract upload, amendment, order-form change, or renewal package update",
   },
   {
     sourceSystem: "Procurement / S2P",
-    extracts: "POs, sourcing events, supplier responses, award summary, approved savings case",
+    extracts:
+      "POs, sourcing events, supplier responses, award summary, approved savings case",
     fields:
       "PO value, supplier offer, concession, award decision, negotiated improvement, approval status",
     grain: "event, supplier response, PO line, award item",
     history: "per sourcing event and per approved commercial change",
-    updateFrequency: "at intake, response receipt, BAFO, award, and approval gates",
+    updateFrequency:
+      "at intake, response receipt, BAFO, award, and approval gates",
   },
   {
     sourceSystem: "AP / ERP / financial subledger",
-    extracts: "Invoice lines, payments, PO match, GL coding, credits, disputes, taxes, pass-throughs",
+    extracts:
+      "Invoice lines, payments, PO match, GL coding, credits, disputes, taxes, pass-throughs",
     fields:
       "billed amount, contracted rate, quantity, PO coverage, exception amount, payment status, credit received",
     grain: "invoice line and payment transaction",
-    history: "monthly or full contract lookback period; 24 months is the preferred baseline for optimization",
+    history:
+      "monthly or full contract lookback period; 24 months is the preferred baseline for optimization",
     updateFrequency: "monthly close or AP extract refresh",
   },
   {
     sourceSystem: "ITSM / service management",
-    extracts: "SLA performance, incident severity, breach logs, service review packs, credit eligibility",
+    extracts:
+      "SLA performance, incident severity, breach logs, service review packs, credit eligibility",
     fields:
       "incident count, Sev1/Sev2 count, SLA target, actual performance, credit earned, credit claimed, credit received",
     grain: "service, severity, month, SLA obligation",
-    history: "monthly performance history; 24 months is the preferred baseline for recurring services",
+    history:
+      "monthly performance history; 24 months is the preferred baseline for recurring services",
     updateFrequency: "monthly service review or ITSM export refresh",
   },
   {
     sourceSystem: "Usage / entitlement / consumption platforms",
-    extracts: "Seats, active users, consumption, storage, workload, feature adoption, license assignment",
+    extracts:
+      "Seats, active users, consumption, storage, workload, feature adoption, license assignment",
     fields:
       "entitled quantity, assigned quantity, active usage, consumed units, shelfware, overage, workload owner",
     grain: "product, entitlement, account/workload, month",
-    history: "monthly entitlement and usage trend; 12-24 months depending on product lifecycle",
+    history:
+      "monthly entitlement and usage trend; 12-24 months depending on product lifecycle",
     updateFrequency: "monthly admin-console, SaaS, or cloud-consumption export",
   },
   {
     sourceSystem: "Finance / Tower confirmation",
-    extracts: "Approved value claim, finance confirmation request, realization ledger, periodized proof",
+    extracts:
+      "Approved value claim, finance confirmation request, realization ledger, periodized proof",
     fields:
       "approved realized value, claim state, confirmation owner, approval timestamp, period, Tower handoff reference",
     grain: "value claim, accounting period, confirmation request",
-    history: "periodized from approval forward; prior periods remain pending until approved",
-    updateFrequency: "on finance approval, monthly close, or Tower value-proof refresh",
+    history:
+      "periodized from approval forward; prior periods remain pending until approved",
+    updateFrequency:
+      "on finance approval, monthly close, or Tower value-proof refresh",
   },
 ] as const;
 
@@ -145,12 +211,18 @@ export async function buildAvaSourceContractGrounding(
   if (!tenantKey || !trimmedId) return { block: "", hasLiveNumbers: false };
 
   const contract = await getContract360(tenantKey, trimmedId).catch(() => null);
-  const [opportunitySet, evidencePack] = await Promise.all([
-    getContractOptimizationOpportunitySet(tenantKey, trimmedId, contract).catch(
-      () => null,
-    ),
-    getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(() => null),
-  ]);
+  const [opportunitySet, evidencePack, contractIntelligence] =
+    await Promise.all([
+      getContractOptimizationOpportunitySet(
+        tenantKey,
+        trimmedId,
+        contract,
+      ).catch(() => null),
+      getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(
+        () => null,
+      ),
+      getContractIntelligence(tenantKey, trimmedId).catch(() => null),
+    ]);
   if (!contract && !opportunitySet) {
     return { block: "", hasLiveNumbers: false };
   }
@@ -159,7 +231,9 @@ export async function buildAvaSourceContractGrounding(
     evidencePack: evidencePack ?? null,
   });
   const traceability = summarizeOpportunityTraceability(
-    opportunitySet?.opportunities ?? [],
+    (opportunitySet?.opportunities ?? []).map((opportunity) =>
+      opportunityForAvaTrace(opportunity, opportunitySet?.claims),
+    ),
   );
   const position = deriveOptimizeWorkflowPosition({
     hasSelectedContract: true,
@@ -190,17 +264,18 @@ export async function buildAvaSourceContractGrounding(
   const valueProofClosed =
     financeConfirmedUsd > 0 && financeRequest?.approvalState === "approved";
 
-  const ledgerTotals = buildLedgerTotals({
-    tracedByValueType: traceability.tracedByValueType,
-    financeConfirmedUsd,
-    valueProofClosed,
-  });
+  const ledgerTotals = traceability.tracedCount > 0
+    ? buildLedgerTotals({
+        tracedByValueType: traceability.tracedByValueType,
+        financeConfirmedUsd,
+        valueProofClosed,
+      })
+    : [];
   const largestLedger = ledgerTotals
     .filter((row) => row.valueType !== "realized_value")
-    .reduce<(typeof ledgerTotals)[number] | null>(
-      (best, row) => (best == null || row.amountUsd > best.amountUsd ? row : best),
-      null,
-    );
+    .reduce<
+      (typeof ledgerTotals)[number] | null
+    >((best, row) => (best == null || row.amountUsd > best.amountUsd ? row : best), null);
 
   const opportunityLines = (opportunitySet?.opportunities ?? [])
     .slice(0, 8)
@@ -208,27 +283,68 @@ export async function buildAvaSourceContractGrounding(
       const trace = traceability.rows.find(
         (row) => row.opportunityId === opportunity.opportunityId,
       );
-      return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${fmtUsd(
-        opportunity.amountUsd,
-      )} · stage ${opportunity.stage} · ${trace?.label ?? "traceability not evaluated"}`;
+      const detail = opportunity.negotiationDetail;
+      const negotiation = detail
+        ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · vendor rationale/concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
+        : "";
+      const amountLabel =
+        opportunity.stage === "signal" ||
+        opportunity.amountState === "not_sized"
+          ? "not sized"
+          : trace?.state === "traced"
+            ? fmtUsd(opportunity.amountUsd)
+            : `stated ${fmtUsd(opportunity.amountUsd)}; ${trace?.state === "restated" ? "calculation run disagrees" : "no reproducible calculation run"}`;
+      return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${amountLabel} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
     });
+  const claimLines = (opportunitySet?.claims ?? [])
+    .slice(0, 32)
+    .map(
+      (claim) =>
+        `- ${claim.claimId} · ${claim.role} · basis ${claim.basis} · evidence ${claim.evidenceStatus} · review ${claim.reviewStatus} · ${claim.statement}`,
+    );
+  const opportunityExportRows = (opportunitySet?.opportunities ?? [])
+    .slice(0, 8)
+    .map((opportunity, index) => {
+      const trace = traceability.rows.find(
+        (row) => row.opportunityId === opportunity.opportunityId,
+      );
+      return formatOpportunityExportRow({
+        index,
+        opportunity,
+        traceLabel: trace?.label ?? null,
+        traceState: trace?.state ?? "not_sized",
+      });
+    });
+
+  const contractDisplayName =
+    firstNonBlank(contract?.contract_name, opportunitySet?.contractName) ??
+    `Contract ${trimmedId}`;
+  const vendorDisplayName =
+    firstNonBlank(contract?.vendor_name, opportunitySet?.vendorName) ??
+    "Vendor not established";
+  const baselineConflict = opportunitySet?.baseline.status === "conflict";
+  const annualValueUsd = contract
+    ? contract.annual_value
+    : baselineConflict
+      ? null
+      : opportunitySet?.baseline.annualValueUsd;
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
-    `Exact contract display name: "${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}". Exact vendor display name: "${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
-    // `resolved_annual_value` wins whenever extraction disagreed with the
-    // stated value; quoting the raw column there would repeat a known conflict.
-    `Contract: ${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}. Vendor: ${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}. Annual value: ${fmtUsd(
-      contract
-        ? contract.annual_value_conflict_flag
-          ? contract.resolved_annual_value
-          : contract.annual_value
-        : opportunitySet?.baseline.annualValueUsd,
-    )}.${
-      contract?.annual_value_conflict_flag
-        ? " (Stated annual value and extracted value disagreed; the resolved value is quoted.)"
+    `Exact contract display name: "${contractDisplayName}". Exact vendor display name: "${vendorDisplayName}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
+    `Contract: ${contractDisplayName}. Vendor: ${vendorDisplayName}. Annual value: ${fmtUsd(annualValueUsd)}.${
+      baselineConflict || contract?.annual_value_conflict_flag
+        ? " (Contract 360 stated annual value; extraction or persisted baseline disagrees. The conflict is unresolved, so this is not a reconciled baseline.)"
         : ""
     }`,
+    "SEMANTIC VALUE GUARD: Annual value is the contract header value, not an annual commitment. Observed spend is consumption or spend evidence, not AP-paid cash. Never call annual value a commitment, and never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status.",
+    contractIntelligence?.intelligence_record
+      ? [
+          "LOAD-TIME CONTRACT INTELLIGENCE RECORD (authoritative for purpose, archetype, anatomy, education, and industry boundary):",
+          JSON.stringify(contractIntelligence.intelligence_record),
+          "The record is deterministic and versioned from the governed load. Explain it, but do not add facts, relationships, benchmarks, or amounts outside it.",
+        ].join("\n")
+      : "Load-time contract intelligence record: not available for this contract; do not invent purpose, archetype, anatomy, education, or industry claims.",
     `Commercial baseline status: ${opportunitySet?.baseline.status ?? "no governed baseline"}.`,
     `Workflow position: step ${position.currentIndex} of ${position.steps.length} (${position.currentLabel}). Next action: ${position.primaryAction}.${
       position.blocker ? ` Blocked by: ${position.blocker}` : ""
@@ -238,12 +354,12 @@ export async function buildAvaSourceContractGrounding(
         ? ` Missing: ${missingFamilies.join(", ")}.`
         : ""
     }`,
-    `Opportunity value that a calculation run can reproduce: ${fmtUsd(traceability.tracedAmountUsd)}. Stated value with no reproducible calculation run: ${fmtUsd(
+    `Opportunity value that a calculation run can reproduce: ${traceability.tracedCount > 0 ? fmtUsd(traceability.tracedAmountUsd) : "not established"}. Stated value with no reproducible calculation run: ${fmtUsd(
       traceability.untracedAmountUsd,
     )}.`,
-    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals
-      .map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`)
-      .join("; ")}.`,
+    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals.length > 0
+      ? ledgerTotals.map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`).join("; ")
+      : "not established; calculation run identity is not exposed by the current opportunity read"}.`,
     largestLedger
       ? `Largest reproducible non-realized ledger for chart narration: ${largestLedger.label} at ${fmtUsd(largestLedger.amountUsd)}. Quote this line instead of recomputing totals from the opportunity rows.`
       : "",
@@ -252,13 +368,99 @@ export async function buildAvaSourceContractGrounding(
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
+    claimLines.length > 0
+      ? [
+          "CLAIM-LEVEL PROVENANCE (use this to explain why a statement may or may not be made):",
+          ...claimLines,
+          "A claim with basis not_recorded, evidence missing/not_established, or review draft is not a supported external fact.",
+          "A calculated sizing claim is not a reproducible amount unless it appears in the run-linked reproducible total above.",
+        ].join("\n")
+      : "Claim-level provenance: no claim rows are loaded for this contract; do not upgrade opportunity prose into a governed fact.",
+    opportunityExportRows.length > 0
+      ? [
+          "CONTRACT OPTIMIZATION EXPORT ROWS (use these rows when the user asks how to optimize this contract, asks for levers, or asks for a client/PDF-ready sample):",
+          "Required visible table columns, in this exact order: Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet.",
+          "Rows to use; do not invent, rename, or add rows:",
+          ...opportunityExportRows,
+        ].join("\n")
+      : "",
     buildSourceEvidenceMapLine(),
     `Contract-grain grounding IS available for ${trimmedId}. Answer questions about ${trimmedId} from the numbers above — do NOT deflect them to Contract 360, and do NOT fall back to portfolio-level figures or generic tenant-context retrieval for this contract.`,
+    "For contract-optimization, lever, negotiation, PDF, export, or client-sample asks: answer with only a short executive read and the required lever table unless the user explicitly asks for additional visuals, relationship maps, or decision tables. Do not add sections named VISUALS, Relationship map, Decision table, Appendix, or Next visuals. A table ask is not a chart ask.",
     "If the user asks which source systems feed the contract view, which fields they contribute, what extracts are needed, the grain/history/update frequency, or the data lineage behind Contract 360, answer from the Source-system evidence map above. That is an in-scope Source contract-evidence question, not a platform-architecture question. Prefer a compact markdown table when the user asks for a table.",
     "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total and the chart-safe ledger totals may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Approved realized value exists only when the finance evidence is present AND the Finance/Tower confirmation request is approved. If the value-proof gate is open, do not say Finance has confirmed, do not say realized value to date, do not call the pending evidence booked, claimable, confirmed, or approved. Do not say the pending amount automatically becomes realized value, converts into approved value, or moves from pending to approved; say it is eligible to be recorded only if Finance/Tower approves the confirmation request. If the user asks for a chart, graph, or table, use the chart-safe ledger totals above and do not add or recompute row-level amounts yourself. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
   ].filter(Boolean);
 
   return { block: lines.join("\n"), hasLiveNumbers: true };
+}
+
+function formatOpportunityExportRow(input: {
+  index: number;
+  opportunity: {
+    readonly shortLabel: string;
+    readonly valueType: OptimizationOpportunityValueType;
+    readonly amountUsd: number | null;
+    readonly amountState: "exact" | "range" | "not_sized";
+    readonly stage: string;
+    readonly confidence: number | null;
+    readonly deadline: string | null;
+    readonly owner: string | null;
+    readonly blockingGap: string | null;
+    readonly nextAction: string;
+    readonly evidenceGrade: string;
+    readonly negotiationDetail?: {
+      readonly buyerAsk: string | null;
+      readonly negotiationLanguage: string | null;
+      readonly vendorConcession: string | null;
+      readonly timingDependency: string | null;
+      readonly ownerRole: string | null;
+      readonly priority: string | null;
+      readonly riskIfIgnored: string | null;
+    } | null;
+  };
+  traceLabel: string | null;
+  traceState: "traced" | "restated" | "untraced" | "not_sized";
+}): string {
+  const { opportunity } = input;
+  const detail = opportunity.negotiationDetail;
+  const isSignal =
+    opportunity.stage === "signal" ||
+    opportunity.amountState === "not_sized" ||
+    (opportunity.confidence != null && opportunity.confidence < 0.5);
+  const askParts = [
+    detail?.buyerAsk,
+    detail?.negotiationLanguage
+      ? `Language: ${detail.negotiationLanguage}`
+      : null,
+  ].filter((part): part is string => Boolean(part));
+  const evidenceParts = [
+    input.traceLabel,
+    opportunity.evidenceGrade,
+    detail?.priority ? `priority ${detail.priority}` : null,
+  ].filter((part): part is string => Boolean(part));
+  const ownerTimingParts = [
+    detail?.ownerRole ?? opportunity.owner,
+    detail?.timingDependency ?? opportunity.deadline,
+  ].filter((part): part is string => Boolean(part));
+  const doNotClaimParts = [
+    "Do not call this realized savings until Finance/Tower confirms it",
+    isSignal
+      ? "do not attach a dollar value until the named evidence gate is loaded"
+      : null,
+    opportunity.blockingGap ? `blocking gap: ${opportunity.blockingGap}` : null,
+    detail?.riskIfIgnored ? `risk if ignored: ${detail.riskIfIgnored}` : null,
+  ].filter((part): part is string => Boolean(part));
+
+  return [
+    `- Sequence ${input.index + 1}`,
+    `Lever: ${opportunity.shortLabel}`,
+    `Action / buyer ask: ${askParts.join(" ") || opportunity.nextAction}`,
+    `Why vendor can agree: ${detail?.vendorConcession ?? "not established in governed opportunity detail"}`,
+    `Evidence basis: ${evidenceParts.join("; ") || "not established"}`,
+    `Value state: ${isSignal ? "Not sized - needs evidence before it carries a number" : input.traceState === "traced" ? fmtUsd(opportunity.amountUsd) : `stated ${fmtUsd(opportunity.amountUsd)}; ${input.traceState === "restated" ? "calculation run disagrees" : "no reproducible calculation run"}`}`,
+    `Owner / timing: ${ownerTimingParts.join(" / ") || "not established"}`,
+    `What not to claim yet: ${doNotClaimParts.join("; ")}.`,
+  ].join(" | ");
 }
 
 function buildLedgerTotals(input: {
@@ -268,9 +470,7 @@ function buildLedgerTotals(input: {
   financeConfirmedUsd: number;
   valueProofClosed: boolean;
 }): readonly {
-  readonly valueType:
-    | OptimizationOpportunityValueType
-    | "realized_value";
+  readonly valueType: OptimizationOpportunityValueType | "realized_value";
   readonly label: string;
   readonly amountUsd: number;
 }[] {
@@ -286,9 +486,9 @@ function buildLedgerTotals(input: {
       amountUsd: input.tracedByValueType.avoided_cost ?? 0,
     },
     {
-      valueType: "negotiable_improvement",
-      label: VALUE_TYPE_LABEL.negotiable_improvement,
-      amountUsd: input.tracedByValueType.negotiable_improvement ?? 0,
+      valueType: "negotiated_improvement",
+      label: VALUE_TYPE_LABEL.negotiated_improvement,
+      amountUsd: input.tracedByValueType.negotiated_improvement ?? 0,
     },
     {
       valueType: "realized_value",

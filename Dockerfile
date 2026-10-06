@@ -120,10 +120,12 @@ COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/config/ecl ./config/ecl
 COPY --from=build --chown=node:node /app/cube ./cube
 COPY --from=build --chown=node:node /app/docs/architecture/meridian-demo-findings-20260824.json ./docs/architecture/meridian-demo-findings-20260824.json
 COPY --from=build --chown=node:node /app/docs/architecture/ecl-retired-code-reference-manifest.json ./docs/architecture/ecl-retired-code-reference-manifest.json
 COPY --from=build --chown=node:node /app/docs/architecture/sql-drafts ./docs/architecture/sql-drafts
+COPY --from=build --chown=node:node /app/docs/governance/dataset-manifests ./docs/governance/dataset-manifests
 COPY --from=build --chown=node:node /app/docs/source/skyharbor-v4 ./docs/source/skyharbor-v4
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets
@@ -136,6 +138,12 @@ COPY --from=build --chown=node:node /app/reports/candidate-invisibility-guard ./
 COPY --from=build --chown=node:node /app/reports/ecl-legacy-table-retirement-map-2026-08-22 ./reports/ecl-legacy-table-retirement-map-2026-08-22
 COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
+# The RLS regression suite is read-only SQL executed by an operator job, not by
+# the web runtime. Its runner (scripts/run-rls-regression.ts) reads this file at
+# runtime, so it must be present in the image or the tenant-isolation check
+# cannot run at all. Only tests/security is copied — the rest of tests/ has no
+# business in a runtime image.
+COPY --from=build --chown=node:node /app/tests/security ./tests/security
 
 RUN npx playwright install-deps chromium \
  && mkdir -p /app/outputs /app/reports /app/job-output \

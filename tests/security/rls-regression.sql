@@ -8,7 +8,7 @@
 --
 -- What this script asserts:
 --
---   1.  For each canonical tenant (apex-retail, meridian-health, first-capital):
+--   1.  For each canonical tenant supplied by scripts/run-rls-regression.ts:
 --         a. Connect as the authenticated role with the tenant's JWT claim.
 --         b. For every tenant-readable table (discovered dynamically from
 --            information_schema), SELECT count(*) and verify ALL rows belong
@@ -78,8 +78,22 @@ CREATE TEMP TABLE rls_regression_findings (
 GRANT INSERT ON rls_regression_findings TO authenticated;
 
 -- ── Canonical tenant list ────────────────────────────────────────────────────
--- Three tenants seeded in production. Must match the canonical keys produced
--- by migrations/20260515120000_tenant_key_canonicalization.sql.
+-- scripts/run-rls-regression.ts supplies rls_regression_expected_tenants from
+-- CANONICAL_TENANT_KEYS. Keep tenant identity code-derived; do not hand-type
+-- tenant keys or aliases here.
+DO $verify_expected_tenants_source$
+BEGIN
+  IF to_regclass('pg_temp.rls_regression_expected_tenants') IS NULL THEN
+    RAISE EXCEPTION
+      'RLS regression expected tenants were not supplied. Run this suite through scripts/run-rls-regression.ts.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM rls_regression_expected_tenants) THEN
+    RAISE EXCEPTION
+      'RLS regression expected tenants were not supplied. CANONICAL_TENANT_KEYS resolved to an empty set.';
+  END IF;
+END
+$verify_expected_tenants_source$;
+
 CREATE TEMP TABLE rls_regression_tenants (
   tenant_key TEXT PRIMARY KEY,
   client_id  UUID
@@ -89,28 +103,149 @@ GRANT SELECT ON rls_regression_tenants TO authenticated;
 
 INSERT INTO rls_regression_tenants (tenant_key, client_id)
 SELECT t.tenant_key, c.id
-  FROM (VALUES
-    ('apex-retail'),
-    ('meridian-health'),
-    ('first-capital')
-  ) AS t(tenant_key)
+  FROM rls_regression_expected_tenants t
   LEFT JOIN public.clients c ON c.tenant_key = t.tenant_key;
 
 -- Verify we resolved a client UUID for every canonical key. Without these we
 -- cannot exercise the UUID-based variant of the policies.
+--
+-- C-632. This block used to raise 'missing from clients table. Run db:migrate +
+-- canonicalization migration before this suite.' It had established only that
+-- THIS CONNECTION saw no row, and those are not the same thing: public.clients
+-- carries row-level security with a single policy scoped to service_role
+-- (supabase/migrations/20260516093000_clients_service_role_policy.sql), so a
+-- connecting role outside that policy sees zero rows whether or not the rows
+-- exist. "The row is absent" and "the row exists and is filtered from here" were
+-- both consistent with what it observed, the message named only the first, and
+-- the remedy it prescribed mutates a shared control database that may already be
+-- correct.
+--
+-- So: report the observation, and discriminate positively where a vantage is
+-- reachable. The vantage is a borrowed service_role, which works only when the
+-- connecting role is a NOINHERIT member — an inheriting member is already
+-- covered by the policy and never reaches this block, and a non-member is
+-- refused SET ROLE. When no vantage is reachable, say `indeterminate` and
+-- withhold the remedy rather than guessing.
+--
+-- Still a refusal in all three cases: a suite that has probed nothing must never
+-- report a pass. scripts/run-rls-regression.ts classifies every one of these as
+-- NOT CHECKED (exit 2) by the stable token in the first line.
 DO $verify_tenants$
 DECLARE
-  missing TEXT;
+  v_missing          TEXT;
+  v_missing_keys     TEXT[];
+  v_connecting_role  TEXT := current_user;
+  v_session_role     TEXT := session_user;
+  v_rls_enabled      BOOLEAN := FALSE;
+  v_rls_forced       BOOLEAN := FALSE;
+  v_table_owner      TEXT;
+  v_owner_member     BOOLEAN := FALSE;
+  v_is_superuser     BOOLEAN := FALSE;
+  v_bypassrls        BOOLEAN := FALSE;
+  v_rls_enforced     BOOLEAN;
+  v_visible_rows     BIGINT;
+  v_can_borrow       BOOLEAN := FALSE;
+  v_vantage          TEXT;
+  v_still_missing    TEXT;
+  v_cause            TEXT;
+  v_remedy           TEXT;
 BEGIN
-  SELECT string_agg(tenant_key, ', ')
-    INTO missing
+  SELECT string_agg(tenant_key, ', ' ORDER BY tenant_key),
+         array_agg(tenant_key ORDER BY tenant_key)
+    INTO v_missing, v_missing_keys
     FROM rls_regression_tenants
    WHERE client_id IS NULL;
-  IF missing IS NOT NULL THEN
-    RAISE EXCEPTION
-      'Canonical tenant(s) % missing from clients table. Run db:migrate + canonicalization migration before this suite.',
-      missing;
+
+  IF v_missing IS NULL THEN
+    RETURN;  -- every canonical key resolved; the probe loop may proceed
   END IF;
+
+  -- What is true of the table?
+  SELECT c.relrowsecurity,
+         c.relforcerowsecurity,
+         pg_get_userbyid(c.relowner),
+         pg_has_role(v_connecting_role, c.relowner, 'USAGE')
+    INTO v_rls_enabled, v_rls_forced, v_table_owner, v_owner_member
+    FROM pg_class c
+   WHERE c.oid = 'public.clients'::regclass;
+
+  -- What is true of the role that connected?
+  SELECT r.rolsuper, r.rolbypassrls
+    INTO v_is_superuser, v_bypassrls
+    FROM pg_roles r
+   WHERE r.rolname = v_connecting_role;
+
+  -- Postgres' own rule for whether row security filters this role on this
+  -- table: superusers and BYPASSRLS roles are exempt, and so is the owner
+  -- unless the table is FORCE ROW LEVEL SECURITY.
+  v_rls_enforced := COALESCE(v_rls_enabled, FALSE)
+                AND NOT COALESCE(v_is_superuser, FALSE)
+                AND NOT COALESCE(v_bypassrls, FALSE)
+                AND NOT (COALESCE(v_owner_member, FALSE) AND NOT COALESCE(v_rls_forced, FALSE));
+
+  -- What can this connection actually see?
+  SELECT count(*) INTO v_visible_rows FROM public.clients;
+
+  IF NOT v_rls_enforced THEN
+    -- Nothing filtered this read, so the zero is about existence.
+    v_cause   := 'absent';
+    v_vantage := 'not needed — row security does not filter this role on public.clients, so its own read is authoritative';
+    v_remedy  := 'The rows are absent from an unfiltered vantage. Run db:migrate + the canonicalization migration before this suite.';
+  ELSE
+    -- Row security filtered this read. Try to borrow a vantage it does not
+    -- filter, and compare. MEMBER (not USAGE) is the privilege SET ROLE needs,
+    -- which is why a NOINHERIT member can borrow what it cannot inherit.
+    IF to_regrole('service_role') IS NOT NULL THEN
+      v_can_borrow := pg_has_role(v_connecting_role, 'service_role', 'MEMBER');
+    END IF;
+
+    IF v_can_borrow THEN
+      BEGIN
+        SET LOCAL ROLE service_role;
+        SELECT string_agg(k, ', ' ORDER BY k)
+          INTO v_still_missing
+          FROM unnest(v_missing_keys) AS k
+         WHERE NOT EXISTS (SELECT 1 FROM public.clients c WHERE c.tenant_key = k);
+        RESET ROLE;
+      EXCEPTION WHEN OTHERS THEN
+        -- The subtransaction rollback restores the role on its own.
+        v_can_borrow := FALSE;
+        v_vantage := format(
+          'attempted as service_role and failed (%s: %s)', SQLSTATE, SQLERRM);
+      END;
+    END IF;
+
+    IF v_can_borrow AND v_still_missing IS NULL THEN
+      v_cause   := 'invisible';
+      v_vantage := 'borrowed service_role, which resolved every key this connection could not see';
+      v_remedy  := 'The rows EXIST and are filtered from this connection by row security. Do NOT run a canonicalization migration — the directory is not missing these rows. Give this suite a vantage row security does not filter (connect as service_role, or as a role with BYPASSRLS) and re-run.';
+    ELSIF v_can_borrow THEN
+      v_cause   := 'absent';
+      v_vantage := format(
+        'borrowed service_role, which also could not resolve %s', v_still_missing);
+      v_remedy  := 'The rows are absent from an unfiltered vantage. Run db:migrate + the canonicalization migration before this suite.';
+    ELSE
+      v_cause   := 'indeterminate';
+      v_vantage := COALESCE(
+        v_vantage,
+        'none reachable — this role is not a member of service_role and does not bypass row security, so it has no unfiltered read to compare against');
+      v_remedy  := 'BOTH causes remain consistent with what was observed: the rows may be absent, or they may exist and be filtered from this connection. This check cannot tell them apart from this vantage and will not guess. Do NOT run a canonicalization migration on the strength of this message. Re-run the suite as service_role, as a NOINHERIT member of it, or as a role with BYPASSRLS, and it will say which.';
+    END IF;
+  END IF;
+
+  RAISE EXCEPTION
+    'rls-regression precondition: canonical tenant rows unresolved [cause=%] for tenant(s) %. OBSERVED: connecting role=%, session role=%, row security on public.clients enabled=%, forced=%, owner=%, enforced against this role=%; rows this connection can see=%. PRIVILEGED VANTAGE: %. %',
+    v_cause,
+    v_missing,
+    v_connecting_role,
+    v_session_role,
+    CASE WHEN COALESCE(v_rls_enabled, FALSE) THEN 'true' ELSE 'false' END,
+    CASE WHEN COALESCE(v_rls_forced, FALSE) THEN 'true' ELSE 'false' END,
+    COALESCE(v_table_owner, '<unknown>'),
+    CASE WHEN v_rls_enforced THEN 'true' ELSE 'false' END,
+    v_visible_rows,
+    v_vantage,
+    v_remedy;
 END
 $verify_tenants$;
 

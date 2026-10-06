@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import "@testing-library/jest-dom";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { FindingsBlock, PageShape, TableSet } from "../TableSet";
 import {
   rankFindings,
@@ -31,6 +31,33 @@ const findings: Finding[] = [
 ];
 
 describe("a block sorted by consequence looks sorted", () => {
+  it("shows a finding's rule without asserting an unverified file source", () => {
+    const onOpenRows = jest.fn();
+    render(<FindingsBlock findings={[{
+      kind: "exposure",
+      claim: "337 regulated data assets are not yet production-governed.",
+      owner: "Data owner",
+      because: "Both fields are declared on each row.",
+      trace: {
+        file: "05_data_assets_integrations.csv",
+        grain: "one data asset or integration",
+        rule: "regulatedDataFlag is true AND qualityStatus is not governed_production_grade",
+      },
+      openRows: { objectType: "data_asset_or_integration", filter: "regulatedDataFlag:true" },
+    }]} onOpenRows={onOpenRows} />);
+
+    expect(document.querySelector("[data-home-lineage]")?.getAttribute("data-home-lineage")).toBe("unverified");
+    fireEvent.click(screen.getByRole("button", { name: "Where this finding comes from" }));
+    const panel = document.querySelector("[data-home-lineage-panel]")?.textContent ?? "";
+    expect(panel).toContain("Rule; source mapping pending");
+    expect(panel).toContain("regulatedDataFlag is true");
+    expect(panel).toContain("Source-file identity and supporting rows have not been verified");
+    expect(panel).not.toContain("05_data_assets_integrations.csv");
+    expect(panel).not.toContain("only file asserting this");
+    fireEvent.click(screen.getByRole("button", { name: "Open these rows" }));
+    expect(onOpenRows).toHaveBeenCalledWith("data_asset_or_integration", "regulatedDataFlag:true");
+  });
+
   // A block where every finding looks equally important makes the reader do the triage.
   it("puts what the record says is wrong now before what it cannot tell you", () => {
     expect(rankFindings(findings).map((f) => f.kind)).toEqual([
@@ -134,7 +161,7 @@ describe("the page states its own shape", () => {
     const line =
       document.querySelector("[data-home-page-shape]")?.textContent ?? "";
     expect(line).toBe(
-      "1 table · 3 findings · 1 the record says is wrong now · 1 view this page cannot build",
+      "1 table · 3 findings · 1 the record says is wrong now · 1 evidence view pending",
     );
   });
 

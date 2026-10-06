@@ -91,4 +91,53 @@ describe("quality validator — truncation + tenant casing", () => {
     expect(res.pass).toBe(false);
     expect(res.blockers.join(" ")).toMatch(/visible exhibit placeholder/i);
   });
+
+  it("blocks when a required evidence signal disappears from the artifact", () => {
+    const req = amsRfpRequest({
+      requiredEvidenceSignals: [
+        {
+          key: "closure-rate",
+          label: "Overall care-gap closure rate",
+          statement: "Overall care-gap closure rate: 41.2 % (as of FY2026)",
+          citationNumber: 6,
+        },
+      ],
+    });
+    const doc = goodDocument();
+
+    const res = validateDeliverableQuality(doc, req);
+
+    expect(res.pass).toBe(false);
+    expect(res.blockers.join(" ")).toMatch(/required evidence signal/i);
+    expect(res.metrics.requiredEvidenceSignalCount).toBe(1);
+    expect(res.metrics.missingRequiredEvidenceSignalCount).toBe(1);
+  });
+
+  it("passes when the required evidence signal is carried with its value and meaning", () => {
+    const req = amsRfpRequest({
+      requiredEvidenceSignals: [
+        {
+          key: "closure-rate",
+          label: "Overall care-gap closure rate",
+          statement: "Overall care-gap closure rate: 41.2 % (as of FY2026)",
+          citationNumber: 6,
+        },
+      ],
+    });
+    const doc = goodDocument();
+    doc.generatedSections[0].bodyMarkdown +=
+      "\n\nThe overall care-gap closure rate is 41.2% as of FY2026 [6].";
+    doc.sourceRegister.push({
+      citationNumber: 6,
+      label: "Overall care-gap closure rate",
+      evidenceFamily: "baseline_metric",
+      confidence: "high",
+      asOf: "FY2026",
+    });
+
+    const res = validateDeliverableQuality(doc, req);
+
+    expect(res.blockers.join(" ")).not.toMatch(/required evidence signal/i);
+    expect(res.metrics.missingRequiredEvidenceSignalCount).toBe(0);
+  });
 });

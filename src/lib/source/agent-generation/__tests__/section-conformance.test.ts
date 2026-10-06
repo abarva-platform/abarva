@@ -70,6 +70,55 @@ describe("Source artifact section conformance", () => {
     expect(sectionStyleB?.status).toBe("verified");
   });
 
+  it("verifies the authored Scope artifact section contracts", () => {
+    const cases: Array<[string, string[]]> = [
+      [
+        "d04_app_inv",
+        [
+          "In-scope application and system inventory",
+          "Criticality and risk tiering",
+          "Integration and dependency map",
+          "Disposition and support-model analysis",
+          "Coverage gaps and assumptions",
+        ],
+      ],
+      [
+        "d06_excl_log",
+        [
+          "Exclusion answer",
+          "Exclusion register",
+          "Pricing and proposal implications",
+          "Residual risks and owner actions",
+          "Sponsor review and changes to carry into RFP",
+        ],
+      ],
+      [
+        "d07_ticket_synth",
+        [
+          "Ticket volume baseline and demand profile",
+          "Incident severity distribution and SLA performance",
+          "Service tower workload breakdown",
+          "Trend analysis and seasonality",
+          "SLA and operational implications for the RFP",
+        ],
+      ],
+    ];
+
+    for (const [artifactCode, sections] of cases) {
+      const body = [
+        `# ${artifactCode}`,
+        ...sections.flatMap((section, index) => [
+          `## §${index + 1} · ${section}`,
+          `This section contains substantive reviewed content for ${section}.`,
+        ]),
+      ].join("\n\n");
+      expect(verifyArtifactSections(artifactCode, body)).toMatchObject({
+        status: "verified",
+        missingSections: [],
+      });
+    }
+  });
+
   it("normalizes exact required section labels emitted as plain text", () => {
     const body = [
       "# Sourcing Strategy Memo",

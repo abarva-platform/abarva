@@ -123,7 +123,33 @@ export function goodDocument(): RenderableDeliverable {
       { key: 'application_inventory', title: 'Application Inventory', columns: ['App', 'Criticality', 'Tower'], rows: [['Reservations Core', 'tier1', 'App Mgmt']], targetFormat: 'xlsx' },
       { key: 'risk_register', title: 'Risks, Issues & Dependencies', columns: ['Item', 'Type', 'Impact', 'Owner', 'Mitigation'], rows: [['Transition window', 'risk', 'high', 'CIO', 'Phased KT']], targetFormat: 'docx' },
     ],
-    exhibits: [{ key: 'tower_scope_map', title: 'Service Tower Scope Map', kind: 'matrix', description: 'Towers × services.', targetFormat: 'xlsx' }],
+    exhibits: [
+      {
+        key: 'tower_scope_map',
+        title: 'Service Tower Scope Map',
+        kind: 'matrix',
+        description: 'Towers × services.',
+        targetFormat: 'xlsx',
+        data: {
+          kind: 'matrix',
+          axes: { x: 'Service tower', y: 'Critical operating dependency' },
+          cells: [
+            {
+              x: 'Application management',
+              y: 'Tier-1 systems',
+              label: 'Reservations Core belongs in the application management scope',
+              value: 'tier1',
+            },
+            {
+              x: 'Service desk',
+              y: 'Monthly volume',
+              label: 'L1 service desk volumes inform the support tower',
+              value: '15,600 tickets/month',
+            },
+          ],
+        },
+      },
+    ],
     sourceRegister: [
       { citationNumber: 1, label: 'Service tower scope', evidenceFamily: 'service_tower_scope', confidence: 'high', asOf: 'FY2026' },
       { citationNumber: 2, label: 'Application inventory', evidenceFamily: 'application_inventory', confidence: 'high', asOf: 'FY2026' },

@@ -1,0 +1,5 @@
+tenant_key,dataset_version,contract_id,month,ticket_count,severity_mix,category,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-11,2,sev4,platform_configuration,SRC-TKT-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-01,1,sev4,cluster_policy_setup,SRC-TKT-002
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-04,1,sev3,sso_configuration,SRC-TKT-003
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-07,1,sev4,cost_alert_threshold,SRC-TKT-004

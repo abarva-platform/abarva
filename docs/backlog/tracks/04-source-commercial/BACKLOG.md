@@ -109,6 +109,25 @@ facts.
    - Acceptance: each legacy evidence path is either mapped into the current
      governed layers with signed-in proof, or explicitly removed from demo and
      default operator narratives.
+7. **SRC55 — Source 360 aVa adversarial proof**
+   - Status: Closed 2026-09-03.
+   - Priority: P0.
+   - Type: agent-runtime / signed-in product proof.
+   - Scope: prove the Source workspace aVa answers from the active Source 360
+     page context, Optimize candidate rows, current contract graph, and
+     governed evidence state without inventing missing finance, event,
+     pricing, or cross-tenant facts.
+   - Acceptance: authenticated proof captures a small adversarial prompt set:
+     actionability, missing evidence before value can be claimed, total savings
+     refusal when finance confirmation is absent, cross-tenant pricing refusal,
+     recommendation refusal when event evaluation evidence is absent, chart or
+     table rendering from loaded rows, and evidence citation back to Source
+     rows. Each prompt is marked pass/fail with transcript and screenshot or
+     DOM proof.
+   - Closure evidence: post-deploy signed-in proof on 2026-09-03 captured the
+     core Source workspace prompt set: grounded current-page context, value
+     refusal without finance confirmation, supplier-selection refusal without
+     evaluation evidence, and cross-tenant pricing refusal.
 
 ## Active Execution Control — 2026-08-15
 
@@ -158,6 +177,13 @@ Proof discipline:
 - Signed-in route/crawl/gauntlet evidence is required for protected product
   surfaces.
 - Auth blockers must be reported as auth-blocked, not product-passed.
+
+Current narrow claim — 2026-09-19:
+
+- SRC80 is limited to Source export stage-order consistency: the CXO narrative
+  report and Deal Pack builders must resolve shared Source stage keys through
+  one authoritative lifecycle map. This does not decide award-language policy,
+  does not add a renderer-only award gate, and does not mutate data.
 
 Latest proof result after PR #6366:
 

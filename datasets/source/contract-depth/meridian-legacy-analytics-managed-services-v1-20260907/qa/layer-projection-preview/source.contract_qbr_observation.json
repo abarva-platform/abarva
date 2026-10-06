@@ -1,0 +1,62 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "qbr:MER-TECH-LAAMS-001:2025-Q3",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "quarter": "2025-Q3",
+    "run_percent": "0.81",
+    "transform_percent": "0.19",
+    "automation_backlog_items": "31",
+    "report_retirement_candidates": "18",
+    "client_satisfaction_score": "3.7",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-QBR"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "qbr:MER-TECH-LAAMS-001:2025-Q4",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "quarter": "2025-Q4",
+    "run_percent": "0.84",
+    "transform_percent": "0.16",
+    "automation_backlog_items": "37",
+    "report_retirement_candidates": "22",
+    "client_satisfaction_score": "3.5",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-QBR"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "qbr:MER-TECH-LAAMS-001:2026-Q1",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "quarter": "2026-Q1",
+    "run_percent": "0.86",
+    "transform_percent": "0.14",
+    "automation_backlog_items": "42",
+    "report_retirement_candidates": "27",
+    "client_satisfaction_score": "3.6",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-QBR"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "qbr:MER-TECH-LAAMS-001:2026-Q2",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "quarter": "2026-Q2",
+    "run_percent": "0.88",
+    "transform_percent": "0.12",
+    "automation_backlog_items": "48",
+    "report_retirement_candidates": "34",
+    "client_satisfaction_score": "3.4",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-QBR"
+  }
+]

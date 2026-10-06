@@ -6,10 +6,10 @@
 // keyword/regex classification — deterministic, no LLM call, testable in
 // isolation from the chat route.
 
+import type { AvaModuleAnswerModeClassification } from "@/lib/agent/module-expert-contract";
 import type { MovesAvaAnswerMode } from "./types";
 
-export interface MovesAvaAnswerModeClassification {
-  mode: MovesAvaAnswerMode;
+export interface MovesAvaAnswerModeClassification extends AvaModuleAnswerModeClassification<MovesAvaAnswerMode> {
   isOutOfScope: boolean;
 }
 
@@ -44,6 +44,14 @@ const MODE_RULES: readonly ModeRule[] = [
       /what did (this|that|the) upload mean/i,
       /what does this upload map to/i,
       /upload.*mean/i,
+    ],
+  },
+  {
+    mode: "evidence_summary",
+    patterns: [
+      /what (?:does|do) (?:the )?evidence (?:prove|show|establish)/i,
+      /what is established by (?:the )?evidence/i,
+      /summari[sz]e (?:the )?(?:approved )?evidence/i,
     ],
   },
   {
@@ -160,7 +168,11 @@ export function shouldBuildMovesAvaPacketForMode(args: {
   hardeningEnabled: boolean;
   mode: MovesAvaAnswerMode;
 }): boolean {
-  return args.hardeningEnabled || args.mode === "phase_input_draft";
+  return (
+    args.hardeningEnabled ||
+    args.mode === "phase_input_draft" ||
+    args.mode === "evidence_summary"
+  );
 }
 
 /**

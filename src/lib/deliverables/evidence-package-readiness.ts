@@ -53,43 +53,91 @@ function confidenceLabel(tier: PackageConfidenceTier): string {
   }
 }
 
-function missingFromBlockers(blockers: readonly string[], retrievedEvidence: number): string[] {
+function missingFromBlockers(blockers: readonly string[]): string[] {
   const missing: string[] = [];
-  const joined = blockers.join(" ").toLowerCase();
+  const normalized = blockers.map((blocker) => blocker.trim().toLowerCase());
+  if (normalized.some((blocker) => blocker.startsWith("no source register"))) {
+    missing.push("Source register for this Move");
+  }
+  if (
+    normalized.some((blocker) =>
+      blocker.startsWith("source register present but body cites nothing"),
+    )
+  ) {
+    missing.push("Citations to the source register in the artifact");
+  }
+  if (
+    normalized.some((blocker) =>
+      blocker.startsWith("no source-backed evidence"),
+    )
+  ) {
+    missing.push("Source-backed evidence required for this artifact");
+  }
+  if (
+    normalized.some((blocker) =>
+      /^(?:\d+\s+)?unsupported client-fact claim/.test(blocker),
+    )
+  ) {
+    missing.push(
+      "Cited metrics, finance-approved baselines, or explicit assumption labels",
+    );
+  }
+  if (
+    normalized.some((blocker) =>
+      blocker.startsWith(
+        "required evidence signal(s) missing from client artifact:",
+      ),
+    )
+  ) {
+    missing.push("Required source-backed content for this artifact");
+  }
 
-  if (retrievedEvidence === 0 || /no source register|retrieved evidence|source-backed|evidence/i.test(joined)) {
-    missing.push("Source-backed evidence attached to this Move");
-  }
-  if (/unsupported client-fact|number|date|\$|%|claim/i.test(joined)) {
-    missing.push("Cited metrics, finance-approved baselines, or explicit assumption labels");
-  }
-  if (/non_mechanical_writing|mechanical|internal tags|ids leaked|generic/i.test(joined)) {
-    missing.push("Client-ready narrative cleanup before executive sharing");
-  }
-  if (/risk|issue|dependenc/i.test(joined)) {
-    missing.push("Risk, issue, and dependency register");
-  }
-  if (/recommendation|decision/i.test(joined)) {
-    missing.push("Clear sponsor decision and recommendation");
-  }
-  if (/section|too short|body/i.test(joined)) {
-    missing.push("Complete workshop findings and phase outputs");
-  }
-
-  return unique(missing.length ? missing : ["Evidence needed to clear the quality gate"]);
+  return unique(missing);
 }
 
-function recommendedNextStep(missing: readonly string[], retrievedEvidence: number): string {
-  if (retrievedEvidence === 0) {
+function recommendedNextStep(
+  missing: readonly string[],
+  blockers: readonly string[],
+  retrievedEvidence: number,
+): string {
+  if (
+    missing.includes("Source register for this Move") &&
+    retrievedEvidence > 0
+  ) {
+    return "Create or restore the source register and connect the retrieved evidence to the artifact, then rebuild.";
+  }
+  if (
+    retrievedEvidence === 0 &&
+    blockers.some((blocker) =>
+      /^(no source register|source register present but body cites nothing|no source-backed evidence|required evidence signal\(s\) missing from client artifact:)/i.test(
+        blocker.trim(),
+      ),
+    )
+  ) {
     return "Upload and approve the phase workshop outputs, source files, and decision evidence, then re-run Approve & Build.";
   }
+  if (
+    blockers.some((blocker) =>
+      /^document too long for this artifact:/i.test(blocker),
+    )
+  ) {
+    return "Shorten the draft to the artifact's target word ceiling, then rebuild. This length blocker does not indicate that more evidence is needed.";
+  }
   if (missing.some((m) => /metrics|baselines|assumption/i.test(m))) {
-    return "Add cited metrics or mark numeric targets as assumptions before re-running the package.";
+    return retrievedEvidence === 0
+      ? "Add source-backed metrics or mark numeric targets as assumptions before re-running the package."
+      : "Cite the unsupported metrics or label them as assumptions before rebuilding; unrelated evidence uploads are not needed.";
   }
-  if (missing.some((m) => /narrative/i.test(m))) {
-    return "Regenerate after evidence is attached so the package can be rewritten as a client-ready executive narrative.";
+  if (missing.length > 0) {
+    return "Resolve the listed source-backed evidence gaps, then re-run Approve & Build.";
   }
-  return "Resolve the listed evidence gaps, then re-run Approve & Build.";
+  if (blockers.length > 0) {
+    return "Resolve the listed build-quality blocker(s), then rebuild. Additional evidence is not implied by the current blocker.";
+  }
+  if (retrievedEvidence < MINIMUM_BOARD_GRADE_EVIDENCE_ITEMS) {
+    return "Add source-backed evidence to improve the package's evidence coverage before external review.";
+  }
+  return "Review the package and its evidence before using it in a decision.";
 }
 
 export function buildEvidencePackageReadiness(
@@ -105,12 +153,10 @@ export function buildEvidencePackageReadiness(
   const blockerPenalty = hasBlockingStatus ? 25 : 0;
   const warningPenalty = Math.min(10, warnings.length * 2);
   const statusFloor = input.status === "succeeded" ? 85 : 0;
-  const executiveReadinessPct = clampPct(
-    Math.max(statusFloor, evidenceCoveragePct) - blockerPenalty - warningPenalty,
-  );
+  const executiveReadinessPct = clampPct(Math.max(statusFloor, evidenceCoveragePct) - blockerPenalty - warningPenalty);
   const confidenceTier = confidenceFor(executiveReadinessPct, input.status);
   const missing = hasBlockingStatus
-    ? missingFromBlockers(blockers, retrievedEvidence)
+    ? missingFromBlockers(blockers)
     : retrievedEvidence < MINIMUM_BOARD_GRADE_EVIDENCE_ITEMS
       ? ["Additional source-backed evidence would increase executive confidence"]
       : [];
@@ -118,7 +164,7 @@ export function buildEvidencePackageReadiness(
   const canShareExternally = input.status === "succeeded" && confidenceTier === "board";
   const label =
     input.status === "blocked"
-      ? "Cannot assemble executive package"
+      ? "Build blocked"
       : input.status === "failed"
         ? "Package assembly failed"
         : input.status === "succeeded"
@@ -127,7 +173,7 @@ export function buildEvidencePackageReadiness(
   const headline = canShareExternally
     ? "Evidence coverage is high enough for board-ready review."
     : input.status === "blocked"
-      ? `Evidence coverage is ${evidenceCoveragePct}%; the package remains below the executive-quality gate.`
+      ? "The run is blocked. Evidence coverage and build-quality blockers are shown separately."
       : input.status === "succeeded"
         ? `Generated package passed the quality gate with ${retrievedEvidence} governed evidence item${retrievedEvidence === 1 ? "" : "s"}.`
         : "AbarVa is assembling and checking the package.";
@@ -143,6 +189,10 @@ export function buildEvidencePackageReadiness(
     confidenceLabel: confidenceLabel(confidenceTier),
     canShareExternally,
     missing,
-    recommendedNextStep: recommendedNextStep(missing, retrievedEvidence),
+    recommendedNextStep: recommendedNextStep(
+      missing,
+      blockers,
+      retrievedEvidence,
+    ),
   };
 }

@@ -200,6 +200,7 @@ function mart(
         actionBody: "Paid seats are idle behind a policy review.",
         ownerHint: "CIO",
         moduleHandoff: "Strategic Moves",
+        handoffEntityId: "MOVE-001",
       },
     ],
     evidenceLineage: [
@@ -323,6 +324,12 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.summary.financeValidatedUsd).toBe(3.8 * M);
     expect(view.summary.claimableUsd).toBe(0);
     expect(view.summary.unknownValueClaimCount).toBe(2);
+  });
+
+  it("preserves the governed module handoff entity for drill-through", () => {
+    const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
+    expect(view.actions[0]?.moduleHandoff).toBe("Strategic Moves");
+    expect(view.actions[0]?.handoffEntityId).toBe("MOVE-001");
   });
 
   it("derives blocked value as promised minus claimable", () => {

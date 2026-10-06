@@ -40,6 +40,32 @@ export const ANALYSIS_METHODS: Record<string, AnalysisMethodSpec> = {
     consumesFamilies: [],
     producesArtifact: "leverage_ranking",
   },
+  strategic_control_repatriation_readiness: {
+    key: "strategic_control_repatriation_readiness",
+    label: "Strategic-control repatriation readiness",
+    description:
+      "Assesses whether provider-delivered analytics capabilities, outbound data flows, processing transparency, and contract exit rights are known enough to decide if capability repatriation is viable; unknown control or exit inputs remain explicit readiness gaps.",
+    consumesFamilies: [
+      "analytics_capability_inventory",
+      "vendor_data_feed_register",
+      "processing_transparency",
+      "contract_ip_data_return_exit",
+    ],
+    producesArtifact: "repatriation_readiness_assessment",
+  },
+  capability_parity_traceability: {
+    key: "capability_parity_traceability",
+    label: "Capability parity traceability",
+    description:
+      "Traces provider outputs back to business rules, measure logic, data quality assumptions, and operating baselines so target capabilities can be rebuilt or compared without treating dashboard parity as capability parity.",
+    consumesFamilies: [
+      "business_rules_measure_logic",
+      "data_quality_identity_conformance",
+      "sla_operations_baseline",
+      "output_workflow_inventory",
+    ],
+    producesArtifact: "capability_parity_trace",
+  },
   workpackage_roadmap_estimate: {
     key: "workpackage_roadmap_estimate",
     label: "WorkPackages → roadmap → estimate (phased)",

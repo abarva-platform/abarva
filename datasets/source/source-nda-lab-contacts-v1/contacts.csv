@@ -1,0 +1,5 @@
+vendor_id,legal_name,contact_id,display_name,email,contact_policy,contact_state,source_system,source_record_id,evidence_reference,as_of_date
+SYN-SUP-AMS-001,Fictional Aster Ridge Managed Services LLC,SYN-NDA-SIGNER-001,Fictional NDA Test Signer 1,signer-1@nda.example,contact_allowed,active,synthetic_lab_nda_test_signers,SYN-NDA-TEST-1,source-nda-lab-contacts-v1:row-1,2026-10-04
+SYN-SUP-AMS-002,Fictional Harborline Application Operations Inc.,SYN-NDA-SIGNER-002,Fictional NDA Test Signer 2,signer-2@nda.example,contact_allowed,active,synthetic_lab_nda_test_signers,SYN-NDA-TEST-2,source-nda-lab-contacts-v1:row-2,2026-10-04
+SYN-SUP-AMS-003,Fictional Linden Vale Endpoint Services LLC,SYN-NDA-SIGNER-003,Fictional NDA Test Signer 3,signer-3@nda.example,contact_allowed,active,synthetic_lab_nda_test_signers,SYN-NDA-TEST-3,source-nda-lab-contacts-v1:row-3,2026-10-04
+SYN-SUP-AMS-004,Fictional Westhaven Infrastructure Operations Inc.,SYN-NDA-SIGNER-004,Fictional NDA Test Signer 4,signer-4@nda.example,contact_allowed,active,synthetic_lab_nda_test_signers,SYN-NDA-TEST-4,source-nda-lab-contacts-v1:row-4,2026-10-04

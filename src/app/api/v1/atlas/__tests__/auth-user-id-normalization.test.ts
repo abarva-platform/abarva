@@ -1,3 +1,14 @@
+/**
+ * Atlas person-id normalization.
+ *
+ * The two assertions below were stale rather than wrong: `AtlasTenancyCtx`
+ * gained `clientKey` (the boundary in `_auth.ts` accepts an explicit tenant
+ * key as well as an id, and returns it), so a strict `toEqual` on the old
+ * two-field shape failed on a field nobody had asserted was absent. The
+ * expected objects now carry `clientKey`, which keeps the comparison strict:
+ * a third field appearing silently still fails.
+ */
+
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { requireAtlasTenancy } from '../_auth';
 
@@ -21,6 +32,7 @@ describe('/api/v1/atlas auth user id normalization', () => {
 
     await expect(requireAtlasTenancy('meridian')).resolves.toEqual({
       clientId: 'client-meridian',
+      clientKey: 'meridian',
       userId: null,
     });
   });
@@ -35,6 +47,7 @@ describe('/api/v1/atlas auth user id normalization', () => {
 
     await expect(requireAtlasTenancy('client-apex')).resolves.toEqual({
       clientId: 'client-apex',
+      clientKey: 'apexretail',
       userId: personId,
     });
   });

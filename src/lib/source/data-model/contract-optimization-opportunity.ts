@@ -3,7 +3,7 @@ import type { SourceContract360Row } from "./types";
 export type OptimizationOpportunityValueType =
   | "recoverable_leakage"
   | "avoided_cost"
-  | "negotiable_improvement";
+  | "negotiated_improvement";
 
 export type OptimizationOpportunityStage =
   | "signal"
@@ -81,6 +81,40 @@ export interface OpportunityCalculationRead {
   readonly lines: readonly OpportunityCalculationLine[];
 }
 
+export interface OpportunityNegotiationDetail {
+  readonly buyerAsk: string | null;
+  readonly negotiationLanguage: string | null;
+  readonly vendorConcession: string | null;
+  readonly timingDependency: string | null;
+  readonly ownerRole: string | null;
+  readonly priority: string | null;
+  readonly riskIfIgnored: string | null;
+}
+
+export interface ContractOpportunityClaim {
+  readonly claimId: string;
+  readonly opportunityId: string;
+  readonly contractId: string;
+  readonly role: string;
+  readonly statement: string;
+  readonly basis: string;
+  readonly scenarioKind: "signed_record" | "proposed_target" | "benchmark_comparable";
+  readonly amountUsd: number | null;
+  readonly amountLowUsd: number | null;
+  readonly amountHighUsd: number | null;
+  readonly evidenceStatus: "supported" | "partial" | "missing" | "conflicted" | "not_established";
+  readonly reviewStatus: "draft" | "reviewed" | "approved" | "blocked";
+  readonly sourceRefs: readonly OpportunitySourceReference[];
+  readonly calculationRunId: string | null;
+  readonly benchmarkId: string | null;
+  readonly playbookRuleId: string | null;
+  readonly playbookRuleVersion: string | null;
+  readonly producedBy: "package_author" | "deterministic_loader" | "human_reviewer" | "claude";
+  readonly generationRef: string | null;
+  readonly reviewerRef: string | null;
+  readonly reviewedAt: string | null;
+}
+
 export interface ContractOptimizationOpportunity {
   readonly opportunityId: string;
   readonly contractId: string;
@@ -88,6 +122,9 @@ export interface ContractOptimizationOpportunity {
   readonly shortLabel: string;
   readonly valueType: OptimizationOpportunityValueType;
   readonly amountUsd: number | null;
+  /** Present only when a governed sizing claim supplies both bounds. */
+  readonly amountLowUsd?: number | null;
+  readonly amountHighUsd?: number | null;
   readonly amountState: "exact" | "range" | "not_sized";
   readonly stage: OptimizationOpportunityStage;
   readonly evidenceGrade: OptimizationEvidenceGrade;
@@ -102,6 +139,7 @@ export interface ContractOptimizationOpportunity {
   readonly overlapTreatment: string;
   readonly approvalState: string;
   readonly narrative: string;
+  readonly negotiationDetail?: OpportunityNegotiationDetail | null;
 }
 
 export interface FinanceRealizationLink {
@@ -126,7 +164,9 @@ export interface OptimizationCaseRead {
     | "outreach_approval"
     | "outcome_recorded"
     | "finance_handoff"
-    | "closed";
+    | "closed"
+    | "unverified";
+  readonly caseCount?: number;
   readonly owner: string | null;
   readonly nextAction: string;
 }
@@ -179,6 +219,8 @@ export interface ContractOptimizationOpportunitySet {
   readonly baseline: OptimizationBaselineRead;
   readonly selectedOpportunityId: string | null;
   readonly opportunities: readonly ContractOptimizationOpportunity[];
+  /** Claim-level provenance for the opportunity statements shown in Optimize. */
+  readonly claims?: readonly ContractOpportunityClaim[];
   readonly optimizationCase?: OptimizationCaseRead | null;
   readonly approvalRequests?: readonly OptimizationApprovalRequestRead[];
   readonly negotiatedOutcomes?: readonly OptimizationNegotiatedOutcomeRead[];
@@ -212,7 +254,8 @@ const DATASET_FALLBACK = "source-v4-golden-contract-evidence";
 const RATE_VARIANCE_RULE = "source.contract_optimization.rate_variance.v1";
 const RATE_VARIANCE_FORMULA =
   "Eligible quantity × (billed rate - operative contract rate) - approved exceptions = rate-variance opportunity";
-const VMS_RATE_CARD_RULE = "source.contract_optimization.vms_rate_card_variance.v1";
+const VMS_RATE_CARD_RULE =
+  "source.contract_optimization.vms_rate_card_variance.v1";
 const VMS_RATE_CARD_FORMULA =
   "SUM(hours × (billed hourly rate - operative rate-card hourly rate)) for VMS/rate-card lines with no amendment = labor rate-card variance";
 const OFF_CONTRACT_BILLING_RULE =
@@ -334,13 +377,14 @@ export function buildContractOptimizationOpportunitySet(
   const potentialNegotiableUsd = sum(
     opportunities
       .filter(
-        (opportunity) => opportunity.valueType === "negotiable_improvement",
+        (opportunity) => opportunity.valueType === "negotiated_improvement",
       )
       .map((opportunity) => opportunity.amountUsd),
   );
   const financeConfirmedUsd = sum(
     financeRealizations.map((item) => item.amountUsd),
   );
+  const claims = buildCompatibilityClaims(opportunities);
 
   const selectedOpportunityId =
     opportunities.find((opportunity) =>
@@ -373,6 +417,7 @@ export function buildContractOptimizationOpportunitySet(
     baseline,
     selectedOpportunityId,
     opportunities,
+    claims,
     optimizationCase: null,
     approvalRequests: [],
     negotiatedOutcomes: [],
@@ -383,6 +428,97 @@ export function buildContractOptimizationOpportunitySet(
     potentialNegotiableUsd,
     financeConfirmedUsd,
   };
+}
+
+function buildCompatibilityClaims(
+  opportunities: readonly ContractOptimizationOpportunity[],
+): readonly ContractOpportunityClaim[] {
+  return opportunities.flatMap((opportunity) => {
+    const sourceRefs = opportunity.evidenceRefs;
+    const sourceBasis = sourceRefs.length > 0 ? "client_record" : "not_recorded";
+    const claims: ContractOpportunityClaim[] = [
+      {
+        claimId: `${opportunity.opportunityId}:problem`,
+        opportunityId: opportunity.opportunityId,
+        contractId: opportunity.contractId,
+        role: "problem",
+        statement: opportunity.label,
+        basis: sourceBasis,
+        scenarioKind: "signed_record",
+        amountUsd: null,
+        amountLowUsd: null,
+        amountHighUsd: null,
+        evidenceStatus: sourceRefs.length > 0 ? "partial" : "not_established",
+        reviewStatus: "draft",
+        sourceRefs,
+        calculationRunId: null,
+        benchmarkId: null,
+        playbookRuleId: null,
+        playbookRuleVersion: null,
+        producedBy: "deterministic_loader",
+        generationRef: null,
+        reviewerRef: null,
+        reviewedAt: null,
+      },
+    ];
+    if (opportunity.negotiationDetail?.buyerAsk) {
+      claims.push({
+        claimId: `${opportunity.opportunityId}:proposed-ask`,
+        opportunityId: opportunity.opportunityId,
+        contractId: opportunity.contractId,
+        role: "proposed_ask",
+        statement: opportunity.negotiationDetail.buyerAsk,
+        basis: "judgment",
+        scenarioKind: "proposed_target",
+        amountUsd: null,
+        amountLowUsd: null,
+        amountHighUsd: null,
+        evidenceStatus: "not_established",
+        reviewStatus: "draft",
+        sourceRefs,
+        calculationRunId: null,
+        benchmarkId: null,
+        playbookRuleId: null,
+        playbookRuleVersion: null,
+        producedBy: "deterministic_loader",
+        generationRef: null,
+        reviewerRef: null,
+        reviewedAt: null,
+      });
+    }
+    if (opportunity.amountUsd != null || opportunity.calculation) {
+      claims.push({
+        claimId: `${opportunity.opportunityId}:sizing`,
+        opportunityId: opportunity.opportunityId,
+        contractId: opportunity.contractId,
+        role: "sizing",
+        statement:
+          opportunity.amountUsd != null
+            ? `Candidate value for ${opportunity.shortLabel}.`
+            : `Sizing remains open for ${opportunity.shortLabel}.`,
+        // The legacy calculation field is descriptive metadata, not a
+        // completed calculation run. Keep the compatibility claim honest
+        // until the persisted calculation lineage is available.
+        basis: "not_recorded",
+        scenarioKind: "signed_record",
+        amountUsd: null,
+        amountLowUsd: null,
+        amountHighUsd: null,
+        evidenceStatus: "not_established",
+        reviewStatus: "draft",
+        sourceRefs,
+        calculationRunId: null,
+        benchmarkId: null,
+        playbookRuleId: null,
+        playbookRuleVersion: null,
+        producedBy: "deterministic_loader",
+        generationRef: null,
+        reviewerRef: null,
+        reviewedAt: null,
+      });
+    }
+    return claims;
+  });
 }
 
 function buildBaseline(input: {
@@ -547,7 +683,8 @@ function buildVmsRateCardOpportunity(
         "Rate-card row has positive rate_variance_usd and no amendment reference approving the higher billed rate.",
       pricingScheduleRef: text(row.rate_card_line_id),
       contractTermRef: "doc.extraction:contract.pricing_schedule",
-      amendmentRef: text(row.amendment_reference) ?? "No rate-card amendment found",
+      amendmentRef:
+        text(row.amendment_reference) ?? "No rate-card amendment found",
       sourceRefs: [
         sourceRef(row, "source.golden_contract_rate_card_variance"),
         ...pdfRefs
@@ -953,9 +1090,7 @@ function buildSlaOpportunity(
           text(row.reporting_month) ??
           null,
         skuOrService:
-          text(row.service_tower) ??
-          text(row.sla_name) ??
-          "monthly SLA credit",
+          text(row.service_tower) ?? text(row.sla_name) ?? "monthly SLA credit",
         quantity:
           number(row.sev1_sev2_incidents) ??
           number(row.credit_eligible_incidents) ??
@@ -1214,7 +1349,7 @@ function buildNegotiatedOpportunity(
     contractId,
     label: "Negotiated price and term improvement",
     shortLabel: "Negotiated improvement",
-    valueType: "negotiable_improvement",
+    valueType: "negotiated_improvement",
     amountUsd: roundCurrency(amount),
     amountState: "exact",
     stage: "target_position",
@@ -1326,7 +1461,12 @@ function monthEndDate(value: string | null): string | null {
   if (!match) return isoDate(value);
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
     return null;
   }
   const end = new Date(Date.UTC(year, month, 0));

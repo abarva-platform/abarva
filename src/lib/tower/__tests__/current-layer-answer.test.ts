@@ -108,10 +108,20 @@ function towerView(overrides: Record<string, unknown> = {}) {
         promisedValueUsd: null,
         businessValueType: null,
         sourceFile: "23_ai_tool_rollout.csv",
+        rolloutGoal: "engineering productivity",
+        rolloutStage: "pilot",
+        rolloutTargetUsers: 680,
+        enabledUsers: 306,
+        usageActual: 299,
         linkedBusinessCaseCount: 4,
         adoptionRatePct: 35,
         adoptionTargetPct: 60,
         controlBlocker: "SOX evidence",
+        sourceSystem: "AI Portfolio and Business Case Tracker",
+        sourceRecordId: "TOOL-ROW",
+        sourceAsOfDate: "2026-08-24",
+        refreshCadence: "monthly",
+        sourceQualityState: "synthetic_review_ready",
       }),
       aiItem({
         aiPortfolioKey: "foundation-1",
@@ -199,13 +209,28 @@ describe("answerCurrentTowerQuestion", () => {
     expect(result.modelOutput.tables?.[0]?.columns).toEqual([
       "Tool",
       "Vendor",
-      "Users",
+      "Goal",
+      "Target users",
+      "Enabled users",
+      "Monthly active users",
       "Adoption",
       "Target",
       "Gap to target",
       "Control blocker",
       "Linked cases",
+      "Source system",
+      "As of",
     ]);
+    expect(result.modelOutput.tables?.[0]?.rows.flat()).toEqual(
+      expect.arrayContaining([
+        "engineering productivity",
+        "680",
+        "306",
+        "299 users",
+        "AI Portfolio and Business Case Tracker",
+        "2026-08-24",
+      ]),
+    );
   });
 
   it("answers selected-row drill-downs without treating missing values as zero", async () => {
@@ -229,6 +254,90 @@ describe("answerCurrentTowerQuestion", () => {
     );
     expect(cells).toContain("Sponsor-stated value");
     expect(cells).toContain("Not loaded");
+    expect(cells).toContain("Rollout goal");
+    expect(cells).toContain("engineering productivity");
+    expect(cells).toContain("Enabled users");
+    expect(cells).toContain("306");
+    expect(cells).toContain("Source system");
+    expect(cells).toContain("AI Portfolio and Business Case Tracker");
+    expect(cells).toContain("Refresh cadence");
+    expect(cells).toContain("monthly");
     expect(cells).not.toContain("$0");
+    expect(result.modelOutput.answer).toContain("Review the selected item's loaded owner");
+  });
+
+  it("uses the portfolio action when a selected row is unavailable", async () => {
+    const result = await answerCurrentTowerQuestion({
+      tenantId: "client-id",
+      tenantKey: "selected-client",
+      tenantName: "Selected Client",
+      question: "Explain this selected row",
+    });
+
+    expect(result.modelOutput.answer).toContain("Review the claim states and proof gaps with Finance");
+    expect(result.modelOutput.answer).not.toContain("selected item's loaded owner");
+  });
+
+  it.each([
+    ["What value is claimable?", "Close the baseline, actual, and attestation gaps"],
+    ["Show the tool rollouts", "collect a before-and-after workflow baseline"],
+    ["Show the budget posture", "Review the claim states and proof gaps with Finance"],
+    ["Rank the top investments", "Have Finance validate each proposed return"],
+    ["Show the distribution by domain", "Validate value-type and domain tags"],
+    ["Which control blockers remain?", "Ask the control owner to document clearance evidence"],
+    ["Show the evidence lineage", "Verify the source and caveat"],
+    ["Describe the AI portfolio", "collect a before-and-after workflow baseline"],
+  ])("includes a grounded next action in the visible %s answer", async (question, action) => {
+    const result = await answerCurrentTowerQuestion({
+      tenantId: "client-id",
+      tenantKey: "selected-client",
+      tenantName: "Selected Client",
+      question,
+    });
+
+    expect(result.modelOutput.answer).toContain(action);
+    expect(result.response).toContain(action);
+    expect(result.modelOutput.answer).not.toMatch(/\bNext:/);
+    expect(result.modelOutput.tables?.length).toBeGreaterThan(0);
+  });
+
+  it("uses the Foundations tab for a context-specific action", async () => {
+    const result = await answerCurrentTowerQuestion({
+      tenantId: "client-id",
+      tenantKey: "selected-client",
+      tenantName: "Selected Client",
+      question: "What should I look at here?",
+      pageContext: { activeTab: "foundations" },
+    });
+
+    expect(result.modelOutput.answer).toContain("Link each foundation to the business cases");
+    expect(result.modelOutput.tables?.[0]?.id).toBe("tower_foundations");
+  });
+
+  it("keeps the existing decision action without repeating it", async () => {
+    const result = await answerCurrentTowerQuestion({
+      tenantId: "client-id",
+      tenantKey: "selected-client",
+      tenantName: "Selected Client",
+      question: "What decision comes next?",
+    });
+
+    expect(result.modelOutput.answer).toContain("The next action is to use the current claim states");
+    expect(result.modelOutput.answer.match(/The next action is/g)).toHaveLength(1);
+  });
+
+  it("gives a safe next action when governed Tower data is unavailable", async () => {
+    mockReadTowerCommandCenter.mockResolvedValueOnce(null);
+    const result = await answerCurrentTowerQuestion({
+      tenantId: "client-id",
+      tenantKey: "selected-client",
+      tenantName: "Selected Client",
+      question: "What is the portfolio posture?",
+    });
+
+    expect(result.modelOutput.answer).toContain(
+      "Have the data owner load and validate the current Tower evidence",
+    );
+    expect(result.modelOutput.answer).not.toMatch(/\$\d/);
   });
 });

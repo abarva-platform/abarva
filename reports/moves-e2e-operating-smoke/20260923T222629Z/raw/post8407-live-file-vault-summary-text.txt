@@ -1,0 +1,548 @@
+url=https://app.abarva.ai/strategic-moves/97f4cba8-8a7f-49d3-8eca-f2b082ed68c2/phase/5?proof=d86f4c6c
+summary=Current Move files, review-ready exports, and review items. 38 current files · 12 review-ready DOCX/PPTX exports · 1 deliverable needs review · 1 model.
+
+Home
+Intelligence
+Moves
+Source Optimize
+Source New
+Tower
+AP
+AbarVa Prod QA
+Sign out
+MOVES
+HEALTHCARE_IDN-Meridian Health-2026
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+FILES & EVIDENCE
+Phase 6 of 6 · Prepare to Execute
+«
+← All Moves
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+
+PHASES
+✓
+Originate
+3 of 3
+✓
+Charter
+2 of 2
+✓
+Understand Current State
+5 of 5
+✓
+Choose the Approach
+2 of 2
+✓
+Build the Plan
+5 of 5
+✓
+Prepare to Execute
+4 of 4
+WORKSPACE
+▦
+Stage workspace
+▣
+Files & Evidence
+◈
+Phase Intelligence
+✓
+Approvals
+
+aVa guides P0-P4 · Atlas takes over P5 Execute.
+
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13/Files & Evidence
+AVA · MOVES
+Files & Evidence
+
+Every input template, client-loaded evidence file, and AbarVa-generated deliverable — the real Artifact Vault for this Move, not a preview.
+
+Steps
+Files
+Intelligence
+Downloads
+
+Current Move files, review-ready exports, and review items. 38 current files · 12 review-ready DOCX/PPTX exports · 1 deliverable needs review · 1 model.
+
+Upload evidence
+Refresh
+EXECUTIVE CONTEXT REVIEW
+What AbarVa gathered for the next phase
+
+AbarVa reviewed active Move evidence and active module context for P5. Candidate preview data stayed out of the default path.
+
+8 attached
+active home context
+Sep 11, 7:54 AM
+ATTACHED EVIDENCE · 8
+acceptance_needles_phase_4_business_case_baseline.md · kpi baseline
+Same tenant, same Move, source-backed/uploaded evidence, readiness-covered, and generation-eligible.
+acceptance_needles_phase_3_design_controls.md · it systems landscape
+Same tenant, same Move, source-backed/uploaded evidence, readiness-covered, and generation-eligible.
+acceptance_needles_phase_1_charter_scope.md · kpi baseline
+Same tenant, same Move, source-backed/uploaded evidence, readiness-covered, and generation-eligible.
++5 more in the extract
+SUGGESTED · 0
+
+No review-only context was suggested.
+
+EXCLUDED · 1
+Candidate preview data
+Never read candidate data by default.
+GAPS · 0
+
+No blocking context gaps were recorded.
+
+Evidence family coverage
+
+current state process: 1 · decision log: 1 · it systems landscape: 2 · kpi baseline: 2 · org workforce: 1 · uploaded artifact: 1
+
+What this means
+
+P5 has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.
+
+All (38)
+Deliverables (15)
+Session files (5)
+Evidence (16)
+Approvals (2)
+Show version history
+DELIVERABLES · 15
+Value Measurement Contract — Measurement Framework
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 5
+Automated quality signal 100/100
+Sep 11, 7:59 AM
+Storage pending
+Review
+Open
+Download
+Meridian Healthcare Demo — Discovery-to-Delivery Handoff
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 5
+Automated quality signal 100/100
+Sep 11, 7:57 AM
+Storage pending
+Review
+Open
+Download
+Meridian Healthcare Demo — Readiness & Change Plan
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 4
+Automated quality signal 100/100
+Sep 11, 7:54 AM
+Storage pending
+Review
+Open
+Download
+Meridian Healthcare Demo — Value Measurement Model
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 4
+Automated quality signal 100/100
+Sep 11, 7:52 AM
+Storage pending
+Review
+Open
+Download
+Financial Model Input Register — Meridian Synthetic Rich Evidence E2E 2026-09-11T12-28
+EXCEL MODEL
+v1
+ready
+Phase 4
+Automated quality signal 100/100
+—
+Sep 11, 7:50 AM
+Storage pending
+Review
+Open
+Download
+Business Case Readiness Memo — Meridian Synthetic Rich Evidence E2E 2026-09-11T12-28
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 4
+Automated quality signal 100/100
+Sep 11, 7:48 AM
+Storage pending
+Review
+Open
+Download
+Meridian Healthcare Demo — Care-Management Reconciliation Roadmap
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 4
+Automated quality signal 80/100
+Sep 11, 7:46 AM
+Storage pending
+Review
+Open
+Download
+Requirements Traceability — Executive Layer
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 3
+Automated quality signal 90/100
+Sep 11, 7:42 AM
+Storage pending
+Review
+Open
+Download
+Operating Model for the Governed Care-Signal Layer
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 3
+Automated quality signal 90/100
+Sep 11, 7:40 AM
+Storage pending
+Review
+Open
+Download
+Governed Care-Signal Operating Layer — Solution Design
+PPTX FINAL
+PRESENTATION
+v1
+ready
+Phase 3
+Automated quality signal 90/100
+Sep 11, 7:38 AM
+Storage pending
+Review
+Open
+Download
+Governed Care-Signal Operating Layer — Target-State Architecture
+PPTX FINAL
+PRESENTATION
+v1
+ready
+Phase 3
+Automated quality signal 100/100
+Sep 11, 7:36 AM
+Storage pending
+Review
+Open
+Download
+Root Cause Worksheet: Population-Health Closure Performance
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 2
+Automated quality signal 80/100
+Sep 11, 7:27 AM
+Storage pending
+Review
+Open
+Download
+Meridian Healthcare Demo — Care-Management Discovery Report
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+needs review
+Phase 2
+Automated quality signal 90/100
+Sep 11, 7:26 AM
+Storage pending
+Review
+Open
+Download
+Program Charter
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v2
+needs review
+Phase 1
+Sep 11, 7:17 AM
+Vault
+Review
+Open
+Download
+Meridian Healthcare Care-Signal Reconciliation — Charter & Discovery Authorization
+WORD-EQUIVALENT
+WORD-EQUIVALENT
+v1
+ready
+Phase 1
+Automated quality signal 90/100
+Sep 11, 7:16 AM
+Storage pending
+Review
+Open
+Download
+SESSION FILES · 5
+P5 Execution / Tower Handoff Context Pack
+MD
+v3
+needs review
+Phase 5
+13 KB
+Sep 11, 7:54 AM
+Vault
+Review
+Open
+Download
+P4 Business Case Baseline Pack
+MD
+v2
+needs review
+Phase 4
+13 KB
+Sep 11, 7:42 AM
+Vault
+Review
+Open
+Download
+P3 Design Evidence Pack
+MD
+v2
+needs review
+Phase 3
+13 KB
+Sep 11, 7:28 AM
+Vault
+Review
+Open
+Download
+P2 Context Extract
+MD
+v2
+needs review
+Phase 2
+13 KB
+Sep 11, 7:17 AM
+Vault
+Review
+Open
+Download
+P1 Context Extract
+MD
+v2
+needs review
+Phase 1
+13 KB
+Sep 11, 7:14 AM
+Vault
+Review
+Open
+Download
+APPROVALS · 2
+Phase Gate Decision — P5 → P6
+HTML PREVIEW
+PREVIEW ONLY
+v6
+approved
+NOT FINAL
+Phase 6
+Sep 11, 2:10 AM
+Vault
+Review
+Open
+Download
+Client changed version requiring reapproval - roadmap_CHANGED_v2_REQUIRES_REAPPROVAL.csv
+CSV
+v2
+aligned
+Phase 4
+6 KB
+Sep 11, 12:24 AM
+Vault
+Review
+Open
+Download
+EVIDENCE · 16
+Synthetic evidence - systems_inventory.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 2
+13 KB
+Sep 11, 12:23 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - systems_inventory.csv
+CSV
+v1
+aligned
+Phase 2
+23 KB
+Sep 11, 12:23 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - roadmap.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 4
+8 KB
+Sep 11, 12:22 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - roadmap.csv
+CSV
+v1
+aligned
+Phase 4
+6 KB
+Sep 11, 12:22 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - quality_measures.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 2
+8 KB
+Sep 11, 12:20 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - quality_measures.csv
+CSV
+v1
+aligned
+Phase 2
+9 KB
+Sep 11, 12:20 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - org_roles.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 1
+9 KB
+Sep 11, 12:19 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - org_roles.csv
+CSV
+v1
+aligned
+Phase 1
+10 KB
+Sep 11, 12:19 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - operating_evidence.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 1
+19 KB
+Sep 11, 12:19 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - operating_evidence.csv
+CSV
+v1
+aligned
+Phase 1
+42 KB
+Sep 11, 12:18 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - interface_inventory.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 2
+10 KB
+Sep 11, 12:17 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - interface_inventory.csv
+CSV
+v1
+aligned
+Phase 2
+11 KB
+Sep 11, 12:17 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - facility_footprint.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 2
+10 KB
+Sep 11, 12:16 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - facility_footprint.csv
+CSV
+v1
+aligned
+Phase 2
+9 KB
+Sep 11, 12:16 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - care_gap_cells.xlsx
+EXCEL MODEL
+v1
+aligned
+Phase 2
+15 KB
+Sep 11, 12:16 AM
+Vault
+Review
+Open
+Download
+Synthetic evidence - care_gap_cells.csv
+CSV
+v1
+aligned
+Phase 2
+25 KB
+Sep 11, 12:15 AM
+Vault
+Review
+Open
+Download
+Ask aVa

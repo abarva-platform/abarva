@@ -141,8 +141,6 @@ export interface ArchitecturePageView {
   subtitle: string;
   context: {
     tenant: string;
-    mode: string;
-    agent: string;
     data: string;
     liveStatus: string;
     liveStatusKind: ContextLiveStatus;
@@ -150,7 +148,6 @@ export interface ArchitecturePageView {
   editorial: {
     title: string;
     body: string;
-    contextUsed: ReadonlyArray<string>;
     evidenceStrength: EvidenceStrength;
     blocker?: string;
     primaryAction: { label: string; href: string };
@@ -214,8 +211,6 @@ export async function buildArchitecturePageView(
       'The canvas explains the app, agents, context, evidence, data plane, gateway, tools, governance, and Azure/private data-plane target.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Admin workspace',
-      agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',
       liveStatusKind: 'deferred',
@@ -223,7 +218,6 @@ export async function buildArchitecturePageView(
     editorial: {
       title: editorial.title,
       body: editorial.body,
-      contextUsed: editorial.contextUsed,
       evidenceStrength: editorial.evidenceStrength,
       blocker: editorial.blocker ?? undefined,
       primaryAction: editorial.primaryAction,

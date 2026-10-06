@@ -31,7 +31,7 @@ describe("buildAvaIntakeResponseParts", () => {
     ]);
     expect(parts[0]).toMatchObject({
       type: "text",
-      title: "Ava sourcing read",
+      title: "aVa sourcing read",
       text: "Five fields unlock the intake.",
     });
     expect(parts[1]).toMatchObject({

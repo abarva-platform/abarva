@@ -183,7 +183,8 @@ const ROUTE_SMOKE_TARGETS: readonly RouteSmokeTarget[] = Object.freeze([
     ownerSurface: 'tower',
     primaryAgent: 'atlas',
     expectedGuard: 'tenant_scoped',
-    expectedReadModel: 'src/components/tower/ProgramPressureCards.tsx',
+    expectedReadModel:
+      'src/components/tower/command-center/TowerCommandCenterAvaShell.tsx',
     smokePriority: 'critical',
     currentlyImplemented: 'exists',
     testStrategy: 'read_model_unit',

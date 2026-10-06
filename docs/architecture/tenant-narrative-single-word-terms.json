@@ -1,0 +1,12 @@
+{
+  "note": "Every single-word term the release-record tenant-narrative guard derives from datasets/tenant-inputs/tenant-input-registry.json today. A term on this list is refused anywhere in release-record prose, including where the word is ordinary English and carries no tenant identity. The guard's GENERIC_TENANT_WORDS list, which suppresses such parts, is hand-maintained, so a new registry tenant can silently add a word here and start refusing ordinary sentences. This file exists so that never happens silently: scripts/release-control/check-tenant-narrative-term-drift.mjs recomputes the set and fails when it differs, which forces one read per new tenant. Edit this file by hand when the answer is that the new word really is an identity token. There is deliberately no script that rewrites it -- a writer would let anyone silence the gate by running it.",
+  "criterion": "A derived word belongs in the guard's GENERIC_TENANT_WORDS exemption -- not on this list -- when blocking it would refuse ordinary release-record prose while protecting nothing, because the tenant's full key and full display name stay blocked either way.",
+  "terms": {
+    "apex": "Under an open decision, not settled. The one distinctive token in its key, so the argument to exempt it is weaker than for healthcare. Recorded here as it stands today; it is on the list because nobody has ruled, not because anybody ruled to keep it.",
+    "healthcare": "Under the same open decision. Derived from a retired demo tenant whose other two key parts are already exempt and whose display name is a cover name, so the whole key reads as generic. Recorded as it stands today, not ratified.",
+    "lakeshore": "A distinctive cover name. Correctly blocked.",
+    "meridian": "A distinctive cover name. Correctly blocked.",
+    "northstar": "A distinctive cover name. Correctly blocked.",
+    "skyharbor": "A distinctive cover name. Correctly blocked."
+  }
+}

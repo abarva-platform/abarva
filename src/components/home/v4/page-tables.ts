@@ -70,12 +70,19 @@ const FINDING_RANK: Record<FindingKind, number> = {
 };
 
 /** Sorts a findings list into reading order, keeping the original order within each kind. */
+const RATED_RANK: Record<string, number> = { high: 0, moderate: 1 };
+
 export function rankFindings(findings: Finding[]): Finding[] {
   return findings
     .map((finding, index) => ({ finding, index }))
     .sort(
       (a, b) =>
         FINDING_RANK[a.finding.kind] - FINDING_RANK[b.finding.kind] ||
+        // Within a kind, the record's own rating orders the list. An unrated finding is not
+        // demoted below a moderate one -- absence of a rating is not a low rating, and treating it
+        // as one would let a gap in the register quietly reorder a queue a leader reads top-down.
+        (RATED_RANK[a.finding.rated ?? ""] ?? 0.5) -
+          (RATED_RANK[b.finding.rated ?? ""] ?? 0.5) ||
         a.index - b.index,
     )
     .map((entry) => entry.finding);
@@ -100,11 +107,18 @@ export function splitLeadingFigure(
 
 export interface Finding {
   kind: FindingKind;
+  /**
+   * The severity the record itself rates, where it rates one.
+   *
+   * Only set from a declared severity field, never inferred from how serious a finding sounds. It
+   * is what lets a queue be ordered by the record's own judgement rather than by ours, and it is
+   * the only thing red is spent on.
+   */
+  rated?: "high" | "moderate";
   claim: string;
   owner: string;
   because: string;
-  /** The file, the rule and the grain behind the figure in the claim. A finding a reader cannot
-   * reproduce is an assertion, and an assertion with an owner's name on it is worse than none. */
+  /** Legacy file hint plus deterministic rule and grain. The file is not verified source lineage. */
   trace?: { file: string; grain: string; rule: string };
   /** The rows behind the finding, openable in the record browser with a filter already applied. */
   openRows?: { objectType: string; filter: string };
@@ -218,9 +232,427 @@ function crossTab(
 }
 
 /** Title-cases a declared enum value for display without inventing a label for it. */
+/** One or many, said correctly. A count reading "1 units" reads as a machine wrote the sentence. */
+const plural = (count: number, one: string, many: string): string =>
+  count === 1 ? one : many;
+
 export function label(value: string): string {
   if (!value) return "not declared";
   return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
+type CrossFamilyEstate = {
+  applications?: EstateRow[];
+  vendors?: EstateRow[];
+  infrastructure?: EstateRow[];
+  data?: EstateRow[];
+  risks?: EstateRow[];
+  programs?: EstateRow[];
+  relationships?: EstateRow[];
+};
+
+function norm(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function splitValues(value: string): string[] {
+  return value
+    .split(/[;,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function containsDeclaredName(value: string, name: string): boolean {
+  if (!value || !name) return false;
+  const wanted = norm(name);
+  return splitValues(value).some((item) => norm(item) === wanted);
+}
+
+function isHigh(value: string): boolean {
+  return /^(critical|high|tier\s*1|mission critical)$/i.test(value.trim());
+}
+
+function isTruthish(value: string): boolean {
+  return /^(true|yes|y|1)$/i.test(value.trim());
+}
+
+type RelationshipEndpoint = {
+  name: string;
+  type: string;
+  row?: EstateRow;
+  posture:
+    | "rated exposure"
+    | "critical system"
+    | "regulated data"
+    | "program"
+    | "declared only";
+};
+
+type RelationshipPath = {
+  left: RelationshipEndpoint;
+  verb: string;
+  right: RelationshipEndpoint;
+  strength: string;
+  confidence: string;
+  evidenceBasis: string;
+  gap: string;
+};
+
+function rowName(row: EstateRow, keys: string[]): string {
+  for (const key of keys) {
+    const value = str(row, key);
+    if (value) return value;
+  }
+  return "";
+}
+
+function indexRows(
+  rows: EstateRow[] | undefined,
+  keys: string[],
+): Map<string, EstateRow> {
+  const index = new Map<string, EstateRow>();
+  for (const row of rows ?? []) {
+    const name = rowName(row, keys);
+    if (name) index.set(norm(name), row);
+  }
+  return index;
+}
+
+function endpointPosture(row: EstateRow | undefined, fallbackType: string) {
+  if (!row) return "declared only" as const;
+  if (isHigh(str(row, "severity")) || isHigh(str(row, "riskRating"))) {
+    return "rated exposure" as const;
+  }
+  if (isHigh(str(row, "criticality"))) return "critical system" as const;
+  if (isTruthish(str(row, "regulatedDataFlag")))
+    return "regulated data" as const;
+  if (
+    /program|initiative/i.test(fallbackType) ||
+    str(row, "programName") ||
+    str(row, "status")
+  ) {
+    return "program" as const;
+  }
+  return "declared only" as const;
+}
+
+function relationshipEndpoint(
+  name: string,
+  type: string,
+  indexes: ReadonlyArray<Map<string, EstateRow>>,
+): RelationshipEndpoint {
+  const key = norm(name);
+  const row = indexes.map((index) => index.get(key)).find(Boolean);
+  return {
+    name,
+    type,
+    row,
+    posture: endpointPosture(row, type),
+  };
+}
+
+function relationshipPaths(estate: CrossFamilyEstate): RelationshipPath[] {
+  const indexes = [
+    indexRows(estate.risks, ["riskOrControlName"]),
+    indexRows(estate.programs, ["programName"]),
+    indexRows(estate.applications, ["systemName"]),
+    indexRows(estate.vendors, ["vendorName", "contractName"]),
+    indexRows(estate.data, ["dataAssetName", "sourceSystem", "targetSystem"]),
+    indexRows(estate.infrastructure, ["platformName"]),
+  ];
+  const rows = estate.relationships ?? [];
+  const paths: RelationshipPath[] = [];
+
+  for (const edge of rows) {
+    const from = str(edge, "fromObjectName");
+    const to = str(edge, "toObjectName");
+    const verb = str(edge, "relationshipType");
+    if (!from || !to || !verb) continue;
+
+    const left = relationshipEndpoint(
+      from,
+      str(edge, "fromObjectType"),
+      indexes,
+    );
+    const right = relationshipEndpoint(to, str(edge, "toObjectType"), indexes);
+    const touchesAttention =
+      left.posture !== "declared only" ||
+      right.posture !== "declared only" ||
+      /risk|control|program|initiative|vendor|contract|application|system|data/i.test(
+        `${left.type} ${right.type}`,
+      );
+    if (!touchesAttention) continue;
+
+    paths.push({
+      left,
+      verb,
+      right,
+      strength: str(edge, "relationshipStrength") || "declared",
+      confidence: str(edge, "confidence") || "not declared",
+      evidenceBasis: str(edge, "evidenceBasis") || "relationship row",
+      gap: str(edge, "knownGaps") || "No additional gap declared on the edge.",
+    });
+  }
+
+  return paths
+    .sort((a, b) => {
+      const score = (path: RelationshipPath) =>
+        [path.left, path.right].filter(
+          (endpoint) => endpoint.posture !== "declared only",
+        ).length;
+      return (
+        score(b) - score(a) ||
+        a.left.name.localeCompare(b.left.name) ||
+        a.right.name.localeCompare(b.right.name)
+      );
+    })
+    .slice(0, 8);
+}
+
+export function relationshipPathTables(estate: CrossFamilyEstate): TableSpec[] {
+  const paths = relationshipPaths(estate);
+  if (paths.length === 0) return [];
+  return [
+    {
+      caption: "Relationship-backed exposure paths",
+      section: "Cross-family executive findings",
+      columns: ["Declared path", "Why it matters", "Evidence state"],
+      rows: paths.map((path) => [
+        `${cellText(path.left.name)} → ${cellText(path.verb)} → ${cellText(path.right.name)}`,
+        [path.left, path.right]
+          .map((endpoint) =>
+            endpoint.posture === "declared only"
+              ? `${cellText(endpoint.name)} is relationship-declared`
+              : `${cellText(endpoint.name)} is ${endpoint.posture}`,
+          )
+          .join("; "),
+        `${cellText(path.strength)} · ${cellText(path.confidence)} · ${cellText(path.evidenceBasis)} · ${cellText(path.gap)}`,
+      ]),
+      note: "Built only from served relationship rows and exact endpoint matches to served estate rows. Declared-only endpoints remain labelled as declared-only rather than resolved by inference.",
+      wide: true,
+    },
+  ];
+}
+
+function relationshipGraphFinding(estate: CrossFamilyEstate): Finding | null {
+  const paths = relationshipPaths(estate);
+  const material = paths.filter((path) =>
+    [path.left, path.right].some(
+      (endpoint) => endpoint.posture !== "declared only",
+    ),
+  );
+  if (material.length === 0) return null;
+  const declaredOnly = paths.filter(
+    (path) =>
+      path.left.posture === "declared only" ||
+      path.right.posture === "declared only",
+  ).length;
+  return {
+    kind: "exposure",
+    claim: `${material.length} relationship-backed ${plural(material.length, "path crosses", "paths cross")} a rated exposure, critical system, regulated data asset, or program; ${declaredOnly} still carry at least one declared-only endpoint.`,
+    owner: "Enterprise Architecture",
+    because:
+      "This is a graph-backed synthesis over served relationship rows. It keeps unresolved endpoints visible and does not create near-match relationships.",
+    trace: {
+      file: "12_relationships.csv + served Home estate rows",
+      grain:
+        "one declared relationship edge and any exact matched endpoint rows",
+      rule: "relationship endpoint is declared, then exact-matched to high-risk, critical, regulated-data or program rows where possible",
+    },
+    openRows: {
+      objectType: "relationship_edge",
+      filter: material[0]?.left.name ?? "",
+    },
+  };
+}
+
+function riskProgramFinding(
+  risks: EstateRow[],
+  programs: EstateRow[],
+  relationships: EstateRow[],
+): Finding | null {
+  const riskByName = new Map(
+    risks
+      .filter((row) => isHigh(str(row, "severity")))
+      .map((row) => [norm(str(row, "riskOrControlName")), row]),
+  );
+  const programByName = new Map(
+    programs.map((row) => [norm(str(row, "programName")), row]),
+  );
+  const joined: Array<{ risk: EstateRow; program: EstateRow }> = [];
+
+  for (const edge of relationships) {
+    const verb = str(edge, "relationshipType");
+    if (!/impact|depend|remediat|mitigat|address|block/i.test(verb)) continue;
+    const from = norm(str(edge, "fromObjectName"));
+    const to = norm(str(edge, "toObjectName"));
+    const leftRisk = riskByName.get(from);
+    const rightRisk = riskByName.get(to);
+    const leftProgram = programByName.get(from);
+    const rightProgram = programByName.get(to);
+    const risk = leftRisk ?? rightRisk;
+    const program = leftProgram ?? rightProgram;
+    if (!risk || !program) continue;
+
+    const percent = num(program, "pctComplete");
+    const status = str(program, "status");
+    if (percent >= 80 || /complete|closed|done/i.test(status)) continue;
+    joined.push({ risk, program });
+  }
+
+  if (joined.length === 0) return null;
+  const first = joined[0];
+  const riskName = str(first.risk, "riskOrControlName");
+  const programName = str(first.program, "programName");
+  const percent = num(first.program, "pctComplete");
+  const progress =
+    percent > 0
+      ? ` and that program is ${percent}% complete`
+      : str(first.program, "phase")
+        ? ` and that program is in ${cellText(str(first.program, "phase"))}`
+        : "";
+
+  return {
+    kind: "exposure",
+    rated: "high",
+    claim:
+      joined.length === 1
+        ? `${riskName} is a high-severity risk tied to ${programName}${progress}.`
+        : `${joined.length} high-severity risks are tied to named remediation programs that are not complete.`,
+    owner:
+      str(first.risk, "controlOwner") ||
+      str(first.program, "businessSponsor") ||
+      "Chief Risk Officer",
+    because:
+      "This finding crosses the risk register, program register and declared relationship edges. It only fires where the relationship endpoint names match served rows exactly.",
+    trace: {
+      file: "07_risks_controls.csv + 08_programs_initiatives.csv + 12_relationships.csv",
+      grain: "one declared risk-program relationship",
+      rule: "high severity risk endpoint joins to a program endpoint whose status is not complete",
+    },
+    openRows: {
+      objectType: "relationship_edge",
+      filter: riskName,
+    },
+  };
+}
+
+function regulatedDataResilienceFinding(
+  dataRows: EstateRow[],
+  platforms: EstateRow[],
+): Finding | null {
+  const platformByName = new Map(
+    platforms.map((row) => [norm(str(row, "platformName")), row]),
+  );
+  const affected = dataRows.filter((row) => {
+    if (!isTruthish(str(row, "regulatedDataFlag"))) return false;
+    const platform =
+      platformByName.get(norm(str(row, "platformName"))) ??
+      platformByName.get(norm(str(row, "platformOrDatabase")));
+    if (!platform) return false;
+    return /backup|restore only|manual/i.test(str(platform, "drTier"));
+  });
+  if (affected.length === 0) return null;
+  const platformsNamed = new Set(
+    affected
+      .map((row) => str(row, "platformName") || str(row, "platformOrDatabase"))
+      .filter(Boolean)
+      .map(cellText),
+  );
+  const platformPhrase =
+    platformsNamed.size === 1
+      ? [...platformsNamed][0]
+      : `${platformsNamed.size} platforms`;
+  return {
+    kind: "exposure",
+    claim: `${affected.length} regulated data ${plural(affected.length, "asset sits", "assets sit")} on ${platformPhrase} whose recovery is declared as backup or manual restore.`,
+    owner: "Chief Data Officer",
+    because:
+      "This joins regulated-data flags from the data estate to named infrastructure recovery posture. It does not infer platform identity beyond exact served names.",
+    trace: {
+      file: "09_data_assets_integrations.csv + 06_infrastructure_platforms.csv",
+      grain: "one regulated data asset on a named platform",
+      rule: "regulatedDataFlag is true and platformName/platformOrDatabase matches a platform with backup/manual DR tier",
+    },
+    openRows: {
+      objectType: "data_asset_or_integration",
+      filter: "regulated",
+    },
+  };
+}
+
+function vendorCriticalSystemsFinding(
+  applications: EstateRow[],
+  vendors: EstateRow[],
+): Finding | null {
+  const exposedVendors = vendors.filter(
+    (row) =>
+      isHigh(str(row, "riskRating")) || isTruthish(str(row, "autoRenewFlag")),
+  );
+  if (exposedVendors.length === 0) return null;
+  const exposedApps = new Map<string, EstateRow>();
+
+  for (const contract of exposedVendors) {
+    const vendorName = str(contract, "vendorName");
+    const supportedSystems = str(contract, "supportedSystems");
+    for (const app of applications) {
+      if (!isHigh(str(app, "criticality"))) continue;
+      const systemName = str(app, "systemName");
+      const sameVendor =
+        vendorName && norm(str(app, "vendor")) === norm(vendorName);
+      const scopedSystem = containsDeclaredName(supportedSystems, systemName);
+      if (sameVendor || scopedSystem) {
+        exposedApps.set(systemName || `${vendorName}-${exposedApps.size}`, app);
+      }
+    }
+  }
+
+  if (exposedApps.size === 0) return null;
+  const firstVendor = exposedVendors[0];
+  return {
+    kind: "exposure",
+    rated: isHigh(str(firstVendor, "riskRating")) ? "high" : undefined,
+    claim: `${exposedApps.size} critical ${plural(exposedApps.size, "system is", "systems are")} tied to vendor contracts that are high-risk or auto-renewing.`,
+    owner: "Chief Procurement Officer",
+    because:
+      "This joins critical systems to contract rows through exact vendor names or declared supported-system lists. It is a sourcing exposure, not a legal conclusion.",
+    trace: {
+      file: "03_applications_systems.csv + 10_vendor_contracts.csv",
+      grain: "one critical application matched to one contract row",
+      rule: "application criticality is high/critical and vendor name or supportedSystems matches a high-risk or auto-renewing contract",
+    },
+    openRows: {
+      objectType: "vendor_contract",
+      filter: str(firstVendor, "vendorName") || "high",
+    },
+  };
+}
+
+export function crossFamilyFindings(estate: CrossFamilyEstate): Finding[] {
+  const findings: Finding[] = [];
+  const graph = relationshipGraphFinding(estate);
+  if (graph) findings.push(graph);
+
+  const riskProgram = riskProgramFinding(
+    estate.risks ?? [],
+    estate.programs ?? [],
+    estate.relationships ?? [],
+  );
+  if (riskProgram) findings.push(riskProgram);
+
+  const regulatedResilience = regulatedDataResilienceFinding(
+    estate.data ?? [],
+    estate.infrastructure ?? [],
+  );
+  if (regulatedResilience) findings.push(regulatedResilience);
+
+  const vendorSystems = vendorCriticalSystemsFinding(
+    estate.applications ?? [],
+    estate.vendors ?? [],
+  );
+  if (vendorSystems) findings.push(vendorSystems);
+
+  return findings;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -548,18 +980,24 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       const years = [...byYear.entries()].sort((a, b) =>
         a[0].localeCompare(b[0]),
       );
+      const declaresAutoRenew = contracts.some((c) => str(c, "autoRenewFlag"));
       return {
         caption: "When the contracts end",
         section: "Commercial exposure",
         columns: ["Term ends", "Contracts", "Annual spend", "Auto-renewing"],
-        rows: years.map(([year, e]) => [year, e.count, usd(e.spend), e.auto]),
+        rows: years.map(([year, e]) => [
+          year,
+          e.count,
+          usd(e.spend),
+          declaresAutoRenew ? e.auto : ABSENT,
+        ]),
         total: [
           "Total",
           contracts.length,
           usd(spend(contracts)),
-          contracts.filter((c) =>
+          countedWhereDeclared(contracts, "autoRenewFlag", (c) =>
             /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
-          ).length,
+          ),
         ],
         note: "An auto-renewing contract passes its term end without a decision unless notice is served inside its declared window.",
       };
@@ -766,7 +1204,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Recovery posture",
-      section: "Where it runs",
+      section: "Operational resilience",
       barColumn: "Platforms",
       columns: ["Recovery tier", "Platforms", "Share"],
       rows: byDr.map((d) => [
@@ -779,7 +1217,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
     },
     {
       caption: "Hosting and headroom",
-      section: "Where it runs",
+      section: "Operational resilience",
       columns: ["Hosting", "Platforms", "Annual cost"],
       rows: byHosting.map((h) => [
         label(h.value),
@@ -823,7 +1261,7 @@ function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
       // Neither column alone shows the exposure: a tier-1 platform recovering from backup is the
       // finding, and it exists only where the two are put against each other.
       caption: "Criticality × recovery tier",
-      section: "Where it runs",
+      section: "Operational resilience",
       columns: ["Criticality", ...tiers.map(label), "Platforms"],
       rows: crits.map((c) => {
         const rows = platforms.filter((p) => str(p, "criticality") === c);
@@ -856,7 +1294,7 @@ function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
     }
     out.push({
       caption: "When platforms reach end of life",
-      section: "Lifecycle & exposure",
+      section: "Platform lifecycle",
       columns: ["Year", "Platforms", "Annual cost"],
       rows: [...byYear.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))
@@ -1130,16 +1568,366 @@ export function constantColumns(
  * Metrics, risks, programs, organisation and AI — the intake families the projection now carries
  * ---------------------------------------------------------------------------------------------- */
 
+/* ------------------------------------------------------------------------------------------------
+ * Undeclared columns — a column of dashes is a field the intake never collected
+ * ---------------------------------------------------------------------------------------------- */
+
+/** What every formatter here emits for a value the record does not carry. Never for a zero. */
+const ABSENT = "\u2014";
+
+/**
+ * Drops a data column whose every cell is the absent mark, and says so under the table.
+ *
+ * A money column built from a field no row declares comes out as a dash in every cell and a dash in
+ * the total. That is not a result. It is a column-width advertisement for a field the intake never
+ * collected, and a reader scanning across for the number finds a shape where one should be.
+ *
+ * The dash is what makes this safe to do without the builder's help: the formatters emit it only
+ * for absent, never for zero, so a column made entirely of them is carrying no value by
+ * construction. An all-ZERO column is a different case and deliberately not touched here -- zero
+ * can be a real count, and only the builder knows whether it is.
+ *
+ * The dropped column is named beneath the table. Silently vanishing it would be the same mistake as
+ * printing it: a column the record cannot fill is a fact about the record.
+ */
+/**
+ * A count of matching rows, or the absent mark when no row declares the field at all.
+ *
+ * Zero and absent are different answers and they render identically. Where the field exists and
+ * nothing matches, zero is a result worth showing. Where no row carries the field, zero is a
+ * statement about the intake wearing the clothes of a finding -- and it is always the reassuring
+ * reading: no regulatory drivers, no auto-renewals, nothing to worry about.
+ *
+ * Returning the absent mark hands the column to dropUndeclaredColumns, which removes it and names
+ * it underneath, so the two mechanisms compose into one rule: a column the record cannot fill is
+ * never drawn and never silent.
+ */
+export function countedWhereDeclared(
+  rows: EstateRow[],
+  field: string,
+  matches: (row: EstateRow) => boolean,
+): number | string {
+  if (!rows.some((row) => str(row, field))) return ABSENT;
+  return rows.filter(matches).length;
+}
+
+export function dropUndeclaredColumns(table: TableSpec): TableSpec {
+  if (table.rows.length === 0) return table;
+  const dropped: number[] = [];
+  // Column 0 labels the rows; it is never a measure and never dropped.
+  for (let column = 1; column < table.columns.length; column += 1) {
+    if (table.rows.every((row) => String(row[column] ?? "") === ABSENT)) {
+      dropped.push(column);
+    }
+  }
+  if (dropped.length === 0) return table;
+  const keep = <T>(values: T[]) =>
+    values.filter((_, i) => !dropped.includes(i));
+  const names = dropped.map((i) => table.columns[i]);
+  const droppedNote = `No row declares ${names.map((n) => n.toLowerCase()).join(" or ")}, so ${names.length === 1 ? "that column is" : "those columns are"} not drawn.`;
+  return {
+    ...table,
+    columns: keep(table.columns),
+    rows: table.rows.map((row) => keep(row)),
+    total: table.total ? keep(table.total) : undefined,
+    barColumn:
+      table.barColumn && names.includes(table.barColumn)
+        ? undefined
+        : table.barColumn,
+    note: [table.note, droppedNote].filter(Boolean).join(" "),
+  };
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Leadership interviews — what the people running the enterprise say about it
+ * ---------------------------------------------------------------------------------------------- */
+
+/** Distinct executive areas that raise a given value of a field. Agreement is a count of areas,
+ *  never a count of rows: one area asked eight questions is not eight people agreeing. */
+function areasRaising(
+  rows: EstateRow[],
+  field: string,
+): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const value = str(row, field);
+    const area = str(row, "executiveArea");
+    if (!value || !area) continue;
+    if (!out.has(value)) out.set(value, new Set());
+    out.get(value)!.add(area);
+  }
+  return out;
+}
+
+export function interviewTables(interviews: EstateRow[]): TableSpec[] {
+  if (interviews.length === 0) return [];
+  const areas = new Set(
+    interviews.map((row) => str(row, "executiveArea")).filter(Boolean),
+  );
+  const tables: TableSpec[] = [];
+
+  // The chapter's own question, answered by counting AREAS rather than rows. A theme every area
+  // raises is consensus; a theme one area raises is either a local problem or something only that
+  // area can see -- and those are opposite readings, so the count has to be visible.
+  // Ordered by how FEW areas raise a theme, not how many. Sorted the other way, a record where
+  // most themes are universal shows ten identical rows and the reader never reaches the ones that
+  // differ -- and the divergence is the entire question the chapter asks. The consensus is stated
+  // in a finding, which is one line; the divergence needs the table.
+  const byTheme = [...areasRaising(interviews, "priorityTheme")].sort(
+    (a, b) => a[1].size - b[1].size || a[0].localeCompare(b[0]),
+  );
+  if (byTheme.length > 0 && areas.size > 1) {
+    const listed = byTheme.slice(0, 10);
+    tables.push({
+      caption: "Where leadership diverges",
+      section: "Where leadership stands",
+      barColumn: "Areas raising it",
+      columns: ["Theme", "Areas raising it", "Of", "Mentions"],
+      rows: listed.map(([theme, raisingAreas]) => [
+        label(theme),
+        raisingAreas.size,
+        areas.size,
+        interviews.filter((row) => str(row, "priorityTheme") === theme).length,
+      ]),
+      total: [
+        `${byTheme.length} themes`,
+        "\u2014",
+        areas.size,
+        interviews.length,
+      ],
+      note: [
+        "Counted by executive area, not by answer: one area asked eight questions is not eight people agreeing. Least-shared themes first, because a theme everyone raises is one line and a theme one area raises is a question.",
+        byTheme.length > listed.length
+          ? `${byTheme.length - listed.length} further themes are raised more widely and are not listed; the total counts every answer.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    });
+  }
+
+  // A system several areas name unprompted is a different object from one that merely appears in
+  // the estate. This is the only table on the page where leadership and the estate meet by name.
+  const bySystem = [...areasRaising(interviews, "systemOrVendorMentioned")]
+    .filter(([, raisingAreas]) => raisingAreas.size > 1)
+    .sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]));
+  if (bySystem.length > 0) {
+    const listed = bySystem.slice(0, 10);
+    tables.push({
+      wide: true,
+      caption: "Systems leadership keeps returning to",
+      section: "Where leadership stands",
+      barColumn: "Areas naming it",
+      columns: ["System named", "Areas naming it", "Mentions", "Themes"],
+      rows: listed.map(([system, raisingAreas]) => {
+        const named = interviews.filter(
+          (row) => str(row, "systemOrVendorMentioned") === system,
+        );
+        return [
+          system,
+          raisingAreas.size,
+          named.length,
+          new Set(named.map((row) => str(row, "priorityTheme")).filter(Boolean))
+            .size,
+        ];
+      }),
+      note: [
+        "Named by the interviewee, not matched from the estate, so a system here is one leadership brought up rather than one we asked about.",
+        bySystem.length > listed.length
+          ? `${bySystem.length - listed.length} further systems are named by more than one area and not listed.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    });
+  }
+  return tables;
+}
+
+export function interviewFindings(interviews: EstateRow[]): Finding[] {
+  if (interviews.length === 0) return [];
+  const findings: Finding[] = [];
+  const areas = new Set(
+    interviews.map((row) => str(row, "executiveArea")).filter(Boolean),
+  );
+
+  // Before anything this record says is read as testimony, what KIND of statement it is. A modelled
+  // answer rendered under a named role is the most damaging thing this page could do: a reader
+  // takes it for something a person said.
+  const modelled = interviews.filter((row) =>
+    /modelled/i.test(str(row, "responseBasis")),
+  ).length;
+  if (modelled === interviews.length) {
+    findings.push({
+      kind: "absence",
+      claim: `All ${interviews.length} interview responses are modelled, not transcribed.`,
+      owner: "Chief Executive Officer",
+      because:
+        "The pattern of what is raised, and by how many parts of the business, is still the record's own. What a named role is quoted as saying is not, and nothing on this page should be read as testimony.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "responseBasis is modelled on every row",
+      },
+    });
+  } else if (modelled > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${modelled} of ${interviews.length} interview responses are modelled rather than transcribed.`,
+      owner: "Chief Executive Officer",
+      because:
+        "The two kinds of statement sit side by side in this record, so any quotation has to carry which one it is.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "responseBasis is modelled",
+      },
+    });
+  }
+
+  const byTheme = areasRaising(interviews, "priorityTheme");
+  const universal = [...byTheme].filter(
+    ([, raisingAreas]) => raisingAreas.size === areas.size,
+  );
+  if (areas.size > 2 && universal.length > 0) {
+    findings.push({
+      kind: "established",
+      claim: `${universal.length} themes are raised by every one of the ${areas.size} executive areas: ${universal
+        .slice(0, 3)
+        .map(([theme]) => cellText(theme))
+        .join("; ")}${universal.length > 3 ? "…" : "."}`,
+      owner: "Chief Executive Officer",
+      because:
+        "Raised everywhere is enterprise consensus rather than one function's complaint, which is the difference between a priority and a grievance.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "every executive area raises the theme at least once",
+      },
+    });
+  }
+
+  const isolated = [...byTheme].filter(
+    ([, raisingAreas]) => raisingAreas.size === 1,
+  );
+  if (areas.size > 2 && isolated.length > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${isolated.length} themes are raised by a single area: ${isolated
+        .slice(0, 3)
+        .map(([theme]) => cellText(theme))
+        .join("; ")}${isolated.length > 3 ? "…" : "."}`,
+      owner: "Chief Executive Officer",
+      because:
+        "One area alone raising something is either a local problem or the only part of the business that can see it, and those readings point opposite ways. The record does not distinguish them.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "exactly one executive area raises the theme",
+      },
+    });
+  }
+
+  const bySystem = [
+    ...areasRaising(interviews, "systemOrVendorMentioned"),
+  ].sort((a, b) => b[1].size - a[1].size);
+  const [mostNamed] = bySystem;
+  if (mostNamed && mostNamed[1].size > 2) {
+    findings.push({
+      kind: "exposure",
+      claim: `${mostNamed[0]} is named by ${mostNamed[1].size} of the ${areas.size} executive areas.`,
+      owner: "Chief Information Officer",
+      because:
+        "A system raised across most of the leadership is carrying more of the business's attention than any single function's roadmap accounts for.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "distinct executiveArea count for systemOrVendorMentioned",
+      },
+    });
+  }
+
+  const namedRisks = new Set(
+    interviews.map((row) => str(row, "riskOrControlMentioned")).filter(Boolean),
+  );
+  if (namedRisks.size > 0) {
+    findings.push({
+      kind: "established",
+      claim: `Leadership names ${namedRisks.size} distinct risks or controls unprompted.`,
+      owner: "Chief Risk Officer",
+      because:
+        "Each is a risk somebody running the business raised on their own, which is a different signal from one that only appears in the register.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "distinct non-empty riskOrControlMentioned",
+      },
+    });
+  }
+  return findings;
+}
+
 export function metricTables(metrics: EstateRow[]): TableSpec[] {
   if (metrics.length === 0) return [];
+  const tables: TableSpec[] = [];
+
+  // What is measured and who answers for it. The chapter's opening question, and the part of it
+  // this record can answer -- a measure set is first a statement about coverage and ownership.
+  const byDomain = countBy(
+    metrics.filter((m) => str(m, "metricDomain")),
+    "metricDomain",
+  );
+  const owners = (rows: EstateRow[]) =>
+    new Set(rows.map((m) => str(m, "owner")).filter(Boolean)).size;
+  if (byDomain.length > 0) {
+    const listed = byDomain.slice(0, 8);
+    tables.push({
+      caption: "What is measured, and who owns it",
+      section: "What is measured",
+      barColumn: "Measures",
+      columns: ["Domain", "Measures", "With a target", "Named owners"],
+      rows: listed.map((d) => {
+        const rows = metrics.filter((m) => str(m, "metricDomain") === d.value);
+        return [
+          label(d.value),
+          d.count,
+          rows.filter((m) => str(m, "targetValue")).length,
+          owners(rows),
+        ];
+      }),
+      total: [
+        "Declared",
+        metrics.length,
+        metrics.filter((m) => str(m, "targetValue")).length,
+        owners(metrics),
+      ],
+      note:
+        [
+          "Measures are counted, never summed: they are declared in different units and an aggregate across them would mean nothing.",
+          byDomain.length > listed.length
+            ? `${byDomain.length - listed.length} further domains are not listed; the total counts every measure.`
+            : null,
+          metrics.length > byDomain.reduce((n, d) => n + d.count, 0)
+            ? `${metrics.length - byDomain.reduce((n, d) => n + d.count, 0)} measures declare no domain and appear only in the total.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
+    });
+  }
+
+  // The claim tables exist only where the record carries a readiness column at all. Rendered
+  // against a record without one they said "0 blocked claims" over an empty body -- which reads as
+  // nothing is blocked when it means nothing is recorded, the most flattering possible misreading
+  // of an absent column.
   const byReadiness = countBy(
     metrics.filter((m) => str(m, "claimReadiness")),
     "claimReadiness",
   );
   const blocked = metrics.filter((m) => str(m, "claimBlockedReason"));
   const withAction = blocked.filter((m) => str(m, "unblockAction"));
-  const tables: TableSpec[] = [
-    {
+  if (byReadiness.length > 0) {
+    tables.push({
       caption: "Can this value be claimed",
       section: "What is measured",
       barColumn: "Metrics",
@@ -1159,8 +1947,8 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
         blocked.length,
       ],
       note: `${withAction.length} of the ${blocked.length} blocked claims already state the action that would unblock them.`,
-    },
-  ];
+    });
+  }
   // The unblock list itself, because it is the agenda -- a count of blocked claims is not actionable
   // and a named action against a named period is.
   if (withAction.length > 0) {
@@ -1189,6 +1977,62 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
 export function metricFindings(metrics: EstateRow[]): Finding[] {
   if (metrics.length === 0) return [];
   const findings: Finding[] = [];
+
+  // The chapter asks whether the enterprise is moving toward its outcomes. That takes three numbers
+  // per measure and this record carries two. Said plainly, because the distance chart above reads
+  // like progress unless the reader is told what it is measuring.
+  const withActual = metrics.filter((m) => str(m, "actualValue")).length;
+  if (withActual === 0) {
+    findings.push({
+      kind: "absence",
+      claim: `No measure declares a current value, across all ${metrics.length}.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Baseline and target say where a measure started and where it is meant to reach. Whether it has moved needs a third number the record does not carry, so the distance shown on this page is the size of the ambition rather than progress against it.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "actualValue is empty on every row",
+      },
+    });
+  } else if (withActual < metrics.length) {
+    findings.push({
+      kind: "absence",
+      claim: `${metrics.length - withActual} of ${metrics.length} measures declare no current value.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Progress can be stated for the rest and not for these, so any figure covering the whole set is covering two different things.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "actualValue is empty",
+      },
+    });
+  }
+
+  // The other half of the chapter's question. A record that says nothing about attestation cannot
+  // be read as saying the value is unproven OR proven -- only that it was never asked.
+  const withClaim = metrics.filter(
+    (m) =>
+      str(m, "claimReadiness") ||
+      str(m, "valueClaimStatus") ||
+      num(m, "financeAttestedValueUsd") > 0,
+  ).length;
+  if (withClaim === 0) {
+    findings.push({
+      kind: "absence",
+      claim: `No measure declares whether its value has been attested, across all ${metrics.length}.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Nothing here states a claim readiness, a claim status or a finance-attested amount. Whether these outcomes can be claimed is not answered by this record either way, which is different from the answer being no.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "claimReadiness, valueClaimStatus and financeAttestedValueUsd are all empty on every row",
+      },
+    });
+  }
+
   const claimable = metrics.filter((m) =>
     /claimable|ready/i.test(str(m, "claimReadiness")),
   ).length;
@@ -1278,17 +2122,20 @@ export function riskTables(risks: EstateRow[]): TableSpec[] {
       rows: byDomain.map((d) => [
         label(d.value),
         d.count,
-        risks.filter(
+        countedWhereDeclared(
+          risks,
+          "regulatoryDriver",
           (r) =>
             str(r, "riskDomain") === d.value &&
             /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")),
-        ).length,
+        ),
       ]),
       total: [
         "Declared",
         byDomain.reduce((n, d) => n + d.count, 0),
-        risks.filter((r) => /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")))
-          .length,
+        countedWhereDeclared(risks, "regulatoryDriver", (r) =>
+          /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")),
+        ),
       ],
       note: "A risk without a regulatory driver is the enterprise's own assessment rather than an external requirement.",
     });
@@ -1306,6 +2153,7 @@ export function riskFindings(risks: EstateRow[]): Finding[] {
   if (highOpen.length > 0) {
     findings.push({
       kind: "exposure",
+      rated: "high",
       claim:
         highOpen.length === 1
           ? `One high-severity risk has no operating control: ${str(highOpen[0], "riskOrControlName")}.`
@@ -1583,37 +2431,151 @@ export function aiFindings(useCases: EstateRow[]): Finding[] {
   return findings;
 }
 
+/**
+ * Reporting lines counted from the parent named on each unit.
+ *
+ * The record carries no span-of-control field, but it carries a parent on nearly every unit, and a
+ * parent link is a structural fact rather than a reading of one. Counting them is arithmetic on the
+ * record; calling the result a span of control would not be, so nothing here does.
+ */
+function reportingLines(units: EstateRow[]) {
+  const named = new Set(units.map((u) => str(u, "orgUnit")).filter(Boolean));
+  const childrenOf = new Map<string, string[]>();
+  let dangling = 0;
+  let parented = 0;
+  for (const unit of units) {
+    const child = str(unit, "orgUnit");
+    const parent = str(unit, "parentOrgUnit");
+    if (!child || !parent) continue;
+    parented += 1;
+    if (!named.has(parent)) {
+      dangling += 1;
+      continue;
+    }
+    childrenOf.set(parent, [...(childrenOf.get(parent) ?? []), child]);
+  }
+  // A record can name a unit somewhere in its own ancestry, and a walk that trusts it never
+  // returns. Carrying the path taken bounds the walk where the cycle closes instead of hanging the
+  // render; a copy per branch keeps siblings from shortening one another.
+  const depthBelow = (unit: string, path = new Set<string>()): number => {
+    if (path.has(unit)) return 0;
+    const kids = childrenOf.get(unit) ?? [];
+    if (kids.length === 0) return 0;
+    const walked = new Set(path).add(unit);
+    return 1 + Math.max(...kids.map((kid) => depthBelow(kid, walked)));
+  };
+  return { childrenOf, depthBelow, dangling, parented };
+}
+
 export function organizationTables(units: EstateRow[]): TableSpec[] {
   if (units.length === 0) return [];
   const byLevel = countBy(
     units.filter((u) => str(u, "roleLevel")),
     "roleLevel",
   );
-  const authority = (rows: EstateRow[]) =>
-    rows.reduce((n, u) => n + num(u, "budgetAuthorityUsd"), 0);
+
+  // A measure the record does not carry must not be summed. Headcount missing on every unit sums to
+  // zero, and a column printing 0 against every level says the enterprise employs nobody -- two
+  // true facts, that the field is read and that every value is absent, making a false one. So a
+  // measure is drawn only where some unit declares it, and the ones dropped are named underneath.
+  const measures = [
+    {
+      field: "budgetAuthorityUsd",
+      column: "Budget authority",
+      name: "budget authority",
+      cell: (rows: EstateRow[]) =>
+        usd(rows.reduce((n, u) => n + num(u, "budgetAuthorityUsd"), 0)),
+    },
+    {
+      field: "headcount",
+      column: "Headcount",
+      name: "headcount",
+      cell: (rows: EstateRow[]) =>
+        rows.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
+    },
+  ];
+  const shown = measures.filter((m) => units.some((u) => num(u, m.field) > 0));
+  const dropped = measures.filter((m) => !shown.includes(m)).map((m) => m.name);
+
+  const listedLevels = byLevel.slice(0, 8);
   const tables: TableSpec[] = [
     {
       caption: "Where authority sits",
       section: "Ownership",
-      columns: ["Level", "Units", "Budget authority", "Headcount"],
-      rows: byLevel.slice(0, 8).map((l) => {
+      columns: ["Level", "Units", ...shown.map((m) => m.column)],
+      barColumn: "Units",
+      rows: listedLevels.map((l) => {
         const rows = units.filter((u) => str(u, "roleLevel") === l.value);
-        return [
-          label(l.value),
-          l.count,
-          usd(authority(rows)),
-          rows.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
-        ];
+        return [label(l.value), l.count, ...shown.map((m) => m.cell(rows))];
       }),
-      total: [
-        "Declared",
-        units.length,
-        usd(authority(units)),
-        units.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
-      ],
-      note: "Budget authority is what a unit may commit, not what it spends. The two are different numbers and the record carries only the one.",
+      total: ["Declared", units.length, ...shown.map((m) => m.cell(units))],
+      note:
+        [
+          shown.some((m) => m.field === "budgetAuthorityUsd")
+            ? "Budget authority is what a unit may commit, not what it spends. The two are different numbers and the record carries only the one."
+            : null,
+          dropped.length > 0
+            ? `No unit declares ${dropped.join(" or ")}, so ${dropped.length === 1 ? "that column is" : "those columns are"} not drawn: an absent measure summed across levels would print as zero.`
+            : null,
+          byLevel.length > listedLevels.length
+            ? `${byLevel.length - listedLevels.length} further levels are not listed; the total counts every unit.`
+            : null,
+          units.length > byLevel.reduce((n, l) => n + l.count, 0)
+            ? `${units.length - byLevel.reduce((n, l) => n + l.count, 0)} ${plural(units.length - byLevel.reduce((n, l) => n + l.count, 0), "unit declares", "units declare")} no level and appear only in the total.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
     },
   ];
+
+  // How the enterprise is organised is a shape, and where the parent links are populated the shape
+  // is in the record. This is the one table in the chapter that answers its first question rather
+  // than describing how complete the answer is.
+  const lines = reportingLines(units);
+  const parents = [...lines.childrenOf.entries()].sort(
+    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
+  );
+  if (parents.length > 0) {
+    const levelOf = new Map(
+      units.map((u) => [str(u, "orgUnit"), str(u, "roleLevel")]),
+    );
+    const listed = parents.slice(0, 8);
+    tables.push({
+      caption: "Who reports to whom",
+      section: "Ownership",
+      columns: ["Unit", "Level", "Units reporting", "Levels below"],
+      barColumn: "Units reporting",
+      rows: listed.map(([parent, kids]) => [
+        parent,
+        label(levelOf.get(parent) ?? ""),
+        kids.length,
+        lines.depthBelow(parent),
+      ]),
+      total: [
+        `${parents.length} ${plural(parents.length, "unit has", "units have")} reports`,
+        "\u2014",
+        parents.reduce((n, [, kids]) => n + kids.length, 0),
+        Math.max(...parents.map(([parent]) => lines.depthBelow(parent))),
+      ],
+      note:
+        [
+          "Reporting lines are counted from the parent each unit names. The record carries no span-of-control field, so no figure here is a declared span.",
+          lines.dangling > 0
+            ? `${lines.dangling} ${plural(lines.dangling, "unit names", "units name")} a parent that is not itself a unit in this record.`
+            : "Every parent named resolves to a unit in this record.",
+          units.length - lines.parented > 0
+            ? `${units.length - lines.parented} ${plural(units.length - lines.parented, "unit names", "units name")} no parent.`
+            : null,
+          parents.length > listed.length
+            ? `${parents.length - listed.length} further units have reports and are not listed; the total counts all of them.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
+    });
+  }
+
   // What a unit is recorded as deciding, and what it owns, is the join that makes any finding
   // assignable to a person. Reporting how complete that join is matters more than listing units.
   const completeness = [
@@ -1677,7 +2639,22 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
   // would let a finding about a system reach a person mostly is not there. Declaring authority in
   // the abstract and declaring what it covers are different completions of the same record.
   const withSystems = units.filter((u) => str(u, "ownedSystems")).length;
-  if (withSystems > 0 && withSystems < units.length / 2) {
+  if (withSystems === 0) {
+    // Zero is the loudest reading of this column and it was the one the rule could not reach: the
+    // guard below starts at one, so a record where nobody owns anything said nothing at all.
+    findings.push({
+      kind: "absence",
+      claim: `No org unit names a system it owns, across all ${units.length} units.`,
+      owner: "Chief HR Officer",
+      because:
+        "Every unit declares what it decides and none declares which systems that covers, so no finding about a system reaches a named owner from this record alone. Ownership on this page stops at the function.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "ownedSystems is empty on every row",
+      },
+    });
+  } else if (withSystems < units.length / 2) {
     findings.push({
       kind: "absence",
       claim: `${withSystems} of ${units.length} org units name a system they own.`,
@@ -1688,6 +2665,66 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
         file: "02_org_ownership.csv",
         grain: "one org unit",
         rule: "ownedSystems is not empty",
+      },
+    });
+  }
+
+  // Authority named but never sized. A level with nine units under it and no headcount or budget
+  // beside it cannot be weighed against any other, which is the comparison an operating model is
+  // read for -- so the missing measure is stated rather than left as a column that is simply absent.
+  const unsized = [
+    { field: "headcount", name: "headcount" },
+    { field: "budgetAuthorityUsd", name: "budget authority" },
+  ]
+    .filter((measure) => !units.some((u) => num(u, measure.field) > 0))
+    .map((measure) => measure.name);
+  if (unsized.length > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `No org unit declares ${unsized.join(" or ")} — authority is named here but never sized.`,
+      owner: "Chief HR Officer",
+      because:
+        "Levels can be counted and compared; what sits under them cannot. Any question about where the organisation is heavy or thin has to be answered somewhere other than this record.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: `${unsized.length === 2 ? "neither field carries" : "the field carries no"} a value above zero on any row`,
+      },
+    });
+  }
+
+  // The reporting structure, checked as a structure. A unit reporting to a parent the record does
+  // not carry is a break in the accountability chain, not a cosmetic gap: nothing above that unit
+  // can be reached by walking the record.
+  const lines = reportingLines(units);
+  if (lines.dangling > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${lines.dangling} org ${plural(lines.dangling, "unit reports", "units report")} to a parent this record does not carry.`,
+      owner: "Chief HR Officer",
+      because:
+        "The chain from that unit upward cannot be walked, so a finding there escalates to nobody the record can name.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "parentOrgUnit names a unit that is not an org_unit on any row",
+      },
+    });
+  } else if (lines.parented > 0) {
+    const deepest = Math.max(
+      0,
+      ...[...lines.childrenOf.keys()].map((unit) => lines.depthBelow(unit)),
+    );
+    findings.push({
+      kind: "established",
+      claim: `All ${lines.parented} reporting lines resolve, ${deepest} levels deep.`,
+      owner: "Chief HR Officer",
+      because:
+        "Every unit that names a parent names one the record also carries, so any unit on this page can be walked upward to whoever it answers to.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "every parentOrgUnit matches an orgUnit; depth is the longest chain of those links",
       },
     });
   }

@@ -40,8 +40,6 @@ export default async function AdminReleaseLedgerPage() {
       >
         <ContextBar
           tenant={tenant.tenantName}
-          mode="Release governance"
-          agent="Steward"
           data="docs/releases/records"
           liveStatus="Markdown-backed audit ledger"
           liveStatusKind="partial"

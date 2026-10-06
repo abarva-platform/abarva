@@ -9,12 +9,11 @@ import type {
   Signal,
 } from "@/lib/home/preview/types";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "../v4/tokens";
-import { DOMAIN_ORDER, domainLabel } from "./domain-labels";
+import { domainLabel } from "./domain-labels";
 
 type Row =
   | (Signal & { origin: "signal" })
   | (ContextItem & {
-      evidenceRefs?: undefined;
       kind?: undefined;
       origin: "context";
       value?: undefined;

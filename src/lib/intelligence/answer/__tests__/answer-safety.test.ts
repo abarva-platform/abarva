@@ -100,7 +100,7 @@ describe("sanitizeAgentAnswerForRender", () => {
     const safe = sanitizeAgentAnswerForRender({
       ...unsafeAnswer,
       directAnswer:
-        "Salesforce contract CTR-090 should stay visible, but BASE-007 should not.",
+        "Salesforce contract CTR-090 and Databricks contract MER-TECH-DBX-001 should stay visible, but BASE-007 should not.",
       factsUsed: [
         {
           id: "selected-contract",
@@ -130,6 +130,7 @@ describe("sanitizeAgentAnswerForRender", () => {
     const renderedPayload = JSON.stringify(safe);
 
     expect(renderedPayload).toContain("CTR-090");
+    expect(renderedPayload).toContain("MER-TECH-DBX-001");
     expect(renderedPayload).not.toMatch(/\bBASE-007\b/);
   });
 

@@ -30,7 +30,7 @@ function sourceWorkspaceRedirectUrl(
   }
 
   const queryString = query.toString();
-  return `/source/workspace${queryString ? `?${queryString}` : ""}`;
+  return `/source${queryString ? `?${queryString}` : ""}`;
 }
 
 /**

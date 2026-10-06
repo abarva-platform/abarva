@@ -13,7 +13,13 @@
 // them — a behavioral assertion, not a shape/snapshot check.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -104,7 +110,7 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
       <SourceAnalyticsCanvas
         event={makeEvent()}
         viewStage="strategy"
-        tenantName="Lakeshore"
+        tenantName="Test Tenant"
         artifacts={artifacts}
       />,
     );
@@ -288,5 +294,281 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     expect(
       within(inventoryRow).getByRole("button", { name: "Upload" }),
     ).toBeInTheDocument();
+  });
+
+  it("offers an accountable absence decision only for a record that may genuinely not exist", () => {
+    const incumbentState: SourceEventEvidence = {
+      id: "incumbent-evidence", sourceEventId: "evt-1", tenantKey: "demo-client",
+      requirementId: "EVID-SRC-STR-INCUMBENT", stage: "strategy",
+      currentState: "Not Requested", sourceArtifactId: null,
+      applicabilityStatus: "applicable", notes: null, lastSyncedAt: null,
+      createdAt: "2026-09-28T00:00:00Z", updatedAt: "2026-09-28T00:00:00Z",
+    };
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        artifacts={[]}
+        evidenceStates={[incumbentState]}
+        initialWorkspace="files"
+      />,
+    );
+
+    const incumbent = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-STR-INCUMBENT",
+    );
+    fireEvent.click(within(incumbent).getByRole("button", { name: "Declare no incumbent" }));
+    expect(within(incumbent).queryByRole("button", { name: "Record applicability" })).not.toBeInTheDocument();
+    fireEvent.change(within(incumbent).getByLabelText("Reason no incumbent exists"), {
+      target: { value: "This net-new service has no incumbent agreement or renewal history." },
+    });
+    fireEvent.click(within(incumbent).getByRole("checkbox", { name: /I confirm no incumbent exists/i }));
+    expect(within(incumbent).getByRole("button", { name: "Record applicability" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Declare no sponsor commitment" })).not.toBeInTheDocument();
+  });
+
+  it("does not offer absence decisions before the schema has been read back", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        artifacts={[]}
+        evidenceStates={[{
+          id: "incumbent-evidence", sourceEventId: "evt-1", tenantKey: "demo-client",
+          requirementId: "EVID-SRC-STR-INCUMBENT", stage: "strategy",
+          currentState: "Not Requested", sourceArtifactId: null,
+          notes: null, lastSyncedAt: null,
+          createdAt: "2026-09-28T00:00:00Z", updatedAt: "2026-09-28T00:00:00Z",
+        }]}
+        initialWorkspace="files"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Declare no incumbent" })).not.toBeInTheDocument();
+  });
+
+  it("does not render a narrative-only trigger as uploaded or available", () => {
+    const triggerEvidence: SourceEventEvidence = {
+      id: "trigger-evidence",
+      sourceEventId: "evt-1",
+      tenantKey: "demo-client",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      stage: "strategy",
+      currentState: "Available",
+      sourceArtifactId: null,
+      notes: "Client-stated trigger text without a linked source record.",
+      lastSyncedAt: null,
+      createdAt: "2026-09-28T00:00:00Z",
+      updatedAt: "2026-09-28T00:00:00Z",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Test Tenant"
+        artifacts={[]}
+        evidenceStates={[triggerEvidence]}
+        initialWorkspace="files"
+      />,
+    );
+
+    const trigger = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-STR-TRIGGER",
+    );
+    expect(trigger).toHaveTextContent("not loaded");
+    expect(trigger).not.toHaveTextContent("available");
+    expect(
+      within(trigger).queryByLabelText("File uploaded"),
+    ).not.toBeInTheDocument();
+    expect(within(trigger).getByLabelText("Open")).toBeInTheDocument();
+    expect(
+      within(trigger).getByRole("button", { name: "Upload" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not describe an unlinked trigger as Available in the Continue summary", () => {
+    const triggerEvidence: SourceEventEvidence = {
+      id: "trigger-evidence",
+      sourceEventId: "evt-1",
+      tenantKey: "demo-client",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      stage: "strategy",
+      currentState: "Available",
+      sourceArtifactId: null,
+      sourceEventFactIds: [],
+      notes: "Typed intake narrative without a linked source record.",
+      lastSyncedAt: null,
+      createdAt: "2026-09-28T00:00:00Z",
+      updatedAt: "2026-09-28T00:00:00Z",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Test Tenant"
+        artifacts={[]}
+        evidenceStates={[triggerEvidence]}
+      />,
+    );
+
+    const needs = screen.getByTestId("source-shell-active-step-needs");
+    expect(needs).toHaveTextContent("Now: Not loaded");
+    expect(needs).not.toHaveTextContent("Now: Available");
+  });
+
+  it("labels RFP evidence owners and reviews parsed evidence", async () => {
+    const rfpEvent: SourcingEventSummary = {
+      ...makeEvent(),
+      currentStageKey: "rfp",
+      currentStageLabel: "RFP",
+    } as SourcingEventSummary;
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        review: {
+          actionLabel:
+            "Reviewed parsed evidence: Requirements and service levels",
+          reviewer: {
+            displayName: "Evidence Reviewer",
+            email: "reviewer@example.test",
+            role: "maestro",
+          },
+          targetState: "Available",
+          disclaimer:
+            "Confirms parsed evidence availability only; it is not content approval.",
+        },
+      }),
+    });
+    const previousFetch = global.fetch;
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    try {
+      render(
+        <SourceAnalyticsCanvas
+          event={rfpEvent}
+          viewStage="rfp"
+          tenantName="Demo Client"
+          artifacts={[
+            {
+              id: "art-requirements",
+              artifactCode: "workshop_output",
+              stageKey: "rfp",
+              title: "source-requirement-intake.csv",
+              status: "draft",
+              parseStatus: "parsed",
+            },
+          ]}
+          evidenceStates={[]}
+          initialWorkspace="files"
+        />,
+      );
+
+      const sourcingRulesRow = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-RFP-SOURCING-RULES",
+      );
+      expect(sourcingRulesRow).toHaveTextContent(
+        "Procurement / sourcing owner",
+      );
+      expect(sourcingRulesRow).toHaveTextContent("DOCX, PDF, XLSX, CSV");
+
+      const securityRow = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-RFP-SECURITY-PRIVACY",
+      );
+      expect(securityRow).toHaveTextContent("Risk / security owner");
+
+      const requirementsRow = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-RFP-REQUIREMENTS",
+      );
+      fireEvent.click(
+        within(requirementsRow).getByRole("button", {
+          name: "Review parsed evidence",
+        }),
+      );
+      const rationale = (await within(requirementsRow).findByLabelText(
+        "Review rationale for Requirements and service levels",
+      )) as HTMLTextAreaElement;
+      expect(rationale.value).toContain("source-requirement-intake.csv");
+      expect(requirementsRow).toHaveTextContent(
+        "Reviewer: Evidence Reviewer (reviewer@example.test)",
+      );
+      expect(requirementsRow).toHaveTextContent("not content approval");
+      fireEvent.click(
+        within(requirementsRow).getByRole("button", {
+          name: "Record evidence review",
+        }),
+      );
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          "/api/v1/source/evt-1/evidence/EVID-SRC-RFP-REQUIREMENTS/availability-review",
+          expect.objectContaining({ method: "POST" }),
+        ),
+      );
+    } finally {
+      global.fetch = previousFetch;
+    }
+  });
+
+  it("binds an operational inventory review to the previewed artifact and hash", async () => {
+    const scopeEvent: SourcingEventSummary = {
+      ...makeEvent(),
+      currentStageKey: "scope",
+      currentStageLabel: "Scope",
+    } as SourcingEventSummary;
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        review: {
+          actionLabel: "Reviewed parsed evidence: Application and service inventory",
+          reviewer: { displayName: "Evidence Reviewer", email: "reviewer@example.test", role: "maestro" },
+          targetState: "Usable Evidence",
+          disclaimer: "Confirms the operational inventory only.",
+          sourceArtifactId: "artifact-1",
+          sourceSha256: "a".repeat(64),
+        },
+      }),
+    });
+    const previousFetch = global.fetch;
+    global.fetch = fetchMock as unknown as typeof fetch;
+    try {
+      render(<SourceAnalyticsCanvas
+        event={scopeEvent}
+        viewStage="scope"
+        tenantName="Demo Client"
+        artifacts={[{
+          id: "artifact-1",
+          artifactCode: "workshop_output",
+          stageKey: "scope",
+          title: "service_catalog_scope.csv",
+          status: "draft",
+          parseStatus: "parsed",
+        }]}
+        evidenceStates={[]}
+        initialWorkspace="files"
+      />);
+      const row = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-SCOPE-APP-INV",
+      );
+      fireEvent.click(within(row).getByRole("button", { name: "Review parsed evidence" }));
+      await within(row).findByLabelText("Review rationale for Application and service inventory");
+      fireEvent.click(within(row).getByRole("button", { name: "Record evidence review" }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-APP-INV/availability-review",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"sourceArtifactId":"artifact-1"'),
+        }),
+      ));
+      expect(JSON.parse(fetchMock.mock.calls.at(-1)?.[1]?.body as string)).toEqual(
+        expect.objectContaining({ sourceSha256: "a".repeat(64) }),
+      );
+    } finally {
+      global.fetch = previousFetch;
+    }
   });
 });

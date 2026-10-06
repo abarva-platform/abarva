@@ -20,7 +20,7 @@ describe("proxy public route patterns", () => {
     expect(isPublicRoute(request)).toBe(true);
   });
 
-  it("treats the hidden approved-access page and eligibility check as public pre-auth routes", () => {
+  it("treats the hidden approved-access page and launch bootstrap checks as public pre-auth routes", () => {
     expect(isPublicRoute(new NextRequest("https://app.abarva.ai/access"))).toBe(
       true,
     );
@@ -28,6 +28,9 @@ describe("proxy public route patterns", () => {
       isPublicRoute(
         new NextRequest("https://app.abarva.ai/api/auth/access-eligibility"),
       ),
+    ).toBe(true);
+    expect(
+      isPublicRoute(new NextRequest("https://app.abarva.ai/api/auth/launch-user")),
     ).toBe(true);
   });
 
@@ -73,6 +76,12 @@ describe("proxy public route patterns", () => {
       expect(isPublicRoute(request)).toBe(true);
       expect(isAuthRequiredRoute(request)).toBe(false);
     }
+  });
+
+  it("admits only the signed e-signature callback, not neighboring Source APIs", () => {
+    expect(isPublicRoute(new NextRequest("https://app.abarva.ai/api/webhooks/esign"))).toBe(true);
+    expect(isPublicRoute(new NextRequest("https://app.abarva.ai/api/webhooks/esign/other"))).toBe(false);
+    expect(isPublicRoute(new NextRequest("https://app.abarva.ai/api/v1/source/event/nda/esign/status"))).toBe(false);
   });
 
   it("does not treat unrelated auth API paths as public", () => {

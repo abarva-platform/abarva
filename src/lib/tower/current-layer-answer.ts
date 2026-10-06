@@ -216,12 +216,17 @@ function toolRows(view: TowerCurrentView): string[][] {
       return [
         item.itemName,
         text(item.vendorName),
+        text(item.rolloutGoal),
+        count(item.rolloutTargetUsers),
+        count(item.enabledUsers),
         item.usageActual === null ? "Not loaded" : `${item.usageActual} ${item.usageMetric ?? ""}`.trim(),
         pct(item.adoptionRatePct),
         pct(item.adoptionTargetPct),
         gap,
         text(item.controlBlocker ?? "None found"),
         count(item.linkedBusinessCaseCount),
+        text(item.sourceSystem),
+        text(item.sourceAsOfDate),
       ];
     });
 }
@@ -324,6 +329,19 @@ function selectedEntityTables(
         ["Gating constraint", text(ai.gatingConstraint)],
         ["Control blocker", text(ai.controlBlocker)],
         ["Finance status", text(ai.financeStatus)],
+        ["Rollout goal", text(ai.rolloutGoal)],
+        ["Rollout stage", text(ai.rolloutStage)],
+        ["Target users", count(ai.rolloutTargetUsers)],
+        ["Enabled users", count(ai.enabledUsers)],
+        ["Monthly active users", count(ai.usageActual)],
+        ["Adoption actual", pct(ai.adoptionRatePct)],
+        ["Adoption target", pct(ai.adoptionTargetPct)],
+        ["Linked business cases", count(ai.linkedBusinessCaseCount)],
+        ["Source system", text(ai.sourceSystem)],
+        ["Source record", text(ai.sourceRecordId ?? ai.sourceRow)],
+        ["Source as of", text(ai.sourceAsOfDate)],
+        ["Refresh cadence", text(ai.refreshCadence)],
+        ["Quality state", text(ai.sourceQualityState)],
         ["Evidence items", String(ai.evidenceItems?.length ?? 0)],
       ]),
     ];
@@ -449,7 +467,21 @@ function answerFromIntent(
     const tools = table(
       "tower_tool_rollouts",
       "AI Tool Rollouts, Adoption Targets, And Blockers",
-      ["Tool", "Vendor", "Users", "Adoption", "Target", "Gap to target", "Control blocker", "Linked cases"],
+      [
+        "Tool",
+        "Vendor",
+        "Goal",
+        "Target users",
+        "Enabled users",
+        "Monthly active users",
+        "Adoption",
+        "Target",
+        "Gap to target",
+        "Control blocker",
+        "Linked cases",
+        "Source system",
+        "As of",
+      ],
       toolRows(view),
     );
     return {
@@ -623,6 +655,42 @@ function answerFromIntent(
   };
 }
 
+function nextActionForIntent(
+  intent: CurrentTowerIntent,
+  hasView: boolean,
+  hasSelectedRow: boolean,
+): string | null {
+  if (!hasView) {
+    return "Have the data owner load and validate the current Tower evidence before making a portfolio decision.";
+  }
+  switch (intent) {
+    case "decision":
+      return null;
+    case "selected":
+      return hasSelectedRow
+        ? "Review the selected item's loaded owner, evidence, and gate with the accountable decision maker before changing its status."
+        : "Review the claim states and proof gaps with Finance before reallocating funding.";
+    case "top_investments":
+      return "Have Finance validate each proposed return and its investment basis before ranking cases for funding.";
+    case "tools":
+    case "ai":
+      return "For rollouts without linked outcome proof, collect a before-and-after workflow baseline and obtain Finance approval before claiming savings.";
+    case "distribution":
+      return "Validate value-type and domain tags with initiative owners before using this breakdown to redirect funding.";
+    case "constraints":
+      return "Ask the control owner to document clearance evidence before treating affected value as claimable.";
+    case "foundations":
+      return "Link each foundation to the business cases it enables before attributing any benefit.";
+    case "value":
+      return "Close the baseline, actual, and attestation gaps before promoting a value claim.";
+    case "evidence":
+      return "Verify the source and caveat on each affected fact before using it in a decision.";
+    case "budget":
+    case "portfolio":
+      return "Review the claim states and proof gaps with Finance before reallocating funding.";
+  }
+}
+
 export async function answerCurrentTowerQuestion(
   args: CurrentTowerAnswerArgs,
 ): Promise<CioTowerAnswerResult> {
@@ -636,6 +704,12 @@ export async function answerCurrentTowerQuestion(
   });
   const intent = intentFromPageContext(intentFor(args.question), args.pageContext);
   const current = answerFromIntent(args, intent, view);
+  const nextAction = nextActionForIntent(
+    intent,
+    view !== null,
+    current.tables[0]?.id.startsWith("tower_selected_") ?? false,
+  );
+  const answer = nextAction ? `${current.answer} ${nextAction}` : current.answer;
   const visualContract = selectTowerVisualContract({
     question: args.question,
     contractKey: args.pageContext?.activeView ?? args.pageContext?.activeTab,
@@ -659,7 +733,7 @@ export async function answerCurrentTowerQuestion(
   ]);
   const modelOutput: CioTowerVisibleAnswerContract = {
     version: "cio_tower_visible_answer_v1",
-    answer: current.answer,
+    answer,
     tables: current.tables,
     tabs: [],
     visualContract,
@@ -667,7 +741,7 @@ export async function answerCurrentTowerQuestion(
   };
   const gfmTables = current.tables.map(tableToGfm).filter(Boolean).join("\n\n");
   return {
-    response: gfmTables ? `${current.answer}\n\n${gfmTables}` : current.answer,
+    response: gfmTables ? `${answer}\n\n${gfmTables}` : answer,
     modelOutputRaw: JSON.stringify(modelOutput),
     modelOutput,
     promptPackageKey: traceKey("tower_current_prompt", [

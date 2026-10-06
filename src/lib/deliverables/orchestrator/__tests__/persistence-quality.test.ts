@@ -1,7 +1,7 @@
 // WIRE proof: the Deliverable Quality Contract is a blocking step in
 // persistDeliverable. A failing artifact is NOT saved client-ready — it is
 // quarantined as an internal draft. Tenant-agnostic; same path for every client.
-import { persistDeliverable } from "../persistence";
+import { persistDeliverable, quarantineReasonWithDetail } from "../persistence";
 import type { OrchestrationResult } from "../orchestrator";
 import { getArtifactBrief } from "../artifact-brief-registry";
 import { amsRfpRequest, goodDocument } from "../__fixtures__/ams-rfp";
@@ -126,12 +126,44 @@ describe("persistDeliverable — quality contract enforcement", () => {
         "exception_handling",
         "control_points",
         "data_flow",
-      ].map((key) => ({
+      ].map((key, index) => ({
         key,
         title: key.replaceAll("_", " "),
         kind: "flow" as const,
         description: `Governed ${key.replaceAll("_", " ")} view.`,
         targetFormat: "html" as const,
+        data: {
+          kind: "flow" as const,
+          nodes: [
+            {
+              id: `${key}-start`,
+              label: key.replaceAll("_", " "),
+              role: "start",
+            },
+            {
+              id: `${key}-control`,
+              label: `Control point ${index + 1}`,
+              role: "review",
+            },
+            {
+              id: `${key}-done`,
+              label: "Accepted output",
+              role: "decision",
+            },
+          ],
+          edges: [
+            {
+              from: `${key}-start`,
+              to: `${key}-control`,
+              label: "passes through",
+            },
+            {
+              from: `${key}-control`,
+              to: `${key}-done`,
+              label: "approves",
+            },
+          ],
+        },
       })),
     };
 
@@ -150,5 +182,29 @@ describe("persistDeliverable — quality contract enforcement", () => {
     expect(String(rendered.html)).not.toContain(
       'data-exhibit="target_conceptual_architecture"',
     );
+  });
+});
+
+describe("quarantineReasonWithDetail", () => {
+  it("names what each blocking finding found", () => {
+    expect(
+      quarantineReasonWithDetail("blocked_missing_exhibits", [
+        {
+          dimension: "exhibit_enforcement",
+          detail: ["raci", "operating_cadence"],
+        },
+        { dimension: "decision_clarity" },
+      ]),
+    ).toBe(
+      "blocked_missing_exhibits: exhibit_enforcement (raci, operating_cadence), decision_clarity",
+    );
+  });
+
+  it("is the state and finding names when a finding carries no detail", () => {
+    expect(
+      quarantineReasonWithDetail("blocked_quality", [
+        { dimension: "so_what_quality", detail: [] },
+      ]),
+    ).toBe("blocked_quality: so_what_quality");
   });
 });

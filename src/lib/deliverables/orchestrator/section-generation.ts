@@ -22,10 +22,13 @@ import type {
   SourceRegisterEntry,
 } from "./types";
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
-import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
-import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
+import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
+import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import { factTokens } from "./numeric-lineage-tokens";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -70,6 +73,64 @@ export function extractUnsupportedFigureClaims(markdown: string): string[] {
     .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
 }
 
+function sentenceEvidenceCitations(
+  sentence: string,
+  evidence: readonly GovernedEvidenceItem[],
+): number[] {
+  const tokens = factTokens(sentence);
+  if (tokens.length === 0) return [];
+  const backedTokens = new Set<string>();
+  const citations = new Set<number>();
+  for (const item of evidence) {
+    const itemTokens = new Set(factTokens(`${item.label} ${item.statement}`));
+    const matchingTokens = tokens.filter((token) => itemTokens.has(token));
+    if (matchingTokens.length > 0) {
+      matchingTokens.forEach((token) => backedTokens.add(token));
+      citations.add(item.citationNumber);
+    }
+  }
+  if (tokens.some((token) => !backedTokens.has(token))) return [];
+  return Array.from(citations).sort((a, b) => a - b);
+}
+
+function appendCitations(
+  sentence: string,
+  citations: readonly number[],
+): string {
+  const suffix = citations.map((n) => `[${n}]`).join("");
+  if (!suffix) return sentence;
+  return sentence.replace(
+    /([.!?])?(\s*)$/u,
+    (_match, punctuation = "", whitespace = "") => {
+      if (punctuation) return ` ${suffix}${punctuation}${whitespace}`;
+      return ` ${suffix}${whitespace}`;
+    },
+  );
+}
+
+/**
+ * Add citations only when an uncited numeric/date token exactly appears in the governed
+ * evidence bundle. This is intentionally narrower than `repairUncitedFigures`: it fixes
+ * citation omissions for known facts, while invented/transformed figures still flow to
+ * the unsupported-claim blocker.
+ */
+export function repairEvidenceBackedUncitedFigures(
+  markdown: string,
+  evidence: readonly GovernedEvidenceItem[],
+): string {
+  if (!markdown || evidence.length === 0) return markdown;
+  const sentences = markdown.split(/(?<=[.!?])\s+/);
+  let changed = false;
+  const repaired = sentences.map((sentence) => {
+    if (!FACT_LIKE.test(sentence) || SUPPORTED.test(sentence)) return sentence;
+    const citations = sentenceEvidenceCitations(sentence, evidence);
+    if (citations.length === 0) return sentence;
+    changed = true;
+    return appendCitations(sentence, citations);
+  });
+  return changed ? repaired.join(" ") : markdown;
+}
+
 /**
  * Deterministically surface any client-fact-looking figure (number/$/%/date) that lacks a
  * [n] citation, an approved assumption, or a placeholder — by tagging the sentence
@@ -111,8 +172,29 @@ export interface ConsolidatedOpenInput {
   detail: string;
 }
 
-function normalizeOpenInputDetail(detail: string): string {
-  const normalized = detail
+/**
+ * A structured field from the model, as text.
+ *
+ * The synthesis pass returns JSON, and a field typed as text here can arrive
+ * as a number, a boolean, null, or a nested value — a table cell holding 64
+ * rather than "64". Every repair below calls string methods on these fields,
+ * so one numeric cell failed the whole build with a TypeError.
+ */
+export function structuredText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeOpenInputDetail(detail: unknown): string {
+  const normalized = structuredText(detail)
     .replace(
       /\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi,
       (_match, inner: string) =>
@@ -134,16 +216,20 @@ function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
   return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
 }
 
-function repairStructuredClientFactText(value: string): string {
+function repairStructuredClientFactText(value: unknown): string {
   return repairUncitedFigures(normalizeOpenInputDetail(value));
 }
 
 function repairStructuredTable(table: RenderableTable): RenderableTable {
+  const columns: unknown[] = Array.isArray(table.columns) ? table.columns : [];
+  const rows: unknown[] = Array.isArray(table.rows) ? table.rows : [];
   return {
     ...table,
-    columns: table.columns.map((column) => normalizeOpenInputDetail(column)),
-    rows: table.rows.map((row) =>
-      row.map((cell) => repairStructuredClientFactText(cell)),
+    columns: columns.map((column) => normalizeOpenInputDetail(column)),
+    rows: rows.map((row) =>
+      (Array.isArray(row) ? row : [row]).map((cell) =>
+        repairStructuredClientFactText(cell),
+      ),
     ),
   };
 }
@@ -162,6 +248,156 @@ function repairStructuredChecklist(
         }
       : {}),
   }));
+}
+
+function repairStructuredDeckSlides(
+  deckSlides: RenderableDeliverable["deckSlides"] | undefined,
+): RenderableDeliverable["deckSlides"] | undefined {
+  const repaired = (deckSlides ?? [])
+    .map((slide) => ({
+      ...slide,
+      ...(slide.title
+        ? { title: repairStructuredClientFactText(slide.title) }
+        : {}),
+      governingMessage: repairStructuredClientFactText(slide.governingMessage),
+      points: (Array.isArray(slide.points) ? slide.points : []).map(
+        repairStructuredClientFactText,
+      ),
+      ...(slide.speakerNotes
+        ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
+        : {}),
+      citationsUsed: (slide.citationsUsed ?? []).filter((n) =>
+        Number.isFinite(n),
+      ),
+    }))
+    .filter((slide) => slide.governingMessage.trim().length > 0);
+  return repaired.length > 0 ? repaired : undefined;
+}
+
+const P2_DISCOVERY_DECK_SLIDES = deckContract(
+  "REF_DECK_P2_DISCOVERY_READOUT",
+).slides;
+
+const ROOT_CAUSE_SLIDE_KEYS = new Set([
+  "executive_answer",
+  "what_is_not_working",
+  "root_causes",
+  "metrics_evidence",
+  "implications",
+  "proceed_hold_stop",
+]);
+
+function contractedP2SlidesFor(deliverableType: string) {
+  if (deliverableType === "discovery_report") return P2_DISCOVERY_DECK_SLIDES;
+  if (deliverableType === "root_cause_worksheet") {
+    return P2_DISCOVERY_DECK_SLIDES.filter((slide) =>
+      ROOT_CAUSE_SLIDE_KEYS.has(slide.id),
+    );
+  }
+  return [];
+}
+
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[[^\]]+\]\([^)]*\)/g, " ")
+    .replace(/[#*_`>|-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function firstSentence(text: string): string {
+  const clean = stripMarkdown(text);
+  const sentence = clean.match(/.+?[.!?](?:\s|$)/)?.[0]?.trim() ?? clean;
+  return sentence.split(/\s+/).slice(0, 26).join(" ");
+}
+
+function sectionForSlide(
+  slideId: string,
+  sections: readonly RenderableSection[],
+): RenderableSection | undefined {
+  const lookup = sections.map((section) => ({
+    section,
+    haystack: `${section.key} ${section.title}`.toLowerCase(),
+  }));
+  const needlesBySlide: Record<string, string[]> = {
+    executive_answer: ["exec", "summary", "answer", "recommendation"],
+    what_we_assessed: ["approach", "evidence", "scope"],
+    current_state: ["current", "baseline", "workflow", "process"],
+    what_is_working: ["working", "strength", "preserve", "readiness"],
+    what_is_not_working: ["gap", "pain", "not_working", "maturity"],
+    root_causes: ["root", "cause", "maturity", "gap"],
+    metrics_evidence: ["metric", "baseline", "evidence", "confidence"],
+    implications: ["implication", "p3", "design", "readiness"],
+    readiness: ["readiness", "data", "control", "governance"],
+    proceed_hold_stop: ["recommendation", "verdict", "continue", "decision"],
+  };
+  for (const needle of needlesBySlide[slideId] ?? []) {
+    const hit = lookup.find((candidate) => candidate.haystack.includes(needle));
+    if (hit) return hit.section;
+  }
+  return sections[0];
+}
+
+function ensureContractedDeckSlides(args: {
+  req: DeliverableIntelligenceRequest;
+  sections: readonly RenderableSection[];
+  repairedSlides: RenderableDeliverable["deckSlides"] | undefined;
+  recommendation: string;
+  nextActions: readonly string[];
+}): RenderableDeliverable["deckSlides"] | undefined {
+  if (!args.req.outputFormats.includes("pptx")) return args.repairedSlides;
+  const contractSlides = contractedP2SlidesFor(args.req.deliverableType);
+  if (contractSlides.length === 0) return args.repairedSlides;
+
+  const key = args.req.deliverableType as DeliverableKey;
+  const band = SLIDE_BANDS[key];
+  if (!band) return args.repairedSlides;
+
+  const current = args.repairedSlides ?? [];
+  if (current.length >= band.min && current.length <= band.max) return current;
+
+  const currentByKey = new Map(
+    current
+      .filter((slide) => slide.key)
+      .map((slide) => [slide.key as string, slide]),
+  );
+  const normalized = contractSlides.map((contractSlide) => {
+    const existing = currentByKey.get(contractSlide.id);
+    if (existing) return existing;
+    const source = sectionForSlide(contractSlide.id, args.sections);
+    const sourceSentence = source ? firstSentence(source.bodyMarkdown) : "";
+    const governingMessage =
+      sourceSentence ||
+      (contractSlide.id === "proceed_hold_stop"
+        ? firstSentence(args.recommendation)
+        : `${contractSlide.label}: ${contractSlide.purpose}`);
+    const actionLine =
+      contractSlide.id === "proceed_hold_stop" && args.nextActions.length > 0
+        ? `Next action: ${args.nextActions[0]}`
+        : contractSlide.requiredElements[0];
+    const citationsUsed = source?.citationsUsed?.filter((n) =>
+      Number.isFinite(n),
+    );
+    return {
+      key: contractSlide.id,
+      title: contractSlide.label,
+      governingMessage,
+      points: [contractSlide.purpose, actionLine].filter(Boolean).slice(0, 3),
+      speakerNotes: [
+        source ? `Grounded in section "${source.title}".` : null,
+        citationsUsed && citationsUsed.length > 0
+          ? `Citations used: ${citationsUsed.join(", ")}.`
+          : "No additional facts introduced by the deterministic deck normalizer.",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      ...(citationsUsed && citationsUsed.length > 0 ? { citationsUsed } : {}),
+    };
+  });
+
+  return normalized.slice(0, band.max);
 }
 
 /**
@@ -209,6 +445,68 @@ export function summariseSection(s: RenderableSection): {
   };
 }
 
+function documentTextForSignalCheck(
+  sections: readonly RenderableSection[],
+  tables: readonly RenderableTable[],
+  recommendation: string,
+  nextActions: readonly string[],
+): string {
+  return [
+    sections.map((s) => `${s.title}\n${s.bodyMarkdown}`).join("\n\n"),
+    tables
+      .map(
+        (t) =>
+          `${t.title}\n${t.columns.join(" | ")}\n${t.rows.map((r) => r.join(" | ")).join("\n")}`,
+      )
+      .join("\n\n"),
+    recommendation,
+    nextActions.join("\n"),
+  ].join("\n\n");
+}
+
+function appendMissingEvidenceSignals(
+  req: DeliverableIntelligenceRequest,
+  sections: readonly RenderableSection[],
+  tables: readonly RenderableTable[],
+  recommendation: string,
+  nextActions: readonly string[],
+): RenderableSection[] {
+  const required = req.requiredEvidenceSignals ?? [];
+  if (required.length === 0) return [...sections];
+  const haystack = documentTextForSignalCheck(
+    sections,
+    tables,
+    recommendation,
+    nextActions,
+  );
+  const missing = required.filter(
+    (signal) =>
+      !carriesRequiredEvidenceSignal(haystack, signal.label, signal.statement),
+  );
+  if (missing.length === 0) return [...sections];
+  return [
+    ...sections,
+    {
+      key: "evidence_signals_carried_forward",
+      title: "Evidence Signals Carried Forward",
+      bodyMarkdown: missing
+        .map(
+          (signal) =>
+            `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`,
+        )
+        .join("\n"),
+      rawBodyMarkdown: missing
+        .map(
+          (signal) =>
+            `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`,
+        )
+        .join("\n"),
+      groundingMode: "governed_facts",
+      citationsUsed: missing.map((signal) => signal.citationNumber),
+    },
+  ];
+}
+
 /**
  * Build the source register from the UNION of evidence actually cited across the sections —
  * the quality gate blocks when `requiresSourceRegister` and the register is empty.
@@ -236,7 +534,9 @@ export interface SynthesisResult {
   subtitle?: string;
   recommendation?: string;
   nextActions?: string[];
+  deckSlides?: RenderableDeliverable["deckSlides"];
   tables?: RenderableTable[];
+  exhibits?: RenderableExhibit[];
   clientCompleteChecklist?: RenderableDeliverable["clientCompleteChecklist"];
 }
 
@@ -301,41 +601,133 @@ function openInputsTable(
   };
 }
 
-function expectedExhibitsForProfile(
-  req: DeliverableIntelligenceRequest,
-  brief?: DeliverableArtifactBrief,
+const GENERIC_EXHIBIT_DESCRIPTION =
+  /profile-required view|populated from cited evidence|shows the user, ai, human decision|decision implication to confirm/i;
+
+function repairStructuredValue(value: unknown): unknown {
+  if (typeof value === "string") return repairStructuredClientFactText(value);
+  if (Array.isArray(value))
+    return value.map((item) => repairStructuredValue(item));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [
+        key,
+        repairStructuredValue(nested),
+      ]),
+    );
+  }
+  return value;
+}
+
+function repairStructuredExhibit(
+  exhibit: RenderableExhibit,
+): RenderableExhibit {
+  return {
+    key: repairStructuredClientFactText(String(exhibit.key ?? "")),
+    title: repairStructuredClientFactText(String(exhibit.title ?? "")),
+    kind: exhibit.kind,
+    description: repairStructuredClientFactText(
+      String(exhibit.description ?? ""),
+    ),
+    targetFormat: exhibit.targetFormat,
+    ...(exhibit.data
+      ? {
+          data: repairStructuredValue(
+            exhibit.data,
+          ) as RenderableExhibit["data"],
+        }
+      : {}),
+  };
+}
+
+function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
+  const data = exhibit.data;
+  if (!data || typeof data !== "object") return false;
+  switch (data.kind) {
+    case "flow":
+      return (
+        Array.isArray(data.nodes) &&
+        data.nodes.length >= 2 &&
+        Array.isArray(data.edges) &&
+        data.edges.length >= 1
+      );
+    case "matrix":
+    case "heatmap":
+    case "comparison":
+      return Array.isArray(data.cells) && data.cells.length >= 2;
+    case "timeline":
+    case "roadmap":
+      return (
+        Array.isArray(data.lanes) &&
+        data.lanes.some(
+          (lane) => Array.isArray(lane.items) && lane.items.length > 0,
+        )
+      );
+    case "value_tree":
+      return Boolean(
+        data.root?.label &&
+        Array.isArray(data.branches) &&
+        data.branches.length > 0,
+      );
+    case "conceptual_architecture":
+    case "logical_architecture":
+    case "physical_architecture":
+    case "agent_orchestration":
+      return (
+        Array.isArray(data.lanes) &&
+        data.lanes.some(
+          (lane) => Array.isArray(lane.items) && lane.items.length > 0,
+        )
+      );
+    default:
+      return false;
+  }
+}
+
+/**
+ * Why an authored exhibit is not kept, or null when it is.
+ *
+ * The rules are the same as before; they are named so a dropped exhibit can
+ * be reported. An exhibit that failed one of them used to vanish without a
+ * trace, and the artifact was then blocked for "missing exhibits" with no
+ * way to tell a missing exhibit from a rejected one.
+ */
+export function exhibitRejectionReason(
+  exhibit: RenderableExhibit,
+): string | null {
+  if (!exhibitHasStructuredData(exhibit)) {
+    return "data is missing, is not a supported payload kind, or is below that kind's minimum content";
+  }
+  const description = exhibit.description?.trim() ?? "";
+  if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
+    return "key, title or description is empty";
+  }
+  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) {
+    return "description is a generic placeholder";
+  }
+  const clauses = description
+    .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return clauses.length >= 3
+    ? null
+    : "description has fewer than three distinct statements";
+}
+
+function renderableExhibitsFromSynthesis(
+  synth: SynthesisResult,
 ): RenderableExhibit[] {
   const byKey = new Map<string, RenderableExhibit>();
-  for (const ex of brief?.expectedExhibits ?? []) {
-    byKey.set(ex.key, {
-      key: ex.key,
-      title: ex.title,
-      kind: ex.kind,
-      description: ex.purpose,
-      targetFormat: ex.preferredFormat,
-    });
-  }
-  const deliverableKey = deliverableKeyForOrchestratorType(req.deliverableType);
-  if (deliverableKey) {
-    const profile = DELIVERABLE_PROFILES[deliverableKey];
-    for (const key of profile.requiredExhibits) {
-      if (!byKey.has(key)) {
-        byKey.set(key, {
-          key,
-          title: key
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (m) => m.toUpperCase()),
-          kind:
-            key.includes("roadmap") || key.includes("calendar")
-              ? "timeline"
-              : key.includes("map") || key.includes("flow")
-                ? "flow"
-                : "matrix",
-          description: `Profile-required view for ${profile.title}; populated from cited evidence, assumptions, and open inputs.`,
-          targetFormat: profile.defaultFormat === "xlsx" ? "xlsx" : "docx",
-        });
-      }
+  for (const exhibit of synth.exhibits ?? []) {
+    const repaired = repairStructuredExhibit(exhibit);
+    const rejection = exhibitRejectionReason(repaired);
+    if (rejection) {
+      console.warn(
+        `[section-generation] authored exhibit not kept: key=${JSON.stringify(repaired.key ?? null)} reason=${rejection}`,
+      );
+      continue;
     }
+    byKey.set(repaired.key, repaired);
   }
   return [...byKey.values()];
 }
@@ -389,10 +781,10 @@ function fallbackRecommendation(
   }
 
   if (req.module === "moves" && req.deliverableType === "charter") {
-    return `We recommend the sponsor review this concise Charter and approve P2 Discovery only with the stated scope, decision rights, evidence plan, assumptions, and caveats carried forward as the governed source of truth.`;
+    return `We recommend the authorized workspace user review and approve Discovery only with the stated scope, decision rights, authorization conditions, assumptions, and caveats carried forward. The listed sponsor contact receives progress updates only when selected; detailed workshop instructions belong in the separate Discovery Workshop Guide.`;
   }
 
-  return `We recommend sponsor review of this artifact before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly.`;
+  return `We recommend review by the authorized workspace user before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly. Sponsors receive progress updates only when selected and do not approve product gates.`;
 }
 
 function fallbackRiskTable(
@@ -418,38 +810,60 @@ function fallbackRiskTable(
       "Open decision",
       clientCompleteReasonLabel(c.reason),
       c.owner,
-      "Confirm during sponsor review before phase advancement.",
+      "Confirm with the authorized workspace user before phase advancement.",
     ]);
   }
 
-  if (
-    rows.length === 0 &&
-    req.module === "moves" &&
-    req.deliverableType === "charter"
-  ) {
-    rows.push(
-      [
-        "Sponsor cadence and decision attendance",
-        "Risk",
-        "P2 can lose momentum if accountable roles are not present for working sessions and gates.",
-        "Executive sponsor / Move lead",
-        "Confirm sponsor cadence and operating-owner attendance before P2 close.",
-      ],
-      [
-        "Evidence readiness for P2 Discovery",
-        "Dependency",
-        "Current-state findings should not be finalized until uploaded evidence is reviewed and accepted.",
-        "Evidence owners",
-        "Use the P2 evidence plan and Files & Evidence review before Approve & Build.",
-      ],
-      [
-        "Scope expansion beyond the charter boundary",
-        "Issue",
-        "Uncontrolled expansion can turn Discovery into solution design before facts are proven.",
-        "Move lead / operating owner",
-        "Hold out-of-scope requests as P3 options unless the sponsor revises the Charter.",
-      ],
-    );
+  if (rows.length === 0 && req.module === "moves") {
+    if (req.deliverableType === "charter") {
+      rows.push(
+        [
+          "Sponsor cadence and decision attendance",
+          "Risk",
+          "P2 can lose momentum if accountable roles are not present for working sessions and gates.",
+          "Executive sponsor / Move lead",
+          "Confirm sponsor cadence and operating-owner attendance before P2 close.",
+        ],
+        [
+          "Discovery working-session readiness",
+          "Dependency",
+          "Current-state findings should not be finalized until uploaded evidence, workshop notes, and client corrections are reviewed and accepted.",
+          "Evidence owners",
+          "Use the separate Discovery Workshop Guide / Evidence Request Pack and Files & Evidence review before the Discovery gate.",
+        ],
+        [
+          "Scope expansion beyond the charter boundary",
+          "Issue",
+          "Uncontrolled expansion can turn Discovery into solution design before facts are proven.",
+          "Move lead / operating owner",
+          "Hold out-of-scope requests as P3 options unless the sponsor revises the Charter.",
+        ],
+      );
+    } else {
+      rows.push(
+        [
+          "Evidence-to-decision traceability",
+          "Dependency",
+          "The phase decision should stay tied to approved evidence, assumptions, and open inputs.",
+          "Move lead / evidence owners",
+          "Review the source register and open-input table before gate approval.",
+        ],
+        [
+          "Governance and control ownership",
+          "Risk",
+          "The design can drift if decision rights, approval points, or control owners remain implicit.",
+          "Sponsor / accountable operating owner",
+          "Name owners and approval cadence before the next phase commits execution work.",
+        ],
+        [
+          "Implementation sequencing",
+          "Issue",
+          "Roadmap planning depends on resolving critical path dependencies before commitments are made.",
+          "Workstream leads",
+          "Carry dependencies into roadmap sequencing and mobilization readiness checks.",
+        ],
+      );
+    }
   }
 
   if (rows.length === 0) return null;
@@ -496,9 +910,14 @@ export function assembleDeliverable(
   const finalSections = cleanedSections.map((section) => ({
     ...section,
     bodyMarkdown: sanitizeClientFacingArtifactMarkdown(
-      repairUncitedFigures(section.bodyMarkdown),
+      repairUncitedFigures(
+        repairEvidenceBackedUncitedFigures(section.bodyMarkdown, evidence),
+      ),
     ),
-    rawBodyMarkdown: section.rawBodyMarkdown ?? section.bodyMarkdown,
+    rawBodyMarkdown: repairEvidenceBackedUncitedFigures(
+      section.rawBodyMarkdown ?? section.bodyMarkdown,
+      evidence,
+    ),
   }));
   const combinedClaims: UnsupportedFigureClaim[] = [
     ...(options.unsupportedClaims ?? []),
@@ -523,20 +942,37 @@ export function assembleDeliverable(
   const nextActions = (synth.nextActions ?? []).map(
     repairStructuredClientFactText,
   );
+  const recommendation = repairStructuredClientFactText(
+    fallbackRecommendation(req, finalSections, synth),
+  );
+  const sectionsWithSignals = appendMissingEvidenceSignals(
+    req,
+    finalSections,
+    tables,
+    recommendation,
+    nextActions,
+  );
+  const generatedSections = sectionsWithSignals;
+  const deckSlides = ensureContractedDeckSlides({
+    req,
+    sections: generatedSections,
+    repairedSlides: repairStructuredDeckSlides(synth.deckSlides),
+    recommendation,
+    nextActions,
+  });
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
-    generatedSections: finalSections,
+    generatedSections,
+    deckSlides,
     tables,
-    exhibits: expectedExhibitsForProfile(req, options.brief),
-    sourceRegister: buildSourceRegister(evidence, finalSections),
+    exhibits: renderableExhibitsFromSynthesis(synth),
+    sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
-    recommendation: repairStructuredClientFactText(
-      fallbackRecommendation(req, finalSections, synth),
-    ),
+    recommendation,
     nextActions,
   };
 }

@@ -14,6 +14,7 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import {
   buildSourceVendor360Cockpit,
+  loadSourceWorkspaceDirectImpactContract,
   loadSourceWorkspacePortfolio,
   resolveImpactVendorNames,
   sourceWorkspaceProvider,
@@ -37,6 +38,37 @@ function csv(rows: readonly Record<string, string>[]): string {
     ),
   ];
   return `${lines.join("\n")}\n`;
+}
+
+function isDirectEvidenceCoverageSql(sql: string): boolean {
+  return (
+    sql.includes("WITH spend AS") &&
+    sql.includes("FROM source.contract_360 c") &&
+    sql.includes("COALESCE(spend.spend_rows, 0)::bigint AS spend_rows") &&
+    sql.includes("FROM source.contract_consumption_observation o") &&
+    /SELECT\s+o\.tenant_key/.test(sql) &&
+    sql.includes("FROM source.contract_performance_observation o") &&
+    sql.includes("FROM source.canonical_fact_assertion facts") &&
+    sql.includes("FROM source.contract_scope cs") &&
+    !sql.includes("FROM consumption.sourcing_spend_monthly_v1") &&
+    !sql.includes("FROM consumption.sourcing_performance_v1") &&
+    !sql.includes("FROM consumption.sourcing_opportunity_v1") &&
+    sql.includes("source.optimization_opportunity") &&
+    sql.includes("source.contract_scope")
+  );
+}
+
+function isDirectActionCandidateSql(sql: string): boolean {
+  return (
+    sql.includes("FROM source.sourcing_opportunity legacy") &&
+    sql.includes("FROM source.optimization_opportunity o") &&
+    sql.includes("legacy.opportunity_id AS action_candidate_id") &&
+    !sql.includes("FROM consumption.sourcing_opportunity_v1")
+  );
+}
+
+function normalizedSql(sql: string): string {
+  return sql.replace(/\s+/g, " ").trim();
 }
 
 describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
@@ -67,6 +99,57 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
 
     expect(sourceWorkspaceProvider()).toBe("legacy");
+  });
+
+  it("reads only the requested supplemental contract from the direct impact producer", async () => {
+    const reads: Array<{ sql: string; params: unknown[] }> = [];
+    mockWithSession.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string, params: unknown[]): Promise<R[]> => {
+        reads.push({ sql, params });
+        if (sql.includes("set_config")) return [];
+        if (isDirectActionCandidateSql(sql)) {
+          return [{ tenant_key: "meridian_health_global", contract_id: "CTR-ACTION-2", vendor_ref: "VEN-2", vendor_name: "Example Vendor", action_candidate_id: "ACT-2", candidate_amount_usd: null }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const detail = await loadSourceWorkspaceDirectImpactContract("meridian", "CTR-ACTION-2");
+
+    expect(detail?.action).toMatchObject({ contract_id: "CTR-ACTION-2", action_candidate_id: "ACT-2" });
+    const impactReads = reads.filter((call) =>
+      isDirectEvidenceCoverageSql(call.sql) || isDirectActionCandidateSql(call.sql),
+    );
+    expect(impactReads).toHaveLength(2);
+    for (const call of impactReads) {
+      expect(call.params).toEqual([expect.arrayContaining(["meridian_health_global"]), "CTR-ACTION-2"]);
+    }
+    const coverageSql = impactReads.find((call) => isDirectEvidenceCoverageSql(call.sql))?.sql ?? "";
+    for (const alias of ["o", "cs", "facts", "c"]) {
+      expect(coverageSql).toContain(`AND ${alias}.contract_id = $2`);
+    }
+    const actionSql = impactReads.find((call) => isDirectActionCandidateSql(call.sql))?.sql ?? "";
+    for (const alias of ["current_contract", "legacy", "o"]) {
+      expect(actionSql).toContain(`AND ${alias}.contract_id = $2`);
+    }
+  });
+
+  it("refuses a cross-tenant direct row and propagates a targeted read error", async () => {
+    mockWithSession.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (isDirectActionCandidateSql(sql)) {
+          return [{ tenant_key: "skyharbor_global", contract_id: "CTR-ACTION-2", action_candidate_id: "ACT-OTHER" }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+    await expect(loadSourceWorkspaceDirectImpactContract("meridian", "CTR-ACTION-2")).resolves.toBeNull();
+
+    mockWithSession.mockRejectedValueOnce(new Error("direct read unavailable"));
+    await expect(loadSourceWorkspaceDirectImpactContract("meridian", "CTR-ACTION-2")).rejects.toThrow("direct read unavailable");
   });
 
   it("resolves UUID-like vendor display names before impact rows reach the workspace payload", () => {
@@ -497,7 +580,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("FROM source.contract_360")
+        ) {
           return [
             {
               tenant_key: "meridian-health",
@@ -552,23 +638,23 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+        if (isDirectEvidenceCoverageSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
               contract_id: "MER-TECH-M365-001",
               vendor_ref: "vendor-microsoft",
               vendor_name: "Microsoft Corporation",
-	              contract_name: "Microsoft 365 Enterprise Agreement",
-	              spend_rows: 12,
-	              actual_spend_usd: 8587900,
-	              committed_spend_usd: 8600004,
-	              performance_rows: 12,
-	              breach_rows: 3,
-	              credit_calculated_usd: 43000.02,
-	              credit_claimed_usd: 0,
-	              credit_recovered_usd: 0,
-	              unclaimed_credit_usd: 43000.02,
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              spend_rows: 12,
+              actual_spend_usd: 8587900,
+              committed_spend_usd: 8600004,
+              performance_rows: 12,
+              breach_rows: 3,
+              credit_calculated_usd: 43000.02,
+              credit_claimed_usd: 0,
+              credit_recovered_usd: 0,
+              unclaimed_credit_usd: 43000.02,
               opportunity_rows: 1,
               candidate_amount_usd: 1960000,
               finance_confirmation_required_rows: 1,
@@ -585,7 +671,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -701,17 +787,32 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("consumption.sourcing_spend_monthly_v1")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_spend_monthly_v1")
+        ) {
           return [
             {
-              spend_row_count: "12",
-              spend_actual: "8587900.00",
-              spend_committed: "8600004.00",
-              performance_row_count: "12",
-              performance_breach_count: "3",
+              row_count: "12",
+              invoice_lines: "12",
+              actual_spend: "8587900.00",
+              committed_amount: "8600004.00",
+              off_contract_spend: "0",
+            },
+          ] as R[];
+        }
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_performance_v1")
+        ) {
+          return [
+            {
+              row_count: "12",
+              breach_count: "3",
               credit_calculated: "43000.02",
               credit_claimed: "0",
               credit_recovered: "0",
+              unclaimed_credit: "43000.02",
             },
           ] as R[];
         }
@@ -729,7 +830,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.workspaceDiagnostics.exploreProvider).toBe(
       "EclProjectionDbProvider",
     );
-    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBeUndefined();
+    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
     expect(portfolio.workspaceDiagnostics.eclProjectionDir).toBeNull();
     expect(portfolio.contracts).toHaveLength(1);
     expect(portfolio.vendors).toHaveLength(1);
@@ -737,8 +838,8 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
     expect(portfolio.impact.claimCards).toHaveLength(1);
     expect(portfolio.impact.vendorPositions).toHaveLength(1);
-    expect(portfolio.impact.storyline).toHaveLength(1);
-    expect(portfolio.impact.avaGroundingBundles).toHaveLength(1);
+    expect(portfolio.impact.storyline).toHaveLength(5);
+    expect(portfolio.impact.avaGroundingBundles).toHaveLength(6);
     expect(
       portfolio.contracts.find(
         (row) => row.contract_id === "MER-TECH-M365-001",
@@ -767,21 +868,24 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.v4Snapshot.performanceCredits.unclaimedCredit).toBe(
       43000.02,
     );
-    expect(
-      runCalls.filter((call) => call.sql.includes("set_config")),
-    ).toContainEqual({
-      sql: "SELECT set_config('app.tenant_key', $1, false)",
-      params: ["meridian-health"],
-    });
+    const canonicalImpactSetConfigCalls = runCalls.filter(
+      (call) =>
+        call.sql.includes("set_config") && call.params[0] === "meridian-health",
+    );
+    expect(canonicalImpactSetConfigCalls.length).toBeGreaterThanOrEqual(1);
+    const legacyImpactSetConfigCalls = runCalls.filter(
+      (call) =>
+        call.sql.includes("set_config") &&
+        call.params[0] === "meridian_health_global",
+    );
+    expect(legacyImpactSetConfigCalls).toHaveLength(0);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_events")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls
         .filter((call) => call.sql.includes("FROM serving."))
-        .every((call) =>
-          call.sql.includes("AND assessment_id = $2"),
-        ),
+        .every((call) => call.sql.includes("AND assessment_id = $2")),
     ).toBe(true);
     expect(
       runCalls
@@ -791,9 +895,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ),
     ).toBe(true);
     expect(
-      runCalls.find((call) =>
-        call.sql.includes("ecl_projection.cube_slice"),
-      ),
+      runCalls.find((call) => call.sql.includes("ecl_projection.cube_slice")),
     ).toMatchObject({
       params: [
         expect.arrayContaining(["meridian-health"]),
@@ -803,20 +905,26 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     });
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_compare")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_approvals")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls.some((call) =>
         call.sql.includes("source.contract_claim_card_v1"),
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
+        call.sql.includes("FROM source.contract_evidence_coverage_v1"),
       ),
     ).toBe(false);
+    expect(runCalls.some((call) => isDirectEvidenceCoverageSql(call.sql))).toBe(
+      true,
+    );
+    expect(runCalls.some((call) => isDirectActionCandidateSql(call.sql))).toBe(
+      true,
+    );
     expect(
       portfolio.cockpit.proofLayers.sourceSystems.find(
         (row) => row.name === "executive_portfolio",
@@ -831,7 +939,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toEqual(["Workday Finance", "BlackLine Account Reconciliations"]);
   });
 
-  it("completes partial prebuilt impact views with derived claim and aVa grounding", async () => {
+  it("completes direct impact rows with generated claim and aVa grounding", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
     mockWithSession.mockImplementation(async (fn) => {
@@ -883,7 +991,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
-        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -927,24 +1035,60 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           return [] as R[];
         }
         if (
-          sql.includes("consumption.sourcing_spend_monthly_v1") &&
-          sql.includes("performance AS") &&
-          sql.includes("spend_row_count")
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_spend_monthly_v1")
         ) {
           return [
             {
-              spend_row_count: "12",
-              spend_actual: "1452000.00",
-              spend_committed: "1480000.00",
-              performance_row_count: "0",
-              performance_breach_count: "0",
-              credit_calculated: "0",
-              credit_claimed: "0",
-              credit_recovered: "0",
+              row_count: "12",
+              invoice_lines: "12",
+              actual_spend: "1452000.00",
+              committed_amount: "1480000.00",
+              off_contract_spend: "0",
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360 c")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_performance_v1")
+        ) {
+          return [
+            {
+              row_count: "0",
+              breach_count: "0",
+              credit_calculated: "0",
+              credit_claimed: "0",
+              credit_recovered: "0",
+              unclaimed_credit: "0",
+            },
+          ] as R[];
+        }
+        if (
+          sql.includes("FROM source.contract c") &&
+          sql.includes("raw_payload ->> 'contract_archetype'")
+        ) {
+          expect(sql).not.toContain("resolved_annual_value");
+          expect(sql).toContain("c.annual_value::numeric AS annual_value");
+          expect(sql).toContain("c.vendor_id AS vendor_ref");
+          expect(sql).toContain("FROM source.contract c");
+          expect(sql).toContain("LEFT JOIN source.vendor v");
+          expect(sql).not.toContain("c.vendor_ref");
+          expect(sql).not.toContain("c.vendor_name");
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              contract_archetype: "productivity_platform",
+              annual_value: "1480000",
+            },
+          ] as R[];
+        }
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("FROM source.contract_360 c")
+        ) {
           return [
             {
               tenant_key: "meridian-health",
@@ -977,7 +1121,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM consumption.sourcing_opportunity_v1 o")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1039,6 +1183,12 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     );
 
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
+    expect(portfolio.archetypeCoverageRows).toEqual([
+      expect.objectContaining({
+        contract_id: "MER-TECH-M365-001",
+        contract_archetype: "productivity_platform",
+      }),
+    ]);
     expect(portfolio.impact.claimCards).toHaveLength(1);
     expect(portfolio.impact.claimCards[0]).toMatchObject({
       action_candidate_id: "OPT-M365-SHELFWARE-001",
@@ -1054,12 +1204,249 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(true);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
+        call.sql.includes("FROM source.sourcing_opportunity legacy"),
       ),
     ).toBe(true);
+    expect(
+      runCalls
+        .filter((call) => isDirectActionCandidateSql(call.sql))
+        .some((call) =>
+          normalizedSql(call.sql).includes(
+            "o.deadline::text AS decision_due_date",
+          ),
+        ),
+    ).toBe(true);
+    const actionSql = runCalls.find((call) =>
+      isDirectActionCandidateSql(call.sql),
+    )?.sql;
+    expect(actionSql).toBeDefined();
+    expect(actionSql).not.toContain("FROM consumption.sourcing_opportunity_v1");
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "WITH current_action_opportunities AS MATERIALIZED",
+    );
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "LEFT JOIN current_action_opportunities current_action",
+    );
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "WHERE current_contract.tenant_key = ANY($1::text[])",
+    );
+    expect(normalizedSql(actionSql ?? "")).not.toContain("AND NOT EXISTS (");
   });
 
-  it("derives impact cards from base Source and consumption views when prebuilt impact views are empty", async () => {
+  it("does not call heavy impact views when direct impact rows are complete", async () => {
+    process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
+    const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
+    mockWithSession.mockImplementation(async (fn) => {
+      const run = async <R>(sql: string, params: readonly unknown[]) => {
+        runCalls.push({ sql, params });
+        if (sql.includes("set_config")) return [] as R[];
+        if (sql.includes("serving.source_contract_360")) {
+          return [
+            {
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "MER-TECH-M365-001",
+                contract_id: "MER-TECH-M365-001",
+                vendor_object_id: "vendor-microsoft",
+                vendor_name: "Microsoft Corporation",
+                contract_name: "Microsoft 365 Enterprise Agreement",
+                annualized_value_usd: "1480000",
+                total_contract_value_usd: "4440000",
+                end_date: "2027-06-30",
+                value_state: "known",
+                scope_json: "[]",
+                spend_summary_json: "{}",
+                gap_flags_json: "[]",
+              },
+            },
+          ] as R[];
+        }
+        if (sql.includes("serving.source_vendor_360")) {
+          return [
+            {
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "vendor-microsoft",
+                vendor_object_id: "vendor-microsoft",
+                vendor_name: "Microsoft Corporation",
+                contract_count: "1",
+                annualized_spend_usd: "1480000",
+                contract_ids_json: JSON.stringify(["MER-TECH-M365-001"]),
+              },
+            },
+          ] as R[];
+        }
+        if (
+          sql.includes("serving.source_events") ||
+          sql.includes("serving.source_compare") ||
+          sql.includes("serving.source_approvals") ||
+          sql.includes("ecl_projection.cube_slice")
+        ) {
+          return [] as R[];
+        }
+        if (isDirectEvidenceCoverageSql(sql)) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              vendor_category: "productivity_platform",
+              contract_archetype: "productivity_platform",
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              spend_rows: "12",
+              actual_spend_usd: "1452000",
+              committed_spend_usd: "1480000",
+              performance_rows: "0",
+              breach_rows: "0",
+              credit_calculated_usd: "0",
+              credit_claimed_usd: "0",
+              credit_recovered_usd: "0",
+              unclaimed_credit_usd: "0",
+              opportunity_rows: "1",
+              candidate_amount_usd: "1960000",
+              finance_confirmation_required_rows: "1",
+              opportunities_with_evidence: "1",
+              scope_rows: "2",
+              critical_scope_rows: "1",
+              document_page_text_rows: "6",
+              change_order_rows: "1",
+              coverage_state: "partial",
+              blocker_if_missing:
+                "finance confirmation required before realized-value claim",
+              evidence_basis_json: { rows: ["SPEND-001", "CLAUSE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (isDirectActionCandidateSql(sql)) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              action_candidate_id: "OPT-M365-SHELFWARE-001",
+              opportunity_id: "OPT-M365-SHELFWARE-001",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              title: "Unused license reduction candidate",
+              action_type: "optimize",
+              opportunity_type: "shelfware",
+              finding_summary:
+                "Unused entitled seats create an avoidable-cost candidate.",
+              deterministic_basis: "usage and spend evidence rows",
+              candidate_amount_usd: "1960000",
+              priority: "high",
+              readiness_state: "finance_confirmation_required",
+              evidence_state: "present",
+              authority_state: "owner_review_required",
+              finance_confirmation_state: "not_confirmed",
+              next_action: "Validate reclaim eligibility.",
+              accountable_role: "Technology sourcing",
+              decision_due_date: "2027-03-31",
+              coverage_state: null,
+              blocker_if_missing:
+                "Never present this candidate as realized savings until finance confirms it.",
+              citation_basis_json: {
+                opportunity_ref: "OPT-M365-SHELFWARE-001",
+              },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.contract_claim_card_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              claim_card_id: "CLAIM-M365-SHELFWARE-001",
+              action_candidate_id: "OPT-M365-SHELFWARE-001",
+              opportunity_id: "OPT-M365-SHELFWARE-001",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              claim_title: "Unused license reduction candidate",
+              allowed_executive_statement:
+                "This contract has an evidence-backed candidate action; finance confirmation is not complete.",
+              blocker_if_missing:
+                "Never present this candidate as realized savings until finance confirms it.",
+              candidate_amount_usd: "1960000",
+              finance_confirmation_state: "not_confirmed",
+              readiness_state: "ready_for_review",
+              evidence_state: "evidence_available",
+              citation_basis_json: { rows: ["USAGE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.ava_grounding_bundle_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              grounding_bundle_id: "AVA-M365-SHELFWARE-001",
+              page_key: "contract_action",
+              section_key: "OPT-M365-SHELFWARE-001",
+              question_family: "value_claim",
+              allowed_claims_json: [{ claim: "candidate action exists" }],
+              refusal_rules_json: [
+                "Refuse realized savings without finance confirmation.",
+              ],
+              citation_sources_json: { rows: ["CLAIM-M365-SHELFWARE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (
+          sql.includes("FROM source.contract_evidence_coverage_v1") ||
+          sql.includes("FROM source.vendor_position_v1") ||
+          sql.includes("FROM source.source_page_storyline_v1")
+        ) {
+          return [] as R[];
+        }
+        return [] as R[];
+      };
+      return fn(run);
+    });
+
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+      "ecl_projection_db",
+    );
+
+    expect(portfolio.impact.actionCandidates).toHaveLength(1);
+    expect(portfolio.impact.claimCards).toHaveLength(1);
+    expect(portfolio.impact.avaGroundingBundles).toHaveLength(6);
+    expect(
+      runCalls.some((call) => call.sql.includes("FROM source.contract_360 c")),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.sourcing_opportunity legacy"),
+      ),
+    ).toBe(true);
+    const directActionSql = runCalls.find((call) =>
+      isDirectActionCandidateSql(call.sql),
+    )?.sql;
+    expect(directActionSql).toContain("LEFT JOIN source.vendor legacy_vendor");
+    expect(directActionSql).toContain("LEFT JOIN source.vendor action_vendor");
+    expect(directActionSql).not.toContain("LEFT JOIN source.contract_360");
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.contract_consumption_observation o"),
+      ),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.contract_evidence_coverage_v1"),
+      ),
+    ).toBe(false);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.contract_action_candidate_v1"),
+      ),
+    ).toBe(false);
+  });
+
+  it("derives impact cards from direct Source and consumption rows", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
     mockWithSession.mockImplementation(async (fn) => {
@@ -1109,38 +1496,6 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
-        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
-          return [
-            {
-              tenant_key: "meridian-health",
-              contract_id: "MER-TECH-M365-001",
-              vendor_ref: "vendor-microsoft",
-              vendor_name: "Microsoft Corporation",
-              contract_name: "Microsoft 365 Enterprise Agreement",
-              spend_rows: "0",
-              actual_spend_usd: "0",
-              committed_spend_usd: "0",
-              performance_rows: "0",
-              breach_rows: "0",
-              credit_calculated_usd: "0",
-              credit_claimed_usd: "0",
-              credit_recovered_usd: "0",
-              unclaimed_credit_usd: "0",
-              opportunity_rows: "0",
-              candidate_amount_usd: "0",
-              finance_confirmation_required_rows: "0",
-              opportunities_with_evidence: "0",
-              scope_rows: "0",
-              critical_scope_rows: "0",
-              document_page_text_rows: "0",
-              change_order_rows: "0",
-              coverage_state: "not_loaded",
-              blocker_if_missing: "legacy coverage row only",
-              evidence_basis_json: {},
-              load_run_id: "legacy-impact-view",
-            },
-          ] as R[];
-        }
         if (
           sql.includes("FROM source.contract_action_candidate_v1") ||
           sql.includes("FROM source.contract_claim_card_v1") ||
@@ -1151,24 +1506,35 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           return [] as R[];
         }
         if (
-          sql.includes("consumption.sourcing_spend_monthly_v1") &&
-          sql.includes("performance AS") &&
-          sql.includes("spend_row_count")
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_spend_monthly_v1")
         ) {
           return [
             {
-              spend_row_count: "12",
-              spend_actual: "1452000.00",
-              spend_committed: "1480000.00",
-              performance_row_count: "3",
-              performance_breach_count: "1",
-              credit_calculated: "25000.00",
-              credit_claimed: "0",
-              credit_recovered: "0",
+              row_count: "12",
+              invoice_lines: "12",
+              actual_spend: "1452000.00",
+              committed_amount: "1480000.00",
+              off_contract_spend: "0",
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360 c")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_performance_v1")
+        ) {
+          return [
+            {
+              row_count: "3",
+              breach_count: "1",
+              credit_calculated: "25000.00",
+              credit_claimed: "0",
+              credit_recovered: "0",
+              unclaimed_credit: "25000.00",
+            },
+          ] as R[];
+        }
+        if (isDirectEvidenceCoverageSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1201,7 +1567,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM consumption.sourcing_opportunity_v1 o")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1251,7 +1617,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("FROM source.contract_360")
+        ) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1317,9 +1686,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       primary_metric_label: "Depth contracts",
       primary_metric_value: "1",
     });
-    expect(
-      portfolio.impact.storyline[0].allowed_executive_statement,
-    ).toContain("separate from the portfolio-register contract count");
+    expect(portfolio.impact.storyline[0].allowed_executive_statement).toContain(
+      "separate from the portfolio-register contract count",
+    );
     expect(portfolio.impact.storyline[0].citation_basis_json).toMatchObject({
       "source.contract_action_candidate_v1": 1,
     });
@@ -1333,10 +1702,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       runCalls.some((call) =>
         call.sql.includes("FROM source.contract_evidence_coverage_v1"),
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
+        call.sql.includes("FROM source.sourcing_opportunity legacy"),
       ),
     ).toBe(true);
   });
@@ -1470,6 +1839,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         datasetVersion: "test",
         analyticsProvider: "test",
         activeLoadRunId: null,
+        lastCompletedLoadAtIso: null,
         asOfDateIso: "2027-06-30T00:00:00Z",
         v4ContractCount: 3,
         v4VendorCount: 3,

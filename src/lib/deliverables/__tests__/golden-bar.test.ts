@@ -6,6 +6,10 @@ import {
   meetsGoldenBar,
 } from "../golden-bar";
 import { premiumGoldenBarOptionsForArtifact } from "../strategic-moves-artifact-standard";
+import {
+  applyPhaseDigest,
+  emptySolutionContext,
+} from "@/lib/programs/solution-context";
 
 const GOLDEN_DIR = join(process.cwd(), "docs/build/golden-artifacts");
 
@@ -394,6 +398,42 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     );
     expect(r.forbiddenLanguageHits).toContain("tenant key");
     expect(r.pass).toBe(false);
+  });
+
+  it("requires exact carried evidence terms for terminal premium artifacts", () => {
+    const ctx = applyPhaseDigest(emptySolutionContext("m1", "meridian"), {
+      baselineMetrics: {
+        "Care-gap closure rate": "41.2% [quality_measures.csv]",
+        "Unmonitored interfaces":
+          "33 of 86 plus 18 partial [interface_inventory.csv]",
+      },
+    });
+    const options = premiumGoldenBarOptionsForArtifact("handoff_package", ctx);
+
+    const missing = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Mobilization model</text></svg>
+        <table><tr><th>Signal</th></tr><tr><td>general closure improvement</td></tr></table>
+        <p>The artifact discusses monitoring in general terms.</p>
+      </body></html>`,
+      undefined,
+      options,
+    );
+    expect(missing.pass).toBe(false);
+    expect(missing.missingExactEvidenceTerms).toEqual(
+      expect.arrayContaining(["41.2%", "33 of 86 plus 18 partial"]),
+    );
+
+    const present = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Mobilization model</text></svg>
+        <table><tr><th>Signal</th><th>Value</th></tr><tr><td>Closure</td><td>41.2%</td></tr></table>
+        <p>Interface control evidence shows 33 of 86 plus 18 partial channels.</p>
+      </body></html>`,
+      undefined,
+      options,
+    );
+    expect(present.missingExactEvidenceTerms).toEqual([]);
   });
 
   it("does not flag overMaximumWordCount when under the ceiling", () => {

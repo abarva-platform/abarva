@@ -46,13 +46,29 @@ function pageKeysTheReaderExpects(): string[] {
   return [...keys].sort();
 }
 
-/** Serving views the reader actually selects from. */
+/**
+ * Serving views the reader actually selects from.
+ *
+ * Read from the declared list rather than from the SQL, because the SQL is now assembled from that
+ * list at query time -- the union is built only over views the database actually has, so that one
+ * absent view costs its own family instead of collapsing the whole read. A declared array is also a
+ * steadier thing to parse than a string that gets rebuilt.
+ */
 function viewsTheReaderSelects(): string[] {
-  return [
+  const block = READER.slice(
+    READER.indexOf("const HOME_SERVING_VIEWS"),
+    READER.indexOf("] as const;", READER.indexOf("const HOME_SERVING_VIEWS")),
+  );
+  const views = [
     ...new Set(
-      [...READER.matchAll(/from serving\.home_([a-z_]+)/g)].map((m) => m[1]),
+      [...block.matchAll(/"serving\.home_([a-z_]+)"/g)].map((m) => m[1]),
     ),
   ].sort();
+  // A list this test could not find would make every case below pass by having nothing to check.
+  if (views.length === 0) {
+    throw new Error("no serving views found in HOME_SERVING_VIEWS");
+  }
+  return views;
 }
 
 /** Page keys the constraint permits. */

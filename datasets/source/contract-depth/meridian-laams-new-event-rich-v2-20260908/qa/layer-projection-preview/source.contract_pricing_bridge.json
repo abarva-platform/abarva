@@ -1,0 +1,62 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-laams-new-event-rich-v2-20260908",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:labor",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "resource_model_billed_labor",
+    "amount_usd": "7849999.99",
+    "basis": "Sum of FTE x annual client bill rate from resource_model.csv",
+    "source_file_id": "DOC-LAAMS-RATE-CARD"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-laams-new-event-rich-v2-20260908",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:tooling",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "analytics_ops_tooling_and_monitoring",
+    "amount_usd": "180000.00",
+    "basis": "Monitoring, scheduler, extract automation, and reporting tooling allowance",
+    "source_file_id": "DOC-LAAMS-RATE-CARD"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-laams-new-event-rich-v2-20260908",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:aws-pass-through",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "aws_dual_run_pass_through",
+    "amount_usd": "300169.50",
+    "basis": "AWS CUR export rows tied to legacy analytics dual-run tags",
+    "source_file_id": "DOC-LAAMS-RATE-CARD"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-laams-new-event-rich-v2-20260908",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:change-orders",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "recurring_change_order_run_support",
+    "amount_usd": "712500.00",
+    "basis": "Recurring accepted change-order rows marked in-scope disputed",
+    "source_file_id": "DOC-LAAMS-RATE-CARD"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-laams-new-event-rich-v2-20260908",
+    "source_row_id": "pricing_bridge:MER-TECH-LAAMS-001:service-credits",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "bridge_component": "unclaimed_service_credit_offset",
+    "amount_usd": "-24531.25",
+    "basis": "Calculated credits owed less credits claimed",
+    "source_file_id": "DOC-LAAMS-RATE-CARD"
+  }
+]

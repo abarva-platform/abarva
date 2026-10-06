@@ -5,19 +5,17 @@
 // the renderer consumes.
 //
 // Strategy:
-//   1. Mandatory + optional items — best-effort parse of the d09 body
-//      looking for "Mandatory items" / "Required items" sections and
-//      "Optional items" / "Recommended items" sections. Each bullet
-//      becomes one checklist item; the section heading becomes the
-//      "Section" column. Missing-or-sparse d09 falls through to a
-//      baseline checklist keyed off the archetype.
+//   1. Requirement rows — preserve the issued d09 Requirement Response
+//      Matrix when present. Older mandatory/optional bullet sections remain
+//      a compatibility fallback. Missing-or-sparse d09 uses the existing
+//      archetype-aware baseline checklist.
 //   2. Format expectations — defaults are sensible procurement-wide
 //      conventions; tenant-level config can override later.
 //   3. Certifications — defaults cover the standard "we have authority
 //      to bind / we accept the locked assumption set" sign-off block.
 //
-// This binder is intentionally lenient: when d09 isn't authored, the
-// download still produces a useful starter checklist.
+// This binder remains lenient when d09 is not authored, but it never replaces
+// an issued matrix with the generic fallback when matrix rows are available.
 
 import 'server-only';
 
@@ -27,6 +25,14 @@ import type {
   ResponseChecklistItem,
   ResponseChecklistPayload,
 } from '../renderers/response-checklist';
+import {
+  SOURCE_REQUIREMENT_CATEGORIES,
+  SOURCE_REQUIREMENT_LEVELS,
+  SOURCE_RESPONSE_TYPES,
+  type SourceRequirementCategory,
+  type SourceRequirementLevel,
+  type SourceResponseType,
+} from '@/lib/source/vendor-response-matrix';
 
 /** Build the payload from event substrate. */
 export function buildResponseChecklistPayloadFromContext(
@@ -64,7 +70,19 @@ interface ParsedChecklist {
   optional: ResponseChecklistItem[];
 }
 
-function parseChecklistFromRfp(md: string): ParsedChecklist {
+export function parseChecklistFromRfp(md: string): ParsedChecklist {
+  const matrixRows = parseRequirementMatrix(md);
+  if (matrixRows.length > 0) {
+    return {
+      mandatory: matrixRows.filter(
+        (row) => row.requirementLevel !== 'Informational',
+      ),
+      optional: matrixRows.filter(
+        (row) => row.requirementLevel === 'Informational',
+      ),
+    };
+  }
+
   const lines = md.split('\n');
   const mandatory: ResponseChecklistItem[] = [];
   const optional: ResponseChecklistItem[] = [];
@@ -120,6 +138,204 @@ function parseChecklistFromRfp(md: string): ParsedChecklist {
     }
   }
   return { mandatory, optional };
+}
+
+function parseRequirementMatrix(md: string): ResponseChecklistItem[] {
+  const lines = md.split('\n');
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const headers = parseMarkdownTableRow(lines[index] ?? '');
+    if (
+      headers.length < 4 ||
+      !isMarkdownSeparator(lines[index + 1] ?? '')
+    ) {
+      continue;
+    }
+
+    const headerIndex = new Map(
+      headers.map((header, column) => [normalizeHeader(header), column]),
+    );
+    const requirementIdColumn = findColumn(headerIndex, [
+      'requirement id',
+      'item id',
+    ]);
+    const requirementColumn = findColumn(headerIndex, [
+      'requirement statement',
+      'requirement',
+    ]);
+    if (requirementIdColumn === null || requirementColumn === null) continue;
+
+    const categoryColumn = findColumn(headerIndex, [
+      'requirement category',
+      'category',
+    ]);
+    const sectionColumn = findColumn(headerIndex, [
+      'rfp section',
+      'section',
+    ]);
+    const levelColumn = findColumn(headerIndex, [
+      'mandatory scored informational',
+      'requirement level',
+      'level',
+    ]);
+    const responseTypeColumn = findColumn(headerIndex, ['response type']);
+    const evidenceRequiredColumn = findColumn(headerIndex, [
+      'evidence required',
+    ]);
+    const criterionColumn = findColumn(headerIndex, [
+      'evaluation criterion id',
+      'criterion id',
+    ]);
+    const rows: ResponseChecklistItem[] = [];
+
+    for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
+      const sourceLine = lines[rowIndex] ?? '';
+      if (!sourceLine.trim().startsWith('|')) break;
+      const cells = parseMarkdownTableRow(sourceLine);
+      const id = cellAt(cells, requirementIdColumn);
+      const requirement = cellAt(cells, requirementColumn);
+      if (!id || !requirement) continue;
+
+      const section = cellAt(cells, sectionColumn) || 'General';
+      const category = parseCategory(cellAt(cells, categoryColumn), section);
+      const requirementLevel = parseRequirementLevel(
+        cellAt(cells, levelColumn),
+      );
+      rows.push({
+        id,
+        category,
+        section,
+        requirement,
+        requirementLevel,
+        responseType: parseResponseType(
+          cellAt(cells, responseTypeColumn),
+          category,
+        ),
+        evidenceRequired: parseEvidenceRequired(
+          cellAt(cells, evidenceRequiredColumn),
+          requirementLevel,
+        ),
+        evaluationCriterionId: cellAt(cells, criterionColumn) || null,
+      });
+    }
+
+    if (rows.length > 0) return rows;
+  }
+  return [];
+}
+
+function parseMarkdownTableRow(line: string): string[] {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|')) return [];
+  return trimmed
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) =>
+      cell
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/\*\*/g, '')
+        .trim(),
+    );
+}
+
+function isMarkdownSeparator(line: string): boolean {
+  const cells = parseMarkdownTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function normalizeHeader(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[/_-]+/g, ' ')
+    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findColumn(
+  headerIndex: ReadonlyMap<string, number>,
+  names: readonly string[],
+): number | null {
+  for (const name of names) {
+    const column = headerIndex.get(name);
+    if (column !== undefined) return column;
+  }
+  return null;
+}
+
+function cellAt(cells: readonly string[], column: number | null): string {
+  return column === null ? '' : (cells[column] ?? '').trim();
+}
+
+function parseCategory(
+  value: string,
+  section: string,
+): SourceRequirementCategory {
+  const exact = SOURCE_REQUIREMENT_CATEGORIES.find(
+    (category) => category.toLowerCase() === value.toLowerCase(),
+  );
+  if (exact) return exact;
+  return inferCategory(`${value} ${section}`);
+}
+
+function inferCategory(value: string): SourceRequirementCategory {
+  const normalized = value.toLowerCase();
+  if (/price|commercial|cost/.test(normalized)) return 'commercial and pricing';
+  if (/sla|service level|performance/.test(normalized)) {
+    return 'SLA and performance';
+  }
+  if (/staff|location|resource/.test(normalized)) return 'staffing and location';
+  if (/transition|cutover|mobilization/.test(normalized)) return 'transition';
+  if (/security|compliance|privacy/.test(normalized)) {
+    return 'security and compliance';
+  }
+  if (/architecture|tool|technology/.test(normalized)) {
+    return 'architecture and tooling';
+  }
+  if (/automation|productivity/.test(normalized)) {
+    return 'automation and productivity';
+  }
+  if (/governance|reporting/.test(normalized)) return 'governance';
+  if (/innovation|value/.test(normalized)) return 'innovation and value';
+  if (/service management|incident|problem|change/.test(normalized)) {
+    return 'service management';
+  }
+  return 'service scope';
+}
+
+function parseRequirementLevel(value: string): SourceRequirementLevel {
+  const level = SOURCE_REQUIREMENT_LEVELS.find(
+    (candidate) => candidate.toLowerCase() === value.toLowerCase(),
+  );
+  if (level) return level;
+  if (/score/i.test(value)) return 'Scored';
+  if (/inform|optional|recommend/i.test(value)) return 'Informational';
+  return 'Mandatory';
+}
+
+function parseResponseType(
+  value: string,
+  category: SourceRequirementCategory,
+): SourceResponseType {
+  const type = SOURCE_RESPONSE_TYPES.find(
+    (candidate) => candidate.toLowerCase() === value.toLowerCase(),
+  );
+  if (type) return type;
+  if (category === 'commercial and pricing') return 'Pricing';
+  if (category === 'SLA and performance') return 'SLA / KPI';
+  if (category === 'staffing and location') return 'Staffing';
+  if (category === 'transition') return 'Transition';
+  if (category === 'security and compliance') return 'Security';
+  return 'Narrative';
+}
+
+function parseEvidenceRequired(
+  value: string,
+  requirementLevel: SourceRequirementLevel,
+): boolean {
+  if (/^(no|n|false)$/i.test(value.trim())) return false;
+  if (/^(yes|y|true|required)$/i.test(value.trim())) return true;
+  return requirementLevel !== 'Informational';
 }
 
 function shortenSection(heading: string): string {

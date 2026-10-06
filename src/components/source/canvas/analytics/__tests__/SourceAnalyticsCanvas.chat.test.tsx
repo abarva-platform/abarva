@@ -62,7 +62,7 @@ jest.mock("@/components/agent/AskAnythingBar", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
-import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
+import { SAMPLE_RFP_STAGE, SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { StageAnalyticsView } from "../view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
 import {
@@ -180,22 +180,18 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
 
     const needs = screen.getByTestId("source-shell-active-step-needs");
     expect(needs).toHaveTextContent("What Continue needs");
-    expect(needs).toHaveTextContent("Volumetrics file");
-    expect(needs).toHaveTextContent("ITSM / finance baseline");
-    expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(needs).toHaveTextContent("CSV or XLSX");
-    expect(needs).toHaveTextContent("1 required file");
-    expect(needs).toHaveTextContent("Tickets, SLA misses, change orders");
-    expect(needs).toHaveTextContent("Missing");
-    expect(needs).toHaveTextContent(
-      "Download the template, fill one row per tower, then upload.",
-    );
+    expect(needs).toHaveTextContent("L2/L3 ticket history and service volumetrics");
+    expect(needs).toHaveTextContent("Source: ServiceNow ITSM");
+    expect(needs).toHaveTextContent("Needed: Available");
+    expect(needs).toHaveTextContent("Now: Not loaded");
+    expect(needs).toHaveTextContent("Download template");
+    expect(needs).toHaveTextContent("Open Files to upload");
 
     const continueGuidance = screen.getByTestId(
       "source-shell-continue-guidance",
     );
     expect(continueGuidance).toHaveTextContent(
-      "Locked: Download the template, fill one row per tower, then upload.",
+      "Locked: Download the template, fill one row per tower, tier, month, and time window, then upload.",
     );
   });
 
@@ -330,7 +326,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
             title: "RFP Package",
             fileFormat: "docx",
             status: "draft",
-            body: "Recommendation: release the RFP package after approval. Decision requested: approve vendor release. Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
+            body: "Scope of services: managed-services operations. Vendors must provide a proposal response against every requirement. Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
             description:
               "Generated Source deliverable. [compliance-review-flagged]",
           },
@@ -480,8 +476,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(reviewQueue).toHaveTextContent(
       "Clear these artifact actions before opening the gate.",
     );
-    expect(reviewQueue).toHaveTextContent("Review supporting evidence");
-    expect(reviewQueue).toHaveTextContent("Review evidence");
+    expect(reviewQueue).toHaveTextContent("Create a governed draft");
+    expect(
+      screen.getByTestId("source-generate-artifact-d07_ticket_synth"),
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d07_ticket_synth"),
     ).toHaveTextContent("Evidence registered");
@@ -523,6 +521,69 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByTestId("source-artifact-review-queue-row-d09_rfp_pack"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("separates evidence items from blockers and offers replacement for a blocked client final", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent({ currentStageKey: "rfp", currentStageLabel: "RFP" })}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={SAMPLE_RFP_STAGE}
+        artifacts={[
+          {
+            id: "rfp-final",
+            artifactCode: "d09_rfp_pack",
+            stageKey: "rfp",
+            status: "client_final",
+            isClientFinal: true,
+            isCurrentAuthoritative: true,
+            title: "Approved RFP Package",
+            body: "Scope of services: managed-services operations. Vendors must provide a proposal response against every requirement. Our internal sensitivity is $3.5M walk-away.",
+            bodyGenerationMetadata: {
+              qualityGate: {
+                passed: true,
+                overallScore: 9,
+                finalSummary: "Passed consulting-grade review.",
+                unsupportedClaims: [],
+                missingEvidence: [],
+              },
+            },
+          },
+          {
+            id: "rfi-evidence",
+            artifactCode: "d10_rfi_summary",
+            stageKey: "rfp",
+            artifactGroup: "upload",
+            status: "preliminary",
+            title: "RFI Summary",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
+    );
+
+    const queue = screen.getByTestId("source-artifact-review-queue");
+    expect(queue).toHaveTextContent(/3 blockers/);
+    expect(queue).toHaveTextContent(/1 evidence item/);
+    const blockedFinal = screen.getByTestId(
+      "source-artifact-review-queue-row-d09_rfp_pack",
+    );
+    expect(blockedFinal).toHaveTextContent(
+      "Repair the accepted final before relying on it.",
+    );
+    expect(
+      screen.getByTestId("source-accept-client-final-toggle-d09_rfp_pack"),
+    ).toHaveTextContent("Replace Client Final");
+    expect(
+      screen.getByTestId("source-artifact-review-queue-row-d10_rfi_summary"),
+    ).toHaveTextContent("Review supporting evidence");
+    expect(
+      screen.queryByTestId("source-generate-artifact-d10_rfi_summary"),
     ).not.toBeInTheDocument();
   });
 
@@ -594,6 +655,11 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toHaveTextContent("Vendor call recording");
     const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
     expect(fileUseMap).toHaveTextContent("File use map");
+    expect(fileUseMap).toHaveTextContent("2/3 workflow-usable");
+    expect(fileUseMap).toHaveTextContent(
+      "Availability review and workflow usability are separate checks",
+    );
+    expect(fileUseMap).not.toHaveTextContent("2/3 ready");
     expect(fileUseMap).toHaveTextContent("Sponsor call notes");
     expect(fileUseMap).toHaveTextContent("Scope workshop output");
     expect(fileUseMap).toHaveTextContent("Vendor call recording");
@@ -612,6 +678,44 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-shell-file-processing-audio-recording"),
     ).toHaveTextContent("REGISTERED ONLY");
+  });
+
+  it("counts a parsed client-final current-authoritative gate artifact as ready for workflow use", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent({ currentStageKey: "rfp", currentStageLabel: "RFP" })}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={SAMPLE_RFP_STAGE}
+        initialWorkspace="files"
+        artifacts={[
+          {
+            id: "rfp-client-final",
+            stageKey: "rfp",
+            artifactKind: "d09_rfp_pack",
+            artifactGroup: "approval",
+            sourceOrigin: "reuploaded",
+            title: "RFP Package - Client Final",
+            fileFormat: "docx",
+            status: "client_final",
+            isClientFinal: true,
+            isCurrentAuthoritative: true,
+            clientFinalAcceptedAt: "2026-09-21T12:00:00.000Z",
+            parseStatus: "parsed",
+            embeddingStatus: "pending",
+            graphStatus: "pending",
+          },
+        ]}
+      />,
+    );
+
+    const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
+    expect(fileUseMap).toHaveTextContent("1/1 workflow-usable");
+    expect(fileUseMap).toHaveTextContent("RFP Package - Client Final");
+    expect(fileUseMap).toHaveTextContent("Ready for workflow use");
+    expect(fileUseMap).toHaveTextContent(
+      "Usable locally; index before enterprise search or aVa citation.",
+    );
   });
 
   it("posts reviewed client-final files from the Files lifecycle matrix", async () => {
@@ -664,7 +768,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
         ],
       },
     });
-    fireEvent.change(screen.getByLabelText(/optional note/i), {
+    fireEvent.change(screen.getByLabelText(/approval rationale/i), {
       target: { value: "Reviewed by sourcing steering committee." },
     });
     fireEvent.submit(
@@ -845,7 +949,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(readback).toHaveTextContent("volumetrics.csv");
     expect(readback).toHaveTextContent("Typed facts:");
     expect(readback).toHaveTextContent("7 typed facts written");
-    expect(readback).toHaveTextContent("VOLUMETRICS_V1");
+    expect(readback).toHaveTextContent(
+      "written through ITSM ticket history by tier and time window",
+    );
     expect(readback).toHaveTextContent("Issues:");
     expect(readback).toHaveTextContent("None reported by parser.");
     expect(readback).toHaveTextContent("Refresh impact:");
@@ -860,7 +966,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     mockAskAnythingBar.mockClear();
   });
 
-  it("does NOT show the stale sample claim when a LIVE stage view says all tasks are complete", () => {
+  it("does not call a stage complete when task badges are done but required evidence is absent", () => {
     const allDoneLiveView: StageAnalyticsView = {
       ...SAMPLE_SCOPE_STAGE,
       tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
@@ -880,11 +986,9 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
 
     const canvas = screen.getByTestId("source-analytics-canvas");
 
-    // The stale sample claim ("Two steps left on Scope — volumetrics and the
-    // sponsor letter") must NOT appear when the live view says complete.
+    // Task badges alone do not satisfy the newly mapped required evidence.
     expect(canvas.textContent).not.toContain("Two steps left");
-    // And it must say something honest instead.
-    expect(canvas.textContent).toMatch(/complete/i);
+    expect(canvas.textContent).toContain("5 required workflow steps remain");
   });
 
   it("derives an honest 'N of M left' claim from the SAME live task-completion evidence when incomplete", () => {
@@ -908,7 +1012,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     );
 
     const canvas = screen.getByTestId("source-analytics-canvas");
-    expect(canvas.textContent).toContain(`${remaining} steps left`);
+    expect(canvas.textContent).toContain(`${remaining} required workflow steps remain for Scope`);
     expect(canvas.textContent).toContain(`1 / ${total}`);
     expect(canvas.textContent).not.toContain("Two steps left");
   });
@@ -951,12 +1055,8 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
         tenantName="Lakeshore"
       />,
     );
-    const total = SAMPLE_SCOPE_STAGE.tasks.length;
-    const done = SAMPLE_SCOPE_STAGE.tasks.filter(
-      (task) => task.state === "done",
-    ).length;
     expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      `${total - done} steps left`,
+      "6 required workflow steps remain for Scope",
     );
   });
 });

@@ -56,6 +56,27 @@ function readJson(file) {
   return JSON.parse(readFileSync(file, "utf8"));
 }
 
+/**
+ * Read a file this audit makes assertions *about*.
+ *
+ * Do not soften this to `existsSync(file) ? readFileSync(file) : ""`. An absent
+ * subject would become an empty string, the empty string mentions nothing this
+ * audit forbids, and every scan over it would report a pass about a file that is
+ * not there. A missing subject is an unanswerable question, not a clean answer,
+ * so it is stated and the run stops — the same contract `readJson` already has
+ * for the packs.
+ */
+function readDeclaredSubject(file, purpose) {
+  if (!existsSync(file)) {
+    fail(
+      `missing declared subject ${path.relative(ROOT, file)} — ${purpose}. ` +
+        `This audit cannot report on a file that is not present; restore the subject ` +
+        `or retarget the audit at the component that replaced it.`,
+    );
+  }
+  return readFileSync(file, "utf8");
+}
+
 function csvCell(value) {
   const text =
     value === null || value === undefined
@@ -483,16 +504,16 @@ function main() {
     },
     {
       name: "UI component source",
-      text: readFileSync(
+      text: readDeclaredSubject(
         path.join(ROOT, "src/components/home/HomeKnowledgeDesignContractSurface.tsx"),
-        "utf8",
+        "it is scanned for blocked content wording",
       ),
     },
   ];
   const blockedRows = [];
-  const componentSource = readFileSync(
+  const componentSource = readDeclaredSubject(
     path.join(ROOT, "src/components/home/HomeKnowledgeDesignContractSurface.tsx"),
-    "utf8",
+    "it is checked for the required Recharts and typography markers",
   );
   const requiredVisualMarkers = [
     {

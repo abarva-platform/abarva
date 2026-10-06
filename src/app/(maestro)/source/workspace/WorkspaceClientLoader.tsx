@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { WorkspaceClient } from "../preview/workspace/WorkspaceClient";
 import { SourceWorkspaceLoadingShell } from "./SourceWorkspaceLoadingShell";
 import type {
+  SourceWorkspaceImpactLayer,
   SourceWorkspaceImpactMode,
   SourceWorkspacePortfolioData,
   SourceWorkspaceProviderMode,
@@ -15,13 +16,41 @@ interface PortfolioResponse {
   readonly impactMode?: SourceWorkspaceImpactMode;
 }
 
+interface ImpactResponse {
+  readonly impact: SourceWorkspaceImpactLayer;
+  readonly sourceProviderKey: SourceWorkspaceProviderMode;
+  readonly impactMode?: SourceWorkspaceImpactMode;
+}
+
 type ImpactLoadState = "loading" | "ready" | "error";
+const PORTFOLIO_RETRY_ATTEMPTS = 2;
+const PORTFOLIO_RETRY_DELAY_MS = 800;
+/**
+ * A stalled impact read must become a state the operator can act on.
+ *
+ * The evidence badge has three states and only ever had two exits: `fetch`
+ * carries no timeout, so a request that never settles leaves "Evidence depth
+ * updating" on screen indefinitely, with zero spend, depth and action rows
+ * beneath it. A spinner that cannot time out reports a failure as progress.
+ */
+const IMPACT_TIMEOUT_MS = 20_000;
+
+export function initialPortfolioImpactModeForWorkspaceTab(
+  workspaceTab?: string | null,
+): SourceWorkspaceImpactMode {
+  // The first paint is the governed portfolio shell. Impact/action rows are
+  // hydrated after it is visible; the shell already labels that state rather
+  // than pretending the rows are absent.
+  void workspaceTab;
+  return "deferred";
+}
 
 function portfolioApiUrl(input: {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
   readonly sourceProviderKey?: SourceWorkspaceProviderMode | null;
   readonly impactMode?: SourceWorkspaceImpactMode;
+  readonly responseScope?: "portfolio" | "impact";
 }) {
   const params = new URLSearchParams();
   if (input.tenantKey.trim()) params.set("client", input.tenantKey.trim());
@@ -30,21 +59,97 @@ function portfolioApiUrl(input: {
     params.set("sourceProvider", input.sourceProviderKey.trim());
   }
   if (input.impactMode) params.set("impact", input.impactMode);
+  if (input.responseScope) params.set("scope", input.responseScope);
   const query = params.toString();
   return `/api/source/workspace/portfolio${query ? `?${query}` : ""}`;
 }
 
-async function fetchPortfolio(url: string): Promise<PortfolioResponse> {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.portfolio) {
-    throw new Error(
-      payload?.detail ??
-        payload?.error ??
-        `Source workspace returned ${response.status}`,
+async function fetchPortfolio(
+  url: string,
+  remaining = PORTFOLIO_RETRY_ATTEMPTS,
+): Promise<PortfolioResponse> {
+  try {
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" },
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.portfolio) {
+      const error = new Error(
+        payload?.detail ??
+          payload?.error ??
+          `Source workspace returned ${response.status}`,
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+    return payload as PortfolioResponse;
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status?: unknown }).status)
+        : null;
+    const retryable = status == null || status >= 500;
+    if (!retryable || remaining <= 0) throw error;
+    await new Promise((resolve) =>
+      window.setTimeout(resolve, PORTFOLIO_RETRY_DELAY_MS),
     );
+    return fetchPortfolio(url, remaining - 1);
   }
-  return payload as PortfolioResponse;
+}
+
+/**
+ * The impact read is retried and bounded exactly as the portfolio read is.
+ *
+ * It was neither. `fetchPortfolio` gained retry when transient portfolio reads
+ * were failing; the second read on the same page did not, so a transient fault
+ * that the totals recovered from silently took the whole evidence layer down
+ * with it. That asymmetry is the defect: two reads of the same API, one
+ * resilient and one not, on a surface whose headline numbers therefore load
+ * while its evidence does not.
+ */
+async function fetchImpact(
+  url: string,
+  remaining = PORTFOLIO_RETRY_ATTEMPTS,
+): Promise<ImpactResponse> {
+  try {
+    const response = await fetchWithTimeout(url, IMPACT_TIMEOUT_MS);
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.impact) {
+      const error = new Error(
+        payload?.detail ??
+          payload?.error ??
+          `Source workspace impact returned ${response.status}`,
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+    return payload as ImpactResponse;
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status?: unknown }).status)
+        : null;
+    const retryable = status == null || status >= 500;
+    if (!retryable || remaining <= 0) throw error;
+    await new Promise((resolve) =>
+      window.setTimeout(resolve, PORTFOLIO_RETRY_DELAY_MS),
+    );
+    return fetchImpact(url, remaining - 1);
+  }
+}
+
+/** `fetch` with an abort, so a stalled read rejects instead of hanging. */
+async function fetchWithTimeout(url: string, timeoutMs: number) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 export function WorkspaceClientLoader({
@@ -54,6 +159,7 @@ export function WorkspaceClientLoader({
   sourceProviderKey,
   initialContractId,
   initialContractTab,
+  initialWorkspaceTab,
 }: {
   readonly tenantName: string;
   readonly tenantKey: string;
@@ -61,6 +167,7 @@ export function WorkspaceClientLoader({
   readonly sourceProviderKey?: SourceWorkspaceProviderMode | null;
   readonly initialContractId?: string | null;
   readonly initialContractTab?: string | null;
+  readonly initialWorkspaceTab?: string | null;
 }) {
   const [portfolio, setPortfolio] =
     useState<SourceWorkspacePortfolioData | null>(null);
@@ -69,15 +176,19 @@ export function WorkspaceClientLoader({
   const [impactLoadState, setImpactLoadState] =
     useState<ImpactLoadState>("loading");
   const [error, setError] = useState<string | null>(null);
-  const deferredUrl = useMemo(
+  const initialImpactMode = useMemo(
+    () => initialPortfolioImpactModeForWorkspaceTab(initialWorkspaceTab),
+    [initialWorkspaceTab],
+  );
+  const initialPortfolioUrl = useMemo(
     () =>
       portfolioApiUrl({
         tenantKey,
         asOfDateIso,
         sourceProviderKey,
-        impactMode: "deferred",
+        impactMode: initialImpactMode,
       }),
-    [asOfDateIso, sourceProviderKey, tenantKey],
+    [asOfDateIso, initialImpactMode, sourceProviderKey, tenantKey],
   );
   const fullUrl = useMemo(
     () =>
@@ -86,6 +197,7 @@ export function WorkspaceClientLoader({
         asOfDateIso,
         sourceProviderKey,
         impactMode: "full",
+        responseScope: "impact",
       }),
     [asOfDateIso, sourceProviderKey, tenantKey],
   );
@@ -96,35 +208,53 @@ export function WorkspaceClientLoader({
     setError(null);
     setImpactLoadState("loading");
 
-    fetchPortfolio(deferredUrl)
-      .then(async (payload) => {
+    fetchPortfolio(initialPortfolioUrl)
+      .then((payload) => {
         if (cancelled) return;
+        const fullImpactPromise =
+          initialImpactMode === "full"
+            ? Promise.resolve({
+                impact: payload.portfolio.impact,
+                sourceProviderKey: payload.sourceProviderKey,
+              })
+            : fetchImpact(fullUrl);
         setPortfolio(payload.portfolio);
         setResolvedProvider(payload.sourceProviderKey);
 
-        try {
-          const fullPayload = await fetchPortfolio(fullUrl);
-          if (cancelled) return;
-          setPortfolio(fullPayload.portfolio);
-          setResolvedProvider(fullPayload.sourceProviderKey);
-          setImpactLoadState("ready");
-        } catch {
-          if (cancelled) return;
-          setImpactLoadState("error");
-        }
+        fullImpactPromise
+          .then((impactPayload) => {
+            if (cancelled) return;
+            setPortfolio((current) =>
+              current
+                ? {
+                    ...current,
+                    impact: impactPayload.impact,
+                  }
+                : current,
+            );
+            setResolvedProvider(impactPayload.sourceProviderKey);
+            setImpactLoadState("ready");
+          })
+          .catch(() => {
+            if (cancelled) return;
+            setImpactLoadState("error");
+          });
       })
       .catch((err) => {
         if (cancelled) return;
+        // The badge is a separate state machine from `error`, and leaving it
+        // on "loading" here was its third missing exit.
+        setImpactLoadState("error");
         setError(
           err instanceof Error
             ? err.message
-            : "Source workspace data could not be loaded.",
+            : "Source data could not be loaded.",
         );
       });
     return () => {
       cancelled = true;
     };
-  }, [deferredUrl, fullUrl]);
+  }, [fullUrl, initialImpactMode, initialPortfolioUrl]);
 
   if (error) {
     return (
@@ -160,7 +290,7 @@ export function WorkspaceClientLoader({
               textTransform: "uppercase",
             }}
           >
-            Source workspace unavailable
+            Source unavailable
           </p>
           <h1 style={{ margin: 0, fontSize: 24 }}>
             Contract book could not load.
@@ -174,7 +304,7 @@ export function WorkspaceClientLoader({
   }
 
   if (!portfolio) {
-    return <SourceWorkspaceLoadingShell tenantName={tenantName} />;
+    return <SourceWorkspaceLoadingShell contractId={initialContractId} />;
   }
 
   return (
@@ -186,6 +316,7 @@ export function WorkspaceClientLoader({
       impactLoadState={impactLoadState}
       initialContractId={initialContractId}
       initialContractTab={initialContractTab}
+      initialWorkspaceTab={initialWorkspaceTab}
     />
   );
 }

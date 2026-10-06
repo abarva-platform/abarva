@@ -19,7 +19,9 @@ const required = [
   "model_risk_responsible_ai_controls",
   "measurement_owner_cadence",
   "finance_baseline_value_plan",
-  "health|meridian|member.?service|member.?experience|contact.?center|call.?center|agent.?assist",
+  "hasHealthcareDomainSignals",
+  "hasMemberServiceAgentAssistSignals",
+  "hasHealthcareDomainSignals && hasMemberServiceAgentAssistSignals",
 ];
 
 for (const token of required) {

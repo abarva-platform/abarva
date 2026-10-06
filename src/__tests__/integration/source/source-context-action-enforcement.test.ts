@@ -32,13 +32,12 @@ jest.mock("@clerk/nextjs", () => ({
 }));
 
 describe("Source context-used and action-enforcement slices", () => {
-  it("archives /source/events into the governed workspace surface", () => {
+  it("keeps the retired event index free of its archived portfolio surfaces", () => {
     const source = readFileSync(
       join(process.cwd(), "src/app/(maestro)/source/events/page.tsx"),
       "utf8",
     );
 
-    expect(source).toContain('redirect("/source/workspace")');
     expect(source).not.toContain("SourceEventsPortfolio");
     expect(source).not.toContain("SourceEventsAgentDockView");
   });

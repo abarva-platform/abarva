@@ -11,11 +11,18 @@ import {
   getArchetype,
   resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
+import { getProgramById } from "@/lib/programs/queries";
+import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
   ingestCurrentStateDoc,
   isDocumentFamily,
   QuarantinedDocumentError,
 } from "@/lib/programs/current-state-doc-ingest";
+import { structuredCurrentStateUploadDetail } from "@/lib/programs/current-state-routing";
+import {
+  artifactTypeForUpload,
+  saveMoveArtifact,
+} from "@/lib/programs/deliverables/move-artifacts";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -48,6 +55,9 @@ export async function POST(
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase("mutation");
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
     const form = await req.formData();
     const file = form.get("file");
@@ -72,11 +82,10 @@ export async function POST(
       );
     }
     if (!isDocumentFamily(family)) {
-      // Structured families have a canonical store — use the CSV ingest route.
       return Response.json(
         {
           error: "structured_family",
-          detail: `'${familyKey}' is backed by ${family.backing?.table}; use /current-state/ingest (CSV).`,
+          detail: structuredCurrentStateUploadDetail(family),
         },
         { status: 400 },
       );
@@ -114,6 +123,38 @@ export async function POST(
         typeof declaredClassification === "string"
           ? declaredClassification
           : null,
+      persistSourceArtifact: async () => {
+        const artifactPhase = Number.isFinite(phase) ? phase : 1;
+        const saved = await saveMoveArtifact(ctx, {
+          moveId: programId,
+          phase: artifactPhase,
+          artifactType: artifactTypeForUpload({
+            body: buffer,
+            family: "uploaded_evidence",
+            fileName: file.name,
+            phase: artifactPhase,
+          }),
+          artifactFamily: "uploaded_evidence",
+          title: file.name,
+          description: `Current-state evidence for ${family.label}.`,
+          fileName: file.name,
+          fileFormat: file.name.split(".").pop()?.toLowerCase() || "bin",
+          body: buffer,
+          status: "review_required",
+          sourceBasis: "client_upload",
+          confidence: "pending_review",
+          citationReady: false,
+          generatedBy: ctx.email ?? "upload",
+          metadata: {
+            uploadedBy: ctx.email ?? null,
+            mime: mimeType,
+            evidenceFamily: family.key,
+            phase: artifactPhase,
+          },
+          requireBlobStored: true,
+        });
+        return { artifactId: saved.artifactId, blobStored: saved.blobStored };
+      },
     });
 
     return Response.json(result, { status: 200 });

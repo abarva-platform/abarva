@@ -9,7 +9,10 @@ const RAW_ID_RE =
   /\b(?:[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}|[A-Z]{2,12}-\d{3,6})\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const RAW_ID_TEST_RE =
   /\b(?:[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}|[A-Z]{2,12}-\d{3,6})\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
-const PUBLIC_SOURCE_CONTRACT_ID_RE = /\bCTR-\d{3,6}\b/;
+const PUBLIC_SOURCE_CONTRACT_ID_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/g;
+const PUBLIC_SOURCE_CONTRACT_ID_TEST_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/;
 const SNAKE_CASE_RE = /\b[a-z]+(?:_[a-z0-9]+){1,}\b/g;
 const SNAKE_CASE_TEST_RE = /\b[a-z]+(?:_[a-z0-9]+){1,}\b/;
 const INTERNAL_PHRASE_RE =
@@ -66,10 +69,25 @@ const INTERNAL_REPLACEMENTS: Array<[RegExp, string]> = [
 
 const EVIDENCE_BOUNDARY_PARAGRAPH_RE =
   /^\s*Evidence boundary:\s*.+(?:\n(?!\s*$).*)*$/gim;
+const PUBLIC_CONTRACT_ID_TOKEN = "PUBLICCONTRACTIDTOKEN";
 
 function replaceRawIds(value: string, replacement: string): string {
-  return value.replace(RAW_ID_RE, (match) =>
-    PUBLIC_SOURCE_CONTRACT_ID_RE.test(match) ? match : replacement,
+  const ids: string[] = [];
+  const protectedValue = value.replace(
+    PUBLIC_SOURCE_CONTRACT_ID_RE,
+    (match) => {
+      const token = `${PUBLIC_CONTRACT_ID_TOKEN}${ids.length}`;
+      ids.push(match);
+      return token;
+    },
+  );
+  const cleaned = protectedValue.replace(RAW_ID_RE, (match) =>
+    PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : replacement,
+  );
+  return ids.reduce(
+    (text, id, index) =>
+      text.replaceAll(`${PUBLIC_CONTRACT_ID_TOKEN}${index}`, id),
+    cleaned,
   );
 }
 
@@ -86,7 +104,10 @@ function dedupeEvidenceBoundaryParagraphs(text: string): string {
     .trim();
 }
 
-export function businessLabel(value: unknown, fallback = "Business context"): string {
+export function businessLabel(
+  value: unknown,
+  fallback = "Business context",
+): string {
   const raw = String(value ?? "").trim();
   if (!raw) return fallback;
   const known = BUSINESS_LABELS[raw.toLowerCase()];
@@ -147,7 +168,11 @@ export function sourceClassDisplayLabel(
 
 export function shapeCitationLabel(citation: AnswerCitation): string {
   const shaped = shapePublicText(citation.label, "");
-  if (!shaped || /^source$/i.test(shaped) || /^supporting source$/i.test(shaped)) {
+  if (
+    !shaped ||
+    /^source$/i.test(shaped) ||
+    /^supporting source$/i.test(shaped)
+  ) {
     return sourceClassDisplayLabel(citation.sourceClass) || "Tenant evidence";
   }
   const words = shaped.split(/\s+/).filter(Boolean);
@@ -171,24 +196,32 @@ export function compactCitations<T extends AnswerCitation>(
     compact.push({
       ...citation,
       label,
-      excerpt: citation.excerpt ? shapePublicText(citation.excerpt, "") : citation.excerpt,
+      excerpt: citation.excerpt
+        ? shapePublicText(citation.excerpt, "")
+        : citation.excerpt,
     });
     if (compact.length >= max) break;
   }
   return compact;
 }
 
-export function shouldDropZeroCoverageRow(row: Record<string, unknown>): boolean {
+export function shouldDropZeroCoverageRow(
+  row: Record<string, unknown>,
+): boolean {
   const values = Object.entries(row);
   const hasCoverageKey = values.some(([key]) =>
     /record|count|source|citation|relationship|fact|gap/i.test(key),
   );
   if (!hasCoverageKey) return false;
   const numericValues = values
-    .filter(([key]) => /record|count|source|citation|relationship|fact/i.test(key))
+    .filter(([key]) =>
+      /record|count|source|citation|relationship|fact/i.test(key),
+    )
     .map(([, value]) => Number(value))
     .filter((value) => Number.isFinite(value));
-  return numericValues.length > 0 && numericValues.every((value) => value === 0);
+  return (
+    numericValues.length > 0 && numericValues.every((value) => value === 0)
+  );
 }
 
 function shapeTable<T extends AnswerTable>(table: T): T {
@@ -215,7 +248,9 @@ function shapeTable<T extends AnswerTable>(table: T): T {
 }
 
 function shapeGraph<T extends AnswerGraph>(graph: T): T {
-  const idMap = new Map(graph.nodes.map((node, index) => [node.id, `node-${index + 1}`]));
+  const idMap = new Map(
+    graph.nodes.map((node, index) => [node.id, `node-${index + 1}`]),
+  );
   return {
     ...graph,
     title: shapePublicText(graph.title, "Relationship graph"),
@@ -229,7 +264,9 @@ function shapeGraph<T extends AnswerGraph>(graph: T): T {
       ...edge,
       from: idMap.get(edge.from) ?? "node-1",
       to: idMap.get(edge.to) ?? "node-1",
-      label: edge.label ? shapePublicText(edge.label, "connects to") : edge.label,
+      label: edge.label
+        ? shapePublicText(edge.label, "connects to")
+        : edge.label,
       kind: edge.kind ? businessLabel(edge.kind) : edge.kind,
     })),
   };
@@ -249,7 +286,9 @@ export function shapeAvaAnswerPacket(answer: AvaAnswerPacket): AvaAnswerPacket {
     if (artifact.artifact === "graph") return shapeGraph(artifact);
     return {
       ...artifact,
-      title: artifact.title ? shapePublicText(artifact.title, "Answer chart") : artifact.title,
+      title: artifact.title
+        ? shapePublicText(artifact.title, "Answer chart")
+        : artifact.title,
     };
   });
   const citations = compactCitations(answer.citations);
@@ -290,7 +329,9 @@ export function shapeAvaAnswerPacket(answer: AvaAnswerPacket): AvaAnswerPacket {
     nextSteps: answer.nextSteps.map((step) => ({
       ...step,
       label: shapePublicText(step.label, "Next step"),
-      rationale: step.rationale ? shapePublicText(step.rationale, "") : step.rationale,
+      rationale: step.rationale
+        ? shapePublicText(step.rationale, "")
+        : step.rationale,
     })),
   };
 }

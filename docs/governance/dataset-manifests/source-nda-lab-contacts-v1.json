@@ -1,0 +1,25 @@
+{
+  "dataset_id": "source-nda-lab-contacts-v1",
+  "title": "Synthetic Source NDA test-signer contacts V1",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Product Engineering",
+  "source_basis": "public-safe synthetic test-signer declarations for the lab NDA workflow; no real supplier contact identities are asserted",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 4,
+  "approved_by": "ANAND SUNDARAM",
+  "approved_at": "2026-10-04",
+  "load_approval": {
+    "approved_by": "ANAND SUNDARAM",
+    "approved_at": "2026-10-04",
+    "assessment_id": "SOURCE-NDA-LAB-CONTACTS-20261004",
+    "source_set_hash": "269f6b7c6224737a9007d51032c77d1ea1bb115331ae4b8db65387266b87b06a",
+    "release_record": "docs/releases/records/2026-10-04-source-nda-lab-contact-intake.md"
+  },
+  "notes": "Only four explicitly declared fictional lab contacts with reserved .example addresses are approved for this exact source hash. This load approval grants no event-specific contact approval, supplier outreach, NDA execution, signature or award. The DocuSign demo adapter must route actual messages only to the separately approved internal test inbox. Never load for another tenant or use as a real client contact register."
+}

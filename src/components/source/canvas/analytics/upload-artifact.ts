@@ -38,6 +38,8 @@ export interface UploadArtifactArgs {
   file: File;
   /** Canonical stage key, so the artifact is scoped to the right stage. */
   stageKey?: string;
+  /** Exact evidence requirement to bind the upload to in the canvas substrate. */
+  evidenceRequirementId?: string;
   /**
    * The canvas artifact code this upload lands on (optional). When provided the
    * route also lands the extracted text on that artifact's body + satisfies its
@@ -99,6 +101,7 @@ export async function uploadSourceCanvasArtifact(
   const formData = new FormData();
   formData.append('file', args.file, args.file.name);
   if (args.stageKey) formData.append('stageKey', args.stageKey);
+  if (args.evidenceRequirementId) formData.append('evidenceRequirementId', args.evidenceRequirementId);
   if (args.artifactCode) formData.append('artifactCode', args.artifactCode);
   const classification = args.classification ?? 'Confidential';
   formData.append('dataClassification', classification);

@@ -1,0 +1,530 @@
+{
+ "item": "T-556",
+ "title": "Fourth triage draw of twenty untriaged unrun suites, highest governed-risk band first",
+ "recordedAt": "2026-09-22T10:36:24.237Z",
+ "base": "d17cd0c83b34b879487a17a12ea27eda8435986d",
+ "scope": {
+  "drawnFrom": "governedRiskFiles from scripts/quality/test-ci-coverage-census.mjs, rows with untriaged true and covered false, band before score before path",
+  "drawSize": 20,
+  "poolUntriagedAndUncovered": 71,
+  "poolAfterExcludingPriorRecords": 62,
+  "remainingAfterThisDraw": 42,
+  "bandsInThisDraw": {
+   "critical": 0,
+   "high": 20
+  },
+  "whyNoCriticalRows": "T-550 drew the critical band to exhaustion. Every row left in the pool at this base is band high, score 10, signal tenant_scoped_read, so the draw is decided by path order alone and is reproducible from the census without judgement.",
+  "disjointFrom": [
+   "docs/architecture/t472-stale-suite-triage.json",
+   "docs/architecture/t509-stale-suite-triage.json",
+   "docs/architecture/t550-stale-suite-triage.json"
+  ],
+  "disjointnessIsAsserted": "src/__tests__/behaviors/t556-stale-suite-triage-record.test.ts reads all three sibling records and fails if any path appears in two. The earlier records stated disjointness in prose and nothing checked it."
+ },
+ "verdictVocabulary": [
+  "wire_into_ci",
+  "rewrite_as_behavior",
+  "update_with_reason_recorded",
+  "repair"
+ ],
+ "jestEvidence": {
+  "how": "Each of the twenty was executed on its own with npx jest --runTestsByPath <path> --no-coverage --ci --json, and every count in suites[] is read out of that run's JSON. No count in this file was typed by hand.",
+  "executedAt": "2026-09-22T10:30:37Z to 2026-09-22T10:30:54Z, before any verdict below was written",
+  "totals": {
+   "suitesExecuted": 20,
+   "green": 18,
+   "red": 2,
+   "testsRun": 305,
+   "testsPassed": 301,
+   "testsFailed": 4,
+   "testsPending": 0
+  }
+ },
+ "censusFieldsNotTrusted": {
+  "finding": "T-551's correction has landed: the census no longer assigns run, green and covered the same value, so it can no longer publish a file as green without executing it. It still does not answer the question this record asks. Every green here comes from an execution; the census was used only to enumerate the pool and rank it.",
+  "checkedOnThisBase": "154 governedRiskFiles rows in exactly two shapes and no others: 83 covered rows report run and green as the literal string 'unknown', and 71 uncovered rows report run false with green 'unknown'. Not one row claims green. The 71 are this draw's pool."
+ },
+ "sourceTextDistinction": {
+  "why": "T-550's rule is that a source-text scanner may never be wired into CI, because a control whose evidence is a string can be satisfied by a comment containing that string. That rule is right for a suite that reads bytes as a stand-in for behaviour it could have executed. It is wrong for a suite whose subject IS the text — a declared floor on what literals may appear in the control plane has no runtime behaviour to execute instead.",
+  "howItIsKeptHonest": "The distinction is a written judgement, not a measurement, so the guard cannot verify it is true. What the guard does instead is make it expensive: textIsTheSubject requires sourceTextScanner true, requires a reason of real length, and may never coexist with a wire_into_ci verdict. One row in this draw uses it."
+ },
+ "counts": {
+  "wire_into_ci": 15,
+  "rewrite_as_behavior": 3,
+  "update_with_reason_recorded": 1,
+  "repair": 1
+ },
+ "forbiddenEdits": "No file under test was edited, wired, deleted, repaired or made green by this item. The guard suite fails if any path in suites[] appears in claimedWriteFiles.",
+ "followOnItems": [
+  "T-557",
+  "T-558",
+  "T-559",
+  "T-560"
+ ],
+ "claimedWriteFiles": [
+  "docs/architecture/t556-stale-suite-triage.json",
+  "src/__tests__/behaviors/t556-stale-suite-triage-record.test.ts",
+  "docs/releases/records/2026-09-22-t556-stale-suite-triage.md",
+  "scripts/exec/source-stage-map.json"
+ ],
+ "suites": [
+  {
+   "path": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 10,
+   "failedTests": 0,
+   "passedTests": 10,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Every case renders or imports the thing it judges: intake identity is proved by making the canonical resolver and the legacy active-client row disagree and checking which reaches the surface, the retired portfolio route by the redirect it performs, and the loading shell by mounting both of its branches. The file's own header records that it was converted out of a readFileSync form, and the only remaining occurrence of that word in it is in that header. Nothing runs it."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 14,
+   "failedTests": 0,
+   "passedTests": 14,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Imports the real exports and calls them. The cases separate an authoring directive from a decision consequence and pin the words a review status is rendered in, including the refusal branches — it refuses rather than returning an empty sentence, and refuses rather than inventing a status. That is executed behaviour on a governed surface and no workflow reaches it."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 5,
+   "failedTests": 0,
+   "passedTests": 5,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Pure functions under test, imported and called. It holds the collision it was written for — two unrelated figures rendering as the same string to one decimal — as a live case rather than a comment, plus the refusal branch that declines to render an absent figure as a zero. Fast, deterministic, unrun."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 3,
+   "failedTests": 0,
+   "passedTests": 3,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Mounts the command KPI strip with react-testing-library and asserts what a reader sees: that a refusal phrase is never set into a sentence built for a number, and that an absent credit is not rendered as a measured zero. Both are the missing-is-not-zero failure the governed UI render-gate exists to stop, proved by rendering."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/sourceFreshness.test.tsx",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 7,
+   "failedTests": 0,
+   "passedTests": 7,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": true,
+   "verdict": "rewrite_as_behavior",
+   "ownerItem": "T-558",
+   "rationale": "Reads three source files at module scope and asserts substrings of them. The behaviour it describes is real and worth a test — freshness read from a recorded completion rather than pattern-matched out of an identifier — but nothing here executes it, so a comment carrying the same substring would satisfy every case. Wiring it would buy a green check and no protection."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/VendorCanvas.cockpit.test.tsx",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 1,
+   "failedTests": 0,
+   "passedTests": 1,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Mounts the vendor canvas and asserts that only populated cross-contract facts appear in the summary. One case, but it is a rendered one on the missing-versus-zero boundary, and it runs in a fraction of a second."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 10,
+   "failedTests": 0,
+   "passedTests": 10,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Drives the real view-model builder and the portfolio adapter. It covers deep-link initialisation, the refusal to substitute the first contract when a deep link names a missing one, and filter/grouping interaction across dimensions. Executed behaviour throughout; no workflow names it."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 7,
+   "failedTests": 0,
+   "passedTests": 7,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": true,
+   "verdict": "rewrite_as_behavior",
+   "ownerItem": "T-558",
+   "rationale": "Reads five source files at module scope — a client component, a view-model builder, a lens, a stylesheet and a retriever — and every assertion is a toContain against those strings. The contract it names is a real one, including how citations are labelled and what claim and refusal contract the agent is handed, but none of it is executed here. This is the exact shape the control audit found: a gate that proves a control exists by finding its name in a file."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 3,
+   "failedTests": 0,
+   "passedTests": 3,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": true,
+   "verdict": "rewrite_as_behavior",
+   "ownerItem": "T-558",
+   "rationale": "Reads a client component and two API route files and asserts substrings of each. It is a tenant-routing contract — which client key is carried into a contract-detail fetch — which makes it worth executing rather than matching. One case already hedges against the weakness by asserting a regex over the call's arguments instead of one formatting of the line, which is a fix for brittleness, not for the fact that nothing runs."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 10,
+   "failedTests": 0,
+   "passedTests": 10,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Mounts the real workspace client against flagged projection rows and drives it: it opens the clicked contract's own detail rather than a preloaded default, keeps selected-contract optimisation scoped to that contract, and distinguishes unsized actions from zero-valued ones. One of its cases reads a source file instead of rendering, named in partialSourceTextCaseNames and handed to the rewrite item; the rest execute.",
+   "partialSourceTextCases": 1,
+   "partialSourceTextCaseNames": [
+    "renders the executive shell without an extra lazy gate for faster first paint"
+   ]
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 4,
+   "failedTests": 0,
+   "passedTests": 4,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Renders the evidence documents component and the coverage-lane helper. The cases are about not zeroing a loaded lane when a detail payload is absent and about using populated detail rows during the hydration transition — stale-zero defects that only show up when something is actually rendered in that intermediate state."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 54,
+   "failedTests": 0,
+   "passedTests": 54,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "The largest suite in the draw and overwhelmingly an executing one: it imports around thirty real exports and calls them, and its refusal cases are the valuable half — it refuses to characterise a contract when no purpose is reviewed, refuses an extraction that is really concatenated clause enums, and keeps a discount ask gated when no same-tenant comparator is loaded. A minority of its cases read component and stylesheet text instead; those are named individually and handed to the rewrite item rather than left to be discovered after wiring.",
+   "partialSourceTextCases": 9,
+   "partialSourceTextCaseNames": [
+    "keeps Source charts on semantic palette tokens instead of hard-black slabs",
+    "keeps Source navigation singular and avoids duplicate toolbar actions",
+    "renders commercial posture on the product-shell Contract 360 page",
+    "keeps Contract 360 Optimize table-first",
+    "keeps the contract graph tab as a real lineage visual with drill-down subtabs",
+    "keeps the Evidence page visual before the row-detail tables",
+    "does not print raw vendor names in executive-facing labels",
+    "keeps portfolio-level facts off a single-contract view",
+    "gives full-width command panels a real grid span"
+   ]
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 2,
+   "failedTests": 0,
+   "passedTests": 2,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Calls the canonical URL builder directly and asserts the URL it returns, including that a selected contract and its tab survive a refresh and that portfolio tabs resolve onto one canonical route. Small, executed, and about a defect a reader experiences as the layout changing by itself."
+  },
+  {
+   "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 6,
+   "failedTests": 0,
+   "passedTests": 6,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Executes the state builder and the tab-parameter helper and closes the round trip in both directions, including the fallback that keeps a contract rather than dropping it when its tab is unrepresentable. Reading a URL into state already worked; these cover the direction that did not, and nothing runs them."
+  },
+  {
+   "path": "src/lib/__tests__/active-client.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": false,
+   "totalTests": 7,
+   "failedTests": 3,
+   "passedTests": 4,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "update_with_reason_recorded",
+   "ownerItem": "T-559",
+   "rationale": "Three of its cases fail, and the product is right in all three. Each asserts a tenant display name that the deliberate generic-display-name change in #4276 (1886b8d24, 2026-07-01) replaced; the returned row is otherwise identical field for field, and the diff is one string. The remaining four cases pass, including the persona-pinning and tenant-lookup-resilience behaviour the file exists for. This is expectation drift behind an intended product change, so the expectations are updated to the current canonical values with that change named — not loosened, and not silenced. It has been red since that date and nothing noticed, because no workflow runs it."
+  },
+  {
+   "path": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": false,
+   "totalTests": 1,
+   "failedTests": 1,
+   "passedTests": 0,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": true,
+   "verdict": "repair",
+   "ownerItem": "T-560",
+   "rationale": "It fails, and the failure is a real finding rather than drift. The file declares a hard floor — zero hardcoded references for the one canonical tenant whose control-plane debt was at zero — explicitly chosen as a floor rather than a ratchet. That floor is now breached in four control-plane files under src/lib with five occurrences between them: src/lib/programs/types.ui.ts (2), src/lib/intelligence/ask/tenant-identity-pin.ts (1), and src/lib/intelligence/ask/tenant-safety-policy.ts (2, across two terms). The paths are named here; the strings are not, because this record is published to a public repository. No workflow runs this suite, so the floor has been decorative for as long as the breach has existed. The repair is product code and the choice of destination is a decision, so it goes to its own item rather than being taken here.",
+   "textIsTheSubject": true,
+   "textIsTheSubjectReason": "This suite walks src/lib, src/app and src/components and asserts that a declared zero-hit floor for one canonical tenant's hardcoded display strings holds across the tree. Its subject is the source text itself — there is no behaviour to execute instead, because the property being policed is the absence of literals in code, not anything the program does at runtime. That is categorically different from a suite that reads a file and matches a string as a stand-in for behaviour it could have executed, and the record distinguishes the two rather than mislabelling this one to escape the wiring rule. It is still not wired into CI by this verdict."
+  },
+  {
+   "path": "src/lib/__tests__/supabase-server.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 10,
+   "failedTests": 0,
+   "passedTests": 10,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "The highest-value row in the draw. It executes the tenant database connection resolver and proves it fails closed — no shared-database fallback when a tenant-scoped secret is missing, shared fallback only when explicitly enabled — plus credential masking in operator reports and the ordering of database URL candidates. A tenant-isolation fail-closed guarantee that no CI job runs is a guarantee nothing defends."
+  },
+  {
+   "path": "src/lib/agent/__tests__/admin-editorial-tenant-isolation.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 30,
+   "failedTests": 0,
+   "passedTests": 30,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Executes the editorial alias surface across tenants and checks for cross-tenant leakage. Its header records that it was repointed rather than deleted when it was found to duplicate a sibling, and that it derives its tenants from code rather than a hardcoded display name — which is the shape the tenancy rules ask for. Green over thirty cases and unrun."
+  },
+  {
+   "path": "src/lib/agent/__tests__/agent-mission-derived.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 12,
+   "failedTests": 0,
+   "passedTests": 12,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Deterministic, pure tests of the single-instance lookups used by two detail surfaces: no network, no model calls, no randomness, same inputs to same outputs. There is no argument against running something with these properties on every pull request other than that nobody wired it."
+  },
+  {
+   "path": "src/lib/agent/__tests__/artifacts.test.ts",
+   "draw": "T-556",
+   "governedRiskBand": "high",
+   "governedRiskScore": 10,
+   "governedRiskSignals": [
+    "tenant_scoped_read"
+   ],
+   "loaded": true,
+   "collected": true,
+   "run": true,
+   "green": true,
+   "totalTests": 109,
+   "failedTests": 0,
+   "passedTests": 109,
+   "pendingTests": 0,
+   "todoTests": 0,
+   "sourceTextScanner": false,
+   "verdict": "wire_into_ci",
+   "ownerItem": "T-557",
+   "rationale": "Locks the streaming artifact sentinel parser: well-formed artifacts extracted and stripped from visible text, sentinels tolerated when split across stream chunks, malformed input not silently swallowed. It is the boundary between what a model emits and what a reader sees, it is the largest case count in the draw, and it runs in about a second."
+  }
+ ]
+}

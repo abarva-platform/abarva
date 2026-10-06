@@ -18,8 +18,6 @@ const SHELL_SURFACE_PREFIXES = [
   "/knowledge-preview",
 ] as const;
 
-const IMMERSIVE_PRODUCT_PATHS = [] as const;
-
 function isShellNativePath(pathname: string): boolean {
   return (
     SHELL_SURFACE_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
@@ -27,28 +25,8 @@ function isShellNativePath(pathname: string): boolean {
   );
 }
 
-function isImmersiveProductPath(pathname: string): boolean {
-  return IMMERSIVE_PRODUCT_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
-}
-
 export function MaestroChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
-
-  if (isImmersiveProductPath(pathname)) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-        }}
-      >
-        {children}
-      </div>
-    );
-  }
 
   // Shell-native surfaces: mount NexusTopNav HERE, once, as part of this
   // persisted layout subtree, instead of inside each page's own AppShell.

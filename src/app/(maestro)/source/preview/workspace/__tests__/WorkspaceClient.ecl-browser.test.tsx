@@ -5,8 +5,19 @@
 jest.mock("server-only", () => ({}));
 
 jest.mock("@/components/agent/AgentDock", () => ({
-  AgentDock: ({ workspace }: { workspace: ReactNode }) => (
-    <div data-testid="source-agent-dock">{workspace}</div>
+  AgentDock: ({
+    disableStoredMode,
+    workspace,
+  }: {
+    disableStoredMode?: boolean;
+    workspace: ReactNode;
+  }) => (
+    <div
+      data-disable-stored-mode={String(Boolean(disableStoredMode))}
+      data-testid="source-agent-dock"
+    >
+      {workspace}
+    </div>
   ),
 }));
 
@@ -106,6 +117,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listSourceContractClaimCards: jest.fn(() => Promise.resolve([])),
   listSourceContractEvidenceCoverage: jest.fn(() => Promise.resolve([])),
   listSourcePageStoryline: jest.fn(() => Promise.resolve([])),
+  listSourceLoadRunCompletions: jest.fn(() => Promise.resolve([])),
   listSourceVendorPositions: jest.fn(() => Promise.resolve([])),
   listVendorContractPortfolio: jest.fn(),
 }));
@@ -117,10 +129,12 @@ import path from "node:path";
 import type { ReactNode } from "react";
 
 import { WorkspaceClient } from "../WorkspaceClient";
+import { expectCleanComposition } from "../test-support/compositionInvariants";
 import {
   loadSourceWorkspacePortfolio,
   type SourceWorkspacePortfolioData,
 } from "../live/portfolioAdapter";
+import type { SourceContract360Row } from "@/lib/source/data-model/types";
 
 const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
 const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
@@ -163,21 +177,14 @@ function expectMeasuredRechartsCard(card: HTMLElement) {
   expect(wrapper).toBeTruthy();
   expect(svg).toBeTruthy();
   expect(svg?.getAttribute("width")).toBe("620");
-  expect(Number(svg?.querySelectorAll("path, rect, circle").length)).toBeGreaterThan(
-    0,
-  );
+  expect(
+    Number(svg?.querySelectorAll("path, rect, circle").length),
+  ).toBeGreaterThan(0);
 }
 
-function expectChartEmptyState(card: HTMLElement, text: RegExp) {
-  expect(card.getAttribute("data-chart-empty")).toBe("true");
-  expect(card.textContent).toMatch(text);
-  expect(card.querySelector(".sw-v2-chart-empty")).toBeTruthy();
-  expect(card.querySelector(".recharts-wrapper")).toBeNull();
-}
-
-async function readWorkspaceSourceFiles(dir = WORKSPACE_ROUTE_DIR): Promise<
-  Array<{ file: string; text: string }>
-> {
+async function readWorkspaceSourceFiles(
+  dir = WORKSPACE_ROUTE_DIR,
+): Promise<Array<{ file: string; text: string }>> {
   const entries = await readdir(dir, { withFileTypes: true });
   const files = await Promise.all(
     entries.flatMap((entry) => {
@@ -331,9 +338,7 @@ describe("Source workspace ECL browser-surface proof", () => {
       configurable: true,
       value: scrollToMock,
     });
-    global.fetch = jest.fn(
-      () => new Promise<Response>(() => undefined),
-    );
+    global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
     await writeEclProjectionFixture(dir);
   });
 
@@ -341,6 +346,35 @@ describe("Source workspace ECL browser-surface proof", () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = ORIGINAL_PROVIDER;
     process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR = ORIGINAL_PROJECTION_DIR;
     await rm(dir, { force: true, recursive: true });
+  });
+
+  it("renders the populated dataset version as a separate header control", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "synthetic-organization",
+      "2027-06-30T00:00:00Z",
+    );
+    const datasetVersion = "source-build-2026.09.21";
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          workspaceDiagnostics: {
+            ...portfolio.workspaceDiagnostics,
+            datasetVersion,
+          },
+        }}
+        tenantName="Synthetic Organization"
+        sourceClientKey="synthetic-organization"
+      />,
+    );
+
+    expect(screen.getByLabelText("Dataset build").textContent).toContain(
+      datasetVersion,
+    );
+    expect(
+      screen.getByLabelText("Source scenario date").textContent,
+    ).toContain("30 Jun 2027");
   });
 
   it("renders the real workspace component from flagged ECL projection rows", async () => {
@@ -382,66 +416,78 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByLabelText("Source workspace sidebar")).toBeNull();
     expect(screen.queryByText("Nexus Source")).toBeNull();
     expect(
-      screen.getByRole("heading", { name: "Source 360", level: 1 }),
+      screen.queryByRole("navigation", {
+        name: "Main application navigation",
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("heading", {
+        name: "Meridian Health contract actions, governed by evidence.",
+        level: 1,
+      }),
     ).toBeTruthy();
     expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
-    expect(screen.getByLabelText("Workspace action toolbar")).toBeTruthy();
+    expect(screen.queryByLabelText("Workspace action toolbar")).toBeNull();
     expect(
       screen.queryByLabelText("Persistent Source workspace toolbar"),
     ).toBeNull();
-    expect(screen.getByText("/ Verdict")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-action-toolbar-buttons")).toBeTruthy();
-    expect(container.querySelectorAll(".sw-v2-action-button")).toHaveLength(2);
+    expect(screen.getByText("/ Command")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-action-toolbar-buttons")).toBeNull();
+    expect(container.querySelectorAll(".sw-v2-action-button")).toHaveLength(0);
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
       "All loaded contracts",
     );
-    expect(screen.getByLabelText("Data as of").textContent).toContain(
+    expect(screen.getByLabelText("Source scenario date").textContent).toContain(
       "30 Jun 2027",
     );
-    expect(screen.getAllByRole("button", { name: "Vendors" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Command" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Contracts" })).toHaveLength(
       1,
     );
-    expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(
-      1,
-    );
-    expect(screen.getByLabelText("Portfolio facts")).toBeTruthy();
-    expect(screen.getByText("Auto-renew notice passed")).toBeTruthy();
-    expect(screen.getAllByText("$10.7M").length).toBeGreaterThan(0);
-    expect(screen.getByText("Still cancellable")).toBeTruthy();
-    expect(screen.getAllByText("Stale renewal dates").length).toBeGreaterThan(
-      0,
-    );
-    expect(screen.getAllByText("1 excluded").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Levers" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Coverage" })).toHaveLength(1);
+    expect(screen.getByLabelText("Source command KPIs")).toBeTruthy();
+    expect(screen.getByText("Contracted value")).toBeTruthy();
+    expect(screen.getByText("Unclaimed credit")).toBeTruthy();
+    expect(screen.getByText("Decision posture")).toBeTruthy();
     expect(screen.queryByText("Decision window")).toBeNull();
     expect(
       screen.getAllByText("Helix Shared Services Group").length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText("Executive position")).toBeTruthy();
-    expect(screen.getByText("Finance confirmation remains separate")).toBeTruthy();
+    expect(screen.getByText("This week's read")).toBeTruthy();
+    expect(screen.getByText("Decision queue")).toBeTruthy();
     expect(
       screen.getByText(
         "No quantified opportunity is loaded in the current deterministic slice.",
       ),
     ).toBeTruthy();
-    expect(screen.getByText("Vendor concentration")).toBeTruthy();
-    expect(screen.getByText("Evidence posture")).toBeTruthy();
+    expect(screen.getByText("Where the money sits")).toBeTruthy();
+    expect(screen.getByText("Evidence lanes")).toBeTruthy();
+    expect(screen.getByText("What stays out")).toBeTruthy();
     expect(screen.getByLabelText("Source 360 canvas")).toBeTruthy();
-    expect(screen.getByLabelText("Claim contract")).toBeTruthy();
-    expect(screen.getByText("What this tab lets you say")).toBeTruthy();
-    expect(screen.getByText("Blocked without more evidence")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-verdict-grid")).toBeTruthy();
+    expect(screen.queryByLabelText("Claim contract")).toBeNull();
+    expect(screen.queryByText("What this tab lets you say")).toBeNull();
+    expect(screen.queryByText("Blocked without more evidence")).toBeNull();
+    expect(container.querySelector(".sw-v2-command-grid")).toBeTruthy();
     expect(container.querySelector(".sw-v2-content-canvas")).toBeTruthy();
-    expect(container.querySelectorAll(".sw-v2-claim-card")).toHaveLength(2);
-    expect(container.querySelector(".sw-v2-verdict-position")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-verdict-action")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-verdict-evidence")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-compact-decisions")).toBeTruthy();
-    expect(container.querySelectorAll(".sw-v2-compact-facts").length).toBeGreaterThan(
-      1,
-    );
-    expect(screen.getByText("Unsupported dashboard claims")).toBeTruthy();
-    expect(screen.getByText("Hidden")).toBeTruthy();
+    expect(container.querySelectorAll(".sw-v2-claim-card")).toHaveLength(0);
+    expect(container.querySelector(".sw-v2-command-read")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-command-queue")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-command-evidence")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-command-queue")).toBeTruthy();
+    expect(
+      container.querySelectorAll(".sw-v2-command-lanes .sw-v2-fact").length,
+    ).toBeGreaterThan(1);
+    expect(
+      screen.getByText("Thin records do not get rich narrative"),
+    ).toBeTruthy();
+    // The rule is the same; it is now stated to the reader rather than to
+    // whoever builds the page. "Contract pages should show…" was an authoring
+    // instruction rendered at the foot of the executive view.
+    expect(
+      screen.getByText(/names the input it needs rather than showing/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Contract pages should show/i)).toBeNull();
     expect(screen.queryByText("Contract register")).toBeNull();
     expect(screen.queryByText("Application scope")).toBeNull();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
@@ -458,7 +504,18 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/Risk score/i)).toBeNull();
     expect(screen.queryByText(/Spend by category/i)).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
+    const contractsTab = screen.getAllByRole("button", {
+      name: "Contracts",
+    })[0] as HTMLButtonElement;
+    expect(
+      screen
+        .getByTestId("source-agent-dock")
+        .getAttribute("data-disable-stored-mode"),
+    ).toBe("true");
+    expect(contractsTab.getAttribute("href")).toBeNull();
+    expect(contractsTab.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(contractsTab);
 
     await waitFor(() => expect(scrollToMock).toHaveBeenCalled());
     expect(
@@ -479,72 +536,137 @@ describe("Source workspace ECL browser-surface proof", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: "Scope" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Economics" })).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(
-      2,
-    );
+    expect(
+      screen.getByRole("navigation", { name: "Contract command toolbar" }),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText("Workspace action toolbar")).toBeNull();
+    expect(
+      screen.queryByRole("navigation", {
+        name: "Source workspace navigation",
+      }),
+    ).toBeNull();
+    expect(screen.queryByLabelText("Claim contract")).toBeNull();
+    expect(screen.queryByText("What this tab lets you say")).toBeNull();
+    expect(screen.queryByText("Blocked without more evidence")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Back to contracts" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Scope" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Economics" })).toBeTruthy();
+    expect(screen.getAllByRole("tab", { name: "Optimize" })).toHaveLength(1);
     expect(
       screen.queryByLabelText("Persistent Source workspace toolbar"),
     ).toBeNull();
     expect(screen.getByText("/ MER-CTR-SSO-BPO-001")).toBeTruthy();
+    [
+      "Story",
+      "Scope",
+      "Economics",
+      "Performance",
+      "Relationship",
+      "Evidence",
+      "Optimize",
+    ].forEach((tabName) => {
+      expect(
+        screen.getAllByRole("tab", { name: tabName }).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(
+      screen.queryByRole("button", { name: "Spend and Usage" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Risks and Compliance" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Savings and Value" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Documents" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "AI Insights" })).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[1]);
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Story" })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
-
-    expect(screen.getByText("Contract 360 / Scope")).toBeTruthy();
-    expect(screen.getByText("Scope basis")).toBeTruthy();
-    expect(screen.getAllByText("Workday Finance").length).toBeGreaterThan(0);
-    expect(screen.getByText("Business function")).toBeTruthy();
+    // Optimize has no right column at all. It takes the full three columns,
+    // so the context panel beside every other tab is not built here.
+    //
+    // This block used to assert that panel's contents on Optimize — "Contract
+    // readout", the governed statement trimmed to its headline, "Decision
+    // consequence". Those assertions were written for the two-column Optimize
+    // and outlived it: the tab went full-width and the panel stopped being
+    // rendered on it. They are asserted as absent rather than deleted, because
+    // the layout is the claim and an assertion that cannot fail is not one.
+    expect(screen.queryByText("Deterministic cards")).toBeNull();
+    expect(screen.queryByText("Contract readout")).toBeNull();
+    expect(screen.queryByText("Decision consequence")).toBeNull();
+    expect(screen.queryByText("What Source can state")).toBeNull();
+    // This fixture loads no governed opportunity rows, so the two surfaces the
+    // full-width tab does own are absent with it — and the tab refuses rather
+    // than inventing a play, which is the control worth pinning here.
+    expect(screen.queryByText("What can be claimed")).toBeNull();
+    expect(screen.queryByText("What still gates value")).toBeNull();
+    expect(
+      screen.getByText("No contract-specific optimization levers loaded."),
+    ).toBeTruthy();
     expect(
       screen.getByText(
-        "Do not infer unsupported tower, module, or CMDB relationships beyond these rows.",
+        /will not invent an optimization play until governed opportunity rows exist/,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
+
+    // Story's side panel has its own context stack rather than the tab
+    // narrative, so the statement keeps its blocker there. That is the
+    // differential: the statement is trimmed only where the panel beside it
+    // already renders the same paragraphs.
+    fireEvent.click(screen.getByRole("tab", { name: "Story" }));
+    {
+      const statement = screen
+        .getByText("What Source can state")
+        .closest(".sw-c3-governed-statement");
+      expect(
+        statement?.querySelectorAll(".sw-c3-governed-blocker").length,
+      ).toBe(1);
+    }
+
+    fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
+
+    expect(screen.getAllByText("Workday Finance").length).toBeGreaterThan(0);
+    // The scope briefing renders each row's business function as content
+    // beside the workload it belongs to, rather than as a column header on a
+    // separate table — so assert the boundary statement the tab is for.
+    expect(
+      screen.getByText(
+        "Declared scope, not enterprise-wide dependency coverage.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("The boundary")).toBeTruthy();
+
+    // Composition, not correctness: no governed sentence on the mounted tab
+    // may be stated twice, and no identifier may reach the reader. Checked per
+    // tab because the previous tab's content is unmounted. Every defect worth
+    // fixing on this surface was found by reading the deployed page rather
+    // than by the suite, because each render is right on its own.
+    expectCleanComposition(container);
+    expect(
+      screen.getByText(
+        "Use only these named workloads when explaining coverage; do not expand to tower, module, or CMDB relationships without matching rows.",
       ),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Source 360" }));
+    fireEvent.click(screen.getByRole("button", { name: "Coverage" }));
 
     expect(
       screen.queryByLabelText("Persistent Source workspace toolbar"),
     ).toBeNull();
-    expect(screen.getByText("/ Vendors")).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Concentration" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "By evidence depth" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "By archetype" })).toBeTruthy();
-    expect(screen.getByText("Vendor 360")).toBeTruthy();
-    expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
-    const vendorChart = screen.getByLabelText("Vendor concentration chart");
-    expect(vendorChart).toBeTruthy();
-    expectMeasuredRechartsCard(vendorChart);
+    expect(screen.getByText("/ Coverage")).toBeTruthy();
+    expect(screen.getByText("Big is not the same as ready")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
+    expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
-      screen.getAllByRole("heading", { name: "Epic Systems Corporation" })
-        .length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
-    ).toBeNull();
-
-    fireEvent.click(screen.getByRole("tab", { name: "By evidence depth" }));
-    expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
-    expectChartEmptyState(
-      screen.getByLabelText("Vendor evidence depth chart"),
-      /No vendor evidence depth chart available/i,
-    );
-
-    fireEvent.click(screen.getByRole("tab", { name: "By archetype" }));
-    expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
-    expectChartEmptyState(
-      screen.getByLabelText("Vendor archetype annual value chart"),
-      /unmapped placeholder bucket/i,
-    );
-
-    fireEvent.click(screen.getByRole("tab", { name: "Concentration" }));
+      screen.getByText("Archetype determines which levers are allowed"),
+    ).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", { name: /Epic Systems Corporation/ }),
+      screen.getByRole("button", { name: /Epic Systems Cor.*ready.*\$12\.0M/ }),
     );
 
     expect(screen.getByText("Selected vendor")).toBeTruthy();
@@ -563,27 +685,38 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText("Portfolio position")).toBeNull();
     expect(screen.queryByText("Material contracts")).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[0]);
+    const leversTab = screen.getByRole("button", {
+      name: "Levers",
+    }) as HTMLButtonElement;
+    expect(leversTab.getAttribute("href")).toBeNull();
+    expect(leversTab.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(leversTab);
     expect(screen.getByRole("tab", { name: "Queue" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();
-    expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
-    expect(screen.getByText("No optimize-ready action rows loaded.")).toBeTruthy();
-    expect(screen.getByText("Evidence basis")).toBeTruthy();
-    expect(screen.getByText("Why this is shown")).toBeTruthy();
-    expect(screen.getByText("Action rows")).toBeTruthy();
+    expect(screen.getByText("What to ask first")).toBeTruthy();
+    expect(
+      screen.getByText("No optimize-ready action rows loaded."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Evidence basis")).toBeNull();
+    expect(screen.queryByText("Why this is shown")).toBeNull();
+    expect(screen.queryByText("Action rows")).toBeNull();
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
     expect(screen.queryByText(/Action candidates/i)).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: "By contract" }));
     expect(screen.getByText("Contract-level action rows")).toBeTruthy();
-    expect(screen.getByText("No contract-level action rows loaded.")).toBeTruthy();
+    expect(
+      screen.getByText("No contract-level action rows loaded."),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Evidence" })[0]);
     expect(screen.getByText("Archetype coverage matrix")).toBeTruthy();
     expect(screen.getByText("Live registry")).toBeTruthy();
     expect(screen.getByText("Evidence lanes")).toBeTruthy();
-    expect(screen.getByText("Loaded rows, missing lanes, and claim eligibility")).toBeTruthy();
+    expect(
+      screen.getByText("Loaded rows, missing lanes, and claim eligibility"),
+    ).toBeTruthy();
     expect(screen.getAllByText("Document page text").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Change orders").length).toBeGreaterThan(0);
     expect(screen.getByText("Show lineage")).toBeTruthy();
@@ -591,39 +724,25 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
     expect(screen.getByText("source.contract_360")).toBeTruthy();
-    expect(screen.getAllByText("source.source_page_text_fact_assertion").length).toBeGreaterThan(
-      0,
-    );
-    expect(screen.getAllByText("source.source_change_order_fact_assertion").length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      screen.getAllByText("source.source_page_text_fact_assertion").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("source.source_change_order_fact_assertion").length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Hide lineage")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Hide lineage" }));
     expect(screen.queryByText("source.contract_360")).toBeNull();
 
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Contract graph" })[0],
-    );
-    expect(screen.getByRole("tab", { name: "Flow" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Volume" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Mapping spine" })).toBeTruthy();
-    expect(container.querySelector(".sw-v2-graph-hero-panel")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-graph-panel")).toBeTruthy();
-    expect(screen.getByLabelText("Source contract graph flow")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-graph-links path")).toBeTruthy();
-    expect(screen.getByText("Source systems and files")).toBeTruthy();
-    expect(screen.getByText("Source page substrate")).toBeTruthy();
-    expect(screen.getByText("Show lineage")).toBeTruthy();
-    expect(screen.queryByText("contract_register_adapter")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
-    expect(screen.getByText("contract_register_adapter")).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: "Mapping spine" }));
-    expect(screen.getByText("Document manifest")).toBeTruthy();
-    expect(screen.getByText("Change orders")).toBeTruthy();
-    expect(screen.getByText("evidence_document_adapter")).toBeTruthy();
-    expect(screen.getByText("change_order_adapter")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Coverage" }));
+    expect(screen.getByText("/ Coverage")).toBeTruthy();
+    expect(screen.getByText("Big is not the same as ready")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
+    expect(screen.getByText("Archetype coverage")).toBeTruthy();
+    expect(
+      screen.getByText("Archetype determines which levers are allowed"),
+    ).toBeTruthy();
   });
 
   it("keeps the Source workspace free of legacy cool-blue design tokens", async () => {
@@ -650,67 +769,162 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
   });
 
-  it("renders a Recharts action mix on the default Optimize page when action rows exist", async () => {
+  it("does not describe deferred impact rows as absent while evidence depth is still loading", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
       "2027-06-30T00:00:00Z",
     );
-    const actionCandidate: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] = {
-      tenant_key: "meridian-health",
-      action_candidate_id: "OPT-TEST-001",
-      opportunity_id: "OPT-TEST-001",
-      contract_id: "MER-TECH-M365-001",
-      vendor_ref: "MER-VEN-HELIX-SSO",
-      vendor_name: "Helix Shared Services Group",
-      title: "Right-size loaded application support tier",
-      action_type: "avoid_future_spend",
-      opportunity_type: "avoid_future_spend",
-      finding_summary: "Loaded action row with a candidate amount.",
-      deterministic_basis: "Action row cites loaded contract and spend rows.",
-      candidate_amount_usd: 1250000,
-      priority: "high",
-      readiness_state: "finance_confirmation_required",
-      evidence_state: "loaded",
-      authority_state: "not_confirmed",
-      finance_confirmation_state: "not_confirmed",
-      next_action: "Review evidence trail",
-      accountable_role: "procurement_owner",
-      decision_due_date: "2027-03-31",
-      coverage_state: "partial",
-      blocker_if_missing:
-        "Never present this candidate as realized savings until finance confirms it.",
-      citation_basis_json: { source: "unit-fixture" },
-      load_run_id: "unit-proof",
+    const dbPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      workspaceDiagnostics: {
+        ...portfolio.workspaceDiagnostics,
+        exploreProvider: "EclProjectionDbProvider" as const,
+      },
     };
-    const performanceCoverage: SourceWorkspacePortfolioData["impact"]["evidenceCoverage"][number] = {
-      tenant_key: "meridian-health",
-      contract_id: "MER-CTR-EPIC-001",
-      vendor_ref: "MER-VEN-EPIC",
-      vendor_name: "Epic Systems Corporation",
-      contract_name: "Clinical Applications Agreement",
-      spend_rows: 12,
-      actual_spend_usd: 12000000,
-      committed_spend_usd: 12000000,
-      performance_rows: 12,
-      breach_rows: 3,
-      credit_calculated_usd: 50000,
-      credit_claimed_usd: 0,
-      credit_recovered_usd: 0,
-      unclaimed_credit_usd: 50000,
-      opportunity_rows: 0,
-      candidate_amount_usd: 0,
-      finance_confirmation_required_rows: 0,
-      opportunities_with_evidence: 0,
-      scope_rows: 1,
-      critical_scope_rows: 0,
-      document_page_text_rows: 0,
-      change_order_rows: 0,
-      coverage_state: "partial",
-      blocker_if_missing:
-        "Document page text missing; finance confirmation required before realized-value claim.",
-      evidence_basis_json: { source: "unit-fixture" },
-      load_run_id: "unit-proof",
-    };
+
+    render(
+      <WorkspaceClient
+        portfolio={dbPortfolio}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+        impactLoadState="loading"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", {
+          name: "Source workspace navigation",
+        }),
+      ).toBeTruthy();
+    });
+
+    expect(screen.getByText("Evidence depth updating")).toBeTruthy();
+    expect(screen.getByText("Evidence depth is still loading.")).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "No quantified opportunity is loaded in the current deterministic slice.",
+      ),
+    ).toBeNull();
+  });
+
+  it("distinguishes unsized command actions from zero-valued and finance-ready actions", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const actionCandidates: SourceWorkspacePortfolioData["impact"]["actionCandidates"] =
+      Array.from({ length: 6 }, (_, index) => ({
+        tenant_key: portfolio.contracts[0].tenant_key,
+        action_candidate_id: `OPP-SIGNAL-${index + 1}`,
+        opportunity_id: `OPP-SIGNAL-${index + 1}`,
+        contract_id: portfolio.contracts[0].contract_id,
+        vendor_ref: portfolio.contracts[0].vendor_ref,
+        vendor_name: portfolio.contracts[0].vendor_name,
+        title: `Review signal ${index + 1}`,
+        action_type: "negotiated_improvement",
+        opportunity_type: "negotiated_improvement",
+        finding_summary: "Evidence required before sizing.",
+        deterministic_basis: "Loaded contract record.",
+        candidate_amount_usd: null,
+        priority: "medium",
+        readiness_state: "review_required",
+        evidence_state: "partial",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Load a calculation basis.",
+        accountable_role: "sourcing_owner",
+        decision_due_date: null,
+        coverage_state: "partial",
+        blocker_if_missing: "Do not claim a dollar amount.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      }));
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          workspaceDiagnostics: {
+            ...portfolio.workspaceDiagnostics,
+            exploreProvider: "EclProjectionDbProvider",
+          },
+          impact: { ...portfolio.impact, actionCandidates },
+        }}
+        tenantName="Demo account"
+        sourceClientKey={portfolio.contracts[0].tenant_key}
+        impactLoadState="ready"
+      />,
+    );
+
+    expect(await screen.findByText("6 open actions · 6 unsized")).toBeTruthy();
+    expect(screen.getByText("1 further action awaits sizing.")).toBeTruthy();
+    expect(screen.getByText(/No candidate dollar total is established/)).toBeTruthy();
+    expect(screen.queryByText(/\$0 in candidate value/)).toBeNull();
+  });
+
+  it("renders a sequenced lever report on the default Optimize page when action rows exist", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const actionCandidate: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] =
+      {
+        tenant_key: "meridian-health",
+        action_candidate_id: "OPT-TEST-001",
+        opportunity_id: "OPT-TEST-001",
+        contract_id: "MER-TECH-M365-001",
+        vendor_ref: "MER-VEN-HELIX-SSO",
+        vendor_name: "Helix Shared Services Group",
+        title: "Right-size loaded application support tier",
+        action_type: "avoid_future_spend",
+        opportunity_type: "avoid_future_spend",
+        finding_summary: "Loaded action row with a candidate amount.",
+        deterministic_basis: "Action row cites loaded contract and spend rows.",
+        candidate_amount_usd: 1250000,
+        priority: "high",
+        readiness_state: "finance_confirmation_required",
+        evidence_state: "loaded",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Review evidence trail",
+        accountable_role: "procurement_owner",
+        decision_due_date: "2027-03-31",
+        coverage_state: "partial",
+        blocker_if_missing:
+          "Never present this candidate as realized savings until finance confirms it.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
+    const performanceCoverage: SourceWorkspacePortfolioData["impact"]["evidenceCoverage"][number] =
+      {
+        tenant_key: "meridian-health",
+        contract_id: "MER-CTR-EPIC-001",
+        vendor_ref: "MER-VEN-EPIC",
+        vendor_name: "Epic Systems Corporation",
+        contract_name: "Clinical Applications Agreement",
+        spend_rows: 12,
+        actual_spend_usd: 12000000,
+        committed_spend_usd: 12000000,
+        performance_rows: 12,
+        breach_rows: 3,
+        credit_calculated_usd: 50000,
+        credit_claimed_usd: 0,
+        credit_recovered_usd: 0,
+        unclaimed_credit_usd: 50000,
+        opportunity_rows: 0,
+        candidate_amount_usd: 0,
+        finance_confirmation_required_rows: 0,
+        opportunities_with_evidence: 0,
+        scope_rows: 1,
+        critical_scope_rows: 0,
+        document_page_text_rows: 0,
+        change_order_rows: 0,
+        coverage_state: "partial",
+        blocker_if_missing:
+          "Document page text missing; finance confirmation required before realized-value claim.",
+        evidence_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
     const dbPortfolio: SourceWorkspacePortfolioData = {
       ...portfolio,
       workspaceDiagnostics: {
@@ -810,6 +1024,36 @@ describe("Source workspace ECL browser-surface proof", () => {
             evidence_basis_json: { source: "unit-fixture" },
             load_run_id: "unit-depth-run",
           },
+          {
+            tenant_key: "meridian-health",
+            contract_id: "SUP-TECH-AMS-001",
+            vendor_ref: "SUP-VEN-AMS",
+            vendor_name: "Example Managed Services Provider",
+            contract_name:
+              "Legacy Analytics Application Managed Services Agreement",
+            spend_rows: 12,
+            actual_spend_usd: 8_032_500.04,
+            committed_spend_usd: 7_850_000.04,
+            performance_rows: 72,
+            breach_rows: 5,
+            credit_calculated_usd: 24_531.25,
+            credit_claimed_usd: 0,
+            credit_recovered_usd: 0,
+            unclaimed_credit_usd: 24_531.25,
+            opportunity_rows: 4,
+            candidate_amount_usd: 1_977_031.25,
+            finance_confirmation_required_rows: 4,
+            opportunities_with_evidence: 4,
+            scope_rows: 48,
+            critical_scope_rows: 8,
+            document_page_text_rows: 45,
+            change_order_rows: 12,
+            coverage_state: "decision_ready",
+            blocker_if_missing:
+              "Finance confirmation required before realized-value claim.",
+            evidence_basis_json: { source: "unit-fixture" },
+            load_run_id: "unit-depth-run",
+          },
         ],
       },
     };
@@ -840,42 +1084,90 @@ describe("Source workspace ECL browser-surface proof", () => {
       evidence_reference: `PERF-TEST-${index + 1}`,
       load_run_id: "unit-proof",
     }));
-    (global.fetch as jest.Mock).mockImplementation((input: RequestInfo | URL) => {
-      if (String(input).includes("/api/source/workspace/contract/")) {
-        const requestedContractId =
-          String(input)
-            .split("/api/source/workspace/contract/")[1]
-            ?.split("?")[0] ?? "MER-TECH-SD-001";
-        const requestedContract =
-          evidenceDepthPortfolio.contracts.find(
-            (contract) => contract.contract_id === requestedContractId,
-          ) ?? evidenceDepthPortfolio.contracts[0];
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              contract: requestedContract,
-              financialExposure: null,
-              operationalPerformance: null,
-              initiativeDependencies: [],
-              scopeTiers: { explicit: [], inferred: [], unresolved: [] },
-              towerObservations: [],
-              towerValueClaims: [],
-              hasTowerOverlay: false,
-              docExtractions: [],
-              optimizationEvidence: null,
-              optimizationOpportunitySet: null,
-              evidenceOverview: null,
-              evidenceScope: [],
-              evidencePricing: [],
-              evidencePerformance: null,
-              performancePeriods,
-              spendMonths: [],
-            }),
-        } as Response);
-      }
-      return new Promise<Response>(() => undefined);
-    });
+    (global.fetch as jest.Mock).mockImplementation(
+      (input: RequestInfo | URL) => {
+        if (String(input).includes("/api/source/workspace/contract/")) {
+          const requestedContractId =
+            String(input)
+              .split("/api/source/workspace/contract/")[1]
+              ?.split("?")[0] ?? "MER-TECH-SD-001";
+          const requestedContract =
+            evidenceDepthPortfolio.contracts.find(
+              (contract) => contract.contract_id === requestedContractId,
+            ) ??
+            (requestedContractId === "SUP-TECH-AMS-001"
+              ? {
+                  ...evidenceDepthPortfolio.contracts[0],
+                  contract_id: "SUP-TECH-AMS-001",
+                  vendor_ref: "SUP-VEN-AMS",
+                  vendor_name: "Example Managed Services Provider",
+                  contract_name:
+                    "Legacy Analytics Application Managed Services Agreement",
+                  annual_value: 7_850_000,
+                }
+              : evidenceDepthPortfolio.contracts[0]);
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                contract: requestedContract,
+                financialExposure: null,
+                operationalPerformance: null,
+                initiativeDependencies: [],
+                scopeTiers:
+                  requestedContractId === "SUP-TECH-AMS-001"
+                    ? {
+                        explicit: [
+                          {
+                            tenant_key: "example-health",
+                            contract_id: "SUP-TECH-AMS-001",
+                            vendor_ref: "SUP-VEN-AMS",
+                            vendor_name: "Example Managed Services Provider",
+                            application_ref: "APP-LA-001",
+                            application_name: "Legacy Claims Analytics",
+                            business_function: "Revenue Cycle Management",
+                            function_ref: "FUNC-RCM",
+                            criticality: "Tier 1",
+                            lifecycle_state: "Maintain",
+                            hosting_model: "AWS",
+                            annual_run_cost: 820_000,
+                            modernization_plan:
+                              "Transition to governed AWS platform",
+                            sla_tier: "Gold",
+                            known_pain_risk: "Batch-window dependency",
+                            it_portfolio_ref: "PORT-LA",
+                          },
+                        ],
+                        reviewed: [],
+                        vendorInferred: [],
+                        unresolved: [],
+                        totalCount: 1,
+                      }
+                    : {
+                        explicit: [],
+                        reviewed: [],
+                        vendorInferred: [],
+                        unresolved: [],
+                        totalCount: 0,
+                      },
+                towerObservations: [],
+                towerValueClaims: [],
+                hasTowerOverlay: false,
+                docExtractions: [],
+                optimizationEvidence: null,
+                optimizationOpportunitySet: null,
+                evidenceOverview: null,
+                evidenceScope: [],
+                evidencePricing: [],
+                evidencePerformance: null,
+                performancePeriods,
+                spendMonths: [],
+              }),
+          } as Response);
+        }
+        return new Promise<Response>(() => undefined);
+      },
+    );
 
     render(
       <WorkspaceClient
@@ -893,64 +1185,839 @@ describe("Source workspace ECL browser-surface proof", () => {
       ).toBeTruthy();
     });
 
-    expect(screen.getByText("Governed contract book + action layer")).toBeTruthy();
-    expect(
-      screen.getAllByRole("button", { name: "View contracts" }).length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getAllByRole("button", { name: "Run optimize" }).length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getByText(/contracts are in the portfolio register/i),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(/action candidates are in the action layer/i),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(/do not change the register count/i),
-    ).toBeTruthy();
+    expect(screen.getByText("1 governed actions")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Run optimize" })).toBeNull();
     expect(screen.queryByText(/vendors are loaded/i)).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
-    fireEvent.click(screen.getByRole("tab", { name: "By evidence depth" }));
-    expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
-    expectMeasuredRechartsCard(
-      screen.getByLabelText("Vendor evidence depth chart"),
-    );
-    expect(screen.getByRole("button", { name: /Kyndryl, Inc./ })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Levers" })[0]);
+    expect(screen.getByText("Action order")).toBeTruthy();
+    expect(
+      screen.getAllByText("1 lever, in the order it has to happen").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Helix Shared Services Group · MER-TECH-M365-001")
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Right-size loaded application support tier"),
+    ).toBeTruthy();
+    expect(screen.getByText("Backed by")).toBeTruthy();
+    expect(
+      screen.getByText("Action row cites loaded contract and spend rows."),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText("Source command KPIs")).toBeNull();
+    expect(screen.queryByText("Evidence-backed action queue")).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "By archetype" }));
-    expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
-    expectMeasuredRechartsCard(
-      screen.getByLabelText("Vendor archetype annual value chart"),
-    );
-    expect(screen.getAllByText(/Managed Services|Technology/).length).toBeGreaterThan(
-      0,
-    );
+    fireEvent.click(screen.getAllByRole("button", { name: "Coverage" })[0]);
+    expect(screen.getByText("Readiness by value")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
+    expect(screen.getByText("Archetype coverage")).toBeTruthy();
+    expect(screen.getByText("Declared plays")).toBeTruthy();
     expect(
       screen.queryByText(/No declared archetype rows are loaded/i),
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
+    const contractSearch = screen.getByRole("searchbox", {
+      name: "Find a contract",
+    });
+    fireEvent.change(contractSearch, { target: { value: "SUP-TECH-AMS-001" } });
+    expect(
+      screen.getByRole("button", {
+        name: /Legacy Analytics Application Managed Services Agreement SUP-TECH-AMS-001 Example Managed Services Provider Supplemental depth decision ready; outside the .*contract register Contract 360/,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("1 matching contracts")).toBeTruthy();
 
-    expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
-    const optimizeChart = screen.getByLabelText("Optimize action type mix chart");
-    expect(optimizeChart).toBeTruthy();
-    expectMeasuredRechartsCard(optimizeChart);
-    expect(screen.getByText("Right-size loaded application support tier")).toBeTruthy();
-    expect(screen.getAllByText("$1.3M").length).toBeGreaterThan(0);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Legacy Analytics Application Managed Services Agreement SUP-TECH-AMS-001 Example Managed Services Provider/,
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Legacy Analytics Application Managed Services Agreement",
+        ),
+      ).toBeTruthy();
+    });
+    expect(screen.getAllByText("Commercial posture").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByText("Contract not found in governed Source rows"),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
+    expect(screen.getByText("Workloads covered")).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Plain English: this contract covers the named workloads/i,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Legacy Claims Analytics")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to contracts" }));
+    const reopenedContractSearch = screen.getByRole("searchbox", {
+      name: "Find a contract",
+    });
+    fireEvent.change(reopenedContractSearch, { target: { value: "Kyndryl" } });
+    expect(
+      screen.getByRole("button", {
+        name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("1 matching contracts")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
+
+    expect(
+      screen.getByText("No contract-specific optimization levers loaded."),
+    ).toBeTruthy();
+    // Same reason as the Optimize block above: the full-width tab renders no
+    // context panel, so "Contract readout" and "Decision consequence" are
+    // asserted absent here rather than present. This contract loads no
+    // governed opportunity rows either, so the ledger and the gate stay off
+    // the tab with them.
+    expect(screen.queryByText("Contract readout")).toBeNull();
+    expect(screen.queryByText("Decision consequence")).toBeNull();
+    expect(screen.queryByText("What can be claimed")).toBeNull();
+    expect(screen.queryByText("What still gates value")).toBeNull();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Review performance evidence" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Performance" }));
 
     expect(screen.getByText("Service Desk Managed Services")).toBeTruthy();
     expect(screen.getAllByText(/MER-TECH-SD-001/).length).toBeGreaterThan(0);
-    expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText("12 performance periods loaded.")).toBeTruthy();
     });
     expectMeasuredRechartsCard(
       screen.getByLabelText("Contract performance trend chart"),
     );
+  });
+
+  it("anchors the default Levers story on the cloud-consumption action set when it is loaded", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const baseAction: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] =
+      {
+        tenant_key: "meridian-health",
+        action_candidate_id: "OPT-BASE-001",
+        opportunity_id: "OPT-BASE-001",
+        contract_id: "MER-TECH-LAAMS-001",
+        vendor_ref: "MER-VEN-LAAMS",
+        vendor_name: "Cognizant Technology Solutions",
+        title: "Managed services lever",
+        action_type: "avoided_cost",
+        opportunity_type: "avoided_cost",
+        finding_summary: "Managed-services action row.",
+        deterministic_basis: "service rows",
+        candidate_amount_usd: 620000,
+        priority: "P1",
+        readiness_state: "finance_confirmation_required",
+        evidence_state: "present",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Review managed-services packet.",
+        accountable_role: "Data & Analytics Operations",
+        decision_due_date: null,
+        coverage_state: "partial",
+        blocker_if_missing:
+          "Never present this candidate as realized savings until finance confirms it.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
+    const databricksAction = {
+      ...baseAction,
+      action_candidate_id: "OPT-DBX-CARRY-FORWARD-001",
+      opportunity_id: "OPT-DBX-CARRY-FORWARD-001",
+      contract_id: "MER-TECH-DBX-001",
+      vendor_ref: "MER-VEN-DATABRICKS",
+      vendor_name: "Databricks, Inc.",
+      title: "Add carry-forward provision for unused Year 1 commitment",
+      action_type: "negotiated_improvement",
+      opportunity_type: "negotiated_improvement",
+      finding_summary:
+        "The contract's no-carry-forward position should not convert delayed workload adoption into lost buyer value.",
+      deterministic_basis:
+        "coverage:MER-TECH-DBX-001:2026-09;clause:MER-TECH-DBX-001:no_carry_forward",
+      candidate_amount_usd: 400000,
+      priority: "P1",
+      next_action: "Draft carry-forward amendment before the Year 2 payment locks.",
+      accountable_role: "Strategic Sourcing",
+      citation_basis_json: {
+        payload: {
+          buyer_ask:
+            "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
+          vendor_concession:
+            "Carry-forward keeps the vendor renewal intact while preserving unused buyer value.",
+          risk_if_ignored:
+            "Unused commitment forfeits at anniversary and weakens the renewal position.",
+          timing_dependency: "Resolve before Year 2 payment authorization.",
+          evidence_rows:
+            "coverage:MER-TECH-DBX-001:2026-09;clause:MER-TECH-DBX-001:no_carry_forward",
+        },
+      },
+    };
+    const databricksContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: "MER-TECH-DBX-001",
+      vendor_ref: "MER-VEN-DATABRICKS",
+      vendor_name: "Databricks, Inc.",
+      vendor_category: "cloud_data_platform",
+      contract_archetype: "cloud_consumption",
+      contract_name:
+        "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+      annual_value: 1900000,
+      resolved_annual_value: 1900000,
+      actual_annual_spend: 66000,
+    };
+    const managedServicesContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: "MER-TECH-LAAMS-001",
+      vendor_ref: "MER-VEN-LAAMS",
+      vendor_name: "Cognizant Technology Solutions",
+      vendor_category: "managed_services",
+      contract_archetype: "managed_services",
+      contract_name: "Legacy Application Managed Services",
+      annual_value: 34800000,
+      resolved_annual_value: 34800000,
+    };
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          contracts: [managedServicesContract, databricksContract],
+          impact: {
+            ...portfolio.impact,
+            actionCandidates: [
+              ...Array.from({ length: 7 }, (_, index) => ({
+                ...baseAction,
+                action_candidate_id: `OPT-LAAMS-${index}`,
+                opportunity_id: `OPT-LAAMS-${index}`,
+              })),
+              ...Array.from({ length: 6 }, (_, index) => ({
+                ...databricksAction,
+                action_candidate_id: `OPT-DBX-${index}`,
+                opportunity_id: `OPT-DBX-${index}`,
+              })),
+            ],
+          },
+        }}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Levers" })[0]);
+
+    expect(
+      screen.getAllByText("6 levers, in the order they have to happen").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Databricks, Inc. · MER-TECH-DBX-001").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Resolve before Year 2 payment authorization.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("No due date")).toBeNull();
+    expect(screen.queryByText(/coverage:MER-TECH-DBX-001/)).toBeNull();
+    expect(screen.queryByText(/no_carry_forward/)).toBeNull();
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: /Add carry-forward provision for unused Year 1 commitment/,
+      })[0],
+    );
+    expect(screen.getByRole("complementary", { name: "Action details" }))
+      .toBeTruthy();
+    expect(screen.getByText("Governed action")).toBeTruthy();
+    expect(screen.getByText("Deadline")).toBeTruthy();
+    expect(
+      screen.getAllByText("Resolve before Year 2 payment authorization.")
+        .length,
+    ).toBeGreaterThan(1);
+    expect(screen.getByText("Accountable")).toBeTruthy();
+    expect(screen.getByText("What backs it")).toBeTruthy();
+    expect(screen.getByText("If ignored")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Carry-forward keeps the vendor renewal intact while preserving unused buyer value.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Unused commitment forfeits at anniversary and weakens the renewal position.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/coverage:MER-TECH-DBX-001/)).toBeNull();
+    expect(screen.queryByText(/no_carry_forward/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Open Contract 360" }))
+      .toBeTruthy();
+    expect(
+      screen.queryByText("Cognizant Technology Solutions · MER-TECH-LAAMS-001"),
+    ).toBeNull();
+  });
+
+  it("keeps selected-contract Optimize scoped to that contract's levers", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const selectedContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: "MER-TECH-DBX-001",
+      vendor_ref: "MER-VEN-DATABRICKS",
+      vendor_name: "Databricks, Inc.",
+      vendor_category: "cloud_data_platform",
+      contract_name:
+        "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+      annual_value: 1_900_000,
+      resolved_annual_value: 1_900_000,
+      actual_annual_spend: 66_000,
+      total_committed_value: 5_700_000,
+      resolved_total_committed_value: 5_700_000,
+      end_date: "2030-10-14",
+      auto_renew: true,
+      notice_period_days: 90,
+    };
+    const selectedAction: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] =
+      {
+        tenant_key: "meridian-health",
+        action_candidate_id: "OPT-DBX-NOTICE-001",
+        opportunity_id: "OPT-DBX-NOTICE-001",
+        contract_id: selectedContract.contract_id,
+        vendor_ref: selectedContract.vendor_ref,
+        vendor_name: selectedContract.vendor_name,
+        title: "Serve notice before the anniversary",
+        action_type: "negotiated_improvement",
+        opportunity_type: "negotiated_improvement",
+        finding_summary: "Commitment is ahead of consumption.",
+        deterministic_basis: "Spend rows and renewal terms support the ask.",
+        candidate_amount_usd: 1_480_000,
+        priority: "P0",
+        readiness_state: "approval_required",
+        evidence_state: "loaded",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Approve the notice strategy.",
+        accountable_role: "VP Technology Sourcing",
+        decision_due_date: "2030-07-16",
+        coverage_state: "decision_ready",
+        blocker_if_missing: null,
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
+    const unrelatedAction = {
+      ...selectedAction,
+      action_candidate_id: "OPT-M365-UNRELATED-001",
+      opportunity_id: "OPT-M365-UNRELATED-001",
+      contract_id: "MER-TECH-M365-001",
+      vendor_ref: "MER-VEN-M365",
+      vendor_name: "Microsoft Corporation",
+      title: "Remove unrelated productivity licenses before true-up",
+      candidate_amount_usd: 2_000_000,
+    };
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          contract: selectedContract,
+          financialExposure: null,
+          operationalPerformance: null,
+          initiativeDependencies: [],
+          scopeTiers: {
+            explicit: [],
+            reviewed: [],
+            vendorInferred: [],
+            unresolved: [],
+            totalCount: 0,
+          },
+          towerObservations: [],
+          towerValueClaims: [],
+          hasTowerOverlay: false,
+          docExtractions: [],
+          optimizationEvidence: null,
+          optimizationOpportunitySet: {
+            tenantKey: "meridian-health",
+            datasetVersion: "unit-proof",
+            contractId: selectedContract.contract_id,
+            vendorId: selectedContract.vendor_ref,
+            vendorName: selectedContract.vendor_name,
+            contractName: selectedContract.contract_name,
+            recommendation: "Build the negotiation sequence.",
+            recommendationDetail:
+              "Commitment is ahead of observed consumption; notice preserves leverage.",
+            actionState: "approval_required",
+            baseline: {
+              status: "ready",
+              headline: "Commercial baseline loaded",
+              detail: "Committed value and observed spend are loaded.",
+              annualValueUsd: 1_900_000,
+              pricingScheduleAnnualValueUsd: null,
+              actualAnnualSpendUsd: 66_000,
+              totalCommittedValueUsd: 5_700_000,
+              conflictAmountUsd: null,
+              sourceRefs: ["source.contract_360"],
+            },
+            selectedOpportunityId: "OPT-DBX-NOTICE-001",
+            opportunities: [
+              {
+                opportunityId: "OPT-DBX-NOTICE-001",
+                contractId: selectedContract.contract_id,
+                label: "Serve notice before the anniversary",
+                shortLabel: "Serve notice",
+                valueType: "negotiated_improvement",
+                amountUsd: 1_480_000,
+                amountState: "exact",
+                stage: "approval_required",
+                evidenceGrade: "document_evidenced",
+                confidence: 0.82,
+                deadline: "2030-07-16",
+                owner: "VP Technology Sourcing",
+                blockingGap: "CFO delegate approval is required.",
+                nextAction: "Approve the notice strategy.",
+                sourceSystems: ["CLM / contract repository"],
+                evidenceRefs: [],
+                calculation: null,
+                overlapTreatment:
+                  "Included only in negotiated improvement to avoid double counting.",
+                approvalState: "pending",
+                narrative: "Notice keeps the other levers alive.",
+                negotiationDetail: {
+                  buyerAsk:
+                    "Non-renewal notice, then a re-based term with carry-forward of unconsumed capacity.",
+                  negotiationLanguage:
+                    "Serve notice before the anniversary and negotiate the ramp before renewal.",
+                  vendorConcession:
+                    "Carry-forward protects renewal revenue while preserving buyer value.",
+                  timingDependency: "Before notice window closes.",
+                  ownerRole: "VP Technology Sourcing",
+                  riskIfIgnored: "Auto-renew locks in unused capacity.",
+                  priority: "P0",
+                },
+              },
+              {
+                opportunityId: "OPT-DBX-SCOPE-001",
+                contractId: selectedContract.contract_id,
+                label: "Move two workloads off the platform",
+                shortLabel: "Rationalize workload scope",
+                valueType: "negotiated_improvement",
+                amountUsd: null,
+                amountState: "not_sized",
+                stage: "signal",
+                evidenceGrade: "missing",
+                confidence: 0.3,
+                deadline: null,
+                owner: "Enterprise Architect",
+                blockingGap: "Application run-cost evidence is missing.",
+                nextAction: "Request the CMDB extract.",
+                sourceSystems: ["Application inventory"],
+                evidenceRefs: [],
+                calculation: null,
+                overlapTreatment:
+                  "Excluded from sized totals until scope economics are loaded.",
+                approvalState: "needs_evidence",
+                narrative: "Scope row exists but run cost is missing.",
+                negotiationDetail: {
+                  buyerAsk:
+                    "Move two workload groups off the platform and reduce committed capacity.",
+                  negotiationLanguage:
+                    "Hold scope movement until application economics are loaded.",
+                  vendorConcession:
+                    "Not stateable until replacement economics exist.",
+                  timingDependency: "After CMDB extract.",
+                  ownerRole: "Enterprise Architect",
+                  riskIfIgnored: "Blast radius and saving remain unknown.",
+                  priority: "P3",
+                },
+              },
+            ],
+            financeRealizations: [],
+            evidenceRequirements: ["CFO delegate approval is required."],
+            potentialRecoverableUsd: 0,
+            potentialAvoidableUsd: 0,
+            potentialNegotiableUsd: 1_480_000,
+            financeConfirmedUsd: 0,
+          },
+          evidenceOverview: null,
+          evidenceScope: [],
+          evidencePricing: [],
+          evidencePerformance: null,
+          performancePeriods: [],
+          spendMonths: [],
+          contractTabIntelligence: [
+            {
+              tenant_key: "meridian-health",
+              contract_id: selectedContract.contract_id,
+              vendor_ref: selectedContract.vendor_ref,
+              vendor_name: selectedContract.vendor_name,
+              contract_name: selectedContract.contract_name,
+              tab_key: "optimize",
+              sort_order: 70,
+              headline: "Two Databricks levers are governed for outreach.",
+              allowed_executive_statement:
+                "Use the approved opportunity rows; signal rows stay unsized.",
+              supporting_evidence_summary:
+                "2 opportunity rows; 1 sized row; owners: VP Technology Sourcing",
+              missing_evidence_summary:
+                "Signal rows need benchmark and per-SKU evidence before they carry value.",
+              action_prompt: "Work the sequence before sending terms.",
+              source_basis: "source.contract_action_candidate_v1",
+              confidence_level: "high",
+              confidence_rationale:
+                "Generated from reviewed contract and opportunity rows.",
+              review_status: "system_generated_from_reviewed_sources",
+              provenance: { "source.contract_action_candidate_v1": 2 },
+              derived_from_load_run_id: "unit-proof",
+            },
+          ],
+        }),
+    } as Response);
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          contracts: [selectedContract, ...portfolio.contracts],
+          impact: {
+            ...portfolio.impact,
+            actionCandidates: [unrelatedAction, selectedAction],
+          },
+        }}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+        initialContractId={selectedContract.contract_id}
+        initialContractTab="Optimize"
+      />,
+    );
+
+    await waitFor(() => {
+      });
+    await waitFor(() => {
+      // The deck's table replaced the inline-styled one; it is addressed by
+      // its column heading rather than an aria-label.
+      expect(screen.getByText("Why they can say yes")).toBeTruthy();
+    });
+
+    // The governed Optimize headline is the lever list in prose, and the three
+    // sub-tabs to the left render those levers as tables. Because the statement
+    // is keyed on the Contract 360 tab and not the sub-tab, it restated
+    // whichever sub-tab was open, on all three. The evidence gate is the one
+    // claim with no other home, so it is what survives in the right column.
+    expect(
+      screen.queryByText("Two Databricks levers are governed for outreach."),
+    ).toBeNull();
+    expect(screen.getByText("What still gates value")).toBeTruthy();
+    // The value-type ledger is the standing context that earns its place on
+    // every sub-tab: the three ledgers never sum, whichever view is open.
+    expect(screen.getByText("What can be claimed")).toBeTruthy();
+    // "What can be claimed" is the ledger's heading, and a heading is not the
+    // ledger. Deleting the stack underneath it left this block green, so the
+    // ledger's own content is asserted too — the finance-confirmed line is the
+    // one that keeps booked dollars in a column of their own.
+    expect(screen.getByText("Finance confirmed")).toBeTruthy();
+    expect(screen.queryByText("Deterministic cards")).toBeNull();
+    expect(
+      screen.getByText(
+        /Signal rows need benchmark and per-SKU evidence before they carry value/,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Levers" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Comparator" })).toBeTruthy();
+    expect(screen.getByText("Serve notice")).toBeTruthy();
+    expect(screen.getByText("Rationalize workload scope")).toBeTruthy();
+    expect(screen.queryByText("Optimize evidenced opportunities")).toBeNull();
+    expect(screen.queryByText("Evidence-backed action queue")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Remove unrelated productivity licenses before true-up",
+      ),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Sequence" }));
+    expect(
+      screen.getByText("2 levers, in the order they have to happen"),
+    ).toBeTruthy();
+  });
+
+  it("opens the clicked contract's own Contract 360, not a preloaded default, when the row is outside the preloaded portfolio slice", async () => {
+    // Regression test for a routing bug: Optimize's Queue/By contract rows
+    // are frequently for contracts that are only summarized (not part of
+    // `portfolio.contracts`, which just holds a preloaded top-N slice).
+    // Clicking such a row correctly calls `fetchContractDetail`, which fetches
+    // the right record, but the render previously ignored that fetched detail
+    // and silently fell back to a default contract already in the preloaded
+    // slice -- showing the wrong contract's Contract 360 page.
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const offSliceContractId = "MER-CTR-OFF-SLICE-001";
+
+    expect(
+      portfolio.contracts.some(
+        (contract) => contract.contract_id === offSliceContractId,
+      ),
+    ).toBe(false);
+
+    const actionCandidate: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] =
+      {
+        tenant_key: "meridian-health",
+        action_candidate_id: "OPT-OFF-SLICE-001",
+        opportunity_id: "OPT-OFF-SLICE-001",
+        contract_id: offSliceContractId,
+        vendor_ref: "MER-VEN-OFF-SLICE",
+        vendor_name: "Off-Slice Vendor Group",
+        title: "Convert recurring change orders into base catalog",
+        action_type: "avoid_future_spend",
+        opportunity_type: "avoid_future_spend",
+        finding_summary:
+          "Loaded action row for a contract outside the preloaded slice.",
+        deterministic_basis: "Action row cites loaded contract and spend rows.",
+        candidate_amount_usd: 151200,
+        priority: "medium",
+        readiness_state: "finance_confirmation_required",
+        evidence_state: "loaded",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Review evidence trail",
+        accountable_role: "procurement_owner",
+        decision_due_date: "2027-03-31",
+        coverage_state: "partial",
+        blocker_if_missing:
+          "Never present this candidate as realized savings until finance confirms it.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
+    const offSliceContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: offSliceContractId,
+      vendor_ref: "MER-VEN-OFF-SLICE",
+      vendor_name: "Off-Slice Vendor Group",
+      contract_name: "Off-Slice Managed Services SOW",
+      annual_value: 7600000,
+      resolved_annual_value: 7600000,
+      total_committed_value: 7400000,
+      resolved_total_committed_value: 7400000,
+      end_date: "2026-09-30",
+      auto_renew: true,
+      vendor_category: "Managed Services",
+    };
+    const routedPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      impact: {
+        ...portfolio.impact,
+        actionCandidates: [actionCandidate],
+      },
+    };
+    let resolveOffSliceFetch!: (response: Response) => void;
+    const offSliceFetch = new Promise<Response>((resolve) => {
+      resolveOffSliceFetch = resolve;
+    });
+    const offSliceResponse = {
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          contract: offSliceContract,
+          financialExposure: null,
+          operationalPerformance: null,
+          initiativeDependencies: [],
+          scopeTiers: {
+            explicit: [],
+            reviewed: [],
+            vendorInferred: [],
+            unresolved: [],
+            totalCount: 0,
+          },
+          towerObservations: [],
+          towerValueClaims: [],
+          hasTowerOverlay: false,
+          docExtractions: [],
+          optimizationEvidence: null,
+          optimizationOpportunitySet: null,
+          evidenceOverview: null,
+          evidenceScope: [],
+          evidencePricing: [],
+          evidencePerformance: null,
+          performancePeriods: [],
+          spendMonths: [],
+        }),
+    } as Response;
+
+    (global.fetch as jest.Mock).mockImplementation(
+      (input: RequestInfo | URL) => {
+        if (String(input).includes("/api/source/workspace/contract/")) {
+          const requestedContractId =
+            String(input)
+              .split("/api/source/workspace/contract/")[1]
+              ?.split("?")[0] ?? offSliceContractId;
+          if (requestedContractId === offSliceContractId) {
+            return offSliceFetch;
+          }
+          const requestedContract =
+            portfolio.contracts.find(
+              (contract) => contract.contract_id === requestedContractId,
+            ) ?? portfolio.contracts[0];
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                contract: requestedContract,
+                financialExposure: null,
+                operationalPerformance: null,
+                initiativeDependencies: [],
+                scopeTiers: { explicit: [], inferred: [], unresolved: [] },
+                towerObservations: [],
+                towerValueClaims: [],
+                hasTowerOverlay: false,
+                docExtractions: [],
+                optimizationEvidence: null,
+                optimizationOpportunitySet: null,
+                evidenceOverview: null,
+                evidenceScope: [],
+                evidencePricing: [],
+                evidencePerformance: null,
+                performancePeriods: [],
+                spendMonths: [],
+              }),
+          } as Response);
+        }
+        return new Promise<Response>(() => undefined);
+      },
+    );
+
+    render(
+      <WorkspaceClient
+        portfolio={routedPortfolio}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", {
+          name: "Source workspace navigation",
+        }),
+      ).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Levers" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By contract" }));
+
+    const offSliceRow = screen.getByRole("button", {
+      name: /Off-Slice Vendor Group/,
+    });
+    expect(offSliceRow.textContent).toContain(offSliceContractId);
+    fireEvent.click(offSliceRow);
+
+    expect(screen.getByText("Loading contract detail")).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
+    ).toBeNull();
+    resolveOffSliceFetch(offSliceResponse);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: /Off-Slice Vendor Group/ }),
+      ).toBeTruthy();
+    });
+    expect(
+      screen.getAllByText(new RegExp(offSliceContractId)).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Epic Systems Corporation" }),
+    ).toBeNull();
+  });
+
+  it("keeps an action reviewable when its contract detail returns 404", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const missingContractId = "CONTRACT-ACTION-WITHOUT-DETAIL";
+    const actionCandidate = {
+      ...portfolio.impact.actionCandidates[0],
+      action_candidate_id: "ACTION-WITHOUT-DETAIL",
+      contract_id: missingContractId,
+      title: "Review unmatched action",
+      next_action: "Resolve contract identity before using detail.",
+    } as SourceWorkspacePortfolioData["impact"]["actionCandidates"][number];
+    const routedPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      impact: { ...portfolio.impact, actionCandidates: [actionCandidate] },
+    };
+    (global.fetch as jest.Mock).mockImplementation(
+      (input: RequestInfo | URL) =>
+        String(input).includes(
+          `/api/source/workspace/contract/${missingContractId}`,
+        )
+          ? Promise.resolve({ ok: false, status: 404 } as Response)
+          : new Promise<Response>(() => undefined),
+    );
+
+    render(
+      <WorkspaceClient
+        portfolio={routedPortfolio}
+        tenantName="Synthetic tenant"
+        sourceClientKey="synthetic-tenant"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Contracts" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a contract" }), {
+      target: { value: missingContractId },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Review unmatched action/ }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Contract detail unavailable")).toBeTruthy();
+    });
+    expect(
+      screen.getByText(/No substitute contract is being shown/),
+    ).toBeTruthy();
+    expect(screen.getByText("Review unmatched action")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Review action" })).toBeTruthy();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.filter(([input]) =>
+        String(input).includes(
+          `/api/source/workspace/contract/${missingContractId}`,
+        ),
+      ),
+    ).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review action" }));
+    expect(
+      screen.getByRole("complementary", { name: "Action details" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Resolve contract identity before using detail."),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Open Contract 360" }),
+    ).toBeNull();
+    expect(screen.getAllByText("Contract detail unavailable").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: portfolio.contracts[0].contract_name }),
+    ).toBeNull();
   });
 });

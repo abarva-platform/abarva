@@ -190,7 +190,7 @@ describe("insertSourceArtifact", () => {
 });
 
 describe("listSourceArtifacts", () => {
-  it("scopes to event + client and current-only by default", async () => {
+  it("preserves client-id scoping for existing callers", async () => {
     const { db, cap } = fakeDb([row]);
     const out = await listSourceArtifacts("evt-1", "c1", {}, db);
     expect(out).toHaveLength(1);
@@ -199,10 +199,82 @@ describe("listSourceArtifacts", () => {
     expect(cap.filters).toContainEqual(["lifecycle_state", "=", "current"]);
     expect(cap.ordered).toBe("created_at");
   });
+
+  it("supports explicit governed tenant-key scoping for registry-only uploads", async () => {
+    const { db, cap } = fakeDb([row]);
+    await listSourceArtifacts("evt-1", { tenantKey: "tenant-1" }, {}, db);
+    expect(cap.filters).toContainEqual(["source_event_id", "=", "evt-1"]);
+    expect(cap.filters).toContainEqual(["tenant_key", "=", "tenant-1"]);
+  });
+  it("preserves a Date-shaped accepted-final timestamp from Postgres", async () => {
+    const acceptedAt = "2026-09-29T14:55:28.000Z";
+    const acceptedFinal = {
+      ...row,
+      artifact_group: "approval",
+      artifact_type: "d01_strategy_memo",
+      status: "client_final",
+      is_client_final: true,
+      is_current_authoritative: true,
+      client_final_accepted_by: "owner-1",
+      client_final_accepted_at: new Date(acceptedAt),
+    };
+    const { db } = fakeDb([acceptedFinal]);
+    const [mapped] = await listSourceArtifacts("evt-1", { tenantKey: row.tenant_key }, {}, db);
+    expect(mapped.clientFinalAcceptedAt).toBe(acceptedAt);
+
+    const { db: invalidDb } = fakeDb([{ ...acceptedFinal, client_final_accepted_at: new Date(NaN) }]);
+    const [invalid] = await listSourceArtifacts("evt-1", { tenantKey: row.tenant_key }, {}, invalidDb);
+    expect(invalid.clientFinalAcceptedAt).toBeNull();
+  });
   it("includes history when requested (no lifecycle filter)", async () => {
     const { db, cap } = fakeDb([row]);
     await listSourceArtifacts("evt-1", "c1", { includeHistory: true }, db);
     expect(cap.filters.some((f) => f[0] === "lifecycle_state")).toBe(false);
+  });
+
+  it("maps registry-only upload rows into a usable File Cabinet record", async () => {
+    const registryOnly = {
+      id: "upload-1",
+      tenant_key: "c1",
+      source_event_id: "evt-1",
+      stage_key: "scope",
+      artifact_family: "other",
+      artifact_kind: "uploaded_source_artifact",
+      source_origin: "uploaded",
+      source_format: "xlsx",
+      original_name: "service-baseline.xlsx",
+      blob_uri: "c1/source/evt-1/upload-1/service-baseline.xlsx",
+      uploader_user_id: "user-1",
+      size_bytes: 2048,
+      sha256: "sha-1",
+      parse_status: "parsed",
+      evidence_state: "parsed_uncited",
+      approval_state: "draft",
+      version: 1,
+      created_at: "2026-09-19T00:00:00Z",
+      updated_at: "2026-09-19T00:00:00Z",
+      deleted_at: null,
+    };
+    const { db } = fakeDb([registryOnly]);
+
+    const [mapped] = await listSourceArtifacts(
+      "evt-1",
+      { tenantKey: "c1" },
+      { includeHistory: true },
+      db,
+    );
+
+    expect(mapped).toMatchObject({
+      id: "upload-1",
+      artifactGroup: "upload",
+      artifactType: "uploaded_source_artifact",
+      title: "service-baseline.xlsx",
+      fileName: "service-baseline.xlsx",
+      fileFormat: "xlsx",
+      sourcingStage: "scope",
+      lifecycleState: "current",
+      sourceRegisterId: "upload-1",
+    });
   });
 });
 

@@ -67,6 +67,8 @@ export interface ArtifactSectionContract {
   key: string;
   title: string;
   intent: string;
+  /** Prompt target for prose in this section; guidance, not a hard section minimum. */
+  targetProseWords?: number;
   /** Per-section word cap. The sum of all sections' maxWords must stay under hardMaxWords. */
   maxWords: number;
 }
@@ -126,42 +128,31 @@ export const CHARTER_CONTRACT: ArtifactContract = {
    */
   maxOutputTokens: 4_000,
   estimatedRenderedPages: "2-3",
-  // Redesigned 2026-07-25: 9 sections replacing the earlier 7. The prior
-  // design folded "discovery questions" and "evidence requested for P2" as
-  // bullets inside a generic "recommendation" section — thinner than the
-  // presentation contract's own promise of a dedicated table for that
-  // content. This design gives Discovery its own first-class section
-  // (discovery_preparation) with two real tables, so the Charter ends by
-  // transitioning cleanly into P2 instead of compressing it into an
-  // afterthought. It also splits "intended outcomes" (what Discovery should
-  // evaluate) from "success measures" (how success will be judged) — these
-  // were previously merged into one "success_criteria" section.
+  // Re-compressed 2026-09-25: the Charter remains a 7-section commitment
+  // instrument. Detailed Discovery/workshop instructions are deliberately not
+  // part of this artifact; they belong in the separate phase workshop guide.
   sections: [
     {
       key: "charter_decision",
-      title: "Charter Decision",
+      title: "Charter Decision & Immediate Next Steps",
       intent:
-        "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus a concise executive decision summary.",
-      maxWords: 100,
+        "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus the immediate owner actions and conditions.",
+      targetProseWords: 120,
+      maxWords: 140,
     },
     {
       key: "opportunity_context",
-      title: "Opportunity & Business Context",
+      title: "Opportunity, Context & Intended Outcomes",
       intent:
-        "Why this Move is being considered, why it matters now, the business opportunity or challenge, and expected business value direction. Only approved P0 capture, sponsor input, and approved enterprise context.",
-      maxWords: 150,
-    },
-    {
-      key: "intended_outcomes",
-      title: "Intended Outcomes",
-      intent:
-        "The business outcomes Discovery is intended to evaluate — objectives, not commitments or validated findings.",
-      maxWords: 120,
+        "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected value direction, and the outcomes Discovery is intended to evaluate. These are objectives, not validated findings.",
+      targetProseWords: 200,
+      maxWords: 220,
     },
     {
       key: "scope",
       title: "Scope & Out of Scope",
       intent: "A simple two-column table: In Scope / Out of Scope. Concise.",
+      targetProseWords: 50,
       maxWords: 150,
     },
     {
@@ -169,6 +160,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Success Measures",
       intent:
         "How the organization will determine whether Discovery was successful. Do not invent current-state baselines, target metrics, or financial benefits.",
+      targetProseWords: 110,
       maxWords: 120,
     },
     {
@@ -176,6 +168,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Sponsorship & Governance",
       intent:
         "Executive sponsor, decision authority, working team, governance cadence (if known). Unknown items labeled Client Decision Required.",
+      targetProseWords: 80,
       maxWords: 140,
     },
     {
@@ -183,21 +176,16 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Known Constraints & Dependencies",
       intent:
         "Only constraints and dependencies already supported by approved evidence — do not infer risks. Unknown items labeled To Validate During Discovery.",
+      targetProseWords: 110,
       maxWords: 120,
     },
     {
-      key: "discovery_preparation",
-      title: "Discovery Preparation",
+      key: "authorization_conditions",
+      title: "Authorization Conditions & Open Inputs",
       intent:
-        "Sets expectations for the Discovery phase — not the assessment itself. An executive table (Area / What to Expect / What We Need From You / Priority) across Business Process, People & Governance, Technology, Data, Performance, Risk & Controls; a second table of typical Discovery activities and durations; and a short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be generated after Charter approval — do not embed that detail here.",
-      maxWords: 250,
-    },
-    {
-      key: "authorization_next_steps",
-      title: "Authorization & Immediate Next Steps",
-      intent:
-        "Charter decision, immediate actions, conditions (if any), and the expected transition into P2.",
-      maxWords: 120,
+        "State the conditions under which the sponsor is authorizing Discovery and the few open inputs that must carry into the separate Discovery Workshop Guide. Do not include agendas, interview scripts, data-request tables, questionnaires, or workshop operating instructions here.",
+      targetProseWords: 140,
+      maxWords: 170,
     },
   ],
   forbiddenTopics: [
@@ -222,12 +210,11 @@ export const CHARTER_CONTRACT: ArtifactContract = {
   presentationElements: [
     "An executive Charter Decision box at the beginning.",
     "A two-column Scope / Out of Scope table.",
-    "A Discovery Preparation table (Area / What to Expect / What We Need From You / Priority).",
-    "A Discovery Activities table (typical activity / typical duration).",
+    "A compact Authorization Conditions / Open Inputs table.",
   ],
   boundaryStatement:
-    "This Charter authorizes and bounds the Discovery phase. It does not present a completed diagnosis, recommend a solution, define architecture, establish a future operating model, provide an implementation roadmap, or commit implementation funding.",
-  maxSubstantiveTables: 4,
+    "This Charter authorizes and bounds the Discovery phase. It does not present a completed diagnosis, recommend a solution, define architecture, establish a future operating model, provide a Discovery workshop guide, provide an implementation roadmap, or commit implementation funding.",
+  maxSubstantiveTables: 3,
   policy: {
     qualityContractRequired: true,
     visualRendererRequired: false,

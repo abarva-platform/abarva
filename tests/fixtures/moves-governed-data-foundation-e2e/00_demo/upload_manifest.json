@@ -1,0 +1,31 @@
+{
+  "default_review_state": "pending",
+  "upload_mode": "manual_product_ui_only",
+  "does_not_write_data": true,
+  "does_not_approve_evidence": true,
+  "initial_uploads": [
+    { "path": "02_p2_discover/01_data_governance_ownership.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "data_governance_ownership" },
+    { "path": "02_p2_discover/02_semantic_layer_certification.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "semantic_layer_certification" },
+    { "path": "02_p2_discover/03_data_lineage_audit_trail.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "data_lineage_audit_trail" },
+    { "path": "02_p2_discover/04_data_quality_rules.csv", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "data_quality_rules" },
+    { "path": "02_p2_discover/05_source_system_data_access.csv", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "source_system_data_access" },
+    { "path": "02_p2_discover/06_platform_architecture_readiness.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "platform_architecture_readiness" },
+    { "path": "02_p2_discover/07_master_identity_resolution.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "master_identity_resolution" },
+    { "path": "02_p2_discover/08_privacy_security_controls.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "privacy_security_controls" },
+    { "path": "02_p2_discover/09_model_risk_responsible_ai_controls.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "model_risk_responsible_ai_controls" },
+    { "path": "02_p2_discover/10_measurement_owner_cadence.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "measurement_owner_cadence" },
+    { "path": "02_p2_discover/11_finance_baseline_value_plan.md", "phase": 2, "evidence_type": "uploaded_evidence", "family_key": "finance_baseline_value_plan" },
+    { "path": "02_p2_discover/12_data_foundation_workshop_45m.md", "phase": 2, "evidence_type": "session_artifact", "family_key": null },
+    { "path": "02_p2_discover/13_security_privacy_review_20m.md", "phase": 2, "evidence_type": "session_artifact", "family_key": null }
+  ],
+  "deferred_uploads": [
+    { "path": "03_p3_deferred/14_solution_design_reviewer_redline.md", "phase": 3, "evidence_type": "session_artifact", "family_key": null, "upload_when": "Only after a P3 draft exists; upload and resolve through the product workflow." }
+  ],
+  "exclusions": [
+    "No employee-level or person-level source data",
+    "No real client facts, names, contacts, credentials, or approvals",
+    "No Finance-validated baseline or approved savings / investment / ROI",
+    "No pre-approved evidence, pre-cleared gates, or phase transition payloads",
+    "No P3 reviewer redline upload before a generated draft exists"
+  ]
+}

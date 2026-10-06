@@ -103,8 +103,6 @@ export interface UsersAccessPageView {
   subtitle: string;
   context: {
     tenant: string;
-    mode: string;
-    agent: string;
     data: string;
     liveStatus: string;
     liveStatusKind: ContextLiveStatus;
@@ -112,7 +110,6 @@ export interface UsersAccessPageView {
   editorial: {
     title: string;
     body: string;
-    contextUsed: ReadonlyArray<string>;
     evidenceStrength: EvidenceStrength;
     blocker?: string;
     primaryAction: { label: string; href: string };
@@ -434,8 +431,6 @@ export async function buildUsersAccessPageView(
       'Role inventory and access posture. No live invite API, no permission editor, no SSO yet — read-only for now.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Admin workspace',
-      agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',
       liveStatusKind: 'deferred',
@@ -443,7 +438,6 @@ export async function buildUsersAccessPageView(
     editorial: {
       title: editorial.title,
       body: editorial.body,
-      contextUsed: editorial.contextUsed,
       evidenceStrength: editorial.evidenceStrength,
       blocker: editorial.blocker ?? undefined,
       primaryAction: editorial.primaryAction,

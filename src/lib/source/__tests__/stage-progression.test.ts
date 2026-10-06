@@ -90,6 +90,52 @@ const STRATEGY_GATES = (
 const GEN = ["d01_strategy_memo", "d05_scope_memo", "d09_rfp_pack"];
 
 describe("computeStageProgression", () => {
+  it("keeps a parsed but unlinked Strategy trigger in the upload queue", () => {
+    const view = computeStageProgression({
+      stage: "strategy",
+      criteria: STRATEGY_GATES(),
+      evidence: [evidence("EVID-SRC-STR-TRIGGER", "Parsed")],
+      artifacts: [],
+      generatableCodes: GEN,
+    });
+
+    expect(view.needs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "upload",
+          requirementId: "EVID-SRC-STR-TRIGGER",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps an unbacked Available incumbent package in the upload queue", () => {
+    const view = computeStageProgression({
+      stage: "strategy",
+      criteria: STRATEGY_GATES(),
+      evidence: [evidence("EVID-SRC-STR-INCUMBENT", "Available")],
+      artifacts: [],
+      generatableCodes: GEN,
+    });
+    expect(view.needs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "upload", requirementId: "EVID-SRC-STR-INCUMBENT" }),
+    ]));
+  });
+  it("removes only the declared-absent incumbent from the upload queue", () => {
+    const view = computeStageProgression({
+      stage: "strategy", criteria: STRATEGY_GATES(), artifacts: [], generatableCodes: GEN,
+      evidence: [{
+        ...evidence("EVID-SRC-STR-INCUMBENT", "Not Requested"),
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "This net-new service has no incumbent agreement or renewal history.",
+        applicabilityActorUserId: "event-owner",
+        applicabilityDecidedAt: "2026-09-28T00:00:00Z",
+      }],
+    });
+    expect(view.needs.some((need) => need.kind === "upload" && need.requirementId === "EVID-SRC-STR-INCUMBENT")).toBe(false);
+    expect(view.needs.some((need) => need.kind === "upload" && need.requirementId === "EVID-SRC-STR-SPEND-BASELINE")).toBe(true);
+    expect(view.allClear).toBe(false);
+  });
   it("empty Strategy stage → upload evidence + generate/prepare deliverables, none clear", () => {
     const view = computeStageProgression({
       stage: "strategy",
@@ -130,16 +176,23 @@ describe("computeStageProgression", () => {
         criterion("GATE-STRATEGY-03", "met"),
       ],
       evidence: [
-        evidence("EVID-SRC-STR-INCUMBENT", "Available"),
-        evidence("EVID-SRC-STR-SPONSOR-COMMIT", "Loaded"),
+        {
+          ...evidence("EVID-SRC-STR-TRIGGER", "Parsed"),
+          sourceArtifactId: "artifact-trigger",
+        },
+        { ...evidence("EVID-SRC-STR-INCUMBENT", "Available"), sourceArtifactId: "artifact-incumbent" },
+        { ...evidence("EVID-SRC-STR-SPEND-BASELINE", "Available"), sourceArtifactId: "artifact-spend" },
+        { ...evidence("EVID-SRC-STR-SPONSOR-COMMIT", "Loaded"), sourceArtifactId: "artifact-commitment" },
       ],
       artifacts: [artifact("d01_strategy_memo", "needs_review", "draft body")],
       generatableCodes: GEN,
     });
 
     expect(view.allClear).toBe(false);
-    // no upload needs (evidence satisfied), no generate for d01 (drafted)
-    expect(view.needs.some((n) => n.kind === "upload")).toBe(false);
+    // no required upload needs (required evidence satisfied), no generate for d01 (drafted)
+    expect(
+      view.needs.some((n) => n.kind === "upload" && !n.optional),
+    ).toBe(false);
     expect(
       view.needs.some(
         (n) => n.kind === "generate" && n.artifactCode === "d01_strategy_memo",

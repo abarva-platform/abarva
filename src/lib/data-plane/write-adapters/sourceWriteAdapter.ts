@@ -36,10 +36,14 @@ import {
 } from "../read-adapters/azureSession";
 import { resolveDataPlaneForTenant } from "../read-adapters/resolveDataPlane";
 import type { DataPlane } from "./types";
+import {
+  persistSourceAuthorityVersionWithRun,
+  type PersistSourceAuthorityVersionInput,
+} from "@/lib/source/new-workspace/authority-version-store";
 
 // --- write inputs ----------------------------------------------------------
 
-/** Insert a participant row when a Source event is created via the API path. */
+/** Assign the named creator as owner of a newly created Source event. */
 export interface SourceParticipantInsert {
   readonly clientKey: string;
   readonly sourceEventId: string;
@@ -57,6 +61,14 @@ export interface SourceApprovalWrite {
   readonly notes: string | null;
   /** The canonical stage key this approval was for, or null if unknown. */
   readonly stageKey?: string | null;
+  readonly authorityApproval?: {
+    readonly authorityKind: "request" | "strategy";
+    readonly versionId: string;
+    readonly role: "request_acceptor" | "business_owner" | "procurement_lead";
+    readonly decision: "approved" | "changes_requested";
+    readonly actorUserId: string;
+    readonly reason: string | null;
+  };
 }
 
 /** Append a gate-criterion approval/waiver record and return its id. */
@@ -102,6 +114,17 @@ export interface SourceLifecycleTransition {
   readonly eventId: string;
   readonly clientKey: string;
   readonly lifecycleState: string;
+  readonly updatedAtIso: string;
+}
+
+/** Correct governed intake fields without changing lifecycle or stage state. */
+export interface SourceEventIntakeUpdate {
+  readonly eventId: string;
+  readonly clientKey: string;
+  readonly triggerDescription?: string;
+  readonly scopeDescription?: string;
+  readonly decisionOwner?: string;
+  readonly estimatedValueUsd?: number;
   readonly updatedAtIso: string;
 }
 
@@ -176,6 +199,16 @@ export interface SourceWriteAdapter {
   transitionLifecycle(
     input: SourceLifecycleTransition,
   ): Promise<SourceWriteOutcome<void>>;
+  /** Correct whitelisted event-intake fields on the tenant-owned event. */
+  updateEventIntake(
+    input: SourceEventIntakeUpdate,
+  ): Promise<SourceWriteOutcome<void>>;
+  /** Atomically correct intake fields and write/reuse the resulting Request version. */
+  updateEventIntakeWithRequestAuthority(
+    input: SourceEventIntakeUpdate & {
+      readonly requestAuthority: PersistSourceAuthorityVersionInput;
+    },
+  ): Promise<SourceWriteOutcome<void>>;
   /** Update a gate-criterion row; returns the updated row. */
   updateGateCriterion(
     input: GateCriterionUpdate,
@@ -203,9 +236,7 @@ export interface SourceWriteAdapter {
 export type SupabaseFactory = () => SupabaseClient;
 
 /**
- * Build the Supabase source write adapter. Every statement is the verbatim
- * pre-seam `.insert()` / `.update()` call — the produced rows are
- * byte-faithful to the routes' prior behavior. The Supabase client factory is
+ * Build the Supabase source write adapter. The Supabase client factory is
  * injectable so tests drive it without a live backend.
  */
 export function createSupabaseSourceWriteAdapter(
@@ -222,30 +253,29 @@ export function createSupabaseSourceWriteAdapter(
           source_event_id: input.sourceEventId,
           source_event_row_id: input.sourceEventId,
           user_id: input.userId,
-          role: "source creator",
-          approval_authority: "contributor",
+          role: "event owner",
+          approval_authority: "approver",
           source_access_level: "source_member",
           can_view_financial: false,
           can_upload_source_artifacts: true,
           can_generate_sourcing_artifacts: true,
-          can_publish_sourcing_artifacts: false,
-          can_approve_source_stages: false,
-          can_approve_award: false,
+          can_publish_sourcing_artifacts: true,
+          can_approve_source_stages: true,
+          can_approve_award: true,
           notify_on: ["source_event_update", "approval_needed"],
         });
-      // The route only treats a missing-table error as benign.
-      if (
-        error &&
-        !/source_event_participants|schema cache|does not exist/i.test(
-          error.message,
-        )
-      ) {
+      if (error) {
         return fail(`source participant assignment failed: ${error.message}`);
       }
       return ok();
     },
 
     async applyApproval(input) {
+      if (input.authorityApproval) {
+        return fail(
+          "exact-version authority approvals require the Azure Postgres write path",
+        );
+      }
       const sb = getClient();
       const { error: updateError } = await sb
         .from("source_events")
@@ -318,6 +348,37 @@ export function createSupabaseSourceWriteAdapter(
         .eq("client_key", input.clientKey);
       if (error) return fail(error.message);
       return ok();
+    },
+
+    async updateEventIntake(input) {
+      const columns: Record<string, unknown> = {
+        updated_at: input.updatedAtIso,
+      };
+      if (input.triggerDescription !== undefined) {
+        columns.trigger_description = input.triggerDescription;
+      }
+      if (input.scopeDescription !== undefined) {
+        columns.scope_description = input.scopeDescription;
+      }
+      if (input.decisionOwner !== undefined) {
+        columns.decision_owner = input.decisionOwner;
+      }
+      if (input.estimatedValueUsd !== undefined) {
+        columns.estimated_value_usd = input.estimatedValueUsd;
+      }
+      const { error } = await getClient()
+        .from("source_events")
+        .update(columns)
+        .eq("id", input.eventId)
+        .eq("client_key", input.clientKey);
+      if (error) return fail(error.message);
+      return ok();
+    },
+
+    async updateEventIntakeWithRequestAuthority() {
+      return fail(
+        "Request authority versioning requires the Azure Postgres write path",
+      );
     },
 
     async updateGateCriterion(input) {
@@ -466,8 +527,8 @@ export function createAzureSourceWriteAdapter(
                 can_upload_source_artifacts, can_generate_sourcing_artifacts,
                 can_publish_sourcing_artifacts, can_approve_source_stages,
                 can_approve_award, notify_on)
-             VALUES ($1,$2::text,$2::uuid,$3,'source creator','contributor','source_member',
-                     false,true,true,false,false,false,$4)`,
+             VALUES ($1,$2::text,$2::uuid,$3,'event owner','approver','source_member',
+                     false,true,true,true,true,true,$4)`,
             [
               input.clientKey,
               input.sourceEventId,
@@ -480,7 +541,6 @@ export function createAzureSourceWriteAdapter(
       } catch (err) {
         if (isUniqueViolation(err)) return ok();
         const msg = errMessage(err);
-        if (/source_event_participants|does not exist/i.test(msg)) return ok();
         return fail(`source participant assignment failed: ${msg}`);
       }
     },
@@ -488,6 +548,64 @@ export function createAzureSourceWriteAdapter(
     async applyApproval(input) {
       try {
         await session(async (run) => {
+          if (input.authorityApproval) {
+            // Intake corrections lock the event before its version; use that order.
+            const eventRows = await run<{ id: string }>(
+              `SELECT id FROM source_events
+                WHERE id = $1::uuid AND client_key = $2
+                FOR UPDATE`,
+              [input.eventId, input.clientKey],
+            );
+            if (!eventRows[0]?.id) {
+              throw new Error("Source event not found for approval");
+            }
+            // The version writer locks this row too; hold it through approval commit.
+            const currentRows = await run<{ id: string }>(
+              `SELECT id FROM source_event_authority_versions
+                WHERE id = $1::uuid
+                  AND event_id = $2::uuid
+                  AND client_key = $3
+                  AND authority_kind = $4
+                  AND superseded_at IS NULL
+                FOR UPDATE`,
+              [
+                input.authorityApproval.versionId,
+                input.eventId,
+                input.clientKey,
+                input.authorityApproval.authorityKind,
+              ],
+            );
+            if (!currentRows[0]?.id) {
+              throw new Error("request authority version is not current");
+            }
+            const authorityRows = await run<{ id: string }>(
+              `INSERT INTO source_event_authority_version_approvals
+                 (event_id, client_key, authority_kind, version_id, role,
+                  decision, actor_user_id, reason)
+               SELECT v.event_id, v.client_key, v.authority_kind, v.id,
+                      $5, $6, $7, $8
+                 FROM source_event_authority_versions v
+                WHERE v.id = $1::uuid
+                  AND v.event_id = $2::uuid
+                  AND v.client_key = $3
+                  AND v.authority_kind = $4
+                  AND v.superseded_at IS NULL
+               RETURNING id`,
+              [
+                input.authorityApproval.versionId,
+                input.eventId,
+                input.clientKey,
+                input.authorityApproval.authorityKind,
+                input.authorityApproval.role,
+                input.authorityApproval.decision,
+                input.authorityApproval.actorUserId,
+                input.authorityApproval.reason,
+              ],
+            );
+            if (!authorityRows[0]?.id) {
+              throw new Error("request authority version is not current");
+            }
+          }
           await run(
             `UPDATE source_events SET lifecycle_state = $1
              WHERE id = $2 AND client_key = $3`,
@@ -578,6 +696,83 @@ export function createAzureSourceWriteAdapter(
             ],
           ),
         );
+        return ok();
+      } catch (err) {
+        return fail(errMessage(err));
+      }
+    },
+
+    async updateEventIntake(input) {
+      try {
+        const assignments = ["updated_at = $1"];
+        const values: unknown[] = [input.updatedAtIso];
+        if (input.triggerDescription !== undefined) {
+          values.push(input.triggerDescription);
+          assignments.push(`trigger_description = $${values.length}`);
+        }
+        if (input.scopeDescription !== undefined) {
+          values.push(input.scopeDescription);
+          assignments.push(`scope_description = $${values.length}`);
+        }
+        if (input.decisionOwner !== undefined) {
+          values.push(input.decisionOwner);
+          assignments.push(`decision_owner = $${values.length}`);
+        }
+        if (input.estimatedValueUsd !== undefined) {
+          values.push(input.estimatedValueUsd);
+          assignments.push(`estimated_value_usd = $${values.length}`);
+        }
+        values.push(input.eventId, input.clientKey);
+        await session((run) =>
+          run(
+            `UPDATE source_events
+               SET ${assignments.join(", ")}
+             WHERE id = $${values.length - 1} AND client_key = $${values.length}`,
+            values,
+          ),
+        );
+        return ok();
+      } catch (err) {
+        return fail(errMessage(err));
+      }
+    },
+
+    async updateEventIntakeWithRequestAuthority(input) {
+      try {
+        await session(async (run) => {
+          const assignments = ["updated_at = $1"];
+          const values: unknown[] = [input.updatedAtIso];
+          if (input.triggerDescription !== undefined) {
+            values.push(input.triggerDescription);
+            assignments.push(`trigger_description = $${values.length}`);
+          }
+          if (input.scopeDescription !== undefined) {
+            values.push(input.scopeDescription);
+            assignments.push(`scope_description = $${values.length}`);
+          }
+          if (input.decisionOwner !== undefined) {
+            values.push(input.decisionOwner);
+            assignments.push(`decision_owner = $${values.length}`);
+          }
+          if (input.estimatedValueUsd !== undefined) {
+            values.push(input.estimatedValueUsd);
+            assignments.push(`estimated_value_usd = $${values.length}`);
+          }
+          values.push(input.eventId, input.clientKey);
+          const updated = await run<{ id: string }>(
+            `UPDATE source_events
+                SET ${assignments.join(", ")}
+              WHERE id = $${values.length - 1} AND client_key = $${values.length}
+              RETURNING id`,
+            values,
+          );
+          if (!updated[0]?.id)
+            throw new Error("Source event not found for intake update");
+          await persistSourceAuthorityVersionWithRun(
+            run,
+            input.requestAuthority,
+          );
+        });
         return ok();
       } catch (err) {
         return fail(errMessage(err));

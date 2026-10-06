@@ -17,6 +17,23 @@ function compactArtifactPointer(
   return `${artifact} generated artifact: ${text.slice(0, 1200)}`;
 }
 
+function carryForwardEvidenceDigest(context: SolutionContext): PhaseDigest {
+  return {
+    ...(context.baselineMetrics
+      ? { baselineMetrics: context.baselineMetrics }
+      : {}),
+    ...(context.metricsThatMatter?.length
+      ? { metricsThatMatter: context.metricsThatMatter }
+      : {}),
+    ...(context.evidenceTaxonomy?.length
+      ? { evidenceTaxonomy: context.evidenceTaxonomy }
+      : {}),
+    ...(context.clientActionableMissingInputs?.length
+      ? { clientActionableMissingInputs: context.clientActionableMissingInputs }
+      : {}),
+  };
+}
+
 export function buildGeneratedPhaseDigest(args: {
   artifact: DeliverableKey;
   phase: number;
@@ -25,9 +42,11 @@ export function buildGeneratedPhaseDigest(args: {
 }): PhaseDigest {
   const { artifact, phase, html, context } = args;
   const pointer = compactArtifactPointer(artifact, html);
+  const evidenceDigest = carryForwardEvidenceDigest(context);
 
   if (artifact === "charter") {
     return {
+      ...evidenceDigest,
       useCase:
         context.useCase ?? context.useCaseCandidate ?? context.problemSeed,
       kpis: context.kpis ?? [
@@ -50,6 +69,7 @@ export function buildGeneratedPhaseDigest(args: {
 
   if (artifact === "discovery_report" || artifact === "root_cause_worksheet") {
     return {
+      ...evidenceDigest,
       currentState: context.currentState,
       gaps: context.gaps?.length
         ? context.gaps
@@ -73,6 +93,7 @@ export function buildGeneratedPhaseDigest(args: {
 
   if (artifact === "solution_approach_options") {
     return {
+      ...evidenceDigest,
       approach: context.approach ?? pointer,
       options: context.options,
       tradeoffsAccepted: context.tradeoffsAccepted,
@@ -89,6 +110,7 @@ export function buildGeneratedPhaseDigest(args: {
 
   if (artifact === "target_state_architecture") {
     return {
+      ...evidenceDigest,
       architecture: pointer,
       patterns: context.patterns,
       integrationContracts: context.integrationContracts,
@@ -109,6 +131,7 @@ export function buildGeneratedPhaseDigest(args: {
     artifact === "sourcing_strategy"
   ) {
     return {
+      ...evidenceDigest,
       solutionDesign: pointer,
       decisions: [
         {
@@ -123,6 +146,7 @@ export function buildGeneratedPhaseDigest(args: {
 
   if (artifact === "execution_roadmap") {
     return {
+      ...evidenceDigest,
       roadmap: pointer,
       risks: context.risks,
       decisions: [
@@ -142,6 +166,7 @@ export function buildGeneratedPhaseDigest(args: {
     artifact === "tower_metrics_plan"
   ) {
     return {
+      ...evidenceDigest,
       businessCase: pointer,
       investmentAsk: context.investmentAsk,
       valuePlan: context.valuePlan,
@@ -149,6 +174,7 @@ export function buildGeneratedPhaseDigest(args: {
   }
 
   return {
+    ...evidenceDigest,
     decisions: [
       {
         phase,

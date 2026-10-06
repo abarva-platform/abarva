@@ -428,12 +428,11 @@ for (const a of ARTIFACTS) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Step 10 — Phase-1 entry deliverables (gateLifecycle).
+// Step 10 — Reference outline availability (not a runtime generation proof).
 // ─────────────────────────────────────────────────────────────────────────────
 {
-  // gateLifecycle's pack-bound deliverable content uses the same
-  // bindFunctionPackForArtifact path; if step 5 binds, phase-1 entry will too.
-  // We exercise the binding for two phase-1 deliverable types.
+  // This probes reference structure only. It does not execute a Moves build,
+  // persist a deliverable, or prove a phase-entry workflow.
   const types = ['business_case', 'discover_brief', 'solution_architecture', 'mobilization_plan'] as const;
   const lines: string[] = [];
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -447,12 +446,12 @@ for (const a of ARTIFACTS) {
   }
   record({
     step: 10,
-    title: 'Phase-1 entry deliverables (gateLifecycle bindings)',
+    title: 'Reference outline availability (not runtime generation)',
     status: 'OK',
     detail: lines.join('\n') +
-      '\nphase-1 entry deliverable generation in gateLifecycle.ts uses the same ' +
-      'pack-bound outline path — when the Move binds, deliverables get real ' +
-      'kernel-derived structure rather than improvised prose.',
+      '\nThis confirms reference outlines are available only. Deliverables are ' +
+      'generated through explicit product actions and reviewed by an authorized ' +
+      'workspace user; this probe is not end-to-end workflow evidence.',
   });
 }
 

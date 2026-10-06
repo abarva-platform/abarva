@@ -38,7 +38,6 @@ import { cx } from "../primitives";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
-type ValueProofLayout = "grid" | "stacked";
 type CostFinding = {
   id: string;
   badge: string;
@@ -93,6 +92,24 @@ function formatOptionalUsdM(value: number | null | undefined): string {
 function humanizeLabel(value: string | null | undefined): string {
   if (!value) return "Not loaded";
   return value.replace(/_/g, " ");
+}
+
+function nextStepLabel(value: string | null): string {
+  const normalized = value?.replace(/_/g, " ").trim().toLowerCase();
+  if (!normalized) return "Not loaded";
+  if (normalized.includes("link") && normalized.includes("value")) {
+    return "Link cases";
+  }
+  if (normalized.includes("measured outcome")) {
+    return "Capture actuals";
+  }
+  if (normalized.includes("finance")) {
+    return "Finance review";
+  }
+  if (normalized.includes("usage")) {
+    return "Map usage";
+  }
+  return humanizeLabel(value);
 }
 
 function valueClaimCount(view: TowerCommandCenterView): number {
@@ -473,47 +490,15 @@ export function ValueProofContractView({
   const unproven = unprovenPromisedUsd(view);
   const programs = topPrograms(view, 20);
   const hasTrajectory = view.valueTrajectory.length > 0;
-  const [layout, setLayout] = useState<ValueProofLayout>("grid");
   return (
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
-      <div className={styles.contractModeRow}>
-        <SectionTitle
-          title="Value proof"
-          subtitle={`${valueClaimCount(view)} claims · proof funnel`}
-        />
-        <div
-          className={styles.contractSegments}
-          role="tablist"
-          aria-label="Value proof display mode"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={layout === "stacked"}
-            className={layout === "stacked" ? styles.segmentOn : undefined}
-            onClick={() => setLayout("stacked")}
-          >
-            Stacked
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={layout === "grid"}
-            className={layout === "grid" ? styles.segmentOn : undefined}
-            onClick={() => setLayout("grid")}
-          >
-            2 × 2
-          </button>
-        </div>
-      </div>
+      <SectionTitle
+        title="Value proof"
+        subtitle={`${valueClaimCount(view)} claims · proof funnel`}
+      />
 
-      <section
-        className={cx(
-          styles.valueProofGrid,
-          layout === "stacked" && styles.valueProofGridStacked,
-        )}
-      >
+      <section className={styles.valueProofGrid}>
         <article className={styles.contractCard}>
           {cardTitle(
             "Investment to value conversion",
@@ -1180,7 +1165,7 @@ function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
     tasks: 1,
     unit: "Task",
     valueUsd: action.amountExposedUsd,
-    due: humanizeLabel(action.due),
+    due: nextStepLabel(action.due),
     tone:
       action.lane === "fix" || action.lane === "stop"
         ? ("red" as Tone)

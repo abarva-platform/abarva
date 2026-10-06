@@ -23,7 +23,7 @@ function formatBandValue(value: number): string {
 }
 
 function bandHref(band: SourceTriageBand, sort: SourceTriageSort): string {
-  return `/source/workspace?decisionBand=${band}&sort=${sort}`;
+  return `/source?decisionBand=${band}&sort=${sort}`;
 }
 
 export function SourceTriageBands({

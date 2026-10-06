@@ -34,11 +34,18 @@ describe("buildPreviewData", () => {
     expect(d.byObjectType.enterprise_context_chunks).toBe(5);
   });
 
-  it("renders markdown with totals, SkyHarbor section, and the SQL plan", () => {
-    const d = buildPreviewData([r({})].map(evaluatePromotion));
+  it("counts no row into the airline section for a different tenant", () => {
+    const d = buildPreviewData([r({ client_key: "meridian-health" })].map(evaluatePromotion));
+    expect(d.skyharbor.total).toBe(0);
+  });
+
+  it("renders markdown with totals, airline tenant section, and the SQL plan", () => {
+    const d = buildPreviewData([r({ client_key: "skyharbor-air" })].map(evaluatePromotion));
     const md = renderPreviewMarkdown(d, "2026-05-09T00:00:00Z");
     expect(md).toMatch(/Total rows evaluated: 1/);
-    expect(md).toMatch(/SkyHarbor Air/);
+    // The section heading prints the tenant's neutral demo label on purpose;
+    // the row count under it proves the key resolved.
+    expect(md).toMatch(/## Airline Demo \(tenant-specific\)\n\n- Rows: \*\*1\*\*/);
     expect(md).toMatch(/READ-ONLY: no source rows mutated/);
     expect(md).toMatch(/UPDATE public\.governed_object_readiness/);
   });

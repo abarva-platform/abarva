@@ -104,6 +104,8 @@ const extractProgramEvidenceFromUploadBufferMock = jest.fn(
           ? 'docx-mammoth'
           : args.mimeType.includes('spreadsheetml')
             ? 'exceljs-xlsx'
+            : args.mimeType.includes('presentationml')
+              ? 'pptx-jszip'
             : 'text-line-parser',
       warnings: [],
     },
@@ -284,8 +286,8 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
       status: 'captured',
       parseMethod: 'pdf-parse',
       warnings: [],
-      whatFound: ['uploaded evidence captured'],
-      whereUsed: ['Move workspace'],
+      whatFound: ['P1 working evidence captured; content requires human review'],
+      whereUsed: ['P1 Charter review'],
     });
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
     expect(recordAttachmentUploadMock).toHaveBeenCalledTimes(1);
@@ -333,8 +335,8 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
       status: 'captured',
       parseMethod: 'text-line-parser',
       warnings: [],
-      whatFound: ['uploaded evidence captured'],
-      whereUsed: ['Move workspace'],
+      whatFound: ['stakeholder input for charter shaping'],
+      whereUsed: ['P1 Charter review'],
     });
     expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
       scanStatus: 'skipped',
@@ -392,6 +394,39 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
       id: 'evidence-1',
       status: 'captured',
       parseMethod: 'exceljs-xlsx',
+    });
+    expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
+      evidenceType: 'workshop_output',
+      attachmentId: 'att-1',
+    });
+  });
+
+  it('captures PPTX uploads as synchronous structured evidence', async () => {
+    const req = makeMultipartRequest(
+      'phase-workshop-readout.pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      1024,
+    );
+    const res = await POST(req, PROGRAM_PARAMS);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      attachment: { scanStatus: string; scanFindings: Record<string, unknown> | null };
+      evidence: { id: string; status: string; parseMethod: string };
+    };
+    expect(body.attachment.scanStatus).toBe('skipped');
+    expect(body.attachment.scanFindings).toMatchObject({
+      reason: 'synchronous_evidence_extraction_only',
+    });
+    expect(body.evidence).toMatchObject({
+      id: 'evidence-1',
+      status: 'captured',
+      parseMethod: 'pptx-jszip',
+    });
+    expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
+      scanStatus: 'skipped',
+      scanFindings: expect.objectContaining({
+        reason: 'synchronous_evidence_extraction_only',
+      }),
     });
     expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
       evidenceType: 'workshop_output',

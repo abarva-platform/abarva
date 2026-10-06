@@ -67,9 +67,26 @@ function isToolRollout(a: TowerAiView): boolean {
   return a.sourceFile === "23_ai_tool_rollout.csv";
 }
 
+function optionalCount(value: number | null | undefined): string {
+  return value === null || value === undefined ? "Not loaded" : formatCount(value);
+}
+
+function optionalPct(value: number | null | undefined): string {
+  return value === null || value === undefined
+    ? "Not loaded"
+    : `${Math.round(value)}%`;
+}
+
+function adoptionGap(a: TowerAiView): string {
+  if (a.adoptionTargetPct === null || a.adoptionActualPct == null) {
+    return "Not loaded";
+  }
+  return `${Math.max(0, Math.round(a.adoptionTargetPct - a.adoptionActualPct))} pts`;
+}
+
 export function plainAi(a: TowerAiView): string {
   if (isToolRollout(a)) {
-    return "This is an AI tool rollout. Its value should be traced through linked business cases, adoption evidence and the controls that govern use.";
+    return "This is an AI tool rollout. Read it through adoption against target, active usage, linked business cases and the controls that govern use.";
   }
   const definition: Record<TowerAiView["kind"], string> = {
     funded: "a real, funded program with its own budget and approvals",
@@ -126,10 +143,13 @@ export function AiInitiativeDrawer({
       {a ? (
         <>
           <div className={styles.drGrid}>
-            <DrawerStat label="AI spend" value={formatUsdM(a.aiSpendUsd)} />
+            <DrawerStat
+              label={isToolRollout(a) ? "Tool spend" : "AI spend"}
+              value={a.aiSpendLoaded ? formatUsdM(a.aiSpendUsd) : "Not loaded"}
+            />
             <DrawerStat label="Recommended posture" value={a.posture} small />
             <DrawerStat
-              label="Value potential"
+              label={isToolRollout(a) ? "Adoption potential" : "Value potential"}
               value={`${a.valueScore}/100`}
               small
               tone="vTeal"
@@ -152,6 +172,47 @@ export function AiInitiativeDrawer({
             <div className={styles.pk}>In plain terms</div>
             <p className={styles.pt}>{plainAi(a)}</p>
           </div>
+
+          {isToolRollout(a) ? (
+            <>
+              <DrawerSection note="usage, target and controls">
+                Tool rollout detail
+              </DrawerSection>
+              <DrawerRow
+                label="Rollout goal"
+                value={a.rolloutGoal ?? "Not recorded"}
+              />
+              <DrawerRow
+                label="Rollout stage"
+                value={a.rolloutStage ?? "Not recorded"}
+              />
+              <DrawerRow
+                label="Target users"
+                value={optionalCount(a.rolloutTargetUsers)}
+              />
+              <DrawerRow
+                label="Enabled users"
+                value={optionalCount(a.enabledUsers)}
+              />
+              <DrawerRow
+                label="Monthly active users"
+                value={optionalCount(a.monthlyActiveUsers)}
+              />
+              <DrawerRow
+                label="Adoption"
+                value={`${optionalPct(a.adoptionActualPct)} vs ${optionalPct(
+                  a.adoptionTargetPct,
+                )} target`}
+                sub="Actual active adoption is compared only with this rollout's own loaded target."
+              />
+              <DrawerRow label="Adoption gap" value={adoptionGap(a)} />
+              <DrawerRow
+                label="Linked business cases"
+                value={optionalCount(a.linkedBusinessCaseCount)}
+                sub="Cases are loaded links from the rollout record, not inferred from vendor name."
+              />
+            </>
+          ) : null}
 
           {/*
             Where the case sits, and what stopped it. The approved design leads its drill-down
@@ -425,6 +486,34 @@ export function AiInitiativeDrawer({
               </span>{" "}
               · usage feed
             </div>
+            {isToolRollout(a) ? (
+              <>
+                <DrawerRow
+                  label="Source system"
+                  value={a.sourceSystem ?? "Not recorded"}
+                />
+                <DrawerRow
+                  label="Source record"
+                  value={a.sourceRecordId ?? "Not recorded"}
+                />
+                <DrawerRow
+                  label="Extracted"
+                  value={a.extractDate ?? "Not recorded"}
+                />
+                <DrawerRow
+                  label="As of"
+                  value={a.sourceAsOfDate ?? "Not recorded"}
+                />
+                <DrawerRow
+                  label="Refresh cadence"
+                  value={a.refreshCadence ?? "Not recorded"}
+                />
+                <DrawerRow
+                  label="Quality state"
+                  value={a.sourceQualityState ?? "Not recorded"}
+                />
+              </>
+            ) : null}
           </div>
         </>
       ) : null}

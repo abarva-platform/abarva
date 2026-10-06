@@ -4,6 +4,7 @@ import {
   isFoundationRouteAllowed,
   isFoundationRouteAllowedForMetadata,
   resolveFoundationTenantKeyFromMetadata,
+  resolveFoundationTenantKeyFromSessionInput,
 } from "@/lib/auth/foundation-route-access";
 
 describe("foundation route access", () => {
@@ -43,6 +44,26 @@ describe("foundation route access", () => {
         clientId: "Airline Demo",
       }),
     ).toBe("airline-demo-new");
+  });
+
+  it("returns the canonical key for a registered non-canonical alias", () => {
+    expect(
+      resolveFoundationTenantKeyFromSessionInput({ tenantKey: "skyharbor" }),
+    ).toBe("skyharbor-air");
+  });
+
+  it("rejects unregistered non-canonical aliases", () => {
+    expect(
+      resolveFoundationTenantKeyFromMetadata({
+        foundationTenant: true,
+        tenantKey: "skyharbor-air-shadow",
+      }),
+    ).toBeNull();
+    expect(
+      resolveFoundationTenantKeyFromSessionInput({
+        tenantKey: "skyharbor-air-shadow",
+      }),
+    ).toBeNull();
   });
 
   it("allows only the legacy preview surface and supporting APIs without metadata", () => {

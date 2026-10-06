@@ -46,6 +46,8 @@ commit_changed_migrations() {
   fi
 
   echo "[vercel-build] Migration files changed:"
+  # shellcheck disable=SC2001  # prefixing every line of a multi-line
+  # string is what sed is for; ${v//s/r} cannot anchor per line.
   echo "${changed_files}" | sed 's/^/[vercel-build]   - /'
   return 0
 }

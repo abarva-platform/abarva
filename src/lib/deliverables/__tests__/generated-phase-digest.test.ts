@@ -37,4 +37,32 @@ describe("generated phase digest", () => {
     });
     expect(architectureMayProceed(ctx).ready).toBe(true);
   });
+
+  it("carries exact diagnostic evidence forward after discovery generation", () => {
+    const ctx = applyPhaseDigest(emptySolutionContext("m", "t"), {
+      currentState: "Care-gap closure and interface monitoring evidence captured.",
+      gaps: ["Interface monitoring incomplete"],
+      baselineMetrics: {
+        "Care-gap closure rate": "41.2% [quality_measures.csv]",
+        "Unmonitored interfaces": "33 of 86 plus 18 partial [interface_inventory.csv]",
+      },
+      metricsThatMatter: [
+        {
+          label: "Open care gaps",
+          value: "1,142,000",
+          source: "care_gap_cells.csv",
+        },
+      ],
+    });
+
+    const digest = buildGeneratedPhaseDigest({
+      artifact: "discovery_report",
+      phase: 2,
+      html: "<html><body><svg></svg><h1>Discovery</h1></body></html>",
+      context: ctx,
+    });
+
+    expect(digest.baselineMetrics).toEqual(ctx.baselineMetrics);
+    expect(digest.metricsThatMatter).toEqual(ctx.metricsThatMatter);
+  });
 });

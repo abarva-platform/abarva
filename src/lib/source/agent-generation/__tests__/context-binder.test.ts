@@ -1,4 +1,5 @@
-import { buildSourceGenerationContext } from "@/lib/source/agent-generation/context-binder";
+import { buildSourceGenerationContext, collectUpstreamBodies } from "@/lib/source/agent-generation/context-binder";
+import type { SourceGenerationContext } from "@/lib/source/agent-generation/types";
 import type { SourcingEventDetail } from "@/lib/source/types";
 
 jest.mock("@/lib/source/canvas-substrate/queries", () => ({
@@ -18,6 +19,7 @@ jest.mock("@/lib/active-client", () => ({
 }));
 
 jest.mock("@/lib/client-config", () => ({
+  ...jest.requireActual("@/lib/client-config"),
   canonicalClientDisplayName: jest.fn(() => "Apex Retail"),
 }));
 
@@ -51,6 +53,11 @@ jest.mock("@/lib/source/archetypes/event-archetype-resolver", () => ({
 jest.mock("@/lib/source/stage-guidebooks/repository", () => ({
   __esModule: true,
   getSourceStageGuidebook: jest.fn(),
+}));
+
+jest.mock("@/lib/source/vendor-response-persistence", () => ({
+  __esModule: true,
+  readNormalizedVendorResponsePackages: jest.fn(),
 }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -98,6 +105,12 @@ const { getSourceStageGuidebook } = jest.requireMock(
 
 const { getCurrentUser } = jest.requireMock("@/lib/auth/current-user") as {
   getCurrentUser: jest.Mock;
+};
+
+const { readNormalizedVendorResponsePackages } = jest.requireMock(
+  "@/lib/source/vendor-response-persistence",
+) as {
+  readNormalizedVendorResponsePackages: jest.Mock;
 };
 
 function makeFluentResult(data: unknown[] = []) {
@@ -201,12 +214,134 @@ describe("buildSourceGenerationContext", () => {
       industry_code: "RETAIL",
     });
     getSourceStageGuidebook.mockResolvedValue(null);
+    readNormalizedVendorResponsePackages.mockResolvedValue([]);
+  });
+
+  it("binds normalized vendor response packages as generation evidence", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    readNormalizedVendorResponsePackages.mockResolvedValue([
+      {
+        artifactId: "response-1",
+        originalName: "vendor-a.xlsx",
+        receivedAt: "2026-09-09T00:00:00.000Z",
+        vendorId: "vendor-a",
+        vendorName: "Vendor A",
+        rows: [],
+        analytics: {
+          requirementCount: 110,
+          requirementCoverageScore: 100,
+          mandatoryCompletenessScore: 100,
+          evidenceCoverageScore: 100,
+          pricingTraceabilityScore: 100,
+          slaTraceabilityScore: 100,
+          exceptionDisclosureScore: 100,
+          criterionLinkageScore: 100,
+          readyForEvaluation: "yes",
+          nonConformances: [],
+          clarificationQuestions: [],
+        },
+        parserWarnings: [],
+      },
+    ]);
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(readNormalizedVendorResponsePackages).toHaveBeenCalledWith({
+      eventId: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      tenantKey: "apexretail",
+    });
+    expect(ctx?.normalizedVendorResponsePackages?.[0]?.vendorName).toBe(
+      "Vendor A",
+    );
+  });
+
+  it("carries the event policy and audited applicability into authoring context", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      approvalPolicyCode: "self_v1",
+    });
+    isUuid.mockReturnValue(true);
+    listEvidenceStatesForEvent.mockResolvedValue([{
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      stage: "strategy",
+      currentState: "Not Requested",
+      applicabilityStatus: "not_applicable",
+      applicabilityReason: "No incumbent for this synthetic event.",
+    }]);
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.event.approvalPolicyCode).toBe("self_v1");
+    expect(ctx?.evidence[0]).toMatchObject({
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      applicabilityStatus: "not_applicable",
+    });
+  });
+
+  it("excludes unreviewed optional bodies from the d02 authoring and review context", () => {
+    const draft = {
+      id: "draft-1",
+      sourceEventId: "event-1",
+      tenantKey: "apexretail",
+      artifactCode: "d01_strategy_memo",
+      stage: "strategy" as const,
+      family: "sourcing_strategy" as const,
+      tier: "stub" as const,
+      status: "needs_review" as const,
+      requirementLevel: "required" as const,
+      gateDefining: true,
+      linkedArtifactId: null,
+      notes: null,
+      body: "Unreviewed vendor-pricing assertion.",
+      bodyFormat: "markdown" as const,
+      bodyAuthoredBy: null,
+      bodyUpdatedAt: null,
+      bodyGenerationMetadata: null,
+      createdAt: "2026-06-12T00:00:00.000Z",
+      updatedAt: "2026-06-12T00:00:00.000Z",
+    };
+    const ctx: SourceGenerationContext = {
+      tenantKey: "apexretail",
+      tenantName: "Apex Retail",
+      event: {
+        id: "event-1",
+        code: "SRC-001",
+        name: "Synthetic sourcing event",
+        archetype: null,
+        rigor: null,
+        currentStageKey: "strategy",
+        statusLabel: "Active",
+        owner: null,
+        triggerDescription: null,
+        scopeDescription: null,
+        estimatedValueUsd: null,
+      },
+      artifactStates: [draft],
+      evidence: [],
+      gateCriteria: [],
+    };
+    expect(collectUpstreamBodies(ctx, ["d01_strategy_memo"], { approvedOnly: true })).toEqual({});
+    ctx.artifactStates[0].status = "approved";
+    expect(collectUpstreamBodies(ctx, ["d01_strategy_memo"], { approvedOnly: true })).toEqual({
+      d01_strategy_memo: "Unreviewed vendor-pricing assertion.",
+    });
   });
 
   it("binds parsed uploaded evidence chunks and facts for generation prompts", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),
       id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      triggerDescription: "Renewal and run-cost pressure.",
+      scopeDescription: "Eight-system analytics managed-services scope.",
     });
     isUuid.mockImplementation(
       (value: string) => value === "522eedf2-ff6b-4307-b312-3e0903c6fd42",
@@ -256,6 +391,161 @@ describe("buildSourceGenerationContext", () => {
         factSummaries: ['artifact_summary/text_uploaded: {"chunk_count":1}'],
       }),
     ]);
+    expect(ctx?.event.triggerDescription).toBe(
+      "Renewal and run-cost pressure.",
+    );
+    expect(ctx?.event.scopeDescription).toBe(
+      "Eight-system analytics managed-services scope.",
+    );
+  });
+
+  it("keeps a short single-chunk upload complete for generation", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const completeChunk = `${"Planning context. ".repeat(70)}Final approval boundary.`;
+    expect(completeChunk.length).toBeGreaterThan(900);
+    expect(completeChunk.length).toBeLessThan(1800);
+    mockUploadedEvidenceQueries({
+      artifacts: [{
+        id: "short-upload",
+        original_name: "synthetic-planning-trigger.txt",
+        artifact_family: "other",
+        source_format: "txt",
+        parse_status: "parsed",
+        evidence_state: "parsed",
+        stage_key: "strategy",
+        source_origin: "uploaded",
+        created_at: "2026-09-09T00:00:00.000Z",
+      }],
+      chunks: [{ artifact_id: "short-upload", chunk_text: completeChunk }],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([completeChunk]);
+  });
+
+  it("keeps ordinary multi-chunk excerpts within the existing prompt budget", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const firstChunk = "A".repeat(1200);
+    const secondChunk = "B".repeat(1200);
+    mockUploadedEvidenceQueries({
+      artifacts: [{
+        id: "long-upload",
+        original_name: "synthetic-long-evidence.txt",
+        artifact_family: "other",
+        source_format: "txt",
+        parse_status: "parsed",
+        evidence_state: "parsed",
+        stage_key: "strategy",
+        source_origin: "uploaded",
+        created_at: "2026-09-09T00:00:00.000Z",
+      }],
+      chunks: [
+        { artifact_id: "long-upload", chunk_text: firstChunk },
+        { artifact_id: "long-upload", chunk_text: secondChunk },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([
+      firstChunk.slice(0, 900),
+      secondChunk.slice(0, 900),
+    ]);
+  });
+
+  it("preserves the complete parsed bidder Q&A chunk set for parity-log generation", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const qaChunks = Array.from({ length: 12 }, (_, index) => ({
+      artifact_id: "qa-artifact",
+      chunk_text: `QA-${String(index + 1).padStart(2, "0")} authoritative answer`,
+      confidence: 0.99,
+    }));
+    mockUploadedEvidenceQueries({
+      artifacts: [
+        {
+          id: "qa-artifact",
+          original_name: "source-bidder-qa-log.txt",
+          artifact_family: "meeting_notes",
+          source_format: "txt",
+          parse_status: "parsed",
+          evidence_state: "parsed_uncited",
+          stage_key: "responses",
+          created_at: "2026-09-09T00:00:00.000Z",
+        },
+      ],
+      chunks: qaChunks,
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toHaveLength(12);
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts.at(-1)).toContain("QA-12");
+  });
+
+  it("does not truncate authoritative bidder Q&A content after 900 characters", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const fullQaChunk = [
+      "Q-001 | Question: First controlled clarification.",
+      `Authoritative answer: ${"A".repeat(920)}`,
+      "Q-002 | Question: Is the complete second clarification retained?",
+      "Authoritative answer: Yes. Preserve this answer for every eligible bidder.",
+    ].join("\n");
+    mockUploadedEvidenceQueries({
+      artifacts: [
+        {
+          id: "qa-artifact",
+          original_name: "source-bidder-qa-log.txt",
+          artifact_family: "meeting_notes",
+          source_format: "txt",
+          parse_status: "parsed",
+          evidence_state: "parsed",
+          stage_key: "responses",
+          source_origin: "uploaded",
+          created_at: "2026-09-09T00:00:00.000Z",
+        },
+      ],
+      chunks: [
+        {
+          artifact_id: "qa-artifact",
+          chunk_text: fullQaChunk,
+          confidence: 0.99,
+        },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([
+      fullQaChunk.replace(/\s+/g, " ").trim(),
+    ]);
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts[0]).toContain(
+      "Q-002 | Question: Is the complete second clarification retained?",
+    );
   });
 
   it("binds current and next-stage guidebooks for workflow-aware artifact prompts", async () => {
@@ -312,7 +602,7 @@ describe("buildSourceGenerationContext", () => {
     );
   });
 
-  it("re-checks tenant_key at every join hop of the uploaded-evidence read (RLS/tenant-isolation workstream, PR B)", async () => {
+  it("re-checks the registered tenant alias set at every uploaded-evidence join hop", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),
       id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
@@ -345,13 +635,85 @@ describe("buildSourceGenerationContext", () => {
 
     await buildSourceGenerationContext("522eedf2-ff6b-4307-b312-3e0903c6fd42");
 
-    // First hop: source_artifacts filtered by tenant_key, not just event.
-    expect(artifacts.eq).toHaveBeenCalledWith("tenant_key", "apexretail");
+    // First hop: source_artifacts remains tenant-scoped while accepting only
+    // aliases registered to the same canonical tenant.
+    expect(artifacts.in).toHaveBeenCalledWith(
+      "tenant_key",
+      expect.arrayContaining(["apexretail", "apex-retail"]),
+    );
     // Second hop: the artifact_id-keyed chunks/facts reads carry an
     // INDEPENDENT tenant_key check too — never just trusting the first
     // hop's artifactIds without re-verifying.
-    expect(chunks.eq).toHaveBeenCalledWith("tenant_key", "apexretail");
-    expect(facts.eq).toHaveBeenCalledWith("tenant_key", "apexretail");
+    expect(chunks.in).toHaveBeenCalledWith(
+      "tenant_key",
+      expect.arrayContaining(["apexretail", "apex-retail"]),
+    );
+    expect(facts.in).toHaveBeenCalledWith(
+      "tenant_key",
+      expect.arrayContaining(["apexretail", "apex-retail"]),
+    );
+  });
+
+  it("binds canonical evidence rows when the signed-in client uses an app-key alias", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-meridian",
+      key: "meridian",
+      name: "Meridian Health",
+      industry_code: "HEALTHCARE",
+    });
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      accountName: "Meridian Health",
+    });
+    isUuid.mockReturnValue(true);
+    const artifacts = makeFluentResult([
+      {
+        id: "artifact-msa",
+        original_name: "Managed_Services_Agreement.docx",
+        artifact_family: "contract",
+        source_format: "docx",
+        parse_status: "parsed",
+        evidence_state: "parsed_uncited",
+        stage_key: "strategy",
+        created_at: "2026-09-08T00:00:00.000Z",
+      },
+    ]);
+    const chunks = makeFluentResult([
+      {
+        artifact_id: "artifact-msa",
+        chunk_text: "The agreement runs through 31 July 2027.",
+        confidence: 0.95,
+      },
+    ]);
+    const facts = makeFluentResult([]);
+    getAzureReadFluentClient.mockReturnValue({
+      from: jest.fn((table: string) => {
+        if (table === "source_artifacts") return artifacts;
+        if (table === "source_artifact_chunks") return chunks;
+        if (table === "source_artifact_facts") return facts;
+        return makeFluentResult([]);
+      }),
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    const expectedAliases = expect.arrayContaining([
+      "meridian",
+      "meridian-health",
+      "meridian_health_global",
+    ]);
+    expect(artifacts.in).toHaveBeenCalledWith("tenant_key", expectedAliases);
+    expect(chunks.in).toHaveBeenCalledWith("tenant_key", expectedAliases);
+    expect(facts.in).toHaveBeenCalledWith("tenant_key", expectedAliases);
+    expect(ctx?.uploadedEvidence?.[0]).toEqual(
+      expect.objectContaining({
+        originalName: "Managed_Services_Agreement.docx",
+        chunkExcerpts: ["The agreement runs through 31 July 2027."],
+      }),
+    );
   });
 
   it("binds the latest uploaded artifact per filename when live crawls re-upload evidence", async () => {

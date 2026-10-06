@@ -42,15 +42,16 @@ describe("Home Layer 4 boundary contract", () => {
     expect(source).not.toContain("isEclProvider ? <EclDemoFindingsPanel product=\"home\" /> : null");
   });
 
-  it("keeps raw evidence identifiers off the executive Home surface", () => {
-    const sourceLabel = readRepoFile("src/components/home/v4/source-label.ts");
-    const claimCard = readRepoFile("src/components/home/preview/ClaimCard.tsx");
-    const resolver = readRepoFile("src/components/home/preview/evidence-resolver.ts");
-
-    expect(sourceLabel).toContain("Raw internal ids do not appear on the CXO surface");
-    expect(sourceLabel).not.toContain("ids: evidenceIds.join");
-    expect(claimCard).toContain("evidenceLabel(item)");
-    expect(claimCard).not.toContain(">{item.id}");
-    expect(resolver).not.toContain("Evidence id \"");
-  });
+  /*
+   * The case that asserted "keeps raw evidence identifiers off the executive Home surface" by
+   * matching bytes of three component files has moved to
+   * `src/components/home/v4/__tests__/executive-surface-raw-id-leak.test.tsx`, where it renders the
+   * surface and asserts what a reader sees (item T-481, row 2 of the T-479 draw).
+   *
+   * It was replaced rather than kept because it was wrong in both directions, and both were
+   * measured: replacing the governed evidence summary with a join of the cited identifiers left it
+   * green whenever the leak was spelled any way but the one it named, and rewording the doc comment
+   * it asserted turned it red while behaviour was identical. Do not re-add a source-text assertion
+   * for this property here.
+   */
 });

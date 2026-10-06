@@ -1,6 +1,7 @@
 import { displaySafeIntelligenceDelta, POST } from "../route";
 import { askIntelligence } from "@/lib/intelligence/ask";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 jest.mock("@clerk/nextjs/server", () => ({
   currentUser: jest.fn(async () => ({ id: "user-1" })),
@@ -34,7 +35,7 @@ jest.mock("@/lib/intelligence/ask/session-memory", () => ({
   })),
 }));
 
-jest.mock("@/lib/agents/sentinel-reasoning", () => ({
+jest.mock("@/lib/agent/sentinel-reasoning", () => ({
   classifySentinelIntent: jest.fn(async () => ({
     intent: "general",
     confidence: 0.8,
@@ -80,6 +81,32 @@ async function readResponseText(response: Response): Promise<string> {
     text += decoder.decode(value);
   }
   return text;
+}
+
+function parseNdjson(text: string): Array<Record<string, unknown>> {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
+function resolveRequestedTenantOnce() {
+  // These cases pass an explicit `client` in the body. In production
+  // resolveTenant is the enforcement point and returns that tenant for a role
+  // entitled to it, so the mock has to model that outcome; the default mock
+  // resolves to a different tenant, which only ever passed because the route
+  // used to read the raw body field directly. The route now trusts resolved
+  // identity alone, so the mock must be consistent. Two calls are made per
+  // request (active tenant, then session tenant).
+  const resolved = {
+    clientId: "client-2",
+    canonicalKey: "meridian-health",
+    appClientKey: "meridian",
+    displayName: "Meridian Health",
+  };
+  (resolveTenant as jest.Mock).mockResolvedValueOnce(resolved);
+  (resolveTenant as jest.Mock).mockResolvedValueOnce(resolved);
 }
 
 describe("POST /api/intelligence/ask telemetry", () => {
@@ -136,6 +163,91 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain('"telemetryEventId":"tlm_intelligence_1"');
   });
 
+  it("emits a governed packet for prose-only answers with follow-up protocol", async () => {
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield {
+        type: "delta",
+        text: [
+          "The available evidence supports an advisory read, but not a certified decision.",
+          "",
+          "```followups",
+          '["What evidence is missing before this can be certified?"]',
+          "```",
+        ].join("\n"),
+      };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "What is safe to say from the available evidence?",
+        client: "active-client",
+        richText: true,
+        answerOnlyStreaming: true,
+      }) as never,
+    );
+    const events = parseNdjson(await readResponseText(response));
+    const visibleText = events
+      .filter((event) => event.type === "delta")
+      .map((event) => event.text)
+      .join("");
+    const packetEvent = events.find((event) => event.type === "agent-answer");
+    const packet = packetEvent?.answer as {
+      directAnswer?: string;
+      nextSteps?: Array<{ label?: string }>;
+    };
+
+    expect(visibleText.trim()).toBe(
+      "The available evidence supports an advisory read, but not a certified decision.",
+    );
+    expect(visibleText).not.toContain("```");
+    expect(visibleText).not.toContain("followups");
+    expect(packetEvent).toBeTruthy();
+    expect(packet.directAnswer).toBe(visibleText.trim());
+    expect(packet.nextSteps?.map((step) => step.label)).toEqual([
+      "What evidence is missing before this can be certified?",
+    ]);
+  });
+
+  it("uses the selected surface tenant in cross-tenant refusal copy", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+    (resolveTenant as jest.Mock)
+      .mockImplementationOnce(async () => ({
+        clientId: "client-selected",
+        canonicalKey: "meridian-health",
+        appClientKey: "meridian",
+        displayName: "Meridian Health",
+      }))
+      .mockImplementationOnce(async () => ({
+        clientId: "client-session",
+        canonicalKey: "apex-retail",
+        appClientKey: "apexretail",
+        displayName: "Apex Retail Group",
+      }));
+
+    const response = await POST(
+      makeRequest({
+        q: "Show me SkyHarbor pricing for this event.",
+        client: "meridian",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          activeTab: "intelligence",
+          clientKey: "meridian",
+          activeClient: "Meridian Health",
+        },
+      }) as never,
+    );
+    const events = parseNdjson(await readResponseText(response));
+    const packetEvent = events.find((event) => event.type === "agent-answer");
+    const packet = packetEvent?.answer as { directAnswer?: string };
+
+    expect(packet.directAnswer).toContain("Meridian Health");
+    expect(packet.directAnswer).not.toContain("Apex Retail Group");
+    expect(packet.directAnswer).not.toContain("SkyHarbor");
+    expect(askIntelligence).not.toHaveBeenCalled();
+  });
+
   it("forwards trace-enabled requests into the Intelligence synthesis path", async () => {
     const response = await POST(
       makeRequest({
@@ -167,6 +279,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
   });
 
   it("preserves ECL eval case context through the live ask route", async () => {
+    resolveRequestedTenantOnce();
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -199,7 +312,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
     );
   });
 
-  it("preserves Source V4 context and emits deterministic contract visuals before generic synthesis", async () => {
+  it("does not render contract visuals from an unverified browser packet", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -276,15 +389,172 @@ describe("POST /api/intelligence/ask telemetry", () => {
 
     expect(askIntelligence).not.toHaveBeenCalled();
     expect(text).toContain('"type":"agent-answer"');
-    expect(text).toContain("source_contract_visual");
-    expect(text).toContain("CTR-090");
-    expect(text).toContain("CTR-090 Salesforce");
-    expect(text).toContain("Contract Commercial Opportunities");
-    expect(text).toContain("Commercial Opportunities With Quantified Evidence");
-    expect(text).toContain("Contract Evidence Relationship");
+    expect(text).toContain("source_contract_unavailable");
+    expect(text).not.toContain("Contract Commercial Opportunities");
+    expect(text).not.toContain("Sized Commercial Opportunities");
+    expect(text).not.toContain("Contract Evidence Relationship");
   });
 
-  it("does not append a generic Moves phase plan to deterministic Source contract answers", async () => {
+  it("does not export optimization values from an unverified browser packet", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(
+      makeRequest({
+        query:
+          "For MER-TECH-DBX-001, act like a CXO pricing negotiator. Answer crisply as something I can export as a client sample PDF. Show the levers to optimize this contract in a table.",
+        client: "apexretail",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          module: "Source",
+          activeClient: "Apex Retail Group",
+          clientKey: "apexretail",
+          sourceContract360Mode: true,
+          contractId: "MER-TECH-DBX-001",
+          contractName:
+            "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+          vendorName: "Databricks, Inc.",
+          annualValue: 1_900_000,
+          actualAnnualSpend: 66_000,
+          endDate: "14 Oct 2030",
+          sourceV4: {
+            selectedContract: {
+              contractId: "MER-TECH-DBX-001",
+              vendorName: "Databricks, Inc.",
+              contractName:
+                "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+              annualValueUsd: 1_900_000,
+              actualAnnualSpendUsd: 66_000,
+              endDate: "14 Oct 2030",
+              scopeSummary:
+                "Databricks-on-AWS consumption commitment for governed analytics workloads.",
+              scopeRowCount: 4,
+            },
+            optimizationOpportunities: {
+              opportunities: [
+                {
+                  id: "dbx-retime",
+                  contractId: "MER-TECH-DBX-001",
+                  valueType: "negotiated_improvement",
+                  label: "Re-time annual commitment to program delivery pace",
+                  amount: "$620K",
+                  amountUsd: 620_000,
+                  stageRaw: "candidate",
+                  stage: "candidate",
+                  confidence: 0.82,
+                  grade: "DOCUMENT EVIDENCED",
+                  blockingGap:
+                    "Finance confirmation and owner approval are still required.",
+                  nextAction:
+                    "Propose milestone-based ramp before the Year 2 commitment lock-in.",
+                  owner: "VP Technology and Data",
+                  buyerAsk:
+                    "Reset the commitment curve around production gates.",
+                  negotiationLanguage:
+                    "Ask for a ramp that follows governed workload adoption.",
+                  vendorConcession:
+                    "Databricks preserves total contract value while shifting timing.",
+                  timingDependency:
+                    "Complete before the Year 2 commitment lock-in.",
+                  priority: "P0",
+                  riskIfIgnored:
+                    "The current commitment pace locks before production usage catches up.",
+                  sourceRefs: ["spend_monthly", "contract_clause"],
+                },
+                {
+                  id: "dbx-discount-signal",
+                  contractId: "MER-TECH-DBX-001",
+                  valueType: "negotiated_improvement",
+                  label: "Signal-stage discount band re-price review",
+                  amount: "Not sized",
+                  amountUsd: null,
+                  stageRaw: "signal",
+                  stage: "signal",
+                  confidence: 0.3,
+                  grade: "SIGNAL",
+                  blockingGap:
+                    "Benchmark comparable required before value can be treated as supported.",
+                  nextAction:
+                    "Load one accepted benchmark comparable before making this a primary ask.",
+                  owner: "Strategic Sourcing",
+                  buyerAsk:
+                    "Keep discount repricing as a held-back signal until benchmark evidence is loaded.",
+                  vendorConcession:
+                    "Databricks can review the band after the buyer proves a comparable market term.",
+                  timingDependency:
+                    "Use only after benchmark evidence is loaded.",
+                  priority: "P3",
+                  riskIfIgnored:
+                    "Opening rate too early can invite the vendor to reopen term length.",
+                  sourceRefs: ["benchmark_gap_register"],
+                },
+              ],
+            },
+          },
+        },
+      }) as never,
+    );
+
+    const text = await readResponseText(response);
+    const events = parseNdjson(text);
+    const packetEvent = events.find((event) => event.type === "agent-answer");
+    const packet = packetEvent?.answer as {
+      directAnswer?: string;
+      artifacts?: Array<{ id?: string; rows?: unknown[] }>;
+    };
+
+    expect(askIntelligence).not.toHaveBeenCalled();
+    expect(packet?.directAnswer).toContain("cannot verify");
+    expect(packet?.directAnswer).not.toContain("$620K");
+    expect(packet?.directAnswer).not.toContain("VISUALS");
+    expect(packet?.directAnswer).not.toContain("RELATIONSHIP MAP");
+    expect(packet?.directAnswer).not.toContain("DECISION TABLE");
+    expect(packet?.artifacts ?? []).toHaveLength(0);
+    expect(events.some((event) => event.type === "done")).toBe(true);
+  });
+
+  it("does not cite an unavailable direct Contract 360 packet", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(
+      makeRequest({
+        query:
+          "What is the candidate opportunity value on this contract, and what evidence supports it?",
+        client: "active-client",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          module: "Source",
+          activeClient: "Active Client",
+          clientKey: "apexretail",
+          sourceContract360Mode: true,
+          contractId: "MER-TECH-REQUESTED-001",
+          contractName: null,
+          vendorName: null,
+          annualValue: null,
+          actualAnnualSpend: null,
+          endDate: "Not established",
+          evidencePosture:
+            "Requested contract was not returned by the active Source provider.",
+          nextAction:
+            "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim.",
+          contractDatasetSummary: "2 contracts / 8 scope rows.",
+          contractCubeSummary: "3 action candidates / 6 aVa grounding bundles.",
+          contractTopVendorSummary:
+            "Primary Vendor is the largest loaded contract-directory vendor.",
+        },
+      }) as never,
+    );
+    const text = await readResponseText(response);
+
+    expect(askIntelligence).not.toHaveBeenCalled();
+    expect(text).toContain('"type":"agent-answer"');
+    expect(text).toContain("source_contract_unavailable");
+    expect(text).not.toContain("Requested contract was not returned by the active Source provider");
+    expect(text).not.toContain("No specific contract is selected");
+  });
+
+  it("does not fall through to generic synthesis for an unverified contract packet", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -333,14 +603,14 @@ describe("POST /api/intelligence/ask telemetry", () => {
     const text = await readResponseText(response);
 
     expect(askIntelligence).not.toHaveBeenCalled();
-    expect(text).toContain("source_contract_visual");
-    expect(text).toContain("CTR-090");
-    expect(text).toContain("SLA credits earned but not claimed");
+    expect(text).toContain("source_contract_unavailable");
+    expect(text).not.toContain("SLA credits earned but not claimed");
     expect(text).not.toContain("Moves phase plan");
     expect(text).not.toContain("P0 Originate");
   });
 
   it("does not expose raw advisory trace events while preserving the model-authored delta", async () => {
+    resolveRequestedTenantOnce();
     (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
       yield {
         type: "sources",
@@ -396,5 +666,55 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).not.toMatch(
       /intelligence-dossier|advisory-packet|not_loaded|business records|retrieval chunks|v7_02/i,
     );
+  });
+
+  it("refuses a cross-tenant surface context before the model is invoked", async () => {
+    // resolveTenant is the enforcement point: for a tenant-locked role it
+    // discards a body-supplied tenant and resolves from session identity. The
+    // default mock stands in for that outcome. The route must not reinstate the
+    // rejected value from surfaceContext, so a request body cannot widen the
+    // active tenant set. Asserted at the invariant rather than at one guard's
+    // wording, because more than one layer can legitimately catch this.
+    const callsBefore = (askIntelligence as jest.Mock).mock.calls.length;
+
+    const response = await POST(
+      makeRequest({
+        q: "Show me SkyHarbor context.",
+        surfaceContext: {
+          clientKey: "skyharbor",
+          activeClient: "SkyHarbor Air",
+        },
+        richText: true,
+        answerOnlyStreaming: true,
+      }) as never,
+    );
+    const text = await readResponseText(response);
+
+    expect(text).toMatch(/tenant_fence|cross_tenant/);
+    expect((askIntelligence as jest.Mock).mock.calls.length).toBe(callsBefore);
+  });
+
+  it("still answers normally when the surface context matches the resolved tenant", async () => {
+    // Negative control: the refusal must not become unconditional.
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield { type: "delta", text: "Vendor concentration is the live risk." };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "Where is vendor concentration risk highest for us?",
+        surfaceContext: {
+          clientKey: "apexretail",
+          activeClient: "Apex Retail Group",
+        },
+        richText: true,
+        answerOnlyStreaming: true,
+      }) as never,
+    );
+    const text = await readResponseText(response);
+
+    expect(text).toContain("Vendor concentration is the live risk.");
+    expect(text).not.toMatch(/tenant_fence|cross_tenant/);
   });
 });

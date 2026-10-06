@@ -15,6 +15,7 @@ import {
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
+import { buildContextCoverage, type ContextCoverage } from "./context-coverage";
 
 export type DeliverableRunStatus =
   | "queued"
@@ -49,6 +50,12 @@ export interface OrchestratorDeliverableRunJobPayload {
     contextSnapshotHash: string;
     architectureModelVersion: string;
   };
+  /** Opaque approved-evidence revision captured when this run was queued. */
+  evidenceSnapshotHash?: string;
+  /** Phase-scoped approved-evidence basis captured when this run was queued. */
+  phaseEvidenceSnapshotHash?: string;
+  /** Moves phase boundary used by the worker's governed evidence assembler. */
+  phase?: number;
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
@@ -67,6 +74,8 @@ export interface MovesPremiumArtifactRunJobPayload {
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
+  evidenceSnapshotHash?: string;
+  phaseEvidenceSnapshotHash?: string;
   phase: number;
   artifact: DeliverableKey;
   generationMode: GenerationMode;
@@ -91,6 +100,7 @@ export interface DeliverableRunRecord {
   artifactId: string | null;
   sectionCount: number | null;
   retrievedEvidence: number | null;
+  contextCoverage: ContextCoverage | null;
   blockers: string[];
   warnings: string[];
   error: string | null;
@@ -126,6 +136,7 @@ export interface CompleteRunInput {
   artifactId?: string | null;
   sectionCount?: number | null;
   retrievedEvidence?: number | null;
+  contextCoverage?: ContextCoverage | null;
   blockers?: string[];
   warnings?: string[];
   error?: string | null;
@@ -160,6 +171,45 @@ function parsePayload(value: unknown): DeliverableRunJobPayload | null {
   return null;
 }
 
+function parseContextCoverage(value: unknown): ContextCoverage | null {
+  if (value === null || value === undefined) return null;
+  const parsed = (() => {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    }
+    return value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : null;
+  })();
+  if (!parsed) return null;
+  return buildContextCoverage({
+    approvedAvailable:
+      typeof parsed.approvedAvailable === "number"
+        ? parsed.approvedAvailable
+        : undefined,
+    retrieved:
+      typeof parsed.retrieved === "number" ? parsed.retrieved : undefined,
+    packed: typeof parsed.packed === "number" ? parsed.packed : undefined,
+    droppedForBudget:
+      typeof parsed.droppedForBudget === "number"
+        ? parsed.droppedForBudget
+        : undefined,
+    unreadable:
+      typeof parsed.unreadable === "number" ? parsed.unreadable : undefined,
+    cited: typeof parsed.cited === "number" ? parsed.cited : undefined,
+    usedTokens:
+      typeof parsed.usedTokens === "number" ? parsed.usedTokens : undefined,
+    evidenceTokenBudget:
+      typeof parsed.evidenceTokenBudget === "number"
+        ? parsed.evidenceTokenBudget
+        : undefined,
+  });
+}
+
 function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
   const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
   return {
@@ -180,6 +230,7 @@ function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
       row.retrieved_evidence === null || row.retrieved_evidence === undefined
         ? null
         : Number(row.retrieved_evidence),
+    contextCoverage: parseContextCoverage(row.context_coverage),
     blockers: arr(row.blockers),
     warnings: arr(row.warnings),
     error: typeof row.error === "string" ? row.error : null,
@@ -435,6 +486,9 @@ export async function completeDeliverableRun(
       artifact_id: input.artifactId ?? null,
       section_count: input.sectionCount ?? null,
       retrieved_evidence: input.retrievedEvidence ?? null,
+      context_coverage: input.contextCoverage
+        ? JSON.stringify(input.contextCoverage)
+        : null,
       // blockers/warnings are JSONB columns. The write client binds params raw,
       // so a non-empty JS array reaches Postgres as an array literal ({a,b}) and
       // JSONB rejects it ("invalid input syntax for type json") — empty arrays
@@ -537,4 +591,53 @@ export async function listSucceededRunsForMove(
       latestByType.set(r.deliverableType, r);
   }
   return [...latestByType.values()];
+}
+
+export interface DeliverableRunHistoryForMove {
+  latest: DeliverableRunRecord;
+  latestSucceeded: DeliverableRunRecord | null;
+}
+
+/**
+ * Latest-created run state per deliverable type for a Move, plus the latest
+ * successful artifact when the current attempt did not produce one. Keeping
+ * these separate prevents an old success from masking a newer failed/blocked
+ * attempt on read-only browse surfaces.
+ */
+export async function listDeliverableRunHistoryForMove(
+  clientId: string,
+  moveId: string,
+  db: DbClient = getAzureWriteFluentClient(),
+  limit = 300,
+): Promise<Map<string, DeliverableRunHistoryForMove>> {
+  const { data, error } = await db
+    .from('deliverable_runs')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`deliverable_runs move history failed: ${error.message}`);
+
+  const rows = ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+  const history = new Map<string, DeliverableRunHistoryForMove>();
+  for (const run of rows) {
+    if (run.jobPayload?.sourceArtifactRef !== moveId) continue;
+    const current = history.get(run.deliverableType);
+    if (!current) {
+      history.set(run.deliverableType, {
+        latest: run,
+        latestSucceeded:
+          run.status === 'succeeded' && run.artifactId ? run : null,
+      });
+      continue;
+    }
+    if (
+      !current.latestSucceeded &&
+      run.status === 'succeeded' &&
+      run.artifactId
+    ) {
+      current.latestSucceeded = run;
+    }
+  }
+  return history;
 }

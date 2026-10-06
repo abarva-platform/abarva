@@ -1,0 +1,5 @@
+tenant_key,dataset_version,source_row_id,contract_id,vendor_ref,vendor_name,quarter,run_percent,transform_percent,automation_backlog_items,report_retirement_candidates,client_satisfaction_score,source_file_id
+meridian-health,meridian-legacy-analytics-managed-services-v1-20260907,qbr:MER-TECH-LAAMS-001:2025-Q3,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2025-Q3,0.81,0.19,31,18,3.7,DOC-MER-TECH-LAAMS-001-QBR
+meridian-health,meridian-legacy-analytics-managed-services-v1-20260907,qbr:MER-TECH-LAAMS-001:2025-Q4,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2025-Q4,0.84,0.16,37,22,3.5,DOC-MER-TECH-LAAMS-001-QBR
+meridian-health,meridian-legacy-analytics-managed-services-v1-20260907,qbr:MER-TECH-LAAMS-001:2026-Q1,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2026-Q1,0.86,0.14,42,27,3.6,DOC-MER-TECH-LAAMS-001-QBR
+meridian-health,meridian-legacy-analytics-managed-services-v1-20260907,qbr:MER-TECH-LAAMS-001:2026-Q2,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2026-Q2,0.88,0.12,48,34,3.4,DOC-MER-TECH-LAAMS-001-QBR

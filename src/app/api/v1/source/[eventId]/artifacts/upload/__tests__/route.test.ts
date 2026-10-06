@@ -92,12 +92,15 @@ jest.mock('@/lib/data-plane/postgresCompat', () => ({
 const insertActivityLogMock = jest.fn(async (_args: unknown[]) => ({
   ok: true,
 }));
+const updateGateCriterionMock = jest.fn<Promise<{ ok: boolean }>, [unknown]>(
+  async () => ({ ok: true }),
+);
 jest.mock('@/lib/data-plane/write-adapters/sourceWriteAdapter', () => ({
   selectSourceWriteAdapter: () => ({
     insertActivityLog: (...args: unknown[]) =>
       insertActivityLogMock(args),
     updateArtifactBody: async () => ({ ok: true }),
-    updateGateCriterion: async () => ({ ok: true }),
+    updateGateCriterion: (args: unknown) => updateGateCriterionMock(args),
   }),
 }));
 
@@ -116,6 +119,8 @@ jest.mock('@/lib/source/artifact-registry', () => ({
   isAllowedSourceArtifactMimeType: (mime: string) =>
     [
       'text/csv',
+      'text/plain',
+      'application/pdf',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ].includes(mime),
   isWithinSourceArtifactSizeLimit: (size: number) =>
@@ -133,7 +138,7 @@ jest.mock('@/lib/source/artifact-registry', () => ({
 jest.mock('@/lib/source/artifact-registry/upload-contract', () => ({
   inferSourceArtifactFamily: () => 'pricing_workbook',
   sourceArtifactFormatFromMime: (mime: string) =>
-    mime.includes('spreadsheet') ? 'xlsx' : 'csv',
+    mime.includes('spreadsheet') ? 'xlsx' : mime === 'application/pdf' ? 'pdf' : mime === 'text/plain' ? 'txt' : 'csv',
 }));
 
 const mockParseSourceTextArtifact = jest.fn(
@@ -145,16 +150,20 @@ jest.mock('@/lib/source/artifact-registry/text-parser', () => ({
     mockParseSourceTextArtifact(input),
 }));
 
+const criteriaByArtifactCodeMock = jest.fn<{ criterionId: string }[], [string]>(
+  () => [],
+);
 jest.mock('@/lib/source/canonical-specs/gate-criteria', () => ({
-  criteriaByArtifactCode: () => [],
+  criteriaByArtifactCode: (code: string) => criteriaByArtifactCodeMock(code),
 }));
 
-jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
-  extractSourceUploadText: async () => ({
+const extractSourceUploadTextMock = jest.fn(async () => ({
     text: 'Pricing: fixed transition fee $1.2M.',
     method: 'xlsx-exceljs',
     warnings: [],
-  }),
+}));
+jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
+  extractSourceUploadText: () => extractSourceUploadTextMock(),
 }));
 
 jest.mock('@/lib/security/sensitive-upload-guard', () => ({
@@ -169,6 +178,15 @@ const syncUploadToCanvasSubstrateMock = jest.fn(async (_args: unknown[]) => ({
 jest.mock('@/lib/source/canvas-substrate/upload-sync', () => ({
   syncUploadToCanvasSubstrate: (...args: unknown[]) =>
     syncUploadToCanvasSubstrateMock(args),
+}));
+
+// This suite owns upload/registry wiring, not normalized proposal parsing.
+// Keep an arbitrary byte buffer from being treated as a real XLSX ZIP.
+jest.mock('@/lib/source/vendor-response-workbook', () => ({
+  parseNormalizedVendorResponseWorkbook: async () => null,
+}));
+jest.mock('@/lib/source/vendor-response-persistence', () => ({
+  persistNormalizedVendorResponsePackage: async () => undefined,
 }));
 
 // Import AFTER all mocks are registered.
@@ -200,6 +218,7 @@ function makeMultipartRequest(
 
 beforeEach(() => {
   jest.clearAllMocks();
+  maybeSingleMock.mockReset();
   requireTenancyMock.mockResolvedValue({
     clientId: 'c-1',
     userId: 'u-1',
@@ -236,9 +255,89 @@ beforeEach(() => {
       version: 1,
     }),
   );
+  mockParseSourceTextArtifact.mockImplementation(
+    async ({ artifact }: { artifact: unknown }) => artifact,
+  );
+  extractSourceUploadTextMock.mockImplementation(async () => ({
+    text: 'Pricing: fixed transition fee $1.2M.',
+    method: 'xlsx-exceljs',
+    warnings: [],
+  }));
 });
 
 describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
+  it('binds an explicitly selected requirement even when the filename has no matching token', async () => {
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    const res = await POST(
+      makeMultipartRequest('owner-note.csv', CSV_MIME, 32, {
+        stageKey: 'strategy',
+        evidenceRequirementId: 'EVID-SRC-STR-TRIGGER',
+        artifactFamily: 'sourcing_strategy',
+        artifactKind: 'sourcing_strategy_memo',
+      }),
+      EVENT_PARAMS,
+    );
+    expect(res.status).toBe(200);
+    expect(syncUploadToCanvasSubstrateMock.mock.calls[0]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        requirementId: 'EVID-SRC-STR-TRIGGER',
+        artifactFamily: 'other',
+      }),
+    );
+    expect(registerSourceArtifactUploadMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artifactFamily: 'other',
+        artifactKind: 'uploaded_source_artifact',
+      }),
+    );
+  });
+
+  it('accepts a text trigger under its declared Strategy requirement', async () => {
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    const res = await POST(
+      makeMultipartRequest('synthetic-trigger.txt', 'text/plain', 128, {
+        stageKey: 'strategy',
+        evidenceRequirementId: 'EVID-SRC-STR-TRIGGER',
+      }),
+      EVENT_PARAMS,
+    );
+    expect(res.status).toBe(200);
+    expect(syncUploadToCanvasSubstrateMock.mock.calls[0]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        requirementId: 'EVID-SRC-STR-TRIGGER',
+        artifactFamily: 'other',
+      }),
+    );
+  });
+
+  it.each([
+    ['unknown', 'EVID-SRC-NOT-REAL', 'owner-note.csv', CSV_MIME],
+    ['wrong stage', 'EVID-SRC-SCOPE-APP-INV', 'owner-note.csv', CSV_MIME],
+    ['wrong file type', 'EVID-SRC-STR-INCUMBENT', 'owner-note.csv', CSV_MIME],
+    ['mismatched MIME', 'EVID-SRC-STR-TRIGGER', 'owner-note.pdf', CSV_MIME],
+  ])('rejects %s requirement binding before storing bytes', async (_reason, requirementId, filename, mime) => {
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    const res = await POST(
+      makeMultipartRequest(filename, mime, 32, {
+        stageKey: 'strategy',
+        evidenceRequirementId: requirementId,
+      }),
+      EVENT_PARAMS,
+    );
+    expect(res.status).toBe(400);
+    expect(storageUploadMock).not.toHaveBeenCalled();
+    expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+  });
+
   it('persists a CSV to Azure Blob at a tenant-scoped path + registers an artifact row', async () => {
     const req = makeMultipartRequest(
       'apex-svc-baseline-18mo.csv',
@@ -270,6 +369,19 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
     expect(registered.sourceEventId).toBe(EVENT_ID);
     expect(registered.sourceOrigin).toBe('uploaded');
     expect(registered.originalName).toBe('apex-svc-baseline-18mo.csv');
+    expect(registered.fileCabinet).toMatchObject({
+      clientId: 'c-1',
+      sourcingStage: 'scope',
+      artifactGroup: 'upload',
+      artifactType: 'uploaded_source_artifact',
+      title: 'apex-svc-baseline-18mo.csv',
+      fileName: 'apex-svc-baseline-18mo.csv',
+      fileFormat: 'csv',
+      blobContainer: 'source-artifacts',
+      fileSize: 512,
+      version: 1,
+      status: 'draft',
+    });
   });
 
   it('accepts an XLSX file', async () => {
@@ -283,6 +395,141 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
         text: 'Pricing: fixed transition fee $1.2M.',
       }),
     );
+  });
+
+  it('keeps sponsor-signature Scope gates open when a scope memo PDF is merely uploaded', async () => {
+    criteriaByArtifactCodeMock.mockReturnValueOnce([
+      { criterionId: 'GATE-SCOPE-02' },
+      { criterionId: 'GATE-SCOPE-04' },
+    ]);
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'synthetic-client', current_stage_key: 'scope' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'scope-artifact', tier: 'outline', status: 'draft' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'sponsor-gate', state: 'pending' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'dual-signature-gate', state: 'pending' },
+      error: null,
+    });
+
+    const res = await POST(
+      makeMultipartRequest('scope-memo.pdf', 'application/pdf', 64, {
+        stageKey: 'scope',
+        artifactCode: 'd05_scope_memo',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      landing?: { satisfiedCriteria: string[] };
+    };
+    expect(registerSourceArtifactUploadMock).toHaveBeenCalledTimes(1);
+    expect(body.landing?.satisfiedCriteria).toEqual([]);
+    expect(updateGateCriterionMock).not.toHaveBeenCalled();
+  });
+
+  it('does not treat a landed upload as a human gate decision', async () => {
+    criteriaByArtifactCodeMock.mockReturnValueOnce([
+      { criterionId: 'GATE-STRATEGY-02' },
+    ]);
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-artifact', tier: 'stub', status: 'draft' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-gate', state: 'pending' },
+      error: null,
+    });
+
+    const res = await POST(
+      makeMultipartRequest('value-target.csv', CSV_MIME, 64, {
+        stageKey: 'strategy',
+        artifactCode: 'd02_value_target',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      landing?: { bodyLanded: boolean; satisfiedCriteria: string[] };
+    };
+    expect(body.landing).toMatchObject({
+      bodyLanded: true,
+      satisfiedCriteria: [],
+    });
+    expect(updateGateCriterionMock).not.toHaveBeenCalled();
+  });
+
+  it('does not satisfy a linked gate when the file has no extractable text', async () => {
+    extractSourceUploadTextMock.mockResolvedValueOnce({
+      text: '',
+      method: 'xlsx-exceljs',
+      warnings: [],
+    });
+    criteriaByArtifactCodeMock.mockReturnValueOnce([
+      { criterionId: 'GATE-STRATEGY-02' },
+    ]);
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-artifact', tier: 'stub', status: 'draft' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-gate', state: 'pending' },
+      error: null,
+    });
+
+    const res = await POST(
+      makeMultipartRequest('value-target.csv', CSV_MIME, 64, {
+        stageKey: 'strategy',
+        artifactCode: 'd02_value_target',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      landing?: { bodyLanded: boolean; satisfiedCriteria: string[] };
+      parseWarnings?: string[];
+    };
+    expect(body.landing).toMatchObject({
+      bodyLanded: false,
+      satisfiedCriteria: [],
+    });
+    expect(body.parseWarnings).toEqual(expect.arrayContaining([
+      expect.stringContaining('No text was extracted'),
+    ]));
+    expect(updateGateCriterionMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces structured database parse errors instead of hiding them', async () => {
+    mockParseSourceTextArtifact.mockRejectedValueOnce({
+      message: 'relation missing',
+      code: '42P01',
+      detail: 'source_artifact_chunks',
+    });
+    const req = makeMultipartRequest('volumetrics.xlsx', XLSX_MIME, 2048);
+    const res = await POST(req, EVENT_PARAMS);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { parseWarnings?: string[] };
+    expect(body.parseWarnings).toEqual([
+      'relation missing | 42P01 | source_artifact_chunks',
+    ]);
   });
 
   it('rejects a request with no file (400)', async () => {

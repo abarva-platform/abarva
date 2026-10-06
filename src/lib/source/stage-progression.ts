@@ -26,6 +26,7 @@ import type {
   SourceEventEvidenceCurrentState,
 } from "./canvas-substrate";
 import type { SourceStageKey } from "./types";
+import { evidenceMeetsRequirement } from "./evidence-authority";
 
 /** The kind of action a need resolves to — the surface maps this to a control. */
 export type StageNeedKind =
@@ -76,18 +77,6 @@ export interface ComputeStageProgressionInput {
   /** Defaults to the live AI-authorable set; injectable for tests. */
   generatableCodes?: ReadonlyArray<string>;
 }
-
-// Readiness ramp ranks. Stale / Low Confidence are failure modes (below any
-// minimum) — they require a refresh.
-const READINESS_RANK: Record<SourceEventEvidenceCurrentState, number> = {
-  "Not Requested": 0,
-  Loaded: 1,
-  Parsed: 2,
-  Available: 3,
-  "Usable Evidence": 4,
-  Stale: -1,
-  "Low Confidence": -1,
-};
 
 // Stage → the vendor communication that issues the same request to all bidders.
 const STAGE_COMMS: Partial<
@@ -192,8 +181,7 @@ function evidenceNeeds(
     const state: SourceEventEvidenceCurrentState =
       live?.currentState ?? "Not Requested";
     const isFailure = state === "Stale" || state === "Low Confidence";
-    const satisfied =
-      !isFailure && READINESS_RANK[state] >= READINESS_RANK[req.minimumState];
+    const satisfied = evidenceMeetsRequirement(req, live);
     if (satisfied) continue;
     out.push({
       id: req.requirementId,

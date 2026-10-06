@@ -25,6 +25,8 @@
 // The visual register is the locked AbarVa design system — no new palette.
 // The module is PURE: deterministic string composition, no I/O, no clock.
 
+import { scrubBuilderVocabulary } from "@/lib/deliverables/client-facing-artifact-sanitize";
+
 // ---------------------------------------------------------------------------
 // Escaping — the shell composes a document string, so every interpolated
 // caller string is escaped.
@@ -965,7 +967,7 @@ export function renderDeckDocument(
     .map((s, i) => s.render(i + 1, slideCount))
     .join('');
 
-  return (
+  const document =
     `<!doctype html><html lang="en"><head>` +
     `<meta charset="utf-8"/>` +
     `<meta name="viewport" content="width=device-width, initial-scale=1"/>` +
@@ -978,6 +980,14 @@ export function renderDeckDocument(
     `</div>` +
     deckControls(slideCount) +
     `<script>${deckScript(slideCount)}</script>` +
-    `</body></html>`
-  );
+    `</body></html>`;
+
+  // Keep builder vocabulary (how the deck was generated) off the client surface.
+  // This export composes its own HTML and does not run the shared client-facing
+  // sanitizer; every HTML deck funnels through here, and the committed PPTX / PDF
+  // derivatives are text-extracted from this HTML — so this one seam cleans every
+  // format. Only the tight builder-vocabulary set is scrubbed (never legitimate
+  // domain terms like "data plane"), and those phrases never occur in the CSS or
+  // script, so scrubbing the whole document string is safe.
+  return scrubBuilderVocabulary(document);
 }

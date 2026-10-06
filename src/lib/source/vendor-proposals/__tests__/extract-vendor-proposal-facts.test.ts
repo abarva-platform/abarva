@@ -148,4 +148,69 @@ describe("extractVendorProposalFacts", () => {
     );
     expect(result.length).toBeGreaterThanOrEqual(12);
   });
+
+  it("extracts commercial and staffing facts from adjacent DOCX table labels", () => {
+    const result = extractVendorProposalFacts(
+      [
+        "Annual steady-state price",
+        "",
+        "$7,536,000",
+        "Transition fee",
+        "$420,000",
+        "Proposed productive FTE",
+        "48.17",
+        "Onshore / offshore",
+        "10.20 / 37.97",
+        "Three-year submitted TCV",
+        "$23,028,000",
+      ].join("\n"),
+    );
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          factKey: "price",
+          valueNumeric: 7536000,
+          unit: "year",
+          currency: "USD",
+        }),
+        expect.objectContaining({
+          factKey: "transition_cost",
+          valueNumeric: 420000,
+          currency: "USD",
+        }),
+        expect.objectContaining({
+          factKey: "productive_fte",
+          valueNumeric: 48.17,
+          unit: "fte",
+        }),
+        expect.objectContaining({
+          factKey: "staffing_location_mix",
+          valueText: "10.20 / 37.97",
+        }),
+        expect.objectContaining({
+          factKey: "submitted_tcv",
+          valueNumeric: 23028000,
+          unit: "three_year_term",
+        }),
+      ]),
+    );
+  });
+
+  it("deduplicates the same table fact repeated in a proposal summary and detail", () => {
+    const result = extractVendorProposalFacts(
+      [
+        "Annual steady-state price",
+        "$7,536,000",
+        "Annual steady-state price",
+        "$7,536,000",
+      ].join("\n"),
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      factKey: "price",
+      valueNumeric: 7536000,
+    });
+  });
 });

@@ -4,8 +4,6 @@ export type ContextLiveStatus = 'live' | 'partial' | 'deferred';
 
 export interface ContextBarProps {
   tenant: string;
-  mode: string;
-  agent: string;
   data: string;
   liveStatus: string;
   liveStatusKind?: ContextLiveStatus;

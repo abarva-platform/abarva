@@ -55,6 +55,20 @@ describe("resolveAssistantAnswerText", () => {
     );
   });
 
+  it("strips follow-up protocol from a packetless fallback stream", () => {
+    const rawStreamed = [
+      "The available evidence supports an advisory read.",
+      "",
+      "```followups",
+      '["What evidence is missing before this can be certified?"]',
+      "```",
+    ].join("\n");
+
+    expect(resolveAssistantAnswerText(rawStreamed, "", false)).toBe(
+      "The available evidence supports an advisory read.",
+    );
+  });
+
   it("uses the packet body when there is no raw stream yet (empty answer)", () => {
     expect(resolveAssistantAnswerText("", "Clean answer.", false)).toBe(
       "Clean answer.",

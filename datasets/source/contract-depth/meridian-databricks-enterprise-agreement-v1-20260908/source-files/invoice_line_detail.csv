@@ -1,0 +1,13 @@
+tenant_key,dataset_version,contract_id,month,line_type,line_amount_usd,invoice_reference,pool_balance_remaining_usd,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-10,commitment_drawdown,1400,DB-INV-2025-08841,1548600,SRC-INV-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-11,commitment_drawdown,1900,DB-INV-2025-08841,1546700,SRC-INV-002
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-12,commitment_drawdown,2300,DB-INV-2025-08841,1544400,SRC-INV-003
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-01,commitment_drawdown,2900,DB-INV-2025-08841,1541500,SRC-INV-004
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-02,commitment_drawdown,3500,DB-INV-2025-08841,1538000,SRC-INV-005
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-03,commitment_drawdown,4300,DB-INV-2025-08841,1533700,SRC-INV-006
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-04,commitment_drawdown,5300,DB-INV-2025-08841,1528400,SRC-INV-007
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-05,commitment_drawdown,7100,DB-INV-2025-08841,1521300,SRC-INV-008
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-06,commitment_drawdown,8100,DB-INV-2025-08841,1513200,SRC-INV-009
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-07,commitment_drawdown,10600,DB-INV-2025-08841,1502600,SRC-INV-010
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-08,commitment_drawdown,13900,DB-INV-2025-08841,1488700,SRC-INV-011
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-09,commitment_drawdown,4800,DB-INV-2025-08841,1483900,SRC-INV-012

@@ -1,0 +1,10 @@
+site,role,headcount,productive_fte,span,provenance
+"Lakeview, IL — enterprise hub",Member services agent,980,842,MA and commercial,SYNTHETIC
+"Lakeview, IL — enterprise hub",Patient access agent,610,524,Scheduling and messaging,SYNTHETIC
+Indiana regional centre,Member services agent,430,369,MA overflow,SYNTHETIC
+Wisconsin regional centre,Patient access agent,385,331,Scheduling,SYNTHETIC
+Distributed / remote,Revenue cycle agent,520,447,Billing and financial assistance,SYNTHETIC
+Distributed / remote,Provider services agent,240,206,Claims and credentialing,SYNTHETIC
+All sites,Team lead / supervisor,198,198,1:12 span,SYNTHETIC
+All sites,Quality and training,86,86,Enterprise,SYNTHETIC
+All sites,Workforce management,34,34,Enterprise,SYNTHETIC

@@ -148,7 +148,7 @@ describe('AddConnectorPanel', () => {
     );
   });
 
-  it('fires telemetry for Test connection and renders the placeholder banner', () => {
+  it('fires telemetry for Test connection and renders the queued-status banner', () => {
     render(<AddConnectorPanel tenantKey="apex-retail" closeHref="/admin/connectors" />);
     fireEvent.click(screen.getByTestId('add-connector-test-button'));
     expect(captureMock).toHaveBeenCalledWith(
@@ -158,7 +158,9 @@ describe('AddConnectorPanel', () => {
         template_id: 'postgres',
       }),
     );
-    expect(screen.getByTestId('add-connector-test-banner')).toHaveTextContent(/placeholder/i);
+    expect(screen.getByTestId('add-connector-test-banner')).toHaveTextContent(
+      /queued until the live connector health service is enabled/i,
+    );
   });
 
   it('Configure auth link points to the selected connector detail', () => {

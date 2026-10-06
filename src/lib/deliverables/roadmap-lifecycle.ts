@@ -20,8 +20,8 @@
  *                         may be generated (before the exit gate).
  *  - review_draft:        a review draft has been generated. Generation BEFORE the
  *                         exit gate is intentional; the exit approval is pending.
- *  - exit_approved_final: the phase EXIT gate is approved and the sponsor has
- *                         accepted → final / board-ready.
+ *  - exit_approved_final: the phase EXIT gate is approved by an authorized
+ *                         workspace user → final / board-ready.
  */
 export const ROADMAP_LIFECYCLE_STATES = [
   "entry_approved",
@@ -37,7 +37,7 @@ export interface RoadmapLifecycleInput {
   entryGateApproved: boolean;
   /** Is this phase's capture complete enough to generate a review draft? */
   captureComplete: boolean;
-  /** Has this phase's EXIT gate been approved (final sponsor acceptance)? */
+  /** Has this phase's EXIT gate been approved by an authorized workspace user? */
   exitGateApproved: boolean;
   /** Has an artifact (review draft) actually been generated for this phase? */
   artifactGenerated: boolean;
@@ -86,9 +86,9 @@ export function roadmapLifecycleSentence(
 ): string {
   switch (lifecycle.state) {
     case "exit_approved_final":
-      return `Final — the Phase ${phase} exit gate is approved and the sponsor has accepted this artifact.`;
+      return `Final — an authorized workspace user approved the Phase ${phase} exit gate.`;
     case "review_draft":
-      return `Review draft generated after Phase ${phase} entry and capture completion. Phase ${phase} exit approval and final sponsor acceptance remain pending.`;
+      return `Review draft generated after Phase ${phase} entry and capture completion. Phase ${phase} exit approval by an authorized workspace user remains pending.`;
     case "generation_eligible":
       return `Phase ${phase} is entered and capture is complete — a review draft may be generated; the Phase ${phase} exit gate is not yet approved.`;
     case "entry_approved":

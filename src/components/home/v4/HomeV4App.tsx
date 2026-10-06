@@ -1,30 +1,49 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { BrowseTheData } from "@/components/home/preview/BrowseTheData";
 import { HomeAvaChat } from "@/components/home/preview/HomeAvaChat";
-import { RecordBrowser } from "./RecordBrowser";
+import { RecordBrowser, type RecordRowMatch } from "./RecordBrowser";
 import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type {
   ChapterId,
+  ChapterView,
+  EnterpriseSignalPacket,
+  HomeRecordRenderSource,
   HomeReviewBundle,
+  TechRecordType,
   TechObjectType,
 } from "@/lib/home/preview/types";
+import {
+  homeNarrativeStatusLabel,
+  homePriorInterpretationLabel,
+  homeRecordSourceLabel,
+  homeSourceCoverageLabel,
+  homeSourceDateCoverageLabel,
+  homeSourceFileReviewLabel,
+} from "@/lib/home/preview/record-source";
+import { sanitizeHomeReviewBundleNarrative } from "@/lib/home/preview/stale-claim-guard";
 import { ArchitecturePage } from "./ArchitecturePage";
-import { ChapterPage } from "./ChapterPage";
+import { ChapterPage, type BriefingOpening } from "./ChapterPage";
+import { sectionId } from "./TableSet";
 import type { EstateRow } from "./page-tables";
 import { chapterArguesFrom, chapterDepth } from "./chapter-page-content";
-import { buildBusinessBriefing } from "./business-briefing";
+import { isGeneratorDeferral } from "./cxo-language";
+import {
+  buildBusinessBriefing,
+  type BusinessBriefing,
+} from "./business-briefing";
 import {
   BusinessBriefingSections,
   PerspectiveSections,
 } from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
+import { EnterpriseContextPanel } from "./EnterpriseContextPanel";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
-import { SANS, V4 } from "./tokens";
+import { PAGE_X, SANS, V4, eyebrow } from "./tokens";
 
 /**
  * Home v4 -- "Record and Reading".
@@ -39,6 +58,14 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
   "meridian-health": demoSafeClientText("Meridian Health"),
   "skyharbor-air": demoSafeClientText("SkyHarbor Air"),
 };
+
+const BRIEFING_RECORD_TYPES = [
+  "application_system",
+  "data_asset_or_integration",
+  "vendor_contract",
+  "infrastructure_platform",
+  "organization_ownership",
+] as const;
 
 type ActiveView =
   | ChapterId
@@ -89,17 +116,412 @@ function formatCompiledDate(value: string): string {
   }).format(new Date(value));
 }
 
+function recordCoverageLine(recordTypes: TechRecordType[]): string {
+  const parts = BRIEFING_RECORD_TYPES.map((objectType) =>
+    recordTypes.find((type) => type.objectType === objectType),
+  )
+    .filter((type): type is TechRecordType => Boolean(type))
+    .map(
+      (type) =>
+        `${type.rows.length.toLocaleString()} ${type.label.toLowerCase()}`,
+    );
+
+  if (parts.length === 0) {
+    return "no counted evidence families";
+  }
+
+  return parts.join("; ");
+}
+
+function businessBriefingOpening({
+  chapterId,
+  briefing,
+  signalPacket,
+  techRecordTypes,
+}: {
+  chapterId: ChapterId;
+  briefing: BusinessBriefing;
+  signalPacket: EnterpriseSignalPacket;
+  techRecordTypes: TechRecordType[];
+}): BriefingOpening | undefined {
+  const coverage = recordCoverageLine(techRecordTypes);
+  const signalCount = (signalPacket.signals ?? []).length;
+  const factCount = (signalPacket.contextItems ?? []).length;
+  const evidenceLine = `${coverage}; ${signalCount.toLocaleString()} signals; ${factCount.toLocaleString()} governed facts.`;
+
+  if (chapterId === "executive_brief") {
+    return {
+      headline:
+        "The first read is estate scale, operating dependency, and evidence quality.",
+      standfirst: `This record carries ${evidenceLine} The brief separates counted evidence from decisions that still need review.`,
+      readoutHeading: "What this brief supports",
+      readoutText:
+        "Use the opening read to orient on scale, dependencies, and unanswered decisions before moving into the specialist chapters.",
+      cards: [
+        {
+          label: "Record coverage",
+          tone: V4.navy,
+          value: coverage,
+        },
+        {
+          label: "Executive use",
+          tone: V4.green,
+          value:
+            "Start with the pattern of evidence, then use the chapter trail to test whether a decision has enough support.",
+        },
+        {
+          label: "Boundary",
+          tone: V4.amber,
+          value:
+            "Counts locate where to look. They do not certify value, risk, or business priority without cited statements.",
+        },
+      ],
+    };
+  }
+
+  if (chapterId === "our_business") {
+    const sectionNames = briefing.sections.map((section) => section.heading);
+    const describedBy =
+      sectionNames.length > 0
+        ? sectionNames.join("; ")
+        : "estate counts and explicit evidence gaps";
+    return {
+      headline:
+        "The business read is organized around model, priorities, leadership voice, and explicit gaps.",
+      standfirst:
+        sectionNames.length > 0
+          ? `It draws from ${briefing.sections.length.toLocaleString()} briefing sections: ${describedBy}.`
+          : `This record carries ${evidenceLine} It has not published enough business-model statements to turn those counts into a business narrative.`,
+      readoutHeading: "What this page orients",
+      readoutText:
+        "Read this page as the bridge between enterprise context and the estate evidence, with unanswered market and peer questions kept visible.",
+      cards: [
+        {
+          label: "Business inputs",
+          tone: V4.navy,
+          value: describedBy,
+        },
+        {
+          label: "What remains open",
+          tone: V4.amber,
+          value:
+            briefing.notInTheRecord[0]?.question ??
+            "Which business records should this chapter be built from?",
+        },
+        {
+          label: "How to use it",
+          tone: V4.green,
+          value:
+            "Use this orientation before drawing conclusions from application, vendor, infrastructure, or metric counts.",
+        },
+      ],
+    };
+  }
+
+  return undefined;
+}
+
+function RecordStateBand({ source }: { source: HomeRecordRenderSource }) {
+  if (
+    source.kind === "ecl_serving_projection" &&
+    source.contextVersion?.coherence === "coherent"
+  ) {
+    return null;
+  }
+  if (source.kind === "reviewed_snapshot") return null;
+
+  const fallback = source.kind === "reviewed_snapshot_fallback";
+  const sourceReview = homeSourceFileReviewLabel(source);
+  return (
+    <aside
+      data-home-record-state-band
+      style={{
+        padding: `15px ${PAGE_X}px`,
+        borderBottom: `1px solid ${V4.rule}`,
+        background: V4.surface,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: SANS,
+          fontSize: 13,
+          fontWeight: 700,
+          lineHeight: 1.45,
+          color: V4.ink,
+        }}
+      >
+        {fallback
+          ? "The reviewed stored record is on screen."
+          : "Live rows and the executive interpretation are not yet one verified version."}
+      </p>
+      <p
+        style={{
+          margin: "3px 0 0",
+          fontFamily: SANS,
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: V4.slate,
+        }}
+      >
+        {homeRecordSourceLabel(source)} · {homeNarrativeStatusLabel(source)}
+        {sourceReview ? ` · ${sourceReview}` : ""}
+      </p>
+    </aside>
+  );
+}
+
+const MIXED_CHAPTER_EVIDENCE = [
+  { family: "applications", type: "application_system", label: "applications" },
+  { family: "vendors", type: "vendor_contract", label: "vendor contracts" },
+  {
+    family: "infrastructure",
+    type: "infrastructure_platform",
+    label: "infrastructure and platform records",
+  },
+  {
+    family: "data",
+    type: "data_asset_or_integration",
+    label: "data and integration records",
+  },
+  { family: "metrics", type: "metric_outcome", label: "metrics and outcomes" },
+  { family: "risks", type: "risk_control", label: "risks and controls" },
+  { family: "programs", type: "program_initiative", label: "programs" },
+  { family: "ai", type: "ai_use_case", label: "AI use cases" },
+  {
+    family: "organization",
+    type: "organization_ownership",
+    label: "organization and ownership records",
+  },
+  {
+    family: "interviews",
+    type: "executive_interview",
+    label: "leadership interview records",
+  },
+] as const;
+
+function MixedChapterFrame({
+  children,
+  enabled,
+  chapter,
+  chapterNumber,
+  source,
+  recordTypes,
+  narrativeGeneratedAt,
+  onBrowse,
+  enterpriseContext,
+  onOpenRows,
+  onOpenMatch,
+}: {
+  children: ReactNode;
+  enabled: boolean;
+  chapter: ChapterView | undefined;
+  chapterNumber: number;
+  source: HomeRecordRenderSource;
+  recordTypes: TechRecordType[];
+  narrativeGeneratedAt: string | null;
+  onBrowse: () => void;
+  enterpriseContext: EnterpriseSignalPacket["homeEnterpriseContext"];
+  onOpenRows: (type: string, filter: string) => void;
+  onOpenMatch: (type: string, match: RecordRowMatch) => void;
+}) {
+  if (!enabled || !chapter) return <>{children}</>;
+
+  const contextHeadings: Partial<Record<ChapterId, [string, string]>> = {
+    executive_brief: ["The enterprise, in evidence", "The business, its priorities, and its execution signals from the current record."],
+    our_business: ["Business model and segment economics", "Where the enterprise operates, who owns each segment, and how resources are attributed."],
+    strategy_value_creation: ["Priorities and execution", "Declared priorities connected to accountable owners, programs, and measures."],
+    how_we_operate: ["How accountability runs", "Business functions, their owners, and the work and risk attached to them."],
+    ...(enterpriseContext?.dependencyProof ? {
+      technology_data: ["Critical dependencies in the record", "How priority risks and programs connect to applications, suppliers, data, and hosting through recorded relationships."],
+    } : {}),
+    performance_value: ["Where investment outruns proof", "Declared program investment, forecast pressure, and the current limits of value evidence."],
+    what_needs_attention: ["Where risk needs review", "High and critical risks ordered by recorded severity and control state; item-level ownership remains to be confirmed."],
+  };
+  const contextHeading = enterpriseContext ? contextHeadings[chapter.chapterId] : undefined;
+
+  const evidence =
+    chapter.chapterId === "executive_brief"
+      ? MIXED_CHAPTER_EVIDENCE.filter(({ type }) =>
+          [
+            "application_system",
+            "vendor_contract",
+            "data_asset_or_integration",
+          ].includes(type),
+        )
+      : chapter.chapterId === "our_business"
+        ? [
+            { type: "business_segment", label: "business segments" },
+            { type: "business_function", label: "business functions" },
+          ]
+        : MIXED_CHAPTER_EVIDENCE.filter(({ family }) =>
+            chapterArguesFrom(chapter.chapterId, family),
+          );
+  const coverage = evidence.map(({ type, label }) => ({
+    label,
+    count: recordTypes.find((recordType) => recordType.objectType === type)
+      ?.rows.length,
+  }));
+  const noInterviews =
+    chapter.chapterId === "leadership_perspective" &&
+    !recordTypes.some(
+      (recordType) =>
+        recordType.objectType === "executive_interview" &&
+        recordType.rows.length > 0,
+    );
+  const sourceCoverage = homeSourceCoverageLabel(source);
+  const sourceQuality = homeSourceFileReviewLabel(source);
+  const sourceDates = homeSourceDateCoverageLabel(source);
+  const narrativeDate = narrativeGeneratedAt
+    ? formatCompiledDate(narrativeGeneratedAt)
+    : "date not established";
+
+  return (
+    <>
+      <section
+        data-home-mixed-chapter-opening={chapter.chapterId}
+        data-home-mixed-executive-opening={
+          chapter.chapterId === "executive_brief" ? "" : undefined
+        }
+        style={{
+          padding: `38px ${PAGE_X}px 30px`,
+          borderBottom: `1px solid ${V4.rule}`,
+        }}
+      >
+        <p style={{ ...eyebrow(V4.blue), margin: "0 0 12px" }}>
+          Chapter {String(chapterNumber).padStart(2, "0")} · {chapter.title}
+        </p>
+        <h1
+          style={{
+            fontFamily: SANS,
+            fontSize: 30,
+            fontWeight: 650,
+            lineHeight: 1.2,
+            margin: 0,
+            maxWidth: "28ch",
+          }}
+        >
+          {contextHeading?.[0] ?? "Current record, interpretation pending review"}
+        </h1>
+        <p
+          style={{
+            fontFamily: SANS,
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: V4.inkSoft,
+            margin: "12px 0 28px",
+            maxWidth: "70ch",
+          }}
+        >
+          {contextHeading?.[1] ?? (noInterviews
+            ? "No leadership interview rows are served here. The prior interpretation cannot establish what leaders said."
+            : "These are counted records, not a current assessment of business performance or priorities.")}
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))",
+            gap: "20px 28px",
+            borderTop: `1px solid ${V4.rule}`,
+            paddingTop: 20,
+          }}
+        >
+          {(contextHeading ? [] : coverage).map(({ label, count }) => (
+            <div key={label}>
+              <strong
+                style={{ display: "block", fontSize: 26, lineHeight: 1.2 }}
+              >
+                {count === undefined ? "Not served" : count.toLocaleString()}
+              </strong>
+              <span style={{ fontSize: 13, color: V4.slate }}>{label}</span>
+            </div>
+          ))}
+        </div>
+        <div
+          style={{
+            marginTop: 24,
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: V4.slate,
+          }}
+        >
+          {sourceCoverage ? (
+            <p style={{ margin: "0 0 3px" }}>{sourceCoverage}</p>
+          ) : null}
+          {sourceQuality ? (
+            <p style={{ margin: "0 0 3px" }}>{sourceQuality}</p>
+          ) : null}
+          {sourceDates ? <p style={{ margin: 0 }}>{sourceDates}</p> : null}
+        </div>
+        <button
+          type="button"
+          onClick={onBrowse}
+          style={{
+            marginTop: 20,
+            padding: 0,
+            border: 0,
+            background: "none",
+            color: V4.blue,
+            fontFamily: SANS,
+            fontSize: 14,
+            fontWeight: 650,
+            cursor: "pointer",
+          }}
+        >
+          Browse the record
+        </button>
+      </section>
+      {contextHeading && enterpriseContext ? (
+        <EnterpriseContextPanel
+          chapterId={chapter.chapterId}
+          context={enterpriseContext}
+          onOpenRows={onOpenRows}
+          onOpenMatch={onOpenMatch}
+        />
+      ) : null}
+      <details
+        data-home-reviewed-interpretation
+        style={{ padding: `22px ${PAGE_X}px 0` }}
+      >
+        <summary
+          style={{
+            cursor: "pointer",
+            fontFamily: SANS,
+            fontSize: 14,
+            fontWeight: 600,
+            color: V4.inkSoft,
+          }}
+        >
+          {homePriorInterpretationLabel(source, narrativeDate)}
+        </summary>
+        <div style={{ margin: `0 -${PAGE_X}px` }}>{children}</div>
+      </details>
+    </>
+  );
+}
+
 export function HomeV4App({
   bundle,
+  recordSource,
+  recordToken,
   tenantKey,
+  requestedProvider,
 }: {
   bundle: HomeReviewBundle;
+  recordSource?: HomeRecordRenderSource;
+  recordToken?: string;
   tenantKey: HomePreviewTenantKey;
+  requestedProvider?: string;
 }) {
+  const displayBundle = useMemo(
+    () => sanitizeHomeReviewBundleNarrative(bundle),
+    [bundle],
+  );
   // Home opens on the briefing: chapter one, the first question a new executive arrives with.
   // Nothing stands in front of it.
   const [activeView, setActiveView] = useState<ActiveView>(
-    () => (bundle.chapters[0]?.chapterId as ActiveView) ?? "browse-the-data",
+    () =>
+      (displayBundle.chapters[0]?.chapterId as ActiveView) ?? "browse-the-data",
   );
   /**
    * A filter carried from a figure to the rows behind it.
@@ -110,13 +532,15 @@ export function HomeV4App({
    * narrows a view someone arrived at deliberately.
    */
   const [recordFilter, setRecordFilter] = useState<string | null>(null);
+  /** The same, for a figure counted by a declared identifier: carried and cleared with it. */
+  const [recordMatch, setRecordMatch] = useState<RecordRowMatch | null>(null);
 
-  const chapters = bundle.chapters;
+  const chapters = displayBundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
   const activeIndex = chapters.findIndex((c) => c.chapterId === activeView);
   const techRecordTypes = useMemo(
-    () => bundle.technologyEstate?.recordTypes ?? [],
-    [bundle.technologyEstate],
+    () => displayBundle.technologyEstate?.recordTypes ?? [],
+    [displayBundle.technologyEstate],
   );
   const activeTechRecordType = activeView.startsWith("tech:")
     ? techRecordTypes.find((t) => `tech:${t.objectType}` === activeView)
@@ -143,12 +567,16 @@ export function HomeV4App({
   const infrastructure = techRecordTypes.find(
     (r) => r.objectType === "infrastructure_platform",
   );
-  const signalPacket = bundle.thesis.signalPacket;
+  const signalPacket = displayBundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
+  const businessBriefing = useMemo(
+    () => buildBusinessBriefing(signalPacket),
+    [signalPacket],
+  );
 
   useEffect(() => {
     const syncFromHash = () => {
-      const hashView = resolveHashView(window.location.hash, bundle);
+      const hashView = resolveHashView(window.location.hash, displayBundle);
       if (hashView) {
         setActiveView(hashView);
       }
@@ -157,15 +585,20 @@ export function HomeV4App({
     syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
     return () => window.removeEventListener("hashchange", syncFromHash);
-  }, [bundle]);
+  }, [displayBundle]);
 
-  const selectActiveView = (id: string, filter?: string) => {
-    const nextView = resolveHashView(`#${id}`, bundle);
+  const selectActiveView = (
+    id: string,
+    filter?: string,
+    match?: RecordRowMatch,
+  ) => {
+    const nextView = resolveHashView(`#${id}`, displayBundle);
     if (!nextView) {
       return;
     }
 
     setRecordFilter(filter ?? null);
+    setRecordMatch(match ?? null);
     setActiveView(nextView);
     if (typeof window !== "undefined" && window.location.hash !== `#${id}`) {
       window.history.replaceState(null, "", `#${id}`);
@@ -177,25 +610,11 @@ export function HomeV4App({
     selectActiveView(`tech:${objectType}`, filter);
   };
 
-  /** Exhibit count lines, computed from the estate rather than asserted. An exhibit whose totals
-   * cannot be derived shows no counts line at all -- an estimated total on a governed surface is
-   * worse than a missing one. */
-  const exhibitMeta = useMemo(() => {
-    const meta: Record<string, string> = {};
-    const contracts = techRecordTypes.find(
-      (t) => t.objectType === "vendor_contract",
-    );
-    if (contracts) {
-      const total = contracts.rows.reduce(
-        (sum, row) => sum + (Number(row.annualSpendUsd) || 0),
-        0,
-      );
-      if (total > 0) {
-        meta.vendor_spend_concentration = `${contracts.rows.length} contracts · $${(total / 1_000_000).toFixed(1)}M`;
-      }
-    }
-    return meta;
-  }, [techRecordTypes]);
+  /** Opens the rows a figure was counted from, by the identifier the count joined on. */
+  const openRecordMatch = (objectType: string, match: RecordRowMatch) => {
+    selectActiveView(`tech:${objectType}`, undefined, match);
+  };
+
 
   /** A chapter counts as drafted when the writer produced a headline for it. That is a property of
    * the generated record, not an inference from empty arrays -- a chapter can legitimately hold
@@ -210,6 +629,37 @@ export function HomeV4App({
   /** Progress is counted from the items themselves rather than asserted alongside them. Stating a
    * numerator separately is how a rail ends up reading "2 of 6 drafted" above six items that are
    * all drafted -- a label contradicting the list beneath it, which makes the reader trust neither. */
+  // Built once for the rail so a chapter's sections and its exposure mark come from the same rows
+  // the chapter itself renders, rather than from a second, drifting source.
+  const estateForRail = {
+    asOf: displayBundle.contextVersion?.dataAsOf ?? undefined,
+    applications: applications?.rows as EstateRow[] | undefined,
+    vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")
+      ?.rows as EstateRow[] | undefined,
+    infrastructure: infrastructure?.rows as EstateRow[] | undefined,
+    data: techRecordTypes.find(
+      (r) => r.objectType === "data_asset_or_integration",
+    )?.rows as EstateRow[] | undefined,
+    metrics: techRecordTypes.find((r) => r.objectType === "metric_outcome")
+      ?.rows as EstateRow[] | undefined,
+    risks: techRecordTypes.find((r) => r.objectType === "risk_control")
+      ?.rows as EstateRow[] | undefined,
+    programs: techRecordTypes.find((r) => r.objectType === "program_initiative")
+      ?.rows as EstateRow[] | undefined,
+    ai: techRecordTypes.find((r) => r.objectType === "ai_use_case")?.rows as
+      | EstateRow[]
+      | undefined,
+    organization: techRecordTypes.find(
+      (r) => r.objectType === "organization_ownership",
+    )?.rows as EstateRow[] | undefined,
+    interviews: techRecordTypes.find(
+      (r) => r.objectType === "executive_interview",
+    )?.rows as EstateRow[] | undefined,
+    relationships: techRecordTypes.find(
+      (r) => r.objectType === "relationship_edge",
+    )?.rows as EstateRow[] | undefined,
+  };
+
   const group = (title: string, items: RailItem[]): RailGroup => ({
     title,
     progress: `${items.filter((i) => i.drafted).length} of ${items.length} drafted`,
@@ -219,11 +669,36 @@ export function HomeV4App({
   const groups: RailGroup[] = [
     group(
       "The briefing",
-      chapters.map((c) => ({
-        id: c.chapterId,
-        label: c.title,
-        drafted: isDrafted(c.chapterId),
-      })),
+      chapters.map((c, i) => {
+        // Sections come from the chapter's own tables, so the rail cannot claim a destination the
+        // chapter does not have.
+        const depth = chapterDepth(c.chapterId, estateForRail);
+        const names: string[] = [];
+        for (const table of depth.tables) {
+          if (table.section && !names.includes(table.section))
+            names.push(table.section);
+        }
+        return {
+          id: c.chapterId,
+          label: c.title,
+          drafted: isDrafted(c.chapterId),
+          index: i + 1,
+          sections:
+            names.length > 1
+              ? names.map((name) => ({ id: sectionId(name), label: name }))
+              : undefined,
+          // One mark in the whole rail, and only where the record *rates* something high.
+          //
+          // An earlier version marked any chapter producing an exposure finding, which was five of
+          // eight -- a mark on most of a list is decoration, and it spent red on something red is
+          // not reserved for. Red means rated high severity, so the mark follows the rating.
+          flagged:
+            chapterArguesFrom(c.chapterId, "risks") &&
+            (estateForRail.risks ?? []).some((row) =>
+              /^(high|critical)$/i.test(String(row.severity ?? "").trim()),
+            ),
+        };
+      }),
     ),
     group("The evidence", [
       // Architecture first: it is the only view here that answers what shape the estate is in.
@@ -255,18 +730,48 @@ export function HomeV4App({
     ]),
   ];
 
-  const provenance = bundle.provenance;
+  const provenance = displayBundle.provenance;
+  const canonicalSnapshotHash =
+    provenance.canonical_snapshot_hash ?? "reviewed-snapshot-unhashed";
+  const renderedRecordSource =
+    recordSource ??
+    ({
+      kind: canonicalSnapshotHash.startsWith("ecl:")
+        ? "ecl_serving_projection"
+        : "reviewed_snapshot",
+      canonicalSnapshotHash,
+      contextVersion: displayBundle.contextVersion,
+    } satisfies HomeRecordRenderSource);
+  const sourceDates = homeSourceDateCoverageLabel(renderedRecordSource);
   const compiledLine = [
-    formatCompiledDate(provenance.generated_at),
+    `Data as of ${displayBundle.contextVersion?.dataAsOf ?? "not established"}`,
+    ...(sourceDates ? [sourceDates] : []),
+    `Narrative generated ${formatCompiledDate(
+      displayBundle.contextVersion?.narrativeGeneratedAt ??
+        provenance.generated_at,
+    )}`,
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
-
+  const exportHrefBase = `/api/home/walkthrough-export?tenant=${encodeURIComponent(
+    tenantKey,
+  )}${requestedProvider ? `&provider=${encodeURIComponent(requestedProvider)}` : ""}${recordToken ? `&context=${encodeURIComponent(recordToken)}` : ""}`;
+  const activeBriefingOpening =
+    activeChapter && isGeneratorDeferral(activeChapter.headline)
+      ? businessBriefingOpening({
+          chapterId: activeChapter.chapterId,
+          briefing: businessBriefing,
+          signalPacket,
+          techRecordTypes,
+        })
+      : undefined;
   return (
     <HomeAvaChat
       key={tenantKey}
       tenantKey={tenantKey}
       activeChapterId={activeChapter?.chapterId}
+      recordSource={renderedRecordSource}
+      requestedProvider={requestedProvider}
     >
       <div
         style={{
@@ -286,114 +791,174 @@ export function HomeV4App({
       >
         <Rail
           clientLabel={TENANT_LABEL[tenantKey]}
+          declaredSyntheticDemo={displayBundle.declaredSyntheticDemo === true}
           groups={groups}
           activeId={activeView}
           onSelect={selectActiveView}
           compiledLine={compiledLine}
+          recordSource={renderedRecordSource}
+          exportHrefBase={exportHrefBase}
         />
 
         <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>
-          {activeChapter ? (
-            isDrafted(activeChapter.chapterId) ? (
-              <ChapterPage
-                key={activeChapter.chapterId}
-                chapter={activeChapter}
-                chapterNumber={activeIndex + 1}
-                signalPacket={signalPacket}
-                visualDatasets={visualDatasets}
-                exhibitMeta={exhibitMeta}
-                onOpenRows={openRecordRows}
-                contracts={
-                  chapterArguesFrom(activeChapter.chapterId, "vendors")
-                    ? techRecordTypes.find(
-                        (r) => r.objectType === "vendor_contract",
-                      )?.rows
-                    : undefined
-                }
-                asOf={bundle.provenance?.generated_at?.slice(0, 10)}
-                metrics={
-                  chapterArguesFrom(activeChapter.chapterId, "metrics")
-                    ? (techRecordTypes.find(
-                        (r) => r.objectType === "metric_outcome",
-                      )?.rows as EstateRow[] | undefined)
-                    : undefined
-                }
-                depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
-                  applications: applications?.rows,
-                  vendors: techRecordTypes.find(
-                    (r) => r.objectType === "vendor_contract",
-                  )?.rows,
-                  infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find(
-                    (r) => r.objectType === "data_asset_or_integration",
-                  )?.rows,
-                  metrics: techRecordTypes.find(
-                    (r) => r.objectType === "metric_outcome",
-                  )?.rows,
-                  risks: techRecordTypes.find(
-                    (r) => r.objectType === "risk_control",
-                  )?.rows,
-                  programs: techRecordTypes.find(
-                    (r) => r.objectType === "program_initiative",
-                  )?.rows,
-                  ai: techRecordTypes.find(
-                    (r) => r.objectType === "ai_use_case",
-                  )?.rows,
-                  organization: techRecordTypes.find(
-                    (r) => r.objectType === "organization_ownership",
-                  )?.rows,
-                })}
-              />
-            ) : (
-              <NotDraftedPage
-                chapterNumber={activeIndex + 1}
-                title={activeChapter.title}
-                guidingQuestion={activeChapter.guidingQuestion}
-                onOpenRows={openRecordRows}
-                depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
-                  applications: applications?.rows,
-                  vendors: techRecordTypes.find(
-                    (r) => r.objectType === "vendor_contract",
-                  )?.rows,
-                  infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find(
-                    (r) => r.objectType === "data_asset_or_integration",
-                  )?.rows,
-                  metrics: techRecordTypes.find(
-                    (r) => r.objectType === "metric_outcome",
-                  )?.rows,
-                  risks: techRecordTypes.find(
-                    (r) => r.objectType === "risk_control",
-                  )?.rows,
-                  programs: techRecordTypes.find(
-                    (r) => r.objectType === "program_initiative",
-                  )?.rows,
-                  ai: techRecordTypes.find(
-                    (r) => r.objectType === "ai_use_case",
-                  )?.rows,
-                  organization: techRecordTypes.find(
-                    (r) => r.objectType === "organization_ownership",
-                  )?.rows,
-                })}
-              />
-            )
-          ) : null}
+          <RecordStateBand source={renderedRecordSource} />
+          <MixedChapterFrame
+            key={activeChapter?.chapterId ?? activeView}
+            enabled={
+              Boolean(activeChapter && isDrafted(activeChapter.chapterId)) &&
+              renderedRecordSource.kind === "ecl_serving_projection" &&
+              renderedRecordSource.contextVersion?.coherence !== "coherent"
+            }
+            chapter={activeChapter}
+            chapterNumber={activeIndex + 1}
+            source={renderedRecordSource}
+            recordTypes={techRecordTypes}
+            narrativeGeneratedAt={
+              displayBundle.contextVersion?.narrativeGeneratedAt ??
+              provenance.generated_at
+            }
+            onBrowse={() => selectActiveView("browse-the-data")}
+            enterpriseContext={signalPacket.homeEnterpriseContext}
+            onOpenRows={openRecordRows}
+            onOpenMatch={openRecordMatch}
+          >
+            {activeChapter ? (
+              isDrafted(activeChapter.chapterId) ? (
+                <ChapterPage
+                  key={activeChapter.chapterId}
+                  chapter={activeChapter}
+                  chapterNumber={activeIndex + 1}
+                  signalPacket={signalPacket}
+                  visualDatasets={visualDatasets}
+                  onOpenRows={openRecordRows}
+                  contracts={
+                    chapterArguesFrom(activeChapter.chapterId, "vendors")
+                      ? techRecordTypes.find(
+                          (r) => r.objectType === "vendor_contract",
+                        )?.rows
+                      : undefined
+                  }
+                  estate={
+                    activeChapter.chapterId === "technology_data"
+                      ? {
+                          applications: applications?.rows as
+                            | EstateRow[]
+                            | undefined,
+                          vendors: techRecordTypes.find(
+                            (r) => r.objectType === "vendor_contract",
+                          )?.rows as EstateRow[] | undefined,
+                          dataAssetCount: integrations?.rows.length,
+                        }
+                      : undefined
+                  }
+                  asOf={displayBundle.contextVersion?.dataAsOf ?? undefined}
+                  queue={
+                    activeChapter.chapterId === "what_needs_attention"
+                      ? {
+                          risks: estateForRail.risks,
+                          programs: estateForRail.programs,
+                          contracts: estateForRail.vendors,
+                        }
+                      : undefined
+                  }
+                  metrics={
+                    chapterArguesFrom(activeChapter.chapterId, "metrics")
+                      ? (techRecordTypes.find(
+                          (r) => r.objectType === "metric_outcome",
+                        )?.rows as EstateRow[] | undefined)
+                      : undefined
+                  }
+                  depth={
+                    activeBriefingOpening
+                      ? undefined
+                      : chapterDepth(activeChapter.chapterId, {
+                          asOf:
+                            displayBundle.contextVersion?.dataAsOf ?? undefined,
+                          applications: applications?.rows,
+                          vendors: techRecordTypes.find(
+                            (r) => r.objectType === "vendor_contract",
+                          )?.rows,
+                          infrastructure: infrastructure?.rows,
+                          data: techRecordTypes.find(
+                            (r) => r.objectType === "data_asset_or_integration",
+                          )?.rows,
+                          metrics: techRecordTypes.find(
+                            (r) => r.objectType === "metric_outcome",
+                          )?.rows,
+                          risks: techRecordTypes.find(
+                            (r) => r.objectType === "risk_control",
+                          )?.rows,
+                          programs: techRecordTypes.find(
+                            (r) => r.objectType === "program_initiative",
+                          )?.rows,
+                          ai: techRecordTypes.find(
+                            (r) => r.objectType === "ai_use_case",
+                          )?.rows,
+                          organization: techRecordTypes.find(
+                            (r) => r.objectType === "organization_ownership",
+                          )?.rows,
+                          interviews: techRecordTypes.find(
+                            (r) => r.objectType === "executive_interview",
+                          )?.rows,
+                          relationships: techRecordTypes.find(
+                            (r) => r.objectType === "relationship_edge",
+                          )?.rows,
+                        })
+                  }
+                  briefingOpening={activeBriefingOpening}
+                />
+              ) : (
+                <NotDraftedPage
+                  chapterNumber={activeIndex + 1}
+                  title={activeChapter.title}
+                  guidingQuestion={activeChapter.guidingQuestion}
+                  onOpenRows={openRecordRows}
+                  depth={chapterDepth(activeChapter.chapterId, {
+                    asOf: displayBundle.contextVersion?.dataAsOf ?? undefined,
+                    applications: applications?.rows,
+                    vendors: techRecordTypes.find(
+                      (r) => r.objectType === "vendor_contract",
+                    )?.rows,
+                    infrastructure: infrastructure?.rows,
+                    data: techRecordTypes.find(
+                      (r) => r.objectType === "data_asset_or_integration",
+                    )?.rows,
+                    metrics: techRecordTypes.find(
+                      (r) => r.objectType === "metric_outcome",
+                    )?.rows,
+                    risks: techRecordTypes.find(
+                      (r) => r.objectType === "risk_control",
+                    )?.rows,
+                    programs: techRecordTypes.find(
+                      (r) => r.objectType === "program_initiative",
+                    )?.rows,
+                    ai: techRecordTypes.find(
+                      (r) => r.objectType === "ai_use_case",
+                    )?.rows,
+                    organization: techRecordTypes.find(
+                      (r) => r.objectType === "organization_ownership",
+                    )?.rows,
+                    interviews: techRecordTypes.find(
+                      (r) => r.objectType === "executive_interview",
+                    )?.rows,
+                    relationships: techRecordTypes.find(
+                      (r) => r.objectType === "relationship_edge",
+                    )?.rows,
+                  })}
+                />
+              )
+            ) : null}
 
-          {activeChapter?.chapterId === "leadership_perspective" ? (
-            <PerspectiveSections
-              perspective={buildBusinessBriefing(signalPacket).perspective}
-            />
-          ) : null}
-
-          {activeChapter &&
-          (activeChapter.chapterId === "executive_brief" ||
-            activeChapter.chapterId === "our_business") ? (
-            <BusinessBriefingSections
-              briefing={buildBusinessBriefing(signalPacket)}
-            />
-          ) : null}
+            {activeChapter?.chapterId === "executive_brief" ? (
+              <BusinessBriefingSections briefing={businessBriefing} />
+            ) : null}
+            {activeChapter?.chapterId === "leadership_perspective" ? (
+              <PerspectiveSections perspective={businessBriefing.perspective} />
+            ) : null}
+            {activeChapter?.chapterId === "our_business" ? (
+              <BusinessBriefingSections briefing={businessBriefing} />
+            ) : null}
+          </MixedChapterFrame>
 
           {activeView === "architecture" && applications ? (
             <ArchitecturePage
@@ -402,7 +967,7 @@ export function HomeV4App({
               applications={applications}
               integrations={integrations}
               infrastructure={infrastructure}
-              canonicalBuild={bundle.provenance.canonical_snapshot_hash}
+              canonicalBuild={displayBundle.provenance.canonical_snapshot_hash}
             />
           ) : null}
 
@@ -412,7 +977,7 @@ export function HomeV4App({
               tenantDisplayName={TENANT_LABEL[tenantKey]}
               integrations={dataMovementRecordType}
               applications={applications}
-              canonicalBuild={bundle.provenance.canonical_snapshot_hash}
+              canonicalBuild={displayBundle.provenance.canonical_snapshot_hash}
             />
           ) : null}
 
@@ -422,9 +987,10 @@ export function HomeV4App({
 
           {activeTechRecordType ? (
             <RecordBrowser
-              key={`${activeTechRecordType.objectType}:${recordFilter ?? ""}`}
+              key={`${activeTechRecordType.objectType}:${recordFilter ?? ""}:${recordMatch ? `${recordMatch.field}=${recordMatch.value}` : ""}`}
               recordType={activeTechRecordType}
               initialQuery={recordFilter ?? undefined}
+              initialMatch={recordMatch ?? undefined}
             />
           ) : null}
         </main>

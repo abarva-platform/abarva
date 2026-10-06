@@ -291,8 +291,8 @@ describe('azurePostgresWriteAdapter', () => {
 
 // --- proof route: quarantine lifecycle write through the seam --------------
 
-// The proof-route data source looks up the parent row via getServerSupabase
-// (a read — transitive per design doc §4). Mock it so the lookup resolves
+// The proof-route data source looks up the parent row through the Azure
+// Postgres compatibility client. Mock it so the lookup resolves
 // without a live backend; the write half is exercised via the injected adapter.
 // `mock`-prefixed name satisfies jest's hoisted-factory scope rule.
 const mockParentRow = {
@@ -307,8 +307,8 @@ const mockParentRow = {
   storage_path: 'quarantine/apex/q4.xlsx',
 };
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: () => ({
     from: () => ({
       select: () => ({
         eq: () => ({

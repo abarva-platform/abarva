@@ -1,0 +1,18 @@
+{
+  "dataset_id": "MERIDIAN_SYNTHETIC_ENTERPRISE_V1",
+  "title": "Synthetic enterprise context source set v1",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "Product/Lab synthetic data owner",
+  "source_basis": "versioned_deterministic_synthetic_enterprise_definition",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "postgres_fts",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 5759,
+  "approved_by": "Codex synthetic lab reviewer under product-owner delegation",
+  "approved_at": "2026-10-01",
+  "notes": "Approval covers deterministic synthetic source generation and local source-set QA only. It is not client attestation, data-plane load approval, agent readiness, retrieval proof, or Home publication. The scoped ACA job, readback, quality gate, and signed-in citation proof remain required."
+}

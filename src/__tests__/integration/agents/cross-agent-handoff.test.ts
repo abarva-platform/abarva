@@ -430,7 +430,7 @@ describe('module hygiene · cross-agent-handoff.ts', () => {
   const path = require('path') as typeof import('path');
   const sourcePath = path.resolve(
     __dirname,
-    '../../../lib/agents/cross-agent-handoff.ts',
+    '../../../lib/agent/cross-agent-handoff.ts',
   );
   const source = fs.readFileSync(sourcePath, 'utf8');
   const codeOnly = source

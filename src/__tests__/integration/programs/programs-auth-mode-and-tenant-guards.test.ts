@@ -92,8 +92,7 @@ describe('Programs auth-mode pilot routes', () => {
     await expect(res.json()).resolves.toEqual({ programs: [{ id: 'eng_1', name: 'Move 1' }] });
   });
 
-  it('wraps detail GET with route-family auth mode and preserves not_found contract', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({ mode: 'service_role', supabase: { mocked: true } });
+  it('reads detail GET through the tenant-scoped default plane and preserves not_found contract', async () => {
     getProgramById.mockResolvedValueOnce(null);
 
     const { GET } = await import('@/app/api/v1/programs/[programId]/route');
@@ -101,11 +100,10 @@ describe('Programs auth-mode pilot routes', () => {
       params: Promise.resolve({ programId: 'eng_404' }),
     });
 
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('detail');
+    expect(getProgramsRouteSupabase).not.toHaveBeenCalled();
     expect(getProgramById).toHaveBeenCalledWith(
       expect.objectContaining({ clientId: 'client_meridian' }),
       'eng_404',
-      expect.objectContaining({ supabase: { mocked: true } }),
     );
     expect(res.status).toBe(404);
     await expect(res.json()).resolves.toEqual({ error: 'not_found' });

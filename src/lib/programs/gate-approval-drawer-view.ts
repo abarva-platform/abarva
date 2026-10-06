@@ -11,6 +11,7 @@
 // Deterministic: no live clocks, no randomness, no network IO, no DB writes.
 
 import type { ProgramDetailView, EvidenceItem } from './programs-types';
+import { gateCriteriaMetSummary } from './gate-criteria-figure-labels';
 import { PHASE_LABEL_MAP } from './programs-fixture';
 import type { ProgramPhaseId } from './programs-types';
 
@@ -177,7 +178,7 @@ export function buildGateApprovalDrawerView(
 
   const metCount = criteriaRows.filter((r) => r.met).length;
   const totalCount = criteriaRows.length;
-  const gateSummary = `${metCount} of ${totalCount} criteria met`;
+  const gateSummary = gateCriteriaMetSummary(metCount, totalCount);
   const blockedRows = criteriaRows.filter((r) => r.status === 'blocked');
 
   let approvalPosture: GateApprovalPosture;

@@ -1,4 +1,5 @@
 import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
+import { createHash } from "node:crypto";
 
 const mockTenancy = {
   clientId: "client-1",
@@ -46,11 +47,14 @@ jest.mock("@/lib/auth/source-access-policy", () => ({
 let mockArtifactStates: Array<{
   artifactCode: string;
   linkedArtifactId: string | null;
+  body?: string | null;
+  bodyGenerationMetadata?: Record<string, unknown> | null;
 }> = [];
 let mockCurrentStageKey = "rfp";
 
 jest.mock("@/lib/source/agent-generation/server", () => ({
   buildSourceGenerationContext: jest.fn(async () => ({
+    tenantKey: "skyharbor",
     event: {
       id: "event-1",
       code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
@@ -89,6 +93,10 @@ jest.mock("@/lib/source/file-cabinet/blob-store", () => ({
 }));
 
 let mockGovernanceRow: {
+  client_id: string;
+  tenant_key: string;
+  source_event_id: string;
+  artifact_type: string;
   status: string | null;
   lifecycle_state: string | null;
   approval_state: string | null;
@@ -108,13 +116,27 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 let mockHasAcceptance = false;
+let mockAcceptanceOverrides: Record<string, unknown> = {};
 
 jest.mock("@/lib/source/artifact-acceptances", () => ({
   getLatestArtifactAcceptance: async () =>
-    mockHasAcceptance ? { id: "acc-1" } : null,
+    mockHasAcceptance
+      ? {
+          id: "acc-1",
+          artifactId: mockArtifactStates.find((state) => state.artifactCode === "d09_rfp_pack")?.linkedArtifactId,
+          eventId: "event-1",
+          authoritativeVersionId: mockArtifactStates.find((state) => state.artifactCode === "d09_rfp_pack")?.linkedArtifactId,
+          artifactRole: "authoritative",
+          artifactState: "approved_for_external_use",
+          contentDriftStatus: "current",
+          gatePreconditionStatus: "ready",
+          ...mockAcceptanceOverrides,
+        }
+      : null,
 }));
 
 import { GET } from "../route";
+import { allowsDegradedSourcePdf } from "@/lib/source/exports/rfp-export-authority";
 
 function req(url: string): import("next/server").NextRequest {
   return { url } as unknown as import("next/server").NextRequest;
@@ -159,7 +181,7 @@ function artifactFixture(
     supersedesArtifactId: "generated-draft",
     supersededByArtifactId: null,
     lifecycleState: "current",
-    blobSha256: "sha256",
+    blobSha256: createHash("sha256").update("client final docx").digest("hex"),
     isClientFinal: true,
     isCurrentAuthoritative: true,
     sourceGeneratedArtifactId: "generated-draft",
@@ -182,13 +204,218 @@ beforeEach(() => {
   mockArtifacts = [];
   mockGovernanceRow = null;
   mockHasAcceptance = false;
+  mockAcceptanceOverrides = {};
   mockArtifactStates = [];
   mockCurrentStageKey = "rfp";
 });
 
 describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
+  it("never treats a cover-only RFP PDF as a successful export", () => {
+    expect(allowsDegradedSourcePdf("d09_rfp_pack", true)).toBe(false);
+    expect(allowsDegradedSourcePdf("d05_scope_memo", true)).toBe(true);
+    expect(allowsDegradedSourcePdf("d16_scorecard", false)).toBe(false);
+  });
+  it("refuses an unlinked RFP export rather than rendering a scaffold", async () => {
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=pdf"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({ error: "export_not_eligible" });
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client-final RFP before checking its linked authority", async () => {
+    mockArtifacts = [artifactFixture()];
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=docx"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+    expect(res.headers.get("x-source-artifact-authoritative")).toBeNull();
+  });
+
+  it("refuses a linked RFP whose persisted row is outside the event tenant", async () => {
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "other-tenant",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=pdf"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("refuses a linked approved RFP without active acceptance", async () => {
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=pdf"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { contentDriftStatus: "stale" },
+    { gatePreconditionStatus: "not_ready" },
+    { eventId: "other-event" },
+    { authoritativeVersionId: "other-artifact" },
+  ])("refuses an acceptance ledger row with invalid release proof: %p", async (override) => {
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+    mockAcceptanceOverrides = override;
+    mockArtifacts = [artifactFixture()];
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=docx"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+  });
+
+  it("does not stream a different client-final file in place of the accepted RFP link", async () => {
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "accepted-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+    mockArtifacts = [artifactFixture({ id: "unrelated-final" })];
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=docx"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("refuses linked bytes when their digest differs from the persisted digest", async () => {
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+    mockArtifacts = [artifactFixture({ blobSha256: "0".repeat(64) })];
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=docx"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("keeps restrictive browser headers when streaming accepted RFP HTML", async () => {
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+    mockArtifacts = [artifactFixture({ fileFormat: "html", fileName: "Accepted RFP.html" })];
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=html"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-security-policy")).toContain("default-src 'none'");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  it("refuses an accepted generated RFP whose authored body failed quality review", async () => {
+    mockArtifactStates = [{
+      artifactCode: "d09_rfp_pack",
+      linkedArtifactId: "generated-draft",
+      body: "# RFP body",
+      bodyGenerationMetadata: { qualityGate: { passed: false } },
+    }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+    mockArtifacts = [artifactFixture({ id: "generated-draft", isClientFinal: false, status: "approved" })];
+
+    const res = await GET(req("https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=docx"), {
+      params: Promise.resolve({ eventId: "event-1", artifactCode: "d09_rfp_pack" }),
+    });
+
+    expect(res.status).toBe(409);
+  });
   it("returns an explicit client-final format mismatch instead of silently regenerating", async () => {
     mockArtifacts = [artifactFixture()];
+    mockArtifactStates = [{ artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
 
     const res = await GET(
       req(
@@ -218,7 +445,7 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
     expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
   });
 
-  it("labels generated fallback responses when no client-final artifact exists", async () => {
+  it("streams the accepted generated file rather than regenerating it", async () => {
     mockArtifacts = [
       artifactFixture({
         id: "generated-draft",
@@ -230,6 +457,23 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
         isCurrentAuthoritative: false,
       }),
     ];
+    mockArtifactStates = [{
+      artifactCode: "d09_rfp_pack",
+      linkedArtifactId: "generated-draft",
+      body: "# RFP body",
+      bodyGenerationMetadata: { qualityGate: { passed: true } },
+    }];
+    mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
 
     const res = await GET(
       req(
@@ -244,10 +488,8 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("x-source-artifact-authoritative")).toBe(
-      "generated-fallback",
-    );
-    expect(mockRenderSourceDeliverable).toHaveBeenCalledTimes(1);
+    expect(res.headers.get("x-source-artifact-authoritative")).toBe("accepted-linked");
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
   });
 
   // PR 4C (ADR-0015): contract-driven export eligibility. d09_rfp_pack is a
@@ -260,6 +502,10 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
       { artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" },
     ];
     mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
       status: "draft",
       lifecycle_state: "current",
       approval_state: null,
@@ -291,12 +537,17 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
       { artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" },
     ];
     mockGovernanceRow = {
+      client_id: "client-1",
+      tenant_key: "skyharbor",
+      source_event_id: "event-1",
+      artifact_type: "d09_rfp_pack",
       status: "approved",
       lifecycle_state: "current",
       approval_state: null,
       approved_by: "reviewer-1",
     };
     mockHasAcceptance = true;
+    mockArtifacts = [artifactFixture({ fileFormat: "pdf", fileName: "Accepted RFP.pdf" })];
 
     const res = await GET(
       req(
@@ -311,6 +562,7 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(mockRenderSourceDeliverable).toHaveBeenCalledTimes(1);
+    expect(res.headers.get("x-source-artifact-authoritative")).toBe("accepted-linked");
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
   });
 });

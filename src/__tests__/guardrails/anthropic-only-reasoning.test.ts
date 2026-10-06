@@ -29,10 +29,7 @@ describe('Anthropic-only reasoning standard', () => {
     expect(fs.existsSync(path.join(ROOT, 'src/lib/intelligence/ask/openai-runtime.ts'))).toBe(false);
   });
 
-  it('the chat route reasons via the audited Anthropic client, not OpenAI', () => {
-    const text = fs.readFileSync(path.join(ROOT, 'src/app/api/chat/route.ts'), 'utf8');
-    expect(text).not.toMatch(/openai-runtime/);
-    expect(text).not.toMatch(/\bOPENAI_API_KEY\b/);
-    expect(text).toMatch(/AnthropicDirectClient|getAuditedAnthropicClient|preflightAnthropicDirectClient/);
+  it('the retired duplicate chat route cannot bypass the audited agent path', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/app/api/chat/route.ts'))).toBe(false);
   });
 });

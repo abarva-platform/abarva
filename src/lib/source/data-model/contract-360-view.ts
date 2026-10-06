@@ -20,6 +20,7 @@ import type { ContractOptimizationEvidencePack } from "./contract-optimization-e
 import type { ContractOptimizationOpportunitySet } from "./contract-optimization-opportunity";
 import type {
   DocExtractionRow,
+  DocFileRow,
   SourceContract360Row,
   SourceContractApplicationScopeRow,
   SourceContractEvidenceOverviewRow,
@@ -31,6 +32,10 @@ import type {
   SourceContractOperationalPerformanceRow,
   SourceContractPerformancePeriodRow,
   SourceContractSpendMonthlyRow,
+  SourceContractTabIntelligenceRow,
+  SourceContractIntelligenceRow,
+  SourceCloudCommitmentCoverageRow,
+  SourceCloudTagQualityRow,
   TowerMetricObservationRow,
   TowerValueClaimRow,
 } from "./types";
@@ -46,6 +51,8 @@ export interface Contract360View {
   readonly hasTowerOverlay: boolean;
   /** doc.extraction rows citing this contract or its vendor — exact clause/row provenance. */
   readonly docExtractions: readonly DocExtractionRow[];
+  /** Governed document inventory attached to this contract. */
+  readonly documentFiles?: readonly DocFileRow[];
   /** Shared four-ledger optimization evidence, if governed system/document rows exist. */
   readonly optimizationEvidence: ContractOptimizationEvidencePack | null;
   /** Atomic opportunity spine and governed calculation/evidence detail. */
@@ -57,6 +64,14 @@ export interface Contract360View {
   readonly evidencePerformance: SourceContractEvidencePerformanceSummary | null;
   readonly performancePeriods: readonly SourceContractPerformancePeriodRow[];
   readonly spendMonths: readonly SourceContractSpendMonthlyRow[];
+  /** Same-tenant cloud commitment coverage rows for portfolio-relative comparator context. */
+  readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
+  /** Monthly tag-quality observations: how much consumption can be attributed. */
+  readonly cloudTagQuality?: readonly SourceCloudTagQualityRow[];
+  /** Load-time governed stories, one per Contract 360 tab. */
+  readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
+  /** One governed record shared by Contract 360, Education, anatomy, and aVa. */
+  readonly contractIntelligence?: SourceContractIntelligenceRow | null;
 }
 
 export interface BuildContract360ViewInput {
@@ -68,6 +83,7 @@ export interface BuildContract360ViewInput {
   readonly towerObservations: readonly TowerMetricObservationRow[];
   readonly towerValueClaims: readonly TowerValueClaimRow[];
   readonly docExtractions?: readonly DocExtractionRow[];
+  readonly documentFiles?: readonly DocFileRow[];
   readonly optimizationEvidence?: ContractOptimizationEvidencePack | null;
   readonly optimizationOpportunitySet?: ContractOptimizationOpportunitySet | null;
   readonly evidenceOverview?: SourceContractEvidenceOverviewRow | null;
@@ -76,6 +92,10 @@ export interface BuildContract360ViewInput {
   readonly evidencePerformance?: SourceContractEvidencePerformanceSummary | null;
   readonly performancePeriods?: readonly SourceContractPerformancePeriodRow[];
   readonly spendMonths?: readonly SourceContractSpendMonthlyRow[];
+  readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
+  readonly cloudTagQuality?: readonly SourceCloudTagQualityRow[];
+  readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
+  readonly contractIntelligence?: SourceContractIntelligenceRow | null;
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -92,6 +112,7 @@ export function buildContract360View(
     towerObservations,
     towerValueClaims,
     docExtractions = [],
+    documentFiles = [],
     optimizationEvidence = null,
     optimizationOpportunitySet = null,
     evidenceOverview = null,
@@ -100,6 +121,10 @@ export function buildContract360View(
     evidencePerformance = null,
     performancePeriods = [],
     spendMonths = [],
+    cloudCommitmentPeerCoverage = [],
+    cloudTagQuality = [],
+    contractTabIntelligence = [],
+    contractIntelligence = null,
     explicitApplicationPairs,
   } = input;
 
@@ -126,6 +151,7 @@ export function buildContract360View(
     hasTowerOverlay:
       towerObservations.length > 0 || towerValueClaims.length > 0,
     docExtractions,
+    documentFiles,
     optimizationEvidence,
     optimizationOpportunitySet,
     evidenceOverview,
@@ -138,6 +164,17 @@ export function buildContract360View(
     spendMonths: spendMonths.filter(
       (r) => r.contract_id === contract.contract_id,
     ),
+    cloudCommitmentPeerCoverage,
+    cloudTagQuality: cloudTagQuality.filter(
+      (r) => r.contract_id === contract.contract_id,
+    ),
+    contractTabIntelligence: contractTabIntelligence.filter(
+      (r) => r.contract_id === contract.contract_id,
+    ),
+    contractIntelligence:
+      contractIntelligence?.contract_id === contract.contract_id
+        ? contractIntelligence
+        : null,
   };
 }
 

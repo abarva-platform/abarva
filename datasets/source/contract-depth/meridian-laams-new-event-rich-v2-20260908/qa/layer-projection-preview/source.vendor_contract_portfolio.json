@@ -1,0 +1,14 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "vendor_category": "legacy_analytics_managed_services",
+    "contract_count": "1",
+    "annual_value": "7850000",
+    "total_committed_value": "7850000.04",
+    "auto_renew_contracts": "1",
+    "next_end_date": "2027-07-14",
+    "contract_refs": "{MER-TECH-LAAMS-001}"
+  }
+]

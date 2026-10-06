@@ -506,6 +506,33 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
 
   await client.query(`
     CREATE VIEW source.contract_vendor_360 AS
+    WITH context_brief AS (
+      SELECT
+        facts.tenant_key,
+        facts.contract_id,
+        active.load_run_id,
+        max(facts.payload ->> 'value_text') FILTER (WHERE facts.fact_key = 'contract.purpose_summary') AS purpose_summary,
+        max(facts.payload ->> 'value_text') FILTER (WHERE facts.fact_key = 'contract.scope_summary') AS scope_summary,
+        max(facts.payload ->> 'value_text') FILTER (WHERE facts.fact_key = 'contract.commercial_thesis') AS commercial_thesis,
+        max(facts.payload ->> 'value_text') FILTER (WHERE facts.fact_key = 'contract.relationship_summary') AS relationship_summary,
+        max(facts.payload ->> 'value_text') FILTER (WHERE facts.fact_key = 'contract.evidence_boundary') AS evidence_boundary_summary
+      FROM source.canonical_fact_assertion facts
+      JOIN source.l4_cube_active_load_run active
+        ON active.tenant_key = facts.tenant_key
+       AND (
+         active.dataset_version IS NULL
+         OR facts.dataset_version = active.dataset_version
+       )
+      WHERE facts.fact_key IN (
+        'contract.purpose_summary',
+        'contract.scope_summary',
+        'contract.commercial_thesis',
+        'contract.relationship_summary',
+        'contract.evidence_boundary'
+      )
+        AND facts.review_state IN ('reviewed', 'approved')
+      GROUP BY facts.tenant_key, facts.contract_id, active.load_run_id
+    )
     SELECT
       c.tenant_key,
       c.contract_id,
@@ -513,12 +540,16 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       COALESCE(v.legal_name, c.vendor_id, 'Unknown vendor') AS vendor_name,
       v.supplier_category AS vendor_category,
       c.contract_name,
-      concat_ws(
-        ' - ',
-        NULLIF(c.agreement_type, ''),
-        NULLIF(c.payment_terms, ''),
-        NULLIF(c.benchmark_rights, ''),
-        NULLIF(c.termination_rights, '')
+      COALESCE(
+        NULLIF(context_brief.scope_summary, ''),
+        NULLIF(c.raw_payload ->> 'contract_english_overview', ''),
+        concat_ws(
+          ' - ',
+          NULLIF(c.agreement_type, ''),
+          NULLIF(c.payment_terms, ''),
+          NULLIF(c.benchmark_rights, ''),
+          NULLIF(c.termination_rights, '')
+        )
       ) AS scope_summary,
       c.annual_value::numeric AS annual_value,
       c.total_committed_value::numeric AS total_committed_value,
@@ -547,7 +578,11 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       false AS annual_value_conflict_flag,
       c.total_committed_value::numeric AS resolved_total_committed_value,
       false AS total_committed_value_conflict_flag,
-      c.load_run_id
+      c.load_run_id,
+      NULLIF(context_brief.purpose_summary, '') AS purpose_summary,
+      NULLIF(context_brief.commercial_thesis, '') AS commercial_thesis,
+      NULLIF(context_brief.relationship_summary, '') AS relationship_summary,
+      NULLIF(context_brief.evidence_boundary_summary, '') AS evidence_boundary_summary
     FROM source.contract c
     JOIN source.l4_cube_active_load_run active
       ON active.tenant_key = c.tenant_key
@@ -569,6 +604,10 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       ON consumption.tenant_key = c.tenant_key
      AND consumption.contract_id = c.contract_id
      AND consumption.load_run_id = c.load_run_id
+    LEFT JOIN context_brief
+      ON context_brief.tenant_key = c.tenant_key
+     AND context_brief.contract_id = c.contract_id
+     AND context_brief.load_run_id = c.load_run_id
     WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
 
   await client.query(`
@@ -591,7 +630,33 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
   await client.query(`
     CREATE VIEW source.contract_360 AS
     SELECT
-      c.*,
+      c.tenant_key,
+      c.contract_id,
+      c.vendor_ref,
+      c.vendor_name,
+      c.vendor_category,
+      c.contract_name,
+      c.scope_summary,
+      c.annual_value,
+      c.total_committed_value,
+      c.committed_annual_spend,
+      c.actual_annual_spend,
+      c.renewal_notice_date,
+      c.end_date,
+      c.notice_period_days,
+      c.auto_renew,
+      c.renewal_decision_state,
+      c.renewal_owner_ref,
+      c.benchmarking_clause,
+      c.exit_rights_summary,
+      c.alternatives_available,
+      c.concentration_note,
+      c.source_confidence,
+      c.resolved_annual_value,
+      c.annual_value_conflict_flag,
+      c.resolved_total_committed_value,
+      c.total_committed_value_conflict_flag,
+      c.load_run_id,
       COALESCE(app.scoped_application_count, 0) AS scoped_application_count,
       COALESCE(app.critical_application_count, 0) AS critical_application_count,
       0::numeric AS linked_budget_amount,
@@ -599,7 +664,11 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       0::bigint AS linked_budget_lines,
       COALESCE(perf.cloud_sev1_sev2_incidents, 0) AS cloud_sev1_sev2_incidents,
       perf.evidence_gap AS operational_evidence_gap,
-      0::bigint AS initiative_dependency_count
+      0::bigint AS initiative_dependency_count,
+      c.purpose_summary,
+      c.commercial_thesis,
+      c.relationship_summary,
+      c.evidence_boundary_summary
     FROM source.contract_vendor_360 c
     LEFT JOIN (
       SELECT

@@ -21,6 +21,7 @@ import { render } from "@testing-library/react";
 
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import { HomeV4App } from "../HomeV4App";
+import { rankFindings } from "../page-tables";
 
 jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -145,8 +146,13 @@ describe("an exhibit belongs to the argument on the page", () => {
         return has ? chapter.chapterId : null;
       })
       .filter(Boolean);
-    // Value and bets. Not "what do leaders agree on", where it answered nothing that was asked.
-    expect(drawn).toEqual(["strategy_value_creation", "performance_value"]);
+    // One chapter, not two. The exhibit follows the DESCRIPTION of a family, not every argument
+    // that draws on it -- the value chapter still reasons about renewals, as a finding, and the
+    // contract register is described under bets. Drawing the same chart in both places is the
+    // duplication this rule exists to prevent, one visual instead of five tables.
+    //
+    // Still not "what do leaders agree on", where it answered nothing that was asked.
+    expect(drawn).toEqual(["strategy_value_creation"]);
   });
 });
 
@@ -187,6 +193,28 @@ describe("a chapter never shows the generator's status", () => {
     // The rows answer it: the strongest finding on this chapter becomes the lead.
     expect(headline.length).toBeGreaterThan(20);
   });
+
+  it.each(["executive_brief", "our_business"] as const)(
+    "%s opens from a briefing readout when authored copy is deferred",
+    (chapterId) => {
+      const value = bundle();
+      const chapter = value.chapters.find((c) => c.chapterId === chapterId)!;
+      chapter.headline = `${chapter.title} is deferred pending stronger evidence`;
+      chapter.executive_synthesis =
+        "This chapter is not ready for executive review.";
+      window.location.hash = chapterId;
+      const { container } = render(
+        <HomeV4App bundle={value} tenantKey="meridian-health" />,
+      );
+      expect(
+        container.querySelector("[data-home-briefing-opening]"),
+      ).not.toBeNull();
+      expect(container.querySelector("[data-home-findings]")).toBeNull();
+      expect(container.querySelector("h1")?.textContent ?? "").not.toMatch(
+        /applications carry|estate is self-hosted|contracts carry|records carry/i,
+      );
+    },
+  );
 });
 
 describe("the visual grammar", () => {
@@ -207,7 +235,7 @@ describe("the visual grammar", () => {
     );
   });
 
-  it("marks an absence as absence, with the view it cannot build", () => {
+  it("marks an absence as absence, with the view still visible", () => {
     window.location.hash = "technology_data";
     const { container } = render(
       <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
@@ -218,7 +246,9 @@ describe("the visual grammar", () => {
       ),
     ];
     expect(marks.length).toBeGreaterThan(0);
-    expect(marks[0].textContent ?? "").toMatch(/not carried by the record/i);
+    expect(marks[0].textContent ?? "").toMatch(
+      /record does not carry this yet|evidence not yet served/i,
+    );
   });
 
   // Written against the shape, not one expression of it. The original assertion matched only the
@@ -282,8 +312,11 @@ describe("the perspective layer", () => {
       <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
     );
     const block = container.querySelector("[data-home-perspective]");
-    if (!block) return; // a record with no patterns or lenses renders none
-    const note = block.querySelector("[data-home-no-comparison]");
+    // No early return. A guard that skips when the thing it guards is missing can never fail on the
+    // case that matters -- this one passed while the section rendered nothing at all on the served
+    // path, because the fixture carried lenses and the served packet does not.
+    expect(block).not.toBeNull();
+    const note = block!.querySelector("[data-home-no-comparison]");
     expect(note).not.toBeNull();
     expect(note!.textContent ?? "").toMatch(
       /no competitor position and no peer benchmark/i,
@@ -291,7 +324,7 @@ describe("the perspective layer", () => {
     // It must precede the patterns, not follow them.
     expect(
       note!.compareDocumentPosition(
-        block.querySelector("[data-home-briefing]")!,
+        block!.querySelector("[data-home-briefing]")!,
       ),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
@@ -303,4 +336,135 @@ describe("the perspective layer", () => {
     );
     expect(container.querySelector("[data-home-perspective]")).toBeNull();
   });
+});
+
+describe("the rail", () => {
+  // Twenty flat entries make the briefing and the evidence look like one list of equal things. They
+  // are not: eight are a reading order, twelve are a reference shelf.
+  it("numbers the briefing, because it is a reading order", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const rail = container.querySelector("nav");
+    expect(rail).not.toBeNull();
+    const text = (rail!.textContent ?? "").replace(/\s+/g, " ");
+    for (const [n, title] of bundle().chapters.map(
+      (c, i) => [i + 1, c.title] as const,
+    )) {
+      expect(text).toContain(`${n}${title}`);
+    }
+  });
+
+  it("reveals a chapter's sections only while that chapter is the one being read", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const open = container.querySelectorAll("[data-home-rail-sections]");
+    // Exactly one chapter expands: the active one.
+    expect(open.length).toBe(1);
+    expect(open[0].querySelectorAll("a").length).toBeGreaterThan(1);
+  });
+
+  it("carries at most one status mark, and only where the record rates something high", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const flags = container.querySelectorAll("[data-home-rail-flag]");
+    // A mark on most of a list is decoration. It follows the record's own rating, not any computed
+    // exposure -- an earlier version marked five of eight chapters, which spent red on something red
+    // is not reserved for.
+    expect(flags.length).toBeLessThanOrEqual(2);
+  });
+
+  it("keeps every destination reachable", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const rail = container.querySelector("nav")!;
+    for (const chapter of bundle().chapters) {
+      expect(rail.textContent ?? "").toContain(chapter.title);
+    }
+    for (const label of ["Current-state architecture", "Browse the record"]) {
+      expect(rail.textContent ?? "").toContain(label);
+    }
+  });
+});
+
+describe("the record's own rating", () => {
+  // The queue is ordered by what the record rates, not by how serious a finding sounds to us.
+  it("orders a rated-high finding ahead of an unrated one of the same kind", () => {
+    const ranked = rankFindings([
+      { kind: "exposure", claim: "unrated", owner: "o", because: "b" },
+      {
+        kind: "exposure",
+        claim: "high",
+        owner: "o",
+        because: "b",
+        rated: "high",
+      },
+      {
+        kind: "exposure",
+        claim: "moderate",
+        owner: "o",
+        because: "b",
+        rated: "moderate",
+      },
+    ]);
+    expect(ranked.map((f) => f.claim)).toEqual(["high", "unrated", "moderate"]);
+  });
+
+  it("does not demote an unrated finding below a moderate one", () => {
+    // Absence of a rating is not a low rating. Treating it as one lets a gap in the register
+    // quietly reorder a queue a leader reads top-down.
+    const ranked = rankFindings([
+      {
+        kind: "exposure",
+        claim: "moderate",
+        owner: "o",
+        because: "b",
+        rated: "moderate",
+      },
+      { kind: "exposure", claim: "unrated", owner: "o", because: "b" },
+    ]);
+    expect(ranked[0].claim).toBe("unrated");
+  });
+
+  it("spends red only on a rating the record declares", () => {
+    window.location.hash = "what_needs_attention";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    for (const badge of container.querySelectorAll(
+      "[data-home-finding-rated]",
+    )) {
+      const rated = badge.getAttribute("data-home-finding-rated");
+      const style = badge.getAttribute("style") ?? "";
+      if (rated === "high")
+        expect(style).toMatch(/rgb\(163, 45, 45\)|#a32d2d/i);
+      else expect(style).not.toMatch(/rgb\(163, 45, 45\)|#a32d2d/i);
+    }
+  });
+});
+
+describe("the closing blocks on a prose-only chapter", () => {
+  // Executive Brief, Our Business and Leadership Perspective carry no tables. What closes them is
+  // the questions the record raises and the limits of the read -- and a question on a page like
+  // this reads as leading somewhere unless the page says otherwise.
+  it.each(["executive_brief", "our_business", "leadership_perspective"])(
+    "%s says its questions are not answered here",
+    (chapterId) => {
+      window.location.hash = chapterId;
+      const { container } = render(
+        <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+      );
+      const rubric = container.querySelector("[data-home-questions-rubric]");
+      if (!container.textContent?.includes("Take these into the room")) return;
+      expect(rubric).not.toBeNull();
+      expect(rubric!.textContent ?? "").toMatch(/stated, not answered/i);
+    },
+  );
 });

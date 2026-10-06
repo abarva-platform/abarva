@@ -1,0 +1,10 @@
+system,vendor,role_in_contact_flow,interface_today,api_readiness,home_gap_reference,provenance
+Salesforce Member/Patient CRM,Salesforce,"Contact record, case management, member 360",Native + batch extract,"UNVALIDATED — named in the active record, feasibility unproven",API readiness unclear,Anchor system; readiness SYNTHETIC
+Epic Cadence,Epic,Scheduling,HL7 v2 + Epic APIs,UNVALIDATED,API readiness unclear,Anchor system
+Epic ClinDoc,Epic,"Clinical documentation, messaging",HL7 v2 + FHIR,UNVALIDATED,API readiness unclear,Anchor system
+Epic Tapestry,Epic,Claims and benefits administration,Batch + flat file,UNVALIDATED,API readiness unclear,Anchor system
+Epic Willow,Epic,Pharmacy,HL7 v2,UNVALIDATED,API readiness unclear,Anchor system
+Eligibility service,In-house,Real-time eligibility,Web service,UNVALIDATED,API readiness unclear,SYNTHETIC
+Knowledge base,Microsoft tooling,Agent guidance content,"Portal, no API today",UNVALIDATED,API readiness unclear,Anchor vendor; detail SYNTHETIC
+Contact Center Virtual Assistant,Not named in the active record,"Deflection, advisory only",Already in production enterprise-wide,"IN PRODUCTION — advisory only, human step intact",—,Status per the active record
+SQL Server datamarts,Microsoft,Reporting,Direct query,N/A,—,Active record: on-prem sprawl; Databricks evaluation-stage only

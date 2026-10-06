@@ -1,0 +1,38 @@
+name: Source aVa library suites
+
+# The Source answer layer carries grounding, refusal, tenant-fence, citation,
+# and value-claim controls. Run every reachable suite by default; a named
+# exclusion is valid only while its primary subject remains unreachable.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  source-ava-library-suites:
+    name: Source aVa library suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refuse a stale or growing quarantine
+        run: node --test scripts/quality/check-source-ava-library-quarantine.test.mjs && node scripts/quality/check-source-ava-library-quarantine.mjs
+
+      - name: Run reachable Source aVa suites
+        run: npx jest src/lib/source/ava/__tests__ --no-coverage --ci $(node scripts/quality/source-ava-library-ignore-args.mjs)

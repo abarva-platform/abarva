@@ -23,6 +23,10 @@ import type {
   PatternRef,
   SynthesisContext,
 } from '@/lib/reasoning/types';
+import {
+  countGateStatuses,
+  type GateStatusCounts,
+} from '@/lib/reasoning/gate-summary-line';
 
 // ─── Serialised types ─────────────────────────────────────────────────────────
 
@@ -120,12 +124,14 @@ export interface ExplanationPayload {
   patternId: string;
   patternVersion: string;
   currentStage: string;
-  /** Gate counts headline (matches provenance ribbon). */
-  gateSummary: {
-    total: number;
-    met: number;
-    unmet: number;
-  };
+  /**
+   * Gate counts headline. Derived from `gates` below — the SAME criteria the
+   * drawer body lists, across every stage — not from
+   * `SynthesisContext.gatesSummary`, which counts the current stage only and
+   * folds waived criteria into `met`. See `gate-summary-line.ts` for why the
+   * drawer may not reuse the ribbon's number.
+   */
+  gateSummary: GateStatusCounts;
   /** Every citation in the context. */
   citations: ExplanationCitationRow[];
   /** All gate criterion evaluations grouped by stage. */
@@ -323,11 +329,9 @@ export function serializeSynthesisExplanation(
     patternId: context.patternId,
     patternVersion: context.patternVersion,
     currentStage: context.currentStage,
-    gateSummary: {
-      total: context.gatesSummary.total,
-      met: context.gatesSummary.met,
-      unmet: context.gatesSummary.unmet,
-    },
+    // Counted from the evaluations this payload also renders as `gates`, so
+    // the headline is a partition of the body and cannot contradict it.
+    gateSummary: countGateStatuses(gateEvaluations),
     citations,
     gates,
     contradictions,

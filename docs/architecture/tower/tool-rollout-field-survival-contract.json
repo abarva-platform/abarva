@@ -1,0 +1,150 @@
+{
+  "contract_id": "tower_tool_rollout_field_survival_v1",
+  "status": "active",
+  "applies_to": "all_tenants",
+  "object_type": "ai_tool_rollout",
+  "source_file": "23_ai_tool_rollout.csv",
+  "row_key": "tool_rollout_id",
+  "principle": "Every approved AI tool rollout field must either survive to a governed consumption layer or be rejected by this contract with an explicit reason.",
+  "layers": {
+    "layer_1_source": "layer_1_client_intake/source_system_extracts/23_ai_tool_rollout.csv",
+    "layer_2_lineage": "layer_2_source_adapters/adapter_emitted_objects.csv",
+    "layer_3_canonical": "layer_3_canonical/canonical_tools.csv",
+    "layer_4_read_model": "layer_4_read_models/tower_tools_table.csv",
+    "tool_rollout_cube": "cube/tower_ai_tool_rollout_cube.csv"
+  },
+  "required_fields": [
+    {
+      "field": "tool_rollout_id",
+      "meaning": "Stable rollout identity.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "tool_name",
+      "meaning": "The tool or platform being rolled out.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "vendor_name",
+      "meaning": "Commercial or internal provider.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "domain_key",
+      "meaning": "Owning IT or business domain.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "rollout_goal",
+      "meaning": "Plain-language purpose for the rollout.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "linked_business_case_count",
+      "meaning": "Business cases linked to the rollout.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "rollout_target_users",
+      "meaning": "Target user population for the rollout.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "enabled_users",
+      "meaning": "Provisioned or enabled users observed in the tool source.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "monthly_active_users",
+      "meaning": "Monthly active users observed in the latest usage source.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "adoption_target_pct",
+      "meaning": "Declared target adoption percent.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "adoption_actual_pct",
+      "meaning": "Observed adoption percent.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "rollout_stage",
+      "meaning": "Current rollout stage.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "control_blocker",
+      "meaning": "Named control or evidence blocker, including explicit none.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "business_owner_role",
+      "meaning": "Role accountable for operational adoption.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "finance_partner_role",
+      "meaning": "Finance role accountable for value review.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "source_system",
+      "meaning": "Upstream system or tracker that supplied the row.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "source_record_id",
+      "meaning": "Upstream row identity.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "extract_date",
+      "meaning": "Date the source extract was produced.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "as_of_date",
+      "meaning": "Reporting period covered by the row.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "refresh_cadence",
+      "meaning": "Expected refresh cadence for this source.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    },
+    {
+      "field": "quality_state",
+      "meaning": "Source quality state earned by the generated package.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "tool_rollout_cube"]
+    }
+  ],
+  "layer_2_checks": {
+    "adapter_id": "meridian_tool_rollout_adapter",
+    "canonical_object_type": "Tool",
+    "lineage_status": "preserved",
+    "required_columns": [
+      "tenant_key",
+      "adapter_id",
+      "canonical_object_type",
+      "canonical_object_id",
+      "source_file",
+      "source_row",
+      "source_system",
+      "source_record_id",
+      "lineage_status",
+      "extract_date",
+      "as_of_date"
+    ]
+  },
+  "relationship_checks": [
+    {
+      "file": "layer_3_canonical/canonical_relationships.csv",
+      "from_object_type": "Tool",
+      "relationship_type": "supports",
+      "to_object_type": "AIUseCase",
+      "count_field": "linked_business_case_count"
+    }
+  ]
+}
