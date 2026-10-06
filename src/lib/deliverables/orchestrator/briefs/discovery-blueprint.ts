@@ -978,19 +978,83 @@ export function suggestDiscoveryArchetypes(
  * suggestion, never authority. `useCaseArchetype` that is itself exactly a
  * catalog id is also honored as a declaration.
  */
-export function getDiscoveryBlueprint(
+/**
+ * How a blueprint came to be selected for a Move. Every value above `inferred`
+ * means a human's declaration decided it; `inferred` and `default` mean nobody
+ * did, and keyword matching (or the general case) chose instead.
+ */
+export type DiscoveryBlueprintBasis =
+  /** `declaredArchetypeId` matched a catalog archetype. */
+  | "declared"
+  /** The `useCaseArchetype` argument was itself exactly a catalog archetype id. */
+  | "declared_via_use_case"
+  /** Nothing matched the catalog; keyword inference picked a specific archetype. */
+  | "inferred"
+  /** Nothing matched and no keywords fired; the general-case blueprint applies. */
+  | "default";
+
+export interface DiscoveryBlueprintResolution {
+  blueprint: DiscoveryBlueprint;
+  basis: DiscoveryBlueprintBasis;
+  /**
+   * A declaration WAS supplied but does not name a catalog archetype, so it was
+   * discarded and selection fell through to inference. Non-null here is a
+   * governance signal, not a detail: the blueprint grading this Move's evidence
+   * was not the one anybody declared. Callers surfacing a blueprint to a person
+   * should say so rather than present the selection as declared.
+   */
+  unknownDeclaration: string | null;
+}
+
+/**
+ * Resolve the discovery blueprint for a Move AND report what decided it.
+ *
+ * `getDiscoveryBlueprint` is this function's blueprint, with the provenance
+ * dropped; the selection rules live here and have exactly one implementation.
+ */
+export function resolveDiscoveryBlueprintWithBasis(
   useCaseArchetype: string,
   declaredArchetypeId?: string | null,
-): DiscoveryBlueprint {
+): DiscoveryBlueprintResolution {
   // Declared identity wins over inference. Try the explicit declaration first,
   // then the primary arg in case a caller passed a clean catalog id as the
   // archetype. A multi-word inference blob won't exact-match a catalog key, so
   // this never false-matches.
-  const declared =
-    resolveDeclaredDiscoveryBlueprint(declaredArchetypeId) ??
-    resolveDeclaredDiscoveryBlueprint(useCaseArchetype);
-  if (declared) return declared;
+  const declaredBlueprint = resolveDeclaredDiscoveryBlueprint(declaredArchetypeId);
+  if (declaredBlueprint) {
+    return {
+      blueprint: declaredBlueprint,
+      basis: "declared",
+      unknownDeclaration: null,
+    };
+  }
+  const declaredViaUseCase = resolveDeclaredDiscoveryBlueprint(useCaseArchetype);
+  if (declaredViaUseCase) {
+    return {
+      blueprint: declaredViaUseCase,
+      basis: "declared_via_use_case",
+      unknownDeclaration: null,
+    };
+  }
 
+  // A declaration that was supplied and did not resolve is carried out, because
+  // the caller cannot otherwise tell this case from "nothing was declared" —
+  // and the two have very different standing.
+  const unknownDeclaration =
+    declaredArchetypeId && declaredArchetypeId.trim()
+      ? declaredArchetypeId.trim()
+      : null;
+
+  const inferred = inferDiscoveryBlueprint(useCaseArchetype);
+  return {
+    blueprint: inferred,
+    basis: inferred.blueprintId === DEFAULT_BLUEPRINT.blueprintId ? "default" : "inferred",
+    unknownDeclaration,
+  };
+}
+
+/** Keyword inference — the fallback, never authority. */
+function inferDiscoveryBlueprint(useCaseArchetype: string): DiscoveryBlueprint {
   const a = (useCaseArchetype || "").toLowerCase();
   const hasFinancialLendingSignals =
     /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
@@ -1024,6 +1088,25 @@ export function getDiscoveryBlueprint(
     return AI_OPERATIONS;
   }
   return DEFAULT_BLUEPRINT;
+}
+
+/** Resolve the discovery blueprint for a Move.
+ *
+ * Identity is declared, never inferred: a `declaredArchetypeId` that matches a
+ * catalog archetype wins outright. Only when nothing is declared (or the
+ * declaration is unknown) does keyword inference run, and it is a fallback
+ * suggestion, never authority. `useCaseArchetype` that is itself exactly a
+ * catalog id is also honored as a declaration.
+ *
+ * Use `resolveDiscoveryBlueprintWithBasis` when the caller shows the selected
+ * archetype to a person and therefore needs to say whether it was declared.
+ */
+export function getDiscoveryBlueprint(
+  useCaseArchetype: string,
+  declaredArchetypeId?: string | null,
+): DiscoveryBlueprint {
+  return resolveDiscoveryBlueprintWithBasis(useCaseArchetype, declaredArchetypeId)
+    .blueprint;
 }
 
 // ── Config contract + loader (Phase 2 of the configurable archetype layer) ──
