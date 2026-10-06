@@ -331,6 +331,10 @@ function configuredPack(
     archetype: CONFIGURED_PACK_ARCHETYPE,
     label: "configured quality operations",
     keyEvidenceFamilies: [CONFIGURED_PACK_FAMILY],
+    // The family is this pack's own, so the pack has to declare it: a pack may
+    // only NAME a family something declares. Omitting this is what the
+    // "fails validation" case below leans on for a different field.
+    declaresEvidenceFamilies: [CONFIGURED_PACK_FAMILY],
     exhibits: [
       {
         key: "configured_defect_pareto",
@@ -595,7 +599,15 @@ describe("the composed brief honours a configured pack", () => {
         .map((section) => section.key);
     };
 
-    expect(landingSites(OVERRIDDEN_PACK_ARCHETYPE)).toEqual(["current_state"]);
+    // Two sites, by the two different routes a landing site is reached:
+    // `current_state` matches the inferred key-spelling rule, and
+    // `maturity_gaps` is a site this structure DECLARES. Written out rather
+    // than derived from the structure so a declaration going missing fails
+    // here instead of quietly shrinking the expectation.
+    expect(landingSites(OVERRIDDEN_PACK_ARCHETYPE)).toEqual([
+      "current_state",
+      "maturity_gaps",
+    ]);
     // A configured pack the Move does not declare lands nothing.
     expect(landingSites(CONFIGURED_PACK_ARCHETYPE)).toEqual([]);
   });

@@ -100,7 +100,25 @@ source, which is all of them today.
   `resolveConfiguredArchetypePack`.
 - `src/lib/deliverables/orchestrator/artifact-brief-registry.ts` — brief
   composition resolves through `resolveConfiguredArchetypePack` instead of the
-  built-in accessor. One line, plus its import.
+  built-in accessor. Two call sites, plus the import. The second is the
+  evidence-landing report that landed on `main` after this branch opened: its
+  own doc comment promises the report is taken from "the resolver the product
+  uses", and leaving it on the built-in accessor would have made it report the
+  seed's families while composition carried the configured ones — a
+  disagreement on exactly the deployment the report exists to explain. With no
+  source declared the two resolvers answer identically, so this is inert on
+  every environment that exists today.
+- `src/lib/deliverables/orchestrator/__tests__/archetype-config-source.test.ts` —
+  two expectations conformed to rules `main` merged while this branch was open,
+  not relaxed. (1) The configured pack fixture now declares its own evidence
+  family: a pack may only NAME a family something declares, and the fixture's
+  family is the pack's own, so `declaresEvidenceFamilies` is the escape hatch
+  that rule ships for this case. (2) The landing-site expectation becomes two
+  keys, because the structure under test now DECLARES `maturity_gaps` as an
+  archetype-evidence site alongside the inferred `current_state`. Both keys are
+  written out as literals rather than derived from the structure, so a
+  declaration going missing fails the case instead of shrinking the
+  expectation.
 - `src/lib/deliverables/orchestrator/__tests__/archetype-config-source.test.ts` —
   19 cases appended to the suite that already pins the evidence half, so the two
   halves of one seam are read together. No new file and no new directory, so no

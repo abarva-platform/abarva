@@ -4,6 +4,7 @@ import {
   UNAUTHORED_FAMILY_GUIDANCE,
   archetypeGuidanceCoverage,
   buildMoveEvidenceNeedPackets,
+  resolveFamilyGuidance,
   type MoveEvidenceNeedPacket,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
@@ -272,5 +273,220 @@ describe("the cross-archetype table earns its place", () => {
         );
       }
     }
+  });
+});
+
+/**
+ * Every packet now says WHICH link in the guidance chain authored its wording.
+ * The reason is the product's first rule — identity is declared, never inferred
+ * — and one link breaks it: a Move-NAME keyword table reads the Move's title.
+ * Before this, a title-matched reading and a declared one were indistinguishable
+ * in the packet, so a surface could present an inference as a declaration.
+ */
+describe("a packet declares where its wording came from", () => {
+  /** Trips BOTH the treasury and the AP-invoice keyword lists. */
+  const TREASURY_AND_AP_NAME = "Treasury Payment Exception Close";
+
+  it("reports the declared archetype's own table as the declared basis", () => {
+    const packet = packetFor(
+      "healthcare_contact_center_agent_assist",
+      NEUTRAL_NAME,
+      "contact_center_kpis",
+    );
+    expect(packet.guidanceBasis).toBe("declared_archetype");
+  });
+
+  it("reports the generic table as the generic basis, not as a declaration", () => {
+    const packet = packetFor("general_default", NEUTRAL_NAME, "cost_baseline");
+    expect(packet.guidanceBasis).toBe("generic");
+    expect(isUnauthored(packet)).toBe(false);
+  });
+
+  it("reports an unauthored family as unauthored rather than as a table reading", () => {
+    const coverage = archetypeGuidanceCoverage().find(
+      (entry) => entry.blueprintId === "ai_operations_customer_digital",
+    );
+    expect(coverage?.unauthored.length).toBeGreaterThan(0);
+    const packet = packetFor(
+      "ai_operations_customer_digital",
+      NEUTRAL_NAME,
+      coverage!.unauthored[0],
+    );
+    expect(packet.guidanceBasis).toBe("unauthored");
+    expect(isUnauthored(packet)).toBe(true);
+  });
+
+  it("marks a reading the Move's TITLE unlocked as inferred, not declared", () => {
+    const named = packetFor("general_default", TREASURY_NAME, "cost_baseline");
+    const unnamed = packetFor("general_default", NEUTRAL_NAME, "cost_baseline");
+    // Same declaration, same family — only the Move's name differs.
+    expect(named.guidanceBasis).toBe("move_name");
+    expect(unnamed.guidanceBasis).toBe("generic");
+    expect(guidanceOf(named)).not.toEqual(guidanceOf(unnamed));
+  });
+
+  it("lets the declared archetype's table beat a name match", () => {
+    const packet = packetFor(
+      "healthcare_contact_center_agent_assist",
+      AGENT_ASSIST_NAME,
+      "contact_center_kpis",
+    );
+    expect(packet.guidanceBasis).toBe("declared_archetype");
+  });
+
+  it("keeps the shared table ahead of a name match", () => {
+    // Derived from the chain rather than from a family list: every family that
+    // the cross-archetype table answers must keep answering it under a title
+    // that trips two keyword lists.
+    let checked = 0;
+    for (const blueprintId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+      for (const family of DISCOVERY_BLUEPRINT_CATALOG[blueprintId].evidenceFamilies) {
+        const declaredPath = resolveFamilyGuidance({
+          familyId: family.id,
+          moveName: "",
+          blueprintId,
+        });
+        if (declaredPath.basis !== "cross_archetype") continue;
+        const named = resolveFamilyGuidance({
+          familyId: family.id,
+          moveName: TREASURY_AND_AP_NAME,
+          blueprintId,
+        });
+        expect(named.basis).toBe("cross_archetype");
+        expect(named.guidance).toEqual(declaredPath.guidance);
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it("resolves the name tables in a fixed order when a title trips two", () => {
+    // Every family the treasury table authors, the AP-invoice table authors too,
+    // so a title tripping both lists is decided by the declared precedence.
+    const both = packetFor("general_default", TREASURY_AND_AP_NAME, "cost_baseline");
+    const treasuryOnly = packetFor("general_default", TREASURY_NAME, "cost_baseline");
+    const apOnly = packetFor("general_default", AP_INVOICE_NAME, "cost_baseline");
+    expect(guidanceOf(apOnly)).not.toEqual(guidanceOf(treasuryOnly));
+    expect(guidanceOf(both)).toEqual(guidanceOf(treasuryOnly));
+    expect(both.guidanceBasis).toBe("move_name");
+  });
+
+  it("gives every family of every catalog archetype a basis", () => {
+    for (const blueprintId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+      for (const packet of packetsFor(blueprintId, NEUTRAL_NAME)) {
+        expect([
+          "declared_archetype",
+          "cross_archetype",
+          "move_name",
+          "generic",
+          "unauthored",
+          "packet_specific",
+        ]).toContain(packet.guidanceBasis);
+      }
+    }
+  });
+
+  it("never reports a name basis for a Move whose title trips no list", () => {
+    for (const blueprintId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+      for (const packet of packetsFor(blueprintId, NEUTRAL_NAME)) {
+        expect(packet.guidanceBasis).not.toBe("move_name");
+      }
+    }
+  });
+});
+
+/**
+ * The coverage report is computed THROUGH the same chain a packet uses, so the
+ * declared-path reading it publishes cannot drift from what a Move receives.
+ */
+describe("the coverage report and a packet agree on the declared path", () => {
+  it("agrees family by family, for every catalog archetype", () => {
+    for (const coverage of archetypeGuidanceCoverage()) {
+      for (const packet of packetsFor(coverage.blueprintId, NEUTRAL_NAME)) {
+        const expectAuthored = packet.guidanceBasis !== "unauthored";
+        expect(coverage.authored.includes(packet.familyId)).toBe(expectAuthored);
+        expect(coverage.unauthored.includes(packet.familyId)).toBe(!expectAuthored);
+      }
+    }
+  });
+
+  it("reads the declared path even for an archetype a Move name could specialise", () => {
+    // An empty Move name is what makes the report declaration-only; pin that no
+    // keyword list matches it, because the report depends on it.
+    for (const blueprintId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+      const blueprint = DISCOVERY_BLUEPRINT_CATALOG[blueprintId];
+      for (const family of blueprint.evidenceFamilies) {
+        expect(
+          resolveFamilyGuidance({ familyId: family.id, moveName: "", blueprintId }).basis,
+        ).not.toBe("move_name");
+      }
+    }
+  });
+});
+
+/**
+ * `nameSpecialised` is the backlog of wording that EXISTS and that no
+ * declaration can reach. It is not the same as `unauthored`: the declared path
+ * answers these families generically, and a better reading sits in a Move-name
+ * table behind a title match.
+ */
+describe("guidance reachable only by a Move's title is reported", () => {
+  it("names the families whose specialised wording a declaration cannot reach", () => {
+    const byBlueprint = new Map(
+      archetypeGuidanceCoverage().map((entry) => [entry.blueprintId, entry]),
+    );
+    // Every family the treasury/AP tables author belongs to the general archetype,
+    // which is why the declared path answers it generically rather than not at all.
+    expect(
+      byBlueprint.get("general_default")?.nameSpecialised.map((e) => e.familyId).sort(),
+    ).toEqual(["cost_baseline", "current_state_process", "it_systems_landscape", "kpi_baseline"]);
+    expect(
+      byBlueprint.get("ai_operations_customer_digital")?.nameSpecialised,
+    ).toEqual([{ familyId: "it_systems_landscape", nameTableIds: ["treasury", "ap_invoice"] }]);
+  });
+
+  it("lists every name table that authors the family, not just the winning one", () => {
+    for (const coverage of archetypeGuidanceCoverage()) {
+      for (const entry of coverage.nameSpecialised) {
+        expect(entry.nameTableIds.length).toBeGreaterThan(0);
+        expect(new Set(entry.nameTableIds).size).toBe(entry.nameTableIds.length);
+      }
+    }
+  });
+
+  it("reports a specialisation only where the declared path is not the archetype's own", () => {
+    for (const coverage of archetypeGuidanceCoverage()) {
+      for (const entry of coverage.nameSpecialised) {
+        const declaredPath = resolveFamilyGuidance({
+          familyId: entry.familyId,
+          moveName: "",
+          blueprintId: coverage.blueprintId,
+        });
+        expect(declaredPath.basis).not.toBe("declared_archetype");
+      }
+    }
+  });
+
+  it("proves each reported specialisation is actually reachable by a title", () => {
+    const titleFor: Record<string, string> = {
+      treasury: TREASURY_NAME,
+      ap_invoice: AP_INVOICE_NAME,
+      contact_center_agent_assist: AGENT_ASSIST_NAME,
+    };
+    let proven = 0;
+    for (const coverage of archetypeGuidanceCoverage()) {
+      for (const entry of coverage.nameSpecialised) {
+        for (const nameTableId of entry.nameTableIds) {
+          const resolved = resolveFamilyGuidance({
+            familyId: entry.familyId,
+            moveName: titleFor[nameTableId],
+            blueprintId: coverage.blueprintId,
+          });
+          expect(resolved.basis).toBe("move_name");
+          proven += 1;
+        }
+      }
+    }
+    expect(proven).toBe(10);
   });
 });
