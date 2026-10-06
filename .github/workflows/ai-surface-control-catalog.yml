@@ -105,6 +105,20 @@ jobs:
         # the focused denial suite as an additional check.
         run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts --runInBand
 
+      # The Moves workspace upload route's own suite arrived in a NEW directory
+      # — `src/app/api/programs/workspace/[moveId]/__tests__` — that no workflow
+      # reached, so `product-directory-ci-coverage` refused it as a dark tree.
+      # Wired rather than baselined, which is what that gate's own message asks
+      # for. `--runTestsByPath` is load-bearing: a bare jest path argument is a
+      # REGEX against the full path, and `[moveId]` would be read as a character
+      # class. Named here because a step may name a suite individually only
+      # inside a required job, and this is one.
+      - name: Exercise Moves workspace evidence upload route
+        run: >-
+          npx jest --runTestsByPath
+          'src/app/api/programs/workspace/[moveId]/__tests__/upload-route.test.ts'
+          --runInBand
+
       - name: Exercise Intelligence gate-waiver decision controls
         run: npx jest --runTestsByPath src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts --runInBand
 
