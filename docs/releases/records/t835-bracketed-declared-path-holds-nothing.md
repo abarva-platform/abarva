@@ -42,8 +42,9 @@ disclaimer just as readily.
 
 ## Layer Impact
 
-No product layer. This is lane-T platform tooling: the pre-claim gate that decides whether an
-automated execution run may take a file. It reads an operator-owned register and writes nothing.
+**Release lane: `internal-admin`.** This is AbarVa-only operations tooling — the pre-claim gate
+that decides whether an automated execution run may take a file. It reads an operator-owned
+register and writes nothing. No product layer changes.
 
 - Layer 1 Client intake — unaffected.
 - Layer 2 Source adapters — unaffected.
@@ -199,6 +200,31 @@ a checkout containing it.
 Revert the single commit. The gate returns to its previous reading, which is the defect: a
 declared route path holds nothing. There is no migration, no state and no deployed artifact, so
 revert is the whole of the rollback.
+
+## Known Gaps
+
+- **A route-group segment in the FIRST position of a path is still unreadable.** The token
+  grammar reaches a path through a delimiter class that includes `(`, so an opening paren in
+  front of a path is consumed as punctuation and `(maestro)/source/page.tsx` written with no
+  prefix reads as nothing. Every route path the register actually writes is rooted at `src/`, so
+  no declared entry is in that shape today, and the delimiter cannot be narrowed without losing
+  the far commoner `(scripts/exec/foo.mjs)`. Measured, not assumed: 0 occurrences on the live
+  register. Left open rather than fixed speculatively.
+- **A bracketed directory with no trailing slash and no extension still holds nothing**, e.g. a
+  declared `src/app/api/v1/source/[eventId]`. The normaliser strips a trailing `]` before the
+  suffix test, so the token fails it and is dropped. That is the pre-existing rule for every
+  extension-less, slash-less token and is not specific to route segments; a scope is declared
+  with a trailing slash. Unchanged by this item.
+- **The two release lines whose reading changed are not reconciled in the register.** Their old
+  reading held 9 and 7 paths each on lines that said in words they were releasing them. Both are
+  release lines, which `heldPaths` discards, so no refusal ever came of it and nothing is owed to
+  any run — but the register still carries the lines, and nobody has checked whether any other
+  line's disclaimer was split the same way and did reach a claim. Counting that is a separate
+  measurement.
+- **No live claim exercised the fix on the real register.** The 3-hour window held 13 paths
+  before and after, because no claim live at the time declared a bracketed path. The end-to-end
+  proof is on a *copy* of the live register with a claim this run appended to it. The first
+  genuine refusal will come from the next run that declares a route file.
 
 ## Audit Evidence
 
