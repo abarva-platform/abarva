@@ -2771,6 +2771,163 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.queryByText(carriedRows[0].owner)).not.toBeInTheDocument();
     });
 
+    // ─── moves_charter_standing_after_discover_v1: the HOST call site ─────
+    // The fold is pure and pinned (charter-standing-after-discover.test.ts)
+    // and the panel has its own suite. What lives only HERE is the same pair
+    // of decisions as the carry-forward above: that the P3+ band is mounted
+    // in the capture flow's `openingBand` slot, and that the host passes the
+    // fold's rows through VERBATIM — it re-reads no flag, re-derives no row
+    // and re-counts nothing.
+    //
+    // As above, pinning the pass-through needs values the host could not have
+    // reconstructed: the assumption owner and Discover's correction live in
+    // the P1 basis and resolution records, neither of which is loaded on a P3
+    // render. A case asserting the band merely EXISTS would survive the prop
+    // being dropped and re-derived empty.
+    const standingRows = [
+      {
+        sectionKey: sponsorFamily.sectionKey,
+        label: sponsorFamily.label,
+        answer: "Weekly written update to the steering group.",
+        owner: "Priya Raman",
+        recordedAt: "2026-10-01T09:00:00.000Z",
+        standing: "unvalidated" as const,
+        plannedValidation: "Confirm the cadence in the sponsor interview.",
+      },
+      {
+        sectionKey: scopeFamily.sectionKey,
+        label: scopeFamily.label,
+        answer: "Member services only; billing stays out.",
+        owner: "Dana Whitfield",
+        recordedAt: "2026-10-01T09:05:00.000Z",
+        standing: "known_wrong" as const,
+        correction: "Discover found billing already inside the same queue.",
+        resolvedAt: "2026-10-02T11:00:00.000Z",
+      },
+    ];
+
+    const designMove = () =>
+      makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+
+    it("moves_charter_standing_after_discover_v1 OFF: P3 capture opens with no standing band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={null}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-standing-after-discover"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_charter_standing_after_discover_v1 ON: the band opens P3 capture with the fold's own rows", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={standingRows}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const band = screen.getByTestId("charter-standing-after-discover");
+      expect(screen.getByTestId("moves-capture-flow")).toContainElement(band);
+
+      // Verbatim pass-through: neither of these is derivable from the capture
+      // state a P3 render holds, so a dropped or re-derived prop fails here.
+      expect(screen.getByText("Priya Raman")).toBeInTheDocument();
+      expect(
+        screen.getByText("Discover found billing already inside the same queue."),
+      ).toBeInTheDocument();
+      expect(band).toHaveAttribute("data-count", "2");
+      expect(band).toHaveAttribute("data-known-wrong", "1");
+      expect(band).toHaveAttribute("data-unvalidated", "1");
+
+      // It qualifies the questions, so it must precede them.
+      const panel = container.querySelector(".mcf-panel");
+      expect(panel).not.toBeNull();
+      expect(
+        band.compareDocumentPosition(panel as Node) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it("renders nothing for an active phase with every charter answer standing clean", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={[]}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-standing-after-discover"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("mounts the two charter bands in the same slot without either displacing the other", () => {
+      // The folds are phase-exclusive (the carry-forward owns P2, this owns
+      // P3+), so in production only one is ever non-null. The host does not
+      // arbitrate that and must not: if it dropped one when the other was
+      // present, a future phase window change would silently lose a band.
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={carriedRows}
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={standingRows}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("charter-assumptions-carry-forward"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("charter-standing-after-discover"),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_charter_standing_after_discover_v1 ON without moves_capture_v2: the legacy canvas grows no standing band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={standingRows}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Structural, as above: `openingBand` is a slot on the capture flow, so
+      // with v2 off there is nowhere to put the band. Pin the consequence.
+      expect(
+        screen.queryByTestId("charter-standing-after-discover"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Priya Raman")).not.toBeInTheDocument();
+    });
+
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
       render(
         <MovesPhaseStandaloneClient

@@ -54,13 +54,18 @@ the surface stays inactive rather than reporting the wrong thing confidently.
 ## Layer Impact
 
 Release lane: `experimental` — feature-flagged, non-default capability
-(`moves_charter_standing_after_discover_v1`, off for all tenants). Nothing calls
-the new module yet, so the product is byte-for-byte unchanged on merge whether
-the flag is on or off.
+(`moves_charter_standing_after_discover_v1`, off for all tenants). The flag is
+off for every tenant, so the product is byte-for-byte unchanged on merge; the
+fold returns `null` and the band renders nothing.
 
-- `4 PRODUCTS` (Moves): adds a read a phase after Discover _can_ consult. No
-  surface, route, copy, or rendered row changes in this increment — the
-  consuming surface is a later slice.
+- `4 PRODUCTS` (Moves): adds the read AND the surface that consults it. The
+  phase page folds the rows server-side (same Move-wide `captureModules` the P2
+  carry-forward already uses, so no second load) and passes them to
+  `MovesPhaseStandaloneClient`, which renders `CharterStandingAfterDiscover` in
+  the capture flow's `openingBand` slot — above the first question, because the
+  band qualifies the answers rather than footnoting them. The two charter bands
+  share that slot and are phase-exclusive by construction: the carry-forward
+  owns P2, this owns P3+.
 - `3 CANONICAL MODEL`: read-only. No schema migration, no new persisted field,
   no new state key. The module reads the existing `p1_charter_basis` and
   `p1_charter_assumption_resolution` entries on the P1 capture-module rows
@@ -91,7 +96,27 @@ the flag is on or off.
   surface cannot run a second, differently-configured read beside the one it
   displays. Pure: no React, no flag lookup, no fetch, no write.
 - `src/lib/features/registry.ts` — registers
-  `moves_charter_standing_after_discover_v1` (off for all tenants).
+  `moves_charter_standing_after_discover_v1` (off for all tenants). Its
+  description's "the consuming surface is a later slice" is replaced with where
+  the surface actually is, now that this release carries it.
+- `src/components/strategic-moves/CharterStandingAfterDiscover.tsx` — **new.**
+  The consuming surface: purely presentational, the host owns the flag gate and
+  the fold. `null` and `[]` both render nothing — an all-clear is not announced
+  here, because the panel's whole subject is the answers that carry a caveat.
+  The two standings are rendered as separate groups, since a corrected answer
+  read as merely unchecked would understate it, and a group with no rows is
+  omitted rather than rendered empty.
+- `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx` — accepts the
+  folded rows as one prop and renders the band in the capture flow's
+  `openingBand` slot beside the P2 carry-forward band. It re-reads no flag,
+  re-derives no row and re-counts nothing.
+- `src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx` —
+  resolves the flag beside its two siblings and folds the rows off the same
+  Move-wide `captureModules` the carry-forward already uses, so P1's rows are in
+  hand on a P3+ render without a second load.
+- `.github/workflows/ai-surface-control-catalog.yml` — registers the new
+  component suite by path. `src/components/strategic-moves/__tests__` is listed
+  file-by-file rather than swept, so an unregistered suite there would be dark.
 - `src/lib/programs/__tests__/charter-standing-after-discover.test.ts` — **new**
   suite, 25 tests: each conjunct of the active gate pinned with the other two
   satisfied; P2 pinned separately as a boundary, not as an off-by-one; the two
@@ -127,13 +152,28 @@ the flag is on or off.
 - `npm run release:check -- --base origin/main --head HEAD` — **PASS**.
 - Signed-in live walk — **NOT RUN**. See Known Gaps; this record does not claim
   `live-proven`.
-- Phone-width layout — **NOT RUN**: this increment renders nothing new.
+- `jest` (`CharterStandingAfterDiscover.test.tsx`, new) — **PASS**: 9/9.
+- `jest` (`MovesPhaseStandaloneClient.test.tsx`, 5 host cases added) —
+  **PASS**: 208/208.
+- `npm run audit:lib-orphans` — **PASS**: "No change against the baseline". The
+  module was a `testOnly` orphan on the required `Agent context broker
+  boundary` check until the host mount landed; it is now reached by product.
+- **Mutation check** — 12 mutations, each asserted to match its anchor exactly
+  once, **12 killed**. Component (8): rendering on an empty list; dropping the
+  known-wrong group; putting every row in the unvalidated group; hiding the
+  correction; hiding the planned validation; badging a caveated answer
+  "Confirmed"; miscounting the rows; dropping the answer wording. Host (4):
+  passing `null` instead of the prop; unmounting the band; passing a truncated
+  slice; dropping the carry-forward band beside it. The two host pass-through
+  mutations are the ones a component-only suite would have missed.
+- Phone-width layout — **NOT RUN**: the band reuses the carry-forward's grid,
+  which collapses to one column under 640px, but this is unverified visually.
 
 ## Rollout Plan
 
-Merge to `main` via squash PR with auto-merge. The flag is off for every tenant
-and no caller consults the module, so there is no runtime behaviour change on
-merge. Ships with the next ACA web image via the repo-owned `aca-main-deploy`
+Merge to `main` via squash PR with auto-merge. The flag is off for every tenant,
+so the fold returns `null`, the band renders nothing and there is no runtime
+behaviour change on merge. Ships with the next ACA web image via the repo-owned `aca-main-deploy`
 workflow. Enabling a tenant should follow the consuming surface and the
 resolution write path, since without a write path no resolution exists and every
 declared assumption would read as `unvalidated` — true today, but a thin thing to
@@ -141,8 +181,9 @@ show a person.
 
 ## Rollback Plan
 
-Revert the PR, or leave `includeTenants: []` (already the state). Nothing calls
-the module and nothing persists through it, so there is no data to migrate back
+Revert the PR, or leave `includeTenants: []` (already the state). With the flag
+off the module is reached but returns `null`, and nothing persists through it, so
+there is no data to migrate back
 and no surface to restore.
 
 ## Deployment Authority
