@@ -1,0 +1,20 @@
+{
+  "dataset_id": "nexus_moves_governed_data_foundation_e2e_synthetic_20261006",
+  "title": "Governed Data Foundation Moves synthetic E2E evidence pack",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "uploaded_evidence",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Fictional synthetic scenario constructed for product workflow testing; not client-attested and contains no real personal data.",
+  "ingestion_method": "api_upload",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 14,
+  "approved_by": "AbarVa product owner authorization",
+  "approved_at": "2026-10-05",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only. No data-plane load, load approval, serving approval, indexing, agent_ready claim, evidence review approval, gate approval, or phase transition is implied. Thirteen files are intended for initial P2 UI upload; the fourteenth is a simulated P3 redline deferred until a generated draft exists. Each uploaded item remains pending human review in the product."
+}
