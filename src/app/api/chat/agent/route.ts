@@ -149,6 +149,7 @@ import {
   formatMovesAvaChatPacketForPrompt,
   shouldBuildMovesAvaPacketForMode,
 } from "@/lib/programs/ava-chat";
+import { resolveMovesAvaArchetypeFraming } from "@/lib/programs/ava-chat/archetype-framing";
 import { resolveMovesAvaVisibleEvidenceCount } from "@/lib/programs/ava-chat/evidence-count";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness";
 import {
@@ -944,11 +945,20 @@ export async function POST(request: Request) {
                 approvedEvidenceUnavailable = true;
               }
             }
+            // The Move's DECLARED archetype framing. `liveMove` carries both
+            // declaration channels; the engagement row is the fallback when the
+            // live read failed this turn, so a declared Move still gets framed.
+            const archetypeFraming = resolveMovesAvaArchetypeFraming({
+              functionPackKey: liveMove?.functionPackKey ?? null,
+              archetype: engagement.program_archetype ?? null,
+              charter: liveMove?.charter ?? engagement.charter ?? null,
+            });
             const packet = buildMovesAvaChatPacket(
               {
                 tenant: tenantName,
                 moveId: programId,
                 moveTitle: engagement.name,
+                archetypeFraming,
                 currentPhase: promptPhase,
                 currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
                 checklistStatus: {
