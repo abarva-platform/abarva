@@ -10,15 +10,15 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 402,
-    "fenced": 226,
-    "fencedDirect": 102,
+    "routes": 403,
+    "fenced": 227,
+    "fencedDirect": 103,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 95,
     "behavioral": 81,
     "byteScannerOnly": 7,
-    "none": 138
+    "none": 139
   },
   "ranking": [
     {
@@ -629,6 +629,12 @@
     },
     {
       "route": "src/app/api/onboarding/upload/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/programs/discovery-archetype-suggestions/route.ts",
       "coverage": "none",
       "fence": "direct",
       "fenceVia": []
@@ -3116,6 +3122,21 @@
       "fenceVia": [],
       "reachesFenceModule": false,
       "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/discovery-archetype-suggestions/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
       "suites": {
         "behavioral": [],
         "byteScanner": []
@@ -6600,6 +6621,7 @@
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
         ],
         "byteScanner": [
+          "scripts/exec/register-time-authority.test.mjs",
           "src/__tests__/integration/source/source-access-control-static.test.ts"
         ]
       }

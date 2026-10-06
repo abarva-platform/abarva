@@ -19,6 +19,7 @@ function packet(overrides: Partial<MoveEvidenceNeedPacket> = {}): MoveEvidenceNe
     exampleTemplate: "KPI baseline",
     exampleContent: ["Metric, period, population, source"],
     whyItMatters: "The discovery report needs evidence-backed baseline facts.",
+    guidanceBasis: "generic",
     blockedArtifacts: [
       {
         artifactType: "discovery_report",

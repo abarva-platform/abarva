@@ -115,8 +115,7 @@ export const SHARED_EVIDENCE_FAMILIES: Readonly<
  * `id` is not overridable: it comes from `ref`, so a reference always resolves
  * to the family it names.
  */
-export interface EvidenceFamilyRef
-  extends Partial<Omit<EvidenceFamily, "id">> {
+export interface EvidenceFamilyRef extends Partial<Omit<EvidenceFamily, "id">> {
   ref: string;
 }
 
@@ -157,7 +156,15 @@ export function composeEvidenceFamilies(
   specs.forEach((spec, index) => {
     let resolved: EvidenceFamily;
     if (isEvidenceFamilyRef(spec)) {
-      const base = library[spec.ref];
+      // An OWN-property read, not a plain index. The library is an ordinary
+      // object, so a `ref` of `constructor` / `toString` / `__proto__` indexes
+      // an inherited `Object.prototype` member: truthy, and not a family. The
+      // composed result would then carry `id: undefined` and a family nobody
+      // declared would reach a client's evidence request. A reference resolves
+      // only to a family the library itself holds.
+      const base = Object.hasOwn(library, spec.ref)
+        ? library[spec.ref]
+        : undefined;
       if (!base) {
         errors.push(
           `evidenceFamilies[${index}]: unknown shared family "${spec.ref}"`,

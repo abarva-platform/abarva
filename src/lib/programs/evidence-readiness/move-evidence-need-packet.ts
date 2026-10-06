@@ -18,6 +18,26 @@ export type MoveEvidenceNeedStatus =
 
 export type MoveEvidenceNeedPriority = "required" | "recommended" | "optional";
 
+/**
+ * Where a packet's wording came from. The product rule is that a Move's
+ * identity is DECLARED, never inferred — so `move_name`, the one basis that
+ * reads a Move's title instead of its declaration, has to be visible rather
+ * than indistinguishable from the rest.
+ */
+export type MoveGuidanceBasis =
+  /** the declared archetype's own guidance table answered this family */
+  | "declared_archetype"
+  /** the cross-archetype table answered it, keyed by family alone */
+  | "cross_archetype"
+  /** a Move-NAME keyword table answered it — inferred, not declared */
+  | "move_name"
+  /** the generic family table answered it */
+  | "generic"
+  /** no table authored this family; `UNAUTHORED_FAMILY_GUIDANCE` was used */
+  | "unauthored"
+  /** wording authored for this one packet rather than for a family */
+  | "packet_specific";
+
 export interface MoveEvidenceNeedPacket {
   moveId: string;
   phase: number | null;
@@ -30,6 +50,8 @@ export interface MoveEvidenceNeedPacket {
   exampleTemplate: string;
   exampleContent: string[];
   whyItMatters: string;
+  /** which table in the guidance chain authored the four fields above. */
+  guidanceBasis: MoveGuidanceBasis;
   blockedArtifacts: Array<{
     artifactType: string;
     title: string;
@@ -628,44 +650,74 @@ export const UNAUTHORED_FAMILY_GUIDANCE: Pick<
   nextAction: "Upload the source file or record a human waiver with rationale.",
 };
 
-function familyGuidance(
-  familyId: string,
-  moveName: string,
-  blueprintId: string,
-): Pick<
-  MoveEvidenceNeedPacket,
-  "exampleTemplate" | "exampleContent" | "whyItMatters" | "nextAction"
-> {
-  // Declared archetype first, and only then the Move-name heuristics below.
-  // A declared archetype's own wording for a family always beats a name match.
-  const declared = ARCHETYPE_EXAMPLES[blueprintId]?.[familyId];
-  const shared = !declared ? CROSS_ARCHETYPE_EXAMPLES[familyId] : null;
-  const treasury =
-    !declared && !shared && isTreasuryMove(moveName)
-      ? TREASURY_EXAMPLES[familyId]
-      : null;
-  const finance =
-    !declared && !shared && !treasury && isApInvoiceMove(moveName)
-      ? FINANCE_AP_EXAMPLES[familyId]
-      : null;
-  const contactCenter =
-    !declared &&
-    !shared &&
-    !treasury &&
-    !finance &&
-    isContactCenterAgentAssistMove(moveName)
-      ? CONTACT_CENTER_AGENT_ASSIST_EXAMPLES[familyId]
-      : null;
-  const generic = GENERIC_EXAMPLES[familyId];
-  return (
-    declared ??
-    shared ??
-    treasury ??
-    finance ??
-    contactCenter ??
-    generic ??
-    UNAUTHORED_FAMILY_GUIDANCE
-  );
+/**
+ * The Move-NAME keyword tables, declared once and in precedence order, so the
+ * chain below cannot drift from what `archetypeGuidanceCoverage` reports. Each
+ * is authored guidance that NO declaration reaches: it is selected by matching
+ * the Move's title, which is an inference about identity, not a declaration.
+ */
+const MOVE_NAME_GUIDANCE_TABLES: ReadonlyArray<{
+  /** stable id, reported as the basis detail */
+  id: string;
+  matches: (moveName: string) => boolean;
+  table: Partial<typeof GENERIC_EXAMPLES>;
+}> = [
+  { id: "treasury", matches: isTreasuryMove, table: TREASURY_EXAMPLES },
+  { id: "ap_invoice", matches: isApInvoiceMove, table: FINANCE_AP_EXAMPLES },
+  {
+    id: "contact_center_agent_assist",
+    matches: isContactCenterAgentAssistMove,
+    table: CONTACT_CENTER_AGENT_ASSIST_EXAMPLES,
+  },
+];
+
+export interface ResolvedFamilyGuidance {
+  guidance: Pick<
+    MoveEvidenceNeedPacket,
+    "exampleTemplate" | "exampleContent" | "whyItMatters" | "nextAction"
+  >;
+  basis: MoveGuidanceBasis;
+  /** which Move-name table answered, when `basis` is `move_name`. */
+  nameTableId: string | null;
+}
+
+/**
+ * The one guidance chain. Declared archetype first, then the cross-archetype
+ * table, then the Move-NAME tables in precedence order, then the generic table,
+ * then the neutral fallback — and it says which link answered.
+ *
+ * `archetypeGuidanceCoverage` resolves through this same function, so the
+ * declared-path reading and what a packet actually gets cannot drift apart.
+ */
+export function resolveFamilyGuidance(args: {
+  familyId: string;
+  moveName: string;
+  blueprintId: string;
+}): ResolvedFamilyGuidance {
+  const declared = ARCHETYPE_EXAMPLES[args.blueprintId]?.[args.familyId];
+  if (declared) {
+    return { guidance: declared, basis: "declared_archetype", nameTableId: null };
+  }
+  const shared = CROSS_ARCHETYPE_EXAMPLES[args.familyId];
+  if (shared) {
+    return { guidance: shared, basis: "cross_archetype", nameTableId: null };
+  }
+  for (const nameTable of MOVE_NAME_GUIDANCE_TABLES) {
+    if (!nameTable.matches(args.moveName)) continue;
+    const authored = nameTable.table[args.familyId];
+    if (authored) {
+      return { guidance: authored, basis: "move_name", nameTableId: nameTable.id };
+    }
+  }
+  const generic = GENERIC_EXAMPLES[args.familyId];
+  if (generic) {
+    return { guidance: generic, basis: "generic", nameTableId: null };
+  }
+  return {
+    guidance: UNAUTHORED_FAMILY_GUIDANCE,
+    basis: "unauthored",
+    nameTableId: null,
+  };
 }
 
 function gapForFamily(
@@ -689,11 +741,12 @@ export function buildMoveEvidenceNeedPackets(
 
   return input.readiness.families.map((family) => {
     const gap = gapForFamily(family, input.readiness.gapRegister);
-    const guidance = familyGuidance(
-      family.familyId,
-      input.moveName,
-      input.readiness.blueprintId,
-    );
+    const resolved = resolveFamilyGuidance({
+      familyId: family.familyId,
+      moveName: input.moveName,
+      blueprintId: input.readiness.blueprintId,
+    });
+    const guidance = resolved.guidance;
     const blockedSpecs = artifactsForFamily(family.familyId);
     const status: MoveEvidenceNeedStatus =
       family.status === "covered"
@@ -729,6 +782,7 @@ export function buildMoveEvidenceNeedPackets(
       exampleTemplate: guidance.exampleTemplate,
       exampleContent: guidance.exampleContent,
       whyItMatters: guidance.whyItMatters,
+      guidanceBasis: resolved.basis,
       blockedArtifacts,
       canDraftBoundary: {
         canDraft,
@@ -762,6 +816,14 @@ export interface ArchetypeGuidanceCoverage {
   authored: string[];
   /** Family ids that fall through to `UNAUTHORED_FAMILY_GUIDANCE`. */
   unauthored: string[];
+  /**
+   * Families where the declared path reads generic (or nothing) and a Move-NAME
+   * table holds its own wording — so only a Move whose title trips a keyword
+   * list gets the specialised reading. Authored guidance no declaration can
+   * reach. The open product question per entry is which archetype should
+   * declare that table, not whether the wording exists.
+   */
+  nameSpecialised: Array<{ familyId: string; nameTableIds: string[] }>;
 }
 
 /**
@@ -769,28 +831,47 @@ export interface ArchetypeGuidanceCoverage {
  * the DECLARED path — the archetype's own table, the cross-archetype table, or
  * the generic table — and which fall through to `UNAUTHORED_FAMILY_GUIDANCE`.
  *
- * Move-name heuristics are deliberately excluded: they are not reachable from a
- * declaration, so counting them would report guidance an archetype only gets
- * when a Move happens to be named a certain way. The unauthored list is the
- * honest backlog of what still needs writing per archetype.
+ * Move-name heuristics are deliberately excluded from `authored`: they are not
+ * reachable from a declaration, so counting them would report guidance an
+ * archetype only gets when a Move happens to be named a certain way. The
+ * unauthored list is the honest backlog of what still needs writing per
+ * archetype; `nameSpecialised` is the backlog of wording that already exists
+ * but is reachable only by a Move's title.
  */
 export function archetypeGuidanceCoverage(): ArchetypeGuidanceCoverage[] {
   return Object.values(DISCOVERY_BLUEPRINT_CATALOG).map((blueprint) => {
     const authored: string[] = [];
     const unauthored: string[] = [];
+    const nameSpecialised: Array<{ familyId: string; nameTableIds: string[] }> =
+      [];
     for (const family of blueprint.evidenceFamilies) {
-      const hasGuidance = Boolean(
-        ARCHETYPE_EXAMPLES[blueprint.blueprintId]?.[family.id] ??
-          CROSS_ARCHETYPE_EXAMPLES[family.id] ??
-          GENERIC_EXAMPLES[family.id],
-      );
-      (hasGuidance ? authored : unauthored).push(family.id);
+      // An empty Move name trips no keyword list, so this reads the DECLARED
+      // path only. The name tables are then asked separately, by table rather
+      // than by inventing a Move name that happens to match one.
+      const resolved = resolveFamilyGuidance({
+        familyId: family.id,
+        moveName: "",
+        blueprintId: blueprint.blueprintId,
+      });
+      (resolved.basis === "unauthored" ? unauthored : authored).push(family.id);
+      // A name table sits BELOW the declared and cross-archetype tables in the
+      // chain, so it can only win where both of those missed. Reporting a
+      // cross-answered family here would name a specialisation no title reaches.
+      if (resolved.basis === "generic" || resolved.basis === "unauthored") {
+        const nameTableIds = MOVE_NAME_GUIDANCE_TABLES.filter(
+          (candidate) => candidate.table[family.id],
+        ).map((candidate) => candidate.id);
+        if (nameTableIds.length > 0) {
+          nameSpecialised.push({ familyId: family.id, nameTableIds });
+        }
+      }
     }
     return {
       blueprintId: blueprint.blueprintId,
       archetypeLabel: blueprint.archetypeLabel,
       authored,
       unauthored,
+      nameSpecialised,
     };
   });
 }

@@ -80,6 +80,7 @@ const buildMoveEvidenceNeedPackets = jest.fn(
         exampleTemplate: "KPI baseline",
         exampleContent: [],
         whyItMatters: "Evidence-backed baseline",
+        guidanceBasis: "generic",
         blockedArtifacts: [
           {
             artifactType: "discovery_report",

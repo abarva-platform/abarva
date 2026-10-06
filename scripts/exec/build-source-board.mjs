@@ -1277,7 +1277,49 @@ const BLOCKER_RULES = [
   //
   // Measured on the live corpus, this term moves EXACTLY ONE item, `C-562`,
   // from `null` to `Decision needed`. Extras zero, in both directions.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)An?\s+(?:[a-z][a-z-]*\s+){0,2}decision\b|\bnot\s+agent\s+work\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
+  // ITEM T-819 — A ROW MAY NAME WHO MAY ACT INSTEAD OF NAMING A DECISION, and
+  // two live phrasings did while nothing here anchored. The live row is a
+  // `[P0]` whose body says both of these, and nothing else that any rule here
+  // reads: that the remaining step "is an operator action, so `no agent may
+  // close this`", and a shouted `DECISION AND ACTION NEEDED` headline. It
+  // derived `blocker: null`, `partialGate: null`, `quote: null`, and the
+  // generated queue offered it as lane C's only claimable row. The row's
+  // subject is deliberately not restated here: this file is public and the
+  // defect is in the phrasing, not in what the row is about.
+  //
+  // Neither half was close. `decision needed` wants the two words adjacent and
+  // this row writes `AND ACTION` between them; the article term above wants an
+  // article, which a shouted headline has not got — the identical hole `C-563`
+  // found on "Owner decision" and closed by adding the categorical phrase the
+  // sentence carried rather than by making the article optional. THE ARTICLE
+  // STAYS REQUIRED, for the reason stated above it. And `not agent work` is a
+  // CATEGORY; a row can state the same thing as a PERMISSION, naming the actor
+  // and the modal, which is what `no agent may` is.
+  //
+  // THE COST WAS PAID THREE TIMES BEFORE IT WAS FILED. The pulse records three
+  // runs reaching this row, finding it unworkable and each calling it a queue
+  // defect — the first 2026-10-03 ~15:15Z — and none filed an item. A lane
+  // whose only row is one it may not touch counts as a lane with work in it,
+  // so the next run spends its opening on the same dead end.
+  //
+  // Both terms are bounded like every term above. `decision and action needed`
+  // is matched WHOLE: the lazy form, `decision` within N characters of
+  // `needed`, is satisfied by "The decision is taken and no approval is
+  // needed", which is a row that must stay claimable and has a case. `no agent
+  // may` requires the modal: written `\bno\s+agent\b` it matches the noun
+  // phrase in "no agent-owned configuration file changes" and would gate a row
+  // whose acceptance says an agent MAY close it — the direction that hides
+  // live work, and also a case.
+  //
+  // Measured on the live corpus at `2026-10-05T23:1xZ`, reading `blocker` per
+  // item out of `source-board-summary.json` for all 668 items before and
+  // after, over one frozen copy of the operator root so the only variable is
+  // this file: the pair moves EXACTLY ONE item, `C-577`, from `null` to
+  // `Decision needed`, and its rung does not move. Extras zero in both
+  // directions, and no item at a rung above 0 moves at all. Downstream, the
+  // generated queue goes 11 claimable to 10 and blocked-on-Anand 128 to 129 —
+  // lane C from one row to none, which is the true state of that lane.
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)An?\s+(?:[a-z][a-z-]*\s+){0,2}decision\b|\bnot\s+agent\s+work\b|\bdecision\s+and\s+action\s+needed\b|\bno\s+agent\s+may\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
   // Item T-703. This was a bare `\bblocked\b` — no anchoring, no veto — while
   // the decision rule directly above has both, added after raw prose made
   // every descriptive use of a word into an owner gate. T-700 gave this rule
