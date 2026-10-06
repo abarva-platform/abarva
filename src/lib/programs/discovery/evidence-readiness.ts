@@ -2,8 +2,10 @@ import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
-  getDiscoveryBlueprint,
+  resolveDeclaredDiscoveryBlueprint,
+  resolveDiscoveryBlueprintWithBasis,
   type DiscoveryBlueprint,
+  type DiscoveryBlueprintBasis,
   type EvidenceFamily,
 } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { TenancyCtx } from "@/lib/programs/types.db";
@@ -49,6 +51,18 @@ export interface DiscoveryEvidenceReadiness {
   blueprintId: string;
   blueprintVersion: string;
   archetypeLabel: string;
+  /**
+   * What decided the archetype this readiness pack grades evidence against.
+   * Anything other than a declared basis means no human chose it, so the gap
+   * register is an opinion about an inferred archetype.
+   */
+  blueprintBasis: DiscoveryBlueprintBasis;
+  /**
+   * The declaration that was supplied and did not name a catalog archetype, so
+   * it was discarded. Non-null means the pack is grading against an archetype
+   * nobody declared; show it rather than presenting the archetype as declared.
+   */
+  unknownDeclaredArchetype: string | null;
   requiredTotal: number;
   requiredCovered: number;
   requiredMissing: number;
@@ -279,14 +293,6 @@ function nonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function firstNonEmptyString(...values: unknown[]): string | null {
-  for (const value of values) {
-    const normalized = nonEmptyString(value);
-    if (normalized) return normalized;
-  }
-  return null;
-}
-
 interface DiscoveryBlueprintProgramInput {
   functionPackKey?: string | null;
   archetype?: string | null;
@@ -316,14 +322,25 @@ export function resolveDeclaredProgramArchetypeId(
       : null;
   const charterClassificationText =
     typeof charterClassification === "string" ? charterClassification : null;
-  return (
-    firstNonEmptyString(
-      program?.functionPackKey,
-      charterArchetype,
-      program?.archetype,
-      charterClassificationText,
-    ) ?? null
+  const candidates = [
+    program?.functionPackKey,
+    charterArchetype,
+    program?.archetype,
+    charterClassificationText,
+  ]
+    .map((value) => nonEmptyString(value))
+    .filter((value): value is string => Boolean(value));
+  // Prefer the first candidate that names a KNOWN catalog archetype. A declared
+  // identity then wins regardless of field order, so a `functionPackKey` that is
+  // not an archetype cannot shadow an archetype declared in the charter
+  // classification, and `program.archetype` (which drives phase logic) need not
+  // be overloaded to declare a discovery blueprint. When no candidate matches
+  // the catalog, the first non-empty value is returned as the inference seed —
+  // identical to the prior behavior.
+  const declaredArchetype = candidates.find(
+    (candidate) => resolveDeclaredDiscoveryBlueprint(candidate) != null,
   );
+  return declaredArchetype ?? candidates[0] ?? null;
 }
 
 export function buildDiscoveryBlueprintInputFromProgram(
@@ -497,6 +514,14 @@ export function mapEvidenceToDiscoveryFamily(
 export function evaluateDiscoveryEvidenceReadiness(args: {
   blueprint: DiscoveryBlueprint;
   evidenceItems: DiscoveryEvidenceReadinessItem[];
+  /**
+   * What decided `blueprint`, from `resolveDiscoveryBlueprintWithBasis`.
+   * Optional so existing callers that only have a blueprint keep working; they
+   * are reported as not-declared, which is what they can honestly claim.
+   */
+  blueprintBasis?: DiscoveryBlueprintBasis;
+  /** A supplied declaration that named no catalog archetype, if any. */
+  unknownDeclaredArchetype?: string | null;
 }): DiscoveryEvidenceReadiness {
   const coverage = new Map<string, DiscoveryEvidenceReadinessItem[]>();
   for (const item of args.evidenceItems) {
@@ -549,6 +574,10 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
     blueprintId: args.blueprint.blueprintId,
     blueprintVersion: args.blueprint.blueprintVersion,
     archetypeLabel: args.blueprint.archetypeLabel,
+    // Absent an explicit basis the caller did not resolve through the
+    // basis-aware path, so the honest answer is that it was not declared here.
+    blueprintBasis: args.blueprintBasis ?? "inferred",
+    unknownDeclaredArchetype: args.unknownDeclaredArchetype ?? null,
     requiredTotal: requiredFamilies.length,
     requiredCovered,
     requiredMissing: gapRegister.length,
@@ -570,10 +599,11 @@ export async function loadDiscoveryEvidenceReadiness(
   programId: string,
 ): Promise<DiscoveryEvidenceReadiness> {
   const program = await getProgramById(ctx, programId);
-  const blueprint = getDiscoveryBlueprint(
+  const resolution = resolveDiscoveryBlueprintWithBasis(
     buildDiscoveryBlueprintInputFromProgram(program),
     resolveDeclaredProgramArchetypeId(program),
   );
+  const blueprint = resolution.blueprint;
   const tenantKey = ctx.clientKey ?? "";
   const rows = await azureRead
     .query<{
@@ -613,6 +643,8 @@ export async function loadDiscoveryEvidenceReadiness(
     .catch(() => []);
   return evaluateDiscoveryEvidenceReadiness({
     blueprint,
+    blueprintBasis: resolution.basis,
+    unknownDeclaredArchetype: resolution.unknownDeclaration,
     evidenceItems: rows.map((row) => ({
       id: row.id,
       title: row.title ?? "Untitled evidence",

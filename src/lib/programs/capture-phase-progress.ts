@@ -40,6 +40,21 @@ export type CapturePhaseProgressContext = {
    * two differed.
    */
   viewedAnsweredCount: number;
+  /**
+   * Optional per-phase SAVED-ANSWER counts, from the module rows the host
+   * already holds for the whole Move (`capturePhaseSavedAnswerCounts`).
+   *
+   * This is NOT a second source for `answered`. A saved answer is a persisted
+   * non-empty value; the viewed row's `answered` additionally requires
+   * structured validity, evidence readiness and — on P1 — a satisfied charter
+   * basis, so this count is strictly weaker and routinely larger. It is carried
+   * on a separate field, under a separate noun, so an unmeasured row can show
+   * the work behind it without claiming any of it is complete.
+   *
+   * Absent (the default, and whenever the rollup flag is off) ⇒ every row
+   * behaves exactly as it did before, stating a question count alone.
+   */
+  savedAnswerCountByPhase?: Readonly<Record<number, number>>;
 };
 
 /**
@@ -76,13 +91,47 @@ export function capturePhaseAnsweredCount(
   return Math.min(Math.max(0, context.viewedAnsweredCount), total);
 }
 
-/** `capturePhaseAnsweredCount` over every row of the strip. */
+/**
+ * How many of a row's questions hold a saved answer, or `null` when nothing
+ * says.
+ *
+ * Returned only for a row this screen CANNOT measure. The viewed row already
+ * states a live `answered` count, and putting a second, weaker figure beside it
+ * would show the same row two numbers under two nouns — the shape of the defect
+ * that produced "11 of 7" in the first place. One figure per row.
+ *
+ * Clamped to the row's own total: the count is derived against the same
+ * route-aware section list, so exceeding it would mean the two disagree about
+ * which questions the phase asks, and a figure above its own total is never the
+ * honest reading of that disagreement.
+ */
+export function capturePhaseSavedAnswers(
+  row: CapturePhaseProgressRow,
+  context: CapturePhaseProgressContext,
+): number | null {
+  if (row.phase === context.viewedPhase) return null;
+  const counts = context.savedAnswerCountByPhase;
+  if (!counts) return null;
+  const saved = counts[row.phase];
+  if (typeof saved !== "number" || !Number.isFinite(saved)) return null;
+  const total = Math.max(0, row.total);
+  return Math.min(Math.max(0, Math.trunc(saved)), total);
+}
+
+/**
+ * `capturePhaseAnsweredCount` and `capturePhaseSavedAnswers` over every row of
+ * the strip.
+ *
+ * The two never both carry a number for the same row, by construction: one is
+ * defined only on the viewed phase and the other only off it.
+ */
 export function capturePhaseProgress<Row extends CapturePhaseProgressRow>(
   rows: readonly Row[],
   context: CapturePhaseProgressContext,
-): Array<Row & { answered: number | null }> {
+): Array<Row & { answered: number | null; savedAnswers: number | null }> {
   return rows.map((row) => ({
     ...row,
     answered: capturePhaseAnsweredCount(row, context),
+    savedAnswers: capturePhaseSavedAnswers(row, context),
   }));
 }

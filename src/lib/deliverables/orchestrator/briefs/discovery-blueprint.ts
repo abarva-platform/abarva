@@ -4,6 +4,14 @@
 // pattern. The Discovery Plan deliverable (generated at the P1→P2 gate) turns
 // this catalog into a client-facing evidence-request list + interview guide.
 
+import { z } from "zod";
+
+import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+import {
+  sharedEvidenceFamilyDrift,
+  type SharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
+
 export interface EvidenceFamily {
   id: string;
   label: string;
@@ -37,6 +45,25 @@ export interface DiscoveryBlueprint {
    */
   suggestionKeywords?: string[];
 }
+
+// The reusable evidence-family library lives in `discovery-evidence-library`;
+// it is re-exported here so a configured source composes against the same
+// module that owns the catalog.
+export {
+  SHARED_EVIDENCE_FAMILIES,
+  composeDiscoveryBlueprint,
+  composeEvidenceFamilies,
+  isEvidenceFamilyRef,
+  sharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
+export type {
+  ComposedDiscoveryBlueprint,
+  ComposedEvidenceFamilies,
+  DiscoveryBlueprintComposition,
+  EvidenceFamilyRef,
+  EvidenceFamilySpec,
+  SharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
 
 // ── AI-Operations / Customer-Digital (IROPS-class) ──────────────────────────
 const AI_OPERATIONS: DiscoveryBlueprint = {
@@ -865,14 +892,13 @@ export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
   [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
 };
 
-/** Normalize a declared archetype token to a catalog key. */
-function normalizeArchetypeId(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[\s./-]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
+/**
+ * How far the built-in seed's shared families have drifted from the library's
+ * canonical wording. Read-only provenance for a setup flow; it changes no
+ * resolution.
+ */
+export function discoveryCatalogSharedFamilyDrift(): SharedEvidenceFamilyDrift[] {
+  return sharedEvidenceFamilyDrift(DISCOVERY_BLUEPRINT_CATALOG);
 }
 
 /**
@@ -884,8 +910,10 @@ function normalizeArchetypeId(value: string): string {
 export function resolveDeclaredDiscoveryBlueprint(
   declaredArchetypeId: string | null | undefined,
 ): DiscoveryBlueprint | null {
-  if (!declaredArchetypeId || !declaredArchetypeId.trim()) return null;
-  return DISCOVERY_BLUEPRINT_CATALOG[normalizeArchetypeId(declaredArchetypeId)] ?? null;
+  return resolveArchetypeCatalogEntry(
+    DISCOVERY_BLUEPRINT_CATALOG,
+    declaredArchetypeId,
+  );
 }
 
 export interface DiscoveryArchetypeSuggestion {
@@ -942,19 +970,83 @@ export function suggestDiscoveryArchetypes(
  * suggestion, never authority. `useCaseArchetype` that is itself exactly a
  * catalog id is also honored as a declaration.
  */
-export function getDiscoveryBlueprint(
+/**
+ * How a blueprint came to be selected for a Move. Every value above `inferred`
+ * means a human's declaration decided it; `inferred` and `default` mean nobody
+ * did, and keyword matching (or the general case) chose instead.
+ */
+export type DiscoveryBlueprintBasis =
+  /** `declaredArchetypeId` matched a catalog archetype. */
+  | "declared"
+  /** The `useCaseArchetype` argument was itself exactly a catalog archetype id. */
+  | "declared_via_use_case"
+  /** Nothing matched the catalog; keyword inference picked a specific archetype. */
+  | "inferred"
+  /** Nothing matched and no keywords fired; the general-case blueprint applies. */
+  | "default";
+
+export interface DiscoveryBlueprintResolution {
+  blueprint: DiscoveryBlueprint;
+  basis: DiscoveryBlueprintBasis;
+  /**
+   * A declaration WAS supplied but does not name a catalog archetype, so it was
+   * discarded and selection fell through to inference. Non-null here is a
+   * governance signal, not a detail: the blueprint grading this Move's evidence
+   * was not the one anybody declared. Callers surfacing a blueprint to a person
+   * should say so rather than present the selection as declared.
+   */
+  unknownDeclaration: string | null;
+}
+
+/**
+ * Resolve the discovery blueprint for a Move AND report what decided it.
+ *
+ * `getDiscoveryBlueprint` is this function's blueprint, with the provenance
+ * dropped; the selection rules live here and have exactly one implementation.
+ */
+export function resolveDiscoveryBlueprintWithBasis(
   useCaseArchetype: string,
   declaredArchetypeId?: string | null,
-): DiscoveryBlueprint {
+): DiscoveryBlueprintResolution {
   // Declared identity wins over inference. Try the explicit declaration first,
   // then the primary arg in case a caller passed a clean catalog id as the
   // archetype. A multi-word inference blob won't exact-match a catalog key, so
   // this never false-matches.
-  const declared =
-    resolveDeclaredDiscoveryBlueprint(declaredArchetypeId) ??
-    resolveDeclaredDiscoveryBlueprint(useCaseArchetype);
-  if (declared) return declared;
+  const declaredBlueprint = resolveDeclaredDiscoveryBlueprint(declaredArchetypeId);
+  if (declaredBlueprint) {
+    return {
+      blueprint: declaredBlueprint,
+      basis: "declared",
+      unknownDeclaration: null,
+    };
+  }
+  const declaredViaUseCase = resolveDeclaredDiscoveryBlueprint(useCaseArchetype);
+  if (declaredViaUseCase) {
+    return {
+      blueprint: declaredViaUseCase,
+      basis: "declared_via_use_case",
+      unknownDeclaration: null,
+    };
+  }
 
+  // A declaration that was supplied and did not resolve is carried out, because
+  // the caller cannot otherwise tell this case from "nothing was declared" —
+  // and the two have very different standing.
+  const unknownDeclaration =
+    declaredArchetypeId && declaredArchetypeId.trim()
+      ? declaredArchetypeId.trim()
+      : null;
+
+  const inferred = inferDiscoveryBlueprint(useCaseArchetype);
+  return {
+    blueprint: inferred,
+    basis: inferred.blueprintId === DEFAULT_BLUEPRINT.blueprintId ? "default" : "inferred",
+    unknownDeclaration,
+  };
+}
+
+/** Keyword inference — the fallback, never authority. */
+function inferDiscoveryBlueprint(useCaseArchetype: string): DiscoveryBlueprint {
   const a = (useCaseArchetype || "").toLowerCase();
   const hasFinancialLendingSignals =
     /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
@@ -988,4 +1080,151 @@ export function getDiscoveryBlueprint(
     return AI_OPERATIONS;
   }
   return DEFAULT_BLUEPRINT;
+}
+
+/** Resolve the discovery blueprint for a Move.
+ *
+ * Identity is declared, never inferred: a `declaredArchetypeId` that matches a
+ * catalog archetype wins outright. Only when nothing is declared (or the
+ * declaration is unknown) does keyword inference run, and it is a fallback
+ * suggestion, never authority. `useCaseArchetype` that is itself exactly a
+ * catalog id is also honored as a declaration.
+ *
+ * Use `resolveDiscoveryBlueprintWithBasis` when the caller shows the selected
+ * archetype to a person and therefore needs to say whether it was declared.
+ */
+export function getDiscoveryBlueprint(
+  useCaseArchetype: string,
+  declaredArchetypeId?: string | null,
+): DiscoveryBlueprint {
+  return resolveDiscoveryBlueprintWithBasis(useCaseArchetype, declaredArchetypeId)
+    .blueprint;
+}
+
+// ── Config contract + loader (Phase 2 of the configurable archetype layer) ──
+// The catalog is data: these schemas define what a configured source — a JSON
+// file today, a DB table or setup UI later — must satisfy, and the loader
+// overlays a validated configured source onto the built-in seed. The seam lets
+// a deploying firm add or override an archetype WITHOUT shipping code, while an
+// invalid source is rejected whole so the catalog can never be partially
+// corrupted. Co-located with the catalog it governs.
+// A configured id becomes a key on the effective catalog. Some snake_case
+// strings are not usable as keys: `__proto__` is a setter on
+// `Object.prototype`, so assigning it changes an object's prototype instead of
+// adding an entry, and `constructor` / `prototype` read back as inherited
+// built-ins rather than as a declared archetype. The id regex admits all three.
+// They are rejected at the contract so a configured source can never name an
+// identity the catalog cannot hold — identity is declared, and a declaration
+// the catalog would silently drop is not a declaration.
+const UNUSABLE_CATALOG_KEYS = ["__proto__", "constructor", "prototype"];
+
+const usableAsCatalogKey = (id: string) => !UNUSABLE_CATALOG_KEYS.includes(id);
+
+const UNUSABLE_KEY_MESSAGE =
+  "id must not be a JavaScript object key (__proto__, constructor, prototype)";
+
+export const EvidenceFamilySchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "family id must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+  label: z.string().min(1),
+  grounds: z.string().min(1),
+  required: z.boolean(),
+  likelySource: z.string().min(1),
+  format: z.string().min(1),
+});
+
+export const InterviewRoleSchema = z.object({
+  role: z.string().min(1),
+  side: z.enum(["business", "it"]),
+  objectives: z.string().min(1),
+  questions: z.array(z.string().min(1)).min(1),
+});
+
+export const DiscoveryBlueprintSchema = z.object({
+  blueprintId: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "blueprintId must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+  blueprintVersion: z.string().min(1),
+  archetypeLabel: z.string().min(1),
+  suggestionKeywords: z.array(z.string().min(1)).optional(),
+  evidenceFamilies: z
+    .array(EvidenceFamilySchema)
+    .min(1)
+    .refine(
+      (families) =>
+        new Set(families.map((family) => family.id)).size === families.length,
+      { message: "evidence family ids must be unique within a blueprint" },
+    ),
+  interviewRoster: z.array(InterviewRoleSchema).min(1),
+});
+
+export const DiscoveryBlueprintCatalogSchema = z.array(DiscoveryBlueprintSchema);
+
+export type DiscoveryBlueprintConfig = z.infer<typeof DiscoveryBlueprintSchema>;
+
+export interface LoadedDiscoveryBlueprintCatalog {
+  catalog: Record<string, DiscoveryBlueprint>;
+  /** Added or overridden archetype ids from the configured source. */
+  applied: string[];
+  /** Validation errors; when non-empty the configured source was rejected. */
+  errors: string[];
+}
+
+/**
+ * Build the effective catalog: the built-in seed, with a validated configured
+ * source overlaid on top (an entry whose `blueprintId` matches a seed id
+ * overrides it; a new id adds an archetype). A configured source that fails
+ * validation is rejected whole — the seed is returned unchanged and the errors
+ * are surfaced — so a malformed config cannot partially corrupt the catalog.
+ */
+export function loadDiscoveryBlueprintCatalog(
+  configuredBlueprints?: unknown,
+): LoadedDiscoveryBlueprintCatalog {
+  // Prototype-free, for two reasons. It answers only ids it was given, so no
+  // caller can reach an inherited member and read it back as an archetype; and
+  // with no `Object.prototype` behind it, writing a key can never invoke an
+  // inherited setter, so every id written becomes an own key and `applied`
+  // cannot name an id the catalog does not hold.
+  const catalog: Record<string, DiscoveryBlueprint> = Object.assign(
+    Object.create(null) as Record<string, DiscoveryBlueprint>,
+    DISCOVERY_BLUEPRINT_CATALOG,
+  );
+  if (configuredBlueprints == null) {
+    return { catalog, applied: [], errors: [] };
+  }
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(configuredBlueprints);
+  if (!parsed.success) {
+    return {
+      catalog,
+      applied: [],
+      errors: parsed.error.issues.map(
+        (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+      ),
+    };
+  }
+  const applied: string[] = [];
+  for (const blueprint of parsed.data) {
+    catalog[blueprint.blueprintId] = blueprint as DiscoveryBlueprint;
+    applied.push(blueprint.blueprintId);
+  }
+  return { catalog, applied, errors: [] };
+}
+
+/**
+ * Validate the built-in seed against the schema. The seam only holds if the
+ * seed itself conforms to the contract a configured source must meet.
+ */
+export function validateBuiltInDiscoveryBlueprintCatalog(): string[] {
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(
+    Object.values(DISCOVERY_BLUEPRINT_CATALOG),
+  );
+  if (parsed.success) return [];
+  return parsed.error.issues.map(
+    (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+  );
 }

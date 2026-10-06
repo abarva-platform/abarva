@@ -62,6 +62,7 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
@@ -444,6 +445,16 @@ export default async function StrategicMovePhaseWorkspacePage({
     isFeatureEnabled(
       { clientKey: ctx.clientKey, clientId: ctx.clientId },
       "moves_capture_handoff_recap_v1",
+    );
+
+  // CONJUNCTION with `moves_capture_v2`: the phase strip this rollup feeds is
+  // part of the redesigned capture flow, so there is no row to label unless the
+  // flow is what rendered.
+  const capturePhaseRollupEnabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_capture_phase_rollup_v1",
     );
 
   // State reconciliation: current_phase is the single source of truth for where
@@ -870,6 +881,17 @@ export default async function StrategicMovePhaseWorkspacePage({
       (item) => item.evidenceId,
     ),
   });
+  // Every phase's saved-answer count, for the capture strip's unmeasured rows.
+  // `captureModules` already holds EVERY capture-module row for the Move — the
+  // loop below then keeps only the viewed phase's — so this is a derivation of
+  // rows in hand, not a second read. Route-aware because P3's question set
+  // depends on the confirmed route.
+  const capturePhaseSavedAnswerCountsForStrip = capturePhaseRollupEnabled
+    ? capturePhaseSavedAnswerCounts(
+        captureModules,
+        initialConfirmedSolutionRoute,
+      )
+    : undefined;
   const initialPhaseCaptureValues: Record<string, string> = {};
   const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> =
     {};
@@ -981,6 +1003,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         charterBasisEnabled={charterBasisEnabled}
         captureCompositionEnabled={captureCompositionEnabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
+        capturePhaseSavedAnswerCounts={capturePhaseSavedAnswerCountsForStrip}
         captureNotesEnabled={captureNotesEnabled}
         captureHandoffRecapEnabled={captureHandoffRecapEnabled}
         carriedCharterAssumptions={carriedCharterAssumptionRows}

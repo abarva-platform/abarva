@@ -8,6 +8,7 @@ synthetic-v-folder-reference,datasets/enterprise-profile-foundation-v1/active-te
 legacy-v-dimension-token,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 legacy-v-file-name,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 v6-v7-current-state,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
+synthetic-v-folder-reference,datasets/source/candidate-supplier-registry-synthetic-v2/FIELD_GUIDE.md,non-loader historical reference
 synthetic-v-folder-reference,docs/architecture/item26-draw16-stale-suite-triage.json,non-loader historical reference
 synthetic-v-folder-reference,docs/architecture/item26-draw17-stale-suite-triage.json,non-loader historical reference
 synthetic-v-folder-reference,docs/architecture/t475-stale-suite-triage.json,non-loader historical reference
@@ -46,6 +47,7 @@ v6-v7-current-state,docs/governance/dataset-manifests/meridian-health-v6-v7-curr
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-rich-synthetic-v3-candidate-20260717.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-synthetic-v2.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/source-candidate-supplier-registry-synthetic-v1.json,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/source-candidate-supplier-registry-synthetic-v2.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/source-servicenow-sourcing-requests-synthetic-v1.json,non-loader historical reference
 synthetic-v-folder-reference,docs/intelligence-v6/SKYHARBOR_CTO_AIRLINE_DEMO_PACKAGE_2026-06-30.md,non-loader historical reference
 legacy-v-dimension-token,docs/intelligence-v6/SKYHARBOR_V6_CTO_DEMO_DESIGN_AUDIT_2026-06-30.md,non-loader historical reference
@@ -525,6 +527,7 @@ synthetic-v-folder-reference,scripts/verify/meridian-context-showcase.mjs,non-lo
 synthetic-v-folder-reference,scripts/verify/meridian-data-pack-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/northstar-context-layer-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/behaviors/source-servicenow-request-acceptance-harness.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-import-workflow.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-loader.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/integration/source/source-servicenow-request-loader.test.ts,non-loader historical reference
 old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,non-loader historical reference
