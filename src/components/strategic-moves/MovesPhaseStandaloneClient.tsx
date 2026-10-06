@@ -48,7 +48,9 @@ import {
   type MovesCaptureFlowPhase,
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
+import { CharterStandingAfterDiscover } from "@/components/strategic-moves/CharterStandingAfterDiscover";
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
+import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import {
   CharterAssumptionBadge,
@@ -285,6 +287,15 @@ interface MovesPhaseStandaloneClientProps {
    * active and nothing renders — the client re-checks no flag of its own.
    */
   carriedCharterAssumptions?: readonly CarriedCharterAssumption[] | null;
+  /**
+   * The charter answers a phase AFTER Discover should carry a caveat on,
+   * folded server-side by `charterStandingAfterDiscover` and already gated
+   * there on P3+ and `moves_charter_standing_after_discover_v1`. `null` means
+   * the surface is not active and nothing renders — the client re-checks no
+   * flag of its own, exactly as with `carriedCharterAssumptions`. The two are
+   * phase-exclusive by construction: the carry-forward owns P2, this owns P3+.
+   */
+  charterStandingAfterDiscover?: readonly PostDiscoverCharterAnswer[] | null;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -902,6 +913,7 @@ export function MovesPhaseStandaloneClient({
   captureNotesEnabled = false,
   captureHandoffRecapEnabled = false,
   carriedCharterAssumptions: carriedCharterAssumptionRows = null,
+  charterStandingAfterDiscover: charterStandingAfterDiscoverRows = null,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -3388,9 +3400,14 @@ export function MovesPhaseStandaloneClient({
                         renderSectionRecapMark: captureSectionRecapMark,
                         handoffSummary: charterBasisRollup,
                         openingBand: (
-                          <CharterAssumptionsCarryForward
-                            assumptions={carriedCharterAssumptionRows}
-                          />
+                          <>
+                            <CharterAssumptionsCarryForward
+                              assumptions={carriedCharterAssumptionRows}
+                            />
+                            <CharterStandingAfterDiscover
+                              rows={charterStandingAfterDiscoverRows}
+                            />
+                          </>
                         ),
                         sectionRecap: (s) =>
                           displayPhaseCaptureValues[s.key] ?? "",

@@ -10,6 +10,10 @@ import {
   carriedCharterAssumptions,
   charterAssumptionCarryForwardActive,
 } from "@/lib/programs/charter-assumptions-carry-forward";
+import {
+  charterStandingAfterDiscover,
+  charterStandingAfterDiscoverActive,
+} from "@/lib/programs/charter-standing-after-discover";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
@@ -421,6 +425,14 @@ export default async function StrategicMovePhaseWorkspacePage({
   const charterAssumptionResolutionEnabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_assumption_resolution_v1",
+  );
+  // What a charter answer is worth once Discover has closed. Its own flag, and
+  // the fold additionally requires the resolution read: without it a resolved
+  // assumption and a surviving one are indistinguishable, and the surface would
+  // report work that was really done as work nobody did.
+  const charterStandingAfterDiscoverEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_standing_after_discover_v1",
   );
   // Composition-only polish for the redesigned capture. It has nothing to show
   // unless the redesigned capture is what renders, so it is resolved as the
@@ -944,6 +956,21 @@ export default async function StrategicMovePhaseWorkspacePage({
     })),
     resolutionReadEnabled: charterAssumptionResolutionEnabled,
   });
+  // The charter answers P3+ should not quote flat. Same Move-wide
+  // `captureModules` as the carry-forward above, so P1's rows are in hand
+  // without a second load; the fold owns the phase window and the flag pair.
+  const charterStandingAfterDiscoverRows = charterStandingAfterDiscover({
+    active: charterStandingAfterDiscoverActive({
+      flagEnabled: charterStandingAfterDiscoverEnabled,
+      resolutionReadEnabled: charterAssumptionResolutionEnabled,
+      phaseNumber: parsedPhase,
+    }),
+    modules: captureModules.map((entry) => ({
+      moduleKey: entry.moduleKey,
+      status: entry.status,
+      state: entry.state ?? null,
+    })),
+  });
   const initialPhaseCaptureRevision = computeCaptureRevision(
     initialPhaseCaptureValues,
     parsedPhase === 1 ? initialP1CharterBasisBySection : undefined,
@@ -1007,6 +1034,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureNotesEnabled={captureNotesEnabled}
         captureHandoffRecapEnabled={captureHandoffRecapEnabled}
         carriedCharterAssumptions={carriedCharterAssumptionRows}
+        charterStandingAfterDiscover={charterStandingAfterDiscoverRows}
       />
     </AppShell>
   );
