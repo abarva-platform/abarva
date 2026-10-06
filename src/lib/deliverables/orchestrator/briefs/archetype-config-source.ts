@@ -20,9 +20,12 @@
 //
 // That is an override of a shipped archetype, which is the half that needs no
 // change to resolution. Reaching a BRAND-NEW configured archetype by
-// declaration is a different rule — the declared token has to resolve against
-// the effective catalog rather than the seed — and it is deliberately not
-// here; see the release record's Known Gaps.
+// declaration is the other rule, and it is now here too: see
+// `resolveDiscoveryBlueprintFromConfiguredCatalog`, which resolves the
+// declaration against the EFFECTIVE catalog instead of the seed. Both rules are
+// needed and neither subsumes the other — a declaration reaches an added
+// archetype, and the override still has to apply when nothing was declared and
+// inference chose a shipped archetype the source replaces.
 //
 // Identity is declared, never inferred: there is no search for a config file,
 // no convention path, no directory scan. A source exists when an operator
@@ -35,7 +38,9 @@ import fs from "node:fs";
 import {
   DISCOVERY_BLUEPRINT_CATALOG,
   loadDiscoveryBlueprintCatalog,
+  resolveDiscoveryBlueprintWithBasis,
   type DiscoveryBlueprint,
+  type DiscoveryBlueprintBasis,
 } from "./discovery-blueprint";
 
 /**
@@ -203,10 +208,14 @@ export interface ConfiguredBlueprintResolution {
 }
 
 /**
- * The entry point a generation path uses: take the blueprint resolution chose
- * from the seed, and hand back what the configured source makes of it, with
- * enough state attached that an operator can tell an inert source from an
- * absent one.
+ * Apply the configured source to a blueprint a caller has ALREADY resolved by
+ * its own means — a persisted selection, or one composed elsewhere.
+ *
+ * It can only ever override, by construction: it is handed a blueprint, not a
+ * declaration, so there is no token for it to match against an id the source
+ * ADDED. A generation path that holds the Move's declared archetype should call
+ * `resolveDiscoveryBlueprintFromConfiguredCatalog` instead, which resolves the
+ * declaration against the effective catalog and reaches an addition.
  */
 export function resolveConfiguredDiscoveryBlueprint(
   resolved: DiscoveryBlueprint,
@@ -221,4 +230,91 @@ export function resolveConfiguredDiscoveryBlueprint(
     sourcePath: effective.sourcePath,
     errors: effective.errors,
   };
+}
+
+/**
+ * Where the blueprint a Move will be graded against came from.
+ *
+ * `seed` is every deployment that configures nothing. The two configured
+ * outcomes are one typo apart and must not read alike: an OVERRIDE replaces a
+ * shipped archetype's evidence plan and interview roster, an ADDITION leaves
+ * every shipped archetype intact.
+ */
+export type ConfiguredBlueprintOrigin =
+  | "seed"
+  | "configured_override"
+  | "configured_addition";
+
+export interface DeclaredConfiguredBlueprintResolution {
+  blueprint: DiscoveryBlueprint;
+  /** What decided the blueprint — declaration, inference, or the default. */
+  basis: DiscoveryBlueprintBasis;
+  /**
+   * A declaration was supplied and names no archetype in the EFFECTIVE catalog.
+   * Carried through unchanged from resolution: a configured source widens what
+   * counts as known, so this is narrower here than against the seed alone.
+   */
+  unknownDeclaration: string | null;
+  origin: ConfiguredBlueprintOrigin;
+  state: ArchetypeConfigState;
+  sourcePath: string | null;
+  errors: string[];
+}
+
+/**
+ * Resolve a Move's blueprint against the configured catalog — the entry point a
+ * generation path should use.
+ *
+ * Two steps, and both are load-bearing:
+ *
+ * 1. Resolution runs against the EFFECTIVE catalog, so a declaration can name
+ *    an archetype the configured source ADDED. Bound to the seed (as every
+ *    live path was), an added archetype was listed as applied, held in the
+ *    catalog, and selectable by nothing.
+ * 2. The override is then applied to the result, because step 1 only helps the
+ *    DECLARED branches. When nothing is declared, inference answers with a
+ *    shipped constant; if the source overrides that archetype, the Move must
+ *    still get the configured version. Dropping this step silently restores the
+ *    seed for every Move whose archetype was inferred.
+ *
+ * `origin` is keyed on `applied`, never on comparing the resolved blueprint
+ * with the seed: a configured entry that restates a shipped archetype
+ * field-for-field is indistinguishable by value, and would read as `seed`.
+ * Addition-vs-override is a KEY question — does the seed declare this id at
+ * all — which is why that part is a key lookup and not a value comparison.
+ */
+export function resolveDiscoveryBlueprintFromConfiguredCatalog(
+  useCaseArchetype: string,
+  declaredArchetypeId?: string | null,
+  env: ArchetypeConfigEnv = process.env,
+): DeclaredConfiguredBlueprintResolution {
+  const effective = loadEffectiveDiscoveryBlueprintCatalog(env);
+  const resolution = resolveDiscoveryBlueprintWithBasis(
+    useCaseArchetype,
+    declaredArchetypeId,
+    effective.catalog,
+  );
+  const blueprint = applyConfiguredBlueprintOverride(
+    resolution.blueprint,
+    effective,
+  );
+  return {
+    blueprint,
+    basis: resolution.basis,
+    unknownDeclaration: resolution.unknownDeclaration,
+    origin: configuredBlueprintOrigin(blueprint.blueprintId, effective.applied),
+    state: effective.state,
+    sourcePath: effective.sourcePath,
+    errors: effective.errors,
+  };
+}
+
+function configuredBlueprintOrigin(
+  blueprintId: string,
+  applied: readonly string[],
+): ConfiguredBlueprintOrigin {
+  if (!applied.includes(blueprintId)) return "seed";
+  return Object.hasOwn(DISCOVERY_BLUEPRINT_CATALOG, blueprintId)
+    ? "configured_override"
+    : "configured_addition";
 }
