@@ -89,10 +89,13 @@ No migration, no script, no workflow change.
     at zero answered and at thirteen. Both partial fills are now asserted, in both orders: a
     required-key list built from one of the two key arrays satisfies the other order's assertions
     on its own.
-- **PASS** census regenerated with `npm run audit:test-ci-coverage:write`; reports "committed census
-  matches this run". Delta `testFiles` +4 / `coveredTestFiles` +4 / uncovered unchanged. Two of the
-  four are this change's new suites; the other two are pre-existing drift between the committed
-  census and main's tree, carried in by the regeneration.
+- **PASS** census regenerated with `npm run audit:test-ci-coverage:write` on a base merged with
+  `origin/main`; reports "committed census matches this run". Delta `testFiles` +2 /
+  `coveredTestFiles` +2 / uncovered unchanged / `directoriesWithTests` +1 (the new API test
+  directory), which is exactly this change's two new suites, both covered. Measured against the
+  merged base deliberately: a first regeneration taken before two sibling changes landed produced a
+  census numerically identical to the one they then committed, so the delta read +4 and would have
+  been erased by the merge without a conflict.
 - **PASS** `npm run audit:tenancy-fence-coverage:write` — no fence change (no new data-plane read).
 - **PASS** `npm run release:check -- --base origin/main --head HEAD`.
 - **NOT RUN** signed-in walk. This cannot be rendered signed-in off the private data plane from a
