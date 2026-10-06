@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import nextConfig from "../../../../../next.config";
 import type { SqlRunner, TxSessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
 import { publishSyntheticTemplate } from "../publish-synthetic-template";
 
@@ -17,6 +18,10 @@ const input = {
   rationale: "I approve this synthetic template for the lab test only.",
   acknowledged: true,
 };
+
+it("loads the PDF parser from Node at runtime so its worker remains available", () => {
+  expect(nextConfig.serverExternalPackages).toContain("pdf-parse");
+});
 
 function fixture(options: { artifactEventId?: string; artifactHash?: string; artifactType?: string; blobUri?: string } = {}) {
   const statements: string[] = [];
@@ -43,7 +48,7 @@ function fixture(options: { artifactEventId?: string; artifactHash?: string; art
   };
   const tx: TxSessionRunner = async (body) => body(run);
   const download = jest.fn(async () => pdf);
-  const extractText = jest.fn(async () => "SYNTHETIC TEST FIXTURE\nMutual NDA template");
+  const extractText = jest.fn(async (): Promise<string | null> => "SYNTHETIC TEST FIXTURE\nMutual NDA template");
   return { tx, download, extractText, statements, inserted };
 }
 
@@ -101,6 +106,15 @@ it("refuses a readable PDF without the synthetic-fixture marker", async () => {
   f.extractText.mockResolvedValue("Ordinary mutual NDA");
   expect(await publishSyntheticTemplate(input, { tx: f.tx, download: f.download, extractText: f.extractText })).toEqual({
     ok: false, code: "template_not_synthetic",
+  });
+  expect(f.inserted).toHaveLength(0);
+});
+
+it("distinguishes a failed PDF extraction from a missing synthetic marker", async () => {
+  const f = fixture();
+  f.extractText.mockResolvedValue(null);
+  expect(await publishSyntheticTemplate(input, { tx: f.tx, download: f.download, extractText: f.extractText })).toEqual({
+    ok: false, code: "template_text_unavailable",
   });
   expect(f.inserted).toHaveLength(0);
 });
