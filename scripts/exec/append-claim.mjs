@@ -529,9 +529,20 @@ function main(argv) {
 
     const conflicts = Array.isArray(overlap?.conflicts) ? overlap.conflicts : [];
     if (conflicts.length) {
+      // `conflicts` is one entry per (path x citing line), on purpose: the
+      // gate's own comment says two runs holding one file is two conflicts,
+      // because collapsing them would report one of the two holders. So its
+      // length is a count of HOLDS, and the sentence below promises a count of
+      // PATHS — "N of M requested path(s)". Putting the hold count in N made a
+      // 3-path request print `4 of 3` on the live register (item T-818), which
+      // is not a near-miss but a statement that cannot be true, and it buried
+      // the fact the reader actually needs: one of those three paths was free.
+      // So N is the number of DISTINCT requested paths that are held, and the
+      // per-holder list below is left whole.
+      const heldPathCount = new Set(conflicts.map((c) => c.path ?? c)).size;
       lines.push(
-        `REFUSED BY THE FILE HALF — ${conflicts.length} of ` +
-          `${overlap?.requested?.length ?? conflicts.length} requested path(s) ` +
+        `REFUSED BY THE FILE HALF — ${heldPathCount} of ` +
+          `${overlap?.requested?.length ?? heldPathCount} requested path(s) ` +
           `already held by another live claim:`,
       );
       for (const c of conflicts) {
