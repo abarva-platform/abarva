@@ -204,9 +204,12 @@ async function main(): Promise<void> {
     if (profiles.length === 0 || profiles.some((profile) => !profile || profile.canonicalKey !== profiles[0]?.canonicalKey)) {
       throw new Error("Move client aliases do not resolve to one canonical tenant");
     }
-    const tenantKey = profiles[0]!.canonicalKey;
-    assertActiveTenant(tenantKey);
-    if (tenantKey !== config.expectedTenantKey) throw new Error("Authenticated Move tenant differs from expected tenant precondition");
+    const canonicalTenantKey = profiles[0]!.canonicalKey;
+    const tenantKey = profiles[0]!.appClientKey;
+    assertActiveTenant(canonicalTenantKey);
+    if (canonicalTenantKey !== config.expectedTenantKey || move.slug !== tenantKey) {
+      throw new Error("Authenticated Move canonical tenant or app client key differs from registry precondition");
+    }
     const declaration = (move.charter?.classification as Record<string, unknown> | undefined)?.archetype;
     if (declaration !== TARGET_ARCHETYPE || move.current_phase !== 1) throw new Error("Move declaration or phase changed since authorized preflight");
     const resolverInput = {
@@ -236,7 +239,7 @@ async function main(): Promise<void> {
     for (const file of source.files) {
       const id = stableUuid(DATASET_ID, move.id, source.sourceHash, file.familyKey, "evidence");
       const governed = {
-        id, tenant_id: move.client_id, client_key: tenantKey, object_type: "program_evidence_item",
+        id, tenant_id: move.client_id, client_key: canonicalTenantKey, object_type: "program_evidence_item",
         source_layer: "uploaded_evidence", industry: null, enterprise_area: "back_office",
         function: "HR analytics", process_area: null, use_case_category: "data_foundation",
         strategic_move_phase_applicability: ["P2"], applicable_agents: [],
@@ -363,7 +366,7 @@ async function main(): Promise<void> {
 
     stage = "proof-writing";
     const finishedAt = new Date().toISOString();
-    const validation = { status: "PASS", move_id: move.id, tenant_key: tenantKey, blueprint_id: TARGET_ARCHETYPE,
+    const validation = { status: "PASS", move_id: move.id, tenant_key: tenantKey, canonical_tenant_key: canonicalTenantKey, blueprint_id: TARGET_ARCHETYPE,
       source_set_hash: source.sourceHash, inserted, idempotent_retry: inserted === 0,
       total_evidence_items: 11, total_pending_reviews: 11,
       counts_by_family: counts, current_phase: phase.rows[0]?.current_phase,
