@@ -1656,7 +1656,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByLabelText("Phase progress")).toBeInTheDocument();
     });
 
-    it("moves_capture_composition_v1 ON: the SAME tab row moves inside the dock, rendered once", () => {
+    it("moves_capture_composition_v1 ON: one tab row, rendered once in the shell (not inside the dock), so its position is consistent across views", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -1670,13 +1670,15 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       const dock = screen.getByTestId("agent-dock");
-      // exactly one tab row, and it is inside the dock's workspace column
+      // exactly one tab row, rendered in the shell above the dock — NOT moved
+      // into the dock workspace (which made its position differ from the
+      // Files/Intelligence/Approvals views and clip it).
       const tablists = screen.getAllByRole("tablist", {
         name: "Move workspace views",
       });
       expect(tablists).toHaveLength(1);
-      expect(dock).toContainElement(tablists[0]);
-      // and it still switches surfaces from there
+      expect(dock).not.toContainElement(tablists[0]);
+      // and it still switches surfaces
       expect(
         within(tablists[0]).getByRole("tab", { name: /Files/ }),
       ).toBeInTheDocument();
