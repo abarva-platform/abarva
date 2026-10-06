@@ -106,7 +106,7 @@ no flag. No client data, schema, retrieval index or tenant scope is touched.
 ## QA / Validation
 
 Lane: **Moves CODE lane**, local validation on an isolated worktree off `origin/main` at
-`91d90ad59f`.
+`91d90ad59f`, then re-validated after merging `origin/main` in at `755d266171`.
 
 - **PASS** — `npx jest src/lib/deliverables/orchestrator/__tests__` → **52 suites, 672 tests, 0
   failing**. Measured baseline on a pristine `origin/main` worktree: the same 52 suites, **657**
@@ -122,6 +122,11 @@ Lane: **Moves CODE lane**, local validation on an isolated worktree off `origin/
 - **PASS** — `npm run audit:test-ci-coverage:write` → "committed census matches this run". Both
   appended suites were already registered in `.github/workflows/unit-suites.yml`; no new test file
   and no new directory.
+- **PASS** — re-run of the same four checks after merging `origin/main` in at `755d266171`:
+  `npx jest src/lib/deliverables/orchestrator/__tests__` → **52 suites, 739 tests, 0 failing**
+  (the test total moved because `main` added cases, not this branch); `tsc --noEmit` → exit `0`;
+  `eslint` on the five changed files → exit `0`; `release:check` → 11 of 11 gates passed. The
+  merge itself was census-only, so no expectation was conformed and no guard was re-derived.
 - **NOT RUN** — signed-in walk. This change alters the brief handed to the drafting model; proving
   it end to end means generating a deliverable of one of the four affected types, which is a
   data-plane action this lane does not take. Named in **Known Gaps**.
@@ -164,10 +169,12 @@ what turned those two into kills.
 
 ### Census attribution
 
-The regenerated census moves `testFiles` 2724 → 2725 and `coveredTestFiles` 2560 → 2561. **None of
-that is this change** — it adds no test file. A pristine `origin/main` worktree regenerates to
-exactly 2725 / 2561 / 2560, so the committed census was already one behind; the delta belongs to an
-earlier merge whose census hunk was dropped. Verified before writing this line, not assumed.
+The regenerated census moves `testFiles` 2727 → 2728 and `coveredTestFiles` 2563 → 2564, with
+`uncoveredTestFiles` unchanged. **None of that is this change** — it adds no test file, and a new
+test file outside a wired directory would move the uncovered count, which is the number to watch.
+The committed census was again one behind after merging `main` in; the delta belongs to earlier
+merges whose census hunks were dropped, and the regenerated run reports "committed census matches
+this run". Verified before writing this line, not assumed.
 
 ## Rollout Plan
 
