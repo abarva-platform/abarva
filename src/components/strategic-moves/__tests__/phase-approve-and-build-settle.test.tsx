@@ -13,7 +13,14 @@
 // anything failed.
 
 import "@testing-library/jest-dom";
-import { render, screen, act, waitFor, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  act,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import {
   PhaseApproveAndBuild,
   type BuildSettledResult,
@@ -125,17 +132,60 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
           actionPortalTargetId="phase-progress-test-action"
           evidenceNeedPackets={[
             {
+              moveId: "move-1",
               phase: 1,
+              artifactType: "charter",
+              evidenceSlot: "Charter success measures",
+              familyId: "charter_success_metrics",
               priority: "required",
+              ownerSource: "Finance / FP&A",
+              acceptedFormats: ["XLSX", "CSV"],
+              exampleTemplate: "Baseline and value measurement worksheet",
+              exampleContent: ["Current baseline with period and owner"],
+              whyItMatters:
+                "Funding-grade claims need a traceable baseline.",
+              guidanceBasis: "generic",
+              blockedArtifacts: [],
+              canDraftBoundary: {
+                canDraft: false,
+                canDraftLabel: "",
+                cannotDraftLabel: "",
+              },
+              preliminaryGenerationCaveat: null,
+              waiverOption: null,
+              nextAction:
+                "Upload a finance-validated baseline or label the target as an assumption.",
               status: "missing",
+              evidenceTitles: [],
             } as MoveEvidenceNeedPacket,
           ]}
         />
       </>,
     );
 
+    const evidenceSummary = await screen.findByText(
+      "1 required evidence item open",
+    );
+    await act(async () => {
+      evidenceSummary.click();
+    });
+    expect(screen.getByText("Charter success measures")).toBeInTheDocument();
     expect(
-      await screen.findByText("1 required evidence item open"),
+      screen.getByText(/Upload a finance-validated baseline/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Likely source owner: Finance \/ FP&A/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Accepted formats: XLSX, CSV")).toBeInTheDocument();
+    const examplesSummary = screen.getByText("Why this matters and examples");
+    await act(async () => {
+      examplesSummary.click();
+    });
+    expect(
+      screen.getByText("Funding-grade claims need a traceable baseline."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Examples are guidance, not client evidence."),
     ).toBeInTheDocument();
     expect(
       within(
@@ -174,6 +224,38 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     });
     expect(button).toHaveStyle({ background: "rgb(20, 124, 91)" });
     expect(button).not.toBeDisabled();
+  });
+
+  it("labels non-blocking evidence gaps as preparation, not blockers", () => {
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        evidenceNeedPackets={[
+          {
+            phase: 1,
+            artifactType: "charter",
+            evidenceSlot: "Success measures",
+            familyId: "success_measures",
+            priority: "required",
+            status: "missing",
+            nextAction: "Upload a baseline source.",
+          } as MoveEvidenceNeedPacket,
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("1 prep item carrying forward"));
+
+    expect(
+      screen.getByText("These items inform the next phase and do not block this phase build."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Preparation · Not yet covered")).toBeInTheDocument();
+    expect(screen.queryByText("Required · Not yet covered")).not.toBeInTheDocument();
   });
 
   it("seeds built rows from persisted Move artifacts on a fresh page load", () => {

@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
     'docx',
     'pptxgenjs',
     '@resvg/resvg-js',
+    'pdf-parse',
   ],
 
   // Enables `forbidden()` and `unauthorized()` from `next/navigation`.

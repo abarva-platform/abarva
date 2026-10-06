@@ -36,7 +36,15 @@ import {
   formatQueueProvenance,
   queueProvenanceStamp,
 } from "./queue-provenance.mjs";
-import { FLAG_SPEC, USAGE, advertisedFlags } from "./append-claim.mjs";
+import { ACTIONS, FLAG_SPEC, USAGE, advertisedFlags } from "./append-claim.mjs";
+// The register's OWN readers, imported rather than restated, so a case cannot
+// pass by agreeing with a copy of the grammar this helper writes (item T-836).
+import {
+  announcesAbstention,
+  announcesRelease,
+  claimedPaths,
+  itemSubjects,
+} from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const HELPER = path.join(HERE, "append-claim.mjs");
@@ -1658,6 +1666,366 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
     );
     fs.rmSync(dir, { recursive: true, force: true });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Case 29 (item T-818) — the refusal headline counts PATHS, not hold records.
+//
+// The headline read `N of M requested path(s) already held`, where N was
+// `fileOverlap.conflicts.length` and M was `fileOverlap.requested.length`.
+// Those count different things. `conflicts` is one entry per (path x citing
+// line) and that is deliberate — `register-time-authority.mjs` says in
+// comment that two runs holding one file is two conflicts, because collapsing
+// them would report only one of the two holders. So when a single holder
+// cites one path on two live lines (a claim plus an amendment, which is the
+// append-only register's normal shape), that path yields two entries and N
+// over-counts it.
+//
+// Reproduced on the live register on 2026-10-05 while probing two lane-T
+// rows: a 3-path request printed `4 of 3 requested path(s)` and a 2-path
+// request printed `4 of 2`. A ratio above 1 is not a near-miss, it is a
+// statement that cannot be true, and the describer's own preamble says it was
+// written because `verdict: take` under a REFUSED banner "invites the reading
+// that the control is broken".
+//
+// The cost is the one the block exists to remove, not cosmetic. That same
+// preamble says an agent "cannot tell WHICH of the files it asked for is
+// held, so it re-invokes the helper one path at a time to find out". In the
+// 3-path probe the true answer was two held and ONE FREE; `4 of 3` cannot
+// carry that, while `2 of 3` tells the reader to go looking for the clear one.
+//
+// So the fix is in the summary sentence only. The per-holder list below it is
+// correct and the guardrail below keeps it whole: de-duplicating `conflicts`
+// to make the numerator agree would lose a holder, which is the failure the
+// gate's comment is guarding.
+// ---------------------------------------------------------------------------
+{
+  const HELD_A = "scripts/exec/alpha-module.mjs";
+  const HELD_B = "scripts/exec/beta-module.mjs";
+  const FREE = "docs/releases/records/t818-nobody-holds-this.md";
+  const ago = (minutes) =>
+    new Date(Date.now() - minutes * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  // One holder, TWO live lines, the SAME two files on both — a claim and the
+  // amendment the protocol tells agents to append rather than restamp.
+  const { dir, file } = fixture([
+    `${ago(45)} | ${OTHER} | item T-819 claimed on branch \`exec/t-819\` — ` +
+      `taking it. files: ${HELD_A},${HELD_B}`,
+    `${ago(15)} | ${OTHER} | item T-819 claimed on branch \`exec/t-819\` — ` +
+      `amendment, appended not restamped. files: ${HELD_A},${HELD_B}`,
+  ]);
+
+  // SETUP, from the REAL gate rather than from the fixture text: the scenario
+  // only exists if the gate genuinely emits more conflict entries than the
+  // request had paths. Without this the acceptance could pass against a gate
+  // that never produced the shape.
+  const probe = preclaimFiles(file, "T-818", ME, ago(0), `${HELD_A},${HELD_B},${FREE}`);
+  const conflicts = probe.report.fileOverlap?.conflicts ?? [];
+  const requested = probe.report.fileOverlap?.requested ?? [];
+  const distinctHeld = new Set(conflicts.map((c) => c.path));
+  check(
+    "T-818 setup — the REAL gate emits 4 hold records for 2 held paths out of 3 requested",
+    probe.status === 1 && conflicts.length === 4 && requested.length === 3 && distinctHeld.size === 2,
+    `status=${probe.status} conflicts=${conflicts.length} requested=${requested.length} ` +
+      `distinct=${distinctHeld.size}`,
+  );
+
+  const beforeRefusal = digest(file);
+  const refused = run([
+    ...base({ file, item: "T-818", identity: ME, message: "three paths, two of them held" }),
+    "--branch", "exec/t-818", "--files", `${HELD_A},${HELD_B},${FREE}`,
+  ]);
+  const out = refused.stdout + refused.stderr;
+  const headline = out.match(
+    /REFUSED BY THE FILE HALF — (\d+) of (\d+) requested path\(s\) already held by another live claim:/,
+  );
+
+  check(
+    "T-818 setup — the claim is refused, appends nothing, and prints the file-half headline",
+    refused.status === 1 && digest(file) === beforeRefusal && headline !== null,
+    `status=${refused.status} changed=${digest(file) !== beforeRefusal}\nout=${out}`,
+  );
+
+  // THE ACCEPTANCE. The sentence says "of M requested path(s)", so the
+  // numerator has to be a count of requested paths. Both numbers are asserted,
+  // not just their ratio: a numerator that merely stopped exceeding the
+  // denominator could still be wrong.
+  check(
+    "T-818 THE ACCEPTANCE — the headline reads `2 of 3`: distinct HELD paths, out of paths requested",
+    headline !== null && headline[1] === "2" && headline[2] === "3",
+    `headline=${headline ? headline[0] : "(absent)"}\nout=${out}`,
+  );
+
+  // The impossible statement, asserted as its own case so a regression names
+  // itself. This is the shape measured on the live register.
+  check(
+    "T-818 THE ACCEPTANCE — the headline never claims more held paths than were requested",
+    headline !== null && Number(headline[1]) <= Number(headline[2]),
+    `headline=${headline ? headline[0] : "(absent)"}`,
+  );
+
+  // GUARDRAIL, and the reason the fix belongs in the sentence rather than in
+  // `conflicts`: every citing line must still be listed. Two lines cite each
+  // of the two held paths, so four `file:` lines are owed. Collapsing the list
+  // to agree with the numerator would report one holder and hide the other.
+  const fileLines = out.split("\n").filter((l) => /^file:\s/.test(l.trim()));
+  check(
+    "T-818 GUARDRAIL — all 4 citing lines are still listed, one per (path x line)",
+    fileLines.length === 4 &&
+      fileLines.filter((l) => l.includes(HELD_A)).length === 2 &&
+      fileLines.filter((l) => l.includes(HELD_B)).length === 2,
+    `fileLines=${fileLines.length}\n${fileLines.join("\n")}`,
+  );
+
+  // The free path is the thing the broken headline could not express. It is
+  // not held, so it must not be reported as held anywhere in the refusal.
+  check(
+    "T-818 GUARDRAIL — the path nobody holds is named nowhere in the refusal",
+    !out.includes(FREE),
+    out,
+  );
+
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item T-836 — an amendment declares its files, like every other record here.
+//
+// T-804 made a line's `files:` list the whole of its lock and left the line
+// that declares none reading its own prose. That residual is deliberate and it
+// is not an oversight: the field-less lines are overwhelmingly amendment-shaped
+// — `AMEND <pr> claim by adjacent <path>` — and they mean to hold what they
+// name, so freeing them would put two runs on one file. Measured on the live
+// register at `91d90ad59f`: 303 of 1325 attributed path-holding lines declare
+// no list, 83 of them AMEND-shaped.
+//
+// So the remedy is NOT to extend the rule to them, and nothing below touches
+// the reader. The defect is upstream of it: an amendment had no way to declare
+// its files, because this helper offered no action that writes one. `--action
+// amend` is that way, and `--files` is REQUIRED on it — an amendment whose
+// files are optional is the field-less line again, written by the sanctioned
+// path.
+//
+// Not decided here, and deliberately: whether an amendment's declared list
+// REPLACES or ADDS TO the list of the claim it amends. That is a protocol call,
+// it is the half T-836's row gates, and this change is careful to need no
+// answer to it — each line's declaration is its own lock, which is what the
+// reader already did before this.
+// ---------------------------------------------------------------------------
+{
+  // The claim being amended declares a path of its OWN. That is not scenery:
+  // every case below reads the register's LAST line, and if the amendment is
+  // not written that line is this claim — which, declaring a list, satisfies
+  // `the declared field is the lock` all by itself. Six of these cases passed
+  // against it on the first red run. So the original declares ORIGINAL, the
+  // amendment declares DECLARED, and each case additionally requires the line
+  // it reads to be the amendment.
+  const ORIGINAL = "scripts/exec/t836-original-module.mjs";
+  const DECLARED = "scripts/exec/t836-declared-module.mjs";
+  const PROSE_ONLY = "scripts/exec/t836-prose-only-module.mjs";
+  const nowStamp = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  const minutesAgo = (m) =>
+    new Date(Date.now() - m * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+  const AMEND_MSG =
+    `extending the claim by the adjacent \`${PROSE_ONLY}\`, which this sentence names ` +
+    "and which must NOT become a lock";
+
+  // THE ACCEPTANCE, first half: the helper writes an amendment at all.
+  {
+    const { dir, file } = fixture([
+      `${minutesAgo(20)} | ${ME} | item T-836 claimed on branch \`exec/t-836\` — ` +
+        `taking it. files: ${ORIGINAL}`,
+    ]);
+    const r = run([
+      ...base({ file, item: "T-836", identity: ME, message: AMEND_MSG }),
+      "--action", "amend", "--branch", "exec/t-836", "--files", DECLARED,
+    ]);
+    const written = fs.readFileSync(file, "utf8").trim().split("\n").at(-1);
+    // THE GUARD every case below shares. `written` is the last line of the
+    // register, which is the amendment only if one was appended; when the
+    // action is refused it is the claim this amendment was meant to extend.
+    const isAmendment = /AMEND item T-836 claim/.test(written ?? "");
+    check(
+      "T-836 THE ACCEPTANCE — `--action amend` is accepted and appends a line",
+      r.status === 0 && /VERDICT: WROTE /.test(r.stdout) && isAmendment,
+      `status=${r.status}\nout=${r.stdout}${r.stderr}\nwritten=${written}`,
+    );
+
+    // The head verb, asserted through the register's OWN readers rather than
+    // by matching the string this helper just produced — the mistake T-712 was
+    // filed against was a writer and a reader drifting apart. An amendment
+    // extends a hold: it must not read as a release or an abstention, and the
+    // id must still be a subject of the line.
+    check(
+      "T-836 THE ACCEPTANCE — the amendment reads as a HOLD, not a release or an abstention",
+      isAmendment &&
+        !announcesRelease(written ?? "") &&
+        !announcesAbstention(written ?? "") &&
+        itemSubjects(written ?? "").some((s) => s.base === "T-836"),
+      `written=${written}\nrelease=${announcesRelease(written ?? "")} ` +
+        `abstain=${announcesAbstention(written ?? "")} ` +
+        `subjects=${JSON.stringify(itemSubjects(written ?? ""))}`,
+    );
+
+    // THE ACCEPTANCE, the half the item words as "whose declared field is read
+    // and whose prose is not", measured through the gate's own `claimedPaths`
+    // on the line the helper actually wrote. The message names a DIFFERENT
+    // path from the field on purpose: if the field were ignored, or absent,
+    // this line would lock `PROSE_ONLY` — which is the live state of 303 lines.
+    const held = claimedPaths(written ?? "").map((p) => p.path);
+    check(
+      "T-836 THE ACCEPTANCE — the amendment's DECLARED field is its lock",
+      isAmendment && held.includes(DECLARED),
+      `held=${JSON.stringify(held)}\nwritten=${written}`,
+    );
+    check(
+      "T-836 THE ACCEPTANCE — the amendment's PROSE locks nothing",
+      isAmendment && !held.includes(PROSE_ONLY),
+      `held=${JSON.stringify(held)}\nwritten=${written}`,
+    );
+
+    // THROUGH THE CLI GATE, not only through the imported reader: the declared
+    // path refuses the next run and the prose path refuses nobody. Same
+    // contrast, one level up, so a change that kept `claimedPaths` right and
+    // broke the line's shape still fails.
+    // The gate is asked at the REAL clock, not at a pinned `--now`. The helper
+    // stamps from `new Date()` at the instant of writing (T-457), so a pinned
+    // instant earlier than that stamp puts the amendment in the future and the
+    // gate correctly declines to read it as live — which looked like the fix
+    // failing and was the probe being wrong.
+    const onDeclared = preclaimFiles(file, "T-900", OTHER, nowStamp(), DECLARED);
+    const onProse = preclaimFiles(file, "T-900", OTHER, nowStamp(), PROSE_ONLY);
+    check(
+      "T-836 THROUGH THE GATE — the amendment's declared path refuses the next run",
+      isAmendment && onDeclared.status === 1 && Boolean(onDeclared.report.fileOverlap?.refuses),
+      `status=${onDeclared.status} report=${JSON.stringify(onDeclared.report.fileOverlap)}`,
+    );
+    check(
+      "T-836 THROUGH THE GATE — the path named only in the amendment's prose refuses nobody",
+      isAmendment && onProse.status === 0 && !onProse.report.fileOverlap?.refuses,
+      `status=${onProse.status} report=${JSON.stringify(onProse.report.fileOverlap)}`,
+    );
+
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // THE OTHER HALF OF THE ACCEPTANCE — and the one that makes the first half
+  // worth anything. An amendment whose `--files` is optional is a field-less
+  // line written through the sanctioned path, which is the defect this item
+  // names. So an amend without a declaration is a USAGE refusal and NOTHING is
+  // appended; the digest, not a tail read.
+  {
+    const { dir, file } = fixture([
+      `${minutesAgo(20)} | ${ME} | item T-836 claimed on branch \`exec/t-836\` — ` +
+        `taking it. files: ${ORIGINAL}`,
+    ]);
+    const before = digest(file);
+    const r = run([
+      ...base({ file, item: "T-836", identity: ME, message: AMEND_MSG }),
+      "--action", "amend", "--branch", "exec/t-836",
+    ]);
+    check(
+      "T-836 GUARDRAIL — an amendment with no --files is REFUSED, and appends nothing",
+      r.status === 2 && digest(file) === before && /VERDICT: REFUSED/.test(r.stdout),
+      `status=${r.status} changed=${digest(file) !== before}\nout=${r.stdout}${r.stderr}`,
+    );
+    check(
+      "T-836 the refusal says WHY an amendment must declare its files",
+      /--files/.test(r.stderr) && /declar/i.test(r.stderr),
+      `stderr=${r.stderr}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // An amend is not a way around the ownership gate. It takes paths, so the
+  // file half is asked — unlike a release and an abstention, which take
+  // nothing and are exempt (C-564) — and a path another live claim holds stops
+  // it. Without this, `--action amend` would be the one action that writes a
+  // hold over somebody else's.
+  {
+    const THEIRS = "scripts/exec/t836-held-by-another.mjs";
+    const { dir, file } = fixture([
+      `${minutesAgo(25)} | ${OTHER} | item T-900 claimed on branch \`x\` — ` +
+        `taking it. files: ${THEIRS}`,
+      `${minutesAgo(20)} | ${ME} | item T-836 claimed on branch \`exec/t-836\` — ` +
+        `taking it. files: ${ORIGINAL}`,
+    ]);
+    const before = digest(file);
+    const r = run([
+      ...base({ file, item: "T-836", identity: ME, message: "widening onto a path somebody else holds" }),
+      "--action", "amend", "--branch", "exec/t-836", "--files", `${DECLARED},${THEIRS}`,
+    ]);
+    check(
+      "T-836 an amendment onto a path another live claim holds is REFUSED by the file half",
+      r.status === 1 && digest(file) === before && /REFUSED BY THE FILE HALF/.test(r.stderr),
+      `status=${r.status} changed=${digest(file) !== before}\nout=${r.stdout}${r.stderr}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // An amendment that announces a release is the T-712 shape with a new head:
+  // the line would open `AMEND ... claim` and the body would hand the work
+  // back, and the head is what the ownership reader parses. Refuse and name
+  // the flag, exactly as a claim does.
+  {
+    const { dir, file } = fixture([
+      `${minutesAgo(20)} | ${ME} | item T-836 claimed on branch \`exec/t-836\` — ` +
+        `taking it. files: ${ORIGINAL}`,
+    ]);
+    const before = digest(file);
+    const r = run([
+      ...base({
+        file, item: "T-836", identity: ME,
+        message: "RELEASED item T-836 — merged, all files free",
+      }),
+      "--action", "amend", "--branch", "exec/t-836", "--files", DECLARED,
+    ]);
+    check(
+      "T-836 an amendment whose message announces a RELEASE is refused, not written",
+      r.status === 2 && digest(file) === before && /--action release/.test(r.stderr),
+      `status=${r.status} changed=${digest(file) !== before}\nout=${r.stdout}${r.stderr}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // An amendment must have a claim of YOURS to extend, and this is the case
+  // that pays for `amend` not being gated on queue provenance. A claim is
+  // refused unless the queue beside the register was written by the repo-owned
+  // generator (T-720); if `amend` were exempt from that AND able to open a hold
+  // on an unclaimed item, it would be the bypass. It is not, because the gate
+  // must answer `already-yours`: the fixture below holds nothing of this
+  // identity's, the gate answers `take`, and there is nothing to amend.
+  {
+    const { dir, file } = fixture([
+      `${minutesAgo(30)} | ${OTHER} | item T-901 claimed on branch \`y\` — ` +
+        `an unrelated row. files: scripts/exec/t836-unrelated.mjs`,
+    ]);
+    const before = digest(file);
+    const r = run([
+      ...base({ file, item: "T-836", identity: ME, message: "amending a claim I never made" }),
+      "--action", "amend", "--branch", "exec/t-836", "--files", DECLARED,
+    ]);
+    check(
+      "T-836 an amendment of an item nobody holds is REFUSED, and appends nothing",
+      r.status === 1 && digest(file) === before && /VERDICT: REFUSED/.test(r.stdout),
+      `status=${r.status} changed=${digest(file) !== before}\nout=${r.stdout}${r.stderr}`,
+    );
+    check(
+      "T-836 that refusal says there is no claim of yours to extend, and names --action claim",
+      /no claim of yours to extend/.test(r.stderr) && /--action claim/.test(r.stderr),
+      `stderr=${r.stderr}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // `amend` is in the vocabulary the usage text publishes. The suite already
+  // pins FLAG_SPEC to USAGE for flags; an action is the same contract and was
+  // not covered, so a new action that the help never mentions would pass.
+  check(
+    "T-836 `amend` is in ACTIONS and named in the usage text",
+    ACTIONS.has("amend") && /\bamend\b/.test(USAGE),
+    `ACTIONS=${JSON.stringify([...ACTIONS])}\nUSAGE=${USAGE}`,
+  );
 }
 
 console.log(`\n${passes} passed, ${failures} failed`);

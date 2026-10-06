@@ -4,6 +4,7 @@ export type NdaOperatorSupplierStatus = {
   vendorId: string;
   contactAuthorityId: string | null;
   contactName: string | null;
+  approvalContacts: readonly { contactId: string; name: string; email: string }[];
   envelopeId: string | null;
   envelopeStatus: "created" | "sent" | "viewed" | "completed" | "declined" | "voided" | null;
   envelopeTemplateVersion: string | null;
@@ -13,6 +14,7 @@ type StatusRow = {
   vendor_id: string;
   contact_authority_id: string | null;
   contact_name: string | null;
+  approval_contacts: unknown;
   envelope_id: string | null;
   envelope_status: string | null;
   envelope_template_version: string | null;
@@ -41,6 +43,19 @@ export async function readSyntheticNdaOperatorStatus(input: {
          SELECT accepted.vendor_id,
                 contact_authority.authority_id AS contact_authority_id,
                 contact_authority.approved_contact_name AS contact_name,
+                COALESCE((
+                  SELECT jsonb_agg(jsonb_build_object(
+                    'contactId', approval_contact.contact_id,
+                    'name', approval_contact.display_name,
+                    'email', approval_contact.email
+                  ) ORDER BY approval_contact.contact_id)
+                  FROM source.vendor_contact approval_contact
+                  WHERE approval_contact.tenant_key = $1
+                    AND approval_contact.vendor_id = accepted.vendor_id
+                    AND approval_contact.contact_policy = 'contact_allowed'
+                    AND approval_contact.contact_state = 'active'
+                    AND lower(split_part(approval_contact.email, '@', 2)) = 'abarva.ai'
+                ), '[]'::jsonb) AS approval_contacts,
                 envelope.provider_envelope_id AS envelope_id,
                 envelope.status AS envelope_status,
                 envelope.template_version AS envelope_template_version
@@ -87,6 +102,19 @@ export async function readSyntheticNdaOperatorStatus(input: {
       const seen = new Set<string>();
       const result: NdaOperatorSupplierStatus[] = [];
       for (const row of rows) {
+        if (!Array.isArray(row.approval_contacts)) return null;
+        const approvalContacts: Array<{ contactId: string; name: string; email: string }> = [];
+        const contactIds = new Set<string>();
+        for (const value of row.approval_contacts) {
+          if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+          const contact = value as Record<string, unknown>;
+          if (typeof contact.contactId !== "string" || !contact.contactId.trim() ||
+              typeof contact.name !== "string" || !contact.name.trim() ||
+              typeof contact.email !== "string" || !/^[^@\s]+@abarva\.ai$/i.test(contact.email) ||
+              contactIds.has(contact.contactId)) return null;
+          contactIds.add(contact.contactId);
+          approvalContacts.push({ contactId: contact.contactId, name: contact.name, email: contact.email });
+        }
         if (!row.vendor_id?.trim() || seen.has(row.vendor_id) ||
             (row.envelope_status !== null && !statuses.has(row.envelope_status)) ||
             Boolean(row.contact_authority_id) !== Boolean(row.contact_name) ||
@@ -96,6 +124,7 @@ export async function readSyntheticNdaOperatorStatus(input: {
           vendorId: row.vendor_id,
           contactAuthorityId: row.contact_authority_id,
           contactName: row.contact_name,
+          approvalContacts,
           envelopeId: row.envelope_id,
           envelopeStatus: row.envelope_status as NdaOperatorSupplierStatus["envelopeStatus"],
           envelopeTemplateVersion: row.envelope_template_version,

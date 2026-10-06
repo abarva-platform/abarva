@@ -11,6 +11,9 @@ import {
 import { AppShell } from "@/components/shell/AppShell";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import { listEffectiveDiscoveryArchetypeOptions } from "@/lib/deliverables/orchestrator/briefs/archetype-declaration-surface";
+import { getOpenDraft } from "@/lib/programs/origination-drafts";
+import { normalizeDiscoveryArchetypeDeclaration } from "@/lib/programs/discovery/discovery-archetype-declaration";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +121,7 @@ export default async function StrategicMoveOriginatePage({
   //   2D — from "Shape into a Move →" CTA on an AI Initiative page
   //   Intelligence — from a pattern/use-case/contradiction evidence edge
   let firstMessage = null;
+  let initialDiscoveryArchetypeId: string | null = null;
   // Discovery Intake: gate the capture panel by `discovery_intake_v2` for this
   // tenant (computed server-side; default off). Re-homed from /programs/new,
   // which the routing cutover supersedes.
@@ -130,6 +134,14 @@ export default async function StrategicMoveOriginatePage({
       fromInitiative,
       fromIntelligence,
     );
+    try {
+      const draft = await getOpenDraft(ctx, "/strategic-moves/new");
+      initialDiscoveryArchetypeId = normalizeDiscoveryArchetypeDeclaration(
+        draft?.state.brief?.discoveryArchetypeId,
+      );
+    } catch {
+      // A failed or stale draft must not disable the rest of the origination page.
+    }
     discoveryIntakeEnabled = isFeatureEnabled(ctx, "discovery_intake_v2");
     extendedIntakeFieldsEnabled = isFeatureEnabled(
       ctx,
@@ -150,6 +162,8 @@ export default async function StrategicMoveOriginatePage({
         discoveryIntakeEnabled={discoveryIntakeEnabled}
         extendedIntakeFieldsEnabled={extendedIntakeFieldsEnabled}
         businessSegmentOptions={businessSegmentOptions}
+        discoveryArchetypeOptions={listEffectiveDiscoveryArchetypeOptions()}
+        initialDiscoveryArchetypeId={initialDiscoveryArchetypeId}
       />
     </AppShell>
   );

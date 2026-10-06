@@ -42,6 +42,38 @@ function charterText(
   return textFromUnknown((scaffold as Record<string, unknown>)[key]);
 }
 
+/**
+ * The archetype id a human DECLARED for this Move, or null.
+ *
+ * Read from the two places a declaration is written: `functionPackKey`, and
+ * `charter.classification.archetype` — the field
+ * `scripts/moves/declare-discovery-archetype-job.ts` writes and guards. This
+ * deliberately does NOT read `program.archetype`: that column holds a coarse
+ * legacy value (`platform_modernization`, …) which names no registry archetype
+ * and is not a declaration of one.
+ *
+ * Mirrors the precedence of `resolveDeclaredProgramArchetypeId`
+ * (`src/lib/programs/discovery/evidence-readiness.ts`) for the fields that can
+ * carry a discovery-blueprint id. Kept local so this server-only resolver does
+ * not pull in the discovery-blueprint module graph.
+ */
+function declaredArchetypeId(
+  charter: Record<string, unknown> | null,
+  functionPackKey: string | null | undefined,
+): string | null {
+  const packKey =
+    typeof functionPackKey === "string" && functionPackKey.trim()
+      ? functionPackKey.trim()
+      : null;
+  if (packKey) return packKey;
+  const classification = charter?.classification;
+  if (!classification || typeof classification !== "object") return null;
+  const declared = (classification as Record<string, unknown>).archetype;
+  return typeof declared === "string" && declared.trim()
+    ? declared.trim()
+    : null;
+}
+
 function moduleText(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
   const state = value as Record<string, unknown>;
@@ -105,6 +137,7 @@ export async function resolveMoveArchetypeForProgram(
   return resolveProgramArchetype({
     archetype: program.archetype,
     classification,
+    declaredArchetypeId: declaredArchetypeId(charter, program.functionPackKey),
     name: program.name,
   });
 }

@@ -13,17 +13,17 @@
     "Every directory holding an UNTRIAGED unrun file is ranked, and admittedBy on each row says which path admitted it: governed_risk_signal for a non-zero governed-risk score, untriaged_unrun_work for a directory that matched no signal and would have been absent before C-555. Order is governed-surface risk first — declared AI controls, approval or lifecycle writes, then tenant-scoped reads — so every signalled directory precedes every zero and keeps the rank it had; the count of unrun files is a tie-breaker, and it is what orders the zero tier among itself. Admission raises no score and no band. A directory whose unrun set is entirely declared quarantine is still not ranked, because it has already been triaged.",
     "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
     "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
-    "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: each of its rows is also a ranked row with admittedBy untriaged_unrun_work unless a triage verdict holds every untriaged file in it (T-773), and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool.",
-    "A triage verdict in a docs/architecture/*triage*.json record is read per file, the latest recordedAt winning (an undated record sorts first; on equal stamps the later record file wins). It never changes untriagedUnrunTestFiles, because a verdict runs nothing. It changes what the ranking ADMITS: an untriaged file whose latest verdict names owned residual work (wire_into_ci, repair, rewrite_as_behavior, update_with_reason_recorded, real, vacuous_control_proof, held_unwired, already_verdicted_elsewhere) is held out of the draw and listed in triageVerdicts.heldTestPaths with its verdict, record and owner, and a directory is ranked only while drawableUnrunTestFiles is above zero. drawableTestPaths on each ranked row names the files a draw may offer. A completion verdict (wired, rewritten_as_behavior_and_wired, already_selected_no_action, deleted_and_replaced) on a file the census measures as unrun is contradicted and stays drawable, as does a verdict word in neither list; both are listed. unclassifiedRiskDirectories is still drawn from the untriaged pool, so a directory whose every untriaged file is held can appear there without a ranked row.",
+    "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: a zero-score row is also a ranked row with admittedBy untriaged_unrun_work unless a triage verdict holds every untriaged file in it (T-773), and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool. Since T-805 it also carries every row the ranking does not, whatever that row scored, so governedRiskRanking and unclassifiedRiskDirectories together name every directory in directoriesWithUntriagedUnrunTestFiles and none falls between them. A row here may therefore read band critical or high: that is a directory the ranking omits because a verdict holds its every untriaged file, not a reclassification of its risk, and the band on the row is how the two are told apart.",
+    "A triage verdict in a docs/architecture/*triage*.json record is read per file, the latest recordedAt winning (an undated record sorts first; on equal stamps the later record file wins). It never changes untriagedUnrunTestFiles, because a verdict runs nothing. It changes what the ranking ADMITS: an untriaged file whose latest verdict names owned residual work (wire_into_ci, repair, rewrite_as_behavior, update_with_reason_recorded, real, vacuous_control_proof, held_unwired, already_verdicted_elsewhere) is held out of the draw and listed in triageVerdicts.heldTestPaths with its verdict, record and owner, and a directory is ranked only while drawableUnrunTestFiles is above zero. drawableTestPaths on each ranked row names the files a draw may offer. A completion verdict (wired, rewritten_as_behavior_and_wired, already_selected_no_action, deleted_and_replaced) on a file the census measures as unrun is contradicted and stays drawable, as does a verdict word in neither list; both are listed. unclassifiedRiskDirectories is still drawn from the untriaged pool, so a directory whose every untriaged file is held appears there without a ranked row whatever its score (T-805), and its owed work stays readable in triageVerdicts.heldTestPaths rather than being admitted back into the draw.",
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2711,
-    "coveredTestFiles": 2547,
-    "pullRequestCoveredTestFiles": 2546,
+    "testFiles": 2744,
+    "coveredTestFiles": 2580,
+    "pullRequestCoveredTestFiles": 2579,
     "uncoveredTestFiles": 164,
-    "directoriesWithTests": 504,
-    "directoriesFullyCovered": 434,
+    "directoriesWithTests": 505,
+    "directoriesFullyCovered": 435,
     "directoriesPartiallyCovered": 27,
     "directoriesUncovered": 43,
     "directoriesWithUnrunTestFiles": 70,
@@ -34,10 +34,10 @@
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 53,
+    "unclassifiedRiskDirectories": 59,
     "rankedDirectories": 0,
     "rankedUntriagedUnrunTestFiles": 0,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 47,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 53,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -1455,9 +1455,11 @@
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "productSourceCount": 1
       }
     },
@@ -1507,9 +1509,11 @@
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "productSourceCount": 1
       }
     },
@@ -1761,6 +1765,21 @@
       }
     },
     {
+      "directory": "src/lib/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 3
+      }
+    },
+    {
       "directory": "src/lib/lakeshore/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -1858,9 +1877,11 @@
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 4,
       "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "productSourceCount": 4
       }
     },
@@ -1874,6 +1895,21 @@
         "score": 0,
         "band": "unclassified",
         "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "productSourceCount": 4
       }
     },
@@ -1914,6 +1950,36 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/home/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 5
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 5
       }
     },
     {
@@ -1969,6 +2035,21 @@
       }
     },
     {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testFiles": 9,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 8
+      }
+    },
+    {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
       "unrunTestFiles": 4,
@@ -1982,15 +2063,33 @@
       }
     },
     {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testFiles": 6,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18
+      }
+    },
+    {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
       "unrunTestFiles": 19,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 19,
       "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "productSourceCount": 27
       }
     }

@@ -34,7 +34,7 @@
  *
  *   node scripts/exec/append-claim.mjs --file <register.md> \
  *        --item <id> --identity <base-agent#run-id> --message <text> \
- *        [--action claim|release|abstain] [--branch <name>] [--files a,b] \
+ *        [--action claim|release|abstain|amend] [--branch <name>] [--files a,b] \
  *        [--strict] [--dry-run] \
  *        [--now ISO] [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...
  *
@@ -68,7 +68,8 @@ const EXIT_GATE_UNUSABLE = 3;
 
 export const USAGE =
   "usage: --file <register.md> --item <id> --identity <base-agent#run-id> --message <text>\n" +
-  "       [--action claim|release|abstain] [--branch <name>] [--files a,b]\n" +
+  "       [--action claim|release|abstain|amend] [--branch <name>] [--files a,b]\n" +
+  "       --action amend REQUIRES --files: an amendment declares its lock\n" +
   "       [--strict] [--dry-run] [--now ISO] [--queue <EXECUTION_QUEUE.md>]\n" +
   "       [--repo <dir>] [--records <dir>] [--base <ref>]\n" +
   "       [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...";
@@ -111,7 +112,20 @@ export function advertisedFlags(usageText) {
  * attributes — `<stamp> | <identity> | item <id> ...` — because a line that
  * reads as prose holds nothing, however carefully it is worded.
  */
-export const ACTIONS = new Set(["claim", "release", "abstain"]);
+export const ACTIONS = new Set(["claim", "release", "abstain", "amend"]);
+
+/**
+ * The actions that TAKE something, and are therefore asked the file half and
+ * held to the same message guards as a claim (item T-836).
+ *
+ * A release and an abstention take nothing — C-564 and the rung below it
+ * exempt them, and the reasoning is written out at the call site. An amendment
+ * is the opposite: its whole purpose is to widen a hold onto paths the
+ * original claim did not name, so it is a claim for the file half's purposes
+ * and must not become the one action that can write a hold over somebody
+ * else's.
+ */
+const TAKING_ACTIONS = new Set(["claim", "amend"]);
 
 /**
  * The head of the message field, in the grammar the register's OWN reader
@@ -135,6 +149,25 @@ export function announcementHead(action, item, branch) {
   // An abstention carries no branch: `announcesAbstention` reads NOT TAKEN in
   // the slot directly after the id, and anything between them hides it.
   if (action === "abstain") return `item ${item} NOT TAKEN`;
+  /*
+   * T-836. An amendment extends a claim already made, and it has a head of
+   * its own because the register already writes one: 59 lines open `AMEND`,
+   * and the shape is what a reader of this file recognises as an amendment
+   * rather than a second claim.
+   *
+   * `item <id>` is kept inside it deliberately. The ownership reader finds
+   * the line's subject there, and a head that only said `AMEND` would write
+   * a line the register cannot attribute to the item being amended — which
+   * is a hold nobody can see. Asserted through `itemSubjects`,
+   * `announcesRelease` and `announcesAbstention` in the suite rather than
+   * against a copy of the grammar, because a writer and a reader drifting
+   * apart is what T-712 was filed against.
+   */
+  if (action === "amend") {
+    const parts = [`AMEND item ${item} claim`];
+    if (branch) parts.push(`on branch \`${branch}\``);
+    return parts.join(" ");
+  }
   const parts = [`item ${item} claimed`];
   if (branch) parts.push(`on branch \`${branch}\``);
   return parts.join(" ");
@@ -340,24 +373,64 @@ function main(argv) {
     );
   }
 
+  /*
+   * T-836. An amendment DECLARES its files, and it is the one action here for
+   * which `--files` is not optional.
+   *
+   * T-804 made a line's `files:` list the whole of its lock and left the line
+   * that declares none reading its own prose. Measured on the live register at
+   * `91d90ad59f`, 303 of 1325 attributed path-holding lines declare no list and
+   * 83 of those open `AMEND`: they extend an earlier claim by naming a file in
+   * a sentence, and they mean to hold it. That residual is NOT an oversight and
+   * the remedy is not to extend the rule to them — freeing them would put two
+   * runs on one file, and a wrong free costs another lane its work silently
+   * where a wrong hold costs one refusal that names itself.
+   *
+   * The defect is upstream of the reader: an amendment had no way to declare
+   * its files, because this helper offered no action that writes one. It does
+   * now, and the declaration is REQUIRED — an amendment whose `--files` were
+   * optional is the field-less line again, written from the sanctioned path,
+   * which is the shape this whole directory exists against.
+   *
+   * NOT DECIDED HERE, and deliberately: whether an amendment's declared list
+   * REPLACES or ADDS TO the list of the claim it amends. That is a protocol
+   * call, it is the half T-836's row gates, and nothing here needs an answer
+   * to it — each line's declaration is its own lock, which is what the reader
+   * already did. Both live lines contribute their paths to the hold set today,
+   * so the effect is ADD-TO; that is a description of the current reader, not
+   * a ruling, and the ruling is still owed.
+   */
+  if (action === "amend" && files === undefined) {
+    fail(
+      EXIT_USAGE,
+      "--action amend requires --files. An amendment that declares no list falls back to " +
+        "holding whatever path its prose happens to name, which is the reading this action " +
+        "exists to replace: name the paths the amendment adds, and they become its lock.\n" +
+        USAGE,
+    );
+  }
+
   // A message that announces one thing under an action that announces another
   // is precisely the record that caused this item: the head says `claimed` and
   // the body says `RELEASED ... all files free`, and the head wins. Refuse,
   // and name the flag, rather than writing a line that contradicts itself.
   const asMessage = `x | y | ${message.trim()}`;
-  if (action === "claim" && announcesRelease(asMessage)) {
+  // An amendment is held to the same two guards (item T-836): its head asserts
+  // the hold STANDS and widens, so a body that hands the work back is the same
+  // self-contradicting record under a new verb, and the head still wins.
+  if (TAKING_ACTIONS.has(action) && announcesRelease(asMessage)) {
     fail(
       EXIT_USAGE,
-      "this message announces a RELEASE but --action is `claim`, so the record would open " +
-        "`item ... claimed` and the register would keep reading it as a hold. " +
+      `this message announces a RELEASE but --action is \`${action}\`, so the record would open ` +
+        "with a head the register keeps reading as a hold. " +
         "Pass --action release.",
     );
   }
-  if (action === "claim" && announcesAbstention(asMessage)) {
+  if (TAKING_ACTIONS.has(action) && announcesAbstention(asMessage)) {
     fail(
       EXIT_USAGE,
-      "this message announces an ABSTENTION but --action is `claim`, so the record would open " +
-        "`item ... claimed` and the register would read it as a hold on every file it names. " +
+      `this message announces an ABSTENTION but --action is \`${action}\`, so the record would ` +
+        "open with a head the register reads as a hold on every file it names. " +
         "Pass --action abstain.",
     );
   }
@@ -385,6 +458,11 @@ function main(argv) {
    * gate below.
    *
    * Before the gate, so a stale queue costs no register read.
+   *
+   * An AMENDMENT is exempt for the same reason and the exemption is paid for
+   * rather than assumed (item T-836): it may only extend a claim this identity
+   * already holds, which was itself gated on a current queue, and that is
+   * enforced on the gate's verdict below.
    */
   if (action === "claim") {
     const provenance = evaluateQueueProvenance({
@@ -447,6 +525,9 @@ function main(argv) {
    * still refused, so this cannot be used to write a release over someone
    * else's claim.
    */
+  // T-836. `amend` reaches this as a taking action, so the file half IS asked:
+  // an amendment widens a hold onto paths the original claim did not name, and
+  // a path another live claim holds must stop it exactly as it stops a claim.
   const askFileHalf = files !== undefined && action !== "release";
 
   const forwarded = allFlagValues("--gate-arg");
@@ -529,9 +610,20 @@ function main(argv) {
 
     const conflicts = Array.isArray(overlap?.conflicts) ? overlap.conflicts : [];
     if (conflicts.length) {
+      // `conflicts` is one entry per (path x citing line), on purpose: the
+      // gate's own comment says two runs holding one file is two conflicts,
+      // because collapsing them would report one of the two holders. So its
+      // length is a count of HOLDS, and the sentence below promises a count of
+      // PATHS — "N of M requested path(s)". Putting the hold count in N made a
+      // 3-path request print `4 of 3` on the live register (item T-818), which
+      // is not a near-miss but a statement that cannot be true, and it buried
+      // the fact the reader actually needs: one of those three paths was free.
+      // So N is the number of DISTINCT requested paths that are held, and the
+      // per-holder list below is left whole.
+      const heldPathCount = new Set(conflicts.map((c) => c.path ?? c)).size;
       lines.push(
-        `REFUSED BY THE FILE HALF — ${conflicts.length} of ` +
-          `${overlap?.requested?.length ?? conflicts.length} requested path(s) ` +
+        `REFUSED BY THE FILE HALF — ${heldPathCount} of ` +
+          `${overlap?.requested?.length ?? heldPathCount} requested path(s) ` +
           `already held by another live claim:`,
       );
       for (const c of conflicts) {
@@ -581,6 +673,37 @@ function main(argv) {
   }
 
   const verdict = report?.verdict ?? "take";
+
+  /*
+   * T-836. An amendment must have something to amend, and it must be YOURS.
+   *
+   * This is also what keeps `--action amend` from being a way around the queue
+   * provenance gate. That gate asks whether the ITEM is a row this backlog
+   * still holds, and it deliberately gates a claim and not a release or an
+   * abstention: the moment a queue is stale is the moment a holder most needs
+   * to record an outcome, and refusing that pushes the correction into a
+   * hand-written line. An amendment is in the same position — the item was
+   * already asserted against a current queue when it was claimed, and making a
+   * holder regenerate before it may widen its own file list would strand it.
+   *
+   * So the amendment is not gated on the queue, and the bypass that would open
+   * is closed here instead: `already-yours` means a live claim of this identity
+   * exists on this item. A verdict of `take` means nothing holds it, so there
+   * is no claim to extend and what was asked for is a claim.
+   *
+   * `held-by-a-sibling` and `held-by-another` never reach this line — the gate
+   * exits non-zero on both and the refusal above is final.
+   */
+  if (action === "amend" && verdict !== "already-yours") {
+    fail(
+      EXIT_REFUSED,
+      `an amendment extends a live claim of your own, and the gate answers \`${verdict}\` for ` +
+        `item ${item} as ${identity} — so there is no claim of yours to extend. ` +
+        "Append a claim first (--action claim), which is the record that asserts the item " +
+        "against a current queue. Nothing was appended.",
+    );
+  }
+
   console.log(`Pre-claim passed — item ${item} as ${identity}: ${verdict}`);
   if (report?.advisory) {
     console.log(
