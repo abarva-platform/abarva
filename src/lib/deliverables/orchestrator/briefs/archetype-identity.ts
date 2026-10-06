@@ -51,6 +51,28 @@ export function resolveArchetypeCatalogEntry<T>(
   catalog: Readonly<Record<string, T>>,
   declaredArchetypeId: string | null | undefined,
 ): T | null {
+  const key = resolveArchetypeCatalogKey(catalog, declaredArchetypeId);
+  return key == null ? null : catalog[key];
+}
+
+/**
+ * The same resolution, answering WHICH key matched rather than the entry.
+ *
+ * A caller that resolves against a catalog assembled from more than one source
+ * — a shipped seed with a configured overlay on top — cannot report where the
+ * answer came from if all it holds is the value. Comparing the value against
+ * the seed's would work only by object identity, which a configured entry that
+ * restates a seed entry field-for-field would fail to distinguish.
+ *
+ * `resolveArchetypeCatalogEntry` is a wrapper over this, so the two cannot
+ * drift: there is still exactly one place that decides what a declared token
+ * matches. Normalization means the returned key is the catalog's own spelling,
+ * not the declaration's.
+ */
+export function resolveArchetypeCatalogKey(
+  catalog: Readonly<Record<string, unknown>>,
+  declaredArchetypeId: string | null | undefined,
+): string | null {
   if (!declaredArchetypeId) return null;
 
   // A declaration of separators alone (or whitespace alone) normalizes away.
@@ -58,7 +80,7 @@ export function resolveArchetypeCatalogEntry<T>(
   if (!normalized) return null;
 
   for (const key of Object.keys(catalog)) {
-    if (normalizeArchetypeId(key) === normalized) return catalog[key];
+    if (normalizeArchetypeId(key) === normalized) return key;
   }
   return null;
 }

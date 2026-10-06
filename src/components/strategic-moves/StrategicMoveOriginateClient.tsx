@@ -46,6 +46,17 @@ import {
 import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import type { DiscoveryArchetypeOption } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import type { ConfiguredBlueprintOrigin } from "@/lib/deliverables/orchestrator/briefs/archetype-config-source";
+
+/**
+ * An archetype the picker may offer. `origin` says who authored the entry, so a
+ * deploying firm's own archetypes can be shown as theirs instead of being mixed
+ * into the shipped catalog. Optional because a caller holding only the shipped
+ * list has nothing to say here, and an absent origin reads as shipped.
+ */
+type DeclarableDiscoveryArchetypeOption = DiscoveryArchetypeOption & {
+  origin?: ConfiguredBlueprintOrigin;
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -616,7 +627,7 @@ interface Props {
   /** Tenant's real business-segment names (grounded fact — e.g. Meridian's
    *  own segment taxonomy). Only used when `extendedIntakeFieldsEnabled`. */
   businessSegmentOptions?: string[];
-  discoveryArchetypeOptions?: DiscoveryArchetypeOption[];
+  discoveryArchetypeOptions?: DeclarableDiscoveryArchetypeOption[];
   initialDiscoveryArchetypeId?: string | null;
 }
 
@@ -1516,7 +1527,7 @@ function P0OriginationContractCanvas({
   setCanvasTab: Dispatch<SetStateAction<P0WorkspaceTab>>;
   setDraftFields: Dispatch<SetStateAction<Record<ScaffoldFieldId, string>>>;
   setSponsorProgressEmails: Dispatch<SetStateAction<boolean>>;
-  discoveryArchetypeOptions: DiscoveryArchetypeOption[];
+  discoveryArchetypeOptions: DeclarableDiscoveryArchetypeOption[];
   discoveryArchetypeId: string;
   setDiscoveryArchetypeId: Dispatch<SetStateAction<string>>;
   discoveryArchetypeSuggestions: Array<{ blueprintId: string; archetypeLabel: string }>;
@@ -1534,6 +1545,19 @@ function P0OriginationContractCanvas({
   const suggestedDiscoveryArchetypeIds = new Set(
     discoveryArchetypeSuggestions.map((option) => option.blueprintId),
   );
+  // A suggestion is already offered in its own group above, so it is dropped
+  // from the catalog groups whichever group it would otherwise have fallen in.
+  const unsuggestedDiscoveryArchetypeOptions = discoveryArchetypeOptions.filter(
+    (option) => !suggestedDiscoveryArchetypeIds.has(option.blueprintId),
+  );
+  // Archetypes this deployment configured are listed as the firm's own rather
+  // than mixed into the shipped catalog: an operator has to be able to tell the
+  // archetype they authored from one that shipped with the product. Empty on
+  // every deployment that configures nothing, where this group does not render.
+  const configuredDiscoveryArchetypeOptions =
+    unsuggestedDiscoveryArchetypeOptions.filter(
+      (option) => option.origin != null && option.origin !== "seed",
+    );
   const activeValue = activeP0Def ? brief.fields[activeP0Def.id] : "";
   const activeDraft = activeP0Def ? draftFields[activeP0Def.id] : "";
   const activeFilled = activeP0Def
@@ -1847,12 +1871,11 @@ function P0OriginationContractCanvas({
                           </optgroup>
                         ) : null}
                         <optgroup label="All discovery blueprints">
-                          {discoveryArchetypeOptions
+                          {unsuggestedDiscoveryArchetypeOptions
                             .filter(
                               (option) =>
-                                !suggestedDiscoveryArchetypeIds.has(
-                                  option.blueprintId,
-                                ),
+                                option.origin == null ||
+                                option.origin === "seed",
                             )
                             .map((option) => (
                               <option
@@ -1863,6 +1886,20 @@ function P0OriginationContractCanvas({
                               </option>
                             ))}
                         </optgroup>
+                        {configuredDiscoveryArchetypeOptions.length > 0 ? (
+                          <optgroup label="Added by your firm">
+                            {configuredDiscoveryArchetypeOptions.map(
+                              (option) => (
+                                <option
+                                  key={option.blueprintId}
+                                  value={option.blueprintId}
+                                >
+                                  {option.archetypeLabel}
+                                </option>
+                              ),
+                            )}
+                          </optgroup>
+                        ) : null}
                       </select>
                       <p id="orig-discovery-archetype-help">
                         {discoveryArchetypeId
