@@ -28,13 +28,14 @@ describe("archetype packs", () => {
       "CLOUD_MODERNIZATION",
       "AI_PDLC",
       "ANALYTICS_CAPABILITY_REPATRIATION",
+      "GOVERNED_DATA_FOUNDATION",
     ]) {
       const pack = getArchetypePack(a)!;
       expect(pack.exhibits.length).toBeGreaterThanOrEqual(4);
       expect(pack.tables.length).toBeGreaterThanOrEqual(4);
       expect(pack.keyEvidenceFamilies.length).toBeGreaterThan(0);
     }
-    expect(Object.keys(ARCHETYPE_PACKS)).toHaveLength(5);
+    expect(Object.keys(ARCHETYPE_PACKS)).toHaveLength(6);
   });
 
   it("AMS exhibits differ from cloud-modernization exhibits", () => {
