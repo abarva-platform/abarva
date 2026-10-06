@@ -150,21 +150,11 @@ export function MovesCaptureFlow({
   nextPhase = null,
   ava,
   requireAnswers = false,
-  initialStep = 0,
+  initialStep,
   approveSlot,
   allowReviewBeforeSubmit = false,
 }: MovesCaptureFlowProps) {
   const groups = getPhaseStepGroups(phase);
-  // view: 0..2 = steps, 3 = hand-off.
-  const [view, setView] = useState<number>(initialStep);
-  // Whether this phase was submitted FROM this flow. The recap may be opened as
-  // a review before that happens, and must not claim a submission that has not.
-  const [submitted, setSubmitted] = useState(false);
-  const handoffAccess = captureHandoffAccess({
-    reviewEnabled: allowReviewBeforeSubmit,
-    hasApproveSlot: Boolean(approveSlot),
-  });
-
   const sectionByKey = useMemo(() => {
     const map = new Map<string, PhaseCaptureSection>();
     for (const section of sections) map.set(section.key, section);
@@ -175,6 +165,30 @@ export function MovesCaptureFlow({
     group.sectionKeys
       .map((key) => sectionByKey.get(key))
       .filter((s): s is PhaseCaptureSection => Boolean(s));
+
+  const firstIncompleteStep = groups.findIndex((group) => {
+    const resolvedSections = groupSections(group);
+    return (
+      resolvedSections.length !== group.sectionKeys.length ||
+      resolvedSections.length === 0 ||
+      resolvedSections.some((section) => !isSectionComplete(section.key))
+    );
+  });
+  // view: 0..2 = steps, 3 = hand-off. A reload resumes at the first step whose
+  // server-backed answers are not complete. When all capture steps are done,
+  // stop at the final step so its governed approval action remains explicit.
+  const resumeStep =
+    firstIncompleteStep >= 0
+      ? firstIncompleteStep
+      : Math.max(groups.length - 1, 0);
+  const [view, setView] = useState<number>(initialStep ?? resumeStep);
+  // Whether this phase was submitted FROM this flow. The recap may be opened as
+  // a review before that happens, and must not claim a submission that has not.
+  const [submitted, setSubmitted] = useState(false);
+  const handoffAccess = captureHandoffAccess({
+    reviewEnabled: allowReviewBeforeSubmit,
+    hasApproveSlot: Boolean(approveSlot),
+  });
 
   const stepComplete = (stepIndex: number): boolean => {
     const group = groups[stepIndex];
