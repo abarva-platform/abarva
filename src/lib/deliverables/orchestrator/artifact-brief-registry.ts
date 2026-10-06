@@ -14,13 +14,15 @@ import type {
   DeliverableIntelligenceRequest,
   DeliverableModule,
 } from "./types";
-import { getArchetypePack } from "./briefs/archetype-packs";
+import {
+  resolveConfiguredArchetypePack,
+  resolveDiscoveryBlueprintFromConfiguredCatalog,
+} from "./briefs/archetype-config-source";
 import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "./briefs/deliverable-structures";
 import { composeArtifactAssets } from "./briefs/artifact-asset-composition";
-import { resolveDiscoveryBlueprintFromConfiguredCatalog } from "./briefs/archetype-config-source";
 
 const CITATION_POLICY =
   "Cite every client-specific fact with [n] tied to the Source Register. Do not expose internal source ids, chunk ids, table names, or fact keys.";
@@ -630,7 +632,12 @@ function composeBrief(
 ): DeliverableArtifactBrief | null {
   const structure = getDeliverableStructure(req.module, req.deliverableType);
   if (!structure) return null;
-  const pack = getArchetypePack(req.useCaseArchetype);
+  // Resolved against the EFFECTIVE pack catalog, not the built-in one. With no
+  // configured source declared the effective catalog is a copy of the seed and
+  // this answers exactly what `getArchetypePack` answered; with one declared,
+  // an archetype's configured exhibits and tables reach the composed brief
+  // instead of validating and then being ignored.
+  const pack = resolveConfiguredArchetypePack(req.useCaseArchetype).pack;
 
   // Enrich the sections that assert client facts with the archetype's key
   // evidence families. Two ways in, and the declared one is why: the inferred
@@ -801,7 +808,10 @@ export interface ArchetypeEvidenceLandingRow {
 export function archetypeEvidenceLandingReport(
   probe: Omit<DeliverableIntelligenceRequest, "module" | "deliverableType">,
 ): ArchetypeEvidenceLandingRow[] {
-  const pack = getArchetypePack(probe.useCaseArchetype);
+  // The EFFECTIVE pack, matching `composeBrief`. Taking the seed here would
+  // make the report disagree with generated output on exactly the deployment
+  // the report exists to explain: one that declares a configured source.
+  const pack = resolveConfiguredArchetypePack(probe.useCaseArchetype).pack;
   const families = pack?.keyEvidenceFamilies ?? [];
   const packAssetKeys = new Set([
     ...(pack?.exhibits ?? []).map((e) => e.key),

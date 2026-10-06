@@ -9,15 +9,26 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { getArtifactBrief } from "../artifact-brief-registry";
+import {
+  archetypeEvidenceLandingReport,
+  getArtifactBrief,
+} from "../artifact-brief-registry";
 import {
   ARCHETYPE_CONFIG_PATH_ENV,
+  ARCHETYPE_PACK_CONFIG_PATH_ENV,
   type ArchetypeConfigEnv,
   applyConfiguredBlueprintOverride,
+  loadEffectiveArchetypePackCatalog,
   loadEffectiveDiscoveryBlueprintCatalog,
+  readConfiguredArchetypePackSource,
   readConfiguredArchetypeSource,
+  resolveConfiguredArchetypePack,
   resolveConfiguredDiscoveryBlueprint,
 } from "../briefs/archetype-config-source";
+import {
+  ARCHETYPE_PACKS,
+  getArchetypePack,
+} from "../briefs/archetype-packs";
 import {
   DISCOVERY_BLUEPRINT_CATALOG,
   getDiscoveryBlueprint,
@@ -298,4 +309,358 @@ describe("both Discovery Plan hosts honour a configured source", () => {
       expect(configuredBrief).toContain(CONFIGURED_ROLE);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// The ARTIFACT-PACK half: exhibits, tables and the governance note.
+//
+// It shipped a contract and an overlay loader with neither end of the seam
+// wired, so a valid configured pack validated and was then ignored — the live
+// path resolved the frozen seed. These pin the supply end against the pack's
+// OWN declared variable, both outcomes a configured entry can have, and the
+// host, so the composed brief is what proves a configured pack reached
+// generation.
+
+const CONFIGURED_PACK_ARCHETYPE = "MANUFACTURING_QUALITY_OPS";
+const CONFIGURED_EXHIBIT_TITLE = "Where Configured Defects Concentrate";
+const CONFIGURED_TABLE_TITLE = "Configured Line Quality Baseline";
+const CONFIGURED_PACK_FAMILY = "configured_line_quality_data";
+const OVERRIDDEN_PACK_ARCHETYPE = "CLOUD_MODERNIZATION";
+
+function configuredPack(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    archetype: CONFIGURED_PACK_ARCHETYPE,
+    label: "configured quality operations",
+    keyEvidenceFamilies: [CONFIGURED_PACK_FAMILY],
+    // The family is this pack's own, so the pack has to declare it: a pack may
+    // only NAME a family something declares. Omitting this is what the
+    // "fails validation" case below leans on for a different field.
+    declaresEvidenceFamilies: [CONFIGURED_PACK_FAMILY],
+    exhibits: [
+      {
+        key: "configured_defect_pareto",
+        title: CONFIGURED_EXHIBIT_TITLE,
+        kind: "chart",
+        purpose: "Show which lines carry the defect cost",
+        preferredFormat: "pptx",
+      },
+    ],
+    tables: [
+      {
+        key: "configured_line_quality_baseline",
+        title: CONFIGURED_TABLE_TITLE,
+        columns: ["Line", "Units", "Defect rate"],
+        groundingMode: "governed_facts",
+        moveToExcelIfWide: true,
+      },
+    ],
+    ...overrides,
+  };
+}
+
+function packEnvWith(sourcePath: string): ArchetypeConfigEnv {
+  return { [ARCHETYPE_PACK_CONFIG_PATH_ENV]: sourcePath };
+}
+
+describe("the declared configured-pack source", () => {
+  it("is absent, not an error, when the environment declares nothing", () => {
+    expect(readConfiguredArchetypePackSource({})).toEqual({
+      sourcePath: null,
+      raw: null,
+      errors: [],
+    });
+  });
+
+  it("reads no file at all when nothing is declared", () => {
+    const readFileSync = jest.spyOn(fs, "readFileSync");
+    try {
+      loadEffectiveArchetypePackCatalog({});
+      expect(readFileSync).not.toHaveBeenCalled();
+    } finally {
+      readFileSync.mockRestore();
+    }
+  });
+
+  // The two halves declare SEPARATE variables, and an operator holding both
+  // paths needs the message to say which one was wrong. A reader wired to the
+  // blueprint key would read the wrong path and report the wrong name.
+  it("names its own variable, not the blueprint one, when the path is unreadable", () => {
+    const missing = path.join(tmpDir, "no-pack-source.json");
+    const source = readConfiguredArchetypePackSource(packEnvWith(missing));
+    expect(source.sourcePath).toBe(missing);
+    expect(source.errors).toHaveLength(1);
+    expect(source.errors[0]).toContain(ARCHETYPE_PACK_CONFIG_PATH_ENV);
+    expect(source.errors[0]).not.toContain(ARCHETYPE_CONFIG_PATH_ENV);
+  });
+
+  it("ignores a blueprint source declared at the blueprint variable", () => {
+    const source = readConfiguredArchetypePackSource(
+      envWith(writeSource([configuredOverride()])),
+    );
+    expect(source.sourcePath).toBeNull();
+    expect(source.errors).toEqual([]);
+  });
+
+  it("reports the declared path when it is not JSON", () => {
+    const file = path.join(tmpDir, "pack-not-json.json");
+    fs.writeFileSync(file, "{ not json", "utf8");
+    const effective = loadEffectiveArchetypePackCatalog(packEnvWith(file));
+    expect(effective.state).toBe("rejected");
+    expect(effective.errors[0]).toMatch(/not valid JSON/);
+    expect(Object.keys(effective.catalog).sort()).toEqual(
+      Object.keys(ARCHETYPE_PACKS).sort(),
+    );
+  });
+});
+
+describe("the effective pack catalog", () => {
+  it("is not_configured, with the seed in force, when nothing is declared", () => {
+    const effective = loadEffectiveArchetypePackCatalog({});
+    expect(effective.state).toBe("not_configured");
+    expect(effective.sourcePath).toBeNull();
+    expect(effective.applied).toEqual([]);
+    expect(Object.keys(effective.catalog).sort()).toEqual(
+      Object.keys(ARCHETYPE_PACKS).sort(),
+    );
+  });
+
+  it("reports an ADDED archetype as added", () => {
+    const effective = loadEffectiveArchetypePackCatalog(
+      packEnvWith(writeSource([configuredPack()])),
+    );
+    expect(effective.state).toBe("in_effect");
+    expect(effective.applied).toEqual([
+      { archetype: CONFIGURED_PACK_ARCHETYPE, outcome: "added" },
+    ]);
+    expect(effective.catalog[CONFIGURED_PACK_ARCHETYPE].exhibits[0].title).toBe(
+      CONFIGURED_EXHIBIT_TITLE,
+    );
+  });
+
+  it("reports a REPLACED shipped archetype as overrode", () => {
+    const effective = loadEffectiveArchetypePackCatalog(
+      packEnvWith(
+        writeSource([
+          configuredPack({ archetype: OVERRIDDEN_PACK_ARCHETYPE }),
+        ]),
+      ),
+    );
+    expect(effective.applied).toEqual([
+      { archetype: OVERRIDDEN_PACK_ARCHETYPE, outcome: "overrode" },
+    ]);
+    expect(effective.catalog[OVERRIDDEN_PACK_ARCHETYPE].exhibits).toHaveLength(
+      1,
+    );
+  });
+
+  it("leaves the seed in force when the source fails validation", () => {
+    const effective = loadEffectiveArchetypePackCatalog(
+      packEnvWith(writeSource([configuredPack({ exhibits: [] })])),
+    );
+    expect(effective.state).toBe("rejected");
+    expect(effective.errors.length).toBeGreaterThan(0);
+    expect(effective.applied).toEqual([]);
+    expect(effective.catalog[CONFIGURED_PACK_ARCHETYPE]).toBeUndefined();
+  });
+});
+
+describe("resolving a declared archetype against the effective pack catalog", () => {
+  it("answers what the built-in accessor answers when nothing is declared", () => {
+    for (const archetype of Object.keys(ARCHETYPE_PACKS)) {
+      const resolution = resolveConfiguredArchetypePack(archetype, {});
+      expect(resolution.pack).toEqual(getArchetypePack(archetype));
+      expect(resolution.origin).toBe("built_in");
+      expect(resolution.appliedOutcome).toBeNull();
+      expect(resolution.archetypeId).toBe(archetype);
+    }
+  });
+
+  // This is the widening over the blueprint half, which can only override what
+  // its own resolution already chose. Resolution here walks whichever catalog
+  // it is handed, so a brand-new configured archetype is reachable BY
+  // DECLARATION with no change to the resolver.
+  it("reaches a newly ADDED archetype by declaration", () => {
+    const resolution = resolveConfiguredArchetypePack(
+      CONFIGURED_PACK_ARCHETYPE,
+      packEnvWith(writeSource([configuredPack()])),
+    );
+    expect(resolution.origin).toBe("configured");
+    expect(resolution.appliedOutcome).toBe("added");
+    expect(resolution.pack?.exhibits[0].title).toBe(CONFIGURED_EXHIBIT_TITLE);
+  });
+
+  it("matches a declaration spelled any way the catalog's id normalizes to", () => {
+    const env = packEnvWith(writeSource([configuredPack()]));
+    for (const spelling of [
+      "manufacturing_quality_ops",
+      "manufacturing-quality-ops",
+      "Manufacturing Quality Ops",
+      CONFIGURED_PACK_ARCHETYPE,
+    ]) {
+      const resolution = resolveConfiguredArchetypePack(spelling, env);
+      expect(resolution.archetypeId).toBe(CONFIGURED_PACK_ARCHETYPE);
+      expect(resolution.origin).toBe("configured");
+    }
+  });
+
+  // Origin is read off what the source reported APPLYING, not off comparing
+  // the resolved pack with the seed. A configured entry that restates a
+  // shipped pack field-for-field is indistinguishable by value, and an
+  // operator told `built_in` for an archetype they configured cannot tell
+  // whether their source was read at all.
+  it("reports configured even when the entry restates the shipped pack", () => {
+    const shipped = ARCHETYPE_PACKS[OVERRIDDEN_PACK_ARCHETYPE];
+    const resolution = resolveConfiguredArchetypePack(
+      OVERRIDDEN_PACK_ARCHETYPE,
+      packEnvWith(writeSource([shipped])),
+    );
+    expect(resolution.pack).toEqual(shipped);
+    expect(resolution.origin).toBe("configured");
+    expect(resolution.appliedOutcome).toBe("overrode");
+  });
+
+  it("reports unresolved, with no pack, for a declaration nothing holds", () => {
+    const resolution = resolveConfiguredArchetypePack(
+      "NOT_AN_ARCHETYPE_ANYWHERE",
+      {},
+    );
+    expect(resolution.pack).toBeUndefined();
+    expect(resolution.archetypeId).toBeNull();
+    expect(resolution.origin).toBe("unresolved");
+  });
+
+  it("never answers an inherited object member", () => {
+    for (const key of ["constructor", "toString", "__proto__"]) {
+      const resolution = resolveConfiguredArchetypePack(key, {});
+      expect(resolution.pack).toBeUndefined();
+      expect(resolution.origin).toBe("unresolved");
+    }
+  });
+
+  it("carries the rejection state through to the caller", () => {
+    const resolution = resolveConfiguredArchetypePack(
+      OVERRIDDEN_PACK_ARCHETYPE,
+      packEnvWith(writeSource([configuredPack({ tables: [] })])),
+    );
+    expect(resolution.state).toBe("rejected");
+    expect(resolution.errors.length).toBeGreaterThan(0);
+    // The seed still answers, so the Move still generates.
+    expect(resolution.origin).toBe("built_in");
+  });
+});
+
+describe("the composed brief honours a configured pack", () => {
+  const originalPackEnvValue = process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV];
+
+  afterEach(() => {
+    if (originalPackEnvValue === undefined) {
+      delete process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV];
+    } else {
+      process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV] = originalPackEnvValue;
+    }
+  });
+
+  function packReq(): DeliverableIntelligenceRequest {
+    return {
+      ...amsRfpRequest(),
+      module: "moves",
+      useCaseArchetype: OVERRIDDEN_PACK_ARCHETYPE,
+      deliverableType: "discovery_report",
+    };
+  }
+
+  // Through the registry's own entry point with the environment set, so
+  // removing the wiring line in `composeBrief` fails this rather than passing
+  // on a hand-rebuilt call sequence.
+  it("carries a configured archetype's exhibits and tables into the brief", () => {
+    const seedBrief = JSON.stringify(getArtifactBrief(packReq()));
+    expect(seedBrief).not.toContain(CONFIGURED_EXHIBIT_TITLE);
+    expect(seedBrief).not.toContain(CONFIGURED_TABLE_TITLE);
+
+    process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV] = writeSource([
+      configuredPack({ archetype: OVERRIDDEN_PACK_ARCHETYPE }),
+    ]);
+    const configuredBrief = JSON.stringify(getArtifactBrief(packReq()));
+    expect(configuredBrief).toContain(CONFIGURED_EXHIBIT_TITLE);
+    expect(configuredBrief).toContain(CONFIGURED_TABLE_TITLE);
+  });
+
+  // Per SECTION, not merely "somewhere in the brief": the landing rule picks
+  // the fact-asserting sections, and a configured pack's families reaching
+  // every section would be a different defect that a presence check passes.
+  it("carries a configured pack's evidence families to their landing sites", () => {
+    const landingSites = (archetype: string): string[] => {
+      process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV] = writeSource([
+        configuredPack({ archetype }),
+      ]);
+      return (getArtifactBrief(packReq())?.recommendedStructure ?? [])
+        .filter((section) =>
+          section.expectedEvidenceFamilies.includes(CONFIGURED_PACK_FAMILY),
+        )
+        .map((section) => section.key);
+    };
+
+    // Two sites, by the two different routes a landing site is reached:
+    // `current_state` matches the inferred key-spelling rule, and
+    // `maturity_gaps` is a site this structure DECLARES. Written out rather
+    // than derived from the structure so a declaration going missing fails
+    // here instead of quietly shrinking the expectation.
+    expect(landingSites(OVERRIDDEN_PACK_ARCHETYPE)).toEqual([
+      "current_state",
+      "maturity_gaps",
+    ]);
+    // A configured pack the Move does not declare lands nothing.
+    expect(landingSites(CONFIGURED_PACK_ARCHETYPE)).toEqual([]);
+  });
+
+  // The landing report is the surface that explains WHERE an archetype's
+  // evidence reaches a deliverable, and it measures the served brief against a
+  // pack. Once composition resolves through the effective catalog there are two
+  // packs it could read, and with no source declared they answer identically —
+  // so nothing here fails on the wrong one. Read against the built-in seed it
+  // answers about an archetype the product is no longer generating from: the
+  // served brief carries the configured families, the seed's land nowhere in
+  // it, and the report calls a fully grounded deployment totally ungrounded.
+  // This is the only shape in which that choice is observable.
+  it("measures the landing report against the pack the product generates from", () => {
+    process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV] = writeSource([
+      configuredPack({ archetype: OVERRIDDEN_PACK_ARCHETYPE }),
+    ]);
+    const row = archetypeEvidenceLandingReport({
+      ...amsRfpRequest(),
+      useCaseArchetype: OVERRIDDEN_PACK_ARCHETYPE,
+    }).find(
+      (r) => r.module === "moves" && r.deliverableType === "discovery_report",
+    );
+
+    expect(row).toBeDefined();
+    expect(row?.coveredSectionKeys).toEqual(
+      expect.arrayContaining(["current_state", "maturity_gaps"]),
+    );
+    expect(row?.landsNowhere).toBe(false);
+    expect(row?.archetypeAssetsWithheld).toBe(false);
+    // And the two resolvers genuinely disagree here rather than coinciding:
+    // the built-in pack's families — what the report would otherwise have been
+    // read against — appear in no section of the brief actually served.
+    const seedFamilies =
+      ARCHETYPE_PACKS[OVERRIDDEN_PACK_ARCHETYPE].keyEvidenceFamilies;
+    const servedFamilies = new Set(
+      getArtifactBrief(packReq()).recommendedStructure.flatMap(
+        (section) => section.expectedEvidenceFamilies,
+      ),
+    );
+    expect(seedFamilies.some((family) => servedFamilies.has(family))).toBe(
+      false,
+    );
+  });
+
+  it("leaves the brief unchanged when the configured source is rejected", () => {
+    const seedBrief = JSON.stringify(getArtifactBrief(packReq()));
+    process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV] = writeSource([
+      configuredPack({ archetype: OVERRIDDEN_PACK_ARCHETYPE, label: "" }),
+    ]);
+    expect(JSON.stringify(getArtifactBrief(packReq()))).toBe(seedBrief);
+  });
 });
