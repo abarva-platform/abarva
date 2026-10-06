@@ -281,6 +281,7 @@ jobs:
           src/components/strategic-moves/__tests__/phase-approval-standing.test.ts
           src/components/strategic-moves/__tests__/DiagnosisFactsEditor.test.tsx
           src/components/strategic-moves/__tests__/SolutionOptionChooser.test.tsx
+          src/components/strategic-moves/__tests__/MovesCaptureFlowRouteSteps.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
