@@ -1,0 +1,11 @@
+rule_id,entity,rule,threshold_or_policy,severity,owner_role,action_on_failure,synthetic_status
+DQ-01,worker_key,not_null_and_unique,100% of in-scope rows,blocker,HR data steward,quarantine batch and report duplicate keys,SYNTHETIC_NOT_VALIDATED
+DQ-02,org_unit_code,valid_reference,100% mapped to approved org hierarchy,blocker,HR data steward,quarantine unmapped values and publish exception list,SYNTHETIC_NOT_VALIDATED
+DQ-03,employment_status,allowed_values,approved code list only,blocker,HR source owner,reject unknown codes and request source correction,SYNTHETIC_NOT_VALIDATED
+DQ-04,hire_date,valid_range,no future dates except documented pre-hire cases,high,HR source owner,quarantine invalid records and reconcile, SYNTHETIC_NOT_VALIDATED
+DQ-05,termination_date,temporal_consistency,not earlier than hire date,high,HR data steward,quarantine invalid records and investigate, SYNTHETIC_NOT_VALIDATED
+DQ-06,job_family,reference_integrity,all values map to versioned job-family list,high,Compensation data steward,hold affected Gold measures pending mapping, SYNTHETIC_NOT_VALIDATED
+DQ-07,report_aggregate_cell,small_cell_suppression,policy threshold to be set by privacy owner,blocker,Privacy owner,suppress cell and record suppression count, SYNTHETIC_NOT_VALIDATED
+DQ-08,refresh_timeliness,source_to_gold_latency,service target to be agreed during design,medium,Data platform owner,alert owner and label report freshness, SYNTHETIC_NOT_VALIDATED
+DQ-09,headcount_reconciliation,source_vs_gold_delta,variance tolerance to be agreed with HR owner,high,HR analytics owner,hold certification and reconcile denominator, SYNTHETIC_NOT_VALIDATED
+DQ-10,metric_definition,versioned_definition,each report links to approved semantic version,blocker,Data Product Council,block publication until definition approval,SYNTHETIC_NOT_VALIDATED

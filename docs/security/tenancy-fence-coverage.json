@@ -1899,6 +1899,7 @@
           "src/app/api/chat/agent/__tests__/source-ava-tenant-broker-leak-gate.test.ts",
           "src/app/api/chat/agent/__tests__/source-l7-discipline.test.ts",
           "src/app/api/chat/agent/__tests__/steward-trust-spine-wiring.test.ts",
+          "src/lib/programs/__tests__/moves-ava-archetype-framing.test.ts",
           "src/lib/source/facts/__tests__/u533-stage-scaffold-provenance.test.ts"
         ]
       }

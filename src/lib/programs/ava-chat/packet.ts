@@ -15,6 +15,7 @@ import {
   MOVES_AVA_ALLOWED_ACTIONS,
   MOVES_AVA_DISALLOWED_ACTIONS,
   type MovesAvaApprovedEvidenceItem,
+  type MovesAvaArchetypeFraming,
   type MovesAvaChatPacket,
   type MovesAvaChecklistStatus,
   type MovesAvaFeedForwardSummary,
@@ -29,6 +30,10 @@ export interface BuildMovesAvaChatPacketInput {
   tenant: string;
   moveId: string;
   moveTitle: string;
+  /** The DECLARED archetype's framing, when the caller resolved one. Omitted
+   *  deliberately from OPTIONAL_FIELD_LABELS: a Move that declares no archetype
+   *  is not a Move with a missing input, so its absence must not add a caveat. */
+  archetypeFraming?: MovesAvaArchetypeFraming | null;
   currentPhase: number;
   currentPhaseClientLabel: string;
   currentPhaseQuestion?: string | null;
@@ -77,6 +82,7 @@ export function buildMovesAvaChatPacket(
     tenant: input.tenant,
     moveId: input.moveId,
     moveTitle: input.moveTitle,
+    archetypeFraming: input.archetypeFraming ?? null,
     currentPhase: input.currentPhase,
     currentPhaseClientLabel: input.currentPhaseClientLabel,
     currentPhaseQuestion: input.currentPhaseQuestion ?? null,
