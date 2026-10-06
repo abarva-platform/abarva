@@ -12,6 +12,10 @@ import {
 } from "@/components/source/new-workspace/SourceNewRequestFirstPage";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
+import {
+  readServiceNowRequestDisposition,
+  readServiceNowRequestDispositions,
+} from "@/lib/source/intake/servicenow-request-event-authority";
 import { listSourcingEvents } from "@/lib/source/queries";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
@@ -42,7 +46,7 @@ export default async function Page({
     }) ?? clientOption.name;
 
   if (params.mode !== "intake" && !params.intent) {
-    const { status, importedRequests, eventWorkspaces } =
+    const { status, importedRequests, eventWorkspaces, requestDispositions, dispositionStatus } =
       await loadRequestFirstWorkspace(clientKey);
     return (
       <SourceNewRequestFirstPage
@@ -51,6 +55,8 @@ export default async function Page({
         requestQueueStatus={status}
         importedRequests={importedRequests}
         eventWorkspaces={eventWorkspaces}
+        requestDispositions={requestDispositions}
+        dispositionStatus={dispositionStatus}
       />
     );
   }
@@ -67,6 +73,13 @@ export default async function Page({
   if (params.requestId && !sourceRequest) {
     redirect("/source/new");
   }
+  const sourceRequestDisposition = sourceRequest
+    ? await readServiceNowRequestDisposition({
+        tenantKey: clientKey ?? "",
+        requestId: sourceRequest.requestId,
+        sourceVersion: sourceRequest.sourceVersion,
+      }).catch(() => null)
+    : null;
 
   return (
     <SourceOriginatePage
@@ -74,6 +87,7 @@ export default async function Page({
       clientShortName={clientOption.shortName}
       clientKey={clientOption.id}
       sourceRequest={sourceRequest}
+      sourceRequestDisposition={sourceRequestDisposition?.disposition_state ?? null}
     />
   );
 }
@@ -84,18 +98,33 @@ async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
     ReturnType<typeof readSourceIntakeRequestQueue>
   >["requests"];
   eventWorkspaces: SourceNewEventWorkspaceSummary[];
+  requestDispositions: Array<{
+    requestId: string;
+    sourceVersion: string;
+    state: "accepted" | "returned" | "merged" | "declined";
+    rationale: string | null;
+    survivingRequestId: string | null;
+  }>;
+  dispositionStatus: "available" | "unavailable";
 }> {
   if (!clientKey) {
     return {
       status: "unauthorized",
       importedRequests: [],
       eventWorkspaces: [],
+      requestDispositions: [],
+      dispositionStatus: "unavailable",
     };
   }
   const [requestRead, events] = await Promise.all([
     readSourceIntakeRequestQueue(clientKey),
     listSourcingEvents().catch(() => null),
   ]);
+  const dispositionRead = requestRead.registryAvailable
+    ? await readServiceNowRequestDispositions(clientKey)
+        .then((rows) => ({ available: true as const, rows }))
+        .catch(() => ({ available: false as const, rows: [] }))
+    : { available: false as const, rows: [] };
   return {
     status: !requestRead.registryAvailable
       ? "unavailable"
@@ -103,6 +132,14 @@ async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
         ? "loaded"
         : "empty",
     importedRequests: requestRead.registryAvailable ? requestRead.requests : [],
+    dispositionStatus: dispositionRead.available ? "available" : "unavailable",
+    requestDispositions: dispositionRead.rows.map((row) => ({
+      requestId: row.request_id,
+      sourceVersion: row.source_version,
+      state: row.disposition_state,
+      rationale: row.rationale,
+      survivingRequestId: row.surviving_request_id,
+    })),
     eventWorkspaces: (events ?? []).map((event) => ({
       id: event.id,
       code: event.code,

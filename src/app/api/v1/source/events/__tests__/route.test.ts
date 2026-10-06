@@ -101,6 +101,10 @@ jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
 jest.mock("@/lib/source/intake/servicenow-request-event-authority", () => ({
   recordServiceNowRequestMappingDecision: jest.fn(async () => undefined),
   linkServiceNowRequestToEvent: jest.fn(async () => undefined),
+  readServiceNowRequestDisposition: jest.fn(async () => ({
+    disposition_state: "accepted",
+    source_version: "v1",
+  })),
 }));
 
 jest.mock("@/lib/source/queries", () => ({

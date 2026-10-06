@@ -84,6 +84,14 @@ interface SourceOriginatePageProps {
   clientKey?: string;
   contractOptimizationCandidates?: readonly ContractOptimizationCandidate[];
   sourceRequest?: SourceIntakeRequestSummary | null;
+  sourceRequestDisposition?: "accepted" | "returned" | "merged" | "declined" | null;
+}
+
+export function isSourceRequestCreationAuthorized(
+  sourceRequest: SourceIntakeRequestSummary | null | undefined,
+  disposition: SourceOriginatePageProps["sourceRequestDisposition"],
+): boolean {
+  return !sourceRequest || disposition === "accepted";
 }
 
 export interface ContractOptimizationCandidate {
@@ -882,6 +890,7 @@ export function SourceOriginatePage({
   clientKey = "apexretail",
   contractOptimizationCandidates = [],
   sourceRequest = null,
+  sourceRequestDisposition = null,
 }: SourceOriginatePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1083,6 +1092,7 @@ export function SourceOriginatePage({
   const canCreate =
     allFactsCaptured &&
     sourceReviewReady &&
+    isSourceRequestCreationAuthorized(sourceRequest, sourceRequestDisposition) &&
     !contractOptimizationRequiresSelection &&
     submitState.status !== "submitting";
   const decisionOwnerPreview = useMemo(
@@ -1773,6 +1783,12 @@ export function SourceOriginatePage({
             </div>
           ) : null}
 
+          {sourceRequest && !isSourceRequestCreationAuthorized(sourceRequest, sourceRequestDisposition) ? (
+            <div role="status" aria-live="polite" style={REVIEW_REQUIRED_NOTICE}>
+              Accept the current request version in the request queue before creating an event.
+            </div>
+          ) : null}
+
           {!contractOptimizationRequiresSelection && (
             <IntakeCompletionFooter
               capturedFacts={capturedFacts}
@@ -1781,7 +1797,7 @@ export function SourceOriginatePage({
               capturedFactsCount={capturedFactsCount}
               totalFactsCount={intakeFields.length}
               submitting={submitState.status === "submitting"}
-              actionBlocked={!sourceReviewReady}
+              actionBlocked={!sourceReviewReady || !isSourceRequestCreationAuthorized(sourceRequest, sourceRequestDisposition)}
               actionLabel={
                 sourceRequest ? "Create event from request" : "Open event"
               }
