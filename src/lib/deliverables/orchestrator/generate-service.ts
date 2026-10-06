@@ -118,6 +118,38 @@ function normalizeQuery(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
 
+/**
+ * Spell a snake_case identifier's parts as separate words, keeping the
+ * identifier itself.
+ *
+ * A brief is right to declare identifiers — `run_cost_baseline`, `AI_PDLC`,
+ * `governed_facts` are identity, and identity is declared. They are wrong as
+ * retrieval TEXT, in two ways that both hinge on the underscore being a word
+ * character:
+ *
+ * 1. The index analyzer treats `application_inventory` as ONE token, so the
+ *    term matches no document that says "application inventory" in prose.
+ * 2. `queryTenantContext` decides whether to run its structured-context passes,
+ *    and which structured terms and segments to ask for, with `\b`-anchored
+ *    word tests over the query string. `\b` sits between a word character and a
+ *    non-word one, and `_` is a word character — so `/\bai\b/` does not match
+ *    `AI_PDLC`, and `/\bcontract\b/` does not match `contract_baseline`. A
+ *    query built from declared identifiers is denied passes that the same words
+ *    in prose would have earned.
+ *
+ * Both spellings are carried. The words are what prose and the word-anchored
+ * selectors can see; the identifier is kept because whether any index holds it
+ * verbatim is not knowable from here, and dropping it could lose a match that
+ * exists today. The caller's own `evidenceQuery` is NOT put through this — it is
+ * authored text and goes to the retriever exactly as written.
+ */
+export function spellIdentifiersAsWords(query: string): string {
+  // Lookahead, not a consumed second group: `a_b_c` with a consuming pattern
+  // leaves `a b_c`, because matching `a_b` eats the `b` the next pair needs.
+  const worded = query.replace(/([A-Za-z0-9])_(?=[A-Za-z0-9])/g, "$1 ");
+  return worded === query ? query : `${query} ${worded}`;
+}
+
 export function buildSectionDrivenEvidenceQueries(
   input: Pick<
     GenerateDeliverableServiceInput,
@@ -174,7 +206,9 @@ export function buildSectionDrivenEvidenceQueries(
   }
 
   const seen = new Set<string>();
-  const queries = rawQueries.filter((query) => {
+  // Spelling appends rather than rewrites, so it cannot make two different raw
+  // queries equal — the dedupe sees the same collisions either side of it.
+  const queries = rawQueries.map(spellIdentifiersAsWords).filter((query) => {
     if (!query) return false;
     const key = query.toLowerCase();
     if (seen.has(key)) return false;
@@ -183,7 +217,7 @@ export function buildSectionDrivenEvidenceQueries(
   });
   return queries.length > 0
     ? queries
-    : [normalizeQuery(`${prefix} current state baseline`)];
+    : [spellIdentifiersAsWords(normalizeQuery(`${prefix} current state baseline`))];
 }
 
 export async function runDeliverableForTenant(

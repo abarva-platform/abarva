@@ -936,8 +936,51 @@ export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }
 const PATH_SUFFIX =
   /\.(?:mjs|cjs|jsx?|tsx?|json|jsonc|md|mdx|ya?ml|sql|css|scss|html|sh|toml|txt|csv|png|svg)$/i;
 
+/**
+ * A segment of a route path that is not spelled in plain path characters
+ * (item T-835).
+ *
+ * The framework writes four of these, and before this item the token class
+ * admitted none of them, so a declared entry naming a route file was not
+ * vetoed by any rule above — it was never seen as a path at all. Measured over
+ * the live register at `3731a69714`: 223 slashed tokens carrying a bracket,
+ * and 0 of them held anything. 357 files under `src/app` carry a bracketed
+ * segment and 341 carry a route group, so this is most of the route tree.
+ *
+ * This is a false PASS, which is the expensive direction: it puts two runs on
+ * one route file and tells neither. T-804, by contrast, was a false REFUSAL,
+ * which costs one reader a second look and names itself.
+ *
+ * The grammar is deliberately the framework's and not "any bracket", because
+ * the register is full of markdown links and a class admitting `[` and `(`
+ * loosely reads `[the record](docs/x.md)` as one token and invents a path
+ * called `text](docs/x.md`. A group must be BALANCED and must hold path
+ * characters only, which a link's target never does — it holds a slash.
+ */
+const DYNAMIC_SEGMENT = "\\[{1,2}(?:\\.{3})?[A-Za-z0-9_.-]+\\]{1,2}"; // [id] [...slug] [[...filter]]
+const ROUTE_GROUP = "\\((?:\\.{1,3})?[A-Za-z0-9_.-]+\\)"; // (maestro) (.)photo (..)feed
+const ROUTE_GROUPING = `(?:${DYNAMIC_SEGMENT}|${ROUTE_GROUP})`;
+
+/**
+ * One path segment over a given class of plain characters.
+ *
+ * Written so that every repetition must consume a bracket or a paren: a plain
+ * run appears once per iteration and never nests inside another quantifier.
+ * The naive `(?:PLAIN+|GROUP)+` is the classic exponential-backtracking shape,
+ * and this reader runs over every line of a 3.8 MB register.
+ */
+const routeSegment = (plain) =>
+  `(?:${plain}+|${ROUTE_GROUPING}${plain}*)(?:${ROUTE_GROUPING}${plain}*)*`;
+
 /** A candidate path token: at least one `/`, path characters only. */
-const PATH_TOKEN = /(?:^|[\s(`'"|,;])((?:\.{0,2}\/)?[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@*-]+)*\/?(?:\*\*?)?)/g;
+const PATH_TOKEN = new RegExp(
+  "(?:^|[\\s(`'\"|,;])((?:\\.{0,2}\\/)?" +
+    routeSegment("[A-Za-z0-9_.@-]") +
+    "(?:\\/" +
+    routeSegment("[A-Za-z0-9_.@*-]") +
+    ")*\\/?(?:\\*\\*?)?)",
+  "g",
+);
 
 /**
  * Normalise a path as the register writes it: backticked, comma-separated,
