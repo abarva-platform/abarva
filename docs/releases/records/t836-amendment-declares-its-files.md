@@ -35,6 +35,9 @@ were optional is the field-less line again, written from the sanctioned path.
 
 ## Layer Impact
 
+Release lane: `internal-admin` — AbarVa-only backlog-execution tooling. No client
+receives it and no product surface reads it.
+
 - **Layer 4 — Products:** none. No product surface, route, prompt, projection or tenant
   object is touched, and nothing here is built into the web image or run by any Container
   Apps job.
