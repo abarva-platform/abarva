@@ -22,11 +22,12 @@ import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   DELIVERABLE_REGISTRY,
-  PHASE_CANONICAL_KEYS,
   FORMAT_LABELS,
   type DeliverableSpec,
   type DeliverableFormat,
 } from "@/lib/programs/deliverable-registry";
+import { phaseDocumentDisplaySet } from "@/lib/programs/phase-document-display-set";
+import { loadMoveConfirmedSolutionRoute } from "@/lib/programs/load-move-confirmed-route";
 import type { AttachmentRecord } from "@/lib/programs/attachments/types";
 import { AI_DECISION_SUPPORT_WATERMARK } from "@/lib/ai-liability/human-decision-controls";
 import {
@@ -738,6 +739,11 @@ export async function PhaseDocumentsPanel({
     string,
     { artifactId: string; updatedAt: string }
   >();
+  // The route the Move has recorded, which narrows what P3 builds. null when
+  // nothing is recorded yet — then every phase shows its full canonical set.
+  const confirmedSolutionRoute = tenancy
+    ? await loadMoveConfirmedSolutionRoute(tenancy, moveId).catch(() => null)
+    : null;
   const activeClient = await getActiveClientRow().catch(() => null);
   if (activeClient) {
     const history = await listDeliverableRunHistoryForMove(
@@ -774,6 +780,20 @@ export async function PhaseDocumentsPanel({
       }
     }
   }
+
+  // Generated = there is a current file to open: saved content, or a run that
+  // succeeded. This is the tally's numerator.
+  const isPhaseDocumentGenerated = (key: string): boolean =>
+    Boolean(deliverablesByKey.get(key)?.latest_content?.trim()) ||
+    runByKey.has(key);
+  // Has output = anything at all to show, including a failed or in-flight
+  // attempt. A document outside the route's build set is kept in the list on
+  // this basis, so a route correction never makes a build failure disappear.
+  // `previousRunByKey` is deliberately NOT a third term: it is only ever
+  // populated alongside `runStateByKey` above, so it could not add a key the
+  // second term has not already added.
+  const hasPhaseDocumentOutput = (key: string): boolean =>
+    isPhaseDocumentGenerated(key) || runStateByKey.has(key);
 
   // Group attachments by phase
   const attachmentsByPhase = new Map<number, AttachmentRecord[]>();
@@ -941,18 +961,18 @@ export async function PhaseDocumentsPanel({
 
       {/* Phase sections */}
       {[1, 2, 3, 4, 5].map((phase) => {
-        const keys = PHASE_CANONICAL_KEYS[phase] ?? [];
-        const specs = keys
-          .map((key) =>
-            DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
-          )
-          .filter(Boolean) as DeliverableSpec[];
+        // The documents this Move's route declares for the phase — the same
+        // set its Approve & Build produces — plus any canonical document
+        // outside that set this Move already has something to show for, so a
+        // route correction never hides output or a failed attempt.
+        const { specs } = phaseDocumentDisplaySet({
+          phase,
+          route: confirmedSolutionRoute,
+          hasOutput: hasPhaseDocumentOutput,
+        });
         const phaseAttachments = attachmentsByPhase.get(phase) ?? [];
-        const generatedCount = specs.filter(
-          (s) =>
-            deliverablesByKey
-              .get(s.deliverableTypeKey)
-              ?.latest_content?.trim() || runByKey.has(s.deliverableTypeKey),
+        const generatedCount = specs.filter((s) =>
+          isPhaseDocumentGenerated(s.deliverableTypeKey),
         ).length;
         const isCurrent = phase === currentPhase;
 
