@@ -1,0 +1,17 @@
+{
+  "package_id": "moves-governed-data-foundation-e2e-synthetic-20261006",
+  "synthetic": true,
+  "contains_phi": false,
+  "contains_real_personal_data": false,
+  "agent_ready": false,
+  "registry_activation": false,
+  "loading_status": "offline_only_not_loaded_not_indexed_not_agent_ready",
+  "archetype_id": "governed_data_foundation",
+  "scenario": "Ten synthetic HR analytics reports over a Bronze/Silver/Gold data foundation; no operating-model redesign; business-owned adoption.",
+  "source_truth_status": "fictional_test_scenario_not_client_attested",
+  "value_status": "no_client_baseline_or_approved_value",
+  "p2_required_family_count": 11,
+  "initial_upload_count": 13,
+  "deferred_p3_upload_count": 1,
+  "total_upload_count": 14
+}
