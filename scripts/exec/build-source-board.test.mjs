@@ -3047,5 +3047,134 @@ console.log("\nbuild-source-board — an owner gate stated as an acceptance stat
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ *
+ * A ROW THAT NAMES WHO MAY ACT IS AN OWNER GATE — item T-819.
+ *
+ * MEASURED by execution, by being sent to the row and refused by it. The
+ * generated queue offered 11 claimable rows at `2026-10-05T23:03Z`; lane C's
+ * only one was a `[P0]` whose body says, twice, that the lane may not have it:
+ * that the remaining step *"is an operator action, so no agent may close
+ * this"*, and a shouted `**DECISION AND ACTION NEEDED**` headline. The board
+ * derived `blocker: null`, `partialGate: null`, `quote: null` for it.
+ *
+ * WHAT THE ROW IS ABOUT IS NOT RESTATED, here or in the fixtures below. This
+ * repository is public and the defect is in two phrasings, so the fixtures
+ * carry the phrasings over a synthetic subject and nothing else of the row.
+ *
+ * It is not a near miss of one term, it is a miss of both halves of the
+ * decision rule:
+ *
+ *   THE HEADLINE IS NOT `decision needed`. The rule's first alternative is
+ *   that phrase as two adjacent words; this row writes the two with `AND
+ *   ACTION` between them. And the article term `An?\s+(?:[a-z][a-z-]*\s+){0,2}
+ *   decision` wants an article in front, which a shouted headline has not got
+ *   — the same hole `C-563` found on "Owner decision" and fixed by adding the
+ *   categorical phrase that sentence carried rather than by making the article
+ *   optional. The article stays required here too, for the reason that rule's
+ *   own comment gives.
+ *
+ *   `not agent work` DOES NOT REACH `no agent may close this`. `C-563` added
+ *   the categorical phrase in the form its live row wrote it. A row can state
+ *   the same thing as a permission instead of as a category, and `C-577`
+ *   does: it names the actor and the modal.
+ *
+ * THE COST IS THE ONE THE BUCKET EXISTS TO PREVENT, and it is paid: the pulse
+ * records three separate runs reaching this row, finding it unworkable, and
+ * calling it a queue defect — 2026-10-03 ~15:15Z, and twice since. Each
+ * stepped around it; none filed it. A lane whose only row is one it may not
+ * touch reads as a lane with work in it, so the count overstates what is
+ * takeable and the next run spends its opening on the same dead end.
+ *
+ * Both terms are bounded the way every term above them is. `no agent may` is
+ * an actor and a permission modal with no descriptive use; `decision and
+ * action needed` is matched WHOLE, so the lazy form `decision` within N
+ * characters of `needed` — which a descriptive sentence satisfies — is held
+ * out by case (c) below.
+ * ------------------------------------------------------------------------ */
+
+console.log("\nbuild-source-board — a row naming who may act is an owner gate (T-819)\n");
+
+/* --- (a) THE LIVE ROW, verbatim from `C-577`'s body. Offered as lane C's
+ * only claimable row while saying this.                                     */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-970",
+    "**[P0] A scheduled validator cannot run until one input exists.** It needs, for one environment, a base URL and a caller credential. Minting a credential and storing it as a repository secret is an operator action, so no agent may close this.",
+    "The owner provisions the inputs for one environment, then one dispatched run reaches a clean verdict on the then-current deployed SHA.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (a) a body stating no agent may close the item is an owner gate",
+    blockerOf(dir, "T-970") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-970"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) THE SHOUTED HEADLINE, the row's other half, on its own. No article,
+ * and `AND ACTION` between the two words the first alternative wants
+ * adjacent.                                                                 */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-971",
+    "**[P0] A scheduled validator reports the honest state until its inputs exist.** **DECISION AND ACTION NEEDED FROM THE OWNER.**",
+    "Provision the inputs for one environment and record the first run that reaches a clean verdict.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (b) a shouted `DECISION AND ACTION NEEDED` headline is an owner gate",
+    blockerOf(dir, "T-971") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-971"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) THE PHRASE IS MATCHED WHOLE. This case PASSES on unfixed code by
+ * design and is the one the lazy fix breaks: written `\bdecision\b[^.\n]{0,40}
+ * \bneeded\b` the term reaches from a decision that is already TAKEN to a
+ * rerun that is needed, 31 characters away, and gates ordinary work.        */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-972",
+    "**The reader drops the second alias of each pair.**",
+    "The decision is taken and no approval is needed; run the reader over the fixture and report the row count.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (c) a decision already taken and an approval not needed is NOT a gate",
+    blockerOf(dir, "T-972") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-972"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) THE ACTOR AND THE MODAL ARE BOTH REQUIRED. This case PASSES on
+ * unfixed code by design and is the one the over-broad fix breaks: written
+ * `\bno\s+agent\b` the term matches a hyphenated noun phrase and gates a row
+ * that says an agent MAY do the work — the direction that hides live work,
+ * which is what `T-703` and `C-417` each paid for once.                     */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-973",
+    "**A validator reads one report and writes another.**",
+    "An agent may close this once the fixture lands, and no agent-owned configuration file changes.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (d) `no agent-owned file` beside `an agent may close this` is NOT a gate",
+    blockerOf(dir, "T-973") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-973"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

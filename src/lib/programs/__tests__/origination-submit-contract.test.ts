@@ -54,6 +54,9 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('foundation_readiness: input.timeline');
     // initiative context must be preserved
     expect(source).toContain('initiative_context: input.fromInitiativeId');
+    expect(source).toContain('discoveryArchetypeId?: string | null');
+    expect(source).toContain('withDeclaredDiscoveryArchetype(');
+    expect(source).toContain('discovery_archetype_id: input.discoveryArchetypeId');
   });
 
   it('records sponsor progress emails only after explicit user opt-in', () => {
