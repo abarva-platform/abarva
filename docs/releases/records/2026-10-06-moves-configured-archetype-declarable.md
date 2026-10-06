@@ -113,7 +113,7 @@ registry change, no generated manual change, no migration.
 ## QA / Validation
 
 Lane: `global-control-lane`. Run in an isolated worktree off `origin/main` at
-`ca5ceddb92`.
+`ca5ceddb92`, then merged forward to `4eb56a636d` (census only).
 
 - **PASS** `npx jest src/lib/programs/__tests__/discovery-archetype-declaration.test.ts`
   — 13 tests.
@@ -146,12 +146,13 @@ Lane: `global-control-lane`. Run in an isolated worktree off `origin/main` at
   configured source, which no environment has, so a walk would observe the
   screen exactly as it is today. Noted as a Known Gap.
 
-Census note: `testFiles` 2727 → 2730 and `coveredTestFiles` 2563 → 2566. This
-change adds **no** test file at all — both new case sets went into existing
-files. The whole delta is measured, not assumed: a pristine `origin/main`
-worktree regenerates to exactly 2730 / 2566 / 2565 against a committed
-2727 / 2563 / 2562, so every one of the three is drift that was already on
-`main`. `docs/security/tenancy-fence-coverage.json` regenerates unchanged.
+Census note: on the merged base, `testFiles` 2729 → 2731 and
+`coveredTestFiles` 2565 → 2567. This change adds **no** test file at all — both
+new case sets went into existing files, so none of that delta can be mine. It is
+measured rather than assumed: a pristine `origin/main` worktree at `ca5ceddb92`
+regenerates to 2730 / 2566 / 2565 against a committed 2727 / 2563 / 2562, which
+is the same three-file drift already sitting on `main` before this branch
+existed. `docs/security/tenancy-fence-coverage.json` regenerates unchanged.
 
 ## Rollout Plan
 
