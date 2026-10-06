@@ -8,6 +8,7 @@ import type {
   BriefSection,
   DeliverableModule,
   ExpectedExhibit,
+  ExpectedTable,
   SectionGroundingMode,
 } from "../types";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
@@ -56,6 +57,29 @@ export interface DeliverableStructure {
    * use-case-specific exhibits (a dependency map, a rollout-wave timeline, etc.).
    */
   expectedExhibits?: ExpectedExhibit[];
+  /**
+   * Tables required BY THIS DELIVERABLE TYPE, regardless of archetype — the
+   * mirror of `expectedExhibits`, and for the same reason.
+   *
+   * Until this field existed, `composeBrief` took its tables from the archetype
+   * pack alone, so within one archetype eighteen of the twenty-one shipped
+   * structures received the IDENTICAL table set: a Target State Architecture
+   * was asked for a vendor pricing template and a volume baseline, a Roadmap
+   * for an application inventory, and a Requirements Traceability document for
+   * neither of the two tables its own sections are built around. Exhibits had
+   * never had that problem because the structure's exhibits are concatenated
+   * with the pack's; tables simply never got the same treatment. Measured over
+   * the shipped catalogs: 7 distinct table signatures across the 105
+   * composable briefs against 37 distinct exhibit signatures.
+   *
+   * Joined with the pack's tables by `composeArtifactAssets` (structure first,
+   * first entry per key wins), so a configured pack that names a key a
+   * structure already declares cannot produce a duplicate expectation.
+   *
+   * Declare a table the artifact TYPE is built around, not one a use case
+   * happens to want — use-case tables stay with the archetype pack.
+   */
+  expectedTables?: ExpectedTable[];
   /**
    * Section keys that carry the archetype pack's `keyEvidenceFamilies`, in
    * ADDITION to the ones `composeBrief` infers from the key's spelling.
@@ -1103,6 +1127,40 @@ const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
   // need the archetype's families named. The verdict and the next actions are
   // judgment. `requirements_baseline` is also a landing site by spelling.
   archetypeEvidenceSectionKeys: ["evidence_design_trace", "gaps_controls"],
+  // The two tables this document's own sections are built around. Neither is
+  // in any archetype pack, so before a structure could declare its tables this
+  // deliverable was composed with the use case's commercial and inventory
+  // tables and no traceability matrix at all.
+  expectedTables: [
+    {
+      key: "requirements_traceability_matrix",
+      title: "Requirement → Evidence → Design → Control Traceability",
+      columns: [
+        "Requirement",
+        "Source Evidence",
+        "Design Element",
+        "Control / Acceptance Test",
+        "Owner",
+        "Status",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: true,
+    },
+    {
+      key: "traceability_gap_register",
+      title: "Traceability Gaps & Holding Conditions",
+      columns: [
+        "Gap",
+        "Requirement Affected",
+        "Why It Is Open",
+        "Closing Action",
+        "Owner",
+        "Gate Impact",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: false,
+    },
+  ],
   purpose:
     "Prove that approved requirements, evidence, design choices, controls, and open decisions remain traceable before the design gate closes.",
   decisionToSupport:
@@ -1254,6 +1312,26 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
 const MOVES_ESTIMATE: DeliverableStructure = {
   module: "moves",
   deliverableType: "estimate_model",
+  // An estimate's basis of estimate is the artifact, not a use-case asset. The
+  // packs' nearest tables are a vendor pricing template and a current-run cost
+  // baseline — neither states how a forward number was built or how confident
+  // it is.
+  expectedTables: [
+    {
+      key: "estimate_basis_buildup",
+      title: "Estimate Build-Up & Basis of Estimate",
+      columns: [
+        "Cost / Effort Component",
+        "Basis of Estimate",
+        "Quantity or Effort",
+        "Rate Basis",
+        "Confidence",
+        "Assumption to Validate",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: true,
+    },
+  ],
   purpose:
     "Estimate investment, run-cost change, resourcing, and confidence for the move.",
   decisionToSupport:
@@ -1404,6 +1482,25 @@ const MOVES_VALUE: DeliverableStructure = {
 const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
   module: "moves",
   deliverableType: "readiness_and_change_plan",
+  // Who holds which decision is what a readiness verdict rests on, and the
+  // structure already names `stakeholders_decision_rights` as an evidence
+  // landing site — it had nowhere to put the result.
+  expectedTables: [
+    {
+      key: "stakeholder_decision_rights",
+      title: "Stakeholders, Decision Rights & Readiness",
+      columns: [
+        "Stakeholder Group",
+        "Role in the Move",
+        "Decision Rights",
+        "Named Owner",
+        "Readiness Signal",
+        "Open Condition",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: false,
+    },
+  ],
   // Who actually owns the seats and what the estate depends on; the verdict,
   // the workplan and the cadence are judgment.
   archetypeEvidenceSectionKeys: [
@@ -1749,6 +1846,25 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
 const SOURCE_EVAL_WORKBOOK: DeliverableStructure = {
   module: "source",
   deliverableType: "evaluation_workbook",
+  // A scoring workbook with no scoring model is not a workbook. Declared
+  // `client_to_complete` because the weights and scores are the evaluation
+  // panel's to set, not ours to assert.
+  expectedTables: [
+    {
+      key: "evaluation_scoring_model",
+      title: "Evaluation Criteria, Weights & Scoring Basis",
+      columns: [
+        "Criterion",
+        "Weight",
+        "Scoring Basis",
+        "Evidence Required",
+        "Scored By",
+        "Score",
+      ],
+      groundingMode: "client_to_complete",
+      moveToExcelIfWide: true,
+    },
+  ],
   purpose: "Provide the proposal evaluation framework and scoring workbook.",
   decisionToSupport:
     "Adopt the evaluation framework and select the preferred vendor.",

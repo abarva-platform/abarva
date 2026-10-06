@@ -25,6 +25,8 @@ import { validateDeliverableQuality } from "../quality-validator";
 import { runDeliverableOrchestration } from "../orchestrator";
 import type { ModelCaller } from "../orchestrator";
 import { getArtifactBrief } from "../artifact-brief-registry";
+import { loadArchetypePackCatalog } from "../briefs/archetype-packs";
+import { composeArtifactAssets } from "../briefs/artifact-asset-composition";
 import { amsRfpRequest, goodDocument, goodPlan } from "../__fixtures__/ams-rfp";
 import type { ExpectedExhibit } from "../types";
 
@@ -204,5 +206,88 @@ describe("C-514 — the production orchestration path supplies the request side"
     expect(
       res.quality?.warnings.find((w) => w.includes("expected exhibits")),
     ).toContain(`0 of ${briefExhibits}`);
+  });
+});
+
+// ── a duplicate EXPECTATION cannot inflate the denominator ──
+//
+// The shortfall's `M` is the expectation array's length and the match is greedy
+// one-to-one, so the same expectation twice costs twice: `M` rises by one that
+// nothing can ever satisfy, and the second copy is then named as missing even
+// though the exhibit it names WAS delivered. That is the "right count, wrong
+// diagnosis" failure this suite's two-pass match was written to remove,
+// arriving through the request side instead of the produced side.
+//
+// Duplicates do not occur in the shipped catalogs — probed across all 105
+// composable briefs — but `loadArchetypePackCatalog` validates a configured
+// pack's keys only WITHIN that pack, so an operator may name a key the
+// structure already declares. `composeArtifactAssets` is the join both sides go
+// through, and this case drives the real validator with its output.
+
+describe("C-514 — a colliding configured pack cannot inflate the expectation", () => {
+  it("counts the collided exhibit once and does not call a delivered exhibit missing", () => {
+    const structureExhibits: ExpectedExhibit[] = [
+      {
+        key: "tower_scope_map",
+        title: "Service Tower Scope Map",
+        kind: "matrix",
+        purpose: "Show the towers in scope.",
+        preferredFormat: "xlsx",
+      },
+    ];
+    const configuredPack = loadArchetypePackCatalog([
+      {
+        archetype: "AMS_IT_OUTSOURCING",
+        label: "AMS / IT Outsourcing",
+        keyEvidenceFamilies: ["service_tower_scope"],
+        exhibits: [
+          {
+            // the same key the structure declares, spelled with the operator's
+            // own title — valid against the pack contract, which checks
+            // uniqueness only within the pack
+            key: "tower_scope_map",
+            title: "In-Scope Tower Map",
+            kind: "matrix",
+            purpose: "Show the towers in scope.",
+            preferredFormat: "pptx",
+          },
+          {
+            key: "transition_sequence",
+            title: "Transition Sequence",
+            kind: "timeline",
+            purpose: "Show the transition waves.",
+            preferredFormat: "pptx",
+          },
+        ],
+        tables: [
+          {
+            key: "risk_register",
+            title: "Risks, Issues & Dependencies",
+            columns: ["Item", "Owner"],
+            groundingMode: "mixed",
+            moveToExcelIfWide: false,
+          },
+        ],
+      },
+    ]);
+    expect(configuredPack.errors).toEqual([]);
+
+    const expectedExhibits = composeArtifactAssets(
+      structureExhibits,
+      configuredPack.catalog.AMS_IT_OUTSOURCING.exhibits,
+    );
+    // three declarations in, two distinct expectations out
+    expect(expectedExhibits).toHaveLength(2);
+
+    // goodDocument() ships exactly one exhibit, the matrix, and no timeline
+    const res = validateDeliverableQuality(goodDocument(), amsRfpRequest(), {
+      expectedExhibits,
+    });
+    expect(res.metrics.expectedExhibitCount).toBe(2);
+    expect(res.metrics.receivedExpectedExhibitCount).toBe(1);
+    expect(res.metrics.missingExpectedExhibits).toEqual(["Transition Sequence"]);
+    expect(res.metrics.missingExpectedExhibits).not.toContain(
+      "Service Tower Scope Map",
+    );
   });
 });
