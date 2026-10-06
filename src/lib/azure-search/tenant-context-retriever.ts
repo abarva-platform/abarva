@@ -256,7 +256,13 @@ function appendFilter(base: string, extra: string): string {
   return `${base} and (${extra})`;
 }
 
-function shouldRunStructuredContextPass(query: string): boolean {
+// Exported so the code that BUILDS retrieval queries can be tested against the
+// real rule rather than a copy of it. The test matters because the match is
+// word-anchored: `\b` sits between a word character and a non-word one, and `_`
+// is a word character, so a query assembled from declared identifiers
+// (`AI_PDLC`, `contract_baseline`) is invisible to every term below. See
+// `spellIdentifiersAsWords` in the deliverables orchestrator's generate-service.
+export function shouldRunStructuredContextPass(query: string): boolean {
   return /\b(ai|agent|agents|adoption|aml|automation|benefit|block|blocks|blocked|contract|contracts|copilot|evidence|governance|initiative|initiatives|kill|persona|productivity|risk|scale|scaling|spend|system|systems|tool|tools|vendor|vendors)\b/i.test(
     query,
   );

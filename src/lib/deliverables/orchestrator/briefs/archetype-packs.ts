@@ -10,12 +10,23 @@ import { z } from "zod";
 import type { ExpectedExhibit, ExpectedTable } from "../types";
 
 import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+import {
+  nearestDeclaredPackEvidenceFamily,
+  unknownPackEvidenceFamilies,
+} from "./evidence-family-vocabulary";
 
 export interface ArchetypePack {
   archetype: string;
   label: string; // how the role line describes the expertise
   /** evidence families this use case typically needs (drives grounding + intake). */
   keyEvidenceFamilies: string[];
+  /**
+   * Family ids this pack INTRODUCES, for a configured archetype that needs
+   * evidence the shipped vocabulary does not declare. Naming them is what
+   * separates a new family from a misspelling of an existing one; a built-in
+   * pack needs none, because the vocabulary is built from the built-in packs.
+   */
+  declaresEvidenceFamilies?: string[];
   exhibits: ExpectedExhibit[];
   tables: ExpectedTable[];
   /** extra governance note appended to the disallowed-fabrication boundary. */
@@ -548,35 +559,83 @@ export const ExpectedTableSchema = z.object({
 const uniqueBy = <T>(items: T[], key: (item: T) => string): boolean =>
   new Set(items.map(key)).size === items.length;
 
-export const ArchetypePackSchema = z.object({
-  // UPPER_SNAKE because that is how this catalog keys its own entries. The
-  // blueprint catalog keys lower_snake; they are separate id spaces and a
-  // declaration is matched against each catalog's own declared ids.
-  archetype: z
-    .string()
-    .min(1)
-    .regex(/^[A-Z0-9_]+$/, "archetype must be UPPER_SNAKE [A-Z0-9_]"),
-  label: z.string().min(1),
-  keyEvidenceFamilies: z
-    .array(z.string().min(1))
-    .min(1)
-    .refine((families) => uniqueBy(families, (family) => family), {
-      message: "keyEvidenceFamilies must not repeat a family",
-    }),
-  exhibits: z
-    .array(ExpectedExhibitSchema)
-    .min(1)
-    .refine((exhibits) => uniqueBy(exhibits, (exhibit) => exhibit.key), {
-      message: "exhibit keys must be unique within a pack",
-    }),
-  tables: z
-    .array(ExpectedTableSchema)
-    .min(1)
-    .refine((tables) => uniqueBy(tables, (table) => table.key), {
-      message: "table keys must be unique within a pack",
-    }),
-  governanceNote: z.string().min(1).optional(),
-});
+/**
+ * Said when a pack names an evidence family nothing declares. Exported so the
+ * message a configured source is refused with has one spelling.
+ */
+export const UNKNOWN_EVIDENCE_FAMILY_MESSAGE =
+  "unknown evidence family — add it to the shipped vocabulary or list it in declaresEvidenceFamilies";
+
+export const ArchetypePackSchema = z
+  .object({
+    // UPPER_SNAKE because that is how this catalog keys its own entries. The
+    // blueprint catalog keys lower_snake; they are separate id spaces and a
+    // declaration is matched against each catalog's own declared ids.
+    archetype: z
+      .string()
+      .min(1)
+      .regex(/^[A-Z0-9_]+$/, "archetype must be UPPER_SNAKE [A-Z0-9_]"),
+    label: z.string().min(1),
+    keyEvidenceFamilies: z
+      .array(z.string().min(1))
+      .min(1)
+      .refine((families) => uniqueBy(families, (family) => family), {
+        message: "keyEvidenceFamilies must not repeat a family",
+      }),
+    // The escape hatch for a configured archetype that needs evidence families
+    // the shipped vocabulary does not declare. lower_snake is enforced HERE and
+    // not on `keyEvidenceFamilies`, because every id a pack merely NAMES is
+    // already checked against the vocabulary (which is lower_snake throughout) —
+    // whereas an id declared here is vouched for by nothing else.
+    declaresEvidenceFamilies: z
+      .array(
+        z
+          .string()
+          .min(1)
+          .regex(
+            /^[a-z0-9_]+$/,
+            "a declared evidence family id must be lower_snake [a-z0-9_]",
+          ),
+      )
+      .refine((families) => uniqueBy(families, (family) => family), {
+        message: "declaresEvidenceFamilies must not repeat a family",
+      })
+      .optional(),
+    exhibits: z
+      .array(ExpectedExhibitSchema)
+      .min(1)
+      .refine((exhibits) => uniqueBy(exhibits, (exhibit) => exhibit.key), {
+        message: "exhibit keys must be unique within a pack",
+      }),
+    tables: z
+      .array(ExpectedTableSchema)
+      .min(1)
+      .refine((tables) => uniqueBy(tables, (table) => table.key), {
+        message: "table keys must be unique within a pack",
+      }),
+    governanceNote: z.string().min(1).optional(),
+  })
+  // Every family a pack NAMES must be a family something declares. These ids
+  // are not labels: they land in a deliverable's sections, and they become the
+  // text of the retrieval query that grounds those sections. An id nothing
+  // declares is therefore not a cosmetic slip — it asks the corpus for evidence
+  // under a name no evidence carries, and the answer comes back plausible.
+  .superRefine((pack, ctx) => {
+    const unknown = unknownPackEvidenceFamilies(
+      pack.keyEvidenceFamilies,
+      pack.declaresEvidenceFamilies ?? [],
+    );
+    for (const id of unknown) {
+      const nearest = nearestDeclaredPackEvidenceFamily(id);
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["keyEvidenceFamilies", pack.keyEvidenceFamilies.indexOf(id)],
+        message: nearest
+          ? `${UNKNOWN_EVIDENCE_FAMILY_MESSAGE}: ${id} — did you mean ${nearest}?`
+          : `${UNKNOWN_EVIDENCE_FAMILY_MESSAGE}: ${id}`,
+      });
+    }
+  });
 
 export const ArchetypePackCatalogSchema = z
   .array(ArchetypePackSchema)

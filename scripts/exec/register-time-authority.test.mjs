@@ -5251,5 +5251,213 @@ const C559_LINES = [
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// Item T-835. A declared path carrying a DYNAMIC ROUTE SEGMENT holds nothing.
+//
+// `PATH_TOKEN`'s character class admits no `[`, `]`, `(` or `)`, so a declared
+// entry naming a Next.js route file is not recognised as a path at all. It is
+// not vetoed by any of the cue rules above — it is never seen, which is why no
+// refusal ever named it and why this was found while measuring T-804 rather
+// than by anybody being refused.
+//
+// That is the opposite direction from T-804 and the more expensive one. T-804
+// was a false REFUSAL: it costs one reader a second look and announces itself.
+// This is a false PASS: it puts two runs on one route file and tells neither.
+//
+// Measured over the live register at `3731a69714`: 223 slashed tokens carrying
+// a bracket, 0 of them held. 357 route files under `src/app` carry a bracketed
+// segment and 341 carry a route group, so the shape is not rare.
+//
+// Every case here drives the real CLI as a child process over a fixture and
+// reads its exit status, because the acceptance is about what the GATE does.
+// ---------------------------------------------------------------------------
+{
+  // The failing case, stated in the item's own terms: a real route file in the
+  // tree, declared on a live claim's `files:` list, and a second run asking
+  // for exactly that path.
+  const ROUTE = "src/app/api/v1/source/[eventId]/stage/route.ts";
+  const { dir, file } = fixture([
+    `2026-09-22T18:20:29Z | runner-one#A | item T-900 claimed | files: ${ROUTE}`,
+  ]);
+  const r = preclaimFiles(file, "T-901", "runner-two#B", ROUTE);
+  check(
+    "T-835 a declared BRACKETED route path refuses the next run asking for it",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  check(
+    "T-835 the refusal names the bracketed path and its holder",
+    (r.report.fileOverlap?.conflicts ?? []).some(
+      (c) => c.path === ROUTE && c.agent === "runner-one#A",
+    ),
+    JSON.stringify(r.report.fileOverlap?.conflicts),
+  );
+  // A ROUTE GROUP is the same defect by a different character: `(maestro)`
+  // fails the class for its parentheses alone, with no bracket anywhere. Worse
+  // than invisible — the tokenizer stops at the paren and reads the prefix
+  // `src/app/` as a SCOPE, which the gate treats as a note and waves through.
+  const GROUPED = "src/app/(maestro)/source/events/[eventId]/page.tsx";
+  const grouped = fixture([
+    `2026-09-22T18:20:29Z | runner-one#A | item T-900 claimed | files: ${GROUPED}`,
+  ]);
+  const g = preclaimFiles(grouped.file, "T-901", "runner-two#B", GROUPED);
+  check(
+    "T-835 a declared ROUTE-GROUP path refuses the next run asking for it",
+    g.status === 1 && g.report.fileOverlap?.refuses === true,
+    `status=${g.status} overlap=${JSON.stringify(g.report.fileOverlap)}`,
+  );
+  check(
+    "T-835 the grouped path is read as a FILE, not as the `src/app/` prefix scope",
+    claimedPaths(`files: ${GROUPED}`).some((p) => p.path === GROUPED && p.kind === "file") &&
+      !claimedPaths(`files: ${GROUPED}`).some((p) => p.path === "src/app/"),
+    JSON.stringify(claimedPaths(`files: ${GROUPED}`)),
+  );
+  // THE DISCRIMINATOR. Widening the class can only ADD refusals, so the thing
+  // that must not change is what it refuses on. A bracketed token that is not
+  // a path must stay invisible: a markdown link is the shape the register
+  // writes most, and reading `[text](docs/x.md)` as one token would invent a
+  // path called `text](docs/x.md`.
+  // The link text carries NO SPACE, and that is the whole point of the case.
+  // Written as `[the record](...)` the space alone makes one token impossible
+  // whatever the grammar admits, so the control passed without testing the
+  // grammar at all — a mutation letting a group's contents cross a slash
+  // survived it. `[record](...)` is the shape that can actually collapse.
+  const LINK = "see [record](docs/releases/records/t804.md) for the measurement";
+  check(
+    "T-835 NEGATIVE CONTROL — a space-free markdown link is not read as one bracketed path",
+    !claimedPaths(LINK).some((p) => /[\[\]()]/.test(p.path)),
+    JSON.stringify(claimedPaths(LINK)),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — the link's TARGET is still read, as it was before",
+    claimedPaths(LINK).some((p) => p.path === "docs/releases/records/t804.md"),
+    JSON.stringify(claimedPaths(LINK)),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — a bracketed token with no path suffix holds nothing",
+    claimedPaths("files: notes/[draft]/scratch").length === 0,
+    JSON.stringify(claimedPaths("files: notes/[draft]/scratch")),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — `Product/Lab`, `and/or` and `24/7` are still not paths",
+    claimedPaths("the Product/Lab lane runs and/or 24/7 on [eventId]/shaped routes").length === 0,
+    JSON.stringify(claimedPaths("the Product/Lab lane runs and/or 24/7 on [eventId]/shaped routes")),
+  );
+  check(
+    "T-835 a bracketed SCOPE is still a note rather than a lock",
+    (() => {
+      const scoped = `files: src/app/api/v1/source/[eventId]/nexus/ask/__tests__/`;
+      const read = claimedPaths(scoped);
+      return (
+        read.length === 1 &&
+        read[0].kind === "scope" &&
+        read[0].path === "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/"
+      );
+    })(),
+    JSON.stringify(claimedPaths("files: src/app/api/v1/source/[eventId]/nexus/ask/__tests__/")),
+  );
+  // A catch-all and an optional catch-all segment are the other two shapes the
+  // framework writes, and a class that admits `[id]` but not `[...slug]` would
+  // leave the same false pass on a narrower set.
+  check(
+    "T-835 a catch-all segment is read as a file",
+    claimedPaths("files: src/app/docs/[...slug]/page.tsx").some(
+      (p) => p.path === "src/app/docs/[...slug]/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/docs/[...slug]/page.tsx")),
+  );
+  check(
+    "T-835 an optional catch-all segment is read as a file",
+    claimedPaths("files: src/app/shop/[[...filter]]/page.tsx").some(
+      (p) => p.path === "src/app/shop/[[...filter]]/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/shop/[[...filter]]/page.tsx")),
+  );
+  // A segment must be NON-EMPTY. Allowing it to match nothing costs both
+  // directions at once: measured over the live register it invents `/` and
+  // `//` as scopes and LOSES 21 real files, because an empty head lets the
+  // token start inside a path and end before its extension.
+  check(
+    "T-835 a bare separator is never read as a path",
+    claimedPaths("files: / and // are not paths").length === 0,
+    JSON.stringify(claimedPaths("files: / and // are not paths")),
+  );
+  check(
+    "T-835 a path after a bare separator is still read whole",
+    claimedPaths("files: see / then src/lib/source/esign/provider.ts").some(
+      (p) => p.path === "src/lib/source/esign/provider.ts",
+    ),
+    JSON.stringify(claimedPaths("files: see / then src/lib/source/esign/provider.ts")),
+  );
+  // One segment may carry MORE THAN ONE group. Next.js intercepting routes
+  // write exactly that — `(..)(..)feed` is a single directory name — and a
+  // grammar admitting only the first group reads the segment as far as the
+  // second and stops, which is this item's own defect on a narrower set.
+  check(
+    "T-835 a segment carrying two route groups is read as a file",
+    claimedPaths("files: src/app/(..)(..)feed/page.tsx").some(
+      (p) => p.path === "src/app/(..)(..)feed/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/(..)(..)feed/page.tsx")),
+  );
+  check(
+    "T-835 a group followed by plain characters in one segment is read as a file",
+    claimedPaths("files: src/app/(.)photo/page.tsx").some(
+      (p) => p.path === "src/app/(.)photo/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/(.)photo/page.tsx")),
+  );
+  // The veto rules must keep governing these paths exactly as they govern any
+  // other: a widened token class must not become a way past the disclaimers.
+  check(
+    "T-835 a disclaimed bracketed path is still freed by its cue",
+    claimedPaths(
+      "this claim does not touch `src/app/api/v1/source/[eventId]/stage/route.ts`",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths("this claim does not touch `src/app/api/v1/source/[eventId]/stage/route.ts`"),
+    ),
+  );
+  check(
+    "T-835 a bracketed path attributed to a sibling is not read as this line's hold",
+    claimedPaths(
+      "that sibling holds `src/app/api/v1/source/[eventId]/stage/route.ts`",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths("that sibling holds `src/app/api/v1/source/[eventId]/stage/route.ts`"),
+    ),
+  );
+  // THE SECOND DIRECTION, found by measuring this change rather than by
+  // reasoning about it. An unreadable segment did not only fail to hold its
+  // own path — it SPLIT the list it sat in. `PATH_LIST_JOINER` requires list
+  // punctuation between consecutive occurrences, and the unread
+  // `(maestro)/source/setup/page.tsx` is not punctuation, so the cue at the
+  // head of a `Files released:` list stopped governing everything after it and
+  // the tail stayed HELD on a line that said in words it was releasing it.
+  //
+  // Measured on the live register: two release lines held 9 and 7 paths each
+  // this way. Neither reached `heldPaths`, which drops release lines in any
+  // case, so no refusal ever came of it — but the reading was wrong and the
+  // same split would land on a CLAIM line's disclaimer just as readily.
+  check(
+    "T-835 a route segment inside a released list no longer splits the cue's reach",
+    claimedPaths(
+      "Files released: src/lib/a.ts, src/app/(maestro)/source/setup/page.tsx, src/lib/b.ts",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths(
+        "Files released: src/lib/a.ts, src/app/(maestro)/source/setup/page.tsx, src/lib/b.ts",
+      ),
+    ),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — the same list without a route segment released all of it before and after",
+    claimedPaths("Files released: src/lib/a.ts, src/lib/c.ts, src/lib/b.ts").length === 0,
+    JSON.stringify(claimedPaths("Files released: src/lib/a.ts, src/lib/c.ts, src/lib/b.ts")),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(grouped.dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

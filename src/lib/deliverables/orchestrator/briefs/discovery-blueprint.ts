@@ -8,7 +8,9 @@ import { z } from "zod";
 
 import { resolveArchetypeCatalogEntry } from "./archetype-identity";
 import {
+  composeEvidenceFamilies,
   sharedEvidenceFamilyDrift,
+  type EvidenceFamilySpec,
   type SharedEvidenceFamilyDrift,
 } from "./discovery-evidence-library";
 
@@ -751,7 +753,8 @@ const GOVERNED_DATA_FOUNDATION: DiscoveryBlueprint = {
     },
     {
       id: "data_quality_rules",
-      label: "Data quality rules (defined, loaded, monitored) + exception owners",
+      label:
+        "Data quality rules (defined, loaded, monitored) + exception owners",
       grounds: "Current-State Assessment · Gate controls",
       required: true,
       likelySource: "Data quality / stewardship",
@@ -777,7 +780,8 @@ const GOVERNED_DATA_FOUNDATION: DiscoveryBlueprint = {
     },
     {
       id: "master_identity_resolution",
-      label: "Master / entity identity resolution (patient, member, provider spine)",
+      label:
+        "Master / entity identity resolution (patient, member, provider spine)",
       grounds: "Target Architecture · Value Model",
       required: true,
       likelySource: "Data governance / MDM",
@@ -785,7 +789,8 @@ const GOVERNED_DATA_FOUNDATION: DiscoveryBlueprint = {
     },
     {
       id: "privacy_security_controls",
-      label: "Privacy & security controls for the data foundation (PHI, access)",
+      label:
+        "Privacy & security controls for the data foundation (PHI, access)",
       grounds: "Risk · Gate controls",
       required: true,
       likelySource: "Security / privacy office",
@@ -809,7 +814,8 @@ const GOVERNED_DATA_FOUNDATION: DiscoveryBlueprint = {
     },
     {
       id: "finance_baseline_value_plan",
-      label: "Finance baseline + value plan (quantify after baselines sign off)",
+      label:
+        "Finance baseline + value plan (quantify after baselines sign off)",
       grounds: "Value Model · Business Case",
       required: true,
       likelySource: "Finance",
@@ -923,6 +929,17 @@ export interface DiscoveryArchetypeSuggestion {
   score: number;
 }
 
+export interface DiscoveryArchetypeOption {
+  blueprintId: string;
+  archetypeLabel: string;
+}
+
+export function listDiscoveryArchetypeOptions(): DiscoveryArchetypeOption[] {
+  return Object.values(DISCOVERY_BLUEPRINT_CATALOG)
+    .map(({ blueprintId, archetypeLabel }) => ({ blueprintId, archetypeLabel }))
+    .sort((a, b) => a.archetypeLabel.localeCompare(b.archetypeLabel));
+}
+
 /**
  * Setup-time suggestion only: rank catalog archetypes by how well their
  * `suggestionKeywords` match a Move's text, so an origination/setup flow can
@@ -943,7 +960,10 @@ export function suggestDiscoveryArchetypes(
       const keywords =
         bp.suggestionKeywords && bp.suggestionKeywords.length > 0
           ? bp.suggestionKeywords
-          : [bp.archetypeLabel.toLowerCase(), bp.blueprintId.replace(/_/g, " ")];
+          : [
+              bp.archetypeLabel.toLowerCase(),
+              bp.blueprintId.replace(/_/g, " "),
+            ];
       let score = 0;
       for (const keyword of keywords) {
         if (keyword && haystack.includes(keyword.toLowerCase())) score += 1;
@@ -956,8 +976,7 @@ export function suggestDiscoveryArchetypes(
     })
     .filter((suggestion) => suggestion.score > 0)
     .sort(
-      (a, b) =>
-        b.score - a.score || a.blueprintId.localeCompare(b.blueprintId),
+      (a, b) => b.score - a.score || a.blueprintId.localeCompare(b.blueprintId),
     )
     .slice(0, Math.max(0, limit));
 }
@@ -1143,6 +1162,85 @@ export const InterviewRoleSchema = z.object({
   questions: z.array(z.string().min(1)).min(1),
 });
 
+/**
+ * A configured reference to a library family (`SHARED_EVIDENCE_FAMILIES`),
+ * with any field restated for this archetype.
+ *
+ * Strict: an unrecognised key is refused rather than stripped. A reference is
+ * mostly absent fields, so a misspelled override (`liklySource`) would
+ * otherwise be dropped in silence and the archetype would ship the canonical
+ * wording while its author read their own.
+ *
+ * `id` is not a field here — it comes from the referenced family, so a
+ * reference can never rename what it points at. `ref` carries the same
+ * key-hazard refusal as a declared id: `{ "ref": "constructor" }` would
+ * otherwise name an inherited `Object.prototype` member.
+ */
+export const EvidenceFamilyRefSchema = z
+  .object({
+    ref: z
+      .string()
+      .min(1)
+      .regex(/^[a-z0-9_]+$/, "ref must be snake_case [a-z0-9_]")
+      .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+    label: z.string().min(1).optional(),
+    grounds: z.string().min(1).optional(),
+    required: z.boolean().optional(),
+    likelySource: z.string().min(1).optional(),
+    format: z.string().min(1).optional(),
+  })
+  .strict();
+
+const BOTH_REF_AND_ID_MESSAGE =
+  "an evidence family names `ref` (a library family) or `id` (its own), not both";
+
+/**
+ * One configured evidence family: written out in full, or a reference.
+ *
+ * Dispatched on the presence of `ref` rather than parsed as a `z.union`. A
+ * union reports `invalid_union: Invalid input` whenever both branches fail
+ * with more than one issue each, which is exactly the malformed-config case an
+ * operator needs the message for — the field and the reason are the whole
+ * value of the contract. Dispatching forwards the chosen branch's own issues
+ * at their own paths.
+ *
+ * Naming both `ref` and `id` is refused, not resolved. `EvidenceFamilySchema`
+ * strips unknown keys, so a spec carrying both would pass as a fully-written
+ * family under the declared `id`, with the `ref` dropped: the author's
+ * overrides would land on a family that borrows nothing from the library they
+ * named.
+ */
+export const EvidenceFamilySpecSchema = z
+  .unknown()
+  .transform((spec, ctx): EvidenceFamilySpec => {
+    if (typeof spec !== "object" || spec === null || Array.isArray(spec)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "an evidence family must be an object",
+      });
+      return z.NEVER;
+    }
+    const named = spec as Record<string, unknown>;
+    if ("ref" in named && "id" in named) {
+      ctx.addIssue({ code: "custom", message: BOTH_REF_AND_ID_MESSAGE });
+      return z.NEVER;
+    }
+    const parsed = (
+      "ref" in named ? EvidenceFamilyRefSchema : EvidenceFamilySchema
+    ).safeParse(spec);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({ ...issue, path: issue.path });
+      }
+      return z.NEVER;
+    }
+    return parsed.data;
+  });
+
+/** What a spec declares as its identity, before the library is consulted. */
+const specIdentityToken = (spec: EvidenceFamilySpec): string =>
+  "ref" in spec ? spec.ref : spec.id;
+
 export const DiscoveryBlueprintSchema = z.object({
   blueprintId: z
     .string()
@@ -1153,17 +1251,19 @@ export const DiscoveryBlueprintSchema = z.object({
   archetypeLabel: z.string().min(1),
   suggestionKeywords: z.array(z.string().min(1)).optional(),
   evidenceFamilies: z
-    .array(EvidenceFamilySchema)
+    .array(EvidenceFamilySpecSchema)
     .min(1)
     .refine(
       (families) =>
-        new Set(families.map((family) => family.id)).size === families.length,
+        new Set(families.map(specIdentityToken)).size === families.length,
       { message: "evidence family ids must be unique within a blueprint" },
     ),
   interviewRoster: z.array(InterviewRoleSchema).min(1),
 });
 
-export const DiscoveryBlueprintCatalogSchema = z.array(DiscoveryBlueprintSchema);
+export const DiscoveryBlueprintCatalogSchema = z.array(
+  DiscoveryBlueprintSchema,
+);
 
 export type DiscoveryBlueprintConfig = z.infer<typeof DiscoveryBlueprintSchema>;
 
@@ -1181,6 +1281,21 @@ export interface LoadedDiscoveryBlueprintCatalog {
  * overrides it; a new id adds an archetype). A configured source that fails
  * validation is rejected whole — the seed is returned unchanged and the errors
  * are surfaced — so a malformed config cannot partially corrupt the catalog.
+ *
+ * A configured archetype may give each evidence family either in full or as a
+ * reference to a library family (`{ "ref": "kpi_baseline" }`, optionally
+ * restating fields). The library has held those canonical definitions and the
+ * composition for them since Phase 3, but this contract only accepted
+ * fully-written families, so the only authorable form was the one the library
+ * exists to remove — the library was reachable from code and from nothing an
+ * operator could write. References are composed here, before the catalog is
+ * written, so every consumer downstream still reads concrete families and
+ * nothing beyond this function knows a reference was used.
+ *
+ * Composition failures (an unknown reference, a duplicate resolved id) reject
+ * the source whole, like a schema failure: a half-composed archetype asks a
+ * client for evidence that is missing a family, with nothing on any screen
+ * saying one went missing.
  */
 export function loadDiscoveryBlueprintCatalog(
   configuredBlueprints?: unknown,
@@ -1197,7 +1312,8 @@ export function loadDiscoveryBlueprintCatalog(
   if (configuredBlueprints == null) {
     return { catalog, applied: [], errors: [] };
   }
-  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(configuredBlueprints);
+  const parsed =
+    DiscoveryBlueprintCatalogSchema.safeParse(configuredBlueprints);
   if (!parsed.success) {
     return {
       catalog,
@@ -1207,9 +1323,27 @@ export function loadDiscoveryBlueprintCatalog(
       ),
     };
   }
+  const composed: DiscoveryBlueprint[] = [];
+  const compositionErrors: string[] = [];
+  parsed.data.forEach((blueprint, index) => {
+    const { families, errors } = composeEvidenceFamilies(
+      blueprint.evidenceFamilies,
+    );
+    if (errors.length > 0) {
+      compositionErrors.push(...errors.map((error) => `${index}.${error}`));
+      return;
+    }
+    composed.push({
+      ...blueprint,
+      evidenceFamilies: families,
+    } as DiscoveryBlueprint);
+  });
+  if (compositionErrors.length > 0) {
+    return { catalog, applied: [], errors: compositionErrors };
+  }
   const applied: string[] = [];
-  for (const blueprint of parsed.data) {
-    catalog[blueprint.blueprintId] = blueprint as DiscoveryBlueprint;
+  for (const blueprint of composed) {
+    catalog[blueprint.blueprintId] = blueprint;
     applied.push(blueprint.blueprintId);
   }
   return { catalog, applied, errors: [] };
