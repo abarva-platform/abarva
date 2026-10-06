@@ -410,6 +410,42 @@ beforeEach(() => {
 });
 
 describe("POST /api/v1/deliverables/generate-phase", () => {
+  // The route used to resolve the phase's canonical keys with
+  // `.map(find).filter(Boolean)`, so a key with no registry entry was dropped
+  // without a word: the build reported success having queued fewer documents
+  // than the phase declares, and the phase's exit gate then refused the Move
+  // for a document this build never attempted. Proving the pure resolver
+  // reports the key is not enough — this asserts the ROUTE refuses on it.
+  it("500 naming the keys when a declared phase document has no registry entry", async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.doMock("@/lib/programs/deliverable-registry", () => {
+        const actual = jest.requireActual("@/lib/programs/deliverable-registry");
+        return {
+          ...actual,
+          phaseCanonicalKeysForRoute: () => [
+            "business_case",
+            "a_key_no_registry_entry_declares",
+          ],
+        };
+      });
+      const { POST: drifted } = await import("../route");
+      const res = await drifted(
+        req({ moveId: "m-drift", phase: 4, useCaseArchetype: "ams" }),
+      );
+      expect(res.status).toBe(500);
+      const body = await res.json();
+      expect(body).toMatchObject({
+        error: "phase_build_set_unresolvable",
+        unresolvedDeliverableKeys: ["a_key_no_registry_entry_declares"],
+      });
+      expect(body.detail).toContain("a_key_no_registry_entry_declares");
+      expect(body.detail).toContain("No phase build was queued");
+      // Nothing was queued — not even the key that DID resolve.
+      expect(createCalls).toHaveLength(0);
+      expect(sequentialCalls).toHaveLength(0);
+    });
+  });
+
   it("400 when phase is out of range", async () => {
     const res = await POST(
       req({ moveId: "m1", phase: 9, useCaseArchetype: "ams" }),
