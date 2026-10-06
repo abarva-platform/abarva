@@ -41,6 +41,7 @@ import { charterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-ass
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
+import { DiagnosisFactsEditor } from "@/components/strategic-moves/DiagnosisFactsEditor";
 import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
@@ -2468,7 +2469,11 @@ export function MovesPhaseStandaloneClient({
     const value = displayPhaseCaptureValues[section.key] ?? "";
     const input =
       section.structured === "facts" ? (
-        <FinderFactsTable rawValue={value} />
+        <DiagnosisFactsEditor
+          label={section.label}
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
       ) : section.structured === "business-change" ? (
         <BusinessChangeAssessmentForm
           value={value}
@@ -9671,6 +9676,21 @@ function MovesStandaloneStyles() {
 .mxw-finder-detail-panel header h2{margin:0 0 4px;font-family:Fraunces,Georgia,serif;color:#0c1a3a}
 .mxw-finder-detail-panel header p{margin:0 0 14px;color:#5b6c8a;font-size:13px}
 .mxw-finder-detail-input{width:100%;border:1px solid rgba(12,26,58,.16);border-radius:10px;padding:12px;font-size:13.5px;color:#28364f;font-family:inherit}
+.mxw-facts-editor{display:block;width:100%}
+.mxw-facts-editor-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.mxw-facts-editor-table th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;padding:4px 6px 6px;border-bottom:1px solid rgba(12,26,58,.14);font-weight:800}
+.mxw-facts-editor-table th:last-child{width:34px}
+.mxw-facts-editor-table td{padding:5px 6px;vertical-align:top}
+.mxw-facts-editor-table input{width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;line-height:1.35;padding:8px 9px}
+.mxw-facts-editor-table input:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-facts-editor-remove{width:28px;height:32px;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#5b6c8a;font-size:15px;line-height:1;cursor:pointer}
+.mxw-facts-editor-remove:hover:not(:disabled){background:#f1f3f8;color:#0c1a3a}
+.mxw-facts-editor-remove:disabled{opacity:.4;cursor:default}
+.mxw-facts-editor-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mxw-facts-editor-actions{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px}
+.mxw-facts-editor-add{border:1px dashed rgba(12,26,58,.28);border-radius:8px;background:#fff;color:#2a5aa8;font:inherit;font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer}
+.mxw-facts-editor-add:hover{background:#f1f3f8}
+.mxw-facts-editor-note{margin:0;flex:1;min-width:180px;font-size:11.5px;line-height:1.45;color:#5b6c8a}
 .mxw-finder-facts-table{width:100%;border-collapse:collapse}
 .mxw-finder-facts-table th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;padding:6px 10px;border-bottom:1px solid rgba(12,26,58,.14)}
 .mxw-finder-facts-table td{padding:8px 10px;border-bottom:1px solid rgba(12,26,58,.08);font-size:13px;color:#28364f;vertical-align:top}
