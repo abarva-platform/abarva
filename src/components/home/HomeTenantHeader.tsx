@@ -21,7 +21,9 @@ interface TenantBrand {
 // Per-tenant brand map. Color drawn from industry archetype.
 // When clients.logo_url + clients.brand_color land, this map collapses
 // to a fallback only.
-const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
+// This remains Partial intentionally: an onboarded tenant without authored
+// identity must use the visible fallback rather than inheriting another brand.
+const TENANT_BRAND: Partial<Record<ClientKey, TenantBrand>> = {
   meridian: {
     initials: 'MH',
     bgColor: '#0F766E', // teal — healthcare
@@ -46,6 +48,11 @@ const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
     initials: 'SH',
     bgColor: '#075985',
     tagline: 'Global airline · $52.1B revenue · IBM Z to AWS modernization',
+  },
+  lakeshore: {
+    initials: 'LH',
+    bgColor: '#2563EB', // blue — diversified holding company
+    tagline: 'Diversified holding company · 4 operating companies · shared services',
   },
 };
 

@@ -4,6 +4,19 @@
 // pattern. The Discovery Plan deliverable (generated at the P1→P2 gate) turns
 // this catalog into a client-facing evidence-request list + interview guide.
 
+import { z } from "zod";
+
+import {
+  normalizeArchetypeId,
+  resolveArchetypeCatalogEntry,
+} from "./archetype-identity";
+import {
+  composeEvidenceFamilies,
+  sharedEvidenceFamilyDrift,
+  type EvidenceFamilySpec,
+  type SharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
+
 export interface EvidenceFamily {
   id: string;
   label: string;
@@ -28,13 +41,49 @@ export interface DiscoveryBlueprint {
   archetypeLabel: string;
   evidenceFamilies: EvidenceFamily[];
   interviewRoster: InterviewRole[];
+  /**
+   * Setup-time hints only. These help a deployer's setup flow SUGGEST this
+   * archetype for a Move's text ("this looks like Data Foundation — use it?").
+   * They are never runtime authority: identity is declared (see
+   * `resolveDeclaredDiscoveryBlueprint`), and declaration always wins over any
+   * keyword signal. Optional so existing entries need no change.
+   */
+  suggestionKeywords?: string[];
 }
+
+// The reusable evidence-family library lives in `discovery-evidence-library`;
+// it is re-exported here so a configured source composes against the same
+// module that owns the catalog.
+export {
+  SHARED_EVIDENCE_FAMILIES,
+  composeDiscoveryBlueprint,
+  composeEvidenceFamilies,
+  isEvidenceFamilyRef,
+  sharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
+export type {
+  ComposedDiscoveryBlueprint,
+  ComposedEvidenceFamilies,
+  DiscoveryBlueprintComposition,
+  EvidenceFamilyRef,
+  EvidenceFamilySpec,
+  SharedEvidenceFamilyDrift,
+} from "./discovery-evidence-library";
 
 // ── AI-Operations / Customer-Digital (IROPS-class) ──────────────────────────
 const AI_OPERATIONS: DiscoveryBlueprint = {
   blueprintId: "ai_operations_customer_digital",
   blueprintVersion: "2026-07-17",
   archetypeLabel: "AI Operations / Customer-Digital",
+  suggestionKeywords: [
+    "irops",
+    "recovery",
+    "disruption",
+    "operations",
+    "operational optimization",
+    "ai operations",
+    "customer digital",
+  ],
   evidenceFamilies: [
     {
       id: "disruption_ops_data",
@@ -257,6 +306,18 @@ const AI_OPERATIONS: DiscoveryBlueprint = {
 // ── Healthcare / Member-Service Contact Center Agent Assist ────────────────
 const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
   blueprintId: "healthcare_contact_center_agent_assist",
+  suggestionKeywords: [
+    "contact center",
+    "call center",
+    "member service",
+    "agent assist",
+    "crm",
+    "patient",
+    "member",
+    "claims",
+    "eligibility",
+    "prior auth",
+  ],
   blueprintVersion: "2026-07-17",
   archetypeLabel: "Healthcare Contact Center Agent Assist",
   evidenceFamilies: [
@@ -390,7 +451,8 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       role: "Enterprise architect / contact-center platform owner",
       side: "it",
-      objectives: "CRM, CCaaS, claims/auth/benefits integration and target architecture",
+      objectives:
+        "CRM, CCaaS, claims/auth/benefits integration and target architecture",
       questions: [
         "Which systems must the agent-assist layer read from at answer time?",
         "What is batch versus real-time today, and where are the API or data-product gaps?",
@@ -400,7 +462,8 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       role: "Security / Privacy / Compliance / Responsible AI lead",
       side: "it",
-      objectives: "PHI controls, auditability, model-risk gates, and human review",
+      objectives:
+        "PHI controls, auditability, model-risk gates, and human review",
       questions: [
         "Where can PHI appear in transcripts, CRM notes, claims data, or generated responses?",
         "What answer types require human approval, suppression, or escalation?",
@@ -413,6 +476,20 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
 // ── Financial Services / Commercial Lending Agent Assist ───────────────────
 const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
   blueprintId: "financial_services_commercial_lending_agent_assist",
+  suggestionKeywords: [
+    "commercial lending",
+    "loan",
+    "lending",
+    "credit",
+    "kyc",
+    "sanctions",
+    "collateral",
+    "covenant",
+    "servicing",
+    "loan origination",
+    "core banking",
+    "document intelligence",
+  ],
   blueprintVersion: "2026-07-22",
   archetypeLabel: "Financial Services Commercial Lending Agent Assist",
   evidenceFamilies: [
@@ -451,7 +528,8 @@ const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       id: "document_intake_quality",
       label: "Document intake, collateral, and data-quality evidence",
-      grounds: "Data Foundation · Exception Reduction · Agent Assist Retrieval Scope",
+      grounds:
+        "Data Foundation · Exception Reduction · Agent Assist Retrieval Scope",
       required: true,
       likelySource: "Loan Ops / Collateral / Document Management",
       format: "Document inventory + quality sample",
@@ -466,7 +544,8 @@ const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
     },
     {
       id: "relationship_manager_credit_ops_org",
-      label: "RM, credit analyst, KYC, collateral, and servicing operating model",
+      label:
+        "RM, credit analyst, KYC, collateral, and servicing operating model",
       grounds: "Operating Model · Adoption Risk · Change Plan",
       required: false,
       likelySource: "Commercial Bank Leadership / Workforce Planning",
@@ -515,7 +594,8 @@ const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       role: "Enterprise architect / lending technology owner",
       side: "it",
-      objectives: "LOS, CRM, document management, core banking, data, and integration scope",
+      objectives:
+        "LOS, CRM, document management, core banking, data, and integration scope",
       questions: [
         "Which systems are sources of record for customer, loan, document, approval, collateral, covenant, and servicing data?",
         "Which systems can be read in near real time, and which remain batch or manual?",
@@ -622,27 +702,423 @@ const DEFAULT_BLUEPRINT: DiscoveryBlueprint = {
   ],
 };
 
-/** Resolve the discovery blueprint for an archetype (ops tokens → AI-Operations). */
-export function getDiscoveryBlueprint(
+// ── Governed Data Foundation for AI / LLM Automation ────────────────────────
+// A data-governance / platform-readiness archetype: the bet is a certified,
+// governed data foundation (ownership, semantic layer, lineage/audit, quality,
+// platform) BEFORE any AI/LLM workflow is claimed. Distinct from the
+// contact-center agent-assist archetype, which the keyword matcher wrongly
+// inferred for data-foundation Moves that mention clinical/claims terms.
+const GOVERNED_DATA_FOUNDATION: DiscoveryBlueprint = {
+  blueprintId: "governed_data_foundation",
+  blueprintVersion: "2026-10-05",
+  archetypeLabel: "Governed Data Foundation for AI / LLM Automation",
+  suggestionKeywords: [
+    "data foundation",
+    "data governance",
+    "governed data",
+    "semantic layer",
+    "lineage",
+    "data quality",
+    "medallion",
+    "lakehouse",
+    "data catalog",
+    "master data",
+    "identity spine",
+    "ai audit",
+    "data platform",
+  ],
+  evidenceFamilies: [
+    {
+      id: "data_governance_ownership",
+      label:
+        "Data governance ownership (council, policies, decision rights, stewardship)",
+      grounds: "Current-State Assessment · Operating Model · Gate controls",
+      required: true,
+      likelySource: "Data governance / CDO office",
+      format: "Doc",
+    },
+    {
+      id: "semantic_layer_certification",
+      label:
+        "Semantic layer / certified metric & entity definitions and ownership",
+      grounds: "Target Architecture · Value Model",
+      required: true,
+      likelySource: "Analytics engineering / data platform",
+      format: "Doc",
+    },
+    {
+      id: "data_lineage_audit_trail",
+      label: "Data lineage + AI/model audit trail (source-to-use traceability)",
+      grounds: "Current-State · Responsible-AI controls",
+      required: true,
+      likelySource: "Data platform / governance",
+      format: "Doc",
+    },
+    {
+      id: "data_quality_rules",
+      label:
+        "Data quality rules (defined, loaded, monitored) + exception owners",
+      grounds: "Current-State Assessment · Gate controls",
+      required: true,
+      likelySource: "Data quality / stewardship",
+      format: "CSV",
+    },
+    {
+      id: "source_system_data_access",
+      label:
+        "Source system data access (EMR, claims, pharmacy, marts) + contracts/SLAs",
+      grounds: "Current-State · Target Architecture",
+      required: true,
+      likelySource: "Enterprise Architecture / source owners",
+      format: "CSV",
+    },
+    {
+      id: "platform_architecture_readiness",
+      label:
+        "Platform & architecture readiness (lakehouse/medallion, environments)",
+      grounds: "Target Architecture",
+      required: true,
+      likelySource: "Data platform engineering",
+      format: "Doc",
+    },
+    {
+      id: "master_identity_resolution",
+      label:
+        "Master / entity identity resolution (patient, member, provider spine)",
+      grounds: "Target Architecture · Value Model",
+      required: true,
+      likelySource: "Data governance / MDM",
+      format: "Doc",
+    },
+    {
+      id: "privacy_security_controls",
+      label:
+        "Privacy & security controls for the data foundation (PHI, access)",
+      grounds: "Risk · Gate controls",
+      required: true,
+      likelySource: "Security / privacy office",
+      format: "Doc",
+    },
+    {
+      id: "model_risk_responsible_ai_controls",
+      label: "Responsible-AI / model-risk controls for downstream automation",
+      grounds: "Risk · Responsible-AI controls",
+      required: true,
+      likelySource: "Model risk / responsible AI",
+      format: "Doc",
+    },
+    {
+      id: "measurement_owner_cadence",
+      label: "Measurement owners + cadence for the certified foundation",
+      grounds: "Value Model · Operating Model",
+      required: true,
+      likelySource: "Analytics / finance",
+      format: "Doc",
+    },
+    {
+      id: "finance_baseline_value_plan",
+      label:
+        "Finance baseline + value plan (quantify after baselines sign off)",
+      grounds: "Value Model · Business Case",
+      required: true,
+      likelySource: "Finance",
+      format: "XLSX",
+    },
+    {
+      id: "change_adoption_owner",
+      label: "Change / adoption owner for governed-foundation rollout",
+      grounds: "Operating Model",
+      required: false,
+      likelySource: "Transformation / change",
+      format: "Doc",
+    },
+  ],
+  interviewRoster: [
+    {
+      role: "Chief Data / Analytics Officer (sponsor)",
+      side: "business",
+      objectives: "Outcome, value, governance mandate, success/kill",
+      questions: [
+        "What does a certified, governed foundation unlock?",
+        "What would make this a kill?",
+      ],
+    },
+    {
+      role: "Data governance lead",
+      side: "business",
+      objectives: "Ownership, policies, decision rights, stewardship",
+      questions: [
+        "Who owns governance decisions and stewardship today?",
+        "Which policies and controls are actually enforced?",
+      ],
+    },
+    {
+      role: "Data platform architect",
+      side: "it",
+      objectives: "Semantic layer, lineage, platform readiness",
+      questions: [
+        "What is certified in the semantic layer vs. ad hoc?",
+        "Where does lineage/audit break today?",
+      ],
+    },
+    {
+      role: "Data quality / MDM lead",
+      side: "it",
+      objectives: "Quality rules + identity resolution",
+      questions: [
+        "Which data quality rules are loaded and monitored?",
+        "How is master/entity identity resolved today?",
+      ],
+    },
+    {
+      role: "Finance lead",
+      side: "business",
+      objectives: "Baselines + value plan",
+      questions: [
+        "What baselines must the value model tie to?",
+        "What signoff is required before quantifying value?",
+      ],
+    },
+  ],
+};
+
+/**
+ * The discovery blueprint catalog — the single source of truth, keyed by
+ * `blueprintId` (the archetype id). Adding an industry/client archetype is a
+ * catalog entry, not a new matcher branch. This is the extensibility seam a
+ * deploying firm configures against (today in code; later movable to
+ * DB/config + a setup UI) without touching resolution logic.
+ */
+export const DISCOVERY_BLUEPRINT_CATALOG: Readonly<
+  Record<string, DiscoveryBlueprint>
+> = {
+  [AI_OPERATIONS.blueprintId]: AI_OPERATIONS,
+  [HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST.blueprintId]:
+    HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST,
+  [FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST.blueprintId]:
+    FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST,
+  [GOVERNED_DATA_FOUNDATION.blueprintId]: GOVERNED_DATA_FOUNDATION,
+  [DEFAULT_BLUEPRINT.blueprintId]: DEFAULT_BLUEPRINT,
+};
+
+/**
+ * How far the built-in seed's shared families have drifted from the library's
+ * canonical wording. Read-only provenance for a setup flow; it changes no
+ * resolution.
+ */
+export function discoveryCatalogSharedFamilyDrift(): SharedEvidenceFamilyDrift[] {
+  return sharedEvidenceFamilyDrift(DISCOVERY_BLUEPRINT_CATALOG);
+}
+
+/**
+ * The shape every blueprint catalog has: archetype id to blueprint. The
+ * built-in seed is one; the effective catalog a configured source produces is
+ * another, and resolution must be able to run against either.
+ */
+export type DiscoveryBlueprintCatalog = Readonly<
+  Record<string, DiscoveryBlueprint>
+>;
+
+/**
+ * Resolve a DECLARED archetype to its blueprint — the authoritative path.
+ * Returns null when nothing was declared or the declaration does not exactly
+ * match a known catalog archetype (so a stale/garbage value falls through to
+ * inference rather than silently mis-selecting a blueprint).
+ *
+ * The catalog is a parameter, defaulting to the built-in seed, because a
+ * configured source can ADD an archetype: the id joins the effective catalog
+ * and is listed as applied, but a resolver bound to the seed can never answer
+ * a declaration of it, so the archetype is live in the catalog and unreachable
+ * by the only mechanism that selects one. The artifact-pack half already
+ * resolves against whichever catalog it is handed; this is the same rule.
+ */
+export function resolveDeclaredDiscoveryBlueprint(
+  declaredArchetypeId: string | null | undefined,
+  catalog: DiscoveryBlueprintCatalog = DISCOVERY_BLUEPRINT_CATALOG,
+): DiscoveryBlueprint | null {
+  return resolveArchetypeCatalogEntry(catalog, declaredArchetypeId);
+}
+
+export interface DiscoveryArchetypeSuggestion {
+  blueprintId: string;
+  archetypeLabel: string;
+  /** How many suggestion keywords matched the text (higher = stronger hint). */
+  score: number;
+}
+
+export interface DiscoveryArchetypeOption {
+  blueprintId: string;
+  archetypeLabel: string;
+}
+
+export function listDiscoveryArchetypeOptions(): DiscoveryArchetypeOption[] {
+  return Object.values(DISCOVERY_BLUEPRINT_CATALOG)
+    .map(({ blueprintId, archetypeLabel }) => ({ blueprintId, archetypeLabel }))
+    .sort((a, b) => a.archetypeLabel.localeCompare(b.archetypeLabel));
+}
+
+/**
+ * Setup-time suggestion only: rank catalog archetypes by how well their
+ * `suggestionKeywords` match a Move's text, so an origination/setup flow can
+ * PROPOSE an archetype for a human to confirm and declare. This never resolves
+ * a blueprint on its own — resolution honors the declaration
+ * (`resolveDeclaredDiscoveryBlueprint`); this only helps a person choose what to
+ * declare. The general default is never suggested.
+ */
+export function suggestDiscoveryArchetypes(
+  text: string,
+  limit = 3,
+): DiscoveryArchetypeSuggestion[] {
+  const haystack = (text || "").toLowerCase();
+  if (!haystack.trim()) return [];
+  return Object.values(DISCOVERY_BLUEPRINT_CATALOG)
+    .filter((bp) => bp.blueprintId !== DEFAULT_BLUEPRINT.blueprintId)
+    .map((bp) => {
+      const keywords =
+        bp.suggestionKeywords && bp.suggestionKeywords.length > 0
+          ? bp.suggestionKeywords
+          : [
+              bp.archetypeLabel.toLowerCase(),
+              bp.blueprintId.replace(/_/g, " "),
+            ];
+      let score = 0;
+      for (const keyword of keywords) {
+        if (keyword && haystack.includes(keyword.toLowerCase())) score += 1;
+      }
+      return {
+        blueprintId: bp.blueprintId,
+        archetypeLabel: bp.archetypeLabel,
+        score,
+      };
+    })
+    .filter((suggestion) => suggestion.score > 0)
+    .sort(
+      (a, b) => b.score - a.score || a.blueprintId.localeCompare(b.blueprintId),
+    )
+    .slice(0, Math.max(0, limit));
+}
+
+/** Resolve the discovery blueprint for a Move.
+ *
+ * Identity is declared, never inferred: a `declaredArchetypeId` that matches a
+ * catalog archetype wins outright. Only when nothing is declared (or the
+ * declaration is unknown) does keyword inference run, and it is a fallback
+ * suggestion, never authority. `useCaseArchetype` that is itself exactly a
+ * catalog id is also honored as a declaration.
+ */
+/**
+ * How a blueprint came to be selected for a Move. Every value above `inferred`
+ * means a human's declaration decided it; `inferred` and `default` mean nobody
+ * did, and keyword matching (or the general case) chose instead.
+ */
+export type DiscoveryBlueprintBasis =
+  /** `declaredArchetypeId` matched a catalog archetype. */
+  | "declared"
+  /** The `useCaseArchetype` argument was itself exactly a catalog archetype id. */
+  | "declared_via_use_case"
+  /** Nothing matched the catalog; keyword inference picked a specific archetype. */
+  | "inferred"
+  /** Nothing matched and no keywords fired; the general-case blueprint applies. */
+  | "default";
+
+export interface DiscoveryBlueprintResolution {
+  blueprint: DiscoveryBlueprint;
+  basis: DiscoveryBlueprintBasis;
+  /**
+   * A declaration WAS supplied but does not name a catalog archetype, so it was
+   * discarded and selection fell through to inference. Non-null here is a
+   * governance signal, not a detail: the blueprint grading this Move's evidence
+   * was not the one anybody declared. Callers surfacing a blueprint to a person
+   * should say so rather than present the selection as declared.
+   */
+  unknownDeclaration: string | null;
+}
+
+/**
+ * Resolve the discovery blueprint for a Move AND report what decided it.
+ *
+ * `getDiscoveryBlueprint` is this function's blueprint, with the provenance
+ * dropped; the selection rules live here and have exactly one implementation.
+ */
+export function resolveDiscoveryBlueprintWithBasis(
   useCaseArchetype: string,
-): DiscoveryBlueprint {
+  declaredArchetypeId?: string | null,
+  catalog: DiscoveryBlueprintCatalog = DISCOVERY_BLUEPRINT_CATALOG,
+): DiscoveryBlueprintResolution {
+  // Declared identity wins over inference. Try the explicit declaration first,
+  // then the primary arg in case a caller passed a clean catalog id as the
+  // archetype. A multi-word inference blob won't exact-match a catalog key, so
+  // this never false-matches.
+  //
+  // Only the DECLARED branches read the catalog argument. Inference is keyword
+  // branches over the shipped constants and cannot be extended by data, so a
+  // configured archetype is reachable by declaration and never by inference —
+  // which is the rule this product already states: identity is declared.
+  const declaredBlueprint = resolveDeclaredDiscoveryBlueprint(
+    declaredArchetypeId,
+    catalog,
+  );
+  if (declaredBlueprint) {
+    return {
+      blueprint: declaredBlueprint,
+      basis: "declared",
+      unknownDeclaration: null,
+    };
+  }
+  const declaredViaUseCase = resolveDeclaredDiscoveryBlueprint(
+    useCaseArchetype,
+    catalog,
+  );
+  if (declaredViaUseCase) {
+    return {
+      blueprint: declaredViaUseCase,
+      basis: "declared_via_use_case",
+      unknownDeclaration: null,
+    };
+  }
+
+  // A declaration that was supplied and did not resolve is carried out, because
+  // the caller cannot otherwise tell this case from "nothing was declared" —
+  // and the two have very different standing.
+  const unknownDeclaration =
+    declaredArchetypeId && declaredArchetypeId.trim()
+      ? declaredArchetypeId.trim()
+      : null;
+
+  const inferred = inferDiscoveryBlueprint(useCaseArchetype);
+  return {
+    blueprint: inferred,
+    basis: inferred.blueprintId === DEFAULT_BLUEPRINT.blueprintId ? "default" : "inferred",
+    unknownDeclaration,
+  };
+}
+
+/** Keyword inference — the fallback, never authority. */
+function inferDiscoveryBlueprint(useCaseArchetype: string): DiscoveryBlueprint {
   const a = (useCaseArchetype || "").toLowerCase();
-  if (
+  const hasFinancialLendingSignals =
     /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
       a,
     ) &&
     /agent.?assist|agentic.?assist|ai.?assist|document.?intelligence|onboarding|workflow|operations?/.test(
       a,
-    )
-  ) {
-    return FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST;
-  }
-  if (
-    /health|meridian|member.?service|member.?experience|contact.?center|call.?center|agent.?assist|agentic.?assist|customer.?service.?ai|claims?|eligibility|benefits?|prior.?auth|authorization|crm/.test(
+    );
+  const hasHealthcareDomainSignals =
+    /health|meridian|clinical|provider|payer|patient|member|claims?|eligibility|benefits?|prior.?auth|authorization|phi/.test(
       a,
-    )
-  ) {
+    );
+  const hasMemberServiceAgentAssistSignals =
+    /member.?service|member.?experience|contact.?center|call.?center|customer.?service|agent.?assist|agentic.?assist|assisted.?agent|crm/.test(
+      a,
+    );
+  const hasHealthcareMemberServiceSignals =
+    hasHealthcareDomainSignals && hasMemberServiceAgentAssistSignals;
+
+  if (hasHealthcareMemberServiceSignals) {
     return HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST;
+  }
+  if (hasFinancialLendingSignals) {
+    return FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST;
   }
   if (
     /irops|re-?accom|recovery|disrupt|operation|ai_ops|ai-operations|customer.?digital|operational_optimization|ai_operations/.test(
@@ -652,4 +1128,311 @@ export function getDiscoveryBlueprint(
     return AI_OPERATIONS;
   }
   return DEFAULT_BLUEPRINT;
+}
+
+/** Resolve the discovery blueprint for a Move.
+ *
+ * Identity is declared, never inferred: a `declaredArchetypeId` that matches a
+ * catalog archetype wins outright. Only when nothing is declared (or the
+ * declaration is unknown) does keyword inference run, and it is a fallback
+ * suggestion, never authority. `useCaseArchetype` that is itself exactly a
+ * catalog id is also honored as a declaration.
+ *
+ * Use `resolveDiscoveryBlueprintWithBasis` when the caller shows the selected
+ * archetype to a person and therefore needs to say whether it was declared.
+ */
+export function getDiscoveryBlueprint(
+  useCaseArchetype: string,
+  declaredArchetypeId?: string | null,
+): DiscoveryBlueprint {
+  return resolveDiscoveryBlueprintWithBasis(useCaseArchetype, declaredArchetypeId)
+    .blueprint;
+}
+
+// ── Config contract + loader (Phase 2 of the configurable archetype layer) ──
+// The catalog is data: these schemas define what a configured source — a JSON
+// file today, a DB table or setup UI later — must satisfy, and the loader
+// overlays a validated configured source onto the built-in seed. The seam lets
+// a deploying firm add or override an archetype WITHOUT shipping code, while an
+// invalid source is rejected whole so the catalog can never be partially
+// corrupted. Co-located with the catalog it governs.
+// A configured id becomes a key on the effective catalog. Some snake_case
+// strings are not usable as keys: `__proto__` is a setter on
+// `Object.prototype`, so assigning it changes an object's prototype instead of
+// adding an entry, and `constructor` / `prototype` read back as inherited
+// built-ins rather than as a declared archetype. The id regex admits all three.
+// They are rejected at the contract so a configured source can never name an
+// identity the catalog cannot hold — identity is declared, and a declaration
+// the catalog would silently drop is not a declaration.
+const UNUSABLE_CATALOG_KEYS = ["__proto__", "constructor", "prototype"];
+
+const usableAsCatalogKey = (id: string) => !UNUSABLE_CATALOG_KEYS.includes(id);
+
+const UNUSABLE_KEY_MESSAGE =
+  "id must not be a JavaScript object key (__proto__, constructor, prototype)";
+
+export const EvidenceFamilySchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "family id must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+  label: z.string().min(1),
+  grounds: z.string().min(1),
+  required: z.boolean(),
+  likelySource: z.string().min(1),
+  format: z.string().min(1),
+});
+
+export const InterviewRoleSchema = z.object({
+  role: z.string().min(1),
+  side: z.enum(["business", "it"]),
+  objectives: z.string().min(1),
+  questions: z.array(z.string().min(1)).min(1),
+});
+
+/**
+ * A configured reference to a library family (`SHARED_EVIDENCE_FAMILIES`),
+ * with any field restated for this archetype.
+ *
+ * Strict: an unrecognised key is refused rather than stripped. A reference is
+ * mostly absent fields, so a misspelled override (`liklySource`) would
+ * otherwise be dropped in silence and the archetype would ship the canonical
+ * wording while its author read their own.
+ *
+ * `id` is not a field here — it comes from the referenced family, so a
+ * reference can never rename what it points at. `ref` carries the same
+ * key-hazard refusal as a declared id: `{ "ref": "constructor" }` would
+ * otherwise name an inherited `Object.prototype` member.
+ */
+export const EvidenceFamilyRefSchema = z
+  .object({
+    ref: z
+      .string()
+      .min(1)
+      .regex(/^[a-z0-9_]+$/, "ref must be snake_case [a-z0-9_]")
+      .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+    label: z.string().min(1).optional(),
+    grounds: z.string().min(1).optional(),
+    required: z.boolean().optional(),
+    likelySource: z.string().min(1).optional(),
+    format: z.string().min(1).optional(),
+  })
+  .strict();
+
+const BOTH_REF_AND_ID_MESSAGE =
+  "an evidence family names `ref` (a library family) or `id` (its own), not both";
+
+/**
+ * One configured evidence family: written out in full, or a reference.
+ *
+ * Dispatched on the presence of `ref` rather than parsed as a `z.union`. A
+ * union reports `invalid_union: Invalid input` whenever both branches fail
+ * with more than one issue each, which is exactly the malformed-config case an
+ * operator needs the message for — the field and the reason are the whole
+ * value of the contract. Dispatching forwards the chosen branch's own issues
+ * at their own paths.
+ *
+ * Naming both `ref` and `id` is refused, not resolved. `EvidenceFamilySchema`
+ * strips unknown keys, so a spec carrying both would pass as a fully-written
+ * family under the declared `id`, with the `ref` dropped: the author's
+ * overrides would land on a family that borrows nothing from the library they
+ * named.
+ */
+export const EvidenceFamilySpecSchema = z
+  .unknown()
+  .transform((spec, ctx): EvidenceFamilySpec => {
+    if (typeof spec !== "object" || spec === null || Array.isArray(spec)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "an evidence family must be an object",
+      });
+      return z.NEVER;
+    }
+    const named = spec as Record<string, unknown>;
+    if ("ref" in named && "id" in named) {
+      ctx.addIssue({ code: "custom", message: BOTH_REF_AND_ID_MESSAGE });
+      return z.NEVER;
+    }
+    const parsed = (
+      "ref" in named ? EvidenceFamilyRefSchema : EvidenceFamilySchema
+    ).safeParse(spec);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({ ...issue, path: issue.path });
+      }
+      return z.NEVER;
+    }
+    return parsed.data;
+  });
+
+/** What a spec declares as its identity, before the library is consulted. */
+const specIdentityToken = (spec: EvidenceFamilySpec): string =>
+  "ref" in spec ? spec.ref : spec.id;
+
+export const DiscoveryBlueprintSchema = z.object({
+  blueprintId: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9_]+$/, "blueprintId must be snake_case [a-z0-9_]")
+    .refine(usableAsCatalogKey, { message: UNUSABLE_KEY_MESSAGE }),
+  blueprintVersion: z.string().min(1),
+  archetypeLabel: z.string().min(1),
+  suggestionKeywords: z.array(z.string().min(1)).optional(),
+  evidenceFamilies: z
+    .array(EvidenceFamilySpecSchema)
+    .min(1)
+    .refine(
+      (families) =>
+        new Set(families.map(specIdentityToken)).size === families.length,
+      { message: "evidence family ids must be unique within a blueprint" },
+    ),
+  interviewRoster: z.array(InterviewRoleSchema).min(1),
+});
+
+export const DiscoveryBlueprintCatalogSchema = z.array(
+  DiscoveryBlueprintSchema,
+);
+
+export type DiscoveryBlueprintConfig = z.infer<typeof DiscoveryBlueprintSchema>;
+
+export interface LoadedDiscoveryBlueprintCatalog {
+  catalog: Record<string, DiscoveryBlueprint>;
+  /** Added or overridden archetype ids from the configured source. */
+  applied: string[];
+  /** Validation errors; when non-empty the configured source was rejected. */
+  errors: string[];
+}
+
+/**
+ * Build the effective catalog: the built-in seed, with a validated configured
+ * source overlaid on top (an entry whose `blueprintId` matches a seed id
+ * overrides it; a new id adds an archetype). A configured source that fails
+ * validation is rejected whole — the seed is returned unchanged and the errors
+ * are surfaced — so a malformed config cannot partially corrupt the catalog.
+ *
+ * A configured archetype may give each evidence family either in full or as a
+ * reference to a library family (`{ "ref": "kpi_baseline" }`, optionally
+ * restating fields). The library has held those canonical definitions and the
+ * composition for them since Phase 3, but this contract only accepted
+ * fully-written families, so the only authorable form was the one the library
+ * exists to remove — the library was reachable from code and from nothing an
+ * operator could write. References are composed here, before the catalog is
+ * written, so every consumer downstream still reads concrete families and
+ * nothing beyond this function knows a reference was used.
+ *
+ * Composition failures (an unknown reference, a duplicate resolved id) reject
+ * the source whole, like a schema failure: a half-composed archetype asks a
+ * client for evidence that is missing a family, with nothing on any screen
+ * saying one went missing.
+ */
+export function loadDiscoveryBlueprintCatalog(
+  configuredBlueprints?: unknown,
+): LoadedDiscoveryBlueprintCatalog {
+  // Prototype-free, for two reasons. It answers only ids it was given, so no
+  // caller can reach an inherited member and read it back as an archetype; and
+  // with no `Object.prototype` behind it, writing a key can never invoke an
+  // inherited setter, so every id written becomes an own key and `applied`
+  // cannot name an id the catalog does not hold.
+  const catalog: Record<string, DiscoveryBlueprint> = Object.assign(
+    Object.create(null) as Record<string, DiscoveryBlueprint>,
+    DISCOVERY_BLUEPRINT_CATALOG,
+  );
+  if (configuredBlueprints == null) {
+    return { catalog, applied: [], errors: [] };
+  }
+  const parsed =
+    DiscoveryBlueprintCatalogSchema.safeParse(configuredBlueprints);
+  if (!parsed.success) {
+    return {
+      catalog,
+      applied: [],
+      errors: parsed.error.issues.map(
+        (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+      ),
+    };
+  }
+  const composed: DiscoveryBlueprint[] = [];
+  const compositionErrors: string[] = [];
+  parsed.data.forEach((blueprint, index) => {
+    const { families, errors } = composeEvidenceFamilies(
+      blueprint.evidenceFamilies,
+    );
+    if (errors.length > 0) {
+      compositionErrors.push(...errors.map((error) => `${index}.${error}`));
+      return;
+    }
+    composed.push({
+      ...blueprint,
+      evidenceFamilies: families,
+    } as DiscoveryBlueprint);
+  });
+  if (compositionErrors.length > 0) {
+    return { catalog, applied: [], errors: compositionErrors };
+  }
+  // An id joins the catalog as a key, but it is SELECTED by declaration, and a
+  // declaration is matched in normalized form. `/^[a-z0-9_]+$/` admits ids that
+  // are distinct as keys and identical as declarations (`ai__operations`
+  // collapses to `ai_operations`, `_ai_operations` likewise). Two such ids make
+  // the resolved archetype depend on key order: the configured entry is listed
+  // as applied, while a Move declaring either token resolves the other. Refused
+  // whole, with the collision named, because the alternative is an archetype
+  // that is live in the catalog and unreachable by the only thing that picks
+  // one. The built-in seed is checked too — a configured id that collides with
+  // a SHIPPED archetype it does not equal is the likelier typo of the two.
+  const ambiguityErrors = ambiguousDeclarationErrors(composed);
+  if (ambiguityErrors.length > 0) {
+    return { catalog, applied: [], errors: ambiguityErrors };
+  }
+  const applied: string[] = [];
+  for (const blueprint of composed) {
+    catalog[blueprint.blueprintId] = blueprint;
+    applied.push(blueprint.blueprintId);
+  }
+  return { catalog, applied, errors: [] };
+}
+
+/**
+ * Configured ids that no declaration can pick out, because they normalize onto
+ * a different id already in play — another configured entry, or a shipped one.
+ *
+ * Equality is not a collision: an id that matches a seed id exactly is the
+ * override the seam is built on. Only a DIFFERENT spelling that normalizes the
+ * same is refused.
+ */
+function ambiguousDeclarationErrors(
+  composed: readonly DiscoveryBlueprint[],
+): string[] {
+  const errors: string[] = [];
+  const claimedBy = new Map<string, string>();
+  for (const seedId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+    claimedBy.set(normalizeArchetypeId(seedId), seedId);
+  }
+  composed.forEach((blueprint, index) => {
+    const normalized = normalizeArchetypeId(blueprint.blueprintId);
+    const claimant = claimedBy.get(normalized);
+    if (claimant !== undefined && claimant !== blueprint.blueprintId) {
+      errors.push(
+        `${index}.blueprintId: "${blueprint.blueprintId}" cannot be declared ` +
+          `unambiguously — it reads as the same archetype as "${claimant}"`,
+      );
+      return;
+    }
+    claimedBy.set(normalized, blueprint.blueprintId);
+  });
+  return errors;
+}
+
+/**
+ * Validate the built-in seed against the schema. The seam only holds if the
+ * seed itself conforms to the contract a configured source must meet.
+ */
+export function validateBuiltInDiscoveryBlueprintCatalog(): string[] {
+  const parsed = DiscoveryBlueprintCatalogSchema.safeParse(
+    Object.values(DISCOVERY_BLUEPRINT_CATALOG),
+  );
+  if (parsed.success) return [];
+  return parsed.error.issues.map(
+    (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+  );
 }

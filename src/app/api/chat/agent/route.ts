@@ -48,16 +48,18 @@ import {
   summarizeFinancialValueForPrompt,
   type RestrictedOutputPolicyLike,
 } from "@/lib/agent/restricted-output-policy";
-import { AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK } from "@/lib/ai-liability/human-decision-controls";
-// AI surface control catalog evidence token:
-// sanitizeAutonomousDecisionLanguage
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  createAutonomousDecisionTextStreamer,
+} from "@/lib/ai-liability/human-decision-controls";
 // Global aVa Product Truth + Scope Guard (all agents, all surfaces).
 // See src/lib/agent/product-truth/.
 import { buildProductTruthSystemPromptBlock } from "@/lib/agent/product-truth";
 import {
-  canonicalClientDisplayName,
+  canonicalClientDisplayNameOrNull,
   demoSafeClientText,
 } from "@/lib/client-config";
+import { resolveTurnTenantName } from "./active-tenant-name";
 import {
   retrieveStageContext,
   retrieveCategoryContext,
@@ -93,7 +95,6 @@ import {
   isStewardVoiceDoctrineEnabled,
 } from "@/lib/agent/voice-doctrine/steward";
 import { VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT } from "@/lib/agent/visible-answer-contract";
-import { isDirectClaudeSurface } from "@/lib/agent/display-text";
 // Wave 3 PR-3 · TrustSpine grounding for the Steward chat dock.
 // Pulls live tenant posture (substrate, connectors, isolation,
 // governance) and threads it into the system prompt so Steward can
@@ -126,6 +127,11 @@ import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidenc
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import {
+  formatSolutionRouteDepthForPrompt,
+  resolveConfirmedSolutionRoute,
+} from "@/lib/programs/solution-route-assessment";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -143,6 +149,8 @@ import {
   formatMovesAvaChatPacketForPrompt,
   shouldBuildMovesAvaPacketForMode,
 } from "@/lib/programs/ava-chat";
+import { resolveMovesAvaVisibleEvidenceCount } from "@/lib/programs/ava-chat/evidence-count";
+import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness";
 import {
   buildDeterministicMovesAvaStatusAnswer,
   buildDeterministicPhaseInputDraftAnswer,
@@ -175,17 +183,17 @@ import { buildAvaSourcePortfolioGrounding } from "@/lib/source/facts/view/ava-po
 // like the value grounding above: when `source_analytics` is off or no event id
 // is present, none of this runs and the chat is byte-for-byte unchanged.
 import {
+  buildSourceAnswerModeDisclosureBlock,
   classifySourceAnswerMode,
   isPhaseBImplementedMode,
   isPhaseCImplementedMode,
   isGroundedAnswerMode,
   shouldSuppressGenericContextBundleForSourceMode,
 } from "@/lib/source/ava/answer-mode";
-import {
-  buildSourceContract360PromptBlock,
-  buildSourcePortfolioFallbackAnswer,
-} from "@/lib/source/ava/portfolio-fallback-answer";
+import { buildSourcePortfolioFallbackAnswer } from "@/lib/source/ava/portfolio-fallback-answer";
+import { buildAuthorizedSourceContract360PromptBlock } from "@/lib/source/ava/server-contract-answer-context";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
+import { resolveContractQuestionId } from "@/lib/source/ava/contract-question-identity";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import {
@@ -375,7 +383,10 @@ const DEFAULT_VOICE =
   "You are an AbarVa AI advisor. Be direct, specific, and actionable.";
 const DEFAULT_AGENT_RESPONSE_MAX_TOKENS = 2048;
 const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096;
-const SOURCE_AGENT_RESPONSE_MAX_TOKENS = 4096;
+// Source contract reviews carry purpose, anatomy, evidence boundaries, and a
+// client-ready lever table. Keep enough headroom for Claude to explain the
+// decision without collapsing the table into labels or dropping the caveats.
+const SOURCE_AGENT_RESPONSE_MAX_TOKENS = 8192;
 const PROGRAM_DELIVERABLE_SAVE_RE =
   /\b(save|persist|sign\s*off|signed\s*off|complete|approve|submit)\b/i;
 const PROGRAM_DELIVERABLE_NOUN_RE =
@@ -562,13 +573,10 @@ export async function POST(request: Request) {
   const earlyActiveClient = await getActiveClientRow().catch(() => null);
   const earlyActiveClientKey =
     earlyActiveClient?.key ?? (await getActiveClientKey().catch(() => null));
-  const tenantName =
-    canonicalClientDisplayName({
-      key: earlyActiveClientKey,
-      name: earlyActiveClient?.name,
-    }) ??
-    canonicalClientDisplayName({ name: body.tenantName }) ??
-    "Unknown active tenant";
+  const tenantName = resolveTurnTenantName({
+    activeClientKey: earlyActiveClientKey,
+    activeClientName: earlyActiveClient?.name,
+  });
   const agentName = body.agentName ?? null;
   const stage = body.stage ?? null;
   // PR-G surface canonicalization. Two surface-key conventions exist
@@ -707,7 +715,7 @@ export async function POST(request: Request) {
   const activeClient = earlyActiveClient;
   const activeClientKey = earlyActiveClientKey;
   const activeClientDisplayName =
-    canonicalClientDisplayName({
+    canonicalClientDisplayNameOrNull({
       key: activeClientKey,
       name: activeClient?.name,
     }) ?? tenantName;
@@ -814,6 +822,39 @@ export async function POST(request: Request) {
           }
         }
 
+        if (promptPhase === 3 && surface.startsWith("/strategic-moves/")) {
+          const modules = await getModuleState(tenancy, programId).catch(
+            () => [],
+          );
+          const moduleValue = (phase: number, key: string) => {
+            const row = modules.find(
+              (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, key),
+            );
+            return readPhaseCaptureModuleValue(row?.state);
+          };
+          const approvedPhaseTwoEvidence = await listApprovedPhaseEvidence(
+            tenancy,
+            programId,
+            2,
+          );
+          const confirmedRoute = resolveConfirmedSolutionRoute({
+            businessChangeAssessment: moduleValue(
+              1,
+              "business_change_assessment",
+            ),
+            routeValidation: moduleValue(2, "solution_route_validation"),
+            approvedEvidenceReferences: approvedPhaseTwoEvidence.map(
+              (item) => item.evidenceId,
+            ),
+          });
+          phasePackBlock = [
+            phasePackBlock,
+            formatSolutionRouteDepthForPrompt(confirmedRoute),
+          ]
+            .filter(Boolean)
+            .join("\n\n");
+        }
+
         const movesAvaChatHardeningEnabled = isFeatureEnabled(
           {
             clientKey: activeClientKey ?? null,
@@ -857,18 +898,52 @@ export async function POST(request: Request) {
             ).length;
             const hardGateTotal = blockingGateScope.length;
             const hardGateOpen = hardGateTotal - hardGateMet;
-            const visibleEvidenceCount =
-              liveMove?.linkedEvidence.length ?? evidence.length;
-            const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
-              tenancy,
-              programId,
-            );
-            const evidenceNeedPackets = buildMoveEvidenceNeedPackets({
-              moveId: programId,
-              moveName: engagement.name,
-              currentPhase: promptPhase,
-              readiness: evidenceReadiness,
+            const contextExtractFreshness =
+              await loadCurrentMoveContextExtractFreshness({
+                tenantKey: tenancy.clientKey ?? tenancy.clientId,
+                moveId: programId,
+                phase: promptPhase,
+              }).catch(() => null);
+            const visibleEvidenceCount = resolveMovesAvaVisibleEvidenceCount({
+              liveLinkedEvidenceCount: liveMove?.linkedEvidence.length,
+              pageEvidenceCount: evidence.length,
+              contextExtractFreshness,
             });
+            const terminalHandoffComplete =
+              promptPhase === 5 && Boolean(liveMove?.terminalComplete);
+            const evidenceNeedPackets = terminalHandoffComplete
+              ? []
+              : buildMoveEvidenceNeedPackets({
+                  moveId: programId,
+                  moveName: engagement.name,
+                  currentPhase: promptPhase,
+                  readiness: await loadDiscoveryEvidenceReadiness(
+                    tenancy,
+                    programId,
+                  ),
+                });
+            const mode = movesAvaMode ?? "phase_guidance";
+            let approvedEvidenceUnavailable = false;
+            let approvedEvidenceItems: Awaited<
+              ReturnType<typeof listProgramEvidenceForPrompt>
+            > = [];
+            let approvedEvidenceTotal = 0;
+            if (
+              mode === "evidence_summary" ||
+              (mode === "phase_input_draft" && promptPhase > 1)
+            ) {
+              try {
+                const loadedEvidenceItems = await listProgramEvidenceForPrompt(
+                  tenancy,
+                  programId,
+                  promptPhase,
+                );
+                approvedEvidenceTotal = loadedEvidenceItems.length;
+                approvedEvidenceItems = loadedEvidenceItems.slice(0, 8);
+              } catch {
+                approvedEvidenceUnavailable = true;
+              }
+            }
             const packet = buildMovesAvaChatPacket(
               {
                 tenant: tenantName,
@@ -894,15 +969,26 @@ export async function POST(request: Request) {
                 evidenceNeedPackets: evidenceNeedPackets.map(
                   formatMoveEvidenceNeedForAva,
                 ),
+                approvedEvidence: approvedEvidenceItems.map((item) => ({
+                  title: item.title,
+                  summary: item.summary,
+                  statements: item.structuredSignals.slice(0, 8),
+                  observations: item.observations.slice(0, 3),
+                  assumptions: item.assumptions.slice(0, 3),
+                  openQuestions: item.openQuestions.slice(0, 3),
+                  citations: item.citations.slice(0, 3),
+                })),
+                approvedEvidenceTotal,
+                approvedEvidenceUnavailable,
                 gateCriteria: liveGateCriteria.map((criterion) => ({
                   label: criterion.label,
                   met: criterion.completed,
                   severity: criterion.severity,
                 })),
+                terminalHandoffComplete,
               },
               message,
             );
-            const mode = movesAvaMode ?? "phase_guidance";
             movesAvaHardeningBlock = movesAvaChatHardeningEnabled
               ? formatMovesAvaChatPacketForPrompt(packet, mode)
               : "";
@@ -915,6 +1001,8 @@ export async function POST(request: Request) {
                 phase: promptPhase,
                 currentValues: valuesByPhase[promptPhase] ?? {},
                 upstreamValuesByPhase: valuesByPhase,
+                approvedEvidenceCount: approvedEvidenceTotal,
+                approvedEvidenceUnavailable,
               });
               movesAvaPhaseInputDraftAnswer =
                 buildDeterministicPhaseInputDraftAnswer({
@@ -925,17 +1013,41 @@ export async function POST(request: Request) {
                     phase: promptPhase,
                     currentValues: valuesByPhase[promptPhase] ?? {},
                     upstreamValuesByPhase: valuesByPhase,
+                    approvedEvidenceCount: approvedEvidenceTotal,
+                    approvedEvidenceUnavailable,
                   }),
                 });
             }
-            movesAvaDeterministicAnswer = movesAvaChatHardeningEnabled
-              ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
-              : null;
+            movesAvaDeterministicAnswer =
+              mode === "evidence_summary"
+                ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+                : movesAvaChatHardeningEnabled
+                  ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+                  : null;
           } catch {
-            // Never block the chat turn on the hardening layer — fall back
-            // to the existing phase-pack-only prompt.
+            // Evidence-summary questions are fail-closed even if another
+            // packet dependency fails; never fall back to free-form claims.
             movesAvaHardeningBlock = "";
-            movesAvaDeterministicAnswer = null;
+            if (movesAvaMode === "evidence_summary") {
+              const unavailableEvidencePacket = buildMovesAvaChatPacket(
+                {
+                  tenant: tenantName,
+                  moveId: programId,
+                  moveTitle: engagement.name,
+                  currentPhase: promptPhase,
+                  currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
+                  approvedEvidenceUnavailable: true,
+                },
+                message,
+              );
+              movesAvaDeterministicAnswer =
+                buildDeterministicMovesAvaStatusAnswer(
+                  unavailableEvidencePacket,
+                  movesAvaMode,
+                );
+            } else {
+              movesAvaDeterministicAnswer = null;
+            }
             movesAvaPhaseInputDraftAnswer = null;
           }
         }
@@ -1477,7 +1589,10 @@ export async function POST(request: Request) {
   // This reads the same governed builders the Optimize page renders from, so
   // aVa's numbers cannot diverge from the ones on screen. Additive: no contract
   // id, an unknown contract, or a read failure leaves the block empty.
-  const contractIdFromContext = resolveSourceContractId(surfaceContext);
+  const contractIdFromContext = resolveContractQuestionId(
+    message,
+    resolveSourceContractId(surfaceContext),
+  );
   let sourceContractGroundingBlock = "";
   let hasSourceContractGrounding = false;
   const contractGroundingTenantKeys = uniqueSourceTenantCandidates([
@@ -1530,6 +1645,14 @@ export async function POST(request: Request) {
   let sourceAvaAnswerMode:
     | ReturnType<typeof classifySourceAnswerMode>["mode"]
     | null = null;
+  // C-522 · the classifier's OTHER two fields, made visible to the model.
+  // `classifySourceAnswerMode` returns `.mode`, `.matchedRule` and
+  // `.isFallback`; this route kept only the first, so it built catch-all
+  // grounding without knowing the catch-all was a fall-through. C-403 measured
+  // that blind spot at 48 of 48 contract questions. Empty string on every turn
+  // that does not classify — the join-filter below strips it, so those turns
+  // are byte-identical.
+  let sourceAvaAnswerModeDisclosureBlock = "";
   let sourceAvaModeGroundingFacts: Record<string, string> = {};
   let sourceAvaModeEvidenceIncomplete = false;
   // Phase B only: the raw mode-grounding block text (for the quality gate's
@@ -1560,10 +1683,8 @@ export async function POST(request: Request) {
     activeClientKey
   ) {
     try {
-      // Resolve the value-at-stake baseline + viewing stage exactly as the canvas
-      // page does (getSourcingEvent → valueAtStakeUsd / currentStageKey). eventType
-      // is left unset so the archetype resolves the same way the canvas does (the
-      // first archetype carrying value-lever rules — today AMS).
+      // Resolve the value-at-stake baseline, viewing stage, and event archetype
+      // exactly as the canvas does. Unresolved/non-authored archetypes fail closed.
       const groundingEvent = await getSourcingEvent(
         sourceEventIdFromContext,
       ).catch(() => null);
@@ -1579,7 +1700,8 @@ export async function POST(request: Request) {
         clientKey: activeClientKey,
         stageKey: viewStageFromContext,
         baselineAmount: groundingEvent?.valueAtStakeUsd ?? null,
-        eventType: null,
+        eventType: groundingEvent?.eventType ?? null,
+        classifiedCategory: groundingEvent?.classifiedCategory ?? null,
       });
       if (grounding.block) {
         sourceAvaGroundingBlock = grounding.block;
@@ -1605,12 +1727,16 @@ export async function POST(request: Request) {
         viewedStage: viewStageFromContext,
       });
       sourceAvaAnswerMode = modeClassification.mode;
+      // The whole classification, not `.mode` — passing the mode alone would
+      // put `isFallback` back out of reach, and `general_advisory` is
+      // fallback-only, so the mode cannot carry that distinction itself.
+      sourceAvaAnswerModeDisclosureBlock =
+        buildSourceAnswerModeDisclosureBlock(modeClassification);
       // Contract Optimize turns can carry both `contractId` and `sourceEventId`.
       // When the single-contract read model is present, it is the authority for
       // this contract; do not append the older event/archetype block after it.
       const contractGroundingIsAuthoritativeForMode =
-        hasSourceContractGrounding &&
-        modeClassification.mode === "contract_optimization";
+        hasSourceContractGrounding;
       if (isGroundedAnswerMode(modeClassification.mode) && groundingEvent) {
         const modeStageKey =
           viewStageFromContext ?? groundingEvent.currentStageKey;
@@ -1771,6 +1897,8 @@ export async function POST(request: Request) {
         const modeStageViewRaw = buildLiveStageView({
           inputs: modeFactInputs,
           citations: {},
+          eventType: groundingEvent.eventType,
+          classifiedCategory: groundingEvent.classifiedCategory,
           baselineLabel: "Value at stake (event estimate)",
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           stageKey: modeStageKey,
@@ -1809,10 +1937,12 @@ export async function POST(request: Request) {
           factInputs: modeFactInputs,
           artifacts: modeArtifacts,
           question: message,
-          // Phase B/C inputs — eventType left unset so the archetype resolves
-          // the same way the canvas/value-grounding does (the first archetype
-          // carrying value-lever rules — today AMS).
-          archetype: needsArchetype ? resolveValueArchetype(null) : undefined,
+          archetype: needsArchetype
+            ? (resolveValueArchetype(
+                groundingEvent.eventType,
+                groundingEvent.classifiedCategory,
+              ) ?? undefined)
+            : undefined,
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           rfpClausePresentLeverKeys: rfpClauseSignal.signalPresent
             ? rfpClauseSignal.presentLeverKeys
@@ -1879,6 +2009,7 @@ export async function POST(request: Request) {
       sourceAvaGroundingBlock = "";
       sourceAvaQuoteNotComputeGuard = "";
       sourceAvaAnswerMode = null;
+      sourceAvaAnswerModeDisclosureBlock = "";
       sourceAvaModeGroundingFacts = {};
       sourceAvaModeEvidenceIncomplete = false;
       sourceAvaModeGroundingBlockText = "";
@@ -1923,15 +2054,28 @@ export async function POST(request: Request) {
   // false for it), so it keeps receiving the generic receipt exactly as
   // before — unchanged behavior for every mode this fix does not target.
   const contextBundlePromptBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ||
     shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
     hasSourcePortfolioGrounding ||
     hasSourceContractGrounding
       ? ""
       : contextBundlePromptBlock;
-  const sourceContract360PromptBlock = buildSourceContract360PromptBlock(
-    surfaceContext,
-    activeClientDisplayName,
-  );
+  const authorizedSourceTenantKey =
+    activeClientKey ?? tenancy?.clientKey ?? null;
+  const sourceContract360PromptBlock =
+    isSourceSurface(surface) &&
+    contractIdFromContext &&
+    authorizedSourceTenantKey
+      ? await buildAuthorizedSourceContract360PromptBlock({
+          query: message,
+          requestContext: {
+            module: "Source",
+            contractId: contractIdFromContext,
+          },
+          tenantKey: authorizedSourceTenantKey,
+          tenantDisplayName: activeClientDisplayName,
+        })
+      : "";
 
   // aVa Source polish gate — Gap 2 fix (follow-up to Gap 1 / #4602).
   //
@@ -1972,11 +2116,14 @@ export async function POST(request: Request) {
   // and is the demonstrated leak vector. `stakeholder_alignment` and any
   // non-Source surface keep receiving this block exactly as before.
   const agentTenantContextBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ||
     shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
     hasSourcePortfolioGrounding ||
     hasSourceContractGrounding
       ? ""
       : agentTenantContextBlock;
+  const crossProgramSignalsBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ? "" : crossProgramSignalsBlock;
 
   // aVa Source polish gate — 3rd attempt (follow-up to #4602 / #4605).
   //
@@ -2013,6 +2160,7 @@ export async function POST(request: Request) {
   // `stakeholder_alignment` and every non-Source surface keep receiving
   // `tenantSystemBlock` exactly as before.
   const tenantSystemBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ||
     shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
     hasSourcePortfolioGrounding ||
     hasSourceContractGrounding
@@ -2144,6 +2292,12 @@ export async function POST(request: Request) {
           "Do not add VISUALS, Relationship map, Decision table, Appendix, raw lineage, JSON, chart fences, or a second table unless the user's exact question explicitly asks for one of those extra artifacts.",
           "Keep signal-stage rows unsized. Preserve owner and timing from the row; do not write 'not established' for owner/timing when the row carries owner, ownerRole, deadline, or timingDependency.",
           "Do not call candidate, signal-stage, pending, approval-required, or finance-unconfirmed value realized savings.",
+          "Before recommending anything, explain in plain English what the contract buys, which archetype it belongs to, what workloads or services are in scope, and which evidence sources connect the commercial position to usage, invoices, performance, owners, and levers.",
+          "Treat the contract anatomy as deterministic input: do not infer a system, application, tower, business-unit, or dependency relationship that is not explicitly present in the supplied grounding.",
+          "Keep four classes separate in the answer: loaded contract facts, deterministic interpretations, authored archetype playbook guidance, and missing evidence. Name the decision blocked by each missing lane.",
+          "Do not use a wall of unlabeled counts. Every number must answer a business question in its label or sentence; replace ratio-style labels such as '84 of 230 blocked' with the business meaning of the state.",
+          "Do not add an external benchmark, industry percentile, discount range, or rate claim unless the supplied grounding includes a cited benchmark source. Buyer-portfolio comparison is not market proof.",
+          "The prompt is the control boundary. Preserve Claude's generated business wording; do not semantically rewrite or scrub the response after generation. Technical access-control and transport safety controls remain independent of this instruction.",
         ].join("\n")
       : "";
 
@@ -2208,7 +2362,7 @@ export async function POST(request: Request) {
     // (sourced from the broker bundle's cross_program_signal items) so
     // the agent can emit a `cross-program-signal` artifact grounded in
     // tenant data when relevant. Empty string elsewhere.
-    crossProgramSignalsBlock,
+    crossProgramSignalsBlockForPrompt,
     "",
     sourceTenantContextBlockForPrompt,
     "",
@@ -2217,7 +2371,7 @@ export async function POST(request: Request) {
     // before the per-event grounding so aVa reads portfolio-wide totals
     // first, then narrows to the specific event if one is active. Empty
     // string when the tenant has no governed contract rows.
-    sourcePortfolioGroundingBlock,
+    hasSourceContractGrounding ? "" : sourcePortfolioGroundingBlock,
     "",
     // aVa DETERMINISTIC GROUNDING · the single contract in scope on the Optimize
     // Contract surface. Deliberately placed AFTER the portfolio block: the
@@ -2232,6 +2386,12 @@ export async function POST(request: Request) {
     // string when the flag is off or no event id is present — the join-filter
     // strips it and the chat is unchanged.
     sourceAvaGroundingBlock,
+    // C-522 · what the deterministic router decided, and whether it decided
+    // anything at all. Placed immediately AFTER the mode grounding it
+    // qualifies: the fall-through wording tells aVa not to present the block
+    // above as a targeted answer, which only reads correctly once that block
+    // has been stated. Empty string when no classification ran.
+    sourceAvaAnswerModeDisclosureBlock,
     sourceContract360PromptBlock,
     "",
     tenantTechnologyContextBlock,
@@ -2305,14 +2465,14 @@ export async function POST(request: Request) {
           "- When there are multiple valid paths, show 2-3 short options and include 'type your own'. Do not stack sponsor, lead, scope, baseline, and timeline questions in one turn.",
           "- If the user misspells a role or name, correct lightly and continue. Do not make the typo the center of the reply.",
           "- Do not mention UUIDs, database IDs, person IDs, or internal lookup mechanics in user-facing prose. Say 'I'll confirm Sarah Chen and Rick Stewart in Meridian's people records' rather than 'I'll get their UUIDs'.",
-          "- ORIGINATION PEOPLE RULES: a program submission needs at least one sponsor resolved in the active tenant's people records. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
-          "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
+          "- ORIGINATION PEOPLE RULES: a program submission needs a sponsor contact resolved in the active tenant's people records, plus an explicit choice about informational phase-progress emails. Sponsor status grants no approval rights. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor contact or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
+          "- PHASE APPROVALS: only the authenticated workspace user with 'Can approve gates: yes' may record a product approval. When that user explicitly approves, use the in-product gate approval action; advance_phase evaluates and advances gates but never records approval. Never ask a sponsor to approve, sign, review, or confirm a product gate; sponsors are listed contacts and receive only explicitly enabled informational progress emails.",
           "- LIFECYCLE LABEL DISCIPLINE: use AbarVa phase language in user-facing prose: P0 Originate, P1 Frame, P2 Decode, P3 Compose, P4 Commit, P5 Mobilize. Never call P4 'Build', P5 'Activate', or P6 'Operate'. If you need to mention external execution, say execution happens outside AbarVa and P4 Commit builds the executable roadmap and value contract.",
           "- DELIVERABLE PERSISTENCE DISCIPLINE: for phase deliverables, do not generate a huge hidden complete_deliverable payload. Save bounded executive-grade content: either a concise markdown artifact under 6,000 characters or the tool's content_outline array with the key sections, decisions, gate proofs, risks, and follow-ups. Then summarize what was saved in chat. Never spend a turn silently composing a full consulting deck inside tool JSON.",
           "- DELIVERABLE FAILURE HONESTY: if complete_deliverable or complete_deliverables fails, do not say 'nothing is lost' unless a durable draft row was actually persisted. Say the draft remains visible in this conversation but is not saved yet, name the platform error if available, and offer one retry after the platform fix.",
           "- P0 DELIVERABLE KEY DISCIPLINE: when saving the accepted P0 seed, use deliverable_type_key='origination_brief'. Do not save a P0 seed, program brief, or origination package as discovery_report; discovery_report is reserved for P1 after current-state evidence is gathered.",
           "- BASELINE FIDELITY DISCIPLINE: when generating or saving deliverables, preserve exact non-financial baseline values, units, sources, grain, methods, owners, and dates from uploaded evidence or signed prior deliverables. Do not replace them with benchmark, peer, demo, or model-inferred numbers. If evidence conflicts, name the conflict and use the latest uploaded/signed evidence as controlling. If the value is missing, write 'missing' and ask for evidence; never invent operational metrics.",
-          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Mobilize packages: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and tower_handoff_plan.",
+          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Mobilize packages: business_case, funding_approval, sponsor_alignment (contact and progress-email preference only), readiness_and_change_plan, and tower_handoff_plan.",
           "- P6 COMPLETION DISCIPLINE: if the user asks to complete P6 setup, close Tower Handoff, or finish the program after the Tower execution tracking contract is signed, call complete_program. Do not treat 'already at P6' as complete; completion is a lifecycle_state write.",
           "- P4 MILESTONE PERSISTENCE: when drafting an execution roadmap with critical milestones, save the roadmap deliverable and then call create_milestones so P4→P5 gate checks can read structured milestone rows. Do not rely on milestone prose inside the roadmap alone.",
           "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
@@ -2350,16 +2510,16 @@ export async function POST(request: Request) {
       ? [
           "- CONVERSATION ONLY: No tools are available on this surface. Do not attempt to call any tool, register any person, look up any record, or execute any system action. Everything happens through conversation text alone. Never say 'I wasn't able to execute' or 'I don't have a tool confirmation' — there are no tools to confirm.",
           "- P0 ORIGINATE STYLE: guide the user through 10 scaffold steps in order. Ask at most ONE question per reply. Never suggest a name, sponsor, or executive unless it comes from an org chart the user uploaded or an explicit user statement naming the person.",
-          "- AH-ORIG-1 (SPONSOR): NEVER propose any sponsor candidate name unless the user has explicitly named the person in this conversation, or they appear in a document the user pasted or uploaded. If no name is provided, ask: 'Can you name the exec who owns this function?' Do not attempt to look up people via any system or tool.",
+          "- AH-ORIG-1 (SPONSOR CONTACT): NEVER propose a sponsor contact name unless the user has explicitly named the person in this conversation, or they appear in a document the user pasted or uploaded. If no name is provided, ask who should be listed as the progress contact. Do not attempt to look up people via any system or tool.",
           "- AH-ORIG-2 (ARCHETYPE): when classifier confidence is low or no_match, NEVER state an archetype as definitive. Always flag uncertainty explicitly: 'This classification is tentative — [reason]. Let me ask a clarifying question before I lock in the archetype.'",
           "- AH-ORIG-3 (VALUE): NEVER state any dollar figure, percentage, or quantified outcome as validated at P0. Always label numeric claims 'UNVALIDATED_HYPOTHESIS' and add a caveat: 'We'll validate this against your baseline in P2.'",
           "- AH-ORIG-4 (BENCHMARKS): NEVER state a benchmark figure as fact without citing a specific AbarVa pattern library entry (e.g., 'per industry pattern PAT-IND-003'). Say 'Per [specific pattern citation], the range for [metric] is approximately [range].'",
           "- AH-ORIG-5 (SPONSOR SECTION): NEVER populate the sponsor section of the brief without citing the source of the name in the same message. Source must be the user's own words or a document they shared.",
           "- AH-ORIG-6 (STEP COMPLETION): NEVER mark a scaffold step complete without user confirmation. Extract content and show it; wait for explicit confirmation ('Yes, that's right') or implicit acceptance before proceeding.",
           "- AH-ORIG-7 (NO P2 FABRICATION): P0/P1 exist to CAPTURE what the user knows today, not to invent what P2 discovery will find. If the user hasn't stated a fact for a section (scope, outcomes, discovery questions, constraints), do not write plausible-sounding content for it — ask, or leave it for the scaffold to mark as not yet captured. Every field must trace to something the user actually said or a document they shared.",
-          "- P0 SCAFFOLD STEPS: there are 10 steps — (1) Business problem/opportunity + why now, (2) Archetype classification, (3) Sponsor candidate + decision authority, (4) In scope, (5) Out of scope, (6) Value hypothesis (pain + value direction + causal mechanism), (7) Intended outcomes + P2 success criteria, (8) Discovery questions + hypotheses to test, (9) Evidence family selection, (10) Foundation readiness (F1–F4 checks) + known constraints/dependencies. Complete them in order.",
-          "- FOUNDATION READINESS: F1 = data readiness, F2 = operating model clarity, F3 = sponsor commitment, F4 = change capacity. Ask the user to confirm each check directly; never infer status from indirect signals.",
-          '- BRIEF-PROGRESS FIELD IDs: when emitting `brief-progress` artifacts on this surface, use EXACTLY these 10 ids in this order: "problem-statement" (step 1), "archetype" (step 2), "sponsor-candidate" (step 3), "scope-in" (step 4), "scope-out" (step 5), "value-hypothesis" (step 6), "outcomes-success" (step 7), "discovery-questions" (step 8), "evidence-family" (step 9), "foundation-readiness" (step 10). These are the only valid ids — do not use target-outcome, timeline, named-systems, named-vendors, lead, scope-boundary, or any other id. The right pane ONLY updates when the id exactly matches the scaffold definition.',
+          "- P0 SCAFFOLD STEPS: there are 10 steps — (1) Business problem/opportunity + why now, (2) Archetype classification, (3) Sponsor contact + progress-email preference and separate workspace approval capability, (4) In scope, (5) Out of scope, (6) Value hypothesis (pain + value direction + causal mechanism), (7) Intended outcomes + P2 success criteria, (8) Discovery questions + hypotheses to test, (9) Evidence family selection, (10) Foundation readiness (F1–F4 checks) + known constraints/dependencies. Complete them in order.",
+          "- FOUNDATION READINESS: F1 = data readiness, F2 = operating-model context, F3 = accountable business owner identified, F4 = change capacity. Ask the authorized workspace user to confirm each check directly; never infer status from indirect signals. Sponsor commitment or approval is not a prerequisite.",
+          '- BRIEF-PROGRESS FIELD IDs: when emitting `brief-progress` artifacts on this surface, use EXACTLY these 10 ids in this order: "problem-statement" (step 1), "archetype" (step 2), "sponsor-candidate" (step 3; contact only), "scope-in" (step 4), "scope-out" (step 5), "value-hypothesis" (step 6), "outcomes-success" (step 7), "discovery-questions" (step 8), "evidence-family" (step 9), "foundation-readiness" (step 10). These are the only valid ids — do not use target-outcome, timeline, named-systems, named-vendors, lead, scope-boundary, or any other id. The right pane ONLY updates when the id exactly matches the scaffold definition.',
         ]
       : []),
     ...(isSourceSurface(surface)
@@ -2458,6 +2618,21 @@ export async function POST(request: Request) {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   }
+  if (
+    isSourceSurface(surface) &&
+    contractIdFromContext &&
+    !sourceContract360PromptBlock
+  ) {
+    return new Response(
+      "I cannot verify that contract from the current authorized Source records. Please select a contract available to this signed-in tenant.",
+      {
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      },
+    );
+  }
   const sourcePortfolioFallbackAnswer = buildSourcePortfolioFallbackAnswer({
     message,
     surface,
@@ -2530,23 +2705,16 @@ export async function POST(request: Request) {
   // client. Violations are logged to the in-memory ring buffer
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
-  let pendingAgentOutput = "";
   // Source aVa output discipline is prompt-first: the model receives the
-  // grounding and answer contract before generation. The quality gate runs as
-  // telemetry only after streaming; it must not rewrite Claude's visible text.
+  // grounding and answer contract before generation. Grounded Source prose is
+  // buffered until the deterministic quality gate runs, then the gated text is
+  // emitted once; non-Source surfaces keep normal streaming.
   const sourceAvaTelemetryGateActive =
     sourceAvaAnswerMode !== null &&
     isGroundedAnswerMode(sourceAvaAnswerMode) &&
     sourceAvaGroundingBlock !== "";
   const readable = new ReadableStream({
     async start(controller) {
-      const flushAgentOutput = () => {
-        if (!pendingAgentOutput) return;
-        const demoSafeText = demoSafeClientText(pendingAgentOutput);
-        bufferedOutput += demoSafeText;
-        controller.enqueue(encoder.encode(demoSafeText));
-        pendingAgentOutput = "";
-      };
       // Tools (commit_program) and the loop both write through this sink.
       // Tool-side writes carry surface-specific sentinels (e.g. the
       // `[[program-created:<id>]]` navigation hint emitted by
@@ -2559,23 +2727,71 @@ export async function POST(request: Request) {
       // sees the whole token; `flush()` below emits whatever it still holds.
       const restrictedFinancialStreamer =
         createRestrictedFinancialTextStreamer(userAccessPolicy);
+      const autonomousDecisionStreamer = createAutonomousDecisionTextStreamer();
       const emitAgentText = (safeText: string) => {
         if (!safeText) return;
         bufferedOutput += safeText;
         controller.enqueue(encoder.encode(safeText));
       };
       const flushRestrictedFinancialTail = () => {
-        if (isDirectClaudeSurface(surface)) return;
-        emitAgentText(restrictedFinancialStreamer.flush());
+        const safeText = autonomousDecisionStreamer.push(
+          restrictedFinancialStreamer.flush(),
+        );
+        if (!safeText) return;
+        if (sourceAvaTelemetryGateActive) {
+          sourceAvaUngatedOutput += safeText;
+          return;
+        }
+        emitAgentText(safeText);
       };
+      // Every agent text delta and every tool-side write passes through this
+      // sink, on every surface. The autonomous-decision scrub belongs here and
+      // nowhere narrower: an answer must not claim it decided, executed or
+      // approved anything on its own.
+      // Redaction is unconditional, and entitlement is the only thing that
+      // decides what it removes. One surface used to skip it via a
+      // surface-name branch whose stated purpose was to keep a prose
+      // optimizer from rewriting model text — but no prose optimizer exists
+      // on this route, so the branch only ever skipped the restricted
+      // financial firewall and handed exact money values to a user whose
+      // access policy says they may not see them. The streamer already
+      // passes entitled users through untouched; the surface has no say.
+      let sourceAvaUngatedOutput = "";
       const writer = {
         write(text: string) {
-          if (isDirectClaudeSurface(surface)) {
-            emitAgentText(text);
+          const safeText = autonomousDecisionStreamer.push(
+            restrictedFinancialStreamer.push(text),
+          );
+          if (!safeText) return;
+          if (sourceAvaTelemetryGateActive) {
+            sourceAvaUngatedOutput += safeText;
             return;
           }
-          emitAgentText(restrictedFinancialStreamer.push(text));
+          emitAgentText(safeText);
         },
+      };
+      const flushSourceAvaGatedOutput = () => {
+        if (!sourceAvaTelemetryGateActive || !sourceAvaUngatedOutput) return;
+        const gateResult = runSourceAnswerQualityGate({
+          answerText: sourceAvaUngatedOutput,
+          mode: sourceAvaAnswerMode,
+          hasGroundingContext: sourceAvaGroundingBlock !== "",
+          groundingFacts: sourceAvaModeGroundingFacts,
+          evidenceIsIncomplete: sourceAvaModeEvidenceIncomplete,
+          groundingBlockText: sourceAvaModeGroundingBlockText || undefined,
+          groundingHasSpecificAsk: sourceAvaModeHasSpecificAsk,
+        });
+        emitAgentText(gateResult.finalText);
+        if (!gateResult.passed) {
+          console.warn("[source-ava-quality-gate] checks failed before emit", {
+            surface,
+            tenantId: activeClientKey ?? undefined,
+            mode: sourceAvaAnswerMode,
+            unresolvedChecks: gateResult.unresolvedChecks,
+            repaired: gateResult.repaired,
+          });
+        }
+        sourceAvaUngatedOutput = "";
       };
       try {
         // CB-6 / CB-10 · emit the assembled context bundle as the
@@ -2655,12 +2871,17 @@ export async function POST(request: Request) {
         const errMessage = err instanceof Error ? err.message : String(err);
         writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
-        flushAgentOutput();
+        flushRestrictedFinancialTail();
+        const autonomousTail = autonomousDecisionStreamer.flush();
+        if (sourceAvaTelemetryGateActive) {
+          sourceAvaUngatedOutput += autonomousTail;
+        } else {
+          emitAgentText(autonomousTail);
+        }
+        flushSourceAvaGatedOutput();
         // Phase A + Phase B quality gate — telemetry-only (2026-08-04). The
-        // full answer text has already streamed live to the client above;
-        // this pass runs the same 12 checks purely to log what would have
-        // failed, so quality regressions stay visible without holding the
-        // turn. Never blocks or re-ships text.
+        // full answer text has been gated before client emission above; this
+        // pass keeps the existing telemetry log against the final text.
         if (sourceAvaTelemetryGateActive) {
           try {
             const gateResult = runSourceAnswerQualityGate({
@@ -2698,9 +2919,6 @@ export async function POST(request: Request) {
             // Telemetry MUST NOT raise — the answer already streamed successfully.
           }
         }
-        // Emit any money-token fragment the redaction streamer is still holding,
-        // so a value at the very end of an answer is not silently dropped.
-        flushRestrictedFinancialTail();
         controller.close();
         // F0.3 post-hoc validation — non-blocking, telemetry-only.
         // The structural mechanism for action-claim integrity is F0.4

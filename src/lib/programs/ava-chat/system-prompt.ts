@@ -46,13 +46,28 @@ export function formatMovesAvaChatPacketForPrompt(
     lines.push(`Gate criteria: ${criteriaText}`);
   }
 
+  if (packet.terminalHandoffComplete) {
+    lines.push(
+      "Terminal handoff state: current P5 handoff is complete. Do not describe evidence needs, feed-forward items, or preparation gaps as blockers, prerequisites, acceptance conditions, or required work before Tower can start. If relevant, frame them only as post-handoff caveats or follow-up work.",
+    );
+    lines.push(
+      "Terminal P5 answer rule: do not ask the user to capture Tower acceptance, confirm a named receiving party, close P5, or complete the handoff package. Those conditions are already satisfied in the live Move state. For next-step questions, start after handoff: Tower execution cadence, metric monitoring, owner follow-through, and caveat burn-down.",
+    );
+  }
+
   if (packet.evidenceNeedPackets.length > 0) {
-    lines.push(`Evidence needs: ${packet.evidenceNeedPackets.join("; ")}`);
+    lines.push(
+      packet.terminalHandoffComplete
+        ? `Post-handoff caveats/follow-up candidates: ${packet.evidenceNeedPackets.join("; ")}`
+        : `Evidence needs: ${packet.evidenceNeedPackets.join("; ")}`,
+    );
   }
 
   if (packet.nextPhaseFeedForwardPack) {
     lines.push(
-      `Feed-forward to next phase: ${packet.nextPhaseFeedForwardPack.headline} — ${packet.nextPhaseFeedForwardPack.carriesForward.join("; ")}`,
+      packet.terminalHandoffComplete
+        ? `Tower handoff context already completed: ${packet.nextPhaseFeedForwardPack.headline} — ${packet.nextPhaseFeedForwardPack.carriesForward.join("; ")}`
+        : `Feed-forward to next phase: ${packet.nextPhaseFeedForwardPack.headline} — ${packet.nextPhaseFeedForwardPack.carriesForward.join("; ")}`,
     );
   }
 
@@ -61,8 +76,34 @@ export function formatMovesAvaChatPacketForPrompt(
   }
 
   if (mode === "phase_input_draft") {
+    if (packet.currentPhase > 1) {
+      if (packet.approvedEvidenceUnavailable) {
+        lines.push(
+          "Approved current-phase evidence could not be verified for this turn. Do not create capture-field artifacts.",
+        );
+      } else if (packet.approvedEvidenceTotal > 0) {
+        lines.push(
+          `Approved current-phase evidence available: ${packet.approvedEvidenceTotal} item${packet.approvedEvidenceTotal === 1 ? "" : "s"}; showing ${packet.approvedEvidence.length}. Approval confirms the extraction was reviewed, not that every extracted statement is independently true.`,
+        );
+        packet.approvedEvidence.forEach((item, index) => {
+          lines.push(
+            `[E${index + 1}] ${item.title}`,
+            `  Summary: ${item.summary ?? "none captured"}`,
+            `  Statements: ${item.statements.join(" | ") || "none captured"}`,
+            `  Observations: ${item.observations.join(" | ") || "none captured"}`,
+            `  Assumptions: ${item.assumptions.join(" | ") || "none captured"}`,
+            `  Open questions: ${item.openQuestions.join(" | ") || "none captured"}`,
+            `  Citations: ${item.citations.map((citation) => `\"${citation.quote}\" (${citation.locator})`).join(" | ") || "none captured"}`,
+          );
+        });
+      } else {
+        lines.push(
+          "No approved current-phase evidence is available for drafting.",
+        );
+      }
+    }
     lines.push(
-      'Phase-input drafting mode: if and only if you can cite approved upstream phase state, emit one [[artifact:capture-field]] artifact per proposed field. Each artifact must use Shape {"phase": <0-5>, "key": <capture-section-key>, "value": <draft text>, "citations": [<source refs>], "confidence": "high"|"medium"|"low"}. Do not render uncited field drafts. Do not say the field is saved, done, approved, or captured; the user must insert the draft and save through phase capture.',
+      'Phase-input drafting mode: P1 may use only its explicit P0-to-P1 field mappings. For P2-P5, prior-phase captures are context only and must never be copied into later phase fields. Emit a [[artifact:capture-field]] artifact only when approved evidence from the current phase directly supports that specific field; cite the evidence label and a source locator. If field-level support is unclear, emit no artifact. Each artifact must use Shape {"phase": <0-5>, "key": <capture-section-key>, "value": <draft text>, "citations": [<source refs>], "confidence": "high"|"medium"|"low"}. Do not say the field is saved, done, approved, or captured; the user must insert the draft and save through phase capture.',
     );
   }
 

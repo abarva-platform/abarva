@@ -68,8 +68,6 @@ export default async function AdminProductionReadinessPage({
       <EditorialCanvas eyebrow={view.eyebrow} title={view.title} subtitle={view.subtitle}>
         <ContextBar
           tenant={view.context.tenant}
-          mode={view.context.mode}
-          agent={view.context.agent}
           data={view.context.data}
           liveStatus={view.context.liveStatus}
           liveStatusKind={view.context.liveStatusKind}
@@ -77,7 +75,6 @@ export default async function AdminProductionReadinessPage({
         <StewardEditorial
           title={view.editorial.title}
           body={view.editorial.body}
-          contextUsed={view.editorial.contextUsed}
           evidenceStrength={view.editorial.evidenceStrength}
           blocker={view.editorial.blocker}
           primaryAction={view.editorial.primaryAction}

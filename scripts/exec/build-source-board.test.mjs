@@ -1,0 +1,3180 @@
+#!/usr/bin/env node
+/**
+ * Behavioural test for the board's claim-record boundary (item T-702).
+ *
+ * The defect this exists to hold shut: `executionClaimEntries` starts a new
+ * claim entry only on `^TIMESTAMP | ` at MINUTE precision. Every register line
+ * that does not match that shape is appended to the preceding entry's text. A
+ * seconds-precision stamp does not match, and neither does the pipe-less
+ * canonical form `<stamp> <agent> item <id> <branch> — claimed` that
+ * `scripts/exec/README.md` documents. One "entry" therefore carries an
+ * arbitrary number of unrelated register lines, and `claimTextForItem` hands
+ * that whole blob to `deriveRung` for any id named anywhere inside it.
+ *
+ * Measured on the live register at 2026-09-22T15:26Z: 1207 lines begin with a
+ * stamp, 633 parsed as entry starts, 574 (47.6%) were swallowed — 207 for
+ * seconds precision and 367 for the pipe-less form. The consequence is not
+ * cosmetic. `rung === 0` is the claimable filter and `rung === 7` is
+ * `isFinished`, so an item reading a foreign line's proof language vanishes
+ * from every bucket the queue renders. `build-execution-queue.mjs` already
+ * accepts both forms in `parseClaimRecord`, so the two repo-owned generators
+ * disagreed about what a record is.
+ *
+ * Every assertion here is on a real child process and on the rung the board
+ * writes into `source-board-summary.json` for a FIXTURE id. Nothing asks the
+ * code under test whether it thinks it parsed correctly.
+ *
+ * Run:  node scripts/exec/build-source-board.test.mjs
+ */
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+import { copyToolchainInto } from "./toolchain-manifest.mjs";
+
+const FIXTURE_DOCUMENTS = {
+  "SOURCE_EXECUTION_BOARD_20260917.md": `# Synthetic execution board
+
+## Outcome tracker
+
+| Outcome | Owner | Status |
+|---|---|---|
+| Toolchain is reviewed | test | open |
+`,
+  "EXECUTION_BACKLOG_20260918.md": `# Synthetic execution backlog
+
+## Toolchain
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| T-507 | **Keep the board executable.** | T | The behavioral suite runs. |
+`,
+  "EXECUTION_CLAIMS.md": `# Synthetic claims
+
+## Claim log — append only
+`,
+  "SOURCE_BACKLOG_MASTER.md": "# Synthetic scope\n",
+};
+
+/**
+ * A register line that states signed-in proof for an id the cases never
+ * declare. Nothing in this line refers to the fixture item; if a fixture item
+ * reads rung 7, it read it from here.
+ */
+const FOREIGN_PROOF =
+  "2026-09-22T02:01Z | codex-other-lane | RELEASED item T-909 — merged, deployed, "
+  + "and signed-in acceptance PASSED on the deployed SHA.";
+
+let failures = 0;
+let passes = 0;
+
+function check(name, ok, detail) {
+  if (ok) {
+    passes += 1;
+    console.log(`  PASS  ${name}`);
+  } else {
+    failures += 1;
+    console.log(`  FAIL  ${name}`);
+    if (detail) console.log(`        ${String(detail).split("\n").join("\n        ")}`);
+  }
+}
+
+function freshFixture() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "t702-"));
+  // Declared once (item T-726) rather than listed here, so a module added to
+  // the toolchain reaches this fixture without anyone remembering to add it.
+  copyToolchainInto(dir);
+  for (const [file, content] of Object.entries(FIXTURE_DOCUMENTS)) {
+    fs.writeFileSync(path.join(dir, file), content);
+  }
+  return dir;
+}
+
+function run(dir, script, args = []) {
+  try {
+    const stdout = execFileSync(process.execPath, [script, ...args], {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return { status: 0, stdout, stderr: "" };
+  } catch (err) {
+    return {
+      status: err.status ?? 1,
+      stdout: err.stdout ?? "",
+      stderr: err.stderr ?? String(err.message ?? err),
+    };
+  }
+}
+
+function mapFixtureId(dir, id) {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  // The real structure map already places most live ids, and it rejects a
+  // repeat outright. Cases that replay REAL rows by id (T-738) would
+  // otherwise crash the build rather than assert anything.
+  const placed = JSON.stringify(map).includes(`"${id}"`);
+  if (placed) return;
+  map.platformTrack.items.push(id);
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
+function addBacklogItem(dir, id, body, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | ${body} | T | ${acceptance} |\n`,
+  );
+  mapFixtureId(dir, id);
+}
+
+/**
+ * A `# | Verdict | Proof` row, header and all — item T-737. The backlog's other
+ * item convention, and the one that has no lane column: 236 of the 691 rows the
+ * board parses are this shape, and reading their third cell as a lane is the
+ * defect the cases below hold shut.
+ */
+function addVerdictRow(dir, id, verdict, proof, { map = true } = {}) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| # | Verdict | Proof |\n|---|---|---|\n| ${id} | ${verdict} | ${proof} |\n`,
+  );
+  if (map) mapFixtureId(dir, id);
+}
+
+/** An item row that declares a lane of the caller's choosing, header and all. */
+function addBacklogItemInLane(dir, id, body, lane, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n| ${id} | ${body} | ${lane} | ${acceptance} |\n`,
+  );
+  mapFixtureId(dir, id);
+}
+
+function appendClaims(dir, lines) {
+  fs.appendFileSync(path.join(dir, "EXECUTION_CLAIMS.md"), `\n${lines.join("\n")}\n`);
+}
+
+/** Every item the board wrote, keyed by id, from the summary it emits. */
+function summaryItems(dir) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  const out = new Map();
+  const walk = (items) => {
+    for (const it of items ?? []) out.set(String(it.num), it);
+  };
+  for (const s of summary.stages ?? []) {
+    walk(s.items);
+    for (const c of s.capabilities ?? []) walk(c.items);
+  }
+  for (const t of summary.tracks ?? []) walk(t.items);
+  return { summary, out };
+}
+
+/**
+ * The lane the board resolved for one id, from every place the summary
+ * records one — item T-738.
+ *
+ * `summaryItems` walks stage, capability and track `items`, and an id the
+ * structure map places on a CAPABILITY appears there as a `declaredIds`
+ * entry with no `items` row of its own, so that walk alone cannot see its
+ * lane. `T-429` is exactly that id, and reading it through the walk alone
+ * reported `null` for a lane the board had resolved correctly. An unusable
+ * or contradicting lane is still a lane for this purpose: both lists carry
+ * the letter the parser produced, which is what these cases are about.
+ */
+function resolvedLane(dir, id) {
+  const { summary, out } = summaryItems(dir);
+  if (out.has(id)) return out.get(id).lane;
+  const seen = [...(summary.laneContradictions ?? []), ...(summary.laneUnusable ?? [])]
+    .find((r) => String(r.num) === id);
+  return seen ? seen.lane : undefined;
+}
+
+function buildBoard(dir) {
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  if (r.status !== 0) throw new Error(`fixture board build failed:\n${r.stderr}`);
+  return r;
+}
+
+/** `execution claims parsed: N` from the board's own report line. */
+function claimsParsed(stdout) {
+  return Number(stdout.match(/execution claims parsed:\s+(\d+)/)?.[1] ?? -1);
+}
+
+console.log("build-source-board — claim-record boundary (T-702)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 1. THE DEFECT, on the shape the live register actually uses.
+ *    A seconds-precision line claiming the fixture item follows a foreign
+ *    line that states signed-in proof. The fixture item declares no proof of
+ *    its own, so rung 7 can only have come from the foreign line.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-901",
+    "**An open question that has shipped nothing.**",
+    "Convert the suite; no proof of any kind exists yet.",
+  );
+  appendClaims(dir, [
+    FOREIGN_PROOF,
+    "2026-09-22T13:39:41Z | fixture-agent | item T-901 claimed; nothing is built yet.",
+  ]);
+  const r = buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-901");
+  check(
+    "a seconds-stamped claim line does not inherit the preceding line's signed-in proof",
+    item?.rung === 0,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}\n`
+      + `claims parsed=${claimsParsed(r.stdout)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 2. THE SAME DEFECT on the pipe-less canonical form the README documents:
+ *    `YYYY-MM-DDTHH:MMZ <agent> item <id> <branch> — claimed`.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-902",
+    "**A second open question that has shipped nothing.**",
+    "Nothing is built yet.",
+  );
+  appendClaims(dir, [
+    FOREIGN_PROOF,
+    "2026-09-22T13:40Z fixture-agent item T-902 fixture/branch — claimed",
+  ]);
+  const r = buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-902");
+  check(
+    "the pipe-less canonical claim form does not inherit the preceding line's proof",
+    item?.rung === 0,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}\n`
+      + `claims parsed=${claimsParsed(r.stdout)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 3. NEGATIVE CONTROL. An item whose OWN claim line states signed-in proof
+ *    must still read rung 7. Without this, deleting claim evidence entirely
+ *    — or refusing to parse the register at all — would pass cases 1 and 2.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-903",
+    "**A finished item.**",
+    "Proof already happened.",
+  );
+  appendClaims(dir, [
+    "2026-09-22T13:41:02Z | fixture-agent | RELEASED item T-903 — merged, deployed, "
+      + "and signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-903");
+  check(
+    "an item whose own seconds-stamped line states signed-in proof still reads rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 4. GUARDRAIL against the opposite error. A genuine continuation — a wrapped
+ *    line with no leading stamp — must still join the record above it. A fix
+ *    that makes every line its own entry would pass 1, 2 and 3 and silently
+ *    drop the tail of every multi-line record in the register.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-904", "**A finished item, recorded over two lines.**", "Proof already happened.");
+  appendClaims(dir, [
+    "2026-09-22T13:42:07Z | fixture-agent | RELEASED item T-904 — merged and deployed;",
+    "signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-904");
+  check(
+    "a wrapped continuation line still joins the record above it",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 5. The boundary is counted, not inferred. Three records written in the
+ *    three grammars the register uses must parse as three, not one.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  const before = claimsParsed(buildBoard(dir).stdout);
+  appendClaims(dir, [
+    "2026-09-22T13:43Z | fixture-agent | item T-507 minute-precision with a pipe.",
+    "2026-09-22T13:44:11Z | fixture-agent | item T-507 seconds precision with a pipe.",
+    "2026-09-22T13:45Z fixture-agent item T-507 fixture/branch — claimed",
+  ]);
+  const after = claimsParsed(buildBoard(dir).stdout);
+  check(
+    "all three register grammars parse as separate records",
+    before === 0 && after === 3,
+    `before=${before} after=${after}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — within-record rung attribution (T-704)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 6. THE DEFECT, on the live shape. One record, correctly bounded by T-702,
+ *    claims the fixture item and names ANOTHER item's pull request as context
+ *    in a sentence that exists to say the other item is somebody else's.
+ *    The fixture item has no PR of its own, so rung 4 can only have come from
+ *    the neighbour. This is `T-598` reduced to a fixture.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-911", "**Filed, nothing built.**", "Decide the approach first.");
+  appendClaims(dir, [
+    "2026-09-22T13:27:11Z | fixture-agent | item T-911 claimed. T-912 is NOT taken - it is claimed with PR #8255 open.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-911");
+  check(
+    "a neighbour's pull request named inside this item's record does not give it a rung",
+    item?.rung === 0,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 7. THE GUARDRAIL, and the reason attribution is per TOKEN rather than per
+ *    sentence. This is `T-448`'s real merge line: the item's own squash-merge,
+ *    with two sibling ids in the trailing clause. A rule that drops any
+ *    sentence naming a foreign id passes case 6 and deletes this — measured on
+ *    the live register, that blunt rule dropped 8 own-leading sentences
+ *    carrying real proof. The merge word is nearest to this item's own id, so
+ *    it is this item's merge.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  // The row states no proof of any kind: `attributableStatusText` admits a
+  // title or acceptance that OPENS with a verdict word, so "Merged and
+  // recorded." in this cell would supply rung 5 by itself and the case would
+  // pass whatever the attribution does.
+  addBacklogItem(dir, "T-913", "**A change that lands.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T13:28:00Z | fixture-agent | item T-913 PR #8139 merge 70e8ebe2 — squash-merged after all 19 required checks completed green on the combined T-914/T-915/T-913 state.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-913");
+  check(
+    "an item's own merge survives sibling ids written later in the same sentence",
+    item?.rung === 5,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 8. NEAREST, NOT FIRST. The same sentence leads with this item's own id and
+ *    still hands the proof to a neighbour — `T-405`, whose line opens
+ *    "item T-405 CLOSED" and then proves that two OTHER ids sit on a deployed
+ *    carrier. A rule that keeps any sentence whose first id is this item's
+ *    passes case 7 and fails here, so the two cases pull in opposite
+ *    directions on purpose.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-916", "**A bookkeeping verdict.**", "Assert ancestry for others.");
+  appendClaims(dir, [
+    "2026-09-22T13:29:00Z | fixture-agent | item T-916 CLOSED — ancestry proves T-917 ab834dd5 and T-918 0b79765e are both contained by deployed carrier 0f166372.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-916");
+  check(
+    "leading with its own id does not let an item keep a deploy it attributes to others",
+    item?.rung !== 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 9. A PULL REQUEST IS NOT AN ID. `#8255` is a PR and `item #59` is a backlog
+ *    item. If the attribution grammar counted bare `#NNNN` as an id, the PR
+ *    number in an item's own merge line would sit nearer the merge word than
+ *    the item does and would steal every merge in the register.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-919", "**A change that lands.**", "The register carries its own line.");
+  appendClaims(dir, [
+    // The PR number sits NEARER the merge word than the item id does. A
+    // grammar that counted `#8255` as an id would hand this merge to the pull
+    // request and the item would lose it; with the id written adjacent to the
+    // verb instead, the case passes whatever the grammar says.
+    "2026-09-22T13:30:00Z | fixture-agent | item T-919 was taken on Monday and, after two rounds of review, PR #8255 squash-merged it.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-919");
+  check(
+    "a pull request number is not read as a competing item id",
+    item?.rung === 5,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 10. THE DIRECTION, asserted rather than trusted. Attribution removes
+ *     matches; it can never create one. Two items share one record — one owns
+ *     the merge, the other is only named in it — and the one that is merely
+ *     named must not end up ABOVE the one that owns it. A change that moves
+ *     any item up needs its own argument, and this case is where that would
+ *     first show.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-920", "**The owner of the record.**", "The register carries its own line.");
+  addBacklogItem(dir, "T-921", "**Only mentioned.**", "Nothing shipped.");
+  appendClaims(dir, [
+    "2026-09-22T13:31:00Z | fixture-agent | item T-920 — squash-merged as abc1234.",
+    "2026-09-22T13:31:30Z | fixture-agent | item T-921 claimed; it depends on item T-920 — squash-merged as abc1234.",
+  ]);
+  buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const owner = out.get("T-920");
+  const mentioned = out.get("T-921");
+  check(
+    "the item merely named in a merge does not outrank the item that owns it",
+    owner?.rung === 5 && (mentioned?.rung ?? 0) < 5,
+    `owner=${owner?.rung} (${owner?.rungLabel}) mentioned=${mentioned?.rung} (${mentioned?.rungLabel})`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the rung-7 veto and what it exposes (T-705)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 11. MARKUP BETWEEN `not` AND THE TERM. The register's habitual form, found
+ *     on four live rows: "Status `deployed`, NOT `live-proven`." A single
+ *     backtick defeats `\s+`, so the sentence that DENIES proof was read as
+ *     asserting it. The row must read Deployed, which is what it says.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-930", "**Shipped to the cluster.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:01:00Z | fixture-agent | RELEASED item T-930 — merged and deployed. Status `deployed`, NOT `live-proven`.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-930");
+  check(
+    "markup between `not` and the term does not defeat the rung-7 veto",
+    item?.rung === 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 12. AN INTERVENING WORD. The other live form: "This line does not claim
+ *     deployed or live-proven." — `not` is followed by `claim`, three words
+ *     before the term, so the adjacent-only veto missed it entirely.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-931", "**Shipped to the cluster.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:02:00Z | fixture-agent | item T-931 merged and deployed. This line does not claim deployed or live-proven.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-931");
+  check(
+    "words between `not` and the term do not defeat the rung-7 veto",
+    item?.rung === 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 13. THE GUARDRAIL AGAINST TIGHTENING INTO SILENCE. A genuine signed-in
+ *     proof must still reach rung 7. A veto widened until nothing can claim
+ *     proof passes every negation case above and is worthless; this is the
+ *     case that fails when that happens. It passes on unfixed code BY DESIGN.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-932", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:03:00Z | fixture-agent | RELEASED item T-932 — merged, deployed, and signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-932");
+  check(
+    "a genuine signed-in proof still reaches rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 13b. THE GUARDRAIL THAT ACTUALLY BITES. Case 13's proof sentence contains
+ *      no `not` at all, so a veto widened to fire on ANY `not` passes it —
+ *      measured, that mutation survived case 13 untouched. Real proof lines
+ *      do carry a negative: the proof ladder's own rung 7 is "signed-in
+ *      acceptance, and opposite-tenant refusal", which is written with one.
+ *      Here the denial word sits AFTER the proof term, so the veto must not
+ *      fire, and a veto keyed on the bare word does.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-935", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:05:00Z | fixture-agent | RELEASED item T-935 — merged, deployed, signed-in acceptance PASSED and the opposite tenant could not read it.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-935");
+  check(
+    "a denial AFTER the proof term does not veto a genuine rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 14. EVALUATION IS PER SENTENCE. A denial in ONE sentence must not veto a
+ *     proof stated in the NEXT one.
+ *
+ *     Stated precisely, because the first version of this comment was wrong
+ *     and a mutation caught it: what protects this is the SPLIT in
+ *     `firstMatchingSentence`, not the veto's own `[^.;\n]` span. The veto
+ *     never sees two sentences at once, so widening its span to cross a full
+ *     stop changes nothing — measured, that mutation passes every case here.
+ *     The `[^.;\n]` is belt-and-braces against a future caller that stops
+ *     splitting; the mutation below removes the split itself, which is what
+ *     this case actually holds shut.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-933", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:04:00Z | fixture-agent | item T-933 is not a rollback. Signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-933");
+  check(
+    "a denial in one sentence does not veto proof stated in the next",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 15. WHAT THE VETO EXPOSED, and the reason the blocker term ships with it.
+ *
+ *     Correcting the veto drops a live row to rung 0 — correctly; its own
+ *     text says "not merged, not deployed, not applied". That row carries NO
+ *     blocker, so a FALSE rung 7 was the only thing keeping owner-gated work
+ *     out of the claimable bucket. A row that says its work remains out of
+ *     scope until separately approved must carry an owner gate at rung 0, or
+ *     the queue offers it as free work the moment the rung is corrected.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-934",
+    "**Implemented locally; not merged, not deployed, not applied.**",
+    "Migration apply, merge and deploy all remain out of scope until separately approved.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-934");
+  check(
+    "a row gated until separately approved carries an owner gate at rung 0",
+    item?.rung === 0 && item?.blocker === "Awaiting approval to apply",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the blocked rule is anchored and vetoed (T-703)\n");
+
+/** The blocker the board wrote for a fixture id. */
+function blockerOf(dir, id) {
+  return summaryItems(dir).out.get(id)?.blocker ?? null;
+}
+
+/* ------------------------------------------------------------------------ *
+ * 16. A FILENAME IS NOT A GATE. The live case: a row naming
+ *     `blocked-loader-paths.json` among its outputs was filed as blocked on
+ *     the owner. The bare word match could not tell a path from a status.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-940",
+    "**A generator writes two report files.**",
+    "Both reports/legacy/summary.json and reports/legacy/blocked-loader-paths.json get a fresh stamp and nothing else.",
+  );
+  buildBoard(dir);
+  check(
+    "a filename containing the word is not read as an owner gate",
+    blockerOf(dir, "T-940") !== "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-940"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 17. A DESCRIBED STATE IS NOT A GATE. Also live: a row asking for proof that
+ *     a panel "goes blocked rather than available" is describing the
+ *     behaviour it wants built, not reporting that anybody is stuck.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-941",
+    "**The panel must fail closed when its read fails.**",
+    "Prove it by making the reader fail and confirming the panel goes blocked rather than available.",
+  );
+  buildBoard(dir);
+  check(
+    "a described UI state is not read as an owner gate",
+    blockerOf(dir, "T-941") !== "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-941"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 18. THE REGRESSION SET, and the case that fails when the rule is tightened
+ *     into silence. Both forms are live: one row opens `BLOCKED ON OWNER
+ *     DECISION` in bold, another states its wiring is "blocked on the
+ *     unapplied migration". Both pass on unfixed code BY DESIGN — a change
+ *     that drops them is worse than the defect it replaces, because it takes
+ *     an item OUT of the never-claim bucket.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  // The acceptance must NOT use the decision rule's vocabulary: that rule sits
+  // above this one, so "Decide whether ..." here would make the case pass or
+  // fail on a rule this item does not touch. Measured — the first version of
+  // this fixture read `Decision needed` on unfixed code and proved nothing.
+  addBacklogItem(dir, "T-942", "**BLOCKED ON OWNER DECISION** — a retired dependency is still live.", "Restore it or retire it, then record which.");
+  addBacklogItem(dir, "T-943", "**The caller exists but cannot be wired.**", "Wiring is blocked on the unapplied migration; the orphan entry is kept rather than deleted.");
+  buildBoard(dir);
+  check(
+    "a genuine gate keeps its label in both the shouted and the stated form",
+    blockerOf(dir, "T-942") === "Blocked (see source)"
+      && blockerOf(dir, "T-943") === "Blocked (see source)",
+    `T-942=${JSON.stringify(blockerOf(dir, "T-942"))} T-943=${JSON.stringify(blockerOf(dir, "T-943"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 19. THE VETO. A row saying the blockage is over must not be filed as one.
+ *     Anchoring alone cannot do this: "is no longer blocked" is a predicate
+ *     form and matches the anchored pattern exactly.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  // The negated form must be one the ANCHOR matches, or the case passes with
+  // the veto deleted and proves nothing. Measured: "is no longer blocked" is
+  // already rejected by the anchoring, so that mutation survived. "not blocked
+  // on X" matches `blocked\s+on` exactly, so only the veto can reject it.
+  addBacklogItem(dir, "T-944", "**The dependency landed.**", "This work is not blocked on the migration any more.");
+  buildBoard(dir);
+  check(
+    "a row stating the blockage is over is not filed as blocked",
+    blockerOf(dir, "T-944") !== "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-944"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 20. A VETOED SENTENCE MUST NOT HIDE A REAL GATE WRITTEN AFTER IT. One row
+ *     can close an old blockage and open a new one, and a veto applied to the
+ *     first match only — or to the whole row at once — loses the live gate.
+ *     This is why the scan continues past a vetoed match and why the veto is
+ *     evaluated per sentence.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-945",
+    "**The first dependency landed; a second one has not.**",
+    // The FIRST anchored match must be the vetoed one, or the scan never has to
+    // continue and the case passes with a stop-at-first-match implementation.
+    // Measured: with "is no longer blocked" first, the anchor skipped it
+    // anyway and that mutation survived.
+    "The loader is not blocked on the migration any more. The projector is blocked on a decision only the owner can make.",
+  );
+  buildBoard(dir);
+  check(
+    "a resolved blockage earlier in the row does not hide a live gate after it",
+    blockerOf(dir, "T-945") === "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-945"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — an owner decision stated as a noun phrase (U-502)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 21. A DECISION THAT NEVER SAYS "decision needed". The live row that forced
+ *     this: its acceptance opens "A decision, then the work that follows from
+ *     it: mount or retire." Placing that id on the map made it rung 0 with NO
+ *     blocker, which is CLAIMABLE — the queue would have offered an owner
+ *     decision to the next agent as free work.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-950",
+    // The title must end with a PLAIN full stop, as the live row does. The
+    // anchor accepts `**` only when it sits immediately before the phrase, so
+    // a title ending `.**` puts bold between the stop and the words and the
+    // case then fails for a reason that has nothing to do with the rule. That
+    // is a real limit of the anchor, shared with the `Decide` form beside it,
+    // and it is recorded as a known gap rather than papered over here.
+    "Nine modules are reached by no product entry point.",
+    "A decision, then the work that follows from it: mount them or retire them.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-950");
+  check(
+    "an owner decision written as a noun phrase is not offered as free work",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22. THE ANCHOR, which is what keeps this from swallowing ordinary prose.
+ *     The phrase must OPEN a sentence or follow bold markup. A row that
+ *     merely mentions a decision in passing is not a gate, and a rule that
+ *     read it as one would move finished work into the never-claim bucket.
+ *     Passes on unfixed code BY DESIGN — it is the guardrail, not the defect.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-951",
+    "**The work is done.**",
+    "The owner already took a decision here and the change follows it; nothing is outstanding.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-951");
+  check(
+    "a decision mentioned mid-sentence is not read as an owner gate",
+    item?.blocker !== "Decision needed",
+    `blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — an owner decision qualified by an adjective (T-761)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 22a. THE SAME DEFECT AS 21, ONE WORD LATER. The U-502 term anchors on the
+ *      literal noun phrase "A decision", so an adjective between the article
+ *      and the noun defeats it — and both live rows that state their gate
+ *      this way put one there. These are the ACTUAL opening sentences of
+ *      `C-504` and `D-044` on `origin/main` `e47dd94e5`, not phrasings
+ *      invented to match a pattern: both derived `blocker: null` and both
+ *      were offered by `EXECUTION_QUEUE.md` as claimable, which is 2 of the
+ *      9 rows it offered. Case 21's comment names that outcome — "the queue
+ *      would have offered an owner decision to the next agent as free work"
+ *      — as the reason its term exists.
+ *
+ *      READ THE SECOND CASE'S NAME EXACTLY AS IT IS WRITTEN. Over the live
+ *      corpus this change moves ONE item, `D-044`, and `C-504` STAYS
+ *      `null` — so this fixture reaches a branch the live `C-504` row does
+ *      not, and saying otherwise would be the shape this suite exists
+ *      against. The difference is the anchor, not the sentence: `D-044`
+ *      opens its acceptance in bold and matches on `\*\*`, while `C-504`
+ *      writes it plain after a title cell that ends with no terminal
+ *      punctuation — and `bodyCorpus` joins title to acceptance with a
+ *      SPACE, so the head of the acceptance cell is not a sentence start at
+ *      all. That is a SECOND and INDEPENDENT cause, measured at **31 items**
+ *      over the live corpus and filed as `T-762`; it is not fixed here,
+ *      because repairing it also REPLACES 8 gates that are currently
+ *      `Signed-in acceptance owed` or `Blocked`, which is a re-ranking the
+ *      generator's own comment reserves for an attributed change of its own.
+ *      The fixture titles below therefore end with a plain full stop, which
+ *      is the shape case 21 records as required, and the case below speaks
+ *      for the SENTENCE FORM only.
+ *
+ *      T-762 HAS SINCE SHIPPED and the live `C-504` row now reads its own
+ *      gate — see case 22d, which uses that row's unpunctuated title. The
+ *      first case's NAME below still says the live row is null, because that
+ *      is what was true when the case was written and keeping the record
+ *      straight is the reason it says so at all.
+ * ------------------------------------------------------------------------ */
+for (const [id, acceptance, why] of [
+  [
+    "T-952",
+    "A product decision, not a code decision, and it is stated that way on purpose: losing 83% of a governed answer is a worse failure than a long one.",
+    "an adjective before the noun (C-504's live sentence; its live ROW is still null — see T-762)",
+  ],
+  [
+    "T-953",
+    "A disambiguation decision precedes the code and an agent must not guess it.",
+    "a longer adjective before the noun (D-044's live row, which this change repairs)",
+  ],
+]) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id, "Nine modules are reached by no product entry point.", acceptance);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get(id);
+  check(
+    `an owner decision qualified by ${why} is not offered as free work`,
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22b. THE GUARDRAILS FOR THE WIDENING, which are the half that matters:
+ *      the adjective slot opens a new way in at the one position the anchor
+ *      allows, so case 22 — which proves a MID-sentence mention stays out —
+ *      cannot speak for this change.
+ *
+ *      Both pass on unfixed code BY DESIGN. They are the guardrails, not the
+ *      defect, and their job is to fail if the slot is written without a
+ *      bound or the anchor is dropped to reach the two cases above.
+ *
+ *      BODY IS DELIBERATELY UNRESOLVED. Case 22 and the first draft of these
+ *      used `**The work is done.**`, and that made the case VACUOUS:
+ *      substituting case 21's own gate sentence, the one this file proves IS
+ *      a gate, into such a row still read no gate and the case still passed.
+ *
+ *      THE CAUSE NAMED HERE WAS WRONG, and item T-762 measured it. This
+ *      paragraph blamed rung resolution — `deriveBlocker` narrowing a
+ *      decision-gate rule to `bodyText` once the rung resolves. That cannot
+ *      be it: `bodyText` IS `bodyCorpus`, and the acceptance sits inside it
+ *      either way. The real cause was the cell boundary. `bodyCorpus` joined
+ *      the title cell to the acceptance cell with a SPACE, and this fixture's
+ *      title ends `.` `*` `*`, so neither the terminator anchor (which needs
+ *      whitespace straight after the stop) nor the bold anchor (which needs
+ *      `**` straight before the phrase) could reach across it. Case 22f
+ *      below is that substitution written as a case; it was RED until T-762
+ *      repaired the boundary, and case 22 has consulted its acceptance ever
+ *      since. These two keep their unresolved body, which costs nothing and
+ *      leaves them independent of that question.
+ * ------------------------------------------------------------------------ */
+for (const [id, acceptance, why, breaks] of [
+  [
+    "T-954",
+    "A test that pins the decision boundary for this loader is added alongside the fix.",
+    "four words between the article and the noun",
+    "an unbounded adjective slot",
+  ],
+  [
+    "T-955",
+    "The change is done and the owner already took a product decision here.",
+    "an adjective-qualified decision named mid-sentence",
+    "dropping the anchor",
+  ],
+]) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id, "Nine modules are reached by no product entry point.", acceptance);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get(id);
+  check(
+    `${why} is not read as an owner gate — this fails under ${breaks}`,
+    item?.blocker !== "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22c. THE SLOT IS NOT VACUOUS IN THE OTHER DIRECTION EITHER. The bare noun
+ *      phrase case 21 pins must keep matching once an optional slot sits in
+ *      front of it — a `{1,2}` quantifier written where `{0,2}` was meant
+ *      passes every case above and silently un-gates the live row that
+ *      forced the U-502 term.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-956",
+    "Nine modules are reached by no product entry point.",
+    "A decision, then the work that follows from it: mount them or retire them.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-956");
+  check(
+    "the bare noun phrase still reads as a gate with the slot empty",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the acceptance cell is a corpus boundary (T-762)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 22d. THE DEFECT, on `C-504`'s LIVE row shape. `bodyCorpus` joins the title
+ *      cell to the acceptance cell with a SPACE, so the head of the
+ *      acceptance cell — the field that states what an item NEEDS — is never
+ *      a sentence start, and no anchored rule can reach anything written
+ *      there. Every anchor the decision term offers requires `^`, a sentence
+ *      terminator, a newline or bold markup immediately before the phrase; a
+ *      bare space is none of them.
+ *
+ *      THE FIXTURE TITLE ENDS WITH NO TERMINAL PUNCTUATION, which is the
+ *      whole point and the reason case 22a could not speak for this. Case
+ *      21's comment records that its fixture title must end with a plain full
+ *      stop for the case to reach the rule at all — that full stop IS the
+ *      anchor, supplied by the title, and it hides the boundary. `C-504`'s
+ *      live title cell ends "…and no live caller does", so its own gate
+ *      sentence is preceded by a bare space and it derived `blocker: null`
+ *      while `EXECUTION_QUEUE.md` offered it as the ONE claimable row in lane
+ *      C. Its acceptance opens "A product decision, not a code decision, and
+ *      it is stated that way on purpose".
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-957",
+    // No terminal punctuation — C-504's live title cell ends this way.
+    "`shapeAgentResponseForSurface` accepts an `issues` array only when the caller passes one, and no live caller does",
+    "A product decision, not a code decision, and it is stated that way on purpose: losing 83% of a governed answer is a worse failure than a long one.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-957");
+  check(
+    "a gate opening an acceptance cell after an unpunctuated title is read (C-504's live shape)",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22e. THE POPULATION, and it is not the noun form. Measured over the live
+ *      corpus, repairing the boundary moves 33 items and **32 of them anchor
+ *      on the IMPERATIVE `Decide`** at the head of their acceptance cell, not
+ *      on the `A <adj> decision` phrase `T-761` added. That term has existed
+ *      since the `Decide` rule was written and has been unreachable from an
+ *      acceptance cell for its whole life: an acceptance is written in the
+ *      imperative, so the gate in one usually is too — which is the reason
+ *      the rule's own comment gives for admitting the imperative at all.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-958",
+    "Wiring `board-artifacts/__tests__` would leave this file dark even after the directory is green",
+    "Decide whether loose root test files move into `__tests__` or whether the wiring names the parent directory.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-958");
+  check(
+    "an imperative gate opening an acceptance cell after an unpunctuated title is read",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22f. CASE 22 IS VACUOUS, and this is the case that proves it rather than
+ *      the paragraph in 22b that asserted it. `T-761` reported the vacuity
+ *      and named rung resolution as the cause. THAT DIAGNOSIS IS WRONG, and
+ *      measuring it is the only reason this case exists: `deriveBlocker`
+ *      narrows a decision-gate rule to `bodyText` when the rung resolves, but
+ *      `bodyText` IS `bodyCorpus` and the acceptance is inside it either way.
+ *      The real cause is the same boundary this item repairs — case 22's
+ *      fixture title is `**The work is done.**`, so the text before its
+ *      acceptance ends `.` `*` `*` ` `, and neither the terminator anchor
+ *      (which needs whitespace straight after the stop) nor the bold anchor
+ *      (which needs `**` straight before the phrase) can reach across it.
+ *
+ *      So this row carries case 21's OWN gate sentence — the one that file
+ *      proves IS a gate — under case 22's title, and asserts it is read as
+ *      one. It is RED before the boundary is repaired, which is precisely the
+ *      statement that case 22 was never consulting its acceptance.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-959",
+    "**The work is done.**",
+    "A decision, then the work that follows from it: mount them or retire them.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-959");
+  check(
+    "case 22's own row shape does consult its acceptance (the vacuity T-761 reported, with the cause corrected)",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22g. THE GUARDRAIL, and it is the half that matters. Making the head of a
+ *      cell a sentence start is a WIDENING at the one position the anchor
+ *      allows, so the repair must not be reached by dropping the anchor
+ *      instead — which would read every passing mention of a decision as an
+ *      owner gate and move finished work into the never-claim bucket.
+ *
+ *      The title is unpunctuated, exactly as in 22d and 22e, so the only
+ *      thing separating this case from those is WHERE the phrase sits inside
+ *      the acceptance. Passes before and after BY DESIGN: it fails if the
+ *      anchor is removed, or if the boundary is implemented by injecting a
+ *      terminator into the middle of a cell rather than between two.
+ * ------------------------------------------------------------------------ */
+for (const [id, acceptance, why] of [
+  [
+    "T-960",
+    "The owner already took a decision here and the change follows it; nothing is outstanding.",
+    "a decision named mid-sentence",
+  ],
+  [
+    "T-961",
+    "The owner already took a product decision here and the change follows it; nothing is outstanding.",
+    "an adjective-qualified decision named mid-sentence",
+  ],
+  [
+    "T-962",
+    "Nothing here is for anyone to decide; the fix is mechanical and the test proves it.",
+    "the imperative verb used mid-sentence",
+  ],
+]) {
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    id,
+    "`shapeAgentResponseForSurface` accepts an `issues` array only when the caller passes one, and no live caller does",
+    acceptance,
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get(id);
+  check(
+    `${why} in an acceptance cell is still not an owner gate — this fails if the anchor is dropped`,
+    item?.blocker !== "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22h. THE BODY STILL WINS OVER THE CLAIM LOG — item T-700's rule, which the
+ *      boundary was quietly defeating for TEN live items. `deriveBlocker`
+ *      returns on the first rule that matches the item's OWN body and holds a
+ *      claim-derived match aside, so an item that declares a gate itself must
+ *      never be labelled from a neighbouring item's release paperwork. With
+ *      the gate unreachable at the acceptance-cell head, the body matched
+ *      nothing and the claim line won by default.
+ *
+ *      Measured on the live corpus, ten of the eleven items whose blocker is
+ *      REPLACED by this change were labelled from the CLAIM LOG rather than
+ *      from their own body — nine of them `Signed-in acceptance owed` read
+ *      off register lines that mostly say the opposite in words ("no
+ *      signed-in proof owed"), and one the `Unclaimed` fallback.
+ *
+ *      The claim line here names signed-in proof for an id this case never
+ *      declares, so the label can only come from the register.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-963",
+    "Two suites hold the identical exact-list lock and nothing holds them to each other",
+    "Decide which suite owns the nav-config lock and have the other assert something it does not.",
+  );
+  appendClaims(dir, [FOREIGN_PROOF]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-963");
+  check(
+    "an item that declares its own gate is not labelled from a claim line (T-700, restored at the cell boundary)",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the lane comes from the named column (T-737)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 23. THE DEFECT, on the live shape. An id whose only parsed definition is a
+ *     `# | Verdict | Proof` row takes the PROOF cell as its lane, because the
+ *     lane was read from position 2 and that convention has no lane column.
+ *     `T-025` on the live board reads lane `PR #7957` by exactly this path,
+ *     and it is one of 35 items in that state. `build-execution-queue.mjs`
+ *     partitions claimable work by this field and sends anything it does not
+ *     recognise to `Lane ? — unassigned lane`.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addVerdictRow(dir, "T-960", "**Merged**", "PR #7957, merge SHA `58f572683`.");
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-960");
+  check(
+    "a verdict row's Proof cell is not read as the item's lane",
+    item !== undefined && !String(item?.lane ?? "").includes("#7957"),
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 24. THE SAME DEFECT where it decides ROUTING. The id carries a real item row
+ *     declaring lane `U`, and a verdict row that happens to sit ABOVE it. The
+ *     lane is resolved as the first non-empty across an id's definitions in
+ *     document order, so the proof sentence wins and the declared lane is
+ *     never reached. An item with a real acceptance and an unreadable lane is
+ *     the one that reaches the queue and is offered to nobody.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addVerdictRow(dir, "T-961", "**Deployed**", "Merge `793e515a2`; revision healthy.", { map: false });
+  addBacklogItemInLane(
+    dir,
+    "T-961",
+    "**A surface nobody can reach.**",
+    "U",
+    "Mount it or retire it once the owner decides.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-961");
+  check(
+    "a declared lane is not shadowed by a verdict row that precedes it",
+    item?.lane === "U",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 25. THE GUARDRAIL. Reading the named column must not stop reading the lane
+ *     that is actually there. 454 of the 691 rows are the four-column item
+ *     convention and every one of them must keep its letter. Passes on
+ *     unfixed code BY DESIGN — it is what stops the fix from zeroing the field.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-962",
+    "**An ordinary item row.**",
+    "C",
+    "The agent control gets a behavioral test.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-962");
+  check(
+    "a four-column item row still yields its declared lane",
+    item?.lane === "C",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 26. THE CONTRADICTION IS REPORTED, and only the contradicting id is named.
+ *     A `T-` id declaring lane `D` and a `C-` id declaring lane `C` sit in one
+ *     fixture. The live instance is `T-458`, which prints under `### Lane D` as
+ *     one of the queue's claimable rows. This asserts the report exists, counts
+ *     one, names the contradiction and does NOT name the agreeing id — an
+ *     over-broad report would be as useless as none.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(dir, "T-963", "**Register reconciliation.**", "D", "One line per item.");
+  addBacklogItemInLane(dir, "C-963", "**An agent control.**", "C", "A behavioral test exists.");
+  const r = buildBoard(dir);
+  const line = r.stdout.split("\n").find((l) => l.includes("lane contradicts its id")) ?? "";
+  check(
+    "an id whose declared lane contradicts its own prefix is reported by name",
+    /\b1\b/.test(line) && line.includes("T-963") && !line.includes("C-963"),
+    `line=${JSON.stringify(line)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 27. AN UNUSABLE LANE IS ITS OWN VERDICT, not a contradiction. Reading the
+ *     named column leaves 14 live items whose Lane cell genuinely holds
+ *     something that is not a lane — a regex fragment, `...`, a sentence —
+ *     because an unescaped `|` inside a code span shifts the row's cells. That
+ *     is a separate defect and it is now reported rather than routed on. This
+ *     case exists because without it the `KNOWN_LANES` guard in the
+ *     contradiction filter is unfalsifiable: removing it moves all 14 into the
+ *     contradiction list and every other case here stays green.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-964",
+    "**A row whose lane cell is not a lane.**",
+    "`grep -q \"error TS\"` with no heap option",
+    "The suite runs under the heap option.",
+  );
+  const r = buildBoard(dir);
+  const lines = r.stdout.split("\n");
+  const unusable = lines.find((l) => l.includes("lane cell is not a lane")) ?? "";
+  const contradicts = lines.find((l) => l.includes("lane contradicts its id")) ?? "";
+  check(
+    "a lane cell that is not a lane is reported as unusable and not as a contradiction",
+    unusable.includes("T-964") && !contradicts.includes("T-964"),
+    `unusable=${JSON.stringify(unusable)}\ncontradicts=${JSON.stringify(contradicts)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 28. THE DEFECT (item T-738). A row splits on EVERY pipe, so an ESCAPED
+ *     pipe — `\|`, which GFM defines as literal content anywhere in a row,
+ *     including inside a code span — ends the cell it sits in and shifts
+ *     every cell after it. The lane is the visible symptom because it is the
+ *     routing field: 11 live items carry a Lane cell holding a regex
+ *     fragment or a shell snippet for exactly this reason.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-970",
+    "**A row whose title quotes a regex.** The pattern is `/\\bfrom\\s*\\|\\bimport\\b/g` and it is content.",
+    "T",
+    "The suite reads the lane, not the second half of the regex.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-970");
+  check(
+    "an escaped pipe inside a code span does not end the cell it sits in",
+    item?.lane === "T",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 29. THE ELEVEN REAL ROWS, BY ID. The acceptance asks for proof on the real
+ *     rows rather than on a fixture alone, so these are the live backlog
+ *     rows copied VERBATIM — whole, including the trailing delimiter, since
+ *     that is what the property is about.
+ *
+ *     They are FROZEN into a repo-owned fixture rather than read from the
+ *     operator backlog at test time, and that is item T-739's finding, not a
+ *     convenience: four sibling suites assert a property of that MUTABLE
+ *     document, so they go red locally the day it improves and SKIP on the
+ *     runner, where nothing gates them. A case that cannot fail where it runs
+ *     is the shape this whole directory exists against.
+ * ------------------------------------------------------------------------ */
+const KNOWN_LANE_LETTERS = new Set(["D", "U", "C", "T"]);
+
+// Beside this module rather than under `__fixtures__/`, and that is not a
+// style choice. `copyToolchainInto` takes every non-suite FILE in this
+// directory and no subdirectory, so a suite run from a copied toolchain —
+// which `toolchain-manifest.test.mjs` does to four suites — would find no
+// such directory and crash. Measured: 16/1 to 15/2 on that suite.
+const REAL_ROWS = fs
+  .readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "t738-real-rows.md"), "utf8")
+  .split(/\r?\n/);
+
+/** The frozen rows, as `{ id, expect, line }` read from the fixture's own comments. */
+function frozenRows() {
+  const out = [];
+  for (let i = 0; i < REAL_ROWS.length; i += 1) {
+    const m = REAL_ROWS[i].match(/^<!--\s+(\S+)\s+\|\s+source line (\d+)\s+\|\s+expect lane (\S+)\s+-->$/);
+    if (!m) continue;
+    out.push({ id: m[1], sourceLine: Number(m[2]), expect: m[3], line: REAL_ROWS[i + 1] });
+  }
+  return out;
+}
+
+{
+  const rows = frozenRows();
+  const recoverable = rows.filter((r) => r.expect !== "MALFORMED");
+  const dir = freshFixture();
+  for (const r of recoverable) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n${r.line}\n`,
+    );
+    mapFixtureId(dir, r.id);
+  }
+  buildBoard(dir);
+  const wrong = recoverable
+    .map((r) => ({ ...r, got: resolvedLane(dir, r.id) }))
+    .filter((r) => r.got !== r.expect);
+  check(
+    `all ${recoverable.length} real escaped-pipe rows recover their declared lane`,
+    recoverable.length === 11 && wrong.length === 0,
+    `count=${recoverable.length}\n` +
+      wrong.map((r) => `${r.id} (backlog line ${r.sourceLine}) want ${r.expect} got ${JSON.stringify(r.got ?? null)}`).join("\n"),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 30. THE ACCEPTANCE SHIFTS IN THE SAME ROWS, and it is the half that
+ *     decides whether an item is claimable or `blocked on Anand`. A splitter
+ *     repaired only far enough to recover cell 2 would leave this wrong and
+ *     case 28 would still pass, so this asserts the LAST cell rather than the
+ *     lane.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-971",
+    "**Two escaped pipes, so the acceptance lands two cells early.** See `a \\| b \\| c`.",
+    "T",
+    "Write the behavioral test and record the mutation count.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-971");
+  check(
+    "the acceptance cell survives an escaped pipe earlier in the row",
+    (item?.acceptance ?? "").startsWith("Write the behavioral test"),
+    `acceptance=${JSON.stringify((item?.acceptance ?? "").slice(0, 90))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 31. A BARE PIPE INSIDE A CODE SPAN IS STILL A DELIMITER, and the row is
+ *     REPORTED rather than recovered.
+ *
+ *     This is the case that makes the T-738 verdict falsifiable. GFM says an
+ *     escaped pipe is content anywhere and a BARE pipe delimits even inside a
+ *     code span — so GitHub renders these two rows shifted as well. Teaching
+ *     the parser to skip code spans, which is what T-738 was filed asking
+ *     for, would make this board disagree with the document a human reads.
+ *     The rows are malformed at SOURCE; the fix belongs in the backlog, and
+ *     what the generator owes is to NAME them.
+ * ------------------------------------------------------------------------ */
+{
+  const malformed = frozenRows().filter((r) => r.expect === "MALFORMED");
+  const dir = freshFixture();
+  for (const r of malformed) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n${r.line}\n`,
+    );
+    mapFixtureId(dir, r.id);
+  }
+  const r = buildBoard(dir);
+  const reported = r.stdout.split("\n").find((l) => l.includes("bare pipe in a code span")) ?? "";
+  check(
+    "a bare pipe inside a code span still delimits, and the row is reported by name",
+    malformed.length === 2 &&
+      malformed.every((m) => reported.includes(m.id)) &&
+      malformed.every((m) => !KNOWN_LANE_LETTERS.has(resolvedLane(dir, m.id))),
+    `reported=${JSON.stringify(reported)}\n` +
+      malformed.map((m) => `${m.id} lane=${JSON.stringify(resolvedLane(dir, m.id) ?? null)}`).join("\n"),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 32. THE GUARDRAIL ON THE FIX ITSELF. A backslash that is itself escaped
+ *     does not escape the pipe after it: `\\|` is a literal backslash and
+ *     then a REAL delimiter. A splitter written as a blanket
+ *     `replace(/\\\|/g, …)` gets this wrong and nothing else here would say
+ *     so. Passes on unfixed code by design — it exists to stop the repair
+ *     from over-reaching, exactly as case 25 does.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n"
+      + "| T-972 | **A row ending in an escaped backslash.** The path is `C:` and then \\\\| T | The delimiter after it is a delimiter. |\n",
+  );
+  mapFixtureId(dir, "T-972");
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-972");
+  check(
+    "an escaped backslash does not escape the delimiter that follows it",
+    item?.lane === "T",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 33. THE UNBALANCED-BACKTICK VERDICT, which T-738's acceptance asks to be
+ *     decided explicitly rather than left to fall out.
+ *
+ *     VERDICT: an odd number of backticks means there is no code span to be
+ *     inside of, so the row is split by the ordinary rule — escapes are
+ *     content, bare pipes delimit — and it is NOT named as a
+ *     bare-pipe-in-a-code-span row. Guessing where the author meant the span
+ *     to close would be inventing content.
+ *
+ *     The live backlog contains ZERO unbalanced rows, measured over every
+ *     id-bearing row, so this branch has no data to hold it and a fixture is
+ *     the only thing that can. Without this case the `ticks % 2` guard is
+ *     unfalsifiable: deleting it leaves every other case here green.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n"
+      + "| T-973 | **A row with three backticks.** `a|b` and then a stray ` opens a span that never closes. | T | Not named as a shifted row. |\n",
+  );
+  mapFixtureId(dir, "T-973");
+  const r = buildBoard(dir);
+  const reported = r.stdout.split("\n").find((l) => l.includes("bare pipe in a code span")) ?? "";
+  check(
+    "an unbalanced backtick span splits by the ordinary rule and is not named as a shifted row",
+    !reported.includes("T-973") && (resolvedLane(dir, "T-973") ?? "").startsWith("b`"),
+    `lane=${JSON.stringify(resolvedLane(dir, "T-973") ?? null)}\nreported=${JSON.stringify(reported)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 34. THE SECOND CALL SITE. `splitTableRow` has two users — the backlog's
+ *     item tables and `tablesUnderHeading`, which reads the BOARD's
+ *     `Vision to acceptance` table. Cases 28-33 exercise only the first: a
+ *     mutation that reverted just this one to split-on-every-pipe left the
+ *     whole suite green, so the call site was being changed on faith.
+ *
+ *     Here an escaped pipe sits in the `Current evidence` cell and the
+ *     assertion is on `Next acceptance gate`, which follows it — the cell a
+ *     stage publishes as its next gate. The live board carries no escaped
+ *     pipe today, so this is a guard on a reachable path rather than a
+ *     repair of live data, and it is written as a fixture for that reason.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.writeFileSync(
+    path.join(dir, "SOURCE_EXECUTION_BOARD_20260917.md"),
+    "# Synthetic execution board\n\n## Vision to acceptance\n\n"
+      + "| Outcome the user should experience | Backlog IDs | Current evidence | Next acceptance gate | Owner lane |\n"
+      + "|---|---|---|---|---|\n"
+      + "| Source New is a simple five-phase journey | E1 | Matched with `a \\| b` and nothing else. | Persist the accepted motion before labels. | Claude Code |\n",
+  );
+  const rr = buildBoard(dir);
+  // `nextGate` is rendered, not serialised into the summary, so the assertion
+  // is on the board the generator actually writes.
+  const html = fs.readFileSync(path.join(dir, "source-board.html"), "utf8");
+  // Assert the DESTINATION, not merely that the text is somewhere on the page.
+  // Split on every pipe and this same sentence still appears — one field to
+  // the left, rendered as the stage's Owner — so "the board contains it" is
+  // satisfied by the defect. The tail of the shifted cell is checked with its
+  // backticks removed, because `stripMd` has already taken them off by the
+  // time it reaches the page.
+  const gateRendered = html.includes("<ul><li>Persist the accepted motion before labels.</li></ul>");
+  const shiftedTail = html.includes("b and nothing else.");
+  check(
+    "an escaped pipe in a board outcome row does not shift the next-gate cell",
+    rr.stdout.includes("board outcomes parsed:    1") && gateRendered && !shiftedTail,
+    `gate rendered as the next action=${gateRendered}; shifted tail present=${shiftedTail}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 35-39. THE ID COLUMN IS A HEADER NAME, NOT A LITERAL SYMBOL — item T-746.
+ *
+ *     `backlogTableItems` required `cells[0] === "#"` to recognise a table's
+ *     header. The register's item tables are not all headed that way: the
+ *     live backlog also uses `| Id | Finding | Lane | What it needs |`,
+ *     `| Id | Finding | Lane | Status |`, `| Item | What | Lane | Acceptance |`
+ *     and `| Id | What is wrong | Lane | Acceptance |`, and every row under
+ *     one of those was dropped before any census counted it. This is item
+ *     T-737's lesson one column to the left: that item taught the reader to
+ *     take the LANE from the column its header names, and the ID column was
+ *     still matched by a symbol.
+ *
+ *     Measured on `origin/main` `aa0eecff9` against the live operator
+ *     documents: an independent scan of ids in item position finds 474 and the
+ *     reader produced 444, a strict subset with zero extras, so 30 were dropped
+ *     with no report of any kind. 26 of those have a table row in one of the
+ *     shapes above; the other 4 are a heading shape, which is a separate item.
+ *     (441, quoted in an earlier draft, was the board's PLACED population —
+ *     parsed minus the 3 it could not place, and those 3 were already named.)
+ *
+ *     A dropped id is not merely missing from a report. It is absent from the
+ *     board's population, absent from the queue's pool, and absent from the
+ *     drop row T-745 added, so no bucket of `EXECUTION_QUEUE.md` can offer it
+ *     to anyone: `T-743` and `T-744` were open, unclaimed, lane-T work while
+ *     three runs in a row recorded "my lane has ZERO claimable rows".
+ *
+ *     Cases 35-37 are the shapes. Case 38 is the protection that the old
+ *     `cells[0] === "#"` test was carrying and must not lose. Case 39 is the
+ *     residual: a shape this reader STILL cannot parse has to be named rather
+ *     than silently dropped, which is the whole defect one level up.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * A table in an arbitrary header shape, under its own section heading.
+ *
+ * The heading is load-bearing, not decoration. The board's header persists
+ * across interrupting prose and resets only at a heading, so a shaped table
+ * appended directly after the fixture's own `# | Item | Lane | Acceptance`
+ * table inherits THAT header: the row parses, carrying cells read against the
+ * wrong columns, and a case asserting only "the id is on the board" passes
+ * before anything is fixed. Under its own heading the header is genuinely
+ * unrecognised, which is the state this item is about.
+ *
+ * No cell may carry a pipe inside a code span either — item T-738 splits such
+ * a row at that pipe and shifts every cell right, so the fixture would be
+ * testing that defect instead of this one. The first draft of these cases did
+ * exactly that and reported a lane of "Finding` row.**".
+ */
+function addShapedRow(dir, header, cells, { map = true } = {}) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n## Synthetic shape section for ${cells[0]}\n\n`
+      + `| ${header.join(" | ")} |\n|${header.map(() => "---").join("|")}|\n| ${cells.join(" | ")} |\n`,
+  );
+  if (map) mapFixtureId(dir, cells[0]);
+}
+
+for (const [header, cells, lane, label] of [
+  [
+    ["Id", "Finding", "Lane", "What it needs"],
+    ["T-941", "**An Id-and-Finding row.**", "T", "Parsed as an item, in lane T."],
+    "T",
+    "`| Id | Finding | Lane | What it needs |`",
+  ],
+  [
+    ["Item", "What", "Lane", "Acceptance"],
+    ["T-942", "**An Item-and-What row.**", "U", "Parsed as an item, in lane U."],
+    "U",
+    "`| Item | What | Lane | Acceptance |`",
+  ],
+  [
+    ["Id", "What is wrong", "Lane", "Acceptance"],
+    ["T-943", "**An Id-and-What-is-wrong row.**", "C", "Parsed as an item, in lane C."],
+    "C",
+    "`| Id | What is wrong | Lane | Acceptance |`",
+  ],
+]) {
+  const dir = freshFixture();
+  addShapedRow(dir, header, cells);
+  const r = buildBoard(dir);
+  const { out } = summaryItems(dir);
+  // The assertion is on the DESTINATION: the id has to reach the board's
+  // population carrying the lane its own header column declares. "The id
+  // appears somewhere" would be satisfied by the unmapped-drop list.
+  check(
+    `a row headed ${label} reaches the board as an item, with the lane its header names`,
+    r.status === 0 && out.has(cells[0]) && resolvedLane(dir, cells[0]) === lane,
+    `exit=${r.status}; on the board=${out.has(cells[0])}; ` +
+      `lane=${JSON.stringify(resolvedLane(dir, cells[0]) ?? null)} expected ${lane}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 38. THE PROTECTION THE OLD GUARD WAS CARRYING.
+ *
+ *     `# | Mutation | Failing cases` is numbered 1..n and is not a backlog
+ *     table. Read as items it collided with #1-#4, four of the oldest and
+ *     most-cited ids on the board, suppressed them as ambiguous and dropped
+ *     three lifecycle stages with no work undone. Widening the ID column must
+ *     not widen the KINDS: the guard becomes a whitelist of conventions, and
+ *     this case is what tells the two apart.
+ *
+ *     Asserted through the unmapped gate rather than through the summary
+ *     alone. An id that leaks in here is not in the fixture's structure map,
+ *     so the board exits 1 and names it — a second, independent signal that
+ *     does not depend on this suite reading the summary the same way the
+ *     generator wrote it.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Mutation | Failing cases |\n|---|---|---|\n"
+      + "| 1 | `>=` to `>` in the reach bound | 2 |\n"
+      + "| 2 | drop the veto entirely | 4 |\n"
+      + "| 3 | return the first match, not the last | 1 |\n",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { out } = summaryItems(dir);
+  const leaked = ["1", "2", "3"].filter((n) => out.has(n));
+  check(
+    "a `# | Mutation | Failing cases` table is still not read as items 1, 2 and 3",
+    r.status === 0 && leaked.length === 0 && !r.stderr.includes("unmapped"),
+    `exit=${r.status}; leaked=${JSON.stringify(leaked)}\nstderr=${r.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 39. THE RESIDUAL. A SHAPE IT CANNOT PARSE MUST BE NAMED.
+ *
+ *     Fixing the shapes we already know about is the smaller half. The defect
+ *     that let 33 ids vanish is that an id the extractor never produces
+ *     cannot appear in ANY of the board's own reports — not in its
+ *     population, and not in the `unmapped` drop list either, because that
+ *     list is computed from the ids it did produce. `not placed on the map: 0`
+ *     was vacuously true over exactly the ids that were not missing.
+ *
+ *     So the board scans for ids in item position INDEPENDENTLY of the
+ *     extractor and reports the difference. `## Item T-981 — …` with no table
+ *     under it is such a shape today: it is item T-740's half of this defect,
+ *     deliberately not fixed here, and this case pins that it is at least
+ *     VISIBLE. When someone parses that shape, this case fails loudly and its
+ *     replacement is a fixture in whatever shape is then unreadable.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n## Item T-981 — filed by a heading with no table under it\n\n"
+      + "| Lane | Priority | Status | PR |\n|---|---|---|---|\n| T | P1 | open | none |\n",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  const residual = summary.unparsedItemIds;
+  check(
+    "an id in item position that no shape parses is NAMED as a residual, not silently dropped",
+    Array.isArray(residual) && residual.map(String).includes("T-981") && !out.has("T-981"),
+    `residual=${JSON.stringify(residual ?? null)}; parsed as an item=${out.has("T-981")}\n` +
+      `exit=${r.status}`,
+  );
+  check(
+    "and the board says so on its own stdout, where the operator reads it",
+    /in item position/i.test(r.stdout) && r.stdout.includes("T-981"),
+    `stdout tail=${r.stdout.split("\n").slice(-12).join("\n")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 40. THE TWO POPULATIONS AGREE — the assertion T-746 asks for by name.
+ *
+ *     "Prove it by scanning the backlog independently of the extractor and
+ *     asserting the two populations agree, not by adding fixtures in the
+ *     shapes you already thought of." A fixture carrying one row of every
+ *     shape the live backlog uses, plus one shape nothing parses, and the
+ *     claim is arithmetic rather than a list: EVERY id discovered in item
+ *     position is either on the board or named in the residual. Nothing may
+ *     fall between the two.
+ *
+ *     The non-item tables are in the same fixture on purpose. If the census
+ *     counted them, the residual would name ids that are not items and this
+ *     case would pass while the generator was wrong in the other direction.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addShapedRow(dir, ["Id", "Finding", "Lane", "Status"], ["T-951", "**Shape A.**", "T", "open"]);
+  addShapedRow(dir, ["Item", "What", "Lane", "Outcome"], ["T-952", "**Shape B.**", "T", "open"]);
+  addShapedRow(dir, ["#", "Verdict", "Proof"], ["T-953", "closed", "PR #1 merged"]);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Mutation | Failing cases |\n|---|---|---|\n| 1 | a mutation, not an item | 2 |\n"
+      + "\n| id | stamp picks | append order picks |\n|---|---|---|\n| T-951 | a report row | a report row |\n"
+      + "\n## Item T-982 — a heading shape nothing parses\n\nProse only.\n",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  const discovered = (summary.itemPositionIds ?? []).map(String);
+  const residual = (summary.unparsedItemIds ?? []).map(String);
+  const unaccounted = discovered.filter((id) => !out.has(id) && !residual.includes(id));
+  check(
+    "every id discovered in item position is either on the board or named in the residual",
+    discovered.length > 0 && unaccounted.length === 0
+      && ["T-951", "T-952", "T-953"].every((id) => discovered.includes(id) && out.has(id))
+      && residual.includes("T-982") && !discovered.includes("1"),
+    `exit=${r.status}\ndiscovered=${JSON.stringify(discovered)}\n` +
+      `residual=${JSON.stringify(residual)}\nunaccounted=${JSON.stringify(unaccounted)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * HELPERS for item T-750 — a verdict written under `##`.
+ * ------------------------------------------------------------------------ */
+
+/** A `## <heading>` section carrying one `# | Item | Lane | Acceptance` row. */
+function addSectionedItem(dir, heading, id, body, lane, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n## ${heading}\n\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n`
+      + `| ${id} | ${body} | ${lane} | ${acceptance} |\n`,
+  );
+}
+
+/** A verdict note written as a heading of the caller's chosen depth. */
+function addVerdictHeading(dir, depth, headingText, prose) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n${"#".repeat(depth)} ${headingText}\n\n${prose}\n`,
+  );
+}
+
+/** Place one id on the map pinned to a section, without disturbing the rest. */
+function mapPinnedFixtureId(dir, id, definedIn, where) {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  const list = where === "outsideLifecycle" ? map.outsideLifecycle : map.platformTrack;
+  list.items.push({ num: id, definedIn });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
+/**
+ * EVERY summary entry for one id, not the last one written.
+ *
+ * `summaryItems` keys by id, so two pinned definitions of one number collapse
+ * to whichever the walk reached second — which is precisely the pair these
+ * cases are about.
+ */
+function allSummaryEntriesFor(dir, id) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  const hits = [];
+  const walk = (o) => {
+    if (Array.isArray(o)) { o.forEach(walk); return; }
+    if (!o || typeof o !== "object") return;
+    if (String(o.num) === id && o.rung !== undefined) hits.push(o);
+    for (const k of Object.keys(o)) walk(o[k]);
+  };
+  walk(summary);
+  return hits;
+}
+
+/* ------------------------------------------------------------------------ *
+ * 23. THE DEFECT (item T-750). A verdict note under `##` reaches nothing.
+ *
+ *     `backlogProseItems` requires `^### Item <id>`, and this backlog writes
+ *     its verdicts under `##` — 62 of them on the live document. Most also
+ *     carry a table row for their own id inside the note, so the verdict
+ *     lands anyway and the gap is invisible; where the note is prose only,
+ *     the verdict reaches no corpus and the item stays at rung 0.
+ *
+ *     `unparsedItemIds` cannot report it either: that list is a set
+ *     difference over IDS, and this id is produced by its own table row, so
+ *     the residual is empty while the verdict is lost. Case 22's arithmetic
+ *     passes over exactly this case — which is the same shape as the gate
+ *     that proved a control existed by finding its name in the file.
+ *
+ *     Measured on the live backlog at 2026-09-24T03:45Z: five ids carry a
+ *     `##` verdict heading and read rung 0, `T-458` among them — the ONLY
+ *     non-data-plane row the claimable queue offered, already marked closed
+ *     by a run at 07:14Z the same day.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture — the item as originally filed",
+    "T-960",
+    "**A control that does not run.**",
+    "T",
+    "A behavioral test drives the real handler.",
+  );
+  mapFixtureId(dir, "T-960");
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-960 — CLOSED 2026-09-24 (fixture). The item was right and the fix shipped.",
+    "Prose only: no table row, no `###` subsection. This is the shape the live backlog uses.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-960");
+  check(
+    "a verdict written under `## Item <id>` closes the item it names",
+    item !== undefined && item.rungLabel === "Closed",
+    `exit=${r.status}\nrungLabel=${JSON.stringify(item?.rungLabel)} rung=${JSON.stringify(item?.rung)}\n`
+      + "Closed and Open are BOTH rung 0 — the label is the only field that tells them apart, "
+      + "and `build-execution-queue.mjs` filters on exactly that (`rungLabel !== \"Closed\"`).",
+  );
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  check(
+    "and the board reports it as Closed rather than merely off rung 0",
+    (summary.allItemsByRung ?? {}).Closed >= 1,
+    `allItemsByRung=${JSON.stringify(summary.allItemsByRung)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 24. The lane suffix is the only thing that tells two items apart.
+ *
+ *     `buildItem` lets an update note through EVERY `definedIn` pin
+ *     (`... || isUpdateNote(d)`), which is right for a number with one item
+ *     and wrong for a collision: on the live board `T-458` is two different
+ *     items in two lanes, and the operator disambiguates by writing
+ *     `T-458(D)`. Attributing that verdict to both would close a lane-U item
+ *     that is explicitly still open on a held decision.
+ *
+ *     So the suffix must SCOPE the verdict, not merely survive parsing.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture D-lane origin",
+    "T-961",
+    "**The data-plane half.**",
+    "D",
+    "Write the register line.",
+  );
+  addSectionedItem(
+    dir,
+    "T-750 fixture U-lane origin",
+    "T-961",
+    "**The surface half, on a held decision.**",
+    "U",
+    "Decide first, do not code first.",
+  );
+  mapPinnedFixtureId(dir, "T-961", "T-750 fixture D-lane origin", "platformTrack");
+  mapPinnedFixtureId(dir, "T-961", "T-750 fixture U-lane origin", "outsideLifecycle");
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-961(D) — CLOSED 2026-09-24 (fixture). The register lines were written two days ago.",
+    "Prose only. This verdict speaks for the D-lane half and for nothing else.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const entries = allSummaryEntriesFor(dir, "T-961");
+  const dLane = entries.find((e) => e.lane === "D");
+  const uLane = entries.find((e) => e.lane === "U");
+  const shown = JSON.stringify(entries.map((e) => ({ lane: e.lane, rungLabel: e.rungLabel })));
+  check(
+    "a `(D)`-suffixed verdict closes the D-lane definition",
+    dLane !== undefined && dLane.rungLabel === "Closed",
+    `exit=${r.status}\nentries=${shown}`,
+  );
+  check(
+    "and leaves the U-lane definition of the same number open",
+    uLane !== undefined && uLane.rungLabel === "Open",
+    `entries=${shown}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 25. A lane suffix no definition answers to fails CLOSED, and is NAMED.
+ *
+ *     The fail-open reading — "the lane does not match, so attribute it
+ *     anyway" — would close an item on a verdict written about a different
+ *     one. The fail-closed reading alone is not enough either: it is silence,
+ *     which is the defect in case 23. So the verdict is withheld AND the
+ *     board says whose it could not be.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture — a lane-U item only",
+    "T-962",
+    "**One definition, lane U.**",
+    "U",
+    "Decide first.",
+  );
+  mapFixtureId(dir, "T-962");
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-962(D) — CLOSED 2026-09-24 (fixture). A suffix naming a lane this id does not have.",
+    "Prose only.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "a verdict whose lane suffix matches no definition does NOT close the item",
+    out.get("T-962")?.rungLabel === "Open",
+    `exit=${r.status}\nrungLabel=${JSON.stringify(out.get("T-962")?.rungLabel)}`,
+  );
+  const unattributed = (summary.laneScopedVerdictsUnattributed ?? []).map((v) => `${v.num}(${v.laneScope})`);
+  check(
+    "and the board names the withheld verdict instead of dropping it in silence",
+    unattributed.includes("T-962(D)"),
+    `laneScopedVerdictsUnattributed=${JSON.stringify(summary.laneScopedVerdictsUnattributed)}`,
+  );
+  check(
+    "and says so on its own stdout, where the operator reads it",
+    /T-962\(D\)/.test(r.stdout),
+    `stdout tail:\n${r.stdout.split("\n").slice(-25).join("\n")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 26. THE GUARD. Widening the heading depth must not widen what counts as a
+ *     DEFINITION.
+ *
+ *     The live backlog carries 348 `## Item` headings against 128 `###`.
+ *     Reading every one as a substantive definition would invent a second
+ *     definition for hundreds of ids, suppress them all as ambiguous, and
+ *     take the lifecycle stages down with them — the `# | Mutation` failure
+ *     of case 21 reached from the heading side. Only a verdict-shaped title
+ *     may be read, and a note is never substantive.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture — the guard",
+    "T-963",
+    "**One definition only.**",
+    "T",
+    "Stay unambiguous.",
+  );
+  mapFixtureId(dir, "T-963");
+  // A heading about the item that states no verdict: commentary, not status.
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-963 — notes on the approach, and why the obvious fix is wrong",
+    "Prose only. Nothing here is a verdict.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "a `##` heading that states no verdict does not become a second definition",
+    !(summary.duplicateNums ?? []).some((d) => String(d.num) === "T-963")
+      && out.get("T-963")?.ambiguous === false,
+    `exit=${r.status}\nduplicateNums=${JSON.stringify((summary.duplicateNums ?? []).map((d) => d.num))}\n`
+      + `ambiguous=${JSON.stringify(out.get("T-963")?.ambiguous)}`,
+  );
+  check(
+    "and it leaves the item at the rung its own text earns",
+    out.get("T-963")?.rungLabel === "Open",
+    `rungLabel=${JSON.stringify(out.get("T-963")?.rungLabel)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --------------------------------------------------------------- item T-752
+ *  An id a STAGE CAPABILITY is the only place that cites it reaches no item,
+ *  and the `unmapped` report is the reason nobody could see that.
+ *
+ *  Two walks of the same map disagreed. `mappedNums` counts a capability
+ *  citation as placement — "an id cited only by a capability is placed, not
+ *  orphaned" — so such an id is deliberately kept OUT of `unmapped`. But
+ *  `stageItems` is built from `map.stages[].items` alone, so the id is built
+ *  into no item either. It is in no bucket of `EXECUTION_QUEUE.md`, claimable
+ *  or blocked, and in no residual this generator prints. Cross-cutting
+ *  capabilities escaped it only because `crossCuttingTrack` is built FROM the
+ *  capability lists.
+ *
+ *  Measured on the live map and backlog at 2026-09-24T06:10Z: of 63 ids under
+ *  a stage capability, exactly two are declared nowhere else — `T-429`
+ *  (lane C) and `T-445` (lane U), both substantive filings with full
+ *  acceptances, in the two lanes the queue reported as having ZERO claimable
+ *  rows that same run. `T-429`'s absence was WRITTEN DOWN on 21 Sep — "265
+ *  item rows and T-429 is not one of them ... survives only as a capability
+ *  reference under /stages[5]/capabilities[3]" — and stayed because the
+ *  observation was prose. These cases are the executable form of it.
+ *
+ *  The live corpus is deliberately NOT asserted here. A case that reads the
+ *  operator's documents is red whenever they improve and skipped wherever CI
+ *  has no copy of them; the generator carries the standing check instead, over
+ *  whatever documents it is given, and reports `placedButUnbuilt` on every run
+ *  including at zero.
+ * ------------------------------------------------------------------------ */
+
+/** Cite an id from a stage capability, and from nowhere else in the map. */
+function citeFromStageCapabilityOnly(dir, id, capability = "Synthetic capability") {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (JSON.stringify(map).includes(`"${id}"`)) {
+    throw new Error(`fixture id ${id} is already placed somewhere in the map`);
+  }
+  const stage = map.stages[0];
+  (stage.capabilities ??= []).push({ capability, items: [id] });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-951", "**Cited by a capability and nowhere else.**", "Be reachable.");
+  // `addBacklogItem` placed it on the platform track. Undo that: the whole
+  // point is an id whose ONLY placement is a stage capability.
+  {
+    const file = path.join(dir, "source-stage-map.json");
+    const map = JSON.parse(fs.readFileSync(file, "utf8"));
+    map.platformTrack.items = map.platformTrack.items.filter((r) => r !== "T-951");
+    fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+  }
+  citeFromStageCapabilityOnly(dir, "T-951");
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "an id cited only by a stage capability is built into an item",
+    out.has("T-951"),
+    `exit=${r.status}\nstderr=${r.stderr}\nitem ids=${JSON.stringify([...out.keys()].slice(0, 40))}`,
+  );
+  check(
+    "and it is not reported as unmapped, because the map does place it",
+    !(summary.unmapped ?? []).map(String).includes("T-951"),
+    `unmapped=${JSON.stringify(summary.unmapped)}`,
+  );
+  check(
+    "and it carries the acceptance its own filing states, not an empty row",
+    (out.get("T-951")?.acceptance ?? "").includes("Be reachable"),
+    `acceptance=${JSON.stringify(out.get("T-951")?.acceptance)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The guardrail against the naive fix. A capability normally cites an id its
+   * own stage already lists — 61 of the 63 live ones do — and concatenating
+   * the two lists without dedup would file that id twice on one stage, which
+   * the queue would render as two rows for one piece of work. This case is
+   * GREEN before the change and must stay green after it; a fix that turns it
+   * red has traded one defect for a louder one.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-952", "**Cited by its own stage and by its capability.**", "Appear once.");
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  map.platformTrack.items = map.platformTrack.items.filter((r) => r !== "T-952");
+  map.stages[0].items = [...(map.stages[0].items ?? []), "T-952"];
+  (map.stages[0].capabilities ??= []).push({ capability: "Also cites it", items: ["T-952"] });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const summary = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  const occurrences = (summary.stages ?? [])
+    .flatMap((s) => s.items ?? [])
+    .filter((i) => String(i.num) === "T-952").length;
+  check(
+    "an id its stage lists AND its capability cites is filed once, not twice",
+    r.status === 0 && occurrences === 1,
+    `exit=${r.status}\noccurrences=${occurrences}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The exclusion, and it has to be stated or the standing check is unusable:
+   * a map may place an id the backlog does not define yet. That builds no item
+   * and is NOT this defect — `buildItem` returning null for a missing
+   * definition is the documented behaviour. Only a PLACED AND DEFINED id that
+   * reaches no item is a fault.
+   */
+  const dir = freshFixture();
+  citeFromStageCapabilityOnly(dir, "T-953", "Cites an id nothing defines");
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "a placed id the backlog does not define builds nothing and does not fail the run",
+    r.status === 0 && !out.has("T-953"),
+    `exit=${r.status}\nstderr=${r.stderr}`,
+  );
+  check(
+    "and it is not reported as placed-but-unbuilt, which is about DEFINED items",
+    Array.isArray(summary.placedButUnbuilt) && !summary.placedButUnbuilt.map(String).includes("T-953"),
+    `placedButUnbuilt=${JSON.stringify(summary.placedButUnbuilt)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The standing check itself, written at zero. A missing field is not a zero
+   * — the rule item T-746 set for the residual — so the generator writes
+   * `placedButUnbuilt` on every run, and a reader can tell "none" from "this
+   * generator does not look".
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-954", "**Ordinary mapped item.**", "Be built.");
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const summary = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  check(
+    "`placedButUnbuilt` is written on every run, including when it is empty",
+    r.status === 0
+      && Object.prototype.hasOwnProperty.call(summary, "placedButUnbuilt")
+      && Array.isArray(summary.placedButUnbuilt)
+      && summary.placedButUnbuilt.length === 0,
+    `exit=${r.status}\nplacedButUnbuilt=${JSON.stringify(summary.placedButUnbuilt)}`,
+  );
+  check(
+    "and stdout says so in words, so a run that is read rather than parsed still reports it",
+    /placed but built into no item:\s+0\b/.test(r.stdout),
+    `stdout tail=${JSON.stringify(r.stdout.split("\n").slice(-12).join("\n"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The cross-cutting half, which already worked and must keep working. It is
+   * here because it is the negative control for the whole item: if this case
+   * had ever been red, the defect would have been noticed years of runs ago.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-955", "**Cited by a cross-cutting capability.**", "Still reachable.");
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  map.platformTrack.items = map.platformTrack.items.filter((r) => r !== "T-955");
+  (map.crossCutting.capabilities ??= []).push({ capability: "Cross-cutting", items: ["T-955"] });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { out } = summaryItems(dir);
+  check(
+    "a cross-cutting capability citation still builds an item",
+    out.has("T-955"),
+    `exit=${r.status}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * Item C-515 — a defined id with no map entry is offered to nobody.
+ *
+ * The drop is upstream of every filter the queue renders. `placedRefs` is
+ * built from the structure map alone, so an id the backlog defines and the
+ * map does not place never becomes an item, never reaches `summary.tracks`,
+ * and therefore appears in no bucket of `EXECUTION_QUEUE.md` — not as
+ * claimable, not as blocked, not as held.
+ *
+ * The board already names the condition and exits 1. That remedy is
+ * structurally red at all times, because filing is a local edit to an
+ * operator-owned document and mapping is a repo-owned pull request, so the
+ * two come apart the instant an item is filed. Measured twice on the live
+ * corpus: 17 ids on 2026-09-24 at 15:50Z (item C-509 placed them all), and 12
+ * more eight hours later, with the queue offering zero rows in lanes U, C and
+ * T on both occasions while filed, unclaimed, executable work sat in the
+ * backlog.
+ *
+ * What these cases hold shut is the HIDING, and nothing else. The gate, its
+ * stderr line, the exit code and `summary.unmapped` are asserted UNCHANGED
+ * below, deliberately: `build-execution-queue.mjs` reserves "whether an
+ * unmapped id should FAIL the board" to the operator, and this item does not
+ * take that decision. Mapping stays owed; it stops being a precondition for
+ * the work being visible.
+ * ------------------------------------------------------------------------ */
+
+/** A backlog item with NO entry in the structure map — the state under test. */
+function addUnmappedBacklogItem(dir, id, body, lane, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n| ${id} | ${body} | ${lane} | ${acceptance} |\n`,
+  );
+}
+
+/** The track a summary places one id on, or undefined. */
+function trackOf(dir, id) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  return (summary.tracks ?? []).find((t) => (t.items ?? []).some((i) => String(i.num) === id));
+}
+
+console.log("\nbuild-source-board — an unmapped id is offered, not hidden (C-515)\n");
+
+{
+  const dir = freshFixture();
+  addUnmappedBacklogItem(
+    dir,
+    "C-970",
+    "**Filed from the operator documents and mapped by nobody.**",
+    "C",
+    "Offer it.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+
+  check(
+    "an unmapped but defined id reaches the summary as an item",
+    out.has("C-970"),
+    `exit=${r.status}\nitems=${JSON.stringify([...out.keys()])}`,
+  );
+  check(
+    "it carries its OWN lane and acceptance, so the queue filters it by the same rules as every other row",
+    out.get("C-970")?.lane === "C" && /Offer it\./.test(out.get("C-970")?.acceptance ?? ""),
+    `item=${JSON.stringify(out.get("C-970"))}`,
+  );
+
+  const track = trackOf(dir, "C-970");
+  check(
+    "it lands on a track that says in its own name that it is not placed",
+    Boolean(track) && /not (yet )?on the structure map|unplaced/i.test(`${track?.name} ${track?.why ?? ""}`),
+    `track=${JSON.stringify(track && { name: track.name, why: track.why })}`,
+  );
+  check(
+    "and on NO stage and NO capability — placement is still owed, and credit is not granted for owing it",
+    !(summary.stages ?? []).some(
+      (s) =>
+        (s.items ?? []).some((i) => String(i.num) === "C-970")
+        || (s.capabilities ?? []).some((c) =>
+          (c.items ?? []).some((i) => String(i.num) === "C-970")
+          || (c.declaredIds ?? []).map(String).includes("C-970")),
+    ),
+    `stages=${JSON.stringify((summary.stages ?? []).map((s) => (s.items ?? []).map((i) => i.num)))}`,
+  );
+
+  /* The reserved decision, asserted untouched in all three of its forms. */
+  check(
+    "the board still exits 1 — whether an unmapped id FAILS the run is the operator's decision, not this item's",
+    r.status === 1,
+    `exit=${r.status}\nstderr=${r.stderr}`,
+  );
+  check(
+    "the stderr line still names the id and still says to add it to the repo-owned map",
+    /unmapped: 1 backlog id\(s\)/.test(r.stderr)
+      && r.stderr.includes("C-970")
+      && /source-stage-map\.json/.test(r.stderr),
+    `stderr=${JSON.stringify(r.stderr)}`,
+  );
+  check(
+    "and `summary.unmapped` still names it, so the queue's census can still report the condition",
+    (summary.unmapped ?? []).map(String).includes("C-970"),
+    `unmapped=${JSON.stringify(summary.unmapped)}`,
+  );
+  check(
+    "it is not reported as placed-but-unbuilt — being built from the unplaced track does not make it placed",
+    Array.isArray(summary.placedButUnbuilt) && summary.placedButUnbuilt.length === 0,
+    `placedButUnbuilt=${JSON.stringify(summary.placedButUnbuilt)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The vision figure must not move. `coverageOf` reads capabilities alone, so
+   * a track cannot credit one — but that is an argument, and the figure is the
+   * number a reader quotes. Measured in both directions against the same
+   * fixture with the unmapped row absent.
+   */
+  const bare = freshFixture();
+  run(bare, "build-source-board.mjs", ["--json"]);
+  const visionBare = JSON.parse(
+    fs.readFileSync(path.join(bare, "source-board-summary.json"), "utf8"),
+  ).vision;
+
+  const withUnmapped = freshFixture();
+  addUnmappedBacklogItem(withUnmapped, "C-971", "**Unplaced.**", "C", "Offer it.");
+  run(withUnmapped, "build-source-board.mjs", ["--json"]);
+  const visionWith = JSON.parse(
+    fs.readFileSync(path.join(withUnmapped, "source-board-summary.json"), "utf8"),
+  ).vision;
+
+  check(
+    "offering an unplaced id moves neither capability coverage nor proof-weighted completion",
+    visionBare.total === visionWith.total
+      && visionBare.covered === visionWith.covered
+      && visionBare.completion === visionWith.completion,
+    `bare=${JSON.stringify({ t: visionBare.total, c: visionBare.covered, p: visionBare.completion })}\n`
+      + `with=${JSON.stringify({ t: visionWith.total, c: visionWith.covered, p: visionWith.completion })}`,
+  );
+  fs.rmSync(bare, { recursive: true, force: true });
+  fs.rmSync(withUnmapped, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The negative control, and the one that separates this change from "put
+   * everything on a track": with nothing unmapped, no such track exists at
+   * all. A track rendered empty on every run would read as a permanent,
+   * meaningless section and would tell a reader nothing about whether mapping
+   * is owed.
+   */
+  const dir = freshFixture();
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  check(
+    "with nothing unmapped the board exits 0 and writes no unplaced track",
+    r.status === 0
+      && !(summary.tracks ?? []).some((t) => /not (yet )?on the structure map|unplaced/i.test(t.name)),
+    `exit=${r.status}\ntracks=${JSON.stringify((summary.tracks ?? []).map((t) => t.name))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * A NEGATED OWED ASSERTION IS NOT A GATE — item C-534, second reader.
+ *
+ * The live case, and the one that shows the cost. `C-534` is itself an item
+ * about the register's owed vocabulary, so its body QUOTES the register
+ * sentence *"Signed-in acceptance **NOT owed**"*. The signed-in rule matched
+ * `signed-in` ... `owed` across that quotation with no negation rule, so the
+ * board filed the item as owing a live signed-in proof, the queue put it in
+ * *Blocked on Anand — never claim these*, and the only item that would have
+ * repaired the identical gap in the reconciliation reader became invisible to
+ * every agent. The defect hid its own fix.
+ *
+ * `C-534` requires no signed-in run of any kind: it changes an operator script
+ * that renders nothing and reaches no tenant data.
+ *
+ * This is a VETO, which removes matches and can only take an item OUT of the
+ * never-claim bucket — the direction this file is most careful about. So the
+ * negation is read ADJACENTLY, and the regression case below is what holds the
+ * narrowing shut.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-946",
+    "**The register's owed vocabulary cannot say \"not owed\".** Nothing distinguishes " +
+      "*\"Signed-in acceptance **NOT owed**: the change alters one refusal branch in a pure " +
+      "function\"* from *\"signed-in acceptance OWED\"*. Both come back owed.",
+    "Add a third register state distinguishing no proof required from a proof owed, red-first.",
+  );
+  buildBoard(dir);
+  check(
+    "a quoted, negated owed assertion is not read as an owner gate",
+    blockerOf(dir, "T-946") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-946"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * THE REGRESSION SET FOR THAT VETO. Both forms are live and both must KEEP the
+ * label. They pass on unfixed code by design: a veto that took them with it
+ * would be worse than the defect, because it would offer genuinely owner-gated
+ * work as free.
+ *
+ * The second is the register's most common owed phrasing and the reason the
+ * negation is adjacent rather than span-wide: its negator belongs to
+ * `live-proven`, several words before `owed`, and a span rule reads it as a
+ * release that owes nothing.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-947", "**The panel ships without acceptance.** Signed-in acceptance owed before this is called live-proven.", "Render the panel and record what it shows.");
+  addBacklogItem(dir, "T-948", "**The reader throws on current filenames.** Not live-proven — signed-in check owed after the deploy.", "Accept the current filenames.");
+  check(
+    "a genuine signed-in gate keeps its label, including when a negator sits earlier in the sentence",
+    (() => {
+      buildBoard(dir);
+      return (
+        blockerOf(dir, "T-947") === "Signed-in acceptance owed" &&
+        blockerOf(dir, "T-948") === "Signed-in acceptance owed"
+      );
+    })(),
+    `T-947=${JSON.stringify(blockerOf(dir, "T-947"))} T-948=${JSON.stringify(blockerOf(dir, "T-948"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * ITEM C-552 — A GATE OVER PART OF AN ITEM MUST NOT GATE ALL OF IT.
+ *
+ * `deriveBlocker` returns at most one blocker per item, and it is a per-ITEM
+ * field. An acceptance written in halves therefore has nowhere to say that one
+ * half is owner-gated and the other is ordinary executable work: the first
+ * true sentence about the gated half labels the whole item, the queue moves it
+ * into the bucket an agent is told never to take, and the executable half
+ * becomes invisible as work.
+ *
+ * THE LIVE CASE, reproduced here by its own text rather than invented. `U-406`
+ * is two halves — state the terminal Value contract in code (needs nobody) and
+ * read the approver role back on a live Value surface (needs a human). A
+ * register line at `2026-09-27T03:05:20Z` stated the second, truthfully, and
+ * the gate below is its exact sentence. Measured on the live documents at
+ * `912a1c593c`: `U-406`'s derived blocker was `Signed-in acceptance owed` and
+ * the generated queue's claimable count went 4 to 3. Removing that one line
+ * from a scratch copy of the operator root returned the blocker to `null`, so
+ * the line is the whole cause and the row's own body gates nothing.
+ *
+ * AND THERE WAS NO IN-REGISTER REMEDY. The register is append-only and
+ * `firstUnvetoedMatch` scans the item's whole corpus, so a later line saying
+ * the executable half is free does not move the blocker — one unvetoed
+ * sentence anywhere is enough. A single badly-scoped sentence gated an item
+ * permanently and by construction.
+ *
+ * What is added is a DECLARATION, not a narrower pattern. `T-703` and `T-761`
+ * each paid for the current breadth of these rules and the sentence above is a
+ * correct match; nothing here changes what matches. An item may instead declare
+ * that the gate it carries covers a named half, and the board then records the
+ * gate as partial: the item is claimable again and the gated half travels with
+ * it. Declared, never inferred — with no declaration the gate covers the whole
+ * item exactly as before, which is the direction that must not move.
+ * ------------------------------------------------------------------------ */
+
+/** The exact sentence from the live register line, character for character. */
+const LIVE_PARTIAL_GATE_SENTENCE =
+  "The signed-in Value readback the row also asks for was NOT attempted and remains owed"
+  + " -- it needs a human and the row forbids waiving the frozen event's Scope policy to reach Value.";
+
+/** A register line carrying it, in the register's own shape. */
+const LIVE_U406_REGISTER_LINE =
+  `2026-09-27T03:05:20Z | source-backlog-executor#20260927T0255Z | item U-406 NOT TAKEN — `
+  + `U-406 ABSTENTION -- re-verified on origin/main, no code written, no claim held. `
+  + LIVE_PARTIAL_GATE_SENTENCE;
+
+const U406_DECLARATION =
+  "**Gate scope — partial.** Gated half: the signed-in Value readback on a live Value surface, "
+  + "which needs a human. Claimable half: state the terminal Value contract in code and test it.";
+
+const U406_BODY =
+  "**Value is terminal and the surface still implies an onward target.** Half (1) is merged and "
+  + "deploy-proven; half (2) states the terminal Value contract in code.";
+
+const U406_ACCEPTANCE =
+  "State the terminal Value contract in code and test it, red-first against the current copy.";
+
+function partialGateOf(dir, id) {
+  return summaryItems(dir).out.get(id)?.partialGate ?? null;
+}
+
+/* --- (a) THE DEFECT, on the live line: the whole item is gated. ---------- *
+ * This case passes before the fix and after it. It is the direction that must
+ * never move: an item carrying a gate and NO declaration stays in the
+ * never-claim bucket, whatever else changes.                                */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "U-406", U406_BODY, U406_ACCEPTANCE);
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  check(
+    "C-552 (a) a gate with no declared scope still covers the whole item",
+    blockerOf(dir, "U-406") === "Signed-in acceptance owed" && partialGateOf(dir, "U-406") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(partialGateOf(dir, "U-406"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) RED FIRST. The row declares the gate covers one half. ---------- *
+ * Same live register line. The item's row now declares which half the gate
+ * covers, so the item must carry no per-item blocker and must carry the gated
+ * half instead.                                                             */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "U-406", `${U406_BODY} ${U406_DECLARATION}`, U406_ACCEPTANCE);
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-552 (b) a row may scope a gate to a named half, and the item keeps no per-item blocker",
+    blockerOf(dir, "U-406") === null
+      && scope?.say === "Signed-in acceptance owed"
+      && /signed-in Value readback/i.test(scope?.gated ?? "")
+      && /terminal Value contract/i.test(scope?.open ?? ""),
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) A REGISTER LINE may declare it too. ---------------------------- *
+ * The acceptance says "a row or register line", and the register is the corpus
+ * that has no other remedy: it is append-only, so the only move available to
+ * it is to append. A declaration appended there must work exactly as the row's
+ * does — the row here is the ORIGINAL, undeclared one.                       */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "U-406", U406_BODY, U406_ACCEPTANCE);
+  appendClaims(dir, [
+    LIVE_U406_REGISTER_LINE,
+    `2026-09-27T03:40:00Z | source-backlog-executor#20260927T0325Z | item U-406 scope — ${U406_DECLARATION}`,
+  ]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-552 (c) an appended register line can scope the same gate",
+    blockerOf(dir, "U-406") === null && /signed-in Value readback/i.test(scope?.gated ?? ""),
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) IT FAILS CLOSED. A declaration naming only the gated half names no
+ * claimable half, so it says nothing about what is takeable and must leave the
+ * gate where it is. A half-written declaration is the shape a hurried agent
+ * writes, and reading it as "free" is the one direction that costs.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback on a live surface.`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  check(
+    "C-552 (d) a declaration that names no claimable half does not free the item",
+    blockerOf(dir, "U-406") === "Signed-in acceptance owed" && partialGateOf(dir, "U-406") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(partialGateOf(dir, "U-406"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (e) A DECLARATION CANNOT INVENT A GATE. An item with no gate at all
+ * that carries one of these declarations must stay ungated and must NOT be
+ * reported as partly gated: a row about partial gates is not a partial gate,
+ * which is the `C-538` disease and it has now reproduced twice live.         */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-949", `**An ordinary open item.** ${U406_DECLARATION}`, "Ship the reader.");
+  buildBoard(dir);
+  check(
+    "C-552 (e) a declaration on an ungated item invents neither a gate nor a partial one",
+    blockerOf(dir, "T-949") === null && partialGateOf(dir, "T-949") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-949"))} partialGate=${JSON.stringify(partialGateOf(dir, "T-949"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (f) `Unclaimed` IS NOT A GATE AND IS NOT SCOPABLE. It is the fallback
+ * and it asserts the ABSENCE of a gate; scoping it would report a partial gate
+ * where no gate was ever stated, and this file's own note on `T-418` is why
+ * that rule is treated differently everywhere else too.                      */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-950",
+    `**The largest unclaimed row in the census.** ${U406_DECLARATION}`,
+    "Ship the reader.",
+  );
+  buildBoard(dir);
+  check(
+    "C-552 (f) the Unclaimed fallback is not converted into a partial gate",
+    partialGateOf(dir, "T-950") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-950"))} partialGate=${JSON.stringify(partialGateOf(dir, "T-950"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (g) THE SUMMARY WRITES THE FIELD AT ZERO. A missing field is not a
+ * zero — the rule item T-746 set for the residual. The queue renders this
+ * roll-up, and a field written only when non-empty is a section exercised only
+ * in the interesting case.                                                   */
+{
+  const dir = freshFixture();
+  buildBoard(dir);
+  const { summary } = summaryItems(dir);
+  check(
+    "C-552 (g) the summary always carries a partialGates roll-up, including empty",
+    Array.isArray(summary.partialGates) && summary.partialGates.length === 0,
+    `partialGates=${JSON.stringify(summary.partialGates)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * A DECLARATION IS NOT DISCARDED FOR BEING LONG — item C-568.
+ *
+ * `PARTIAL_GATE_DECLARATION` capped each half at 300 characters. That cap was
+ * a MATCH PRECONDITION, so a half one character over it did not truncate — the
+ * whole declaration failed to match, `declaredGateScope` returned null, and the
+ * row lost its gate in silence. The same bound already existed a second time,
+ * as `tidy`'s 240-character slice, where it is a display truncation and
+ * harmless. One bound, written twice, once fatally.
+ *
+ * MEASURED over the live operator root at 2026-09-28T03:44Z rather than read
+ * off the pattern: 3 backlog item rows declare the canonical form and only
+ * ONE parsed. `T-497` overran on its claimable half alone (gated 124, claimable
+ * 354) and kept a whole-item `Decision needed`, hiding a half its own row calls
+ * delivered. `C-416` overran on both (gated 404, claimable 1534) and, having no
+ * derived owner gate to keep, was offered as the SINGLE claimable lane-T row
+ * with no gate annotation anywhere in the queue — while its own gated half
+ * reads "do not edit `ProgramPressureCards.tsx` and do not flip
+ * `routeReachable`".
+ *
+ * So the cap failed in both directions at once: it hid claimable work behind a
+ * gate, and it offered gated work as free. The lengths below are the live
+ * ones, not round numbers, because a bound is only proven by the corpus that
+ * crosses it (the `T-495` note on sweeping a bound over the real corpus).       */
+
+/** Filler that crosses the old cap without containing a cell boundary. */
+const longHalf = (lead, chars) => {
+  const body = "and the reason it runs long is that the row states the remedy rather than naming it, ";
+  return `${lead} ${body.repeat(Math.ceil(chars / body.length))}`.slice(0, chars).trim();
+};
+
+/* --- (h) RED FIRST. A gated half over the old 300-char cap still parses. -- *
+ * `C-416`'s own gated half is 404 characters. Before the fix this declaration
+ * did not match at all.                                                      */
+{
+  const dir = freshFixture();
+  const gated = longHalf("which of the two remedies the catalog names is taken", 404);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: ${gated} Claimable half: state the terminal Value contract in code and test it.`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (h) a gated half longer than 300 characters still scopes the gate",
+    blockerOf(dir, "U-406") === null
+      && scope?.say === "Signed-in acceptance owed"
+      && /which of the two remedies the catalog names is taken/.test(scope?.gated ?? "")
+      && /terminal Value contract/.test(scope?.open ?? ""),
+    `gatedChars=${gated.length} blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (i) RED FIRST. A claimable half over the cap still parses. ---------- *
+ * `T-497`'s failing half. This is the direction that HID work: the gate stayed
+ * over the whole item and the declared-claimable half reached no lane table.  */
+{
+  const dir = freshFixture();
+  const open = longHalf("rewrite the other 11, whose subject is behaviour", 354);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: ${open}`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (i) a claimable half longer than 300 characters still scopes the gate",
+    blockerOf(dir, "U-406") === null
+      && /signed-in Value readback/.test(scope?.gated ?? "")
+      && /rewrite the other 11/.test(scope?.open ?? ""),
+    `openChars=${open.length} blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (j) THE HALVES ARE STILL TRUNCATED FOR DISPLAY, and that is the bound
+ * that was always meant to be here. Parsing must not be decided by length;
+ * rendering a 1,534-character cell into a queue table still must not happen.
+ * If this case ever fails because the slice was removed along with the cap,
+ * the queue grows an unreadable row rather than losing a gate — a different
+ * defect, and the reason both bounds are asserted separately.               */
+{
+  const dir = freshFixture();
+  const open = longHalf("establish by execution what the live surface renders", 1534);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: ${open}`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (j) a parsed half is truncated for display, not rejected for length",
+    scope !== null && (scope.open ?? "").length <= 240 && (scope.open ?? "").length > 0,
+    `openChars=${open.length} storedChars=${(scope?.open ?? "").length} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (k) THE TERMINATOR STILL ENDS A HALF. With the length cap gone, the
+ * trailing `(?:\||\n|$)` alternation is the ONLY bound on the claimable half,
+ * so that is the one to assert: a half must not run past its cell and absorb
+ * the lane column.
+ *
+ * This case guards a DIRECTION; it does not prove the character class.
+ * Measured: narrowing the class to `[^\n|]` and then widening it back leaves
+ * this case green either way, because the alternation already stops a half at
+ * the first surviving pipe. The narrowed class was reverted for that reason
+ * rather than shipped as a guard nothing can fail.                           */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: state the terminal Value contract in code`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (k) a half stops at the table-cell boundary and does not absorb the lane column",
+    scope !== null
+      && !/\bT\b\s*$/.test(scope.open ?? "")
+      && !(scope.open ?? "").includes(U406_ACCEPTANCE)
+      && /terminal Value contract in code/.test(scope.open ?? ""),
+    `partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * A GATE STATED THE WAY AN ACCEPTANCE STATES IT — item C-563.
+ *
+ * `BLOCKER_RULES` has been widened four times by measurement (T-596, T-703,
+ * T-705, T-761) and every one of those repairs was the same shape: a row
+ * declared an owner gate in a form the rule did not recognise, derived
+ * `blocker: null`, and the queue offered owner work to the next agent as free
+ * work. This is that shape twice more, and it was found the way the others
+ * were — by executing the generator over the live documents, not by reading
+ * the pattern.
+ *
+ * MEASURED on the live operator root frozen at 2026-09-27T19:50Z, backlog
+ * sha256 `4a12db96…`, from a scratch copy so nothing wrote to the register:
+ * the queue offered **7 claimable rows and 3 of them name work an agent is
+ * forbidden to do**. `C-562` opens its acceptance "Owner decision, not agent
+ * work — do not edit the required gate from a feature branch"; `U-525` and
+ * `U-527` both direct a signed-in run, which the queue's own *Blocked on
+ * Anand* section says an agent must not attempt. All three derived
+ * `blocker: null`.
+ *
+ * The two holes, each with its own live row:
+ *
+ *   THE DECISION RULE REQUIRES AN ARTICLE. T-761 bounded a two-word slot
+ *   between `A`/`An` and `decision`, which is what catches "A product
+ *   decision" and "A disambiguation decision". `C-562` writes the role
+ *   without an article — "Owner decision" — so nothing anchors. The article
+ *   is deliberately NOT made optional here: `(?:An?\s+)?` would admit "The
+ *   decision was taken in #8123", which the rule's own comment names as a
+ *   form that must stay out. What is added instead is the categorical phrase
+ *   the sentence also carries, `not agent work`, which cannot be written
+ *   descriptively — a row that says it is not agent work is not describing
+ *   anything, it is declaring who may act.
+ *
+ *   THE SIGNED-IN RULE RECOGNISES ONLY STATUS PHRASING. Its third branch
+ *   wants a status word (`pending`, `owed`, `not proven`) within 80
+ *   characters of `signed-in`, which is how a RELEASE LINE reports a proof
+ *   gap. An ACCEPTANCE is written in the imperative — "Run a signed-in phase
+ *   build", "Generate one deliverable …, signed in, and record" — and says
+ *   the same thing with no status word anywhere. That is precisely the hole
+ *   T-596 repaired in the decision rule for the same reason, stated in this
+ *   file's own comment: "An acceptance is written in the imperative, so the
+ *   decision gate in one usually is too."
+ *
+ * Both terms are anchored and bounded the way every term above them is, and
+ * the bound is what the guardrail cases below exist to hold. Measured over the
+ * live corpus, the pair moves **4 items and no others** — `C-562`, `U-525` and
+ * `U-527` from `null` into the never-claim bucket, and `U-401` from the
+ * general `Blocked (see source)` to the specific `Signed-in acceptance owed`,
+ * which its own acceptance names ("this item carries them to `signed-in
+ * acceptance`"). **Nothing leaves a gate**: blocked-on-Anand goes 377 → 380,
+ * claimable 7 → 4, and no item at a rung above 0 moves at all.
+ * ------------------------------------------------------------------------ */
+
+console.log("\nbuild-source-board — an owner gate stated as an acceptance states it (C-563)\n");
+
+/* --- (a) THE LIVE ROW, verbatim. `C-562`'s acceptance opens with the phrase
+ * and the queue offered it as claimable anyway.                             */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-960",
+    "**A required gate is a coin flip on wall clock.**",
+    "Owner decision, not agent work — do not edit the required gate from a feature branch. Recommendation: raise the timeout and move the heavy step.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (a) a role-stated decision declaring itself not agent work is an owner gate",
+    blockerOf(dir, "T-960") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-960"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) THE IMPERATIVE SIGNED-IN FORM, from `U-525`. No status word appears
+ * anywhere in the row, so the rule's third branch cannot reach it.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-961",
+    "**A merged change declares a signed-in proof and nobody has run it.**",
+    "Run a signed-in phase build for one authorized tenant and record what the surface renders, each document opened rather than listed.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (b) an acceptance directing a signed-in run is an owner gate",
+    blockerOf(dir, "T-961") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-961"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) THE UNHYPHENATED VARIANT, from `U-527`, where the phrase sits 60
+ * characters into the sentence as an aside. Every branch above this one
+ * spells the token `signed-in`; the register and the acceptances both write
+ * `signed in` too, and a rule that reads only one spelling reads half the
+ * corpus.                                                                    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-962",
+    "**A second merged change declares the same proof.**",
+    "Generate one deliverable per phase for one authorized tenant, signed in, and record the slide count off the rendered deck.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (c) the unhyphenated `signed in` spelling is read as the same gate",
+    blockerOf(dir, "T-962") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-962"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) THE SPAN IS ONE SENTENCE. This case PASSES on unfixed code by
+ * design and is the one an over-broad fix breaks: written `[\s\S]{0,120}`
+ * instead of `[^.\n]{0,120}` the imperative reaches across the full stop into
+ * a descriptive mention 78 characters away and gates ordinary work.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-963",
+    "**The reader drops the second alias of each pair.**",
+    "Run the reader over the fixture and report the row count. The census names a signed-in surface among its rows.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (d) an imperative does not reach a later sentence's mention of a signed-in surface",
+    blockerOf(dir, "T-963") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-963"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (e) THE IMPERATIVE MUST ANCHOR. Also green on unfixed code: drop the
+ * anchor and every mid-sentence "we should run a signed-in check later"
+ * becomes a gate, which is the un-narrowing the signed-in detector already
+ * had to be rescued from once.                                              */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-964",
+    "**The panel renders the trail.**",
+    "The record says we should run a signed-in check later; this item ships the reader and nothing else.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (e) an unanchored mid-sentence imperative is not read as a gate",
+    blockerOf(dir, "T-964") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-964"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (f) THE VETO STILL APPLIES TO THE NEW BRANCH. `firstUnvetoedMatch`
+ * gives it this for free, and that is exactly why it is asserted: a term
+ * added somewhere the veto does not reach would read a row saying the proof
+ * is NOT owed as a row owing one.                                           */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-965",
+    "**The exporter emits the canonical token.**",
+    "Run the exporter over the fixture and diff the output; a signed-in proof is not owed here, because nothing user-visible changes.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (f) a sentence stating the signed-in proof is not owed keeps its veto",
+    blockerOf(dir, "T-965") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-965"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (g) THE PHRASE IS THE WHOLE PHRASE. Green on unfixed code: written
+ * `\bnot\s+\w+\s+work\b` the term matches any negated kind of work, and a
+ * row saying it IS agent work acquires an owner gate — a false gate, which is
+ * the direction that hides live work.                                        */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-966",
+    "**The map entry is owed.**",
+    "This is agent work, not owner work: add the id to the repo-owned structure map and open the pull request.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (g) a row declaring itself agent work does not acquire an owner gate",
+    blockerOf(dir, "T-966") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-966"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (h) NEITHER TERM DEMOTES A GATE. The signed-in rule sits above the
+ * blocked rule, so a row carrying both now reads the more specific label —
+ * `U-401` is the live instance, and its own acceptance says it "carries them
+ * to `signed-in acceptance`". What must never happen is the label going to
+ * `null`, so that is what this asserts rather than which of the two wins.    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-967",
+    "**Two deployed changes are live and unproven.**",
+    "Generate at least one real deliverable end to end, signed in, and judge the rendered slides; the remaining wiring is blocked on the unapplied migration.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (h) a row stating two gates keeps one, and never falls to no gate",
+    blockerOf(dir, "T-967") !== null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-967"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * ITEM C-417 — A DEFINITION IS NOT A STATUS.
+ *
+ * `C-549` shipped a residual bucket so a per-unit item at rung 1-6 stops being
+ * invisible. 10 of the 13 rows it surfaced carry a derived owner gate, and the
+ * queue's instruction for those is *surface it, do not claim it* — so for
+ * those the bucket reports the work and still does not offer it. One of the 10
+ * is a successor id filed for exactly that purpose, and its gate is derived
+ * from a sentence that says the opposite.
+ *
+ * Measured at `2026-09-28T05:0xZ` by running this generator over a frozen copy
+ * of the operator root and reading `blocker` per item out of
+ * `source-board-summary.json` — 668 items before and after, not by reading the
+ * pattern. `\bnot\s+signed-in\b` matched inside *"A completed job is not
+ * signed-in acceptance; model readback, stale behavior and opposite-tenant
+ * refusal are three separate captures"*. That clause DEFINES a boundary — it
+ * distinguishes a finished job from an owner proof — and reports no debt.
+ * Nothing could veto it, by construction, because the negation IS the match.
+ *
+ * The fix requires a RUNG-BEARING PARTICIPLE after the token. A status verdict
+ * says the proof has not happened ("DEPLOYED, NOT SIGNED-IN PROVEN", "NOT
+ * signed-in accepted"); a definition predicates a NOUN, and `acceptance` is
+ * deliberately absent from the participle list because it is the noun the
+ * definition uses.
+ *
+ * On the live corpus this moves EXACTLY ONE item and extras are zero in both
+ * directions. The regression block that follows carries the two live rows that
+ * must KEEP the gate, and both pass on unfixed code by design — which is what
+ * makes a widening visible if one is ever attempted here.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-990",
+    "**The successor id carries an untouched 13-model row set.** Boundary, and it is the whole reason this is agent-workable: authoring only. A completed job is not signed-in acceptance; model readback, stale behavior and opposite-tenant refusal are three separate captures.",
+    "Author the 13 rows and their fixtures.",
+  );
+  buildBoard(dir);
+  check(
+    "C-417 (a) a clause DEFINING that a completed job is not signed-in acceptance is not an owner gate",
+    blockerOf(dir, "T-990") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-990"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * THE REGRESSION SET FOR C-417. Both are live rows and both must KEEP the
+ * gate. They pass on unfixed code by design: a change that took them with it
+ * would offer owner work as free work, which is the cost `C-563`, `T-596`,
+ * `T-703`, `T-705` and `T-761` each paid once.
+ *
+ * The two are written here split from the ids the item names as its known
+ * negatives, so this file does not acquire the gate it describes. The first is
+ * a status verdict ending in `PROVEN`, the second one ending in `accepted` —
+ * the two participles that separate a verdict from the definition above.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-993",
+    "**The Stage 07 scorecard authority has never been written or read back by a signed-in user.** The addendum table records it as DEPLOYED, NOT SIGNED-IN PROVEN because the accepted workspaces are at Scope and completed Value.",
+    "Write one scorecard and read it back.",
+  );
+  addBacklogItem(
+    dir,
+    "T-994",
+    "**The board verdict heading attribution shipped.** DEPLOYED with digest proof; CODE LIVE VIA DESCENDANT, IMAGE SUPERSEDED; NOT signed-in accepted.",
+    "Do not promote past deployed until the image matches.",
+  );
+  buildBoard(dir);
+  check(
+    "C-417 (b) \"NOT SIGNED-IN PROVEN\" is a status verdict and keeps its gate",
+    blockerOf(dir, "T-993") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-993"))}`,
+  );
+  check(
+    "C-417 (c) \"NOT signed-in accepted\" is a status verdict and keeps its gate",
+    blockerOf(dir, "T-994") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-994"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * A ROW THAT NAMES WHO MAY ACT IS AN OWNER GATE — item T-819.
+ *
+ * MEASURED by execution, by being sent to the row and refused by it. The
+ * generated queue offered 11 claimable rows at `2026-10-05T23:03Z`; lane C's
+ * only one was a `[P0]` whose body says, twice, that the lane may not have it:
+ * that the remaining step *"is an operator action, so no agent may close
+ * this"*, and a shouted `**DECISION AND ACTION NEEDED**` headline. The board
+ * derived `blocker: null`, `partialGate: null`, `quote: null` for it.
+ *
+ * WHAT THE ROW IS ABOUT IS NOT RESTATED, here or in the fixtures below. This
+ * repository is public and the defect is in two phrasings, so the fixtures
+ * carry the phrasings over a synthetic subject and nothing else of the row.
+ *
+ * It is not a near miss of one term, it is a miss of both halves of the
+ * decision rule:
+ *
+ *   THE HEADLINE IS NOT `decision needed`. The rule's first alternative is
+ *   that phrase as two adjacent words; this row writes the two with `AND
+ *   ACTION` between them. And the article term `An?\s+(?:[a-z][a-z-]*\s+){0,2}
+ *   decision` wants an article in front, which a shouted headline has not got
+ *   — the same hole `C-563` found on "Owner decision" and fixed by adding the
+ *   categorical phrase that sentence carried rather than by making the article
+ *   optional. The article stays required here too, for the reason that rule's
+ *   own comment gives.
+ *
+ *   `not agent work` DOES NOT REACH `no agent may close this`. `C-563` added
+ *   the categorical phrase in the form its live row wrote it. A row can state
+ *   the same thing as a permission instead of as a category, and `C-577`
+ *   does: it names the actor and the modal.
+ *
+ * THE COST IS THE ONE THE BUCKET EXISTS TO PREVENT, and it is paid: the pulse
+ * records three separate runs reaching this row, finding it unworkable, and
+ * calling it a queue defect — 2026-10-03 ~15:15Z, and twice since. Each
+ * stepped around it; none filed it. A lane whose only row is one it may not
+ * touch reads as a lane with work in it, so the count overstates what is
+ * takeable and the next run spends its opening on the same dead end.
+ *
+ * Both terms are bounded the way every term above them is. `no agent may` is
+ * an actor and a permission modal with no descriptive use; `decision and
+ * action needed` is matched WHOLE, so the lazy form `decision` within N
+ * characters of `needed` — which a descriptive sentence satisfies — is held
+ * out by case (c) below.
+ * ------------------------------------------------------------------------ */
+
+console.log("\nbuild-source-board — a row naming who may act is an owner gate (T-819)\n");
+
+/* --- (a) THE LIVE ROW, verbatim from `C-577`'s body. Offered as lane C's
+ * only claimable row while saying this.                                     */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-970",
+    "**[P0] A scheduled validator cannot run until one input exists.** It needs, for one environment, a base URL and a caller credential. Minting a credential and storing it as a repository secret is an operator action, so no agent may close this.",
+    "The owner provisions the inputs for one environment, then one dispatched run reaches a clean verdict on the then-current deployed SHA.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (a) a body stating no agent may close the item is an owner gate",
+    blockerOf(dir, "T-970") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-970"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) THE SHOUTED HEADLINE, the row's other half, on its own. No article,
+ * and `AND ACTION` between the two words the first alternative wants
+ * adjacent.                                                                 */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-971",
+    "**[P0] A scheduled validator reports the honest state until its inputs exist.** **DECISION AND ACTION NEEDED FROM THE OWNER.**",
+    "Provision the inputs for one environment and record the first run that reaches a clean verdict.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (b) a shouted `DECISION AND ACTION NEEDED` headline is an owner gate",
+    blockerOf(dir, "T-971") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-971"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) THE PHRASE IS MATCHED WHOLE. This case PASSES on unfixed code by
+ * design and is the one the lazy fix breaks: written `\bdecision\b[^.\n]{0,40}
+ * \bneeded\b` the term reaches from a decision that is already TAKEN to a
+ * rerun that is needed, 31 characters away, and gates ordinary work.        */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-972",
+    "**The reader drops the second alias of each pair.**",
+    "The decision is taken and no approval is needed; run the reader over the fixture and report the row count.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (c) a decision already taken and an approval not needed is NOT a gate",
+    blockerOf(dir, "T-972") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-972"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) THE ACTOR AND THE MODAL ARE BOTH REQUIRED. This case PASSES on
+ * unfixed code by design and is the one the over-broad fix breaks: written
+ * `\bno\s+agent\b` the term matches a hyphenated noun phrase and gates a row
+ * that says an agent MAY do the work — the direction that hides live work,
+ * which is what `T-703` and `C-417` each paid for once.                     */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-973",
+    "**A validator reads one report and writes another.**",
+    "An agent may close this once the fixture lands, and no agent-owned configuration file changes.",
+  );
+  buildBoard(dir);
+  check(
+    "T-819 (d) `no agent-owned file` beside `an agent may close this` is NOT a gate",
+    blockerOf(dir, "T-973") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-973"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log(`\n${passes} passed, ${failures} failed`);
+process.exit(failures ? 1 : 0);

@@ -1,0 +1,23 @@
+FAIL src/lib/deliverables/orchestrator/__tests__/discovery-plan.test.ts
+  ● discovery blueprint › does not treat every healthcare move as member-service agent assist
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "general_default"
+    Received: "ai_operations_customer_digital"
+
+      51 |     );
+      52 |
+    > 53 |     expect(bp.blueprintId).toBe("general_default");
+         |                            ^
+      54 |     expect(bp.evidenceFamilies.map((f) => f.id)).not.toEqual(
+      55 |       expect.arrayContaining([
+      56 |         "contact_center_kpis",
+
+      at Object.toBe (src/lib/deliverables/orchestrator/__tests__/discovery-plan.test.ts:53:28)
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       1 failed, 15 passed, 16 total
+Snapshots:   0 total
+Time:        0.165 s
+Ran all test suites matching src/lib/deliverables/orchestrator/__tests__/discovery-plan.test.ts|src/lib/programs/discovery/__tests__/evidence-readiness.test.ts.

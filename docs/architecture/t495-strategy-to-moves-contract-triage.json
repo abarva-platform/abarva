@@ -1,0 +1,92 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: strategy-to-moves-contract rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-27T23:57:34.000Z",
+  "base": "95271303533e33adb1bf67a3877597dc6fc9e66f",
+  "directory": "src/lib/intelligence/ask/__tests__",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. The other 13 rows of its draw are untouched and keep their T-492 verdicts.",
+    "The gated half of T-495 -- the three rows carrying textIsTheSubject -- is NOT touched here. It needs a lane decision from the owner.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw, which is left as the historical draw it is."
+  ],
+  "method": [
+    "Re-verified on origin/main 9527130353 by running the suite, not by reading it: 1 failed of 11, and the failure was the byte assertion the item names.",
+    "The scanner case was DELETED rather than repaired, per the acceptance. A tighter pattern would have been the same defect with a longer fuse.",
+    "Replacement cases drive the real synthesizeStream. Only the audited Anthropic client is mocked, because it is I/O; the classifier, the registry builders and the deterministic fallback all run for real.",
+    "Expected strings are produced by calling the registry's own builders, so no literal in the suite can drift from the registry.",
+    "Five mutations against the product, each verified to have changed the file before the suite was run."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 13,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 42,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": false,
+      "drivesProductionEntryPoint": "synthesizeStream",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/intelligence-library-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "toContainNote": "42 toContain calls remain and none reads a repository file. Every one asserts over a string a product function returned -- the synthesizer's emitted answer, the captured model input, or the registry's own output. The count is recorded because a scanner detector that counts toContain would flag it, and the distinction that matters is the subject, not the matcher.",
+      "rationale": "The deleted case asserted 24 substrings of four source files. It was red because synthesizer.ts no longer contains the literal 'const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode)' -- the call is still made, at synthesizer.ts:825, written as a ternary arm. It would also have passed with the feature unwired so long as the words stayed. Three behavioural cases replace it: the classified mode's system contract and prompt directive must reach the model, read through the synthesizer's own onModelInput hook; the mode's deterministic fallback must reach the caller, asserted as equality against applyCxoAnswerModeFallbacks over the model's text; and a general-mode query must receive no mode contract at all, which is the case that fails when the injection is made unconditional."
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "const answerMode = classifyAbarvaAnswerMode(args.query) -> \"general\"",
+      "result": "2 of 13 failed",
+      "catches": "the classification driving the injection"
+    },
+    {
+      "mutation": "finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode) -> cleanedText",
+      "result": "1 of 13 failed",
+      "catches": "the deterministic fallback reaching the caller"
+    },
+    {
+      "mutation": "strategyToAbarvaSolution = answerMode !== \"general\" -> true",
+      "result": "1 of 13 failed",
+      "catches": "the negative control",
+      "note": "SURVIVED ON THE FIRST ATTEMPT and the suite was at fault, not the mutation. The general-mode case looped over the four non-general modes only, and `general` declares a systemContract and a promptDirective of its own, so an unconditional injection injected general's contract and no case looked for it. The loop now walks Object.keys(CXO_ANSWER_MODE_REGISTRY), so it covers every mode the registry declares, including modes added later."
+    },
+    {
+      "mutation": "strategyToAbarvaSolutionPromptDirective -> \"\"",
+      "result": "1 of 13 failed",
+      "catches": "the prompt directive reaching the user message"
+    },
+    {
+      "mutation": "strategyToAbarvaSolutionAddendum -> \"\"",
+      "result": "1 of 13 failed",
+      "catches": "the system contract reaching the system prompt"
+    }
+  ],
+  "residualsNotClosedHere": [
+    "The deleted case also asserted that src/lib/intelligence/ask/index.ts and src/app/api/intelligence/ask/route.ts contain applyCxoAnswerModeFallbacks( and classifyAbarvaAnswerMode(...). Those were byte assertions over two other modules: they proved the words were present and would have survived the feature being unwired, so deleting them removes a false assurance rather than real coverage. Neither is replaced here, because driving either module means standing up retrieval or a Next.js route, which is a larger unit than this suite. Recorded as a note on T-495.",
+    "The directory src/lib/intelligence/ask/__tests__ still cannot be wired whole. Measured on this base: 2 failed suites of 23, and the second is ask-guardrails.test.ts, which T-497 left red on purpose behind an owner decision. The item's own note calls this suite the single blocker on that directory; that is wrong, and the correction is recorded on the item.",
+    "OBSERVED, NOT FIXED. buildCxoAnswerModeSystemAddendum and buildCxoAnswerModePromptDirective have exactly one caller between them -- synthesizer.ts -- and it is guarded by answerMode !== \"general\". CXO_ANSWER_MODE_REGISTRY.general declares both a systemContract (GENERAL_ADVISORY_CONTRACT) and a promptDirective, so neither can reach a model through this path. Whether that is deliberate (the role prompt may already carry the same posture) or a gap is a question about what is sent to the model on every general-mode answer, so it is not changed here and not asserted either way. Checked and NOT a finding: the registry holds 11 entries against 5 in AbarvaAnswerMode, but all six extra entries are active:false and declare no systemContract and no promptDirective, so the narrower type is correct and no authored contract is stranded by it."
+  ]
+}

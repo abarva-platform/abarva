@@ -1,0 +1,369 @@
+  console.error
+    An update to FileCabinetPanel inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      1755 |       if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      1756 |       const j = await r.json();
+    > 1757 |       setArtifacts(Array.isArray(j.artifacts) ? j.artifacts : []);
+           |       ^
+      1758 |     } catch (e) {
+      1759 |       setError(e instanceof Error ? e.message : "load failed");
+      1760 |     } finally {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setArtifacts (src/components/strategic-moves/FileCabinetPanel.tsx:1757:7)
+
+  console.error
+    An update to FileCabinetPanel inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      1759 |       setError(e instanceof Error ? e.message : "load failed");
+      1760 |     } finally {
+    > 1761 |       setLoading(false);
+           |       ^
+      1762 |     }
+      1763 |   }, [moveId]);
+      1764 |
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setLoading (src/components/strategic-moves/FileCabinetPanel.tsx:1761:7)
+
+  console.error
+    An update to EvidenceUploadControl inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      5801 |       };
+      5802 |       const rows = Array.isArray(payload.artifacts) ? payload.artifacts : [];
+    > 5803 |       setPhaseArtifacts(
+           |       ^
+      5804 |         rows.filter(
+      5805 |           (a) => a.phase === phase && a.lifecycleState !== "superseded",
+      5806 |         ),
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setPhaseArtifacts (src/components/strategic-moves/MovesPhaseStandaloneClient.tsx:5803:7)
+
+  console.error
+    An update to CostEffortWizard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+       95 |       .then((data) => {
+       96 |         if (cancelled) return;
+    >  97 |         setConfig(data.config);
+          |         ^
+       98 |         setDefaultRateCard(data.defaultRateCard ?? null);
+       99 |         setDraftValues((prev) => ({ currency: defaultCurrency ?? "USD", ...prev }));
+      100 |       })
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setConfig (src/components/strategic-moves/cost-effort/CostEffortWizard.tsx:97:9)
+
+  console.error
+    An update to CostEffortWizard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+       96 |         if (cancelled) return;
+       97 |         setConfig(data.config);
+    >  98 |         setDefaultRateCard(data.defaultRateCard ?? null);
+          |         ^
+       99 |         setDraftValues((prev) => ({ currency: defaultCurrency ?? "USD", ...prev }));
+      100 |       })
+      101 |       .catch((err: unknown) => {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setDefaultRateCard (src/components/strategic-moves/cost-effort/CostEffortWizard.tsx:98:9)
+
+  console.error
+    An update to CostEffortWizard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+       97 |         setConfig(data.config);
+       98 |         setDefaultRateCard(data.defaultRateCard ?? null);
+    >  99 |         setDraftValues((prev) => ({ currency: defaultCurrency ?? "USD", ...prev }));
+          |         ^
+      100 |       })
+      101 |       .catch((err: unknown) => {
+      102 |         if (!cancelled) setLoadError(err instanceof Error ? err.message : "Could not load the Cost & Effort configuration.");
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setDraftValues (src/components/strategic-moves/cost-effort/CostEffortWizard.tsx:99:9)
+
+  console.error
+    An update to CostEffortWizard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      103 |       })
+      104 |       .finally(() => {
+    > 105 |         if (!cancelled) setLoading(false);
+          |                         ^
+      106 |       });
+      107 |     return () => {
+      108 |       cancelled = true;
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setLoading (src/components/strategic-moves/cost-effort/CostEffortWizard.tsx:105:25)
+
+  console.error
+    An update to RiskAssessmentPanel inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      214 |           setLoadError("Could not load a prior risk assessment for this Move.");
+      215 |       } finally {
+    > 216 |         if (!cancelled) setLoading(false);
+          |                         ^
+      217 |       }
+      218 |     })();
+      219 |     return () => {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setLoading (src/components/strategic-moves/risk-assessment/RiskAssessmentPanel.tsx:216:25)
+
+  console.error
+    An update to SolutioningPanel inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      87 |           );
+      88 |       } finally {
+    > 89 |         if (!cancelled) setLoading(false);
+         |                         ^
+      90 |       }
+      91 |     })();
+      92 |     return () => {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setLoading (src/components/strategic-moves/solutioning/SolutioningPanel.tsx:89:25)
+
+  console.error
+    An update to MovesPhaseStandaloneClient inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      1660 |         const finalText = committedVisible.trimEnd();
+      1661 |         const agentAnswer = buildVisibleAnswer(finalText);
+    > 1662 |         setAvaThread((prev) =>
+           |         ^
+      1663 |           prev.map((m) =>
+      1664 |             m.id === assistantId ? { ...m, text: finalText, agentAnswer } : m,
+      1665 |           ),
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setAvaThread (src/components/strategic-moves/MovesPhaseStandaloneClient.tsx:1662:9)
+
+  console.error
+    An update to MovesPhaseStandaloneClient inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      1675 |       } finally {
+      1676 |         clearTimeout(hangTimer);
+    > 1677 |         setAvaStreaming(false);
+           |         ^
+      1678 |       }
+      1679 |     },
+      1680 |     [
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setAvaStreaming (src/components/strategic-moves/MovesPhaseStandaloneClient.tsx:1677:9)
+
+  console.error
+    An update to EvidenceUploadControl inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      5801 |       };
+      5802 |       const rows = Array.isArray(payload.artifacts) ? payload.artifacts : [];
+    > 5803 |       setPhaseArtifacts(
+           |       ^
+      5804 |         rows.filter(
+      5805 |           (a) => a.phase === phase && a.lifecycleState !== "superseded",
+      5806 |         ),
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setPhaseArtifacts (src/components/strategic-moves/MovesPhaseStandaloneClient.tsx:5803:7)
+
+  console.error
+    An update to EvidenceUploadControl inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      5801 |       };
+      5802 |       const rows = Array.isArray(payload.artifacts) ? payload.artifacts : [];
+    > 5803 |       setPhaseArtifacts(
+           |       ^
+      5804 |         rows.filter(
+      5805 |           (a) => a.phase === phase && a.lifecycleState !== "superseded",
+      5806 |         ),
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setPhaseArtifacts (src/components/strategic-moves/MovesPhaseStandaloneClient.tsx:5803:7)
+
+Test Suites: 1 passed, 1 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        8.95 s, estimated 9 s
+Ran all test suites matching src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx.

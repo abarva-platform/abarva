@@ -16,6 +16,12 @@ describe('tenancyErrorResponse', () => {
     expect((await res.json()).error).toBe('no_client');
   });
 
+  it('maps forbidden → 403', async () => {
+    const res = tenancyErrorResponse(new TenancyError('forbidden'));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe('forbidden');
+  });
+
   it('maps tenant_lookup_unavailable → retryable 503 (not no_client)', async () => {
     const res = tenancyErrorResponse(new TenancyError('tenant_lookup_unavailable'));
     expect(res.status).toBe(503);

@@ -14,6 +14,7 @@ import {
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
 } from "@/lib/source/constants";
+import { SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER } from "@/lib/source/new-workspace/phase-state";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import { SAMPLE_RFP_STAGE } from "../sample-view-model";
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
@@ -41,7 +42,7 @@ jest.mock("@clerk/nextjs", () => ({
 
 const EXPECTED_STAGE_MARKER: Partial<Record<SourceStageKey, string>> = {
   strategy: "Confirm strategy & sponsor",
-  scope: "Provide the volumetrics",
+  scope: "Provide ticket volumes",
   rfp: "Confirm RFP clause coverage",
   responses: "Confirm vendor response coverage",
   evaluation: "Confirm vendor bids for should-cost",
@@ -108,11 +109,25 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       expect(screen.getByTestId("source-analytics-canvas")).toBeInTheDocument();
 
       const rail = screen.getByTestId("source-shell-v2-rail");
-      for (const journeyStage of SOURCE_STAGE_ORDER) {
-        expect(
-          within(rail).getByText(SOURCE_STAGE_LABELS[journeyStage]),
-        ).toBeInTheDocument();
-      }
+      const primaryJourneyItems = within(rail).getAllByTestId(
+        "source-reader-journey-checkpoint",
+      );
+      expect(primaryJourneyItems).toHaveLength(
+        SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.length,
+      );
+      expect(primaryJourneyItems.map((item) => item.textContent)).toEqual([
+        expect.stringContaining("Request intake"),
+        expect.stringContaining("Request"),
+        expect.stringContaining("Define"),
+        expect.stringContaining("Suppliers & NDA"),
+        expect.stringContaining("Market package"),
+      ]);
+      expect(
+        primaryJourneyItems.map((item) => item.textContent).join(" "),
+      ).not.toContain("Executive Decision");
+      expect(
+        within(rail).getByTestId("source-reader-journey-deep-stage-link"),
+      ).toHaveAttribute("href", `/source/events/evt-src57?stage=${stageKey}`);
 
       expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
       expect(screen.getByTestId("source-shell-focused-work-panel")).toHaveStyle(
@@ -146,32 +161,11 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         screen.getByTestId("source-journey-current-stage-status"),
       ).toBeInTheDocument();
 
-      const evidenceTables = screen.getAllByTestId(
-        "source-shell-evidence-ask-table",
-      );
-      expect(evidenceTables.length).toBeGreaterThan(0);
-      const evidenceTableText = evidenceTables
-        .map((table) => table.textContent)
-        .join(" ");
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Evidence needed"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Where to get it"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Template / grain"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Required"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Next action"));
-
-      expect(
-        screen.getByTestId("source-shell-active-step-needs"),
-      ).toHaveTextContent(/what continue needs/i);
+      const activeNeed = screen.getByTestId("source-shell-active-step-needs");
+      expect(activeNeed).toHaveTextContent(/what continue needs/i);
+      expect(activeNeed).toHaveTextContent(/required/i);
+      expect(screen.queryByTestId("source-shell-evidence-ask-table"))
+        .toBeNull();
       expect(
         screen.getByTestId("source-shell-active-step-guide"),
       ).toHaveTextContent(/guidebook/i);
@@ -184,6 +178,54 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       ).toBeGreaterThan(0);
     },
   );
+
+  it("does not mark missing supplier history complete on a completed event", () => {
+    const event = {
+      ...makeEvent("value"),
+      status: "completed",
+      statusLabel: "Completed",
+    } as SourcingEventSummary;
+
+    render(
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage="value"
+        tenantName="AbarVa QA"
+        artifacts={[
+          {
+            id: "strategy-record",
+            artifactCode: "STRATEGY-MEMO",
+            sourcingStage: "strategy",
+            title: "Strategy memo",
+          },
+          {
+            id: "scope-record",
+            artifactCode: "SCOPE-MEMO",
+            sourcingStage: "scope",
+            title: "Scope memo",
+          },
+          {
+            id: "rfp-record",
+            artifactCode: "RFP-PACKAGE",
+            sourcingStage: "rfp",
+            title: "RFP package",
+          },
+        ]}
+      />,
+    );
+
+    const checkpoints = within(
+      screen.getByTestId("source-shell-v2-rail"),
+    ).getAllByTestId("source-reader-journey-checkpoint");
+    const supplierCheckpoint = checkpoints.find((checkpoint) =>
+      checkpoint.textContent?.includes("Suppliers & NDA"),
+    );
+
+    expect(supplierCheckpoint).toBeDefined();
+    expect(within(supplierCheckpoint as HTMLElement).getByText("Historical gap"))
+      .toBeInTheDocument();
+    expect(supplierCheckpoint).not.toHaveTextContent("✓");
+  });
 
   it("keeps supporting workspaces reachable without competing with the active step canvas", () => {
     renderStage("scope");
@@ -264,13 +306,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
 
     renderStage("rfp", completedRfpView);
 
-    expect(
-      screen.getByTestId("source-shell-stage-ready-panel"),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("source-shell-stage-ready-panel")).toHaveStyle({
-      width: "100%",
-      maxWidth: "none",
-    });
+    expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Requirements and service levels");
     const readiness = screen.getByTestId("source-stage-operating-status");
     expect(readiness).toHaveTextContent("RFP gate readiness");
     expect(readiness).toHaveTextContent("RFP Package unlocks");

@@ -1,3 +1,10 @@
+import * as nodeFs from 'fs';
+import * as nodePath from 'path';
+
+import {
+  resolvePathStatus,
+  SHARED_PATH_DISPOSITIONS,
+} from '@/lib/qa/path-disposition';
 // I8 · Sentinel Interaction Rail tests.
 //
 // Covers:
@@ -195,108 +202,88 @@ describe('module hygiene · sentinel-interaction-rail-view.ts', () => {
 // Canon hygiene · SentinelInteractionRail.tsx
 // ---------------------------------------------------------------------
 
-describe('canon hygiene · SentinelInteractionRail.tsx', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+// Retired · SentinelInteractionRail.tsx
+//
+// A describe block here read src/components/intelligence/SentinelInteractionRail.tsx with
+// fs.readFileSync in its body. The legacy surface sunset at 0c6a86c51 deleted
+// that file, so the read threw during COLLECTION -- and a throw there takes
+// the whole file with it. Every block above this point stopped running too,
+// and jest reported "0 tests", which does not read as a failure the way a red
+// count does.
+//
+// Recorded as retired rather than deleted, and checked against the register,
+// so what the sunset cost stays visible and the claim cannot rot unnoticed.
+describe('retired · SentinelInteractionRail.tsx (canon hygiene · SentinelInteractionRail.tsx)', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
+  const RETIRED_PATH = 'src/components/intelligence/SentinelInteractionRail.tsx';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../components/intelligence/SentinelInteractionRail.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
+  it('is absent, and the register names the commit that removed it', () => {
+    const abs = nodePath.resolve(__dirname, '../../../../', RETIRED_PATH);
+    expect(nodeFs.existsSync(abs)).toBe(false);
 
-  it('imports tokens from @/lib/design/abarva-theme', () => {
-    expect(codeOnly).toMatch(/from '@\/lib\/design\/abarva-theme'/);
+    const resolved = resolvePathStatus(
+      RETIRED_PATH,
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('imports the AbarVa AgentBadge primitive', () => {
-    expect(codeOnly).toMatch(/from '@\/components\/abarva\/AgentBadge'/);
-  });
-
-  it('is a server component (no use client directive)', () => {
-    expect(source).not.toMatch(/^['"]use client['"];?\s*$/m);
-  });
-
-  it('does not call any React hook', () => {
-    expect(codeOnly).not.toMatch(/\buseState\b/);
-    expect(codeOnly).not.toMatch(/\buseEffect\b/);
-    expect(codeOnly).not.toMatch(/\buseMemo\b/);
-    expect(codeOnly).not.toMatch(/\buseCallback\b/);
-    expect(codeOnly).not.toMatch(/\buseRef\b/);
-    expect(codeOnly).not.toMatch(/\buseReducer\b/);
-    expect(codeOnly).not.toMatch(/\buseContext\b/);
-  });
-
-  it('does not contain raw hex color literals (canon: read tokens only)', () => {
-    expect(codeOnly).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-  });
-
-  it('does not contain DM Sans font-family literals', () => {
-    expect(codeOnly).not.toMatch(/DM Sans/i);
-  });
-
-  it('does not import Sentinel runtime, Atlas, Nexus, or agent runtime', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
-  });
-
-  it('does not import Source UI, legacy /programs, mock.ts, or auth', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/\(maestro\)\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/programs\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/programs\/mock'/);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/auth\//);
+  it('does not accept an absence nobody declared', () => {
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 });
-
 // ---------------------------------------------------------------------
 // Mount wiring · SentinelPatternDetail.tsx
 // ---------------------------------------------------------------------
 
-describe('SentinelPatternDetail · mounts SentinelInteractionRail', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+// Retired · SentinelPatternDetail.tsx
+//
+// A describe block here read src/components/intelligence/SentinelPatternDetail.tsx with
+// fs.readFileSync in its body. The legacy surface sunset at 0c6a86c51 deleted
+// that file, so the read threw during COLLECTION -- and a throw there takes
+// the whole file with it. Every block above this point stopped running too,
+// and jest reported "0 tests", which does not read as a failure the way a red
+// count does.
+//
+// Recorded as retired rather than deleted, and checked against the register,
+// so what the sunset cost stays visible and the claim cannot rot unnoticed.
+describe('retired · SentinelPatternDetail.tsx (SentinelPatternDetail · mounts SentinelInteractionRail)', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
+  const RETIRED_PATH = 'src/components/intelligence/SentinelPatternDetail.tsx';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../components/intelligence/SentinelPatternDetail.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
+  it('is absent, and the register names the commit that removed it', () => {
+    const abs = nodePath.resolve(__dirname, '../../../../', RETIRED_PATH);
+    expect(nodeFs.existsSync(abs)).toBe(false);
 
-  it('imports the rail component and deterministic rail view builder', () => {
-    expect(source).toMatch(
-      /from '@\/components\/intelligence\/SentinelInteractionRail'/,
+    const resolved = resolvePathStatus(
+      RETIRED_PATH,
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
     );
-    expect(source).toMatch(
-      /from '@\/lib\/intelligence\/sentinel-interaction-rail-view'/,
-    );
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('anchors the rail to the current pattern detail view', () => {
-    expect(source).toContain('tenantDisplayName: view.tenant.displayName');
-    expect(source).toContain('anchorPatternKey: view.patternKey');
-    expect(source).toContain('anchorPatternName: view.patternName');
-    expect(source).toContain('observedProgramCount: view.affectedProgramRows.length');
-  });
-
-  it('mounts the rail after source basis and before Why it matters', () => {
-    const sourceBasisIndex = source.indexOf('IntelligenceSourceBasisPanel');
-    const railIndex = source.indexOf('<SentinelInteractionRail');
-    const whyIndex = source.indexOf('<Block heading="Why it matters">');
-    expect(sourceBasisIndex).toBeGreaterThan(-1);
-    expect(railIndex).toBeGreaterThan(sourceBasisIndex);
-    expect(whyIndex).toBeGreaterThan(railIndex);
+  it('does not accept an absence nobody declared', () => {
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 });
-
 function stripComments(src: string): string {
   const lineStripped = src
     .split('\n')

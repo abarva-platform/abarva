@@ -18,7 +18,7 @@
 //
 // Companion to:
 //   src/lib/architecture/unified-context-builder.ts (CTX2)
-//   src/lib/agents/agent-mission-queue.ts (AG10)
+//   src/lib/agent/agent-mission-queue.ts (AG10)
 //   docs/build/slices/CTX3_MISSION_CONTEXT_BRIDGE.md
 //
 // The bridge is intentionally narrow: CTX2 v1 supports three

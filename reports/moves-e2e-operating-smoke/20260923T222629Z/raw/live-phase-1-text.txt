@@ -1,0 +1,140 @@
+Home
+Intelligence
+Moves
+Source Optimize
+Source New
+Tower
+AP
+AbarVa Prod QA
+Sign out
+MOVES
+HEALTHCARE_IDN-Meridian Health-2026
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+P1 WORKFLOW
+Phase 2 of 6 · Charter
+«
+← All Moves
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+
+PHASES
+✓
+Originate
+3 of 3
+✓
+Charter
+2 of 2
+✓
+Understand Current State
+5 of 5
+✓
+Choose the Approach
+2 of 2
+✓
+Build the Plan
+5 of 5
+✓
+Prepare to Execute
+4 of 4
+WORKSPACE
+▦
+Stage workspace
+▣
+Files & Evidence
+◈
+Phase Intelligence
+✓
+Approvals
+
+aVa guides P0-P4 · Atlas takes over P5 Execute.
+
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13/P1 · Charter
+AVA · MOVES
+Charter
+What exactly are we committing to investigate?
+
+Turn the idea into a bounded charter. Define scope, owner, success measures, assumptions, and the next gate.
+
+Download P2 readiness workbook
+Preview completed workbook
+P1
+INPUTS
+6/6
+GATE
+Complete
+NEXT
+Charter Inputs
+No required input blockers for the current step. Workbook available · acceptance required before next phase
+Steps
+Files
+Intelligence
+INPUTS
+✓
+Sponsor commitment
+✓
+Scope boundary
+✓
+Success criteria
+✓
+Stakeholder map
+✓
+Decision rights
+✓
+Evidence plan
+WORKFLOW
+Charter Inputs
+Upload Evidence
+Approve & Build
+What P2 Understand Current State will need
+Call transcript/recording availability and retention
+Use the left steps in order. Approve & Build remains the governed close; it is not a visual-only button.
+✓
+Step 7 of 9
+Charter Inputs
+DONE
+P1 SOURCE OF TRUTH
+Charter inputs
+
+These are the fields the gate saves and approves. Edit them here before running Approve & Build.
+
+6 / 6
+01
+Sponsor commitment
+Sponsor engagement, authority, and decision cadence for the Move.
+DONE
+02
+Scope boundary
+Included and excluded process, user, function, system, or cohort boundaries.
+DONE
+03
+Success criteria
+Outcomes, KPIs, and directional targets that Discovery must validate.
+DONE
+04
+Stakeholder map
+Business, IT, finance, risk, and operational stakeholders needed for Discovery.
+DONE
+05
+Decision rights
+Who can approve scope, investment, design decisions, and phase advancement.
+DONE
+06
+Evidence plan
+Evidence families, interviews, workshops, extracts, or templates needed next.
+DONE
+Initial transformation posture
+
+Capture the starting hypothesis for P2 discovery. This is not the selected solution approach; P3 will choose the approach after current-state evidence, constraints, and readiness are proven.
+
+A
+Improve the current process
+P2 validates whether focused workflow, knowledge, and metric fixes are enough before larger design work.
+B
+Explore a balanced transformation
+Hypothesis to validate
+P2 keeps process, platform, operating model, and controls in scope so P3 can compare viable paths.
+C
+Evaluate major transformation potential
+P2 tests whether the value, readiness, and change appetite justify a broader redesign later.
+Ask aVa

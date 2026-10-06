@@ -4,12 +4,18 @@
  * Validates the runActiveRouteShellVerification() function from
  * src/lib/qa/active-route-shell-verification.ts.
  *
- * Wave-20 SHELL1-7 components are pre-integration deferred items. Tests
- * accept 'deferred' as a valid status — the suite should pass now with
- * some deferrals and fully pass (all checks pass) after Wave-20 integration.
+ * Wave-20 SHELL1-7 components were written as pre-integration deferred items.
+ * Most of them have since landed and pass. Two had not: one was deleted with
+ * its containing directory and one was never on this history at all, and
+ * T-524 replaced both blanket deferrals with a declared disposition. These
+ * tests therefore accept 'removed' alongside 'deferred' and 'pass', and the
+ * Wave-20 loop below asserts the DECLARED status per component rather than
+ * "anything but fail" — a matcher that accepts two of three outcomes cannot
+ * tell a retirement from a pending build, which is the defect T-524 fixed.
  */
 
 import {
+  ROUTE_SHELL_PATH_REGISTER,
   runActiveRouteShellVerification,
   ShellCheckStatus,
   ShellVerificationCheck,
@@ -44,7 +50,7 @@ describe('QA28 — Active Route Shell Verification: report shape', () => {
   });
 
   it('every check has checkId, description, status, detail, deterministicSeed', () => {
-    const VALID_STATUSES: ShellCheckStatus[] = ['pass', 'fail', 'deferred', 'not_applicable'];
+    const VALID_STATUSES: ShellCheckStatus[] = ['pass', 'fail', 'deferred', 'removed', 'not_applicable'];
     for (const check of report.checks) {
       expect(typeof check.checkId).toBe('string');
       expect(check.checkId.length).toBeGreaterThan(0);
@@ -62,8 +68,13 @@ describe('QA28 — Active Route Shell Verification: report shape', () => {
     expect(emptyDescriptions).toHaveLength(0);
   });
 
-  it('passCount + failCount + deferredCount + notApplicableCount === checks.length', () => {
-    const total = report.passCount + report.failCount + report.deferredCount + report.notApplicableCount;
+  it('passCount + failCount + deferredCount + removedCount + notApplicableCount === checks.length', () => {
+    const total =
+      report.passCount +
+      report.failCount +
+      report.deferredCount +
+      report.removedCount +
+      report.notApplicableCount;
     expect(total).toBe(report.checks.length);
   });
 
@@ -71,6 +82,7 @@ describe('QA28 — Active Route Shell Verification: report shape', () => {
     expect(report.passCount).toBeGreaterThanOrEqual(0);
     expect(report.failCount).toBeGreaterThanOrEqual(0);
     expect(report.deferredCount).toBeGreaterThanOrEqual(0);
+    expect(report.removedCount).toBeGreaterThanOrEqual(0);
     expect(report.notApplicableCount).toBeGreaterThanOrEqual(0);
   });
 
@@ -165,23 +177,48 @@ describe('QA28 — Active Route Shell Verification: required checks present', ()
 // ---------------------------------------------------------------------------
 
 describe('QA28 — Active Route Shell Verification: Wave-20 deferred items', () => {
-  const wave20ComponentPaths = [
-    'AbarVaAppShell',
-    'ProgramRouteShell',
-    'SentinelAgentColumn', // Wave S1: SourceRouteShell retired, replaced by SentinelAgentColumn
-    'AdminRouteShell',
-    'IntelligenceRouteShell',
-    'TowerRouteShell',
+  // Measured on this history rather than assumed. Five of the six landed and
+  // are present; IntelligenceRouteShell never did, and the directory that
+  // would hold it was deleted by 0c6a86c51 (confirmed an ancestor of
+  // origin/main with git merge-base --is-ancestor).
+  const wave20ComponentExpectations: ReadonlyArray<
+    readonly [string, ShellCheckStatus]
+  > = [
+    ['AbarVaAppShell', 'pass'],
+    ['ProgramRouteShell', 'pass'],
+    // Wave S1: SourceRouteShell retired, replaced by SentinelAgentColumn
+    ['SentinelAgentColumn', 'pass'],
+    ['AdminRouteShell', 'pass'],
+    ['IntelligenceRouteShell', 'removed'],
+    ['TowerRouteShell', 'pass'],
   ];
 
-  for (const componentName of wave20ComponentPaths) {
-    it(`${componentName} check status is 'deferred' or 'pass' (not 'fail')`, () => {
+  for (const [componentName, expected] of wave20ComponentExpectations) {
+    it(`${componentName} check status is declared '${expected}'`, () => {
       const check = report.checks.find((c) => c.route.includes(componentName));
       expect(check).toBeDefined();
-      // Pre-integration: deferred. Post-integration: pass. Never fail.
-      expect(['deferred', 'pass']).toContain(check!.status);
+      expect(check!.status).toBe(expected);
     });
   }
+
+  it('every absent path is backed by a register entry, not by a sentence', () => {
+    // Structural on purpose. The first form of this guard matched the detail
+    // text for the wording T-524 removed, and it failed on the register note
+    // that QUOTES that wording to explain why it went — a text matcher cannot
+    // tell a quotation from a claim, which is the same shape as a CI gate that
+    // proves a control exists because its name appears in the file.
+    const undeclared = report.checks
+      .filter((c) => c.status === 'deferred' || c.status === 'removed')
+      .filter((c) => {
+        const disposition = ROUTE_SHELL_PATH_REGISTER[c.route];
+        return !(
+          disposition?.retired ||
+          disposition?.pending ||
+          disposition?.undecided
+        );
+      });
+    expect(undeclared.map((c) => c.checkId)).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------

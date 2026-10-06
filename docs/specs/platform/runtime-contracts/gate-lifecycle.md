@@ -1,141 +1,72 @@
-# Gate Lifecycle Contract
+# Moves Approval and Phase Lifecycle Contract
 
-Why this contract matters: phase advancement, charter creation, opener injection, and outcome-fee invoicing are not handled in one place. The current lifecycle spans the legacy engage turn route, engagement DB helpers, and `phaseOpenerFor()`. Builders need one accurate map before touching any of it.
+## Authority
 
-## Source of truth
+The authenticated workspace user with the required Moves capability is the only
+person who records product approvals. The approval is an explicit action in
+Nexus, attributed to that user's identity and rationale.
 
-- `src/lib/nexus/gateLifecycle.ts`
-- `src/lib/db/engagement.ts`
-- `src/app/api/engage/[engagementId]/turn/route.ts`
+A sponsor is a listed contact. Sponsor identity does not grant product access,
+approval authority, or a vote in a Moves gate. A sponsor may receive
+informational phase-progress email only when an authorized workspace user has
+explicitly enabled that contact's notification preference. Progress email is
+not an approval request and has no workflow effect.
 
-## Current architecture boundary
+## Workflow
 
-Two different layers exist today:
+1. Evidence, decisions, and generated deliverables are assembled for the active
+   Move and phase. Generated or edited deliverables remain drafts until reviewed.
+2. The server evaluates the current gate from governed state. A hard blocker
+   prevents approval; clients cannot mark a gate ready by changing presentation
+   state.
+3. When ready, the Moves UI presents an approval action only to a workspace
+   user with `canApproveGates` for that Move. The action requires explicit
+   confirmation and a substantive human rationale.
+4. `POST /api/v1/programs/:programId/advance` rechecks tenant scope, per-Move
+   access, approval capability, rationale, and gate readiness on the server.
+   Only then does it record the phase decision, actor, evidence packet, and
+   phase transition.
+5. Progress notifications are sent only to sponsor contacts whose preference
+   is explicitly enabled. Notification failure does not change the approval.
 
-- `src/lib/nexus/gateLifecycle.ts`
-  - defines `PHASE_OPENERS`
-  - exports `phaseOpenerFor()`
-  - exports `applyGateSignal()`
-- `src/app/api/engage/[engagementId]/turn/route.ts`
-  - currently performs the live phase transition work in production
-  - parses gate approval blocks
-  - records approvals
-  - fires deliverable generation
-  - appends the opener turn
-  - emits the `phase_opener` event
+Deliverable sign-off follows the same authority rule. The sign-off route checks
+the workspace user's permission and the deliverable's current version. Its
+client-readiness scan remains mandatory; acknowledging readiness blockers is a
+separate, deliberate action and is never implied by approval.
 
-Important: the new `/api/v1/nexus/query` route does not currently drive this lifecycle.
+## Agent and chat boundary
 
-## `PHASE_OPENERS` contract
+aVa may explain readiness, identify blockers, prepare drafts, and recommend the
+next step. It cannot approve a deliverable, satisfy a gate, create a sponsor
+approval request, or advance a phase based on natural-language intent or a
+model-generated control block. Chat tools return the gate state and direct the
+authorized workspace user to the explicit in-product approval action.
 
-Verbatim shipped openers:
+The legacy `POST /api/engage/:engagementId/turn` conversation route resolves the
+graph id inside the active tenant and then checks per-Move read access before
+loading conversation context. A listed sponsor contact alone cannot access the
+route. Chat may update phase-one working drafts, but it cannot sign them off or
+change the phase.
 
-```text
-1: "Now that we have the charter locked, let's start the diagnostic. What category, region, or decision type would give the business the fastest felt result? Aim for a first-win scope we can pressure-test in 2-3 weeks."
-2: "Diagnostic is approved. Time to design. Let's put the solution shape on paper — architecture sketch, vendor shortlist with tradeoffs, and the one decision we can't punt past this phase."
-3: "Design's signed off. Execute phase starts now. Break this into work items, name owners, and lock the first milestone. What's the 30-day target?"
-4: "Execute is complete. Outcome verification phase — baseline vs actual, attested savings, and what we'd do differently. Who's the attestor, and what's their bar?"
-```
+## Retired paths and compatibility
 
-`phaseOpenerFor(phase)` returns the matching string or `null`.
+- Sponsor approval and workflow-commitment writes return `410 Gone` with the
+  workspace-user approval model.
+- Historical sponsor-approval records may remain readable for audit and
+  migration purposes, but they do not satisfy current gate criteria.
+- The filesystem sponsor-commitment ledger and model-driven gate lifecycle are
+  not runtime authorities.
+- `founder_approval_required` is legacy state only; it does not create an
+  external sponsor approval path.
 
-## `applyGateSignal()` contract
+## Required proof
 
-`applyGateSignal(input)` accepts:
+Tests must prove both sides of the authority boundary: an authorized workspace
+user can record a ready gate and an unauthorized or sponsor-only identity
+cannot. They must also prove that a hard gate blocker remains blocking, chat
+cannot write approval state, sponsor notification is opt-in and informational,
+and tenant-scoped graph-id reads cannot return another client's engagement.
 
-- `signal`
-- `engagementId`
-- `actorUserId`
-
-Supported signals:
-
-- `gate_approval`
-- `phase_transition`
-
-Behavior:
-
-- resolves `fromPhase` / `toPhase` from signal payload when present
-- otherwise reads `engagements.current_phase` and advances by `+1`
-- updates `engagements.current_phase`
-- inserts a `module_state_log` row with:
-  - `module_key: phase_${fromPhase}_gate`
-  - `previous_state: pending_gate`
-  - `new_state: completed`
-  - `notes: Gate approval · advance phase X → Y`
-  - `context_jsonb` containing signal payload
-- when entering Phase 1:
-  - upserts `deliverable_types.type_key = 'charter'`
-  - ensures a `deliverables_v2` charter row exists
-  - inserts version 1 draft markdown if the deliverable is new
-
-Return shape:
-
-- `applied`
-- `fromPhase`
-- `toPhase`
-- `phase1Prompt?`
-- `deliverableId?`
-
-## Actual shipped phase transition path
-
-In `src/app/api/engage/[engagementId]/turn/route.ts`, the lifecycle runs as:
-
-1. Agent stream completes and full text is accumulated.
-2. `parseGateApprovalBlock(agentFullText)` is evaluated.
-3. If a gate block exists:
-   - approver fallback is `sponsor -> maestro -> null`
-4. `recordGateApproval()` is called with:
-   - `engagementId`
-   - `phase`
-   - `approvedByPersonId`
-   - `approvalText`
-   - `summary`
-5. `recordGateApproval()`:
-   - reads `engagements.gates_passed` and `current_phase`
-   - short-circuits if the phase is already approved
-   - appends/updates one approved gate record
-   - advances `engagements.current_phase` to `min(4, phase + 1)`
-6. `logAudit()` writes `engagement.gate_approved`.
-7. Route emits:
-   - `gate_approved`
-   - payload `{ phase, new_phase }`
-8. `generateDeliverableForPhase(engagement.id, gateApproval.phase)` fires in the background.
-9. `phaseOpenerFor(updated.current_phase)` is called.
-10. If an opener exists and the phase actually advanced:
-   - opener is persisted as a new agent turn
-   - route emits `phase_opener` with `{ phase, turnId, text }`
-11. If the approved phase is `4`, `engagement.outcome_fee_usd > 0`, and Stripe is configured:
-   - `createOutcomeFeeInvoice()` fires in the background
-
-The route finally emits `done`.
-
-## Other side-channel lifecycle events in the engage route
-
-The same route also parses and persists:
-
-- decisions via `parseDecisionBlocks()` -> `appendDecision()`
-- actual metrics via `parseActualMetricsBlock()` -> `updateActualMetrics()`
-- outcome fee proposals via `parseOutcomeFeeBlock()` -> `proposeOutcomeFee()`
-
-These are related to gate progression because they typically accumulate during later phases, but they are not themselves gate signals.
-
-## Event contract from the legacy engage route
-
-This route is newline-delimited JSON, not SSE. Relevant lifecycle events are:
-
-- `gate_approved`
-- `phase_opener`
-- `done`
-- `error`
-
-It also emits `decisions_logged`, `actual_metrics_captured`, and `outcome_fee_proposed`.
-
-## Change safety notes
-
-- If phase advancement migrates from the legacy engage route to `/api/v1/nexus/query`, move both the persistence step and the opener emission together.
-- Do not change `PHASE_OPENERS` text casually; Playwright and demo flows assert exact opener copy.
-- `recordGateApproval()` and `applyGateSignal()` do similar work in different layers today. Treat that overlap as active architecture debt, not as evidence both are currently invoked in the same flow.
-
-## Changelog
-
-- 2026-04-21: Initial contract doc authored from shipped source
+The release record and live acceptance evidence remain separate from unit
+tests. A merge or healthy deployment alone is not proof of signed-in approval,
+audit attribution, notification behavior, or phase readback.

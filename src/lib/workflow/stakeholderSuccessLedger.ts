@@ -1,7 +1,6 @@
 // Server-only stakeholder success + tension ledger · FM-04
 //
-// Same pattern as sponsorCommitmentLedger.ts — separate from the types
-// module because this file uses fs.
+// Separate from the types module because this file uses fs.
 
 import 'server-only';
 import { existsSync, readFileSync } from 'fs';

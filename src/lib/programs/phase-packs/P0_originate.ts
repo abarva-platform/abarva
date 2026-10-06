@@ -10,8 +10,8 @@
 //   1. Value hypothesis seed - the first causal claim about what changes,
 //      for whom, by how much, and through what mechanism.
 //
-//   2. Sponsor candidate - a named executive with plausible decision rights,
-//      budget access, and calendar commitment. Candidate, not ceremony.
+//   2. Sponsor contact - a named executive stakeholder selected to receive
+//      progress updates. This role carries no Nexus approval authority.
 //
 //   3. Classification - the program pattern, business domain, impacted cohort,
 //      likely evidence family, and risk posture used to select Discovery work.
@@ -19,7 +19,7 @@
 // P0 does not prove the problem. P1 does that. P0 proves the idea is specific
 // enough, owned enough, and consequential enough to deserve Discovery spend.
 // A funded idea with no value mechanism becomes theatre. A good idea with no
-// sponsor becomes orphan work. A sponsor with no classification becomes a
+// accountable business owner becomes orphan work. A sponsor with no classification becomes a
 // bespoke consulting exercise instead of a governed program.
 //
 // This pack reflects the failure modes observed across Apex Retail's 4
@@ -32,8 +32,8 @@ export const P0_ORIGINATE: PhasePack = {
   phase: 0,
   label: 'P0 Originate',
   outcome:
-    'A Discovery-ready program seed: a named sponsor candidate with plausible ' +
-    'decision rights, a value hypothesis seed that states the target cohort, ' +
+    'A Discovery-ready program seed: a named sponsor contact for progress ' +
+    'updates, a value hypothesis seed that states the target cohort, ' +
     'behavior change, expected direction of value, and causal mechanism, plus ' +
     'a classification that selects the program pattern, business domain, risk ' +
     'posture, and evidence family for P1. P0 is not done when someone likes the ' +
@@ -67,12 +67,12 @@ export const P0_ORIGINATE: PhasePack = {
     },
     {
       id: 'sponsor-candidate-named',
-      label: 'Sponsor candidate named with plausible authority',
+      label: 'Sponsor contact listed for progress updates',
       severity: 'hard',
       evaluationHint:
-        'engagement_participants includes a real person candidate for sponsor or ' +
-        'approver authority, or the seed explicitly names the executive expected ' +
-        'to sign. Role labels like "CIO office" or "business" do not satisfy this.',
+        'engagement_participants or the seed identifies the contact by name and ' +
+        'role and records the progress-email preference. This contact is not a ' +
+        'Nexus approver; the authorized workspace user records product approvals.',
       preventsFailureModes: [1],
     },
     {
@@ -80,7 +80,7 @@ export const P0_ORIGINATE: PhasePack = {
       label: 'Discovery funding or capacity envelope stated',
       severity: 'soft',
       evaluationHint:
-        'Business case, founder_approval_requests context_jsonb, or program seed ' +
+        'Business case, approved origination brief, or program seed ' +
         'states the budget/capacity/time box for Discovery. P0 can proceed with ' +
         'a soft flag if the envelope is provisional, but not if Discovery has no ' +
         'named capacity at all.',
@@ -141,8 +141,7 @@ export const P0_ORIGINATE: PhasePack = {
       },
       {
         id: 'what-value-mechanism',
-        text:
-          'What behavior changes if this works, and how does that create value?',
+        text: 'What behavior changes if this works, and how does that create value?',
         why:
           'Separates value hypothesis from benefit slogan. P1 will validate the ' +
           'problem and baseline the metric, but P0 must name the causal path to test.',
@@ -154,14 +153,13 @@ export const P0_ORIGINATE: PhasePack = {
       },
       {
         id: 'who-can-say-no',
-        text:
-          'Who can say no to this program, and who can force it through if teams resist?',
+        text: 'Who owns the business outcome, and who should be listed as sponsor contact for progress updates?',
         why:
-          'Surfaces whether the sponsor candidate has authority or whether P0 is ' +
-          'being driven by an enthusiast with no decision rights.',
+          'Separates accountable business ownership from the sponsor contact. ' +
+          'Product approvals are recorded by an authorized workspace user.',
         expectedAnswerShape:
-          'Named executive and authority shape: budget, policy, operating model, ' +
-          'vendor decision, stakeholder access. A committee is a warning sign.',
+          'Named accountable business owner, named sponsor contact, and whether ' +
+          'the contact should receive phase-progress emails.',
         preventsFailureModes: [1],
       },
       {
@@ -194,8 +192,7 @@ export const P0_ORIGINATE: PhasePack = {
       },
       {
         id: 'classification-defense',
-        text:
-          'What evidence would prove this classification wrong during Discovery?',
+        text: 'What evidence would prove this classification wrong during Discovery?',
         why:
           'Prevents premature pattern lock. P1 should be allowed to reclassify if ' +
           'the current-state evidence contradicts the P0 assumption.',
@@ -207,8 +204,7 @@ export const P0_ORIGINATE: PhasePack = {
       },
       {
         id: 'discovery-capacity',
-        text:
-          'What Discovery capacity is actually approved: people, data access, sponsor time, and calendar window?',
+        text: 'What Discovery capacity is available: people, data access, stakeholder time, and calendar window?',
         why:
           'A P0 seed without Discovery capacity creates a waiting room. P1 needs ' +
           'permission to interview, inspect systems, and capture baselines.',
@@ -218,8 +214,7 @@ export const P0_ORIGINATE: PhasePack = {
       },
       {
         id: 'first-evidence-request',
-        text:
-          'What is the first evidence request P1 should make on day one?',
+        text: 'What is the first evidence request P1 should make on day one?',
         why:
           'Tests whether classification has operational teeth. A good P0 seed ' +
           'points P1 toward a real table, report, export, inventory, or workshop.',
@@ -234,7 +229,8 @@ export const P0_ORIGINATE: PhasePack = {
       {
         id: 'p1-entry-package',
         text:
-          'Before we open Discovery, do we have the sponsor candidate, value ' +
+          'Before we open Discovery, do we have the sponsor contact and email ' +
+          'preference, value ' +
           'hypothesis seed, classification, first cohort, and first evidence request in one place?',
         why:
           'P1 should start with a usable packet, not a transcript archaeology ' +
@@ -244,26 +240,14 @@ export const P0_ORIGINATE: PhasePack = {
         preventsFailureModes: [2, 10],
       },
       {
-        id: 'sponsor-calendar',
-        text:
-          'What sponsor touchpoint is already on the calendar during Discovery?',
-        why:
-          'Discovery without sponsor cadence drifts into analyst work. P1 needs a ' +
-          'known sponsor check-in to validate or kill the problem statement.',
-        expectedAnswerShape:
-          'Specific meeting or cadence. "Ad hoc" is a soft fail and should be flagged.',
-        preventsFailureModes: [1],
-      },
-      {
         id: 'stop-condition-for-discovery',
-        text:
-          'What would cause us to stop after Discovery instead of moving to Synthesis?',
+        text: 'What would cause us to stop after Discovery instead of moving to Synthesis?',
         why:
           'Introduces kill discipline early. If P1 cannot falsify the idea, it is ' +
           'performing confirmation work.',
         expectedAnswerShape:
           'A measurable or observable stop condition tied to problem severity, ' +
-          'baseline size, sponsor authority, or access constraints.',
+          'baseline size, delivery capacity, or access constraints.',
         preventsFailureModes: [10],
       },
     ],
@@ -286,18 +270,19 @@ export const P0_ORIGINATE: PhasePack = {
       preventsFailureModes: [2, 10],
     },
     {
-      id: 'enthusiast-without-authority',
-      label: 'The Enthusiast Without Authority',
+      id: 'unclear-accountable-owner',
+      label: 'The Unclear Accountable Owner',
       detectionHint:
         'The person driving P0 is a PM, architect, innovation lead, vendor contact, ' +
-        'or chief-of-staff delegate, while the executive who controls budget or ' +
-        'policy is absent or unnamed.',
+        'or delegate, while the accountable business owner for outcomes is absent ' +
+        'or unnamed.',
       whatToFlag:
-        'Surface that the program has energy but not authority. P1 will collect ' +
-        'evidence no one is obliged to act on.',
+        'Surface that the program has energy but no accountable business owner. ' +
+        'P1 will collect evidence without a clear operating counterpart.',
       mitigation:
-        'Name the sponsor candidate and the exact decision right they hold. If ' +
-        'authority is uncertain, make sponsor validation the first P1 work item.',
+        'Name the accountable business owner and separately list the sponsor ' +
+        'contact for progress communication. Product approvals remain with an ' +
+        'authorized workspace user.',
       preventsFailureModes: [1],
     },
     {
@@ -364,12 +349,12 @@ export const P0_ORIGINATE: PhasePack = {
       'classification, and first evidence request. Do not reward enthusiasm with ' +
       'program status. P0 posture is origination discipline: make the seed concrete.',
     midPhase:
-      'Force the value mechanism into one sentence, test sponsor authority, and ' +
+      'Force the value mechanism into one sentence, identify the accountable business owner, and ' +
       'map the classification to P1 evidence. If the user drifts into solution ' +
       'design, pull them back to what Discovery must prove or disprove.',
     exit:
       'Package the handoff for P1. Confirm no placeholders remain in sponsor ' +
-      'candidate, value hypothesis seed, classification, first cohort/use case, ' +
+      'contact and progress-email preference, value hypothesis seed, classification, first cohort/use case, ' +
       'Discovery capacity, and first evidence request. Exit posture is not ' +
       'approval theatre; it is deciding whether the seed deserves investigation.',
   },
@@ -382,7 +367,7 @@ export const P0_ORIGINATE: PhasePack = {
     ],
     producesForNext: [
       'Value hypothesis seed - P1 validates the problem and baselines the metric against it',
-      'Sponsor candidate - P1 confirms authority, cadence, and stakeholder access',
+      'Sponsor progress contact and email preference - product approvals remain with an authorized workspace user',
       'Classification - P1 selects evidence family and pattern-specific baselines from program-lifecycle-patterns.ts',
       'First cohort or consuming use case - P1 scopes interviews, evidence requests, and baseline grain',
       'First evidence request - P1 starts with a concrete report/table/export/workshop rather than generic discovery',
@@ -430,7 +415,7 @@ export const P0_ORIGINATE: PhasePack = {
     },
     {
       id: 'p0-sponsor-candidate',
-      label: 'Identify a real sponsor candidate with authority via sponsor 1:1',
+      label: 'List sponsor progress contact and email preference',
       complexity: 'complex',
       agentRole: 'coach_interview',
       inputs: ['value-hypothesis-seed'],

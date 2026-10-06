@@ -1,6 +1,8 @@
 import {
   buildMalformedSourceConsultingGradeReview,
   buildSourceConsultingGradeCompactRetryPrompt,
+  buildSourceConsultingGradeReviewPrompt,
+  buildSourceConsultingGradeRewritePrompt,
   buildSourceQualityGateMetadata,
   buildSourceQualitySourceContext,
   applyDeterministicSourceClaimGate,
@@ -113,13 +115,13 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(requiresSourceConsultingGradeGate("d04_app_inv")).toBe(false);
   });
 
-  it("summarizes evidence, upstream bodies, and gate states for the reviewer", () => {
+  it("summarizes evidence, upstream bodies, and gate states for a buyer-internal reviewer", () => {
     const context = buildSourceQualitySourceContext({
       ctx: makeContext(),
       upstreamBound: {
         d01_strategy_memo: "Strategy memo with $300M baseline.",
       },
-      artifactCode: "d09_rfp_pack",
+      artifactCode: "d01_strategy_memo",
     });
 
     expect(context).toContain("SkyHarbor Air");
@@ -130,21 +132,37 @@ describe("Source consulting-grade quality gate helpers", () => {
     );
     expect(context).toContain("dc-infra-inventory");
     expect(context).toContain("11_Data_Center_Infrastructure_Inventory.csv");
-    expect(context).toContain("D09 RFP evidence coverage semantics");
-    expect(context).toContain("Exhibit 09 — Approved evaluation criteria");
-    expect(context).toContain("satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE");
-    expect(context).toContain(
-      "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)",
-    );
-    expect(context).not.toContain("EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested");
-    expect(context).toContain(
-      "Blocking gaps are only items still missing after this coverage map",
-    );
+    expect(context).not.toContain("D09 RFP evidence coverage semantics");
+    expect(context).toContain("EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested");
     expect(context).toContain("rfp-package-complete");
     expect(context).toContain("Artifact-specific requirements (from source-artifact-profiles.ts)");
     expect(context).toContain("Decision purpose:");
     expect(context).toContain("source=linked evidence record");
     expect(context).not.toContain("artifact=artifact-1");
+  });
+
+  it("keeps private upstream and workflow evidence out of the D09 reviewer and rewrite context", () => {
+    const ctx = makeContext();
+    ctx.event.name = "Private internal workflow test";
+    ctx.event.owner = "Confidential decision owner";
+    ctx.event.estimatedValueUsd = 300_000_000;
+    ctx.evidence[0].notes = "Release-Hold RH-05: no legal approval";
+    ctx.uploadedEvidence![0].originalName = "buyer_private_release_register.csv";
+    ctx.uploadedEvidence![0].chunkExcerpts = ["Internal negotiation target: 12-15%."];
+    const context = buildSourceQualitySourceContext({
+      ctx,
+      upstreamBound: {
+        d05_scope_memo: "Release-Hold Governing Table: RH-05 blocks distribution.",
+      },
+      artifactCode: "d09_rfp_pack",
+    });
+
+    expect(context).toContain(ctx.tenantName);
+    expect(context).not.toMatch(/Release-Hold|RH-05|internal negotiation target/i);
+    expect(context).not.toContain("buyer_private_release_register.csv");
+    expect(context).not.toContain(ctx.event.name);
+    expect(context).not.toContain("Confidential decision owner");
+    expect(context).not.toContain("$300,000,000");
   });
 
   it("does not leak D09 RFP evidence-coverage language into other artifact codes", () => {
@@ -192,6 +210,172 @@ describe("Source consulting-grade quality gate helpers", () => {
     );
     expect(violations.some((item) => item.claim === "$2M")).toBe(false);
     expect(violations.some((item) => item.claim === "$7.85M")).toBe(false);
+  });
+
+  it("rejects vendor-pack obligations absent from its bounded source context", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Buyer. Vendor-disclosable service and legal terms: Not issued.",
+      body: [
+        "| Service availability | >= 99.9% monthly |",
+        "| P1 incident response | <= 30 minutes |",
+        "The supplier must comply with HIPAA and report PHI breaches within 24 hours.",
+      ].join("\n"),
+    });
+
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("99.9%") }),
+      expect.objectContaining({ claim: expect.stringContaining("30 minutes") }),
+      expect.objectContaining({ claim: expect.stringContaining("HIPAA") }),
+    ]));
+  });
+
+  it("rejects clinical workload claims inferred from a buyer name alone", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Health. Vendor-disclosable event scope: Not issued.",
+      body: [
+        "The supplier will support patient-facing and clinical-support systems.",
+        "The service covers healthcare data environments.",
+      ].join("\n"),
+    });
+
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("patient-facing") }),
+      expect.objectContaining({ claim: expect.stringContaining("healthcare data environments") }),
+    ]));
+  });
+
+  it("checks each named compliance standard rather than only the first on a line", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Approved vendor-disclosable terms: HIPAA applies to the contracted service.",
+      body: "The supplier must comply with HIPAA, SOC 2, and ISO 27001.",
+    });
+
+    expect(violations.map((item) => item.reason)).toEqual(expect.arrayContaining([
+      expect.stringContaining("SOC 2"),
+      expect.stringContaining("ISO 27001"),
+    ]));
+    expect(violations.some((item) => item.reason.includes("HIPAA"))).toBe(false);
+  });
+
+  it("does not mistake explicit not-issued terms for vendor obligations", () => {
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Health. Vendor-disclosable terms: Not issued.",
+      body: "| Patient-facing systems | Not issued |\nHIPAA obligations: Not issued.",
+    })).toEqual([]);
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Health. Vendor-disclosable terms: Not issued.",
+      body: "HIPAA: Not issued; the supplier must comply with ISO 27001.",
+    });
+    expect(mixed.map((item) => item.reason)).toEqual([
+      expect.stringContaining("ISO 27001"),
+    ]);
+  });
+
+  it("allows only clinical workload terms present in approved vendor context", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Approved vendor-disclosable scope: patient-facing applications are in scope.",
+      body: "The supplier will support patient-facing and clinical-support systems.",
+    });
+
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("clinical-support") }),
+    ]));
+    expect(violations.some((item) => item.reason.includes("patient-facing"))).toBe(false);
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Approved vendor-disclosable scope: patient-facing and clinical-support systems are in scope.",
+      body: "The supplier will support patient-facing and clinical-support systems.",
+    })).toEqual([]);
+  });
+
+  it("does not treat response completeness as an unapproved D09 service level", () => {
+    const body = [
+      "Bidders must complete 100% of mandatory response fields.",
+      "Service levels and data protection obligations: Not issued.",
+    ].join("\n");
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Buyer. Vendor-disclosable terms: Not issued.",
+      body,
+    })).toEqual([]);
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d05_scope_memo",
+      sourceContext: "Buyer: Example Buyer.",
+      body: "The supplier must meet a 30 minute P1 response target and HIPAA obligations.",
+    })).toEqual([]);
+  });
+
+  it("does not let a completion percentage hide a separate commercial target", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Buyer. Commercial terms: Not issued.",
+      body: "Complete 100% of mandatory response fields; buyer savings target 12%.",
+    });
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("12%") }),
+    ]));
+  });
+
+  it("allows a D09 obligation when the bounded context actually contains it", () => {
+    const body = "Service availability must be >= 99.9% monthly. HIPAA applies to the contracted service.";
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Vendor-disclosable approved terms: Service availability >= 99.9% monthly. HIPAA applies to the contracted service.",
+      body,
+    })).toEqual([]);
+  });
+
+  it("does not treat pending or rejected source terms as vendor-approved authority", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Service availability 99.9% target pending. HIPAA not approved for this package.",
+      body: "Service availability must be 99.9%. The supplier must comply with HIPAA.",
+    });
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("99.9%") }),
+      expect.objectContaining({ claim: expect.stringContaining("HIPAA") }),
+    ]));
+  });
+
+  it.each(["d01_strategy_memo", "d02_value_target"])(
+    "rejects unbound category rankings and routine outcomes in %s",
+    (artifactCode) => {
+      const body = [
+        "Service desk is among the highest-volume infrastructure services a health system operates.",
+        "These services are among the most commonly assessed for managed-service delivery.",
+        "Managed-service models routinely generate operational efficiency.",
+      ].join("\n");
+      const violations = findDeterministicSourceClaimViolations({
+        artifactCode,
+        sourceContext: "The synthetic trigger names a service desk and endpoint scope only.",
+        body,
+      });
+
+      expect(violations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ claim: expect.stringContaining("highest-volume") }),
+        expect.objectContaining({ claim: expect.stringContaining("most commonly assessed") }),
+        expect.objectContaining({ claim: expect.stringContaining("routinely generate") }),
+      ]));
+    },
+  );
+
+  it("keeps equivalent category assertions when the bound source establishes them", () => {
+    const body = [
+      "Service desk is among the highest-volume infrastructure services a health system operates.",
+      "These services are among the most commonly assessed for managed-service delivery.",
+      "Managed-service models routinely generate operational efficiency.",
+    ].join("\n");
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: body,
+      body,
+    })).toEqual([]);
   });
 
   it("rejects invented calendars, unsupported durations, comparisons, and internal ids", () => {
@@ -263,6 +447,57 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations).toEqual([]);
   });
 
+  it("rejects an unbound post-go-live quarter horizon even when model review passes", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "The measurement window and start date are client-set.",
+      body: "The Event Owner will track measurement criteria through the first two post-go-live quarters.",
+    });
+
+    expect(violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          claim: "two post-go-live quarters",
+          reason: expect.stringContaining("Date or duration claim"),
+        }),
+      ]),
+    );
+    const review = applyDeterministicSourceClaimGate({
+      standardId: "partner-grade-consulting-deliverable-v1" as const,
+      minRequiredScore: 8,
+      artifactCode: "d02_value_target",
+      artifactName: "Value Target Brief",
+      pass: true,
+      overallScore: 9,
+      dimensionScores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+        id: dimension.id,
+        score: 9,
+        rationale: "Model review passed.",
+        requiredFixes: [],
+      })),
+      unsupportedClaims: [],
+      missingEvidence: [],
+      rewriteGuidance: [],
+    }, violations);
+    expect(review.pass).toBe(false);
+    expect(review.unsupportedClaims.join(" ")).toContain("two post-go-live quarters");
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "The measurement window and start date are client-set.",
+      body: "The measurement window and start date will be set by the client.",
+    })).toEqual([]);
+  });
+
+  it("accepts a quarter-length horizon when an equivalent duration is bound", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "The approved measurement period is six months after go-live.",
+      body: "The approved measurement period covers two post-go-live quarters.",
+    });
+
+    expect(violations).toEqual([]);
+  });
+
   it("accepts an explicit refusal to invent a missing benchmark", () => {
     const violations = findDeterministicSourceClaimViolations({
       artifactCode: "d01_strategy_memo",
@@ -272,6 +507,308 @@ describe("Source consulting-grade quality gate helpers", () => {
     });
 
     expect(violations).toEqual([]);
+  });
+
+  it("rejects Strategy drafts that contradict audited applicability, SELF policy, or a pending gate", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [{
+      ...ctx.evidence[0],
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      stage: "strategy",
+      currentState: "Not Requested",
+      applicabilityStatus: "not_applicable",
+    }];
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: [
+        "EVID-SRC-STR-INCUMBENT — Not Requested; request the incumbent contract.",
+        "EVID-SRC-STR-SPONSOR-COMMIT is required before release.",
+        "The event is ready to advance. Approve at the Strategy Gate.",
+      ].join("\n"),
+    });
+    expect(violations.map((item) => item.reason)).toEqual(expect.arrayContaining([
+      expect.stringContaining("audited not-applicable"),
+      expect.stringContaining("SELF policy"),
+      expect.stringContaining("pending Strategy gate"),
+    ]));
+  });
+
+  it("rejects a recommendation to approve or advance while Strategy criteria are pending", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+
+    for (const artifactCode of ["d01_strategy_memo", "d02_value_target"]) {
+      const violations = findDeterministicSourceClaimViolations({
+        artifactCode,
+        sourceContext: "",
+        ctx,
+        body: "Recommendation | **Approve to advance** — scope is bounded and the event is ready for the next phase.",
+      });
+      expect(violations.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+    }
+
+    const refusal = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not approve to advance yet; Strategy criteria are pending review.",
+    });
+    expect(refusal).toEqual([]);
+
+    const qualifiedRefusal = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not recommend approval to advance while the Strategy gate is pending.",
+    });
+    expect(qualifiedRefusal).toEqual([]);
+
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not approve yet; Recommendation | Approve to advance into the next phase.",
+    });
+    expect(mixed.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "met" }];
+    const cleared = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Recommend approval to advance after the recorded review.",
+    });
+    expect(cleared).toEqual([]);
+  });
+
+  it("rejects positive approval instructions in a pending Strategy draft", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+
+    for (const artifactCode of ["d01_strategy_memo", "d02_value_target"]) {
+      for (const body of [
+        "My recommendation: conduct the Strategy Gate Review session and record approval.",
+        "Advance this event.",
+        "There are no blocking gaps. The pending criteria are ready to be closed in the review.",
+      ]) {
+        const violations = findDeterministicSourceClaimViolations({
+          artifactCode,
+          sourceContext: "",
+          ctx,
+          body,
+        });
+        expect(violations.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+      }
+    }
+
+    for (const body of [
+      "Do not record approval or advance this event while criteria are pending.",
+      "Conduct the gate review and record a decision; approval only if each criterion is met.",
+      "After all criteria are met, record approval.",
+      "Record approval only if each criterion is met.",
+      "The review may determine whether the criteria can be closed; no approval is recorded yet.",
+    ]) {
+      expect(findDeterministicSourceClaimViolations({
+        artifactCode: "d01_strategy_memo",
+        sourceContext: "",
+        ctx,
+        body,
+      })).toEqual([]);
+    }
+
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not record approval yet; Advance this event.",
+    });
+    expect(mixed.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+  });
+
+  it("rejects a direct Strategy-to-RFP transition without blocking later-stage discussion", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "met" }];
+
+    for (const artifactCode of ["d01_strategy_memo", "d02_value_target"]) {
+      for (const body of [
+        "Approve the event to advance into RFP preparation.",
+        "After approval, the event advances to the Market package.",
+      ]) {
+        const violations = findDeterministicSourceClaimViolations({
+          artifactCode,
+          sourceContext: "",
+          ctx,
+          body,
+        });
+        expect(violations.some((item) => item.reason.includes("Define/Scope"))).toBe(true);
+      }
+    }
+
+    for (const body of [
+      "Approval moves the event to Define/Scope; RFP release has its own later gate.",
+      "After Strategy approval, Define/Scope work may begin preparing the later RFP.",
+      "Strategy approval does not authorize advancement to RFP.",
+      "Strategy approval should not advance the event to RFP.",
+      "The RFP package will be considered only after Scope is approved.",
+    ]) {
+      expect(findDeterministicSourceClaimViolations({
+        artifactCode: "d01_strategy_memo",
+        sourceContext: "",
+        ctx,
+        body,
+      })).toEqual([]);
+    }
+
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not advance now, but after approval the event advances to RFP.",
+    });
+    expect(mixed.some((item) => item.reason.includes("Define/Scope"))).toBe(true);
+
+    ctx.event.currentStageKey = "rfp";
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "The RFP stage may now authorize market release after its own gate.",
+    })).toEqual([]);
+  });
+
+  it("allows accurate absence and policy language while refusing unsupported vendor-pricing lore", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [{
+      ...ctx.evidence[0],
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      stage: "strategy",
+      applicabilityStatus: "not_applicable",
+    }];
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+    const accurate = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-INCUMBENT is not applicable by audited decision. A separate sponsor commitment is not required under SELF policy. The Strategy gate is pending.",
+    });
+    expect(accurate).toEqual([]);
+
+    ctx.event.approvalPolicyCode = "legacy_signed_scope_v1";
+    const legacy = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-SPONSOR-COMMIT is required before release.",
+    });
+    expect(legacy).toEqual([]);
+
+    const unsupported = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "No market evidence is loaded.",
+      body: "Vendors in this managed-service market price aggressively and recover margin through change orders.",
+    });
+    expect(unsupported.some((item) => /vendor-pricing/i.test(item.reason))).toBe(true);
+  });
+
+  it("rejects request-or-waive gate prerequisites for optional or SELF-excluded Strategy evidence", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      {
+        ...ctx.evidence[0],
+        requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+      {
+        ...ctx.evidence[0],
+        id: "sponsor-evidence",
+        requirementId: "EVID-SRC-STR-SPONSOR-COMMIT",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+    ];
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: [
+        "Market benchmark (EVID-SRC-STR-MARKET-BENCHMARK): request-or-waive decision required at gate.",
+        "Sponsor commitment (EVID-SRC-STR-SPONSOR-COMMIT): request-or-waive decision required at gate.",
+      ].join("\n"),
+    });
+    expect(violations.map((item) => item.reason)).toEqual(expect.arrayContaining([
+      expect.stringContaining("Recommended evidence"),
+      expect.stringContaining("SELF policy"),
+    ]));
+
+    const contradictory = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-MARKET-BENCHMARK is optional, but a request-or-waive decision is required before the gate closes.",
+    });
+    expect(contradictory.some((item) => item.reason.includes("Recommended evidence"))).toBe(true);
+
+    const policyContradiction = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-SPONSOR-COMMIT: request-or-waive decision before gate close.",
+    });
+    expect(policyContradiction.some((item) => item.reason.includes("SELF policy"))).toBe(true);
+
+    const accurate = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "",
+      ctx,
+      body: "The market scan is optional and not required for the Strategy gate. A separate sponsor commitment is not required under SELF policy.",
+    });
+    expect(accurate).toEqual([]);
+
+    const statusOnly = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Market benchmark (EVID-SRC-STR-MARKET-BENCHMARK): Not Requested; this scan is optional and does not block Strategy.",
+    });
+    expect(statusOnly).toEqual([]);
+
+    ctx.event.approvalPolicyCode = "legacy_signed_scope_v1";
+    const strict = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-SPONSOR-COMMIT is required before the Strategy gate closes.",
+    });
+    expect(strict).toEqual([]);
+  });
+
+  it("binds effective Strategy evidence roles into the model quality review packet", () => {
+    const ctx = makeContext();
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      { ...ctx.evidence[0], requirementId: "EVID-SRC-STR-MARKET-BENCHMARK", stage: "strategy" },
+      { ...ctx.evidence[0], id: "sponsor-evidence", requirementId: "EVID-SRC-STR-SPONSOR-COMMIT", stage: "strategy" },
+    ];
+    const packet = buildSourceQualitySourceContext({
+      ctx,
+      upstreamBound: {},
+      artifactCode: "d01_strategy_memo",
+    });
+    expect(packet).toMatch(/EVID-SRC-STR-MARKET-BENCHMARK;[^\n]*level=recommended;[^\n]*gate_blocking=false/);
+    expect(packet).toMatch(/EVID-SRC-STR-SPONSOR-COMMIT;[^\n]*policy_applies=false;[^\n]*gate_blocking=false/);
   });
 
   it("forces evidence and source-discipline dimensions below the release bar", () => {
@@ -353,6 +890,80 @@ describe("Source consulting-grade quality gate helpers", () => {
     for (const dimension of CONSULTING_GRADE_DIMENSIONS) {
       expect(prompt).toContain(dimension.id);
     }
+  });
+
+  it("keeps review and rewrite guidance within the bound commercial evidence", () => {
+    const sourceContext = [
+      "Estimated value: not recorded",
+      "EVID-SRC-STR-SPEND-BASELINE; state=Not Applicable; applicability=not_applicable",
+      "EVID-SRC-STR-MARKET-BENCHMARK; state=Not Requested; level=recommended; gate_blocking=false",
+    ].join("\n");
+    const args = {
+      artifactCode: "d01_strategy_memo",
+      artifactName: "Sourcing Strategy Memo",
+      bodyMarkdown: "No spend baseline exists. Dollar sizing remains client-to-complete with Finance as owner.",
+      sourceContext,
+    };
+    const unsafeFix = "Add a sector-typical illustrative $5m-$20m annual range.";
+    const unboundProxyFix = "Add an illustrative proxy dollar range for the market.";
+    const review = {
+      standardId: "partner-grade-consulting-deliverable-v1" as const,
+      minRequiredScore: 8,
+      artifactCode: args.artifactCode,
+      artifactName: args.artifactName,
+      pass: false,
+      overallScore: 7,
+      dimensionScores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+        id: dimension.id,
+        score: dimension.id === "commercial_specificity" ? 7 : 8,
+        rationale: "Commercial scale is unbound.",
+        requiredFixes: dimension.id === "commercial_specificity" ? [unsafeFix, unboundProxyFix] : [],
+      })),
+      unsupportedClaims: [],
+      missingEvidence: ["Finance baseline"],
+      rewriteGuidance: [unsafeFix, unboundProxyFix],
+    };
+
+    for (const prompt of [
+      buildSourceConsultingGradeReviewPrompt(args),
+      buildSourceConsultingGradeCompactRetryPrompt({ ...args, previousError: "Malformed review" }),
+      buildSourceConsultingGradeRewritePrompt({ ...args, review }),
+    ]) {
+      expect(prompt).toContain("Do not request or add illustrative, proxy, or sector-typical financial amounts");
+      expect(prompt).toContain("Commercial specificity can be shown through named levers, an unquantified range, and the evidence needed to size it");
+      expect(prompt).toContain("Do not turn recommended evidence into a gate requirement or invent a collection date");
+      expect(prompt).toContain(sourceContext);
+    }
+    const rewritePrompt = buildSourceConsultingGradeRewritePrompt({ ...args, review });
+    expect(rewritePrompt).toContain(
+      "Ignore review fixes that conflict with these evidence limits",
+    );
+    expect(rewritePrompt).not.toContain(unsafeFix);
+    expect(rewritePrompt).not.toContain(unboundProxyFix);
+    expect(rewritePrompt).toContain("Keep the financial scale unquantified until bound evidence supplies its values.");
+
+    const supportedReview = {
+      ...review,
+      rewriteGuidance: ["Reconcile the cited $12M Finance baseline with the value table."],
+      dimensionScores: review.dimensionScores.map((dimension) => ({
+        ...dimension,
+        requiredFixes: dimension.id === "commercial_specificity"
+          ? ["Reconcile the cited $12M Finance baseline with the value table."]
+          : [],
+      })),
+    };
+    expect(buildSourceConsultingGradeRewritePrompt({
+      ...args,
+      sourceContext: `${sourceContext}\nFinance approved baseline: $12M.`,
+      review: supportedReview,
+    })).toContain("Reconcile the cited $12M Finance baseline with the value table.");
+
+    const timingPrompt = buildSourceConsultingGradeRewritePrompt({
+      ...args,
+      review: { ...review, rewriteGuidance: ["Set a 30-day collection deadline."] },
+    });
+    expect(timingPrompt).not.toContain("Set a 30-day collection deadline.");
+    expect(timingPrompt).toContain("Leave timing client-to-set until a bound source supplies the date or duration.");
   });
 
   it("records malformed reviewer output as a failed Gate B review", () => {

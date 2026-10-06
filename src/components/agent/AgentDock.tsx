@@ -46,6 +46,10 @@ import { demoSafeClientText } from "@/lib/client-config";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import { AgentResponseParts } from "@/components/agent/AgentResponseParts";
+import { AILabel } from "@/components/abarva/AILabel";
+import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
+import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
 import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
@@ -105,11 +109,17 @@ function shouldRenderAvaArtifactsInDock(
   return hasRenderableAvaArtifacts(answer);
 }
 
-function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
+function avaAnswerTextForDock(surface: string, answer?: AvaAnswerPacket | null): string {
   if (!answer) return "";
+  const directAnswer = answer.directAnswer?.trim();
+  const prose = answer.prose?.trim();
   const text =
-    answer.prose?.trim() ||
-    answer.directAnswer?.trim() ||
+    (surface === "home-preview"
+      ? [directAnswer, prose === directAnswer ? "" : prose]
+          .filter(Boolean)
+          .join("\n\n")
+      : prose) ||
+    directAnswer ||
     [answer.interpretation, answer.businessImplication, answer.recommendation]
       .filter((part): part is string => Boolean(part?.trim()))
       .join("\n\n")
@@ -201,8 +211,7 @@ function visibleAgentDockBody(
   agentAnswer?: AvaAnswerPacket | null,
   preserveVisibleText = false,
 ): string {
-  void surface;
-  const packetText = avaAnswerTextForDock(agentAnswer);
+  const packetText = avaAnswerTextForDock(surface, agentAnswer);
   const bodyText =
     agentAnswer &&
     hasRenderableAvaArtifacts(agentAnswer) &&
@@ -396,7 +405,7 @@ export interface ChatMessage {
   id: string;
   role: "agent" | "user";
   body: string;
-  /** Optional structured UI parts, used by Source/aVa for tables and charts. */
+  /** Optional structured UI parts rendered beneath the assistant prose. */
   parts?: AgentResponsePart[];
   /** Optional createdAt for byline rendering. */
   at?: string;
@@ -724,8 +733,6 @@ export function AgentDock(props: AgentDockProps) {
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
-    expandedWidth,
-    expandedMaxWidth,
     preserveVisibleText = false,
     collapsedSummary,
     collapsedChipStyle,
@@ -769,7 +776,7 @@ export function AgentDock(props: AgentDockProps) {
     : safeThread;
   const focused = variant === "focused";
   const chatOnly = layout === "chat-only";
-  const showReviewChrome = !focused && !quietReviewChrome;
+  const showReviewChrome = (!focused || surface === "home-preview") && !quietReviewChrome;
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -830,10 +837,21 @@ export function AgentDock(props: AgentDockProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [mode, lastRichMode, setMode]);
 
+  useEffect(() => {
+    if (mode !== "expand") return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mode]);
+
   // Composer state
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const threadScrollRef = useRef<HTMLDivElement | null>(null);
+  const followThreadRef = useRef(true);
+  const lastUserTurnIdRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dropZoneRef = useRef<HTMLDivElement | null>(null);
 
@@ -897,15 +915,30 @@ export function AgentDock(props: AgentDockProps) {
     }
   }, []);
 
-  // Scroll only the dock's internal thread pane. DOM-level scrollIntoView()
-  // can move the hosting admin page when this dock is embedded in /admin.
+  const onThreadScroll = useCallback(() => {
+    const scroller = threadScrollRef.current;
+    if (!scroller) return;
+    followThreadRef.current =
+      scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= 80;
+  }, []);
+
+  // Follow streaming text only while the reader is near the end. Keep all
+  // movement inside the transcript so the hosting page never jumps.
   useEffect(() => {
-    if (thread.length === 0 && !isAgentBusy) return;
+    const lastUserTurn = [...thread]
+      .reverse()
+      .find((turn) => turn.role === "user");
+    if (lastUserTurn && lastUserTurn.id !== lastUserTurnIdRef.current) {
+      lastUserTurnIdRef.current = lastUserTurn.id;
+      followThreadRef.current = true;
+    }
+    if ((thread.length === 0 && !isAgentBusy) || !followThreadRef.current)
+      return;
     const scroller = threadScrollRef.current;
     if (scroller) {
       scroller.scrollTop = scroller.scrollHeight;
     }
-  }, [thread.length, isAgentBusy]);
+  }, [thread, isAgentBusy]);
 
   useEffect(() => {
     if (!anyUploading) return;
@@ -1096,15 +1129,53 @@ export function AgentDock(props: AgentDockProps) {
     : `Restore ${collapsedSummaryLabel ?? displayAgentName} chat`;
   const visibleSuggestedActions = useMemo(
     () =>
-      focused && thread.length > 0 && !keepSuggestedActionsVisible
+      (focused || mode === "expand") &&
+      thread.length > 0 &&
+      !keepSuggestedActionsVisible
         ? []
         : suggestedActions,
-    [focused, keepSuggestedActionsVisible, suggestedActions, thread.length],
+    [
+      focused,
+      keepSuggestedActionsVisible,
+      mode,
+      suggestedActions,
+      thread.length,
+    ],
   );
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,
   // expand). The collapsed mode renders the floating chip instead.
   const chatPanel = useMemo(() => {
+    const expanded = mode === "expand";
+    const openingSuggestions = (
+      <div
+        style={expanded ? EXPANDED_SUGGESTIONS_STYLE : SUGGESTIONS_STYLE}
+        aria-label="Suggested actions"
+      >
+        {expanded ? null : (
+          <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
+        )}
+        {visibleSuggestedActions.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            onClick={() => {
+              if (action.onClick) action.onClick();
+              else void submitSuggestedAction(action.body);
+            }}
+            disabled={submitting}
+            data-testid={`agent-dock-suggestion-${action.id}`}
+            style={
+              expanded
+                ? EXPANDED_SUGGESTION_BUTTON_STYLE
+                : SUGGESTION_BUTTON_STYLE
+            }
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    );
     return (
       <div
         ref={dropZoneRef}
@@ -1118,11 +1189,16 @@ export function AgentDock(props: AgentDockProps) {
           ...PANEL_STYLE,
           ...(focused ? FOCUSED_PANEL_STYLE : null),
           ...(chatOnly ? CHAT_ONLY_PANEL_STYLE : null),
+          ...(expanded ? EXPANDED_PANEL_INNER_STYLE : null),
           outline: draggingOver
             ? `2px dashed ${CANVAS.SPLITTER_ACTIVE}`
             : "none",
           outlineOffset: -2,
-          background: draggingOver ? "rgba(12,26,58,0.04)" : CANVAS.CHAT_BG,
+          background: draggingOver
+            ? "rgba(12,26,58,0.04)"
+            : expanded
+              ? "#FFFFFF"
+              : CANVAS.CHAT_BG,
         }}
       >
         {/* Spinner keyframes are scoped to this dock instance. */}
@@ -1173,20 +1249,29 @@ export function AgentDock(props: AgentDockProps) {
         {/* Thread */}
         <div
           ref={threadScrollRef}
+          onScroll={onThreadScroll}
           style={{
             ...(focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE),
             ...(chatOnly ? CHAT_ONLY_THREAD_STYLE : null),
             ...(chatOnly && thread.length === 0
               ? CHAT_ONLY_EMPTY_THREAD_STYLE
               : null),
+            ...(expanded ? EXPANDED_THREAD_STYLE : null),
+            ...(expanded && thread.length === 0
+              ? EXPANDED_EMPTY_THREAD_STYLE
+              : null),
           }}
           data-testid="agent-dock-thread"
         >
           {thread.length === 0 ? (
             <div
-              style={chatOnly ? CHAT_ONLY_EMPTY_STATE_STYLE : EMPTY_STATE_STYLE}
+              style={
+                expanded || chatOnly
+                  ? CHAT_ONLY_EMPTY_STATE_STYLE
+                  : EMPTY_STATE_STYLE
+              }
             >
-              {chatOnly ? (
+              {chatOnly || expanded ? (
                 <AvaAskMark
                   variant="wordmark-dark"
                   style={CHAT_ONLY_EMPTY_MARK_STYLE}
@@ -1194,20 +1279,25 @@ export function AgentDock(props: AgentDockProps) {
               ) : null}
               <p
                 style={
-                  chatOnly ? CHAT_ONLY_EMPTY_TITLE_STYLE : EMPTY_TITLE_STYLE
+                  chatOnly || expanded
+                    ? CHAT_ONLY_EMPTY_TITLE_STYLE
+                    : EMPTY_TITLE_STYLE
                 }
               >
                 Ask {displayAgentName} anything.
               </p>
               <p
                 style={
-                  chatOnly
+                  chatOnly || expanded
                     ? CHAT_ONLY_EMPTY_SUBTITLE_STYLE
                     : EMPTY_SUBTITLE_STYLE
                 }
               >
                 {agent.role}
               </p>
+              {expanded && visibleSuggestedActions.length > 0
+                ? openingSuggestions
+                : null}
             </div>
           ) : (
             thread.map((turn) => (
@@ -1216,39 +1306,93 @@ export function AgentDock(props: AgentDockProps) {
                 data-testid={`agent-dock-turn-${turn.role}`}
                 style={
                   turn.role === "user"
-                    ? focused
-                      ? FOCUSED_USER_TURN_STYLE
-                      : USER_TURN_STYLE
-                    : AGENT_TURN_STYLE
+                    ? expanded
+                      ? EXPANDED_USER_TURN_STYLE
+                      : focused
+                        ? FOCUSED_USER_TURN_STYLE
+                        : USER_TURN_STYLE
+                    : expanded
+                      ? EXPANDED_AGENT_TURN_STYLE
+                      : AGENT_TURN_STYLE
                 }
               >
                 {turn.role === "agent" ? (
-                  <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
+                  <div
+                    style={
+                      expanded
+                        ? { ...AGENT_BYLINE_STYLE, ...EXPANDED_PROSE_STYLE }
+                        : AGENT_BYLINE_STYLE
+                    }
+                  >
+                    <span>{displayAgentName}</span>
+                    {/*
+                      Every agent turn carries a visible AI-output marker. A
+                      reader must be able to tell drafted text from a recorded
+                      fact without inferring it from the byline.
+                    */}
+                    {showReviewChrome ? (
+                      <AILabel
+                        status="draft"
+                        detail="Review before acting"
+                        compact
+                      />
+                    ) : null}
+                  </div>
                 ) : null}
-                <div style={BUBBLE_STYLE}>
+                <div
+                  style={
+                    turn.role === "user" && expanded
+                      ? EXPANDED_USER_BUBBLE_STYLE
+                      : turn.role === "agent" && expanded
+                        ? { ...BUBBLE_STYLE, ...EXPANDED_PROSE_STYLE }
+                        : BUBBLE_STYLE
+                  }
+                >
                   {turn.role === "agent" ? (
-                    <AgentMarkdown
-                      text={visibleAgentDockBody(
-                        surface,
-                        turn.body,
-                        turn.agentAnswer,
-                        preserveVisibleText,
-                      )}
-                    />
+                    turn.parts?.length ? (
+                      <AgentResponseParts parts={turn.parts} />
+                    ) : (
+                      <AgentMarkdown
+                        text={visibleAgentDockBody(
+                          surface,
+                          turn.body,
+                          turn.agentAnswer,
+                          preserveVisibleText,
+                        )}
+                      />
+                    )
                   ) : (
                     turn.body
                   )}
+                  {/*
+                    Substantive agent prose with no citation says so. Silence
+                    here would let an uncited answer read exactly like an
+                    evidenced one.
+                  */}
+                  {showReviewChrome &&
+                  turn.role === "agent" &&
+                  (!turn.citations || turn.citations.length === 0) &&
+                  shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
+                    <div style={expanded ? EXPANDED_PROSE_STYLE : undefined}>
+                      <CitationGapNotice compact />
+                    </div>
+                  ) : null}
                 </div>
                 {showReviewChrome &&
                 turn.role === "agent" &&
                 surface !== "intelligence" &&
                 turn.citations &&
                 turn.citations.length > 0 ? (
-                  <EvidenceBasis citations={turn.citations} />
+                  <div style={expanded ? EXPANDED_PROSE_STYLE : undefined}>
+                    <EvidenceBasis citations={turn.citations} />
+                  </div>
                 ) : null}
                 {turn.role === "agent" &&
                 shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
-                  <div style={{ marginTop: 12 }}>
+                  <div
+                    data-testid="agent-dock-artifacts"
+                    style={{ marginTop: 12 }}
+                  >
                     <AgentAnswerRenderer
                       answer={turn.agentAnswer}
                       showChrome={!focused}
@@ -1282,7 +1426,7 @@ export function AgentDock(props: AgentDockProps) {
             <div
               data-testid="agent-dock-throbber"
               aria-live="polite"
-              style={AGENT_TURN_STYLE}
+              style={expanded ? EXPANDED_AGENT_TURN_STYLE : AGENT_TURN_STYLE}
             >
               <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
               <div
@@ -1300,32 +1444,15 @@ export function AgentDock(props: AgentDockProps) {
               </div>
             </div>
           ) : null}
+          {expanded && thread.length > 0 && visibleSuggestedActions.length > 0
+            ? openingSuggestions
+            : null}
         </div>
 
         {/* Suggested actions */}
-        {visibleSuggestedActions.length > 0 ? (
-          <div style={SUGGESTIONS_STYLE} aria-label="Suggested actions">
-            <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
-            {visibleSuggestedActions.map((action) => (
-              <button
-                key={action.id}
-                type="button"
-                onClick={() => {
-                  if (action.onClick) {
-                    action.onClick();
-                  } else {
-                    void submitSuggestedAction(action.body);
-                  }
-                }}
-                disabled={submitting}
-                data-testid={`agent-dock-suggestion-${action.id}`}
-                style={SUGGESTION_BUTTON_STYLE}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
+        {visibleSuggestedActions.length > 0 && !expanded
+          ? openingSuggestions
+          : null}
 
         {/* Pending attachment chips */}
         {uploads.length > 0 ? (
@@ -1344,7 +1471,11 @@ export function AgentDock(props: AgentDockProps) {
         ) : null}
 
         <div
-          style={COMPOSER_DISCLAIMER_STYLE}
+          style={
+            expanded
+              ? EXPANDED_COMPOSER_DISCLAIMER_STYLE
+              : COMPOSER_DISCLAIMER_STYLE
+          }
           data-testid="agent-dock-disclaimer"
         >
           aVa can make mistakes. Check important info.
@@ -1353,7 +1484,7 @@ export function AgentDock(props: AgentDockProps) {
         {/* Composer */}
         <form
           onSubmit={submit}
-          style={INPUT_FORM_STYLE}
+          style={expanded ? EXPANDED_INPUT_FORM_STYLE : INPUT_FORM_STYLE}
           aria-label={`Ask ${displayAgentName}`}
           data-testid="agent-dock-form"
         >
@@ -1414,10 +1545,22 @@ export function AgentDock(props: AgentDockProps) {
         </form>
         {showReviewChrome ? (
           <>
-            <div style={ACTION_APPROVAL_NOTICE_WRAP_STYLE}>
+            <div
+              style={
+                expanded
+                  ? EXPANDED_NOTICE_WRAP_STYLE
+                  : ACTION_APPROVAL_NOTICE_WRAP_STYLE
+              }
+            >
               <AgentActionApprovalNotice compact />
             </div>
-            <div style={RESPONSIBILITY_FOOTER_WRAP_STYLE}>
+            <div
+              style={
+                expanded
+                  ? EXPANDED_FOOTER_WRAP_STYLE
+                  : RESPONSIBILITY_FOOTER_WRAP_STYLE
+              }
+            >
               <AIResponsibilityFooter compact />
             </div>
           </>
@@ -1444,6 +1587,7 @@ export function AgentDock(props: AgentDockProps) {
     onDragLeave,
     onDragOver,
     onDrop,
+    onThreadScroll,
     removeUpload,
     requestRawMode,
     runSessionExport,
@@ -1583,13 +1727,7 @@ export function AgentDock(props: AgentDockProps) {
         data-testid="agent-dock-expand-overlay"
         style={EXPAND_OVERLAY_STYLE}
       >
-        <div
-          style={{
-            ...EXPAND_PANEL_STYLE,
-            ...(expandedWidth ? { width: expandedWidth } : null),
-            ...(expandedMaxWidth ? { maxWidth: expandedMaxWidth } : null),
-          }}
-        >
+        <div data-testid="agent-dock-expand-panel" style={EXPAND_PANEL_STYLE}>
           {chatPanel}
         </div>
       </div>
@@ -1609,27 +1747,30 @@ function SessionExportActions({
   onExport,
 }: SessionExportActionsProps) {
   return (
-    <div aria-label="Export chat session" style={SESSION_EXPORT_STYLE}>
-      <button
-        type="button"
-        aria-label="Export chat session as HTML"
-        title="Export session as HTML"
-        disabled={pending !== null}
-        onClick={() => void onExport("html")}
-        style={SESSION_EXPORT_BUTTON_STYLE}
-      >
-        {pending === "html" ? "..." : "HTML"}
-      </button>
-      <button
-        type="button"
-        aria-label="Export chat session as PDF"
-        title="Export session as PDF"
-        disabled={pending !== null}
-        onClick={() => void onExport("pdf")}
-        style={SESSION_EXPORT_BUTTON_STYLE}
-      >
-        {pending === "pdf" ? "..." : "PDF"}
-      </button>
+    <div aria-label="Export aVa chat session only" style={SESSION_EXPORT_STYLE}>
+      <span style={SESSION_EXPORT_LABEL_STYLE}>Chat export</span>
+      <div style={SESSION_EXPORT_BUTTON_GROUP_STYLE}>
+        <button
+          type="button"
+          aria-label="Export aVa chat session only as HTML"
+          title="Export aVa chat session only as HTML"
+          disabled={pending !== null}
+          onClick={() => void onExport("html")}
+          style={SESSION_EXPORT_BUTTON_STYLE}
+        >
+          {pending === "html" ? "..." : "HTML"}
+        </button>
+        <button
+          type="button"
+          aria-label="Export aVa chat session only as PDF"
+          title="Export aVa chat session only as PDF"
+          disabled={pending !== null}
+          onClick={() => void onExport("pdf")}
+          style={SESSION_EXPORT_BUTTON_STYLE}
+        >
+          {pending === "pdf" ? "..." : "PDF"}
+        </button>
+      </div>
       {status ? (
         <span style={SESSION_EXPORT_STATUS_STYLE}>{status}</span>
       ) : null}
@@ -1677,6 +1818,17 @@ function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
         dockId={dockId}
       >
         <PinBottomIcon />
+      </ModeButton>
+      {/* Pin-top */}
+      <ModeButton
+        mode="pin-top"
+        active={mode === "pin-top"}
+        onClick={() => onChange(mode === "pin-top" ? "side-rail" : "pin-top")}
+        aria-label="Pin top"
+        title="Pin top"
+        dockId={dockId}
+      >
+        <PinTopIcon />
       </ModeButton>
       {/* Expand / restore */}
       {mode === "expand" ? (
@@ -1942,6 +2094,25 @@ function PinBottomIcon() {
     </svg>
   );
 }
+function PinTopIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="7" rx="2" />
+      <line x1="3" y1="14" x2="21" y2="14" />
+      <line x1="12" y1="14" x2="12" y2="21" />
+    </svg>
+  );
+}
 function MaximizeIcon() {
   return (
     <svg
@@ -2059,6 +2230,11 @@ const CHAT_ONLY_PANEL_STYLE: CSSProperties = {
   background: "#FFFFFF",
 };
 
+const EXPANDED_PANEL_INNER_STYLE: CSSProperties = {
+  borderRight: "none",
+  background: "#FFFFFF",
+};
+
 const HEADER_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -2100,6 +2276,12 @@ const AGENT_ROLE_STYLE: CSSProperties = {
   fontSize: 12,
   color: CANVAS.INK_SOFT,
   lineHeight: 1.3,
+  // Keep the eyebrow on one line in a narrow dock: truncate rather than wrap
+  // under the wordmark and crowd the mode controls. The grid parent already
+  // sets min-width:0 so this can shrink and ellipsize.
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
 const MODE_PICKER_STYLE: CSSProperties = {
@@ -2112,6 +2294,20 @@ const MODE_PICKER_STYLE: CSSProperties = {
 };
 
 const SESSION_EXPORT_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+};
+
+const SESSION_EXPORT_LABEL_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 10,
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+};
+
+const SESSION_EXPORT_BUTTON_GROUP_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
@@ -2212,6 +2408,18 @@ const CHAT_ONLY_EMPTY_THREAD_STYLE: CSSProperties = {
   paddingBottom: 24,
 };
 
+const EXPANDED_THREAD_STYLE: CSSProperties = {
+  ...FOCUSED_THREAD_STYLE,
+  width: "100%",
+  padding: "28px 24px 36px",
+  scrollPaddingBottom: 36,
+  overscrollBehavior: "contain",
+};
+
+const EXPANDED_EMPTY_THREAD_STYLE: CSSProperties = {
+  alignContent: "center",
+};
+
 const EMPTY_STATE_STYLE: CSSProperties = {
   paddingTop: 12,
   display: "grid",
@@ -2278,6 +2486,25 @@ const FOCUSED_USER_TURN_STYLE: CSSProperties = {
   justifyItems: "end",
 };
 
+const EXPANDED_AGENT_TURN_STYLE: CSSProperties = {
+  ...AGENT_TURN_STYLE,
+  width: "min(100%, 1180px)",
+  margin: "0 auto",
+  padding: "12px 0",
+};
+
+const EXPANDED_PROSE_STYLE: CSSProperties = {
+  width: "min(100%, 860px)",
+  margin: "0 auto",
+};
+
+const EXPANDED_USER_TURN_STYLE: CSSProperties = {
+  ...USER_TURN_STYLE,
+  width: "min(100%, 860px)",
+  margin: "0 auto",
+  padding: "12px 0",
+};
+
 const AGENT_BYLINE_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -2299,6 +2526,14 @@ const BUBBLE_STYLE: CSSProperties = {
   maxWidth: "100%",
 };
 
+const EXPANDED_USER_BUBBLE_STYLE: CSSProperties = {
+  ...BUBBLE_STYLE,
+  maxWidth: "min(100%, 680px)",
+  padding: "10px 16px",
+  borderRadius: 18,
+  background: "#F1F3F5",
+};
+
 const FEEDBACK_ROW_STYLE: CSSProperties = {
   display: "flex",
   justifyContent: "flex-end",
@@ -2316,6 +2551,13 @@ const SUGGESTIONS_STYLE: CSSProperties = {
   overscrollBehavior: "contain",
   background: CANVAS.CHAT_BG,
   scrollPaddingBottom: 12,
+};
+
+const EXPANDED_SUGGESTIONS_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  width: "min(100%, 680px)",
+  marginTop: 28,
 };
 
 const SUGGESTIONS_LABEL_STYLE: CSSProperties = {
@@ -2341,6 +2583,17 @@ const SUGGESTION_BUTTON_STYLE: CSSProperties = {
   color: CANVAS.INK,
   cursor: "pointer",
   transition: "background 120ms ease, border-color 120ms ease",
+};
+
+const EXPANDED_SUGGESTION_BUTTON_STYLE: CSSProperties = {
+  ...SUGGESTION_BUTTON_STYLE,
+  padding: "12px 4px",
+  border: "none",
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 0,
+  background: "transparent",
+  color: CANVAS.INK_SOFT,
+  textAlign: "left",
 };
 
 const CHIPS_ROW_STYLE: CSSProperties = {
@@ -2496,6 +2749,14 @@ const COMPOSER_DISCLAIMER_STYLE: CSSProperties = {
   textAlign: "center",
 };
 
+const EXPANDED_COMPOSER_DISCLAIMER_STYLE: CSSProperties = {
+  ...COMPOSER_DISCLAIMER_STYLE,
+  width: "min(calc(100% - 32px), 860px)",
+  margin: "0 auto",
+  padding: "8px 0 6px",
+  background: "#FFFFFF",
+};
+
 // Composer · a GPT-like unified input bar. `position: sticky` is retained as
 // the last guardrail for cramped viewports: the thread and suggestion regions
 // scroll above this bar instead of pushing it below the fold.
@@ -2516,6 +2777,14 @@ const INPUT_FORM_STYLE: CSSProperties = {
   zIndex: 3,
 };
 
+const EXPANDED_INPUT_FORM_STYLE: CSSProperties = {
+  ...INPUT_FORM_STYLE,
+  width: "min(calc(100% - 32px), 860px)",
+  margin: "0 auto 8px",
+  borderRadius: 24,
+  boxShadow: "0 4px 24px rgba(12, 26, 58, 0.10)",
+};
+
 const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {
   padding: "0 18px 14px",
   background: CANVAS.CHAT_BG,
@@ -2526,6 +2795,22 @@ const ACTION_APPROVAL_NOTICE_WRAP_STYLE: CSSProperties = {
   padding: "0 18px 8px",
   background: CANVAS.CHAT_BG,
   flex: "0 0 auto",
+};
+
+const EXPANDED_NOTICE_WRAP_STYLE: CSSProperties = {
+  ...ACTION_APPROVAL_NOTICE_WRAP_STYLE,
+  width: "min(calc(100% - 32px), 860px)",
+  margin: "0 auto",
+  padding: "0 0 4px",
+  background: "#FFFFFF",
+};
+
+const EXPANDED_FOOTER_WRAP_STYLE: CSSProperties = {
+  ...RESPONSIBILITY_FOOTER_WRAP_STYLE,
+  width: "min(calc(100% - 32px), 860px)",
+  margin: "0 auto",
+  padding: "0 0 10px",
+  background: "#FFFFFF",
 };
 
 const ATTACH_BUTTON_STYLE: CSSProperties = {
@@ -2626,22 +2911,22 @@ const PIN_PANEL_STYLE_TOP: CSSProperties = {
 const EXPAND_OVERLAY_STYLE: CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgba(10,10,11,0.55)",
+  background: "#FFFFFF",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   zIndex: 1000,
-  padding: "5vh 5vw",
+  padding: 0,
 };
 
 const EXPAND_PANEL_STYLE: CSSProperties = {
-  width: "90vw",
-  height: "90vh",
-  maxWidth: 1400,
-  maxHeight: 1000,
-  background: CANVAS.CHAT_BG,
-  borderRadius: 8,
-  boxShadow: "0 30px 80px rgba(0,0,0,0.35)",
+  width: "100%",
+  height: "100%",
+  maxWidth: "none",
+  maxHeight: "100dvh",
+  background: "#FFFFFF",
+  borderRadius: 0,
+  boxShadow: "none",
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",

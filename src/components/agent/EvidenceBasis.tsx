@@ -16,6 +16,7 @@ import type { AskSource } from "@/lib/intelligence/ask/types";
 import { BrandColors, BrandTypography } from "@/lib/shell/brand-tokens";
 
 const GROUPS: ReadonlyArray<{ label: string; types: ReadonlyArray<string> }> = [
+  { label: "Governed record", types: ["SURFACE"] },
   { label: "Client context", types: ["TENANT", "GRAPH"] },
   { label: "Corpus patterns", types: ["PATTERN"] },
   {

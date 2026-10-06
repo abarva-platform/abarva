@@ -14,6 +14,7 @@ function packet(overrides: Partial<MoveEvidenceNeedPacket>): MoveEvidenceNeedPac
     exampleTemplate: 'Application and integration landscape',
     exampleContent: ['System inventory'],
     whyItMatters: 'Architecture artifacts need the real systems and owners.',
+    guidanceBasis: 'generic',
     blockedArtifacts: [
       { artifactType: 'target_state_architecture', title: 'Target-State Architecture', phase: 3, reason: 'needed' },
     ],
@@ -30,7 +31,7 @@ function packet(overrides: Partial<MoveEvidenceNeedPacket>): MoveEvidenceNeedPac
 describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => {
   it('includes only open needs that block an artifact in the next phase', () => {
     const pack = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [
@@ -60,7 +61,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
 
   it('sorts open needs required-first', () => {
     const pack = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [
@@ -81,7 +82,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
 
   it('isFullyReady is true only when no required need is open', () => {
     const withRequired = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [packet({ priority: 'required', status: 'missing' })],
@@ -91,7 +92,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
     expect(withRequired.isFullyReady).toBe(false);
 
     const onlyOptional = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [packet({ priority: 'optional', status: 'partial' })],
@@ -101,7 +102,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
     expect(onlyOptional.isFullyReady).toBe(true);
 
     const noOpenNeeds = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [],
@@ -113,7 +114,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
 
   it('excludes covered, waived, and not_applicable packets even when required', () => {
     const pack = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [
@@ -144,7 +145,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
 
   it('defaults carriesForwardContent to empty when the caller supplies none', () => {
     const pack = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseLabel: 'Design Future State',
       nextPhaseNum: 3,
       isTerminalHandoff: false,
       evidenceNeedPackets: [],
@@ -156,7 +157,7 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
 
   it('passes real content signals through untouched', () => {
     const pack = buildNextPhaseReadinessPack({
-      nextPhaseLabel: 'Build the Plan',
+      nextPhaseLabel: 'Roadmap & Business Case',
       nextPhaseNum: 4,
       isTerminalHandoff: false,
       evidenceNeedPackets: [],

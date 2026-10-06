@@ -100,7 +100,18 @@ export type FeatureFlagKey =
   | "moves_extended_intake_fields_v1"
   | "moves_classify_fast_lane_v1"
   | "moves_risk_tier_scoring_v1"
-  | "moves_solution_pattern_gate_v1";
+  | "moves_solution_pattern_gate_v1"
+  | "moves_capture_v2"
+  | "moves_home_v2"
+  | "moves_charter_basis_v1"
+  | "moves_charter_assumptions_discover_v1"
+  | "moves_capture_p0_v1"
+  | "moves_capture_composition_v1"
+  | "moves_capture_notes_v1"
+  | "moves_capture_handoff_recap_v1"
+  | "moves_charter_assumption_resolution_v1"
+  | "moves_capture_phase_rollup_v1"
+  | "moves_charter_standing_after_discover_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -120,7 +131,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_ava_chat_hardening",
     summary:
-      "2026-09-05: Nexus/aVa chat inside Moves phase workspaces is grounded by a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) instead of a blank prompt, and every answer is post-hoc scanned for banned language (Claude-deflection, internal-ID leaks, workflow-bypass claims). Phase-grounded and workflow-safe by design: Moves aVa never approves or advances a gate, never claims a promotion happened, and stays narrower than Intelligence. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS.",
+      "2026-09-05: Nexus/aVa chat inside Moves phase workspaces can use a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) to ground model answers and suppress generic tenant context. Status, blocker, readiness, and phase-input draft modes have deterministic response paths; explicit evidence-summary questions use only phase-scoped approved evidence and return a cited, deterministic summary even when hardening is otherwise off. Other free-form responses remain model-generated from prompt guidance and are not post-hoc quality-gated. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS.",
     policy: "tenant",
     includeTenants: ["lakeshore", "meridian"],
   },
@@ -141,7 +152,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_approvals_overview_v1",
     summary:
-      "2026-07-21: cross-phase Approvals overview inside the Moves phase workspace (MovesPhaseStandaloneClient) — a read-only list, one row per phase, built entirely from the existing getMovePhaseTallies() output (met/total gate criteria, done/current/upcoming state) already threaded through the component as the phaseTallies prop. Approver column is a static 'Sponsor' label (the current constant GATE_RULES approverRole in governance.ts) — no per-role rows, no requires_revalidation state, no new fetch or API route. 'Review & approve' reuses the existing per-phase navigation (the rail's phase Link hrefs, or the local substep jump for the phase already open). Gates the rail's 'Approvals' link: when off, that link behaves byte-for-byte as before (jumps straight to the current phase's approve substep); when on, it opens this overview instead. Closes out MOVES-UI-001 Phase 5 (MOVES-UI-002). Cross-tenant proof: Lakeshore, SkyHarbor, Meridian, First Capital all live-verified 2026-07-21. Promoted to default-on for all tenants 2026-07-21, same rationale as moves_finder_shell_v1. Env: ABARVA_FEATURE_MOVES_APPROVALS_OVERVIEW_V1_TENANTS (now an exclude-list if ever needed).",
+      "2026-07-21: cross-phase Approvals overview inside the Moves phase workspace (MovesPhaseStandaloneClient) — a read-only list, one row per phase, built from the existing phase-tally output. Approval authority is the authenticated workspace user with gate-approval permission; listed sponsor contacts have no approval authority and may receive informational progress emails. No per-role approval rows or new API route. 'Review & approve' reuses existing per-phase navigation. The existing feature flag controls the overview presentation only.",
     policy: "platform",
     excludeTenants: [],
   },
@@ -390,6 +401,83 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // (Platform policy means default ON; we need the opposite.) Flip on
     // per tenant via `includeTenants` only when a controlled lab decides
     // to re-introduce Neo4j; in production the flag stays empty.
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_v2",
+    summary:
+      "2026-10-04: Renders the redesigned 3-step phase capture (MovesCaptureFlow) for phases 1-5 in place of the contract-steps canvas — a journey strip, a 3-step bar, two to three questions per step, and a hand-off screen. Same canonical sections/keys, saves, structured editors, and gate; only the capture presentation changes. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_home_v2",
+    summary:
+      "2026-10-04: Renders the redesigned Moves Home portfolio landing (MovesHome) - human headline, a 'Waiting on you' triage (the specific ask per move, oldest first), an all-moves table with a six-dot phase rail, and the reconciled-with-client-inventory panel. Presentation only; reads the same portfolio + reconciliation, with value numbers from governed facts. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_basis_v1",
+    summary:
+      "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Enabled for the synthetic demo tenant for signed-in review; the legacy approved-evidence lock stays in force elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_capture_p0_v1",
+    summary:
+      "2026-10-04: Extends the redesigned 3-step phase capture (moves_capture_v2) to P0 Originate, which was mounted for phases 1-5 only and so stayed on the legacy finder-columns canvas. P0's eleven canonical inputs are already grouped into its three steps (Why now / The bet / Readiness) by the shared step-group contract, so this changes only which phases render that flow. The hand-off step carries P0's own gate control inline, using the same authorization check and the same required-evidence gate as the legacy canvas - P0 still cannot advance on intake answers alone. Requires moves_capture_v2 to also be enabled for the tenant; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_capture_handoff_recap_v1",
+    summary:
+      "2026-10-05: Makes the redesigned phase capture's hand-off recap reachable. The flow keeps the recap as view 3, but its footer spends its one forward control on the host's governed approve slot and nothing else calls into view 3, so the recap \u2014 which hosts the charter-basis rollup and the per-question basis marks \u2014 is deployed and renders nowhere. When on, the last step offers \"Review what you captured\", which opens the recap WITHOUT submitting; opened that way the recap does not claim the phase was submitted, and the governed approve control travels onto it so the decision still runs through the existing gate pipeline. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; off for every tenant. Env: ABARVA_FEATURE_MOVES_CAPTURE_HANDOFF_RECAP_V1_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_composition_v1",
+    summary:
+      "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_assumptions_discover_v1",
+    summary:
+      "2026-10-05: Keeps the other half of the charter-basis promise. P1 tells the workspace user that a field answered from an assumption carries into Discover to be validated, but the recorded basis was read on phase 1 only, so P2 never showed it and the sentence named a handover the product did not perform. With this on, P2 Discover opens with the charter answers still standing on an assumption - each with the owner and the validation plan the person typed when they declared it. Read-only: it closes, edits and re-classifies nothing, adds no canonical field or key, and never renders a carried row in evidence wording. An answer edited after its basis was declared is excluded, because the stale plan was written about the previous wording. Requires moves_charter_basis_v1 to be meaningful; default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_notes_v1",
+    summary:
+      "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Enabled for the synthetic demo tenant for signed-in review; the dock is unchanged elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_assumption_resolution_v1",
+    summary:
+      "2026-10-05: Lets P2 Discover close a charter assumption it has validated. The phase already inherits the charter answers P1 left standing on an assumption (moves_charter_assumptions_discover_v1), each with an owner and the plan for validating it, but a person looking at one could not record what Discover found, so an assumption stayed open forever once declared. This adds the resolution data model and the resolution-aware read: an assumption resolved as confirmed, corrected, or superseded by approved evidence stops being listed as open and owed. A resolution is stored on the same capture-module row as the recorded basis under its own key, never nested inside it, and is pinned to the revision of the answer it was written about - edit the answer and the resolution no longer applies, the same rule the basis itself follows. A resolution is never rendered as approved evidence. The write path and its control are a later slice; with nothing writing one yet, on and off read identically today. Deliberately separate from moves_charter_assumptions_discover_v1 so a tenant can inherit the assumptions read-only without the resolve path. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_phase_rollup_v1",
+    summary:
+      "2026-10-05: Lets the capture flow's phase strip say how much of a phase has been saved, for the five rows the screen cannot measure. The strip shows one row per phase, but the host holds live capture values only for the phase on screen, so every other row states a bare question count and a person stepping through the flow sees none of the work behind them. The rows needed to fix that are already loaded - the phase route reads every capture-module row for the Move and then discards all but the viewed phase - so this adds no read. An unmeasured row now states how many of its questions hold a SAVED ANSWER, under that word and no other. A saved answer is a persisted non-empty value; the viewed row's answered count additionally requires structured validity, evidence readiness, and on Charter a satisfied basis, so the saved count is strictly weaker and routinely larger. The two therefore never share a row and never share a noun, and a saved count never earns the completion tick - only a live measurement does, which is the invariant that removed an earlier row's claim to be fully answered when all of its questions were blank. Route-aware, because Design is the only phase whose question set depends on the confirmed solution route. Requires the redesigned capture flow to be on to render at all. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_charter_standing_after_discover_v1",
+    summary:
+      "2026-10-05: Carries the charter's unresolved assumptions past Discover. P1 lets a charter field be answered from an assumption with an owner and a validation plan, P2 inherits those assumptions and can record what Discover found, and both reads are scoped to their own phase - so from P3 onward a charter answer reads identically whether it was proved, assumed and never checked, or checked and found wrong. P3 routes a solution off that answer, P4 builds a business case on it and P5 mobilises against it. With this on, a phase after Discover can read two standings against a charter answer: unvalidated, where the assumption outlived Discover unresolved; and known-wrong, where Discover recorded a correction and the charter still carries the wording the correction was written about. The known-wrong standing is derived from the same revision pin the rest of the family uses - a correction stops reading the moment the answer is edited - not from a comparison this read invents. Read-only: it resolves, edits and re-classifies nothing, adds no canonical field or key, and never renders a standing in evidence wording. Requires moves_charter_assumption_resolution_v1, because without the resolution read a resolved assumption and a surviving one are indistinguishable and the surface would report work that was really done as work nobody did; it reports nothing rather than reporting that. P2 is excluded and stays with the carry-forward. The consuming surface is the capture flow's opening band on P3+, beside the P2 carry-forward band it mirrors. Default OFF for every tenant.",
     policy: "tenant",
     includeTenants: [],
   },

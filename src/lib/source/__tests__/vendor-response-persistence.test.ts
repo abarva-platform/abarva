@@ -6,14 +6,17 @@ const insert = jest.fn(async (payload: unknown) => {
 });
 const filters: Array<[string, unknown]> = [];
 let readRows: unknown[] = [];
+let artifactRows: unknown[] = [];
+let acceptanceRows: unknown[] = [];
 
 const writeClient = { from: jest.fn(() => ({ insert })) };
 const readClient = {
-  from: jest.fn(() => {
+  from: jest.fn((table: string) => {
     type ReadChain = {
       select: jest.Mock<ReadChain, []>;
       eq: jest.Mock<ReadChain, [string, unknown]>;
       in: jest.Mock<ReadChain, [string, unknown]>;
+      order: jest.Mock<ReadChain, [string?, unknown?]>;
       limit: jest.Mock<Promise<{ data: unknown[]; error: null }>, []>;
     };
     const chain = {} as ReadChain;
@@ -26,7 +29,16 @@ const readClient = {
       filters.push([column, value]);
       return chain;
     });
-    chain.limit = jest.fn(async () => ({ data: readRows, error: null }));
+    chain.order = jest.fn(() => chain);
+    chain.limit = jest.fn(async () => ({
+      data:
+        table === "source_artifacts"
+          ? artifactRows
+          : table === "source_artifact_acceptances"
+            ? acceptanceRows
+            : readRows,
+      error: null,
+    }));
     return chain;
   }),
 };
@@ -93,6 +105,8 @@ beforeEach(() => {
   readClient.from.mockClear();
   filters.length = 0;
   readRows = [];
+  artifactRows = [];
+  acceptanceRows = [];
 });
 
 describe("normalized vendor response persistence", () => {
@@ -144,12 +158,42 @@ describe("normalized vendor response persistence", () => {
     );
   });
 
-  it("reads by tenant and event and keeps only the latest package per vendor", async () => {
+  it("refuses unaccepted workbook extraction instead of feeding scoring, aVa, award, or benchmark consumers", async () => {
+    readRows = [
+      responseRow("artifact-draft", "REQ-001", "Draft response"),
+      summaryRow("artifact-draft", "2026-09-08T00:00:00.000Z", "draft.xlsx"),
+    ];
+    artifactRows = [
+      artifactAuthorityRow("artifact-draft", {
+        is_client_final: false,
+        is_current_authoritative: false,
+        client_final_accepted_at: null,
+      }),
+    ];
+    acceptanceRows = [];
+
+    const packages = await readNormalizedVendorResponsePackages({
+      eventId: "event-1",
+      tenantKey: "example-tenant",
+    });
+
+    expect(packages).toEqual([]);
+  });
+
+  it("reads accepted packages with stable question identity, normalized response category, review state, and provenance", async () => {
     readRows = [
       responseRow("artifact-old", "REQ-001", "Old response"),
       summaryRow("artifact-old", "2026-09-01T00:00:00.000Z", "old.xlsx"),
       responseRow("artifact-new", "REQ-001", "Current response"),
       summaryRow("artifact-new", "2026-09-08T00:00:00.000Z", "new.xlsx"),
+    ];
+    artifactRows = [
+      artifactAuthorityRow("artifact-old"),
+      artifactAuthorityRow("artifact-new"),
+    ];
+    acceptanceRows = [
+      acceptanceRow("artifact-old", "2026-09-01T01:00:00.000Z"),
+      acceptanceRow("artifact-new", "2026-09-08T01:00:00.000Z"),
     ];
 
     const packages = await readNormalizedVendorResponsePackages({
@@ -168,8 +212,25 @@ describe("normalized vendor response persistence", () => {
       artifactId: "artifact-new",
       originalName: "new.xlsx",
       vendorName: "Example Services",
+      reviewState: "accepted",
+      authority: {
+        acceptedArtifactOnly: true,
+        downstreamContextPolicy: "include",
+      },
     });
     expect(packages[0].rows[0].responseNarrative).toBe("Current response");
+    expect(packages[0].rows[0]).toMatchObject({
+      questionId:
+        "source-response-question:example-tenant:event-1:example-services:REQ-001",
+      responseCategory: "comply",
+      reviewState: "accepted",
+      provenance: {
+        artifactId: "artifact-new",
+        artifactName: "new.xlsx",
+        parser: "source_normalized_vendor_response_v1",
+        factKey: "example-services::REQ-001",
+      },
+    });
   });
 
   it("reads canonical and app-client aliases for the same tenant", async () => {
@@ -229,5 +290,34 @@ function summaryRow(
       analytics,
       parser_warnings: [],
     },
+  };
+}
+
+function artifactAuthorityRow(
+  artifactId: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    id: artifactId,
+    status: "client_final",
+    lifecycle_state: "current",
+    approval_state: "approved",
+    is_client_final: true,
+    is_current_authoritative: true,
+    client_final_accepted_at: "2026-09-08T01:00:00.000Z",
+    deleted_at: null,
+    ...overrides,
+  };
+}
+
+function acceptanceRow(artifactId: string, acceptedAt: string) {
+  return {
+    artifact_id: artifactId,
+    artifact_role: "authoritative",
+    artifact_state: "client_final",
+    content_drift_status: "current",
+    gate_precondition_status: "ready",
+    downstream_context_policy: "include",
+    accepted_at: acceptedAt,
   };
 }

@@ -16,13 +16,14 @@ import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getSourcingEvent } from "@/lib/source/queries";
-import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 import {
   firstGovernanceBlocker,
   normalizeApprovalReason,
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import type { SourcingEventDetail } from "@/lib/source/types";
+import { buildSourceRequestAuthorityPayload } from "@/lib/source/new-workspace/source-version-authority";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -157,7 +158,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     await getAzureReadFluentClient()
       .from("source_events")
       .select(
-        "id, client_key, trigger_description, scope_description, decision_owner, estimated_value_usd",
+        "id, client_key, event_name, event_type, sourcing_motion, classified_category, trigger_description, scope_description, decision_owner, estimated_value_usd",
       )
       .eq("id", eventId)
       .eq("client_key", activeClient.key)
@@ -174,7 +175,17 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
 
   const updatedAtIso = new Date().toISOString();
   const sourceWrite = selectSourceWriteAdapter(undefined, activeClient.key);
-  const update = await sourceWrite.updateEventIntake({
+  const existingRow = existing as {
+    event_name: string;
+    event_type: string;
+    sourcing_motion: string | null;
+    classified_category: string | null;
+    trigger_description: string | null;
+    scope_description: string | null;
+    decision_owner: string | null;
+    estimated_value_usd: number | null;
+  };
+  const update = await sourceWrite.updateEventIntakeWithRequestAuthority({
     eventId,
     clientKey: activeClient.key,
     triggerDescription,
@@ -182,6 +193,23 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     decisionOwner,
     estimatedValueUsd,
     updatedAtIso,
+    requestAuthority: {
+      eventId,
+      clientKey: activeClient.key,
+      authorityKind: "request",
+      payload: buildSourceRequestAuthorityPayload({
+        eventName: existingRow.event_name,
+        eventType: existingRow.event_type,
+        sourcingMotion: existingRow.sourcing_motion,
+        classifiedCategory: existingRow.classified_category,
+        triggerDescription:
+          triggerDescription ?? existingRow.trigger_description ?? "",
+        scopeDescription: scopeDescription ?? existingRow.scope_description,
+        decisionOwner: decisionOwner ?? existingRow.decision_owner,
+        estimatedValueUsd: estimatedValueUsd ?? existingRow.estimated_value_usd,
+      }),
+      createdByUserId: tenancy.userId,
+    },
   });
   if (!update.ok) {
     return Response.json(
@@ -191,10 +219,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   }
 
   if (triggerDescription !== undefined) {
-    await syncEventIntakeEvidence({
+    await repairLegacyClientStatedTriggerEvidence({
       sourceEventId: eventId,
       tenantKey: activeClient.key,
-      triggerDescription,
     }).catch((error) => {
       console.warn(
         "[PATCH /api/v1/source/events/:eventId] trigger evidence sync failed",

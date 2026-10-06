@@ -1,20 +1,24 @@
 # Legacy Context Language Burndown PR1
 
-Status: PASS
+Status: FAIL
 
-Generated: 2026-07-17T00:00:05.525Z
+Generated: 2026-09-18T18:18:29.512Z
 
 Scope: local runtime/proof language audit only. No Azure/Postgres mutation, no tenant promotion, no deploy, and no archive/delete was performed.
 
 ## Results
 
-- Blocked visible/generated/proof findings remaining: 0
-- Allowed internal/test/API/admin compatibility findings: 164
-- Original active-language findings burned down or classified: 164
+- Blocked visible/generated/proof findings remaining: 5
+- Allowed internal/test/API/admin compatibility findings: 278
+- Original active-language findings burned down or classified: 278
 
 ## Remaining Blockers
 
-- PASS: no blocked visible/generated/proof legacy terms remain.
+- datasets/context-artifacts/approved/apex-retail/home-knowledge/approved-home-knowledge-design-contract-pack.json: V4 — 2 occurrence(s) in generated/proof artifact.
+- datasets/context-artifacts/approved/apex-retail/home-knowledge/approved-home-knowledge-design-contract-pack.json: synthetic demo — 2 occurrence(s) in generated/proof artifact.
+- datasets/context-artifacts/approved/first-capital/home-knowledge/approved-home-knowledge-design-contract-pack.json: V4 — 3 occurrence(s) in generated/proof artifact.
+- datasets/context-artifacts/approved/first-capital/home-knowledge/approved-home-knowledge-design-contract-pack.json: synthetic demo — 2 occurrence(s) in generated/proof artifact.
+- datasets/context-artifacts/approved/lakeshore-holdings/home-knowledge/approved-home-knowledge-design-contract-pack.json: synthetic demo — 1 occurrence(s) in generated/proof artifact.
 
 ## Allowed Internal Uses
 
@@ -31,32 +35,32 @@ Scope: local runtime/proof language audit only. No Azure/Postgres mutation, no t
 - src/app/(maestro)/admin/setup/cxo-intel/page.tsx: substrate — allowed-internal-admin
 - src/app/(maestro)/admin/setup/page.tsx: substrate — allowed-internal-admin
 - src/app/(maestro)/dossier/[threadId]/page.tsx: dossier — existing-runtime-copy-outside-dataset-sunset-boundary
-- src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts: V7 — allowed-test-fixture
-- src/app/(maestro)/home/page.tsx: V6 — allowed-internal-storage-lineage
-- src/app/(maestro)/home/page.tsx: V7 — existing-runtime-copy-outside-dataset-sunset-boundary
+- src/app/(maestro)/home/__tests__/home-page-ecl-route.test.tsx: projection — allowed-test-fixture
+- src/app/(maestro)/home/page.tsx: projection — allowed-code-identifier-or-route
+- src/app/(maestro)/home/preview/page.tsx: projection — allowed-code-identifier-or-route
+- src/app/(maestro)/intelligence/page.tsx: projection — allowed-code-identifier-or-route
+- src/app/(maestro)/knowledge-preview/page.tsx: old Home — allowed-code-identifier-or-route
 - src/app/(maestro)/platform/admin/pilot/[tenantKey]/page.tsx: substrate — existing-runtime-copy-outside-dataset-sunset-boundary
-- src/app/(maestro)/source/events/[eventId]/page.tsx: dossier — existing-runtime-copy-outside-dataset-sunset-boundary
+- src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts: substrate — allowed-test-fixture
 - src/app/(maestro)/source/events/[eventId]/page.tsx: substrate — allowed-code-identifier-or-route
-- src/app/(maestro)/strategic-moves/expert-kernel/dossier/page.tsx: dossier — existing-runtime-copy-outside-dataset-sunset-boundary
-- src/app/api/admin/context-layer/csv-upload/__tests__/route.test.ts: source_record_id — allowed-test-fixture
-- src/app/api/chat/agent/route.ts: dossier — allowed-api-implementation
-- src/app/api/chat/agent/route.ts: substrate — allowed-api-implementation
-- src/app/api/debug/tower-substrate/route.ts: substrate — allowed-api-implementation
-- src/app/api/home/know/ask/route.ts: V6 — allowed-api-implementation
-- src/app/api/home/know/ask/route.ts: V7 — allowed-api-implementation
-- src/app/api/home/summary-snapshot/route.ts: V6 — allowed-api-implementation
-- src/app/api/home/summary-snapshot/route.ts: V7 — allowed-api-implementation
-- src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts: V7 — allowed-test-fixture
-- src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts: dossier — allowed-test-fixture
-- src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts: substrate — allowed-test-fixture
-- src/app/api/intelligence/ask/route.ts: dossier — allowed-api-implementation
-- src/app/api/intelligence/ask/route.ts: substrate — allowed-api-implementation
-- src/app/api/intelligence/ask/route.ts: source_record_id — allowed-api-implementation
-- src/app/api/programs/synthesis/__tests__/route.test.ts: V6 — allowed-test-fixture
-- src/app/api/programs/synthesis/route.ts: V6 — allowed-api-implementation
-- src/app/api/reasoning/_auth.ts: substrate — allowed-api-implementation
-- src/app/api/reasoning/audit/route.ts: substrate — allowed-api-implementation
-- src/app/api/source/synthesis/__tests__/route.test.ts: V6 — allowed-test-fixture
-- src/app/api/source/synthesis/route.ts: V6 — allowed-api-implementation
+- src/app/(maestro)/source/optimize/__tests__/page.financial-access.test.tsx: V4 — allowed-test-fixture
+- src/app/(maestro)/source/optimize/page.tsx: V4 — allowed-code-identifier-or-route
+- src/app/(maestro)/source/preview/workspace/ContractAnatomy.tsx: projection — allowed-code-identifier-or-route
+- src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx: projection — allowed-code-identifier-or-route
+- src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx: substrate — existing-runtime-copy-outside-dataset-sunset-boundary
+- src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx: source_record_id — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx: V4 — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx: projection — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx: source_record_id — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts: projection — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts: V4 — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts: source_record_id — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/contractPerformanceCards.test.tsx: latest loaded — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts: projection — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts: V4 — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts: projection — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts: V4 — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts: V4 — allowed-test-fixture
+- src/app/(maestro)/source/preview/workspace/buildViewModel.ts: V4 — existing-runtime-copy-outside-dataset-sunset-boundary
 
-- ...124 additional allowed rows in allowed-internal-legacy-uses.csv
+- ...238 additional allowed rows in allowed-internal-legacy-uses.csv

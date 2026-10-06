@@ -15,7 +15,10 @@ import {
 import { generateDeliverable as defaultGenerate } from "./model-caller";
 import { persistDeliverable as defaultPersist } from "./persistence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { generateArchitectureModel } from "@/lib/visual-system/architecture-generation";
+import {
+  generateArchitectureModel,
+  ArchitectureRefusalError,
+} from "@/lib/visual-system/architecture-generation";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
 import { governedArchitectureToolCall } from "@/lib/deliverables/quality/architecture-egress-adapter";
@@ -33,10 +36,18 @@ import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildPassPrompt } from "./prompt-builder";
 import { resolveContextBudget } from "./context-budget";
-import {
-  withCitedEvidence,
-  type ContextCoverage,
-} from "./context-coverage";
+import { withCitedEvidence, type ContextCoverage } from "./context-coverage";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+
+const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
+  "target_state_architecture",
+]);
+
+function usesStructuredArchitecturePath(
+  deliverableKey: DeliverableKey | undefined,
+): boolean {
+  return !!deliverableKey && STRUCTURED_ARCHITECTURE_KEYS.has(deliverableKey);
+}
 
 export interface GenerateDeliverableServiceInput extends Omit<
   BuildRequestParams,
@@ -47,6 +58,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
   userId: string;
   /** the move / source-event id this deliverable is generated for. */
   sourceArtifactRef: string;
+  /** Moves phase boundary used to keep later evidence out of this prompt. */
+  phase?: number;
   /** Canonical deliverables_v2 registry key, when different from the orchestrator type. */
   deliverableTypeKey?: string;
   /** semantic query used to retrieve governed evidence. */
@@ -61,6 +74,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
     contextSnapshotHash: string;
     architectureModelVersion: string;
   };
+  evidenceSnapshotHash?: string;
+  phaseEvidenceSnapshotHash?: string;
   outputFormats?: OutputFormat[];
   adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
@@ -101,6 +116,38 @@ export interface GenerateServiceDeps {
 
 function normalizeQuery(value: string): string {
   return value.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Spell a snake_case identifier's parts as separate words, keeping the
+ * identifier itself.
+ *
+ * A brief is right to declare identifiers — `run_cost_baseline`, `AI_PDLC`,
+ * `governed_facts` are identity, and identity is declared. They are wrong as
+ * retrieval TEXT, in two ways that both hinge on the underscore being a word
+ * character:
+ *
+ * 1. The index analyzer treats `application_inventory` as ONE token, so the
+ *    term matches no document that says "application inventory" in prose.
+ * 2. `queryTenantContext` decides whether to run its structured-context passes,
+ *    and which structured terms and segments to ask for, with `\b`-anchored
+ *    word tests over the query string. `\b` sits between a word character and a
+ *    non-word one, and `_` is a word character — so `/\bai\b/` does not match
+ *    `AI_PDLC`, and `/\bcontract\b/` does not match `contract_baseline`. A
+ *    query built from declared identifiers is denied passes that the same words
+ *    in prose would have earned.
+ *
+ * Both spellings are carried. The words are what prose and the word-anchored
+ * selectors can see; the identifier is kept because whether any index holds it
+ * verbatim is not knowable from here, and dropping it could lose a match that
+ * exists today. The caller's own `evidenceQuery` is NOT put through this — it is
+ * authored text and goes to the retriever exactly as written.
+ */
+export function spellIdentifiersAsWords(query: string): string {
+  // Lookahead, not a consumed second group: `a_b_c` with a consuming pattern
+  // leaves `a b_c`, because matching `a_b` eats the `b` the next pair needs.
+  const worded = query.replace(/([A-Za-z0-9])_(?=[A-Za-z0-9])/g, "$1 ");
+  return worded === query ? query : `${query} ${worded}`;
 }
 
 export function buildSectionDrivenEvidenceQueries(
@@ -159,7 +206,9 @@ export function buildSectionDrivenEvidenceQueries(
   }
 
   const seen = new Set<string>();
-  const queries = rawQueries.filter((query) => {
+  // Spelling appends rather than rewrites, so it cannot make two different raw
+  // queries equal — the dedupe sees the same collisions either side of it.
+  const queries = rawQueries.map(spellIdentifiersAsWords).filter((query) => {
     if (!query) return false;
     const key = query.toLowerCase();
     if (seen.has(key)) return false;
@@ -168,7 +217,7 @@ export function buildSectionDrivenEvidenceQueries(
   });
   return queries.length > 0
     ? queries
-    : [normalizeQuery(`${prefix} current state baseline`)];
+    : [spellIdentifiersAsWords(normalizeQuery(`${prefix} current state baseline`))];
 }
 
 export async function runDeliverableForTenant(
@@ -216,21 +265,23 @@ export async function runDeliverableForTenant(
   );
 
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
-  const { evidence, sourceRegister, retrievedCount, coverage } = await assemble({
-    tenantClientKey: input.tenantClientKey,
-    clientId: input.clientId,
-    sourceArtifactRef: input.sourceArtifactRef,
-    query: evidenceQueries[0],
-    queries: evidenceQueries,
-    audienceIsVendorFacing,
-    contextBudget,
-  });
-  const coverageWarnings =
-    coverage.requiresAttention
-      ? [
-          `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
-        ]
-      : [];
+  const { evidence, sourceRegister, retrievedCount, coverage } = await assemble(
+    {
+      tenantClientKey: input.tenantClientKey,
+      clientId: input.clientId,
+      sourceArtifactRef: input.sourceArtifactRef,
+      ...(input.phase !== undefined ? { phase: input.phase } : {}),
+      query: evidenceQueries[0],
+      queries: evidenceQueries,
+      audienceIsVendorFacing,
+      contextBudget,
+    },
+  );
+  const coverageWarnings = coverage.requiresAttention
+    ? [
+        `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
+      ]
+    : [];
 
   // 2 · orchestrator request
   const req = buildDeliverableRequest(
@@ -253,7 +304,8 @@ export async function runDeliverableForTenant(
   );
   const wantsArchitecture =
     !!deliverableKey &&
-    DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture";
+    (usesStructuredArchitecturePath(deliverableKey) ||
+      DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture");
   // Target Architecture's quality contract requires a rendered current state,
   // gap-to-target bridge, and conceptual/logical/physical architecture levels.
   // A prose-only path can never satisfy that contract, so the structured model
@@ -363,6 +415,21 @@ export async function runDeliverableForTenant(
         .join("\n\n")
         .slice(0, 48000);
     } catch (err) {
+      if (err instanceof ArchitectureRefusalError) {
+        // A policy refusal blocks — it is never silently re-routed to another
+        // model. Surface the category/explanation so a human can narrow or
+        // rephrase the input and re-request, or confirm it is out of bounds.
+        return {
+          ok: false,
+          qualityPass: false,
+          blockers: [
+            `Target Architecture generation was refused by the model under a usage policy (${err.category ?? "category not named"}). This deliverable is blocked and is never routed to a different model; a reviewer should narrow or rephrase the architecture input and re-request, or confirm the content is genuinely out of bounds.`,
+          ],
+          blockedReason: `architecture_generation_refused: ${err.message}`,
+          retrievedEvidence: retrievedCount,
+          contextCoverage: coverage,
+        };
+      }
       return {
         ok: false,
         qualityPass: false,
@@ -489,14 +556,52 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
-    ...(renderAsDeck
-      ? { renderAsDeck: true, tenantKey: input.tenantClientKey }
+    ...(input.phaseEvidenceSnapshotHash
+      ? { phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash }
       : {}),
+    ...(renderAsDeck ? { renderAsDeck: true } : {}),
+    ...(input.tenantClientKey ? { tenantKey: input.tenantClientKey } : {}),
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
     ...(input.decisionLineage
-      ? { generationLineage: input.decisionLineage }
+      ? {
+          generationLineage: {
+            ...input.decisionLineage,
+            ...(input.evidenceSnapshotHash
+              ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
+              : {}),
+            ...(input.phaseEvidenceSnapshotHash
+              ? {
+                  phaseEvidenceSnapshotHash:
+                    input.phaseEvidenceSnapshotHash,
+                  evidenceSnapshotScope: "phase",
+                }
+              : {}),
+          },
+        }
+      : input.evidenceSnapshotHash
+        ? {
+            generationLineage: {
+              evidenceSnapshotHash: input.evidenceSnapshotHash,
+              ...(input.phaseEvidenceSnapshotHash
+                ? {
+                    phaseEvidenceSnapshotHash:
+                      input.phaseEvidenceSnapshotHash,
+                    evidenceSnapshotScope: "phase",
+                  }
+                : {}),
+            },
+          }
+        : {}),
+    ...(input.evidenceSnapshotHash
+      ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
+      : {}),
+    ...(input.phaseEvidenceSnapshotHash
+      ? {
+          phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash,
+          evidenceSnapshotScope: "phase",
+        }
       : {}),
     enforceQualityContract,
     governanceOk: true, // the multi-pass generation already cleared audited egress

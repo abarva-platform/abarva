@@ -37,6 +37,9 @@ function fmtAmount(value: number, unit: ValueUnit): string {
 
 function fmtRange(low: number, high: number, unit: ValueUnit): string {
   if (low === high) return fmtAmount(low, unit);
+  if (low < 0 || high < 0) {
+    return `${fmtAmount(low, unit)} to ${fmtAmount(high, unit)}`;
+  }
   return `${fmtAmount(low, unit)}–${fmtAmount(high, unit)}`;
 }
 
@@ -58,26 +61,49 @@ const CONFIDENCE_LABEL: Record<FactConfidence, string> = {
 export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
   const { bands, unit, baselineLabel, baselineAmount } = waterfall;
 
-  // Scale bars against the largest quantified high value, so proportion reads.
+  const quantified = bands.filter((b) => b.state === 'quantified');
+  const rollup = (valueTypes: readonly string[]) => {
+    const selected = quantified.filter((band) => valueTypes.includes(band.valueType));
+    return {
+      count: selected.length,
+      low: selected.reduce((sum, band) => sum + band.amountLow, 0),
+      high: selected.reduce((sum, band) => sum + band.amountHigh, 0),
+    };
+  };
+  const negotiable = rollup([
+    'expected_concession',
+    'incremental_negotiated',
+    'solution_tightening',
+  ]);
+  const protectedValue = rollup(['protected']);
+  const riskAdjusted = rollup(['risk_adjusted']);
+
+  // Scale bars against the largest quantified movement magnitude so signed TCO
+  // adjustments remain visible without being mistaken for positive value.
   const maxHigh = Math.max(
     1,
-    ...bands.filter((b) => b.state === 'quantified').map((b) => b.amountHigh),
+    ...quantified.map((b) => Math.max(Math.abs(b.amountLow), Math.abs(b.amountHigh))),
   );
 
-  // Total the quantified bands to a defensible range (never a point).
-  const quantified = bands.filter((b) => b.state === 'quantified');
-  const totalLow = quantified.reduce((acc, b) => acc + b.amountLow, 0);
-  const totalHigh = quantified.reduce((acc, b) => acc + b.amountHigh, 0);
-  // A baseline is only meaningful when a valid positive AND credible amount
-  // exists. When the event carries no baseline (garbage <= 0) OR a positive-but-
-  // incredible one (orders of magnitude smaller than the classified value — e.g.
-  // a bare `15` mis-parsed from "15-20%", which would print "millions of % of
-  // baseline"), suppress the "Value at stake" line and the "% of baseline"
-  // fragment rather than fabricating/keeping a nonsense denominator — the
-  // classified total still shows on its own.
-  const hasBaseline = isCredibleBaseline(baselineAmount, totalHigh);
-  const pctLow = hasBaseline ? Math.round((totalLow / baselineAmount) * 100) : 0;
-  const pctHigh = hasBaseline ? Math.round((totalHigh / baselineAmount) * 100) : 0;
+  // The doctrine requires negotiable value, protected value, and risk-adjusted
+  // movements to be stated apart. Only negotiable value uses the baseline as a
+  // percentage denominator; netting a TCO debit into it creates a false headline.
+  const hasBaseline =
+    negotiable.count > 0 && isCredibleBaseline(baselineAmount, negotiable.high);
+  const pctLow = hasBaseline
+    ? Math.round((negotiable.low / baselineAmount) * 100)
+    : 0;
+  const pctHigh = hasBaseline
+    ? Math.round((negotiable.high / baselineAmount) * 100)
+    : 0;
+  const statedApart = [
+    protectedValue.count > 0
+      ? `Protected value ${fmtRange(protectedValue.low, protectedValue.high, unit)}`
+      : null,
+    riskAdjusted.count > 0
+      ? `Risk-adjusted movement ${fmtRange(riskAdjusted.low, riskAdjusted.high, unit)}`
+      : null,
+  ].filter((value): value is string => Boolean(value));
 
   const cardStyle: CSSProperties = {
     border: `1px solid ${ANALYTICS.LINE}`,
@@ -103,7 +129,7 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
               fontFamily: ANALYTICS.SERIF,
               fontSize: 18,
               fontWeight: 700,
-              letterSpacing: '-0.3px',
+              letterSpacing: 0,
               color: ANALYTICS.INK,
               margin: 0,
             }}
@@ -122,11 +148,13 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
               fontFamily: ANALYTICS.SERIF,
               fontSize: 22,
               fontWeight: 700,
-              letterSpacing: '-0.6px',
+              letterSpacing: 0,
               color: ANALYTICS.INK,
             }}
           >
-            {fmtRange(totalLow, totalHigh, unit)}
+            {negotiable.count > 0
+              ? fmtRange(negotiable.low, negotiable.high, unit)
+              : 'Not sized'}
           </div>
           <div
             style={{
@@ -136,8 +164,21 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
               marginTop: 2,
             }}
           >
-            {hasBaseline ? `${pctLow}–${pctHigh}% of baseline · ` : ''}classified value
+            {hasBaseline ? `${pctLow}–${pctHigh}% of baseline · ` : ''}
+            negotiable value
           </div>
+          {statedApart.length > 0 ? (
+            <div
+              style={{
+                fontFamily: ANALYTICS.MONO,
+                fontSize: 10.5,
+                color: ANALYTICS.FAINT,
+                marginTop: 4,
+              }}
+            >
+              {statedApart.join(' · ')}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -149,9 +190,13 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
         {bands.map((band) => {
           const meta = valueTypeMeta(band.valueType);
           const insufficient = band.state === 'insufficient_evidence';
+          const magnitude = Math.max(
+            Math.abs(band.amountLow),
+            Math.abs(band.amountHigh),
+          );
           const widthPct = insufficient
             ? 0
-            : Math.max(6, Math.round((band.amountHigh / maxHigh) * 100));
+            : Math.max(6, Math.round((magnitude / maxHigh) * 100));
           return (
             <div
               key={band.id}

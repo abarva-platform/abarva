@@ -40,6 +40,13 @@ jest.mock('posthog-js', () => ({
   default: { capture: jest.fn() },
 }));
 
+const refreshMock = jest.fn();
+
+jest.mock('next/navigation', () => ({
+  __esModule: true,
+  useRouter: () => ({ refresh: refreshMock, push: jest.fn(), replace: jest.fn() }),
+}));
+
 const CANONICAL_OPTIONS: TenantSwitcherOption[] = [
   {
     canonicalKey: 'apex-retail',

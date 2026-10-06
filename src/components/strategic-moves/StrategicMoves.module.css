@@ -969,6 +969,18 @@
   outline: none;
 }
 
+.p0SelectInput {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: white;
+  color: var(--abarva-ink-black);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 11px;
+}
+
 .p0AnswerInput {
   min-height: 106px;
   resize: vertical;
@@ -983,6 +995,22 @@
 .p0NameInput:focus {
   border-color: #0f62fe;
   box-shadow: 0 0 0 2px rgba(15, 98, 254, 0.12);
+}
+
+.p0SponsorEmailPreference {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  color: var(--abarva-ink-black);
+  font-size: 13px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.p0SponsorEmailPreference input {
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .p0Footer {

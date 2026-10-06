@@ -1,0 +1,5 @@
+home_identified_gap,source_dimension,filled_by_this_package,which_tabs,still_open_after_this
+KPI baselines incomplete,Metrics & Outcomes,"PARTIAL — synthetic baselines for AHT, FCR, transfer and repeat contact","05, 06, 07","Actuals from production systems. These are planning figures, not measured."
+"API readiness unclear across CRM, claims, eligibility and knowledge",Applications & Systems,PARTIAL — integration surface documented per system,08,Production integration feasibility. Named systems are not proven interfaces.
+Transcript availability and governance not validated,Operational Process Evidence,NO — deliberately out of scope,—,"Transcripts are PHI-bearing. Nothing here ingests, approves or substitutes for them."
+AWS + Databricks production-readiness validation missing,Infrastructure & Platforms,NO — deliberately out of scope,—,The active record says Databricks is evaluation-stage only. This package does not change that.

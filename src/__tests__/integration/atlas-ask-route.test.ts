@@ -101,8 +101,58 @@ describe('POST /api/v1/atlas/ask', () => {
     expect(json.threadId).toBe('atlas_thread_1');
     expect(json.renderedResponse.response_text).toContain('defensible next step');
     expect(json.renderedResponse.response_text).not.toContain('**');
-    expect(json.renderedResponse.response_text).toContain('- Evidence:');
-    expect(json.renderedResponse.response_text).toContain('- Next:');
+
+    // This pair of assertions used to read `toContain('- Evidence:')` and
+    // `toContain('- Next:')`, and they were CORRECT on the day they were
+    // written: `buildAtlasRenderedResponse` shaped this surface through
+    // `shapeAgentResponseForSurface('/tower', ...)`, and `/tower` was a
+    // compacted surface, so the shaper rebuilt advisor prose into a fixed
+    //
+    //   {headline} / - Evidence: / - Missing: / - Next: / - Question:
+    //
+    // template. VOICE.STRAT-2026-05-10f removed `/tower` from that set ONE DAY
+    // later, on the ground that the template "is a Brief violation by
+    // construction" — see the comment on `shouldCompactSurface` in
+    // `src/lib/agent/response-shape.ts`, which names Tower explicitly: "Tower
+    // now preserves natural Atlas output and only applies safety repairs".
+    //
+    // So the labelled affordance is not an open question on this surface: it
+    // was removed deliberately and is guarded elsewhere.
+    //
+    // The obvious repair — INVERTING the two assertions to `not.toMatch(/^-
+    // Evidence:/m)` — was written, and then measured, and it is VACUOUS. Two
+    // mutations that put the labelled lines back (re-adding `tower` to
+    // `shouldCompactSurface`, and appending the labels in
+    // `shapeAtlasVisibleResponse`) both made this case fail at
+    // `expect(res.status).toBe(200)` instead: the route runs
+    // `assertVisibleAnswerContract` over `response_text` and answers 422 on a
+    // scaffolding label, so `response_text` can never carry one by the time a
+    // test can read it. An assertion no mutation can reach is not coverage.
+    //
+    // What the two labels stood for is asserted instead, as substance rather
+    // than as a literal: the evidence sentence and the recommended next step
+    // both survive the shaping, unlabelled, in the model's own prose.
+    expect(json.renderedResponse.response_text).toContain(
+      'Portfolio KPI evidence shows gate slippage, sponsor ambiguity, and value-baseline risk.',
+    );
+    expect(json.renderedResponse.response_text).toContain(
+      'I recommend opening Programs',
+    );
+
+    // NOT asserted here, deliberately, and this is the second thing measurement
+    // changed: "the internal agent name never reaches the reader". It is true,
+    // and it is defended twice — `BANNED_BRAND_RE` in
+    // `src/lib/answer/shared-response-shaper.ts` rewrites Atlas to aVa upstream,
+    // and `normalizeAtlasVisibleText` in `src/lib/atlas/rendered-response.ts`
+    // then does it AGAIN, redundantly. Removing the second one changes nothing
+    // observable: the response still reads "aVa can see the pressure stack".
+    //
+    // And with BOTH scrubs removed the route answers 422 rather than leaking the
+    // name, because `assertVisibleAnswerContract` also bans it. So no single
+    // mutation can make a brand assertion on a 200 response fail — it would fail
+    // at the status line instead. An assertion in that position states a true
+    // thing and guards nothing, so it is recorded here rather than written.
+
     expect(json.renderedResponse.follow_up_actions[0]).toMatchObject({
       label: 'Open programs',
       kind: 'navigate',
@@ -115,5 +165,46 @@ describe('POST /api/v1/atlas/ask', () => {
     expect(runAtlasTurnDetailed).toHaveBeenCalledWith(expect.objectContaining({
       message: 'Walk me through the top contradictions and which deliverables carry them.',
     }));
+  });
+
+  // The reachable half of what the two deleted assertions were about. The
+  // labelled Evidence/Next template is not merely absent from this surface —
+  // the route REFUSES to display it, and nothing else in
+  // `src/__tests__/integration` asserts that refusal on the Atlas route. The
+  // mutation that proves this case is deleting the `visibleContract.passed`
+  // block from `src/app/api/v1/atlas/ask/route.ts`: the route then answers 200
+  // with the labelled text and this case fails.
+  it('refuses to display an answer that carries scaffolding labels', async () => {
+    runAtlasTurnDetailed.mockResolvedValue({
+      threadId: 'atlas_thread_2',
+      routeType: 'llm',
+      intent: 'llm',
+      response: 'Gate slippage is the pressure.\n- Evidence: three programs slipped.\n- Next: assign an owner.',
+      suggestions: [],
+      toolsUsed: [],
+      signalId: null,
+      observationId: 'obs_2',
+      modelName: 'claude-opus-4-7',
+      promptVersion: 'tower-w5-v1',
+      toolResults: { programs: [], observations: [] },
+    });
+
+    const { POST } = await import('@/app/api/v1/atlas/ask/route');
+    const res = await POST(makeRequest({
+      message: 'Where is the pressure?',
+      clientId: 'client_meridian',
+    }));
+
+    expect(res.status).toBe(422);
+
+    const json = await res.json() as {
+      error: string;
+      violations: Array<{ id: string }>;
+    };
+
+    expect(json.error).toBe('visible_answer_contract_failed');
+    expect(json.violations.map((v) => v.id)).toEqual(
+      expect.arrayContaining(['scaffolding_label_evidence', 'scaffolding_label_next']),
+    );
   });
 });

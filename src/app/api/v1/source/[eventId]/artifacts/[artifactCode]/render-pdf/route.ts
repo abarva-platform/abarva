@@ -21,6 +21,10 @@ import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster"
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { buildSourceGenerationContext } from "@/lib/source/agent-generation/server";
 import {
+  allowsDegradedSourcePdf,
+  requireRfpArtifactExport,
+} from "@/lib/source/exports/rfp-export-authority";
+import {
   PDF_CONTENT_TYPE,
   isPdfGeneratable,
   renderArtifactPdf,
@@ -191,6 +195,14 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
     );
   }
 
+  const rfpExport = await requireRfpArtifactExport(
+    ctx,
+    artifactCode,
+    activeClient?.id ?? null,
+    "pdf",
+  );
+  if (rfpExport.response) return rfpExport.response;
+
   const generatedAt = new Date().toISOString();
   let payload: unknown;
   try {
@@ -234,8 +246,8 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
   try {
     buffer = await renderToBuffer(false);
   } catch (err) {
-    if (!isNarrative) {
-      console.error("[render-pdf] structured artifact PDF render threw", err);
+    if (!allowsDegradedSourcePdf(artifactCode, isNarrative)) {
+      console.error("[render-pdf] required full-body PDF render threw", err);
       return Response.json(
         {
           error: "render_failed",

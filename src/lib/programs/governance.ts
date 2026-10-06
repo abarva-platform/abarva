@@ -16,7 +16,8 @@
 //
 // Hard gates block advance until approval; soft gates allow advance
 // with an unresolved marker. Every check returns a GateCheck (shape in
-// types.ts). Approvals route through founder_approval_requests.
+// types.ts). Current gate approvals are explicit Moves actions by an
+// authorized workspace user; legacy approval requests do not advance phases.
 //
 // P2 may return a "discontinue" recommendation — the gate is allowed
 // to kill the move. P3 explicitly rejects tool-first solutions without
@@ -27,29 +28,22 @@ import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
-import {
-  createSupabaseProgramsWriteAdapter,
-  selectProgramsWriteAdapter,
-} from "@/lib/data-plane/write-adapters/programsWriteAdapter";
-import { resolveDataPlaneForTenant } from "@/lib/data-plane/read-adapters/resolveDataPlane";
 import type {
   ApprovalAuthority,
-  FounderApprovalRequestRow,
   GateCheck,
   TenancyCtx,
 } from "./types.db";
 import { getProgramById } from "./queries";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
-import {
-  getRoleApprovalSummary,
-  requiredApprovalRolesFor,
-} from "./deliverable-role-approvals";
-import {
-  isGateApprovalStrictMode,
-  isStrictModeApprovalRole,
-} from "@/lib/auth/gate-approval-strict-mode";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { resolveMoveTier } from "./p0-extended-intake-fields";
+import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
+import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
+import {
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -103,7 +97,7 @@ const GATE_RULES: GateRule[] = [
     fromPhase: 0,
     toPhase: 1,
     hard: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
     checks: [
       {
         key: "program_seed_recorded",
@@ -118,7 +112,7 @@ const GATE_RULES: GateRule[] = [
       },
       {
         key: "sponsor_assigned",
-        describe: "Sponsor candidate identified for Charter",
+        describe: "Sponsor progress contact listed",
         severity: "hard",
       },
       {
@@ -139,23 +133,24 @@ const GATE_RULES: GateRule[] = [
     ],
   },
   // P1 Charter → P2 Discover & Diagnose
-  // The signed charter must lock sponsor, value range, success metrics,
+  // The approved charter must lock sponsor contact, value range, success metrics,
   // and stakeholder map before the move is allowed to spend Discovery
   // capacity on baselining and root cause work.
   {
     fromPhase: 1,
     toPhase: 2,
     hard: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
     checks: [
       {
         key: "charter_signed_off",
-        describe: "Charter signed off by sponsor",
+        describe: "Charter approved by an authorized Move user",
         severity: "hard",
       },
       {
         key: "sponsor_assigned",
-        describe: "Sponsor committed and decision rights named",
+        describe:
+          "Sponsor contact listed for progress communication; product decision authority is assigned separately",
         severity: "hard",
       },
       {
@@ -174,7 +169,7 @@ const GATE_RULES: GateRule[] = [
     fromPhase: 2,
     toPhase: 3,
     hard: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
     checks: [
       {
         key: "discovery_report_signed_off",
@@ -204,6 +199,12 @@ const GATE_RULES: GateRule[] = [
           "Diagnosis clears P2 without unresolved hard gaps or kill recommendation",
         severity: "hard",
       },
+      {
+        key: "solution_route_validated",
+        describe:
+          "P1 change assessment and P2 solution route are completed against approved evidence",
+        severity: "hard",
+      },
     ],
   },
   // P3 Design Future State → P4 Roadmap & Business Case
@@ -214,11 +215,17 @@ const GATE_RULES: GateRule[] = [
     fromPhase: 3,
     toPhase: 4,
     hard: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
     checks: [
       {
+        key: "solution_route_validated",
+        describe:
+          "The P1 change assessment and P2 solution route remain backed by approved evidence",
+        severity: "hard",
+      },
+      {
         key: "design_approved",
-        describe: "Future-state design and operating-model shift signed off",
+        describe: "P3 solution design for the confirmed route signed off",
         severity: "hard",
       },
       {
@@ -246,7 +253,7 @@ const GATE_RULES: GateRule[] = [
     fromPhase: 4,
     toPhase: 5,
     hard: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
     checks: [
       {
         key: "execution_roadmap_drafted",
@@ -281,7 +288,8 @@ const GATE_RULES: GateRule[] = [
       },
       {
         key: "sponsor_alignment_confirmed",
-        describe: "Sponsor and stakeholder alignment confirmed",
+        describe:
+          "Handoff decision authority and stakeholder conditions documented",
         severity: "soft",
       },
       {
@@ -316,7 +324,7 @@ const GATE_RULES: GateRule[] = [
     fromPhase: 5,
     toPhase: 6,
     hard: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
     checks: [
       {
         key: "handoff_package_signed_off",
@@ -356,7 +364,7 @@ const CLASSIFY_FAST_LANE_RULE: GateRule = {
   fromPhase: 1,
   toPhase: 5,
   hard: true,
-  approverRole: "sponsor",
+  approverRole: "approver",
   checks: [
     {
       key: "fast_lane_decision_recorded",
@@ -445,7 +453,7 @@ export async function evaluateGate(
   programId: string,
   fromPhase: number,
   toPhase: number,
-  opts: { supabase?: SupabaseClient } = {},
+  opts: { supabase?: SupabaseClient; allowHistoricalPhase?: boolean } = {},
 ): Promise<GateCheck> {
   assertTenancy(ctx);
   let rule = findGateRule(fromPhase, toPhase);
@@ -499,7 +507,11 @@ export async function evaluateGate(
       approverRole: null,
     };
   }
-  if (program.currentPhase !== fromPhase) {
+  const historicalReapproval =
+    opts.allowHistoricalPhase === true &&
+    typeof program.currentPhase === "number" &&
+    program.currentPhase > fromPhase;
+  if (program.currentPhase !== fromPhase && !historicalReapproval) {
     return {
       pass: false,
       failedChecks: [
@@ -526,7 +538,9 @@ export async function evaluateGate(
   ] = await Promise.all([
     sb
       .from("deliverables_v2")
-      .select("id, deliverable_type_key, status")
+      .select(
+        "id, deliverable_type_key, status, approved_artifact_id, structured_data",
+      )
       .eq("engagement_id", programId),
     sb
       .from("program_modules")
@@ -534,7 +548,7 @@ export async function evaluateGate(
       .eq("engagement_id", programId),
     sb
       .from("engagement_participants")
-      .select("user_id, approval_authority")
+      .select("user_id, approval_authority, role")
       .eq("engagement_id", programId),
     sb
       .from("program_approval_requests")
@@ -554,6 +568,8 @@ export async function evaluateGate(
       id: string;
       deliverable_type_key: string;
       status: string;
+      approved_artifact_id?: string | null;
+      structured_data?: Record<string, unknown> | null;
     }> | null) ?? [];
   const moduleRows =
     (modules as Array<{
@@ -571,33 +587,157 @@ export async function evaluateGate(
     deliverableRows.find((d) => keys.includes(d.deliverable_type_key));
   const findDeliverables = (...keys: string[]) =>
     deliverableRows.filter((d) => keys.includes(d.deliverable_type_key));
-  const isSignedOff = (row: { status: string } | undefined) =>
-    row?.status === "signed_off";
-  // A deliverable TYPE that requires named role approvals (see
-  // deliverable-role-approvals.ts's REQUIRED_APPROVAL_ROLES) must have every
-  // required role recorded as `approved`, IN ADDITION TO the existing
-  // single-actor sign-off, before its gate check passes. A type with no
-  // required roles is unaffected — this only tightens the 3 covered types
-  // (business_case, target_state_architecture, operating_model_design).
+  const currentEvidenceSnapshot = ctx.clientKey
+    ? await loadApprovedMoveEvidenceSnapshot({
+        tenantKey: ctx.clientKey,
+        moveId: programId,
+      }).catch(() => null)
+    : null;
+  const linkedArtifactIds = deliverableRows
+    .map((row) => row.approved_artifact_id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+  const linkedArtifactRows =
+    ctx.clientKey && linkedArtifactIds.length > 0
+      ? await sb
+          .from("move_artifacts")
+          .select(
+            "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, created_at, metadata",
+          )
+          .eq("tenant_key", ctx.clientKey)
+          .eq("move_id", programId)
+          .in("artifact_id", linkedArtifactIds)
+      : { data: [] };
+  const linkedArtifactById = new Map(
+    (
+      (linkedArtifactRows.data as Array<{
+        artifact_id: string;
+        tenant_key: string;
+        move_id: string;
+        artifact_family: string;
+        lifecycle_state: string;
+        created_at?: string | null;
+        metadata?: Record<string, unknown> | null;
+      }> | null) ?? []
+    ).map((artifact) => [artifact.artifact_id, artifact]),
+  );
+  const isSignedOff = (
+    row:
+      | {
+          id: string;
+          deliverable_type_key: string;
+          status: string;
+          approved_artifact_id?: string | null;
+          structured_data?: Record<string, unknown> | null;
+        }
+      | undefined,
+  ) => {
+    if (row?.status !== "signed_off") return false;
+    const structured = row.structured_data ?? {};
+    const structuredGenerated =
+      structured.source === "generated_by_orchestrator" ||
+      structured.source === "generated_artifact_acceptance" ||
+      structured.source === "moves_program_generate" ||
+      typeof structured.generated_artifact_id === "string" ||
+      typeof structured.generatedArtifactId === "string";
+    const structuredEvidenceSnapshotHash =
+      typeof structured.evidenceSnapshotHash === "string"
+        ? structured.evidenceSnapshotHash
+        : null;
+    const deliverablePhase = DELIVERABLE_REGISTRY.find(
+      (spec) => spec.deliverableTypeKey === row.deliverable_type_key,
+    )?.phase;
+    const structuredLineageCurrent = Boolean(
+      currentEvidenceSnapshot &&
+      deliverablePhase &&
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot: currentEvidenceSnapshot,
+        phase: deliverablePhase,
+        recordedRevision:
+          (typeof structured.phaseEvidenceSnapshotHash === "string"
+            ? structured.phaseEvidenceSnapshotHash
+            : structuredEvidenceSnapshotHash) ?? null,
+        scope:
+          typeof structured.evidenceSnapshotScope === "string"
+            ? structured.evidenceSnapshotScope
+            : null,
+        generatedAt:
+          typeof structured.generatedAt === "string"
+            ? structured.generatedAt
+            : null,
+      }),
+    );
+    const linkedArtifactId = row.approved_artifact_id;
+    const linkedArtifact = linkedArtifactId
+      ? linkedArtifactById.get(linkedArtifactId)
+      : null;
+    const linkedMetadata = linkedArtifact?.metadata ?? {};
+    const linkedArtifactMatchesDeliverable = Boolean(
+      row &&
+      (linkedMetadata.deliverableId === row.id ||
+        (typeof structured.generatedArtifactId === "string" &&
+          linkedMetadata.generatedArtifactId ===
+            structured.generatedArtifactId)),
+    );
+    const linkedArtifactCurrent = Boolean(
+      currentEvidenceSnapshot &&
+      linkedArtifact &&
+      linkedArtifact.tenant_key === ctx.clientKey &&
+      linkedArtifact.move_id === programId &&
+      linkedArtifact.artifact_family === "generated_deliverable" &&
+      linkedArtifact.lifecycle_state === "current" &&
+      linkedArtifactMatchesDeliverable &&
+      Boolean(
+        deliverablePhase &&
+        isApprovedMoveEvidenceBasisCurrent({
+          snapshot: currentEvidenceSnapshot,
+          phase: deliverablePhase,
+          recordedRevision:
+            typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
+              ? linkedMetadata.phaseEvidenceSnapshotHash
+              : typeof linkedMetadata.evidenceSnapshotHash === "string"
+                ? linkedMetadata.evidenceSnapshotHash
+                : null,
+          scope:
+            typeof linkedMetadata.evidenceSnapshotScope === "string"
+              ? linkedMetadata.evidenceSnapshotScope
+              : null,
+          generatedAt: linkedArtifact.created_at ?? null,
+        }),
+      ),
+    );
+
+    if (linkedArtifactId && !linkedArtifactCurrent) return false;
+    if (
+      structuredGenerated &&
+      !structuredLineageCurrent &&
+      !linkedArtifactCurrent
+    ) {
+      return false;
+    }
+    return true;
+  };
+  // One authenticated, authorized workspace user records the approval. Role
+  // labels describe stakeholders and reviewers; they are not separate gate
+  // actors or extra approval requirements.
   const meetsApprovalBar = async (
     row:
-      | { id: string; deliverable_type_key: string; status: string }
+      | {
+          id: string;
+          deliverable_type_key: string;
+          status: string;
+          structured_data?: Record<string, unknown> | null;
+        }
       | undefined,
   ): Promise<boolean> => {
-    if (!isSignedOff(row)) return false;
-    const required = requiredApprovalRolesFor(row!.deliverable_type_key);
-    if (required.length === 0) return true;
-    const summary = await getRoleApprovalSummary(
-      ctx,
-      programId,
-      row!.id,
-      row!.deliverable_type_key,
-      { supabase: sb },
-    );
-    return summary.allRequiredApproved;
+    return isSignedOff(row);
   };
   const anyMeetsApprovalBar = async (
-    rows: Array<{ id: string; deliverable_type_key: string; status: string }>,
+    rows: Array<{
+      id: string;
+      deliverable_type_key: string;
+      status: string;
+      structured_data?: Record<string, unknown> | null;
+    }>,
   ): Promise<boolean> => {
     for (const row of rows) {
       if (await meetsApprovalBar(row)) return true;
@@ -641,6 +781,7 @@ export async function evaluateGate(
     "solution_design",
     "operating_model_design",
     "target_state_architecture",
+    "process_change_estimate_brief",
   );
   const executionRoadmapRow = findDeliverable(
     "execution_roadmap",
@@ -687,8 +828,15 @@ export async function evaluateGate(
     (m) => m.module_key === "cxo_interview",
   );
   const hasSponsor = (
-    (participants as Array<{ approval_authority: string | null }> | null) ?? []
-  ).some((p) => p.approval_authority === "sponsor");
+    (participants as Array<{
+      approval_authority: string | null;
+      role?: string | null;
+    }> | null) ?? []
+  ).some(
+    (p) =>
+      p.approval_authority === "sponsor" ||
+      /^(co[- ]?)?sponsor$/i.test(p.role?.trim() ?? ""),
+  );
   const latestSeedBrief =
     ((approvalRequests as Array<{
       request_status: string | null;
@@ -705,6 +853,36 @@ export async function evaluateGate(
     })
     .join("\n")
     .toLowerCase();
+  const captureValue = (phase: number, key: string) => {
+    const row = moduleRows.find(
+      (item) => item.module_key === `phase_${phase}_${key}`,
+    );
+    const value = row?.state_jsonb?.value;
+    return typeof value === "string" ? value : "";
+  };
+  const captureCompleted = (phase: number, key: string) =>
+    moduleRows.some(
+      (item) =>
+        item.module_key === `phase_${phase}_${key}` &&
+        item.status === "completed",
+    );
+  const routeEvidenceReferences =
+    fromPhase === 2 || fromPhase === 3
+      ? await listApprovedPhaseEvidence(ctx, programId, 2)
+      : [];
+  const confirmedSolutionRoute =
+    fromPhase === 2 || fromPhase === 3
+      ? resolveConfirmedSolutionRoute({
+          businessChangeAssessment: captureValue(
+            1,
+            "business_change_assessment",
+          ),
+          routeValidation: captureValue(2, "solution_route_validation"),
+          approvedEvidenceReferences: routeEvidenceReferences.map(
+            (item) => item.evidenceId,
+          ),
+        })
+      : null;
 
   let latestOriginationBriefText = "";
   if (originationBriefRow) {
@@ -982,6 +1160,12 @@ export async function evaluateGate(
             "No signed Discovery Report is available for P2 readiness. Approve or upload the client-approved Discovery Report in Files & Evidence, then rerun Approve & Build.";
         }
         break;
+      case "solution_route_validated":
+        pass =
+          captureCompleted(1, "business_change_assessment") &&
+          captureCompleted(2, "solution_route_validation") &&
+          confirmedSolutionRoute !== null;
+        break;
       case "discovery_notes_ingested":
         pass =
           isPresent(
@@ -1019,16 +1203,47 @@ export async function evaluateGate(
         pass = cxoInterviewModule?.status === "completed";
         break;
       case "design_approved":
-        pass = await anyMeetsApprovalBar(designRows);
+        if (confirmedSolutionRoute?.route === "technical_product") {
+          pass = await meetsApprovalBar(
+            findDeliverable("target_state_architecture"),
+          );
+          if (!pass) {
+            failureReason =
+              "Target architecture is not signed off with the required technology and risk/security reviews.";
+          }
+        } else if (
+          confirmedSolutionRoute?.route === "process_change" &&
+          confirmedSolutionRoute.workflowChange !== "material" &&
+          confirmedSolutionRoute.roleAccountabilityChange !== "material"
+        ) {
+          pass =
+            (await meetsApprovalBar(
+              findDeliverable("target_state_architecture"),
+            )) &&
+            (await meetsApprovalBar(
+              findDeliverable("process_change_estimate_brief"),
+            ));
+          if (!pass) {
+            failureReason =
+              "The target architecture and bounded process-change estimate brief must both be signed off.";
+          }
+        } else {
+          pass = await anyMeetsApprovalBar(designRows);
+        }
         break;
       case "requirements_design_outcome_trace":
         pass =
-          isPresent(requirementsTraceRow) ||
-          (fromPhase === 3 &&
-            /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(
-              phaseCaptureText,
-            ) &&
-            phaseModulesCompleted(fromPhase));
+          confirmedSolutionRoute?.route === "technical_product" ||
+          (confirmedSolutionRoute?.route === "process_change" &&
+            confirmedSolutionRoute.workflowChange !== "material" &&
+            confirmedSolutionRoute.roleAccountabilityChange !== "material")
+            ? await meetsApprovalBar(requirementsTraceRow)
+            : isPresent(requirementsTraceRow) ||
+              (fromPhase === 3 &&
+                /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(
+                  phaseCaptureText,
+                ) &&
+                phaseModulesCompleted(fromPhase));
         break;
       case "vendor_selection_approved": {
         const vendor = findDeliverable(
@@ -1111,9 +1326,7 @@ export async function evaluateGate(
         );
         break;
       case "sponsor_alignment_confirmed":
-        pass = isSignedOff(
-          findDeliverable("stakeholder_alignment", "sponsor_alignment"),
-        );
+        pass = isSignedOff(findDeliverable("stakeholder_alignment"));
         break;
       case "readiness_and_change_plan_signed_off":
         pass = isSignedOff(changePlanRow);
@@ -1188,7 +1401,7 @@ export async function evaluateGate(
         break;
       case "fast_lane_decision_recorded":
         // Reaching fromPhase===1 already proves the P0->P1 gate passed (a
-        // real sponsor + signed origination brief) — this check only needs
+        // listed sponsor contact + approved origination brief) — this check only needs
         // to confirm the Move still carries the 'Straightforward' tag.
         // evaluateGate only reaches this rule at all when that's already
         // true (see the (1,5) branch above), so this is a defense-in-depth
@@ -1215,74 +1428,6 @@ export async function evaluateGate(
   };
 }
 
-export async function requestFounderApproval(
-  ctx: TenancyCtx,
-  programId: string,
-  input: {
-    requestType: FounderApprovalRequestRow["requestType"];
-    headline: string;
-    context?: Record<string, unknown>;
-    approverUserId?: string;
-    approverRole?: ApprovalAuthority;
-    deadlineHours?: number;
-  },
-  opts: { supabase?: SupabaseClient } = {},
-): Promise<string> {
-  assertTenancy(ctx);
-  const deadline = input.deadlineHours
-    ? new Date(Date.now() + input.deadlineHours * 3_600_000).toISOString()
-    : null;
-  // Physical insert goes through the programs write seam (Slice 3f). Supabase
-  // stays the default; the route-scoped client (if any) is threaded through so
-  // RLS / auth-mode is unchanged. Azure is opt-in via `ABARVA_DATA_PLANE`.
-  const adapter =
-    resolveDataPlaneForTenant(ctx.clientKey) === "azure-postgres"
-      ? selectProgramsWriteAdapter(undefined, ctx.clientKey)
-      : opts.supabase
-        ? createSupabaseProgramsWriteAdapter(
-            () => opts.supabase as SupabaseClient,
-          )
-        : selectProgramsWriteAdapter("supabase", ctx.clientKey);
-  const written = await adapter.insertFounderApproval({
-    programId,
-    requestedByUserId: ctx.userId,
-    requestType: input.requestType,
-    headline: input.headline,
-    context: input.context ?? {},
-    approverUserId: input.approverUserId ?? null,
-    approverRole: input.approverRole ?? null,
-    deadlineAtIso: deadline,
-  });
-  if (!written.ok || !written.data) {
-    throw new Error(written.error ?? "[requestFounderApproval] write failed");
-  }
-  const approvalId = written.data.approvalId;
-  await writeProgramAuditLogBestEffort(ctx, {
-    programId,
-    engagementId: programId,
-    action: "phase_approval_requested",
-    fromState: null,
-    toState: "approval_pending",
-    rationale: input.headline,
-    evidenceRefs: [approvalId],
-  });
-  return approvalId;
-}
-
-export class ApprovalSeparationOfDutiesError extends Error {
-  constructor() {
-    super("separation_of_duties");
-    this.name = "ApprovalSeparationOfDutiesError";
-  }
-}
-
-export class ApprovalStrictModeRoleError extends Error {
-  constructor() {
-    super("strict_mode_role_required");
-    this.name = "ApprovalStrictModeRoleError";
-  }
-}
-
 export async function decideApproval(
   ctx: TenancyCtx,
   programId: string,
@@ -1293,31 +1438,6 @@ export async function decideApproval(
 ): Promise<boolean> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
-
-  // SECURITY (audit 2026-05-22, P1-3 / P1-4): before consuming the
-  // approval, load the pending row so we can enforce separation of
-  // duties. Under GATE_APPROVAL_STRICT_MODE the approver must (a) hold an
-  // admin/maestro role and (b) differ from the original requester. In
-  // pilot (flag off) self-approval remains allowed per the documented
-  // Gate self-approval model.
-  if (decision === "approved" && isGateApprovalStrictMode()) {
-    if (!isStrictModeApprovalRole(ctx.role)) {
-      throw new ApprovalStrictModeRoleError();
-    }
-    const { data: pendingRow } = await sb
-      .from("founder_approval_requests")
-      .select("id, requested_by_user_id")
-      .eq("engagement_id", programId)
-      .eq("id", approvalId)
-      .eq("status", "pending")
-      .maybeSingle();
-    const requestedBy = (
-      pendingRow as { requested_by_user_id?: string | null } | null
-    )?.requested_by_user_id;
-    if (requestedBy && requestedBy === ctx.userId) {
-      throw new ApprovalSeparationOfDutiesError();
-    }
-  }
 
   const { data, error } = await sb
     .from("founder_approval_requests")
@@ -1433,12 +1553,12 @@ export async function hasAuthority(
     .maybeSingle();
   const auth = (data as { approval_authority: ApprovalAuthority | null } | null)
     ?.approval_authority;
-  if (!auth) return false;
+  if (!auth || required === "sponsor" || auth === "sponsor") return false;
   const hierarchy: Record<ApprovalAuthority, number> = {
     observer: 0,
     contributor: 1,
     approver: 2,
-    sponsor: 3,
+    sponsor: 1,
   };
   return hierarchy[auth] >= hierarchy[required];
 }

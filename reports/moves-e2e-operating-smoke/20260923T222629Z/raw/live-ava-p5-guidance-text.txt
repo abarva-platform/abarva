@@ -1,0 +1,204 @@
+Home
+Intelligence
+Moves
+Source Optimize
+Source New
+Tower
+AP
+AbarVa Prod QA
+Sign out
+MOVES
+HEALTHCARE_IDN-Meridian Health-2026
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+P5 WORKFLOW
+Phase 6 of 6 · Prepare to Execute
+«
+← All Moves
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+
+PHASES
+✓
+Originate
+3 of 3
+✓
+Charter
+2 of 2
+✓
+Understand Current State
+5 of 5
+✓
+Choose the Approach
+2 of 2
+✓
+Build the Plan
+5 of 5
+✓
+Prepare to Execute
+4 of 4
+WORKSPACE
+▦
+Stage workspace
+▣
+Files & Evidence
+◈
+Phase Intelligence
+✓
+Approvals
+
+aVa guides P0-P4 · Atlas takes over P5 Execute.
+
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13/P5 · Prepare to Execute
+AVA · MOVES
+Prepare to Execute
+Is the organization ready to execute and track outcomes?
+
+Prepare ownership, controls, adoption, value tracking, and Tower handoff. Make approved value measurable after launch.
+
+P5
+INPUTS
+7/7
+GATE
+Complete
+NEXT
+Run Approve & Build
+No required input blockers for the current step. Tower handoff artifacts
+Steps
+Files
+Intelligence
+INPUTS
+✓
+Mobilization plan & RACI
+✓
+Launch readiness
+✓
+Value-proof rules & metrics
+✓
+First 90 days & milestones
+✓
+Governance & Tower cadence
+✓
+Open risks & client-to-complete
+✓
+Recommendation to launch
+WORKFLOW
+✓
+Prepare
+✓
+Execution Readiness
+Approve & Build
+What Tower handoff will need
+Use the left steps in order. Approve & Build remains the governed close; it is not a visual-only button.
+Step 10 of 10
+Approve & Build
+OPEN
+Gate approval
+
+This Move has completed P5 and handed off to Tower. The approved output is carrying forward into the execution and value-tracking surface.
+
+DECISION
+Move handed off to Tower
+
+Tower is now the execution and value-tracking surface for this Move.
+
+4/4 hard gates met
+2 generated artifacts
+Open Tower
+WHAT CHANGED
+No hard blockers are open.
+
+Tower handoff can start from the approved record.
+
+2 generated artifacts
+Tower handoff
+Gate execution checklist
+3/3 complete
+Role approvals
+Open review record
+Open Tower →
+✓ P5 is already approved and handed off to Tower.
+Tower is now the execution and value-tracking surface for this Move.
+Next: Tower handoff readiness
+No required gaps
+Ask aVa
+aVa
+Execution-readiness partner
+×
+YOU
+
+For this P5 Move, what should the client team do next? Name the execution workshops or sessions to run, evidence to collect, open blockers/caveats, which metrics go to Tower, and cite the Move context you are using.
+
+AVA
+
+From the live Move record, all 4 hard gate criteria are met — the Move is at exit, not mid-phase. The practical question is whether the handoff package is complete enough for Tower acceptance, and six evidence items are still missing.
+
+What the client team should do next
+
+The immediate priority is closing the six missing required evidence items before Tower acceptance can be confirmed. These aren't optional — they are gaps that would force the delivery team to return to the program team during execution, which fails the P5 handoff test.
+
+Missing required evidence to collect now:
+
+Knowledge base ownership and freshness — who owns the KB, what is the update cadence, and is there a named steward?
+Call transcript and recording availability — retention policy, access controls, and volume confirmed?
+PHI, privacy, security, and audit controls — privacy impact assessment complete, audit log design confirmed?
+Human-in-the-loop decision model — which decisions require human review, escalation path named?
+Model risk and responsible AI controls — AI Governance Council sign-off, monitoring plan named?
+Measurement owner and cadence — who owns outcome measurement post-launch, at what cadence?
+
+Sessions to run
+
+Three working sessions close the gap cleanly: (1) a Privacy and Security review with the clinical and IT security owners to close the PHI, HITL, and audit controls items together; (2) a Model Risk and AI Governance session — noting that the 2025 sepsis alert was declined for exactly this reason (missing monitoring plan and unnamed clinical owner), so this session must produce named owners and a monitoring plan, not just a submission; (3) a Tower Measurement Handoff session with the receiving Tower lead to lock the metric contract, confirm cadence, and produce the explicit acceptance statement.
+
+Open blockers and caveats
+
+The Data Governance Lead role is vacant — this is a named dependency for measure reconciliation and stewardship and must be resolved or formally waived before Tower accepts. Kona Coast is design-scope only and excluded from launch scope due to the legacy platform's weekly feed cadence; the handoff package must state this boundary explicitly so the delivery team does not scope it into wave 1. Three value inputs remain zero and unvalidated pending actuary and finance sign-off — the Tower metric contract must not treat these as realized value. Executive sponsor and program lead are not recorded on the engagement row; Tower acceptance requires a named receiving-party individual, which means this gap must be closed before the final gate.
+
+Metrics going to Tower
+
+The Tower metric contract should carry: care-gap closure rate (baseline 41.2%, 418,000 attributed lives, 1,142,000 open gaps), care-management search-and-reconciliation time (baseline 31 of 53 minutes per case), and caseload closure volume. Each metric needs a named owner, measurement cadence, and escalation threshold. The three unvalidated value inputs must be flagged as pending actuary/finance sign-off — not included as committed targets.
+
+Move context cited
+
+Live gate tally (4 of 4 hard criteria met) from the active Move record. Evidence gaps from the P5 evidence needs block. Baseline figures from the client-approved business case baseline and charter scope addenda (418,000 lives, 1,142,000 gaps, 41.2% closure rate). Governance history: retired 2024 readmission model, declined 2025 sepsis alert. Design constraint: Kona Coast excluded from launch scope. Workflow baseline: 31 of 53 minutes on search and reconciliation per the process walkthrough document.
+
+VISUALS
+Gate readiness by phase
+Met criteria by phase, using the same deterministic tallies as the Moves rail.
+HORIZONTAL BAR
+25%
+100%
+Originate
+Charter
+Diagnose
+Design
+Roadmap
+Mobilize
+100%
+100%
+100%
+100%
+100%
+100%
+Derived from phase readiness criteria and next-phase evidence needs for this Move.
+DECISION TABLE
+Phase readiness scorecard
+PHASE	STATUS	MET	TOTAL	OPEN
+Originate	Approved	3	3	0
+Charter	Approved	2	2	0
+Diagnose	Approved	5	5	0
+Design	Approved	2	2	0
+Roadmap	Approved	5	5	0
+Mobilize	Approved	4	4	0
+Derived from the same hard-readiness criteria used by the phase rail.
+Structured highlights captured from aVa
+KIND	SUMMARY
+Context Bundle	Captured as structured response context.
+Phase Recommendation	Close six specific source gap items, then run three targeted sessions before requesting Tower acceptance confirmation.
+Phase Progress	Knowledge base ownership and freshness
+Phase Progress	Call transcript/recording availability and retention
+Phase Progress	PHI, privacy, security, and audit controls
+Phase Progress	Human-in-the-loop decision model
+Parsed from the response stream and rendered as structured UI.
+Send
+Originate

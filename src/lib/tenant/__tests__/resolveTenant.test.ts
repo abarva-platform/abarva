@@ -1,6 +1,7 @@
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import { TenantResolutionError } from "@/lib/tenant/CanonicalTenant";
 import {
+  CANONICAL_TENANT_KEYS,
   appClientKeyForTenant,
   brokerTenantKey,
   canonicalTenantKey,
@@ -73,6 +74,21 @@ describe("resolveTenant", () => {
     azureReadMaybeSingleMock.mockReset();
     mockClientRow(null);
   });
+
+  it.each(CANONICAL_TENANT_KEYS)(
+    "resolves canonical tenant key %s without a parallel tenant list",
+    async (tenantKey) => {
+      currentUserMock.mockResolvedValue(null);
+      mockCookie(null);
+
+      await expect(
+        resolveTenant({ requestedClient: tenantKey, allowFallback: false }),
+      ).resolves.toMatchObject({
+        canonicalKey: tenantKey,
+        source: "body",
+      });
+    },
+  );
 
   it("pins explicit SkyHarbor email personas before stale active-client cookies", async () => {
     currentUserMock.mockResolvedValue({

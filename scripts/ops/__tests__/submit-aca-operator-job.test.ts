@@ -224,3 +224,137 @@ describe('terminalStatus', () => {
     expect(mod.terminalStatus('Unknown')).toBe(false)
   })
 })
+
+describe('Source ServiceNow request proof summary', () => {
+  let outDir: string
+
+  beforeEach(() => {
+    outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aca-servicenow-proof-test-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const summary = {
+    schemaVersion: 1,
+    event: 'source_servicenow_request_import_proof_summary',
+    mode: 'dry_run',
+    requestCount: 10,
+    archetypeCount: 10,
+    requiredFactGapCount: 0,
+    missingArchetypeCount: 0,
+    inputSha256: 'a'.repeat(64),
+    inputSourceVersion: 'extract-v1',
+    inserted: 0,
+    committed: false,
+    authority: {
+      requestVersionsOnly: true,
+      mappingDecisionsWritten: false,
+      eventsCreated: false,
+      suppliersContacted: false,
+    },
+  }
+
+  test('extracts the trailing summary when the tar marker was lost to ACA log tailing', async () => {
+    const mod = await import(WRAPPER)
+    const logLines = [
+      '2026-01-01 stdout F __SEMANTIC2_PROOF_TGZ_BEGIN__',
+      ...Array.from({ length: 450 }, (_, index) => `2026-01-01 stdout F report line ${index}`),
+      `2026-01-01 stdout F __SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__${JSON.stringify(summary)}`,
+    ]
+    const tail = logLines.slice(-300).join('\n')
+    const proof = mod.extractProofBundle(tail, outDir)
+
+    expect(proof).toMatchObject({
+      extracted: true,
+      extractionKind: 'source_servicenow_request_summary',
+      proofBundleExtracted: false,
+      summary,
+    })
+    expect(JSON.parse(fs.readFileSync(path.join(outDir, '05-source-servicenow-proof-summary.json'), 'utf8'))).toEqual(summary)
+    expect(fs.readFileSync(path.join(outDir, '05-source-servicenow-proof-summary.json'), 'utf8')).not.toContain('tenantKey')
+  })
+
+  test('rejects a dry-run marker that claims a write', async () => {
+    const mod = await import(WRAPPER)
+    const log = `__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__${JSON.stringify({ ...summary, committed: true })}`
+    expect(mod.extractProofBundle(log, outDir)).toMatchObject({ extracted: false })
+  })
+
+  test('uses the summary when a tar payload begins but is incomplete', async () => {
+    const mod = await import(WRAPPER)
+    const log = [
+      '__SEMANTIC2_PROOF_TGZ_BEGIN__',
+      'partial-base64',
+      `__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__${JSON.stringify(summary)}`,
+    ].join('\n')
+    expect(mod.extractProofBundle(log, outDir)).toMatchObject({
+      extracted: true,
+      extractionKind: 'source_servicenow_request_summary',
+      proofBundleExtracted: false,
+      summary,
+    })
+    expect(fs.existsSync(path.join(outDir, 'proof.tgz'))).toBe(false)
+  })
+})
+
+describe('Source candidate supplier proof summary', () => {
+  let outDir: string
+
+  beforeEach(() => {
+    outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aca-supplier-proof-test-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const summary = {
+    schemaVersion: 1,
+    event: 'source_candidate_supplier_registry_import_proof_summary',
+    mode: 'dry_run',
+    rowCount: 25,
+    supplierCount: 20,
+    archetypeCount: 10,
+    failClosedControlCount: 5,
+    inputSha256: 'a'.repeat(64),
+    inputSourceVersion: 'v1',
+    inserted: 0,
+    committed: false,
+    authority: {
+      dryRunDefault: true,
+      supplierRegistryRowsOnly: true,
+      candidateSupplierAuthoritiesWritten: false,
+      eventsCreated: false,
+      suppliersContacted: false,
+      emailsSent: false,
+    },
+  }
+
+  test('extracts a trailing supplier summary after a truncated proof bundle', async () => {
+    const mod = await import(WRAPPER)
+    const logLines = [
+      '2026-01-01 stdout F __SEMANTIC2_PROOF_TGZ_BEGIN__',
+      ...Array.from({ length: 450 }, (_, index) => `2026-01-01 stdout F report line ${index}`),
+      `2026-01-01 stdout F __SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__${JSON.stringify(summary)}`,
+    ]
+    const proof = mod.extractProofBundle(logLines.slice(-300).join('\n'), outDir)
+    expect(proof).toMatchObject({
+      extracted: true,
+      extractionKind: 'source_candidate_supplier_summary',
+      proofBundleExtracted: false,
+      summary,
+    })
+    expect(fs.readFileSync(path.join(outDir, '05-source-candidate-supplier-proof-summary.json'), 'utf8')).not.toContain('tenantKey')
+  })
+
+  test('rejects a dry-run supplier marker that claims a write or contact', async () => {
+    const mod = await import(WRAPPER)
+    const marker = (value: unknown) => `__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__${JSON.stringify(value)}`
+    expect(mod.extractProofBundle(marker({ ...summary, committed: true }), outDir)).toMatchObject({ extracted: false })
+    expect(mod.extractProofBundle(marker({ ...summary, authority: {
+      ...summary.authority, suppliersContacted: true,
+    } }), outDir)).toMatchObject({ extracted: false })
+  })
+})

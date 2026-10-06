@@ -23,15 +23,55 @@ import {
   YAxis,
 } from "recharts";
 import type { SourceWorkspaceVM } from "./buildViewModel";
-import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
+import {
+  ContractEducationBriefing,
+  ContractValueLedgers,
+} from "./Contract360Briefing";
+import {
+  ContractBriefingHeader,
+  ContractCaseThreadStrip,
+  ContractEvidenceFamilies,
+  ContractRegisterOnly,
+  ContractRelationshipBriefing,
+  ContractScopeBriefing,
+  ContractStoryBriefing,
+} from "./Contract360Surfaces";
+import {
+  ContractConsumptionMix,
+  ContractPerformanceCards,
+  ContractEconomicsBriefing,
+} from "./Contract360Economics";
+import { ContractLeverTable } from "./ContractLeverTable";
+import { ContractAnatomy } from "./ContractAnatomy";
+import { ContractOptimizeMethod } from "./ContractOptimizeMethod";
+import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
+import {
+  usableScopeSummary,
+  usableText,
+  withoutIdentifierTokens,
+} from "@/lib/source/contract-purpose-refusal";
+// Re-exported because this file is where the helper has always been imported
+// from. The implementation moved to lib with the refusal control it belongs
+// to; the public symbol stays put so importers and the export-reachability
+// baseline see no change (T-591).
+export { withoutIdentifierTokens };
+import {
+  contractBookAnnualValueForContract,
+  contractBookAnnualValue,
+  contractPopulations,
+  countOrDash,
+} from "./contractPopulations";
 import type {
   SourceWorkspacePortfolioData,
   SourceWorkspaceProviderMode,
 } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
+import type { ContractFacetKey } from "@/lib/source/contract-intelligence/education";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { displaySourceLeverTitle, leverPriorityRank, leverSequenceRank } from "@/lib/source/data-model/source-lever-order";
+import { buildCanonicalWorkspaceUrl } from "./workspaceNavigation";
 import type {
   DocExtractionRow,
   DocFileRow,
@@ -60,6 +100,7 @@ const CONTRACT_TABS = [
   "Relationship",
   "Evidence",
   "Optimize",
+  "Education",
 ] as const;
 const VENDOR_SUBTABS = [
   "Concentration",
@@ -73,8 +114,6 @@ const CONTRACT_LIST_SUBTABS = [
 ] as const;
 const OPTIMIZE_SUBTABS = ["Queue", "By type", "By contract"] as const;
 const CONTRACT_OPTIMIZE_SUBTABS = ["Levers", "Sequence", "Comparator"] as const;
-const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"] as const;
-
 export const SOURCE_CHART_PALETTE = {
   ink: "#102033",
   teal: "#1d9e75",
@@ -109,6 +148,8 @@ type FocusedContractRow = {
   readonly reason: string;
 };
 type FocusedContractSet = {
+  /** Every contract the set ranked over. Any partition must sum to this. */
+  readonly populationCount: number;
   readonly rows: readonly FocusedContractRow[];
   readonly remainderCount: number;
   readonly remainderAnnualValue: number;
@@ -420,18 +461,24 @@ function actionCardBasis(candidate: SourceContractActionCandidateRow) {
   );
 }
 
-function orderedActionRows(
+export function orderedActionRows(
   rows: readonly SourceContractActionCandidateRow[],
 ): SourceContractActionCandidateRow[] {
   return [...rows].sort(
-    (left, right) =>
-      actionSequenceRank(left) - actionSequenceRank(right) ||
+    (left, right) => {
+      const leftPriority = leverPriorityRank(left.priority);
+      const rightPriority = leverPriorityRank(right.priority);
+      return leftPriority - rightPriority ||
+      (leftPriority === Number.MAX_SAFE_INTEGER
+        ? actionSequenceRank(left) - actionSequenceRank(right)
+        : leverSequenceRank(left.title) - leverSequenceRank(right.title)) ||
       priorityRank(left.priority) - priorityRank(right.priority) ||
       sortableDate(left.decision_due_date) -
         sortableDate(right.decision_due_date) ||
       (numberFromDb(right.candidate_amount_usd) ?? 0) -
         (numberFromDb(left.candidate_amount_usd) ?? 0) ||
-      left.action_candidate_id.localeCompare(right.action_candidate_id),
+      left.action_candidate_id.localeCompare(right.action_candidate_id);
+    },
   );
 }
 
@@ -604,9 +651,14 @@ function commandExecutiveRead(
     };
   }
   if (actionSet.totalRows > 0) {
+    const sizedCount = portfolio.impact.actionCandidates.filter(
+      (row) => numberFromDb(row.candidate_amount_usd) != null,
+    ).length;
     return {
       title: `${actionSet.totalRows} governed actions are loaded.`,
-      body: `${money(actionSet.totalAmount)} is candidate value in the action layer. Source keeps it out of realized savings until finance confirmation and approval are recorded.`,
+      body: sizedCount > 0
+        ? `${money(actionSet.totalAmount)} across ${sizedCount} sized actions is candidate value, not realized savings. Finance confirmation and approval remain separate.`
+        : "These actions are unsized. No candidate dollar total is established until their evidence and calculation gates close.",
     };
   }
   return {
@@ -628,36 +680,28 @@ function topVendorShareLabel(
   return `${Math.min(100, Math.round((topThree / totalAnnualValue) * 100))}%`;
 }
 
-function parseDateStampFromText(value: string | null | undefined) {
-  if (!value) return null;
-  const text = value.trim();
-  const dashed = text.match(/\b(20\d{2})[-_](0[1-9]|1[0-2])[-_]([0-3]\d)\b/);
-  const compact = text.match(/\b(20\d{2})(0[1-9]|1[0-2])([0-3]\d)\b/);
-  const match = dashed ?? compact;
-  if (!match) return null;
-  const iso = `${match[1]}-${match[2]}-${match[3]}`;
-  const time = new Date(`${iso}T00:00:00Z`).getTime();
-  return Number.isNaN(time) ? null : iso;
-}
 
-function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
-  const loadRunDates = [
-    ...portfolio.impact.actionCandidates.map((row) => row.load_run_id),
-    ...portfolio.impact.evidenceCoverage.map((row) => row.load_run_id),
-    ...portfolio.impact.vendorPositions.map((row) => row.load_run_id),
-  ]
-    .map(parseDateStampFromText)
-    .filter((value): value is string => Boolean(value));
-  const sortedLoadRunDates = loadRunDates.sort();
-  const refreshedIso =
-    sortedLoadRunDates.length > 0
-      ? sortedLoadRunDates[sortedLoadRunDates.length - 1]
-      : null;
-  if (refreshedIso) {
+export function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
+  /*
+   * Read the recorded completion, do not infer one.
+   *
+   * This used to pattern-match a date out of every row's load run id. An
+   * identifier may carry the dataset version's stamp, the run's, both, or
+   * neither, and nothing distinguishes them — so the control reported a
+   * package's version date as the portfolio's refresh date, on the surface a
+   * reader checks to know whether the numbers are today's.
+   *
+   * Both package loaders stamp `completed_at` on a terminal status and the
+   * portfolio now carries the newest of them. Where no completed run is
+   * recorded the control says what it does know — the as-of date — rather than
+   * guessing at freshness.
+   */
+  const completedAt = portfolio.workspaceDiagnostics.lastCompletedLoadAtIso;
+  if (completedAt) {
     return {
       ariaLabel: "Source freshness",
       label: "Refreshed",
-      value: fmtDate(refreshedIso),
+      value: fmtDate(completedAt),
     };
   }
   if (portfolio.asOfDateIso?.startsWith("2027-06-30")) {
@@ -963,6 +1007,39 @@ export function WorkspaceExecutiveShell({
       : currentPage;
   const isCommandCenter = !selectedContractId;
   const dateControl = sourceDateControl(portfolio);
+  const datasetVersion = portfolio.workspaceDiagnostics.datasetVersion.trim();
+
+  // Keep the canonical /source URL as the single source of navigation truth.
+  // The workspace deliberately stays client-side so tab changes do not swap
+  // shells, but a refresh or shared link must reconstruct the same selection.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const nextUrl = buildCanonicalWorkspaceUrl({
+      currentHref: currentUrl,
+      selectedKind: logic.state.sel.kind,
+      selectedId: logic.state.sel.id,
+      contractTab: logic.state.tabs.contract,
+      currentPage,
+      sourceClientKey,
+      sourceProviderKey,
+    });
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(
+        { ...window.history.state, sourceWorkspace: true },
+        "",
+        nextUrl,
+      );
+    }
+  }, [
+    currentPage,
+    logic.state.sel.id,
+    logic.state.sel.kind,
+    logic.state.tabs.contract,
+    selectedContractId,
+    sourceClientKey,
+    sourceProviderKey,
+  ]);
 
   const resetMainScroll = useCallback(() => {
     const schedule =
@@ -976,16 +1053,6 @@ export function WorkspaceExecutiveShell({
       mainRef.current?.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
     });
   }, []);
-
-  const workspaceHrefFor = (page: PageLabel) => {
-    const params = new URLSearchParams();
-    params.set("workspaceTab", page.toLowerCase());
-    if (sourceClientKey?.trim()) params.set("client", sourceClientKey.trim());
-    if (sourceProviderKey?.trim()) {
-      params.set("sourceProvider", sourceProviderKey.trim());
-    }
-    return `/source?${params.toString()}`;
-  };
 
   const selectPage = (page: PageLabel) => {
     if (page === "Command") {
@@ -1068,6 +1135,12 @@ export function WorkspaceExecutiveShell({
               <span>Scope</span>
               <b>All loaded contracts</b>
             </div>
+            {datasetVersion ? (
+              <div className="sw-v2-control" aria-label="Dataset build">
+                <span>Dataset build</span>
+                <b>{datasetVersion}</b>
+              </div>
+            ) : null}
             <div className="sw-v2-control" aria-label={dateControl.ariaLabel}>
               <span>{dateControl.label}</span>
               <b>{dateControl.value}</b>
@@ -1080,28 +1153,36 @@ export function WorkspaceExecutiveShell({
         </header>
 
         {selectedContractId && selectedContract ? (
-          <ContractCommandBar
-            activeTab={logic.state.tabs.contract ?? "Story"}
-            contract={selectedContract}
-            onBackToContracts={() => logic.select("contractList", null)}
-            onOpenPortfolioPage={selectPage}
-            onOpenTab={(tab) => logic.setTab("contract", tab)}
-          />
+          <>
+            <ContractBriefingHeader
+              contract={selectedContract}
+              noticeDays={contractNoticeDays(selectedContract)}
+              onBack={() => logic.select("contractList", null)}
+              vm={vm}
+            />
+            <ContractCommandBar
+              activeTab={logic.state.tabs.contract ?? "Story"}
+              contract={selectedContract}
+              onBackToContracts={() => logic.select("contractList", null)}
+              onOpenPortfolioPage={selectPage}
+              onOpenTab={(tab) => logic.setTab("contract", tab)}
+            />
+          </>
         ) : (
           <nav
             className="sw-v2-horizontal-tabs"
             aria-label="Source workspace navigation"
           >
             {PAGE_LABELS.map((label) => (
-              <a
+              <button
                 key={label}
                 role="button"
-                href={workspaceHrefFor(label)}
                 className={label === currentPage ? "is-active" : ""}
+                aria-pressed={label === currentPage}
                 onClick={() => selectPage(label)}
               >
                 <span>{label}</span>
-              </a>
+              </button>
             ))}
           </nav>
         )}
@@ -1170,6 +1251,12 @@ export function WorkspaceExecutiveShell({
                 <ContractDetailLoadState
                   contractId={selectedContractId}
                   state={fetchedContractDetail}
+                  actionCandidate={portfolio.impact.actionCandidates.find(
+                    (candidate) => candidate.contract_id === selectedContractId,
+                  )}
+                  onReviewAction={(candidateId) =>
+                    setOpenActionCandidateId(candidateId)
+                  }
                 />
               )
             ) : (
@@ -1204,6 +1291,10 @@ export function WorkspaceExecutiveShell({
         </section>
         <SourceActionDrawer
           candidate={openActionCandidate}
+          contractDetailFailed={Boolean(
+            openActionCandidate &&
+              logic.state.contractDetail[openActionCandidate.contract_id] === "error",
+          )}
           coverage={
             openActionCandidate
               ? coverageForContract(portfolio, openActionCandidate.contract_id)
@@ -1236,7 +1327,7 @@ function ImpactLoadBadge({ state }: { state: ImpactLoadState }) {
   );
 }
 
-function SourceCommandKpiStrip({
+export function SourceCommandKpiStrip({
   portfolio,
   totalAnnualValue,
   creditFinding,
@@ -1260,18 +1351,27 @@ function SourceCommandKpiStrip({
   const actualAmount =
     numberFromDb(commitmentCoverage?.actual_spend_usd) ??
     numberFromDb(commitmentContract?.actual_annual_spend);
-  const utilization =
+  // A percentage or nothing — never a refusal phrase, because the caller sets
+  // it into a sentence that ends in "consumed". Carrying the refusal as a
+  // string produced "Databricks, Inc. · Usage not established consumed" on the
+  // command tile.
+  const utilizationPercent =
     committedAmount && committedAmount > 0 && actualAmount != null
       ? `${Math.round((actualAmount / committedAmount) * 1000) / 10}%`
-      : "Usage not established";
+      : null;
   const decisionRows = focusedActionSet(portfolio);
   const readyRows = portfolio.impact.actionCandidates.filter((row) =>
     /ready|approved|complete/i.test(
       `${row.readiness_state ?? ""} ${row.authority_state ?? ""}`,
     ),
   ).length;
-  const financeBlockedRows = portfolio.impact.actionCandidates.filter((row) =>
-    /not_confirmed|finance/i.test(row.finance_confirmation_state ?? ""),
+  const financeBlockedRows = portfolio.impact.actionCandidates.filter(
+    (row) =>
+      numberFromDb(row.candidate_amount_usd) != null &&
+      /not_confirmed|finance/i.test(row.finance_confirmation_state ?? ""),
+  ).length;
+  const unsizedActionRows = portfolio.impact.actionCandidates.filter(
+    (row) => numberFromDb(row.candidate_amount_usd) == null,
   ).length;
 
   return (
@@ -1286,14 +1386,22 @@ function SourceCommandKpiStrip({
         value={impactCreditMoney(commitmentRow?.candidate_amount_usd)}
         note={
           commitmentRow
-            ? `${safeVendorDisplayName(commitmentRow.vendor_name, commitmentRow.vendor_ref)} · ${utilization} consumed`
+            ? `${safeVendorDisplayName(commitmentRow.vendor_name, commitmentRow.vendor_ref)}${utilizationPercent ? ` · ${utilizationPercent} consumed` : " · consumption against commitment not established"}`
             : "No commitment-timing action is loaded."
         }
         tone={commitmentRow ? "warn" : undefined}
       />
+      {/*
+        No credit row loaded is not a credit of zero.
+        `$0` states that we looked and found none; the note beside it said the
+        opposite — that nothing was loaded. On an executive tile that reads as
+        a measured result, so the absence is now named as one.
+      */}
       <Metric
         label="Unclaimed credit"
-        value={impactCreditMoney(creditFinding)}
+        value={
+          creditFinding > 0 ? impactCreditMoney(creditFinding) : "Not established"
+        }
         note={
           creditFinding > 0
             ? "Calculated above recovered; finance confirmation stays separate."
@@ -1304,7 +1412,7 @@ function SourceCommandKpiStrip({
       <Metric
         label="Decision posture"
         value={`${readyRows} ready`}
-        note={`${decisionRows.totalRows} open actions · ${financeBlockedRows} finance checks`}
+        note={`${decisionRows.totalRows} open actions${unsizedActionRows > 0 ? ` · ${unsizedActionRows} unsized` : ""}${financeBlockedRows > 0 ? ` · ${financeBlockedRows} sized awaiting finance` : ""}`}
       />
     </section>
   );
@@ -1312,12 +1420,14 @@ function SourceCommandKpiStrip({
 
 function SourceActionDrawer({
   candidate,
+  contractDetailFailed,
   coverage,
   asOfDateIso,
   onClose,
   onOpenContract,
 }: {
   candidate: SourceContractActionCandidateRow | null;
+  contractDetailFailed: boolean;
   coverage: SourceContractEvidenceCoverageRow | null;
   asOfDateIso: string;
   onClose: () => void;
@@ -1391,16 +1501,20 @@ function SourceActionDrawer({
           </section>
         ) : null}
         <div className="sw-v2-action-drawer-foot">
-          <button
-            type="button"
-            className="sw-v2-primary"
-            onClick={() => {
-              onOpenContract(candidate.contract_id, "Optimize");
-              onClose();
-            }}
-          >
-            Open Contract 360
-          </button>
+          {contractDetailFailed ? (
+            <span>Contract detail unavailable</span>
+          ) : (
+            <button
+              type="button"
+              className="sw-v2-primary"
+              onClick={() => {
+                onOpenContract(candidate.contract_id, "Optimize");
+                onClose();
+              }}
+            >
+              Open Contract 360
+            </button>
+          )}
         </div>
       </aside>
     </div>
@@ -1518,8 +1632,7 @@ function PortfolioPage({
             ))}
             {actionSet.remainderCount > 0 ? (
               <p className="sw-v2-muted">
-                {actionSet.remainderCount} further actions carry{" "}
-                {money(actionSet.remainderAmount)} in candidate value.
+                {remainingActionSummary(portfolio, actionSet)}
               </p>
             ) : null}
           </div>
@@ -1598,7 +1711,7 @@ function PortfolioPage({
             value={String(portfolio.impact.actionCandidates.length)}
           />
           <Fact
-            label="aVa grounding bundles"
+            label="Answerable contracts"
             value={String(portfolio.impact.avaGroundingBundles.length)}
           />
           <Fact
@@ -1621,10 +1734,10 @@ function PortfolioPage({
             </div>
           ))}
           <p className="sw-v2-muted">
-            Contract pages should show scope, economics, performance,
-            relationship, and evidence narratives only when the corresponding
-            load rows exist. Otherwise they should render a specific backfill
-            request, not a reusable placeholder.
+            A contract page states a scope, economics, performance,
+            relationship or evidence finding only where rows exist behind it.
+            Where they do not, it names the input it needs rather than showing
+            a placeholder.
           </p>
         </div>
       </section>
@@ -1640,16 +1753,24 @@ function CoveragePage({
   onOpenVendor: (vendorRef: string) => void;
 }) {
   const readinessRows = vendorReadinessDecisionRows(portfolio);
-  const archetypeCoverage = vendorArchetypeCoverage(portfolio);
-  const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
-  const mappedPct =
-    archetypeCoverage.totalContracts > 0
+  const populations = contractPopulations(portfolio);
+  /*
+   * Scored against the contract book alone. A percentage whose numerator came
+   * from the evidence layer and whose denominator came from the register is
+   * not a coverage rate — the two describe different contracts.
+   */
+  const registerMappedPct =
+    populations.registerCount > 0
       ? Math.round(
-          (archetypeCoverage.declaredContracts /
-            archetypeCoverage.totalContracts) *
+          (populations.declaredInRegisterCount / populations.registerCount) *
             100,
         )
       : 0;
+  const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
+  const archetypeCoverageTitle =
+    populations.declaredOutsideRegisterCount > 0
+      ? `${populations.declaredInRegisterCount} of ${populations.registerCount} register contracts are classified`
+      : `${populations.declaredInRegisterCount} of ${populations.registerCount} contracts carry a declared archetype`;
 
   return (
     <div className="sw-v2-coverage-grid">
@@ -1701,32 +1822,63 @@ function CoveragePage({
       <section className="sw-v2-panel">
         <PanelHead
           eyebrow="Archetype coverage"
-          title={`${mappedPct}% mapped to a declared contract archetype`}
+          title={archetypeCoverageTitle}
         />
         <div className="sw-v2-coverage-meter">
           <i
             style={
               {
-                "--sw-v2-fill": `${mappedPct}%`,
+                "--sw-v2-fill": `${registerMappedPct}%`,
               } as CSSProperties
             }
           />
         </div>
+        {/*
+          This partition sums to the register and nothing else. The earlier
+          panel put a declared count taken from the evidence layer beside an
+          unmapped count taken from the register, which read as a partition and
+          summed past the size of the book.
+        */}
         <div className="sw-v2-fact-stack sw-v2-compact-facts">
           <Fact
-            label="Declared"
-            value={String(archetypeCoverage.declaredContracts)}
+            label="Classified in register"
+            value={String(populations.declaredInRegisterCount)}
           />
           <Fact
-            label="Unmapped register"
-            value={String(archetypeCoverage.unmappedCount)}
+            label="Unclassified register headers"
+            value={String(populations.undeclaredInRegisterCount)}
           />
-          <Fact
-            label="Supplemental declared"
-            value={String(archetypeCoverage.supplementalDeclaredCount)}
-          />
+          {populations.declaredOutsideRegisterCount > 0 ? (
+            <Fact
+              label="Classified evidence outside register"
+              value={String(populations.declaredOutsideRegisterCount)}
+            />
+          ) : (
+            <Fact label="Contract book" value={String(populations.registerCount)} />
+          )}
         </div>
-        {archetypeCoverage.unmappedCount > 0 ? (
+        {populations.unjoinedEvidenceCount > 0 ? (
+          <p className="sw-v2-muted">
+            <b>
+              {populations.unjoinedEvidenceCount} of {populations.evidenceContractCount}{" "}
+              contracts with loaded evidence are not in this book.
+            </b>{" "}
+            Their identifiers do not match any register header, so their
+            evidence cannot be counted as coverage of these{" "}
+            {populations.registerCount} contracts, and no percentage spanning
+            the two is shown. Reconciling the two identifier sets is a load-path
+            fix, not a display one.
+          </p>
+        ) : null}
+        {populations.declaredOutsideRegisterCount > 0 ? (
+          <p className="sw-v2-muted">
+            {populations.declaredOutsideRegisterCount} loaded evidence
+            contracts already carry a declared archetype, but their identifiers
+            are not linked to a register header yet. They are shown in the
+            declared plays below and excluded from the register percentage.
+          </p>
+        ) : null}
+        {populations.undeclaredInRegisterCount > 0 ? (
           <p className="sw-v2-muted">
             Backfill unlock: every register header needs a declared archetype
             before Source can draw an archetype concentration chart without
@@ -2074,7 +2226,7 @@ function VendorArchetypeMixChart({
       <ChartEmptyState
         label="Vendor archetype annual value chart"
         title="Archetype data not charted."
-        body={`${coverage.totalContracts} contract headers stay in the register, but Source will not draw a concentration chart from an unmapped placeholder bucket.`}
+        body={`${contractPopulations(portfolio).registerCount} contract headers stay in the register, but Source will not draw a concentration chart from an unmapped placeholder bucket.`}
       />
     );
   }
@@ -2695,7 +2847,7 @@ function VendorArchetypeTable({
             {coverage.unmappedCount} register headers remain unclassified and
             are not collapsed into a placeholder bucket.
             {coverage.supplementalDeclaredCount > 0
-              ? ` ${coverage.supplementalDeclaredCount} classified contract-depth rows are shown from the evidence layer.`
+              ? ` ${coverage.supplementalDeclaredCount} classified evidence records sit outside the contract book and are excluded from annual-value archetype totals.`
               : ""}
           </span>
         </div>
@@ -2999,13 +3151,14 @@ function ContractListTable({
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const focus = focusedContractSet(portfolio);
+  const bookIds = new Set(portfolio.contracts.map((row) => row.contract_id));
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-contract-row">
         <span>Contract</span>
         <span>Vendor</span>
         <span>Why listed</span>
-        <span>Annual value</span>
+        <span>Book annual value</span>
         <span>Next action</span>
       </div>
       {focus.rows.map(({ contract, reason, actionRows }) => (
@@ -3021,7 +3174,11 @@ function ContractListTable({
           </span>
           <span>{safeContractVendorDisplayName(contract)}</span>
           <span>{reason}</span>
-          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>
+            {bookIds.has(contract.contract_id)
+              ? money(contractBookAnnualValueForContract(contract))
+              : "Outside book"}
+          </span>
           <span>
             {actionRows > 0 ? "Open Optimize" : "Review Contract 360"}
           </span>
@@ -3029,10 +3186,11 @@ function ContractListTable({
       ))}
       {focus.remainderCount > 0 ? (
         <div className="sw-v2-table-foot">
-          <b>{focus.remainderCount} further registry contracts</b>
+          <b>{focus.remainderCount} more contract records</b>
           <span>
-            {money(focus.remainderAnnualValue)} stays summarized until spend,
-            performance, document, or action evidence is loaded.
+            {money(focus.remainderAnnualValue)} of contract-book value stays
+            summarized until spend, performance, document, or action evidence
+            is loaded. Supplemental evidence records remain outside that book.
           </span>
         </div>
       ) : null}
@@ -3048,6 +3206,7 @@ function ContractEvidenceDepthTable({
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const focus = focusedContractSet(portfolio);
+  const populations = contractPopulations(portfolio);
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-contract-depth-row">
@@ -3078,10 +3237,14 @@ function ContractEvidenceDepthTable({
       ))}
       {focus.remainderCount > 0 ? (
         <div className="sw-v2-table-foot">
-          <b>{focus.depthReadyCount} contracts have loaded detail rows.</b>
+          <b>
+            {focus.depthReadyCount} of {focus.populationCount} contract records
+            have loaded evidence or action rows.
+          </b>
           <span>
-            The remaining {focus.remainderCount} are held as portfolio registry
-            rows until their evidence lanes are populated.
+            {populations.registerCount} are governed contract-book headers;{" "}
+            {populations.unjoinedDepthCount} evidence records sit outside that
+            book; {focus.remainderCount} records are not shown above.
           </span>
         </div>
       ) : null}
@@ -3097,11 +3260,12 @@ function ContractFinancialPostureTable({
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const focus = focusedContractSet(portfolio);
+  const bookIds = new Set(portfolio.contracts.map((row) => row.contract_id));
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-financial-row">
         <span>Contract</span>
-        <span>Annual value</span>
+        <span>Book annual value</span>
         <span>Actual spend</span>
         <span>Committed value</span>
         <span>Posture</span>
@@ -3117,7 +3281,11 @@ function ContractFinancialPostureTable({
             <b>{contract.contract_name}</b>
             <small>{safeContractVendorDisplayName(contract)}</small>
           </span>
-          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>
+            {bookIds.has(contract.contract_id)
+              ? money(contractBookAnnualValueForContract(contract))
+              : "Outside book"}
+          </span>
           <span>{money(numberFromDb(contract.actual_annual_spend))}</span>
           <span>{money(numberFromDb(contract.total_committed_value))}</span>
           <span>{financialPosture(contract)}</span>
@@ -3139,9 +3307,13 @@ function ContractFinancialPostureTable({
 function ContractDetailLoadState({
   contractId,
   state,
+  actionCandidate,
+  onReviewAction,
 }: {
   contractId: string | null;
   state: Contract360Response | "loading" | "error" | undefined;
+  actionCandidate?: SourceContractActionCandidateRow;
+  onReviewAction: (candidateId: string) => void;
 }) {
   const failed = state === "error";
   return (
@@ -3161,6 +3333,17 @@ function ContractDetailLoadState({
           ? `Source could not load ${contractId ?? "the selected contract"}. No substitute contract is being shown.`
           : `Loading ${contractId ?? "the selected contract"} from the governed contract-detail service.`}
       </p>
+      {failed && actionCandidate ? (
+        <div>
+          <p>{actionCandidate.title ?? actionCandidate.finding_summary}</p>
+          <button
+            type="button"
+            onClick={() => onReviewAction(actionCandidate.action_candidate_id)}
+          >
+            Review action
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -3178,7 +3361,6 @@ function ContractPage({
 }) {
   const tab = logic.state.tabs.contract ?? "Story";
   const detailReady = vm.detailState === "ready";
-  const coverage = coverageForContract(portfolio, contract.contract_id);
   const portfolioScopeRows = portfolio.applicationScope.filter(
     (row) => row.contract_id === contract.contract_id,
   );
@@ -3193,41 +3375,150 @@ function ContractPage({
       : [];
   const scopeRows =
     portfolioScopeRows.length > 0 ? portfolioScopeRows : detailScopeRows;
+  const coverage = contractCoverageWithDetailLanes(
+    coverageForContract(portfolio, contract.contract_id),
+    contract,
+    scopeRows,
+    vm,
+  );
   const contractClaimCards = portfolio.impact.claimCards.filter(
     (row) => row.contract_id === contract.contract_id,
   );
-  const tabNarrative = contractTabNarrative(
-    tab,
-    vm,
-    contract,
-    coverage,
-    scopeRows,
-    contractClaimCards[0],
-  );
+
+  /*
+   * Register-only tier.
+   *
+   * A contract with no evidence row in any lane cannot answer the questions the
+   * tabs ask. Rendering seven empty tabs reads as a product that does not work;
+   * withholding them and saying what loading would unlock reads as a product
+   * that knows what it does not have. This is the majority state of the book
+   * today, so it is the state worth getting right.
+   */
+  const hasAnyEvidence =
+    coverage != null ||
+    scopeRows.length > 0 ||
+    contractClaimCards.length > 0 ||
+    (detailReady &&
+      ((vm.detail?.spendMonths?.length ?? 0) > 0 ||
+        (vm.detail?.performancePeriods?.length ?? 0) > 0 ||
+        (vm.detail?.docExtractions?.length ?? 0) > 0 ||
+        (vm.detail?.optimizationOpportunitySet?.opportunities?.length ?? 0) >
+          0 ||
+        (vm.opportunityView?.opportunities?.length ?? 0) > 0));
+
+  if (!hasAnyEvidence && detailReady) {
+    return (
+      <ContractRegisterOnly
+        contract={contract}
+        onBack={() => logic.select("contractList", null)}
+      />
+    );
+  }
+
 
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
-      <section className="sw-v2-panel sw-v2-span-2 sw-v2-contract-story-panel">
-        <PanelHead
-          eyebrow={`Contract 360 / ${tab}`}
-          title={contract.contract_name}
-        />
-        <ContractTabStory
-          coverage={coverage}
-          contract={contract}
-          scopeRows={scopeRows}
-          tab={tab}
-          tabNarrative={tabNarrative}
-          vm={vm}
-        />
-        {tab === "Optimize" ? <ContractOptimizeContent vm={vm} /> : null}
-        {tab === "Economics" &&
+      <ContractCaseThreadStrip vm={vm} isOptimizeTab={tab === "Optimize"} />
+      <section
+        className={`sw-v2-panel ${
+          tab === "Optimize" ? "sw-v2-span-3" : "sw-v2-span-2"
+        } sw-v2-contract-story-panel`}
+      >
+        {/*
+          Straight from the tab row to the tab's own content.
+
+          The design gives every surface two or three cards and nothing else.
+          What sat here instead was a panel head repeating the contract name, a
+          governed-narrative block that rendered the lever list as a run-on
+          paragraph under a SYSTEM_GENERATED label, and three stat tiles with
+          most of their height empty — all of it above the fold, on every tab.
+          Each briefing component now owns its surface, carries its own
+          provenance line, and states its figures once.
+        */}
+        {tab === "Optimize" ? (
+          <>
+            <ContractOptimizeContent vm={vm} />
+            {/*
+              The value-type ledger and the evidence gate follow the Optimize
+              body because Optimize no longer has a column for them to sit
+              beside.
+
+              Both used to render in the right-hand context panel. That panel is
+              not built on this tab any more — Optimize took the full three
+              columns — and both Optimize branches were left behind inside it,
+              each under a `tab === "Optimize"` test nested in a
+              `tab !== "Optimize"` one. Neither could run, so the tab lost them
+              silently rather than by decision.
+
+              They are the two claims with no other home here. The lever table
+              renders the levers and the sequence view renders their order, but
+              only the ledger keeps candidate, claimed and realized value in
+              separate columns that never sum, and only the gate names what a
+              signal row still needs before it can carry value at all. Both are
+              standing context for every sub-tab, so they close the tab rather
+              than flanking it.
+            */}
+            {vm.opportunityView ? (
+              <>
+                <PanelHead
+                  eyebrow="Optimization gates"
+                  title="What can be claimed"
+                />
+                <ContractValueTypeStack view={vm.opportunityView} />
+                <ContractOptimizeGateStatement vm={vm} />
+              </>
+            ) : null}
+          </>
+        ) : null}
+        {tab === "Economics" && detailReady && vm.detail?.spendMonths?.length ? (
+          // One chart of these rows, not two. The briefing carries the
+          // commitment-pace view the design specifies; the earlier ramp plotted
+          // the same months beside it as a separate percentage chart.
+          <ContractEconomicsBriefing spendMonths={vm.detail.spendMonths} />
+        ) : null}
+        {tab === "Economics" ? <ContractValueLedgers vm={vm} /> : null}
+        {tab === "Performance" &&
+        !contractFacetIsRequired(vm, "Performance") &&
         detailReady &&
         vm.detail?.spendMonths?.length ? (
-          <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
+          // On a contract type with no service-credit regime the useful
+          // performance question is which workloads draw on the commitment.
+          <>
+            <ContractPerformanceCards
+              spendMonths={vm.detail.spendMonths}
+              tagQuality={vm.detail.cloudTagQuality ?? []}
+              vm={vm}
+            />
+            <ContractConsumptionMix
+              spendMonths={vm.detail.spendMonths}
+              vm={vm}
+            />
+          </>
         ) : null}
-        {tab === "Scope" ? (
-          <ContractScopeTable scopeRows={scopeRows} />
+        {tab === "Story" ? (
+          <ContractStoryBriefing
+            contract={contract}
+            coverage={coverage}
+            scopeRows={scopeRows}
+            vm={vm}
+          />
+        ) : tab === "Scope" ? (
+          // The briefing carries all five columns the table did — application,
+          // business function, criticality, hosting and run cost — so keeping
+          // both rendered every scope row twice.
+          <ContractScopeBriefing scopeRows={scopeRows} vm={vm} />
+        ) : tab === "Relationship" ? (
+          <ContractRelationshipBriefing
+            contract={contract}
+            scopeRows={scopeRows}
+            vm={vm}
+          />
+        ) : tab === "Performance" &&
+          !contractFacetIsRequired(vm, "Performance") ? (
+          <ContractFacetNotRequired
+            tab="Performance"
+            reason={contractFacetReason(vm, "Performance")}
+          />
         ) : tab === "Performance" &&
           detailReady &&
           vm.detail?.performancePeriods?.length ? (
@@ -3258,11 +3549,24 @@ function ContractPage({
             </div>
           </>
         ) : tab === "Evidence" && detailReady && vm.detail ? (
-          <ContractEvidenceDocuments
-            coverage={coverage}
-            files={vm.detail.documentFiles ?? []}
-            extractions={vm.detail.docExtractions}
-          />
+          <>
+            <ContractAnatomy
+              coverage={coverage}
+              scopeRowCount={scopeRows.length}
+              vm={vm}
+            />
+            <ContractEvidenceFamilies coverage={coverage} vm={vm} />
+            <ContractEvidenceDocuments
+              coverage={coverage}
+              files={vm.detail.documentFiles ?? []}
+              extractions={vm.detail.docExtractions}
+            />
+          </>
+        ) : tab === "Education" && vm.contractEducation ? (
+          <>
+            <ContractEducationBriefing education={vm.contractEducation} />
+            <ContractOptimizeMethod vm={vm} />
+          </>
         ) : tab === "Optimize" ? null : (
           <ContractTabBody
             contract={contract}
@@ -3273,20 +3577,74 @@ function ContractPage({
         )}
       </section>
 
-      <section className="sw-v2-panel sw-v2-contract-context-panel">
+      {tab !== "Optimize" ? <section className="sw-v2-panel sw-v2-contract-context-panel">
         <ContractDetailSidePanel
-          cardCount={contractClaimCards.length}
           contract={contract}
           coverage={coverage}
           scopeRows={scopeRows}
           tab={tab}
           vm={vm}
         />
-      </section>
+        {/*
+          The governed statement moved here from the tab body.
+
+          In the design the right-hand column is where interpretation lives, and
+          the tab body is content cards only. Rendering the narrative in the body
+          put a SYSTEM_GENERATED label and a run-on paragraph above every
+          surface; dropping it outright would have lost a governed claim. It
+          reads as a quiet statement beside the tab instead.
+        */}
+        {/*
+          Optimize is not one of the tabs that reaches this panel.
+
+          This used to be a `tab === "Optimize" ? gate : statement` choice, and
+          the comment here described the gate as surviving "here on its own".
+          Neither is true any more: this whole section is skipped on Optimize,
+          so the Optimize arm of that choice could never be taken and the gate
+          it named rendered nowhere at all. The gate now renders at the end of
+          the Optimize body, where the tab can actually show it; every tab that
+          does reach this panel wants the statement, so there is no longer a
+          choice to make here.
+        */}
+        <ContractGovernedStatement
+          contract={contract}
+          coverage={coverage}
+          headlineOnly={narrativeBodyIsAlreadyOnScreen(tab, vm)}
+          scopeRows={scopeRows}
+          tab={tab}
+          vm={vm}
+        />
+      </section> : null}
 
       {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
     </div>
   );
+}
+
+/**
+ * Days remaining before the notice window closes.
+ *
+ * Returns null unless the contract records both an end date and a notice
+ * period — a notice countdown assembled from a default would be the most
+ * actionable false fact on the page.
+ */
+export function contractNoticeDays(
+  contract: SourceContract360Row,
+): number | null {
+  const endDate = contract.end_date ? new Date(contract.end_date) : null;
+  const noticeDays = numberFromDb(
+    (contract as unknown as { notice_period_days?: unknown })
+      .notice_period_days,
+  );
+  if (!endDate || Number.isNaN(endDate.getTime())) return null;
+  if (noticeDays == null || !Number.isFinite(noticeDays)) return null;
+
+  const deadline = new Date(endDate);
+  deadline.setDate(deadline.getDate() - noticeDays);
+  const days = Math.ceil(
+    (deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+  );
+  return days >= 0 ? days : null;
 }
 
 function ContractCommandBar({
@@ -3314,11 +3672,16 @@ function ContractCommandBar({
       >
         Back to contracts
       </button>
-      <div className="sw-v2-contract-commandbar-tabs" role="tablist">
+      <div
+        className="sw-v2-contract-commandbar-tabs sw-c3-tabrow"
+        role="tablist"
+      >
         {CONTRACT_TABS.map((label) => (
           <button
             key={label}
             type="button"
+            role="tab"
+            aria-selected={activeTab === label}
             className={activeTab === label ? "is-active" : ""}
             onClick={() => onOpenTab(label)}
           >
@@ -3338,101 +3701,73 @@ function ContractCommandBar({
   );
 }
 
-function ContractTabStory({
-  coverage,
-  contract,
-  scopeRows,
-  tab,
-  tabNarrative,
-  vm,
-}: {
-  coverage: SourceContractEvidenceCoverageRow | null | undefined;
-  contract: SourceContract360Row;
-  scopeRows: readonly SourceContractApplicationScopeRow[];
-  tab: string;
-  tabNarrative: ReturnType<typeof contractTabNarrative>;
-  vm: SourceWorkspaceVM;
-}) {
-  const actualSpend =
-    numberFromDb(contract.actual_annual_spend) ??
-    numberFromDb(coverage?.actual_spend_usd);
-  const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
-    numberFromDb(coverage?.committed_spend_usd);
-  const utilization =
-    annualValue && annualValue > 0 && actualSpend != null
-      ? Math.round((actualSpend / annualValue) * 100)
-      : null;
-  const sizedTotal = vm.opportunityView
-    ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
-    : 0;
-  const stats =
-    tab === "Optimize"
-      ? [
-          [
-            "Sized opportunity",
-            sizedTotal > 0 ? money(sizedTotal) : "Not sized",
-          ],
-          [
-            "Levers",
-            vm.opportunityView
-              ? `${vm.opportunityView.opportunities.length} total`
-              : "Not loaded",
-          ],
-          [
-            "Finance confirmed",
-            vm.opportunityView?.financeConfirmed ?? "Not established",
-          ],
-        ]
-      : tab === "Economics"
-        ? [
-            ["Annual value", money(annualValue)],
-            ["Actual annual spend", money(actualSpend)],
-            [
-              "Utilization",
-              utilization == null ? "Not established" : `${utilization}%`,
-            ],
-          ]
-        : [
-            ["Vendor", safeContractVendorDisplayName(contract)],
-            ["End date", fmtDate(contract.end_date)],
-            [
-              "Notice",
-              contract.notice_period_days == null
-                ? "Not established"
-                : `${contract.notice_period_days} days`,
-            ],
-          ];
-  const purpose =
-    tab === "Story"
-      ? contractPurposeSummary(contract, coverage, scopeRows)
-      : null;
+function contractFacetIsRequired(
+  vm: SourceWorkspaceVM,
+  tab: ContractFacetKey,
+): boolean {
+  return vm.contractEducation?.facetRequirements[tab]?.state !== "not_required";
+}
 
+function contractFacetReason(vm: SourceWorkspaceVM, tab: ContractFacetKey) {
   return (
-    <div className={`sw-v2-contract-story is-${tab.toLowerCase()}`}>
-      <div>
-        {purpose ? (
-          <div className="sw-v2-contract-purpose">
-            <h3>{purpose.heading}</h3>
-            <p>{purpose.body}</p>
-            <span>{purpose.evidence}</span>
-          </div>
-        ) : null}
-        <span>{tabNarrative.provenance}</span>
-        <h2>{tabNarrative.headline}</h2>
-        <p>{tabNarrative.body}</p>
-        <small>{tabNarrative.blocker}</small>
-      </div>
-      <dl>
-        {stats.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    vm.contractEducation?.facetRequirements[tab]?.reason ??
+    "This evidence lane is not required by the declared contract archetype."
+  );
+}
+
+function ContractFacetNotRequired({
+  tab,
+  reason,
+}: {
+  tab: string;
+  reason: string;
+}) {
+  return (
+    <section className="sw-v2-evidence-empty" aria-label={`${tab} applicability`}>
+      <b>{tab} is not a required evidence lane for this contract.</b>
+      <p>{reason}</p>
+      <p>
+        Source is not treating the absence of service-level rows as a defect or
+        asking someone to load irrelevant evidence. If the executed agreement
+        contains a service-level obligation, map it to the contract and this
+        lane will become applicable.
+      </p>
+    </section>
+  );
+}
+
+/**
+ * Whether a governed string repeats the purpose paragraph already on screen.
+ *
+ * Compared on a normalised opening rather than on containment. The two are
+ * written from the same reviewed source and share their first sentences before
+ * diverging, so neither string contains the other — an equality or `includes`
+ * test misses a repeat that a reader plainly sees.
+ */
+function repeatsPurpose(
+  purpose: ReturnType<typeof contractPurposeSummary> | null,
+  candidate: string | null | undefined,
+): boolean {
+  if (!purpose || !candidate) return false;
+  const words = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(" ")
+      .filter(Boolean);
+  const purposeWords = words(purpose.body);
+  const candidateWords = words(candidate);
+  const SHARED_OPENING = 12;
+  if (
+    purposeWords.length < SHARED_OPENING ||
+    candidateWords.length < SHARED_OPENING
+  ) {
+    return purposeWords.join(" ") === candidateWords.join(" ");
+  }
+  return (
+    purposeWords.slice(0, SHARED_OPENING).join(" ") ===
+    candidateWords.slice(0, SHARED_OPENING).join(" ")
   );
 }
 
@@ -3452,11 +3787,11 @@ export function contractPurposeSummary(
   const archetype = isDeclaredArchetype(rawArchetype)
     ? titleFromSourceKey(String(rawArchetype))
     : null;
+  const reviewedPurpose = usableScopeSummary(contract.purpose_summary);
   const scopePhrase =
-    usableScopeSummary(contract.purpose_summary) ??
+    reviewedPurpose ??
     scopeFromContractName(contractName) ??
-    usableScopeSummary(contract.scope_summary) ??
-    "the loaded commercial scope";
+    usableScopeSummary(contract.scope_summary);
   const classificationText = [
     rawArchetype,
     contract.vendor_category,
@@ -3468,16 +3803,17 @@ export function contractPurposeSummary(
     .join(" ")
     .toLowerCase();
   const kind = contractPurposeKind(classificationText);
-  const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
   const evidenceParts = [
     archetype ? `${archetype} archetype` : null,
     annualValue != null ? `${money(annualValue)} annual value` : null,
+    annualValue == null && committedSpend != null
+      ? `${money(committedSpend)} committed spend`
+      : null,
     actualSpend != null ? `${money(actualSpend)} observed spend` : null,
     positiveCount(numberFromDb(coverage?.scope_rows) ?? scopeRows.length)
       ? `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`
@@ -3491,36 +3827,56 @@ export function contractPurposeSummary(
       : null,
   ].filter(Boolean);
 
+  const loadedBasis = evidenceParts.length
+    ? `Loaded basis: ${evidenceParts.join("; ")}.`
+    : "No supporting contract-header evidence is loaded.";
+
+  if (!reviewedPurpose) {
+    return {
+      heading: "Purpose review needed",
+      body: "No reviewed contract-purpose extraction is available.",
+      evidence: loadedBasis,
+    };
+  }
+
   return {
     heading: "What this contract is",
-    body: usableScopeSummary(contract.purpose_summary)
-      ? `${scopePhrase} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`
-      : `This is ${kind.article} ${kind.label} with ${vendor} covering ${scopePhrase}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
-    evidence: `Loaded basis: ${evidenceParts.join("; ")}.`,
+    body: `${reviewedPurpose} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
+    evidence: `Reviewed purpose extraction. ${loadedBasis}`,
   };
 }
 
-function usableText(value: string | null | undefined) {
-  const text = value?.trim();
-  if (
-    !text ||
-    /^(not established|unknown|unresolved|none|null|n\/a)$/i.test(text)
-  ) {
-    return null;
-  }
-  return text;
+
+
+/**
+ * The governed record's review status, in words a reader can use.
+ *
+ * The raw value is an identifier - `system_generated_from_reviewed_sources`,
+ * `draft_gap` - and it was rendering verbatim into the provenance line a
+ * reader consults to judge how much to trust the tab. It also undersold
+ * itself: the longest of those values means the tab was generated from rows a
+ * person had already reviewed, which is a strong provenance rather than a
+ * machine disclaimer.
+ *
+ * An unrecognised value is stripped rather than guessed at, so a status added
+ * upstream cannot leak an identifier onto this surface.
+ */
+const REVIEW_STATUS_WORDS: Readonly<Record<string, string>> = {
+  system_generated_from_reviewed_sources: "generated from reviewed rows",
+  draft_gap: "draft, evidence incomplete",
+  requires_review: "awaiting review",
+  reviewed: "reviewed",
+  approved: "approved",
+};
+
+export function reviewStatusInWords(value: string | null | undefined): string {
+  const raw = value?.trim();
+  if (!raw) return "review status not recorded";
+  const known = REVIEW_STATUS_WORDS[raw.toLowerCase()];
+  if (known) return known;
+  return withoutIdentifierTokens(raw) ?? "review status not recorded";
 }
 
-function usableScopeSummary(value: string | null | undefined) {
-  const text = usableText(value);
-  if (!text) return null;
-  if (
-    /\b(absent|unknown|unresolved|none|null|n\/a|for_cause_only)\b/i.test(text)
-  ) {
-    return null;
-  }
-  return text;
-}
 
 function scopeFromContractName(contractName: string) {
   const [, scope] = contractName.split(/\s[-–—]\s(.+)/);
@@ -3633,15 +3989,149 @@ function ContractTabBody({
   );
 }
 
+/**
+ * The governed narrative for a tab, stated once, beside it.
+ *
+ * Carries the reviewed headline, the allowed executive statement and what the
+ * tab cannot say — the content the removed tab-body block held — without the
+ * builder-facing provenance label or the stat tiles that came with it.
+ */
+function ContractGovernedStatement({
+  contract,
+  coverage,
+  headlineOnly,
+  scopeRows,
+  tab,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  coverage: ReturnType<typeof coverageForContract>;
+  /** The side panel already rendered this narrative's body and blocker. */
+  headlineOnly: boolean;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  tab: string;
+  vm: SourceWorkspaceVM;
+}) {
+  const narrative = contractTabNarrative(
+    tab,
+    vm,
+    contract,
+    coverage,
+    scopeRows,
+    // The claim card is optional context for the narrative; the callers that
+    // have one pass it, and this statement reads fine without.
+    undefined,
+  );
+  if (!narrative.headline && (headlineOnly || !narrative.body)) return null;
+
+  /*
+   * The Story purpose card and this headline are written from the same reviewed
+   * source. They now sit in different columns rather than stacked, but that is
+   * still the same paragraph twice on one screen.
+   */
+  const purpose =
+    tab === "Story"
+      ? contractPurposeSummary(contract, coverage, scopeRows)
+      : null;
+  const headline = repeatsPurpose(purpose, narrative.headline)
+    ? null
+    : narrative.headline;
+
+  return (
+    <div className="sw-c3-governed-statement">
+      <div className="sw-c3-eyebrow">What Source can state</div>
+      {headline ? (
+        <p className="sw-c3-governed-headline">{headline}</p>
+      ) : null}
+      {!headlineOnly && narrative.body ? (
+        <p className="sw-c3-note">{narrative.body}</p>
+      ) : null}
+      {!headlineOnly && narrative.blocker ? (
+        <p className="sw-c3-note sw-c3-governed-blocker">{narrative.blocker}</p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The Optimize evidence gate, and nothing else.
+ *
+ * The governed Optimize record's headline and body are the lever list and the
+ * ask sequence written as prose, which the Optimize sub-tabs render as tables.
+ * Its missing-evidence summary is the one claim with no other home: what a
+ * signal-stage row still needs before it can carry a value.
+ *
+ * The action-prompt fallback is deliberately not used here. Where no gate is
+ * recorded, that fallback is the ask list again, and this surface would be
+ * restating the Sequence sub-tab to say nothing new.
+ */
+function ContractOptimizeGateStatement({ vm }: { vm: SourceWorkspaceVM }) {
+  const governed = contractTabIntelligenceFor(
+    "Optimize",
+    vm.detail?.contractTabIntelligence ?? [],
+  );
+  const gate = withoutNotRequiredFacets(vm, governed?.missing_evidence_summary);
+  if (!gate) return null;
+
+  return (
+    <div className="sw-c3-governed-statement">
+      <div className="sw-c3-eyebrow">What still gates value</div>
+      <p className="sw-c3-note sw-c3-governed-blocker">{gate}</p>
+    </div>
+  );
+}
+
+/**
+ * Whether this tab already shows the narrative's body somewhere else.
+ *
+ * Two ways that happens. Most tabs: the side panel's narrative stack and the
+ * governed statement both read `contractTabNarrative` with the same arguments,
+ * so wherever the panel takes that branch the statement repeats its body and
+ * blocker word for word. Education: the panel is not the narrative stack, but
+ * the tab body opens with the same archetype paragraph the narrative carries
+ * as its body, and the panel repeats it again as the coaching focus.
+ *
+ * Either way the statement's headline is the only part not already on screen,
+ * which is what the grid uses this to decide.
+ */
+function narrativeBodyIsAlreadyOnScreen(
+  tab: string,
+  vm: SourceWorkspaceVM,
+): boolean {
+  // Scope duplicates only when a governed record exists.
+  //
+  // Its boundary card renders that record's allowed statement and missing
+  // evidence, which are exactly the narrative's body and blocker. With no
+  // record the card falls back to its own prose and the narrative's are the
+  // only statement of theirs on the tab, so suppressing them there would lose
+  // a claim rather than a repeat.
+  if (tab === "Scope") {
+    return (
+      contractTabIntelligenceFor(
+        "Scope",
+        vm.detail?.contractTabIntelligence ?? [],
+      ) != null
+    );
+  }
+  if (tab === "Story" || tab === "Relationship" || tab === "Evidence") {
+    return false;
+  }
+  // Education is the exception to the rule above: its side panel is not the
+  // narrative stack, but its tab body opens with the same archetype paragraph
+  // the narrative carries as `body`, and the panel repeats it again as the
+  // coaching focus. Only the headline is not already on screen.
+  if (tab === "Education" && vm.contractEducation) return true;
+  if (tab === "Optimize" && vm.opportunityView) return false;
+  return true;
+}
+
 function ContractDetailSidePanel({
-  cardCount,
   contract,
   coverage,
   scopeRows,
   tab,
   vm,
 }: {
-  cardCount: number;
   contract: SourceContract360Row;
   coverage: ReturnType<typeof coverageForContract>;
   scopeRows: readonly SourceContractApplicationScopeRow[];
@@ -3692,14 +4182,22 @@ function ContractDetailSidePanel({
       </>
     );
   }
+  if (tab === "Education" && vm.contractEducation) {
+    return (
+      <>
+        <PanelHead
+          eyebrow="Contract education"
+          title="How to improve this contract over time"
+        />
+        <ContractEducationSidePanel education={vm.contractEducation} />
+      </>
+    );
+  }
   if (tab === "Optimize" && vm.opportunityView) {
     return (
       <>
         <PanelHead eyebrow="Optimization gates" title="What can be claimed" />
-        <ContractValueTypeStack
-          view={vm.opportunityView}
-          cardCount={cardCount}
-        />
+        <ContractValueTypeStack view={vm.opportunityView} />
       </>
     );
   }
@@ -3722,7 +4220,10 @@ function ContractDetailSidePanel({
               : "What the spend evidence supports"
           }
         />
-        <ContractNarrativeContextStack narrative={tabNarrative} />
+        <ContractNarrativeContextStack
+          bodyOwnedElsewhere={!contractFacetIsRequired(vm, tab)}
+          narrative={tabNarrative}
+        />
       </>
     );
   }
@@ -3747,15 +4248,57 @@ function ContractDetailSidePanel({
 }
 
 function ContractNarrativeContextStack({
+  bodyOwnedElsewhere = false,
   narrative,
 }: {
+  /**
+   * The tab body already renders this narrative's body verbatim. On a
+   * not-required tab the body IS the governed applicability reason, which the
+   * applicability panel states in full, so repeating it here put the identical
+   * sentence in both columns.
+   */
+  bodyOwnedElsewhere?: boolean;
   narrative: ReturnType<typeof contractTabNarrative>;
 }) {
   return (
     <div className="sw-v2-fact-stack">
-      <Fact label="Decision consequence" value={narrative.blocker} />
-      <p className="sw-v2-muted">{narrative.body}</p>
+      {/*
+        No consequence card where nothing is blocked. The slot used to be
+        filled by the governed record's authoring directive, which read as a
+        consequence to anyone who did not know it was an instruction.
+      */}
+      {narrative.blocker ? (
+        <Fact label="Decision consequence" value={narrative.blocker} />
+      ) : null}
+      {bodyOwnedElsewhere ? null : (
+        <p className="sw-v2-muted">{narrative.body}</p>
+      )}
       <p className="sw-v2-muted">Basis: {narrative.provenance}.</p>
+    </div>
+  );
+}
+
+function ContractEducationSidePanel({
+  education,
+}: {
+  education: NonNullable<SourceWorkspaceVM["contractEducation"]>;
+}) {
+  const next = education.steps.find((step) => step.state === "next");
+  return (
+    <div className="sw-v2-fact-stack">
+      <Fact label="The coaching focus" value={education.focus} />
+      <Fact
+        label="Next evidence move"
+        value={
+          next
+            ? `${next.title}: ${next.question}`
+            : "Keep the loop current at each review."
+        }
+      />
+      <p className="sw-v2-muted">
+        This guide is selected from the declared contract archetype. It does
+        not replace contract evidence or create a value claim.
+      </p>
     </div>
   );
 }
@@ -3774,8 +4317,14 @@ function ContractEvidenceContextStack({
 
   return (
     <div className="sw-v2-fact-stack">
-      <Fact label="Structured evidence rows" value={String(structuredRows)} />
-      <Fact label="Document page rows" value={String(documentRows)} />
+      <Fact
+        label="Reconciled records"
+        value={coverage ? String(structuredRows) : "Not loaded"}
+      />
+      <Fact
+        label="Citable contract passages"
+        value={coverage ? String(documentRows) : "Not loaded"}
+      />
       <Fact
         label="What this means"
         value={
@@ -3806,10 +4355,7 @@ function ContractStoryContextStack({
   scopeRows: readonly SourceContractApplicationScopeRow[];
   vm: SourceWorkspaceVM;
 }) {
-  const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
@@ -3834,7 +4380,7 @@ function ContractStoryContextStack({
         }
       />
       <Fact
-        label="Sized ask"
+        label="Candidate value to negotiate"
         value={sizedTotal > 0 ? money(sizedTotal) : "Not sized"}
       />
       {signalCount > 0 ? (
@@ -4087,7 +4633,6 @@ function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
 
   return (
     <>
-      <ProductShellOptimizationExecutiveStrip vm={vm} />
       <SubtabBar
         tabs={CONTRACT_OPTIMIZE_SUBTABS}
         active={subtab}
@@ -4124,7 +4669,9 @@ function ContractLeverTableContent({ vm }: { vm: SourceWorkspaceVM }) {
       </div>
     );
   }
-  return <ProductShellLeverTable vm={vm} />;
+  // The deck's treatment: five columns with the argument in prose, a dashed
+  // rule on signal-stage rows, and a total stated as a candidate.
+  return <ContractLeverTable vm={vm} />;
 }
 
 function ContractNegotiationSequenceContent({ vm }: { vm: SourceWorkspaceVM }) {
@@ -4260,7 +4807,7 @@ function SourceLeverSequence({
             >
               <span className="sw-v2-lever-sequence-index">{index + 1}</span>
               <span className="sw-v2-lever-sequence-main">
-                <b>{row.title ?? row.finding_summary ?? "Review loaded action"}</b>
+                <b>{displaySourceLeverTitle(row.title ?? row.finding_summary ?? "Review loaded action")}</b>
                 <small>{body}</small>
                 <em>
                   Backed by <strong>{basis}</strong>
@@ -4292,135 +4839,6 @@ function SourceLeverSequence({
         </p>
       ) : null}
     </div>
-  );
-}
-
-function ProductShellOptimizationExecutiveStrip({
-  vm,
-}: {
-  vm: SourceWorkspaceVM;
-}) {
-  const view = vm.opportunityView;
-  if (!view || view.opportunities.length === 0) return null;
-
-  const quantifiedCount = view.opportunities.filter(
-    (opportunity) => opportunity.stageRaw === "quantified",
-  ).length;
-  const signalCount = view.opportunities.filter(
-    (opportunity) => opportunity.stageRaw === "signal",
-  ).length;
-  const financeConfirmedCount = view.opportunities.filter(
-    (opportunity) => opportunity.stageRaw === "finance_confirmed",
-  ).length;
-  // Sized and signal-stage dollars are reported apart. A signal has no
-  // defensible number behind it yet, so folding it into one total would
-  // overstate exactly the figure a CFO will challenge first.
-  const sizedTotalUsd = sizedOpportunityTotalUsd(view.opportunities);
-  const items = [
-    {
-      label: "Levers",
-      value: String(view.opportunities.length),
-      detail: `${quantifiedCount} sized · ${signalCount} signal-stage`,
-      tone: "#0a0a0b",
-    },
-    {
-      label: "Sized opportunity",
-      value: sizedTotalUsd > 0 ? money(sizedTotalUsd) : "Not sized",
-      detail: "excludes signal-stage rows; candidate, not booked",
-      tone: SOURCE_CHART_PALETTE.teal,
-    },
-    {
-      label: "Quantified",
-      value: String(quantifiedCount),
-      detail: "calculation-backed or document-evidenced",
-      tone: SOURCE_CHART_PALETTE.teal,
-    },
-    {
-      label: "Signal-stage",
-      value: String(signalCount),
-      detail: "requires more evidence before upgrade",
-      tone: SOURCE_CHART_PALETTE.amber,
-    },
-    {
-      label: "Finance confirmed",
-      value: String(financeConfirmedCount),
-      detail:
-        view.financeConfirmed === "Not established"
-          ? "no outcome claimed"
-          : `${view.financeConfirmed} outcome`,
-      tone:
-        financeConfirmedCount > 0
-          ? SOURCE_CHART_PALETTE.teal
-          : SOURCE_CHART_PALETTE.slate,
-    },
-  ];
-
-  return (
-    <section
-      aria-label="Executive lever summary"
-      style={{
-        border: "1px solid rgba(10,10,11,.1)",
-        borderRadius: 8,
-        background: "#fffdfa",
-        margin: "0 0 14px",
-        padding: "12px 14px",
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gap: 8,
-          gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
-        }}
-      >
-        {items.map((item) => (
-          <div
-            key={item.label}
-            aria-label={`${item.label}: ${item.value}`}
-            style={{
-              borderLeft: `3px solid ${item.tone}`,
-              minHeight: 62,
-              padding: "2px 10px 2px 11px",
-            }}
-          >
-            <span
-              style={{
-                color: "#74716a",
-                display: "block",
-                fontSize: 9.5,
-                fontWeight: 850,
-                letterSpacing: ".08em",
-                marginBottom: 3,
-                textTransform: "uppercase",
-              }}
-            >
-              {item.label}
-            </span>
-            <b
-              style={{
-                color: item.tone,
-                display: "block",
-                fontSize: 18,
-                lineHeight: 1.05,
-                marginBottom: 4,
-              }}
-            >
-              {item.value}
-            </b>
-            <small
-              style={{
-                color: "#5f5e5a",
-                display: "block",
-                fontSize: 11,
-                lineHeight: 1.3,
-              }}
-            >
-              {item.detail}
-            </small>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -4738,218 +5156,33 @@ export function leverTableRows<
  */
 function ContractValueTypeStack({
   view,
-  cardCount,
 }: {
   view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
-  cardCount: number;
 }) {
   const { established, absent, confirmed } = contractValueTypeSummary(view);
 
   return (
     <div className="sw-v2-fact-stack">
       {established.map(([label, value, meaning]) => (
-        <Fact key={label} label={`${label} - ${meaning}`} value={value} />
+        <Fact key={label} label={`${label} — ${meaning}`} value={value} />
       ))}
       {absent.length > 0 ? (
         <p className="sw-v2-muted">
-          No {absent.join(" or ")} dollars on this contract - nothing has been
-          mischarged, so the whole opportunity has to be negotiated rather than
-          simply claimed.
+          No {absent.join(" or ")} dollars on this contract — nothing has
+          been mischarged, so the whole opportunity has to be negotiated rather
+          than simply claimed.
         </p>
       ) : null}
       <Fact
         label="Finance confirmed"
         value={confirmed ?? "Nothing booked yet"}
       />
-      <Fact label="Deterministic cards" value={String(cardCount)} />
+      {/*
+        A count of deterministic claim cards used to sit here. It is a builder's
+        measure of the pipeline, not a fact about the contract, and a reader has
+        no way to act on it or to tell what it would mean if it changed.
+      */}
     </div>
-  );
-}
-
-function ContractConsumptionRamp({
-  spendMonths,
-}: {
-  spendMonths: readonly ConsumptionRampInput[];
-}) {
-  const rows = consumptionRampRows(spendMonths);
-  if (rows.length === 0) return null;
-
-  const totalCommitted = rows.reduce(
-    (sum, row) => sum + (row.committedUsd ?? 0),
-    0,
-  );
-  const totalActual = rows.reduce((sum, row) => sum + (row.actualUsd ?? 0), 0);
-  const utilization =
-    totalCommitted > 0
-      ? Math.round((totalActual / totalCommitted) * 100)
-      : null;
-  const latest = rows[rows.length - 1];
-
-  return (
-    <section
-      aria-label="Contract consumption ramp"
-      style={{
-        border: "1px solid rgba(10,10,11,.1)",
-        borderRadius: 8,
-        background: "#fffdfa",
-        margin: "14px 0",
-        padding: "13px 14px",
-      }}
-    >
-      <div
-        style={{
-          alignItems: "start",
-          display: "grid",
-          gap: 14,
-          gridTemplateColumns: "minmax(0, 1.6fr) minmax(185px, .7fr)",
-        }}
-      >
-        <div>
-          <span
-            style={{
-              color: SOURCE_CHART_PALETTE.teal,
-              display: "block",
-              fontSize: 9.5,
-              fontWeight: 850,
-              letterSpacing: ".08em",
-              marginBottom: 5,
-              textTransform: "uppercase",
-            }}
-          >
-            Consumption ramp
-          </span>
-          <b style={{ display: "block", fontSize: 15, marginBottom: 3 }}>
-            Monthly actual spend against committed run-rate
-          </b>
-          <p className="sw-v2-muted" style={{ margin: "0 0 12px" }}>
-            The empty space is the commercial argument: Source shows what was
-            committed and what was actually consumed, month by month, without
-            extrapolating missing periods.
-          </p>
-          <div
-            style={{
-              alignItems: "end",
-              display: "grid",
-              gap: 7,
-              gridTemplateColumns: `repeat(${rows.length}, minmax(34px, 1fr))`,
-              minHeight: 144,
-              overflowX: "auto",
-              paddingBottom: 2,
-            }}
-          >
-            {rows.map((row) => (
-              <div
-                key={row.key}
-                aria-label={`${row.periodLabel}: ${
-                  row.utilizationPct == null
-                    ? "utilization not established"
-                    : `${row.utilizationPct}% utilized`
-                }`}
-                style={{
-                  alignItems: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                  minWidth: 0,
-                }}
-              >
-                <small
-                  style={{
-                    color: row.isPartial
-                      ? SOURCE_CHART_PALETTE.amber
-                      : "#5f5e5a",
-                    fontSize: 10,
-                    fontWeight: 800,
-                    minHeight: 12,
-                  }}
-                >
-                  {row.utilizationPct == null ? "-" : `${row.utilizationPct}%`}
-                </small>
-                <div
-                  style={{
-                    alignItems: "end",
-                    display: "flex",
-                    height: 96,
-                    justifyContent: "center",
-                    width: "100%",
-                  }}
-                >
-                  <div
-                    style={{
-                      background: row.isPartial
-                        ? "rgba(186,117,23,.05)"
-                        : "rgba(29,158,117,.04)",
-                      border: `1px ${row.isPartial ? "dashed" : "solid"} ${
-                        row.isPartial
-                          ? "rgba(186,117,23,.6)"
-                          : "rgba(15,110,86,.35)"
-                      }`,
-                      borderRadius: 5,
-                      height:
-                        row.committedScalePct == null
-                          ? 38
-                          : `${row.committedScalePct}%`,
-                      minHeight: 28,
-                      overflow: "hidden",
-                      position: "relative",
-                      width: "100%",
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: row.isPartial
-                          ? "rgba(186,117,23,.45)"
-                          : "rgba(29,158,117,.65)",
-                        bottom: 0,
-                        height:
-                          row.actualScalePct == null
-                            ? 0
-                            : `${row.actualScalePct}%`,
-                        left: 0,
-                        position: "absolute",
-                        right: 0,
-                      }}
-                    />
-                  </div>
-                </div>
-                <span
-                  style={{
-                    color: "#74716a",
-                    fontSize: 10,
-                    fontWeight: 750,
-                  }}
-                >
-                  {row.periodLabel}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="sw-v2-fact-stack">
-          <Fact
-            label="Observed utilization"
-            value={utilization == null ? "Not established" : `${utilization}%`}
-          />
-          <Fact label="Observed actual" value={money(totalActual)} />
-          <Fact label="Observed commitment" value={money(totalCommitted)} />
-          <Fact
-            label="Latest tracking grain"
-            value={`${latest.serviceId} · ${latest.businessUnit}`}
-          />
-          <p className="sw-v2-muted">
-            Track the same fields every month: commitment run-rate, actual
-            consumed spend, invoice/paid amount, workload or service, owner/cost
-            center, and evidence reference.
-          </p>
-          {rows.some((row) => row.isPartial) ? (
-            <p className="sw-v2-muted">
-              Dashed month is still open; Source does not project it to a full
-              period.
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -4962,139 +5195,6 @@ function ContractConsumptionRamp({
  * screen used to show a count of levers with no way to find out what they
  * were, which made the tab unactionable.
  */
-function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
-  const view = vm.opportunityView;
-  if (!view || view.opportunities.length === 0) return null;
-  const rows = leverTableRows(view.opportunities);
-  if (rows.length === 0) return null;
-
-  const cellStyle: React.CSSProperties = {
-    borderTop: "1px solid rgba(10,10,11,.08)",
-    fontSize: 12,
-    lineHeight: 1.35,
-    padding: "9px 10px",
-    verticalAlign: "top",
-  };
-  const headStyle: React.CSSProperties = {
-    color: "#74716a",
-    fontSize: 9.5,
-    fontWeight: 850,
-    letterSpacing: ".08em",
-    padding: "0 10px 6px",
-    textAlign: "left",
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-  };
-
-  return (
-    <div style={{ marginTop: 14, overflowX: "auto" }}>
-      <table
-        aria-label="Negotiation levers"
-        style={{ borderCollapse: "collapse", minWidth: 940, width: "100%" }}
-      >
-        <thead>
-          <tr>
-            <th style={headStyle}>Lever</th>
-            <th style={headStyle}>The ask</th>
-            <th style={headStyle}>Why they can agree</th>
-            <th style={headStyle}>Worth</th>
-            <th style={headStyle}>Owner &amp; timing</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((opportunity) => {
-            const isSignal = opportunity.stageRaw === "signal";
-            return (
-              <tr key={opportunity.id}>
-                <td style={cellStyle}>
-                  <b style={{ display: "block", fontSize: 13 }}>
-                    {opportunity.shortLabel || opportunity.label}
-                  </b>
-                  <small
-                    style={{
-                      color: isSignal ? SOURCE_CHART_PALETTE.amber : "#5f5e5a",
-                      display: "block",
-                      fontSize: 10,
-                      marginTop: 3,
-                    }}
-                  >
-                    {opportunity.valueType} · {opportunity.stage}
-                  </small>
-                </td>
-                <td style={cellStyle}>
-                  {opportunity.buyerAsk ?? "Ask not recorded"}
-                  {opportunity.negotiationLanguage ? (
-                    <em
-                      style={{
-                        color: "#5f5e5a",
-                        display: "block",
-                        fontStyle: "italic",
-                        marginTop: 5,
-                      }}
-                    >
-                      &ldquo;{opportunity.negotiationLanguage}&rdquo;
-                    </em>
-                  ) : null}
-                </td>
-                <td style={cellStyle}>
-                  {opportunity.vendorConcession ?? "Not recorded"}
-                </td>
-                <td style={cellStyle}>
-                  <b
-                    style={{
-                      color: isSignal ? "#74716a" : SOURCE_CHART_PALETTE.teal,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {isSignal ? "Not sized" : opportunity.amount}
-                  </b>
-                  {isSignal ? (
-                    <small
-                      style={{
-                        color: SOURCE_CHART_PALETTE.amber,
-                        display: "block",
-                        fontSize: 10,
-                        marginTop: 3,
-                      }}
-                    >
-                      needs evidence before it carries a number
-                    </small>
-                  ) : null}
-                </td>
-                <td style={cellStyle}>
-                  {opportunity.ownerRole ?? opportunity.owner}
-                  <small
-                    style={{
-                      color: "#5f5e5a",
-                      display: "block",
-                      fontSize: 10,
-                      marginTop: 3,
-                    }}
-                  >
-                    {opportunity.timingDependency ?? opportunity.deadline}
-                  </small>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <p
-        style={{
-          color: "#5f5e5a",
-          fontSize: 11,
-          lineHeight: 1.4,
-          margin: "9px 2px 0",
-        }}
-      >
-        Every row is a candidate until finance confirms it. Signal-stage rows
-        carry no dollar figure on purpose - the evidence behind them does not
-        yet support one.
-      </p>
-    </div>
-  );
-}
-
 function ProductShellDiscountComparator({ vm }: { vm: SourceWorkspaceVM }) {
   const summary = portfolioDiscountComparatorSummary(
     vm.c?.id,
@@ -5509,7 +5609,38 @@ function OptimizeActionQueue({
   );
 }
 
-function EvidencePage({
+/**
+ * Total one evidence lane across the loaded coverage rows.
+ *
+ * Null, not zero, when no coverage row was loaded at all: nothing was read, so
+ * the lane has no measured total and renders as a dash. A loaded lane that
+ * genuinely holds nothing still totals 0 and still prints 0.
+ *
+ * The distinction is carried by the absence of a coverage ROW, not by a null
+ * field on one. `SourceContractEvidenceCoverageRow` declares every lane as
+ * `readonly number`, and the only producer of `impact.evidenceCoverage`
+ * COALESCEs each lane to 0 in SQL, so a loaded lane never arrives as null —
+ * but the impact read yields an empty array when it returns nothing or throws,
+ * while the contract register is filled by a separate read. The register can
+ * therefore hold contracts with nothing loaded to look in.
+ *
+ * This is the rule `evidenceArchetypeRows` states for its "No evidence loaded"
+ * group and the one `Contract360Surfaces.laneCount` applies per contract; the
+ * posture panel used to drop it and keep the digit. `numberFromDb` stays in the
+ * sum because the lanes arrive from pg as `bigint` strings.
+ */
+function postureLaneTotal(
+  coverage: readonly SourceContractEvidenceCoverageRow[],
+  field: "spend_rows" | "performance_rows" | "document_page_text_rows",
+): number | null {
+  if (coverage.length === 0) return null;
+  return coverage.reduce(
+    (sum, row) => sum + (numberFromDb(row[field]) ?? 0),
+    0,
+  );
+}
+
+export function EvidencePage({
   portfolio,
   showLineage,
   onToggleLineage,
@@ -5625,11 +5756,11 @@ function EvidencePage({
                 <small>{row.description}</small>
               </span>
               <span>{row.contractCount}</span>
-              <span>{row.spendRows}</span>
-              <span>{row.performanceRows}</span>
-              <span>{row.documentPageTextRows}</span>
-              <span>{row.changeOrderRows}</span>
-              <span>{row.actionRows}</span>
+              <span>{countOrDash(row.spendRows)}</span>
+              <span>{countOrDash(row.performanceRows)}</span>
+              <span>{countOrDash(row.documentPageTextRows)}</span>
+              <span>{countOrDash(row.changeOrderRows)}</span>
+              <span>{countOrDash(row.actionRows)}</span>
               <span>{row.registryLabel}</span>
             </div>
           ))}
@@ -5674,30 +5805,16 @@ function EvidencePage({
           />
           <Fact
             label="Spend rows"
-            value={String(
-              coverage.reduce(
-                (sum, row) => sum + (numberFromDb(row.spend_rows) ?? 0),
-                0,
-              ),
-            )}
+            value={countOrDash(postureLaneTotal(coverage, "spend_rows"))}
           />
           <Fact
             label="Performance rows"
-            value={String(
-              coverage.reduce(
-                (sum, row) => sum + (numberFromDb(row.performance_rows) ?? 0),
-                0,
-              ),
-            )}
+            value={countOrDash(postureLaneTotal(coverage, "performance_rows"))}
           />
           <Fact
             label="Document page text"
-            value={String(
-              coverage.reduce(
-                (sum, row) =>
-                  sum + (numberFromDb(row.document_page_text_rows) ?? 0),
-                0,
-              ),
+            value={countOrDash(
+              postureLaneTotal(coverage, "document_page_text_rows"),
             )}
           />
           <Fact label="Finance confirmed" value="Not established" />
@@ -5723,22 +5840,48 @@ function evidenceArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     {
       description: string;
       contractCount: number;
-      spendRows: number;
-      performanceRows: number;
-      documentPageTextRows: number;
-      changeOrderRows: number;
-      actionRows: number;
+      /** Null means the lane was never loaded for this group; 0 means loaded and empty. */
+      spendRows: number | null;
+      performanceRows: number | null;
+      documentPageTextRows: number | null;
+      changeOrderRows: number | null;
+      actionRows: number | null;
     }
   >();
 
-  for (const contract of portfolio.contracts) {
-    const rawArchetype = contract.vendor_category?.trim() || "";
+  /*
+   * Walk the evidence rows, not the contract book.
+   *
+   * The matrix used to iterate `portfolio.contracts` and look the evidence up
+   * by contract_id. Where the two collections do not share an identifier space
+   * every lookup misses, so the lane columns rendered as zeros directly above
+   * the same lanes summed from the evidence rows themselves — the same figure
+   * reported twice on one screen, once as 0 and once as its real value.
+   *
+   * Counting the evidence rows makes the lane totals agree with the lane panel
+   * by construction. Register headers with no evidence row are then reported
+   * separately, as a book with no evidence rather than as archetypes with none.
+   */
+  const registerIds = new Set(
+    portfolio.contracts.map((contract) => contract.contract_id),
+  );
+  const registerById = new Map(
+    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
+  );
+
+  for (const coverage of portfolio.impact.evidenceCoverage) {
+    const contract = registerById.get(coverage.contract_id) ?? null;
+    const rawArchetype =
+      coverage.contract_archetype?.trim() ||
+      coverage.vendor_category?.trim() ||
+      contract?.vendor_category?.trim() ||
+      "";
     const archetype = rawArchetype
       ? titleFromSourceKey(rawArchetype)
       : "Not established";
     const current = groups.get(archetype) ?? {
       description: rawArchetype
-        ? "Declared category from the governed contract row."
+        ? "Declared category from the governed evidence row."
         : "No declared category; no inferred taxonomy override.",
       contractCount: 0,
       spendRows: 0,
@@ -5747,15 +5890,32 @@ function evidenceArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       changeOrderRows: 0,
       actionRows: 0,
     };
-    const coverage = coverageByContractId.get(contract.contract_id);
     current.contractCount += 1;
-    current.spendRows += numberFromDb(coverage?.spend_rows) ?? 0;
-    current.performanceRows += numberFromDb(coverage?.performance_rows) ?? 0;
-    current.documentPageTextRows +=
-      numberFromDb(coverage?.document_page_text_rows) ?? 0;
-    current.changeOrderRows += numberFromDb(coverage?.change_order_rows) ?? 0;
-    current.actionRows += actionRowsByContractId.get(contract.contract_id) ?? 0;
+    current.spendRows = (current.spendRows ?? 0) + (numberFromDb(coverage.spend_rows) ?? 0);
+    current.performanceRows = (current.performanceRows ?? 0) + (numberFromDb(coverage.performance_rows) ?? 0);
+    current.documentPageTextRows =
+      (current.documentPageTextRows ?? 0) + (numberFromDb(coverage.document_page_text_rows) ?? 0);
+    current.changeOrderRows = (current.changeOrderRows ?? 0) + (numberFromDb(coverage.change_order_rows) ?? 0);
+    current.actionRows =
+      (current.actionRows ?? 0) +
+      (actionRowsByContractId.get(coverage.contract_id) ?? 0);
     groups.set(archetype, current);
+  }
+
+  const registerWithoutEvidence = portfolio.contracts.filter(
+    (contract) => !coverageByContractId.has(contract.contract_id),
+  ).length;
+  if (registerWithoutEvidence > 0) {
+    groups.set("No evidence loaded", {
+      description: `${registerWithoutEvidence} of ${registerIds.size} contract headers have no evidence row in any lane.`,
+      contractCount: registerWithoutEvidence,
+      // Null, not zero: nothing was loaded to look in. These render as a dash.
+      spendRows: null,
+      performanceRows: null,
+      documentPageTextRows: null,
+      changeOrderRows: null,
+      actionRows: null,
+    });
   }
 
   return [...groups.entries()]
@@ -5777,433 +5937,6 @@ function evidenceArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Legacy graph renderer is no longer reachable from the Source command IA; remove in a focused cleanup.
-function ContractGraphPage({
-  portfolio,
-  subtab,
-  onOpenSubtab,
-  showLineage,
-  onToggleLineage,
-}: {
-  portfolio: SourceWorkspacePortfolioData;
-  subtab: string;
-  onOpenSubtab: (tab: string) => void;
-  showLineage: boolean;
-  onToggleLineage: () => void;
-}) {
-  const lanes = [
-    {
-      title: "Source systems and files",
-      nodes: [
-        {
-          label: "Contract repository",
-          lineage: "CLM agreements, SOWs, pricing schedules, amendments",
-        },
-        {
-          label: "Finance and invoices",
-          lineage: "AP / ERP paid amount, invoice amount, cost center",
-        },
-        {
-          label: "Service catalog",
-          lineage: "CMDB applications, service towers, hosting model",
-        },
-        {
-          label: "Service performance",
-          lineage: "ITSM tickets, incidents, SLA periods, service credits",
-        },
-        {
-          label: "Usage consoles",
-          lineage: "SaaS seats, cloud usage, reserved commitments",
-        },
-      ],
-    },
-    {
-      title: "Adapters",
-      nodes: [
-        {
-          label: "Register adapter",
-          lineage: "contract_register_adapter",
-        },
-        {
-          label: "Clause adapter",
-          lineage: "contract_clause_adapter",
-        },
-        {
-          label: "Spend adapter",
-          lineage: "contract_consumption_adapter",
-        },
-        {
-          label: "Performance adapter",
-          lineage: "contract_performance_adapter",
-        },
-        {
-          label: "Scope adapter",
-          lineage: "contract_scope_adapter",
-        },
-        {
-          label: "Opportunity adapter",
-          lineage: "optimization_opportunity_adapter",
-        },
-      ],
-    },
-    {
-      title: "Canonical facts",
-      nodes: [
-        {
-          label: "Contract",
-          lineage: "source.contract",
-        },
-        {
-          label: "Commercial terms",
-          lineage: "source.contract_term",
-        },
-        {
-          label: "Scope and applications",
-          lineage: "source.contract_scope",
-        },
-        {
-          label: "Monthly spend observations",
-          lineage: "source.contract_consumption_observation",
-        },
-        {
-          label: "Performance observations",
-          lineage: "source.contract_performance_observation",
-        },
-        {
-          label: "Optimization opportunities",
-          lineage: "source.optimization_opportunity",
-        },
-      ],
-    },
-    {
-      title: "Source page substrate",
-      nodes: [
-        {
-          label: "Source 360",
-          lineage: "source.contract_360",
-        },
-        {
-          label: "Claim cards",
-          lineage: "source.contract_claim_card_v1",
-        },
-        {
-          label: "Action queue",
-          lineage: "source.contract_action_candidate_v1",
-        },
-        {
-          label: "Vendor position",
-          lineage: "source.vendor_position_v1",
-        },
-        {
-          label: "Page storyline",
-          lineage: "source.source_page_storyline_v1",
-        },
-        {
-          label: "aVa grounding bundle",
-          lineage: "source.ava_grounding_bundle_v1",
-        },
-      ],
-    },
-  ];
-
-  return (
-    <div className="sw-v2-grid sw-v2-graph-layout">
-      <section className="sw-v2-panel sw-v2-span-2 sw-v2-graph-hero-panel sw-v2-graph-panel">
-        <SubtabBar
-          tabs={GRAPH_SUBTABS}
-          active={subtab}
-          onSelect={onOpenSubtab}
-        />
-        <PanelHead eyebrow="Contract graph" title={graphSubtabTitle(subtab)} />
-        {subtab === "Volume" ? (
-          <GraphVolumeTable portfolio={portfolio} showLineage={showLineage} />
-        ) : subtab === "Mapping spine" ? (
-          <GraphSpineTable portfolio={portfolio} showLineage={showLineage} />
-        ) : (
-          <div className="sw-v2-graph" aria-label="Source contract graph flow">
-            <svg
-              className="sw-v2-graph-links"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M24 50 C32 50 34 50 40 50" />
-              <path d="M49 50 C57 50 59 50 65 50" />
-              <path d="M74 50 C82 50 84 50 90 50" />
-            </svg>
-            {lanes.map((lane) => (
-              <div key={lane.title} className="sw-v2-graph-lane">
-                <h3>{lane.title}</h3>
-                {lane.nodes.map((node) => (
-                  <div key={node.lineage} className="sw-v2-graph-node">
-                    <b>{node.label}</b>
-                    {showLineage ? <small>{node.lineage}</small> : null}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-        <LineageToggle
-          showLineage={showLineage}
-          onToggleLineage={onToggleLineage}
-        />
-      </section>
-
-      <section className="sw-v2-panel">
-        <PanelHead eyebrow="Live substrate" title="What Source can use now" />
-        <div className="sw-v2-fact-stack">
-          <Fact label="Contracts" value={String(portfolio.contracts.length)} />
-          <Fact label="Vendors" value={String(portfolio.vendors.length)} />
-          <Fact
-            label="Claim cards"
-            value={String(portfolio.impact.claimCards.length)}
-          />
-          <Fact
-            label="Action rows"
-            value={String(portfolio.impact.actionCandidates.length)}
-          />
-          <Fact
-            label="aVa bundles"
-            value={String(portfolio.impact.avaGroundingBundles.length)}
-          />
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function GraphVolumeTable({
-  portfolio,
-  showLineage,
-}: {
-  portfolio: SourceWorkspacePortfolioData;
-  showLineage: boolean;
-}) {
-  const coverage = portfolio.impact.evidenceCoverage;
-  const rows = [
-    {
-      layer: "Contract headers",
-      object: "source.contract_360",
-      count: portfolio.contracts.length,
-      claim: "Contract count, vendor, dates, values, renewal posture",
-    },
-    {
-      layer: "Vendor rollups",
-      object: "source.vendor_contract_portfolio",
-      count: portfolio.vendors.length,
-      claim: "Vendor count, concentration, grouped contract list",
-    },
-    {
-      layer: "Application scope",
-      object: "source.contract_application_scope",
-      count: portfolio.applicationScope.length,
-      claim: "Contract-to-application rows only where loaded",
-    },
-    {
-      layer: "Spend rows",
-      object: "consumption.sourcing_spend_monthly_v1",
-      count: coverage.reduce(
-        (sum, row) => sum + (numberFromDb(row.spend_rows) ?? 0),
-        0,
-      ),
-      claim: "Actual spend trend only where monthly rows exist",
-    },
-    {
-      layer: "Performance rows",
-      object: "consumption.sourcing_performance_v1",
-      count: coverage.reduce(
-        (sum, row) => sum + (numberFromDb(row.performance_rows) ?? 0),
-        0,
-      ),
-      claim: "SLA and credit posture only where periods exist",
-    },
-    {
-      layer: "Action rows",
-      object: "source.contract_action_candidate_v1",
-      count: portfolio.impact.actionCandidates.length,
-      claim: "Optimize queue rows; not finance-confirmed value",
-    },
-    {
-      layer: "Document page text",
-      object: "source.source_page_text_fact_assertion",
-      count: coverage.reduce(
-        (sum, row) => sum + (numberFromDb(row.document_page_text_rows) ?? 0),
-        0,
-      ),
-      claim: "Document statements only where page-text rows exist",
-    },
-    {
-      layer: "Change orders",
-      object: "source.source_change_order_fact_assertion",
-      count: coverage.reduce(
-        (sum, row) => sum + (numberFromDb(row.change_order_rows) ?? 0),
-        0,
-      ),
-      claim: "Scope, price, or term drift only where change-order facts exist",
-    },
-  ];
-  return (
-    <>
-      <GraphVolumeBars rows={rows} />
-      <div className="sw-v2-table">
-        <div className="sw-v2-table-head sw-v2-graph-volume-row">
-          <span>Layer</span>
-          <span>{showLineage ? "Read object" : "Substrate"}</span>
-          <span>Rows</span>
-          <span>Allowed claim</span>
-        </div>
-        {rows.map((row) => (
-          <div
-            key={row.object}
-            className="sw-v2-table-row sw-v2-graph-volume-row"
-          >
-            <span>
-              <b>{row.layer}</b>
-            </span>
-            <span>
-              {showLineage ? row.object : plainSubstrateLabel(row.object)}
-            </span>
-            <span>{row.count}</span>
-            <span>{row.claim}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function GraphSpineTable({
-  portfolio,
-  showLineage,
-}: {
-  portfolio: SourceWorkspacePortfolioData;
-  showLineage: boolean;
-}) {
-  const rows: Array<{
-    family: string;
-    sourceSystem: string;
-    adapter: string;
-    canonical: string;
-    substrate: string;
-    rows: number;
-  }> = [
-    {
-      family: "Contract register",
-      sourceSystem: "CLM / contract repository",
-      adapter: "contract_register_adapter",
-      canonical: "source.contract, source.vendor",
-      substrate: "source.contract_360",
-      rows: portfolio.contracts.length,
-    },
-    {
-      family: "Vendor rollup",
-      sourceSystem: "Vendor master and contract refs",
-      adapter: "vendor_portfolio_adapter",
-      canonical: "source.vendor",
-      substrate: "source.vendor_contract_portfolio",
-      rows: portfolio.vendors.length,
-    },
-    {
-      family: "Scope to applications",
-      sourceSystem: "CMDB / service catalog",
-      adapter: "contract_scope_adapter",
-      canonical: "source.contract_scope",
-      substrate: "source.contract_application_scope",
-      rows: portfolio.applicationScope.length,
-    },
-    {
-      family: "Spend consumption",
-      sourceSystem: "AP / ERP invoices",
-      adapter: "contract_consumption_adapter",
-      canonical: "source.contract_consumption_observation",
-      substrate: "consumption.sourcing_spend_monthly_v1",
-      rows:
-        sourceImpactCoverageRowTotal(
-          portfolio.impact.evidenceCoverage,
-          "spend_rows",
-        ) || portfolio.v4Snapshot.spendConsumption.rowCount,
-    },
-    {
-      family: "SLA performance",
-      sourceSystem: "ITSM / SLA history",
-      adapter: "contract_performance_adapter",
-      canonical: "source.contract_performance_observation",
-      substrate: "consumption.sourcing_performance_v1",
-      rows:
-        sourceImpactCoverageRowTotal(
-          portfolio.impact.evidenceCoverage,
-          "performance_rows",
-        ) || portfolio.v4Snapshot.performanceCredits.rowCount,
-    },
-    {
-      family: "Optimization action",
-      sourceSystem: "Deterministic impact layer",
-      adapter: "optimization_opportunity_adapter",
-      canonical: "source.optimization_opportunity",
-      substrate: "source.contract_action_candidate_v1",
-      rows: portfolio.impact.actionCandidates.length,
-    },
-    {
-      family: "Document manifest",
-      sourceSystem: "Evidence manifest / document inventory",
-      adapter: "evidence_document_adapter",
-      canonical: "source.source_record_snapshot",
-      substrate: "source.source_page_text_fact_assertion",
-      rows: portfolio.impact.evidenceCoverage.reduce(
-        (sum, row) => sum + (numberFromDb(row.document_page_text_rows) ?? 0),
-        0,
-      ),
-    },
-    {
-      family: "Change orders",
-      sourceSystem: "Amendment and change-order register",
-      adapter: "change_order_adapter",
-      canonical: "source.contract_change_order",
-      substrate: "source.source_change_order_fact_assertion",
-      rows: portfolio.impact.evidenceCoverage.reduce(
-        (sum, row) => sum + (numberFromDb(row.change_order_rows) ?? 0),
-        0,
-      ),
-    },
-  ];
-  return (
-    <>
-      <GraphMappingFlow rows={rows} showLineage={showLineage} />
-      <div className="sw-v2-table">
-        <div className="sw-v2-table-head sw-v2-graph-spine-row">
-          <span>Evidence family</span>
-          <span>Source system</span>
-          <span>{showLineage ? "Adapter" : "Intake path"}</span>
-          <span>{showLineage ? "Canonical" : "Facts created"}</span>
-          <span>{showLineage ? "Product substrate" : "Source view"}</span>
-          <span>Rows</span>
-        </div>
-        {rows.map((row) => (
-          <div
-            key={row.family}
-            className="sw-v2-table-row sw-v2-graph-spine-row"
-          >
-            <span>{row.family}</span>
-            <span>{row.sourceSystem}</span>
-            <span>
-              {showLineage ? row.adapter : plainAdapterLabel(row.adapter)}
-            </span>
-            <span>
-              {showLineage ? row.canonical : plainCanonicalLabel(row.canonical)}
-            </span>
-            <span>
-              {showLineage ? row.substrate : plainSubstrateLabel(row.substrate)}
-            </span>
-            <span>{row.rows}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
 type EvidenceLaneVisualRow = {
   readonly name: string;
   readonly support: string;
@@ -6212,7 +5945,7 @@ type EvidenceLaneVisualRow = {
   readonly state: string;
 };
 
-function EvidenceLaneBarChart({
+export function EvidenceLaneBarChart({
   rows,
 }: {
   rows: readonly EvidenceLaneVisualRow[];
@@ -6239,91 +5972,6 @@ function EvidenceLaneBarChart({
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function GraphVolumeBars({
-  rows,
-}: {
-  rows: readonly {
-    readonly layer: string;
-    readonly object: string;
-    readonly count: number;
-    readonly claim: string;
-  }[];
-}) {
-  const maxCount = Math.max(...rows.map((row) => row.count), 1);
-  return (
-    <div
-      className="sw-v2-graph-volume-visual"
-      aria-label="Source graph row volume"
-    >
-      {rows.map((row, index) => {
-        const width = Math.max(5, Math.round((row.count / maxCount) * 100));
-        return (
-          <div key={row.object} className="sw-v2-volume-card">
-            <span>{row.layer}</span>
-            <b>{formatCount(row.count)}</b>
-            <i
-              style={
-                {
-                  "--sw-v2-volume-width": `${width}%`,
-                  "--sw-v2-volume-color": chartSeriesColor(index),
-                } as CSSProperties
-              }
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function GraphMappingFlow({
-  rows,
-  showLineage,
-}: {
-  rows: readonly {
-    readonly family: string;
-    readonly sourceSystem: string;
-    readonly adapter: string;
-    readonly canonical: string;
-    readonly substrate: string;
-    readonly rows: number;
-  }[];
-  showLineage: boolean;
-}) {
-  const featuredRows = rows.slice(0, 6);
-  return (
-    <div className="sw-v2-mapping-flow" aria-label="Source mapping flow">
-      {featuredRows.map((row) => (
-        <div key={row.family} className="sw-v2-mapping-flow-row">
-          <span>
-            <b>{row.sourceSystem}</b>
-            <small>{row.family}</small>
-          </span>
-          <i aria-hidden="true" />
-          <span>
-            <b>{showLineage ? row.adapter : plainAdapterLabel(row.adapter)}</b>
-            <small>adapter</small>
-          </span>
-          <i aria-hidden="true" />
-          <span>
-            <b>
-              {showLineage ? row.canonical : plainCanonicalLabel(row.canonical)}
-            </b>
-            <small>{formatCount(row.rows)} rows</small>
-          </span>
-          <i aria-hidden="true" />
-          <span>
-            <b>
-              {showLineage ? row.substrate : plainSubstrateLabel(row.substrate)}
-            </b>
-            <small>Source view</small>
-          </span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -6405,53 +6053,6 @@ function PanelHead({ eyebrow, title }: { eyebrow: string; title: string }) {
   );
 }
 
-function plainAdapterLabel(adapter: string) {
-  if (adapter.includes("contract_register")) return "Contract register";
-  if (adapter.includes("vendor_portfolio")) return "Vendor rollup";
-  if (adapter.includes("scope")) return "Scope mapping";
-  if (adapter.includes("consumption")) return "Spend consumption";
-  if (adapter.includes("performance")) return "SLA performance";
-  if (adapter.includes("optimization")) return "Action calculation";
-  if (adapter.includes("evidence_document")) return "Document evidence";
-  if (adapter.includes("change_order")) return "Change-order evidence";
-  return "Mapped intake";
-}
-
-function plainCanonicalLabel(canonical: string) {
-  if (canonical.includes("contract, source.vendor")) {
-    return "Contracts and vendors";
-  }
-  if (canonical.includes("source.vendor")) return "Vendor facts";
-  if (canonical.includes("contract_scope")) return "Scope facts";
-  if (canonical.includes("contract_consumption")) return "Monthly spend facts";
-  if (canonical.includes("contract_performance")) {
-    return "Performance and credit facts";
-  }
-  if (canonical.includes("optimization")) return "Opportunity facts";
-  if (canonical.includes("source_record_snapshot")) return "Document snapshots";
-  if (canonical.includes("change_order")) return "Change-order facts";
-  if (canonical.includes("page_text")) return "Document page text";
-  if (canonical.includes("contract_term")) return "Commercial term facts";
-  return "Canonical facts";
-}
-
-function plainSubstrateLabel(substrate: string) {
-  if (substrate.includes("contract_360")) return "Contract detail";
-  if (substrate.includes("vendor_contract_portfolio"))
-    return "Vendor portfolio";
-  if (substrate.includes("application_scope")) return "Application scope";
-  if (substrate.includes("spend_monthly")) return "Spend trend";
-  if (substrate.includes("performance")) return "Performance view";
-  if (substrate.includes("action_candidate")) return "Optimize action queue";
-  if (substrate.includes("page_text")) return "Document page text";
-  if (substrate.includes("change_order")) return "Change-order facts";
-  if (substrate.includes("claim_card")) return "Executive claim cards";
-  if (substrate.includes("vendor_position")) return "Vendor position";
-  if (substrate.includes("source_page_storyline")) return "Page storyline";
-  if (substrate.includes("ava_grounding")) return "aVa grounding";
-  return "Source view";
-}
-
 function titleFromSourceKey(value: string): string {
   return value
     .replace(/[_-]+/g, " ")
@@ -6465,56 +6066,6 @@ function Fact({ label, value }: { label: string; value: string }) {
     <div className="sw-v2-fact">
       <span>{label}</span>
       <b>{value}</b>
-    </div>
-  );
-}
-
-function ContractScopeTable({
-  scopeRows,
-}: {
-  scopeRows: readonly SourceContractApplicationScopeRow[];
-}) {
-  if (scopeRows.length === 0) {
-    return (
-      <div className="sw-v2-empty-state">
-        <b>No scoped applications loaded for this contract.</b>
-        <p>
-          Source can show the contract header, but it will not infer which
-          applications, services, or business functions are covered.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="sw-v2-table">
-      <div className="sw-v2-table-head sw-v2-scope-row">
-        <span>Application / service</span>
-        <span>Business function</span>
-        <span>Criticality</span>
-        <span>Hosting</span>
-        <span>Run cost</span>
-      </div>
-      {scopeRows.slice(0, 12).map((row) => (
-        <div
-          key={`${row.contract_id}:${row.application_ref}`}
-          className="sw-v2-table-row sw-v2-scope-row"
-        >
-          <span>
-            <b>{row.application_name}</b>
-            <small>{row.application_ref}</small>
-          </span>
-          <span>{row.business_function ?? "Not established"}</span>
-          <span>{row.criticality ?? "Not established"}</span>
-          <span>{row.hosting_model ?? "Not established"}</span>
-          <span>{money(numberFromDb(row.annual_run_cost))}</span>
-        </div>
-      ))}
-      {scopeRows.length > 12 ? (
-        <div className="sw-v2-table-foot">
-          Showing 12 of {scopeRows.length} scoped rows.
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -6702,6 +6253,97 @@ function coverageForContract(
   );
 }
 
+/**
+ * Detail rows are the authoritative counts for the selected contract. The
+ * portfolio projection can legitimately be thinner, but its zeroes must not
+ * make a loaded contract look empty on Evidence or Anatomy.
+ */
+export function contractCoverageWithDetailLanes(
+  coverage: ReturnType<typeof coverageForContract>,
+  contract: SourceContract360Row,
+  scopeRows: readonly SourceContractApplicationScopeRow[],
+  vm: SourceWorkspaceVM,
+): SourceContractEvidenceCoverageRow | null {
+  // The detail payload can be populated during the final hydration transition
+  // before the status flag flips to ready. The rows themselves are the
+  // authority for the selected contract; do not let a lagging status label
+  // expose a stale portfolio zero.
+  const detail = vm.detail;
+  const opportunityCount =
+    detail?.optimizationOpportunitySet?.opportunities.length ??
+    vm.opportunityView?.opportunities.length ??
+    0;
+  // Detail is authoritative only when there is a detail payload to be
+  // authoritative with. With none loaded, `?? 0` would hand every lane a zero
+  // and a fully loaded contract would render empty — the same stale-zero
+  // failure this function exists to prevent, arriving from the other side.
+  const detailCounts = {
+    // Scope rows and opportunities arrive outside the detail payload, so they
+    // stand on their own presence rather than on the payload's.
+    ...(scopeRows.length > 0 ? { scope_rows: scopeRows.length } : {}),
+    ...(opportunityCount > 0 ? { opportunity_rows: opportunityCount } : {}),
+    ...(detail
+      ? {
+          spend_rows: detail.spendMonths.length,
+          performance_rows: detail.performancePeriods.length,
+          document_page_text_rows: detail.docExtractions.length,
+        }
+      : {}),
+  };
+  const detailActualSpend = (detail?.spendMonths ?? []).reduce(
+    (sum, row) => sum + (numberFromDb(row.actual_spend) ?? 0),
+    0,
+  );
+  const detailCommittedSpend = (detail?.spendMonths ?? []).reduce(
+    (sum, row) => sum + (numberFromDb(row.committed_amount) ?? 0),
+    0,
+  );
+  const hasDetailLane = Object.values(detailCounts).some((count) => count > 0);
+  if (!coverage && !hasDetailLane) return null;
+
+  const base: SourceContractEvidenceCoverageRow = coverage ?? {
+    tenant_key: contract.tenant_key,
+    contract_id: contract.contract_id,
+    vendor_ref: contract.vendor_ref,
+    vendor_name: contract.vendor_name,
+    vendor_category: contract.vendor_category,
+    contract_archetype: contract.contract_archetype,
+    contract_name: contract.contract_name,
+    spend_rows: 0,
+    actual_spend_usd: 0,
+    committed_spend_usd: 0,
+    performance_rows: 0,
+    breach_rows: 0,
+    credit_calculated_usd: 0,
+    credit_claimed_usd: 0,
+    credit_recovered_usd: 0,
+    unclaimed_credit_usd: 0,
+    opportunity_rows: 0,
+    candidate_amount_usd: 0,
+    finance_confirmation_required_rows: 0,
+    opportunities_with_evidence: 0,
+    scope_rows: 0,
+    critical_scope_rows: 0,
+    document_page_text_rows: 0,
+    change_order_rows: 0,
+    coverage_state: "partial",
+    blocker_if_missing: null,
+    evidence_basis_json: null,
+    load_run_id: null,
+  };
+
+  return {
+    ...base,
+    ...detailCounts,
+    actual_spend_usd:
+      detailActualSpend > 0 ? detailActualSpend : base.actual_spend_usd,
+    committed_spend_usd:
+      detailCommittedSpend > 0
+        ? detailCommittedSpend
+        : base.committed_spend_usd,
+  };
+}
+
 function storylineBySurface(
   portfolio: SourceWorkspacePortfolioData,
   surfaceKey: string,
@@ -6768,7 +6410,15 @@ export function focusedContractSet(
         actionRows,
         claimRows,
         depthScore,
-        reason: contractFocusReason(contract, coverage, actionRows, claimRows),
+        reason: contractFocusReason(
+          contract,
+          coverage,
+          actionRows,
+          claimRows,
+          portfolio.impact.actionCandidates.filter(
+            (row) => row.contract_id === contract.contract_id,
+          ),
+        ),
       };
     })
     .sort(
@@ -6788,14 +6438,22 @@ export function focusedContractSet(
     }
   }
   const selectedIds = new Set(rows.map((row) => row.contract.contract_id));
-  const remainder = portfolio.contracts.filter(
-    (contract) => !selectedIds.has(contract.contract_id),
+  /*
+   * Remainder is taken from `ranked`, the same population the depth count is
+   * taken from. Taking it from `portfolio.contracts` instead counted the
+   * register while the depth count counted the register plus supplemental
+   * rows, so the two figures were rendered in one sentence and summed to more
+   * than either population contained.
+   */
+  const remainder = ranked.filter(
+    (row) => !selectedIds.has(row.contract.contract_id),
   );
   return {
     rows,
+    populationCount: contractPopulations(portfolio).contractRecordCount,
     remainderCount: remainder.length,
     remainderAnnualValue: remainder.reduce(
-      (sum, contract) => sum + (numberFromDb(contract.annual_value) ?? 0),
+      (sum, row) => sum + (numberFromDb(row.contract.annual_value) ?? 0),
       0,
     ),
     depthReadyCount: ranked.filter((row) => row.depthScore > 0).length,
@@ -6808,6 +6466,24 @@ function countByContract(contractIds: readonly string[]) {
     counts.set(contractId, (counts.get(contractId) ?? 0) + 1);
   }
   return counts;
+}
+
+/**
+ * Consumption as a share of the amount that can actually be consumed.
+ *
+ * One definition, used by every surface that reports utilization, so the tab
+ * summary and the consumption chart cannot disagree about the same contract.
+ * Returns null rather than 0 when there is no commitment to measure against —
+ * an unknown ratio is not a zero one.
+ */
+export function utilizationAgainstCommitment(
+  consumed: number | null | undefined,
+  commitment: number | null | undefined,
+): number | null {
+  if (consumed == null || commitment == null) return null;
+  if (!Number.isFinite(consumed) || !Number.isFinite(commitment)) return null;
+  if (commitment <= 0) return null;
+  return Math.round((consumed / commitment) * 100);
 }
 
 function contractDepthScore(
@@ -6834,11 +6510,17 @@ function contractFocusReason(
   coverage: SourceContractEvidenceCoverageRow | null,
   actionRows: number,
   claimRows: number,
+  actions: readonly SourceContractActionCandidateRow[],
 ) {
+  if (
+    claimRows > 0 &&
+    actions.length > 0 &&
+    actions.every((row) => numberFromDb(row.candidate_amount_usd) == null)
+  ) return `${claimRows} claim rows · sizing not established`;
   if (claimRows > 0)
-    return `${claimRows} executive claim card${claimRows === 1 ? "" : "s"}`;
+    return `${claimRows} evidenced claim${claimRows === 1 ? "" : "s"}`;
   if (actionRows > 0)
-    return `${actionRows} action row${actionRows === 1 ? "" : "s"}`;
+    return `${actionRows} governed action${actionRows === 1 ? "" : "s"}`;
   if ((coverage?.unclaimed_credit_usd ?? 0) > 0)
     return "Unclaimed credit evidence";
   if ((coverage?.performance_rows ?? 0) > 0)
@@ -6849,7 +6531,7 @@ function contractFocusReason(
   if ((coverage?.scope_rows ?? 0) > 0) return "Application scope mapped";
   if (numberFromDb(contract.actual_annual_spend) != null)
     return "Actual spend loaded";
-  return "Header-only portfolio signal";
+  return "Register entry only — no evidence loaded";
 }
 
 export function focusedVendorSet(
@@ -7028,8 +6710,7 @@ function vendorsWithImpactEvidence(
         vendor_category: existing.vendor_category ?? vendorCategory,
         contract_count: Math.max(existing.contract_count, contractRefs.length),
         annual_value: numberFromDb(existing.annual_value) ?? annualValue,
-        total_committed_value:
-          numberFromDb(existing.total_committed_value) ?? annualValue,
+        total_committed_value: numberFromDb(existing.total_committed_value),
         contract_refs: contractRefs,
         vendor_refs: uniqueRefs([
           existing.vendor_ref,
@@ -7046,7 +6727,7 @@ function vendorsWithImpactEvidence(
       vendor_category: vendorCategory,
       contract_count: contractRefs.length,
       annual_value: annualValue,
-      total_committed_value: annualValue,
+      total_committed_value: null,
       auto_renew_contracts: 0,
       next_end_date: null,
       contract_refs: contractRefs,
@@ -7056,11 +6737,7 @@ function vendorsWithImpactEvidence(
 
   for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
     const contract = contractsById.get(coverage.contract_id);
-    const annualValue =
-      numberFromDb(contract?.resolved_annual_value) ??
-      numberFromDb(contract?.annual_value) ??
-      numberFromDb(coverage.candidate_amount_usd) ??
-      numberFromDb(coverage.actual_spend_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: coverage.contract_id,
       vendorName: coverage.vendor_name || contract?.vendor_name || "",
@@ -7078,10 +6755,7 @@ function vendorsWithImpactEvidence(
 
   for (const action of portfolio.impact?.actionCandidates ?? []) {
     const contract = contractsById.get(action.contract_id);
-    const annualValue =
-      numberFromDb(contract?.resolved_annual_value) ??
-      numberFromDb(contract?.annual_value) ??
-      numberFromDb(action.candidate_amount_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: action.contract_id,
       vendorName: action.vendor_name || contract?.vendor_name || "",
@@ -7095,10 +6769,7 @@ function vendorsWithImpactEvidence(
 
   for (const claim of portfolio.impact?.claimCards ?? []) {
     const contract = contractsById.get(claim.contract_id);
-    const annualValue =
-      numberFromDb(contract?.resolved_annual_value) ??
-      numberFromDb(contract?.annual_value) ??
-      numberFromDb(claim.candidate_amount_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: claim.contract_id,
       vendorName: claim.vendor_name || contract?.vendor_name || "",
@@ -7209,9 +6880,6 @@ export function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
 }
 
 export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
-  const contractsById = new Map(
-    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
-  );
   const groups = new Map<
     string,
     {
@@ -7260,29 +6928,31 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     groups.set(categoryKey, current);
   };
 
+  const seenContractIds = new Set<string>();
   for (const contract of portfolio.contracts) {
+    seenContractIds.add(contract.contract_id);
     addArchetypeContract({
       category: contractArchetype(contract) ?? contract.vendor_category,
       contractId: contract.contract_id,
       vendorRef: contract.vendor_ref,
       vendorName: contract.vendor_name,
       annualValue:
-        numberFromDb(contract.resolved_annual_value) ??
-        numberFromDb(contract.annual_value),
+        contractBookAnnualValueForContract(contract),
     });
   }
 
-  for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
-    if (contractsById.has(coverage.contract_id)) continue;
+  // Canonical depth can be loaded before its identifier is bridged into the
+  // portfolio register. Show that declared taxonomy in the mix without
+  // pretending it belongs to the register's annual-value denominator.
+  for (const row of portfolio.archetypeCoverageRows ?? []) {
+    if (seenContractIds.has(row.contract_id)) continue;
+    seenContractIds.add(row.contract_id);
     addArchetypeContract({
-      category: coverage.contract_archetype ?? coverage.vendor_category,
-      contractId: coverage.contract_id,
-      vendorRef: coverage.vendor_ref,
-      vendorName: coverage.vendor_name,
-      annualValue:
-        numberFromDb(coverage.committed_spend_usd) ??
-        numberFromDb(coverage.actual_spend_usd) ??
-        numberFromDb(coverage.candidate_amount_usd),
+      category: row.contract_archetype,
+      contractId: row.contract_id,
+      vendorRef: row.vendor_ref,
+      vendorName: row.vendor_name,
+      annualValue: row.annual_value,
     });
   }
 
@@ -7315,19 +6985,22 @@ export function vendorArchetypeCoverage(
       declaredRegisterIds.add(contract.contract_id);
     }
   }
+  const considerDeclared = (
+    contractId: string,
+    archetype: string | null | undefined,
+  ) => {
+    if (!isDeclaredArchetype(archetype)) return;
+    if (registerIds.has(contractId)) declaredRegisterIds.add(contractId);
+    else declaredSupplementalIds.add(contractId);
+  };
+  for (const row of portfolio.archetypeCoverageRows ?? []) {
+    considerDeclared(row.contract_id, row.contract_archetype);
+  }
   for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
-    if (
-      !isDeclaredArchetype(
-        coverage.contract_archetype ?? coverage.vendor_category,
-      )
-    ) {
-      continue;
-    }
-    if (registerIds.has(coverage.contract_id)) {
-      declaredRegisterIds.add(coverage.contract_id);
-    } else {
-      declaredSupplementalIds.add(coverage.contract_id);
-    }
+    considerDeclared(
+      coverage.contract_id,
+      coverage.contract_archetype ?? coverage.vendor_category,
+    );
   }
   const totalContracts =
     portfolio.contracts.length + declaredSupplementalIds.size;
@@ -7443,6 +7116,24 @@ function focusedActionSet(
   };
 }
 
+function remainingActionSummary(
+  portfolio: SourceWorkspacePortfolioData,
+  actionSet: FocusedActionSet,
+): string {
+  const sizedRemainder = portfolio.impact.actionCandidates.filter(
+    (row) => numberFromDb(row.candidate_amount_usd) != null,
+  ).length - actionSet.rows.filter(
+    (row) => numberFromDb(row.candidate_amount_usd) != null,
+  ).length;
+  if (sizedRemainder === 0) {
+    return `${actionSet.remainderCount} further ${actionSet.remainderCount === 1 ? "action awaits" : "actions await"} sizing.`;
+  }
+  const sizedSummary = `${actionSet.remainderCount} further ${actionSet.remainderCount === 1 ? "action includes" : "actions include"} ${sizedRemainder} sized ${sizedRemainder === 1 ? "candidate" : "candidates"} totaling ${money(actionSet.remainderAmount)}.`;
+  return sizedRemainder === actionSet.remainderCount
+    ? sizedSummary
+    : `${sizedSummary} The rest await sizing.`;
+}
+
 function formatFinanceState(state: string | null | undefined) {
   if (!state) return "Not established";
   return state.replace(/_/g, " ");
@@ -7478,12 +7169,6 @@ function optimizeSubtabTitle(subtab: string) {
   if (subtab === "By type") return "Action rows grouped by type";
   if (subtab === "By contract") return "Contract-level action rows";
   return "What to ask first";
-}
-
-function graphSubtabTitle(subtab: string) {
-  if (subtab === "Volume") return "Loaded row volume by substrate";
-  if (subtab === "Mapping spine") return "Source system to product mapping";
-  return "Contract at the center; systems, facts, and actions around it";
 }
 
 export function topVendors(
@@ -7571,10 +7256,7 @@ function withContractBackedVendorMetrics(
   }
   const annualValue = linkedContracts.reduce(
     (sum, contract) =>
-      sum +
-      (numberFromDb(contract.resolved_annual_value) ??
-        numberFromDb(contract.annual_value) ??
-        0),
+      sum + (contractBookAnnualValueForContract(contract) ?? 0),
     0,
   );
   const totalCommittedValue = linkedContracts.reduce(
@@ -7631,12 +7313,8 @@ export function vendorLinkedContracts(
   }
   return [...rows.values()].sort(
     (a, b) =>
-      (numberFromDb(b.resolved_annual_value) ??
-        numberFromDb(b.annual_value) ??
-        0) -
-      (numberFromDb(a.resolved_annual_value) ??
-        numberFromDb(a.annual_value) ??
-        0),
+      (contractBookAnnualValueForContract(b) ?? 0) -
+      (contractBookAnnualValueForContract(a) ?? 0),
   );
 }
 
@@ -7724,15 +7402,7 @@ function uniqueRefs(refs: readonly string[]) {
 }
 
 function portfolioAnnualValue(portfolio: SourceWorkspacePortfolioData) {
-  const snapshotValue = numberFromDb(
-    portfolio.v4Snapshot.executivePortfolio.annualValue,
-  );
-  if (snapshotValue && snapshotValue > 0) return snapshotValue;
-  const vendorValue = portfolio.vendors.reduce(
-    (sum, vendor) => sum + (numberFromDb(vendor.annual_value) ?? 0),
-    0,
-  );
-  return vendorValue > 0 ? vendorValue : null;
+  return contractBookAnnualValue(portfolio);
 }
 
 function vendorShare(
@@ -7797,7 +7467,7 @@ function subheadFor(
   if (page === "Coverage") {
     return vendor
       ? `${vendor.contract_count} contracts / ${money(numberFromDb(vendor.annual_value))} recorded annual value.`
-      : `${portfolio.contracts.length} register contracts · ${portfolio.impact.evidenceCoverage.length} contracts with depth rows · ${vendorArchetypeCoverage(portfolio).unmappedCount} register headers still need archetype mapping.`;
+      : coverageScopeLine(portfolio);
   }
   if (page === "Contracts" && contract) {
     return `${contract.contract_id} / ${money(numberFromDb(contract.annual_value))} annual value / expiry ${fmtDate(contract.end_date)}.`;
@@ -7831,6 +7501,72 @@ function commandHeadline(
   return `${tenantName || "Source"} contract actions, governed by evidence.`;
 }
 
+/**
+ * Clauses in a stored missing-evidence summary, keyed by the facet they name.
+ *
+ * The summary is assembled in SQL, which has no view of the archetype model, so
+ * it lists every empty lane as missing. On a contract type that does not carry
+ * service levels, "performance rows missing" then contradicts the Performance
+ * tab's own statement that the lane is not required — the same fact described
+ * as a gap on one tab and as not applicable on another.
+ */
+const FACET_CLAUSE_PATTERNS: readonly {
+  readonly facet: ContractFacetKey;
+  readonly test: RegExp;
+}[] = [
+  { facet: "Performance", test: /performance|sla|service[- ]credit/i },
+];
+
+/**
+ * Drop clauses that name a facet this contract's archetype does not require.
+ * Returns null when nothing survives, so the caller falls through to its own
+ * wording rather than rendering an empty caveat.
+ */
+export function withoutNotRequiredFacets(
+  vm: SourceWorkspaceVM,
+  summary: string | null | undefined,
+): string | null {
+  const text = summary?.trim();
+  if (!text) return null;
+  const kept = text
+    .split(";")
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.length > 0)
+    .filter((clause) =>
+      FACET_CLAUSE_PATTERNS.every(
+        ({ facet, test }) =>
+          !test.test(clause) || contractFacetIsRequired(vm, facet),
+      ),
+    );
+  return kept.length > 0 ? kept.join("; ") : null;
+}
+
+/**
+ * The Coverage page scope line.
+ *
+ * Register headers and contracts with evidence are two collections, and they
+ * join on contract_id. Putting the two totals side by side reads as "83 of the
+ * 230" whenever they happen to appear together, which is only true to the
+ * extent the identifiers actually match. Say how many join.
+ */
+export function coverageScopeLine(
+  portfolio: SourceWorkspacePortfolioData,
+): string {
+  const populations = contractPopulations(portfolio);
+  const parts = [
+    `${populations.registerCount} contracts in the book`,
+    `${populations.declaredInRegisterCount} with a declared archetype`,
+  ];
+  if (populations.unjoinedEvidenceCount > 0) {
+    parts.push(
+      `${populations.unjoinedEvidenceCount} of ${populations.evidenceContractCount} contracts with loaded evidence are not in this book`,
+    );
+  } else {
+    parts.push(`${populations.evidenceContractCount} with loaded evidence`);
+  }
+  return `${parts.join(" · ")}.`;
+}
+
 export function contractTabNarrative(
   tab: string,
   vm: SourceWorkspaceVM,
@@ -7841,6 +7577,15 @@ export function contractTabNarrative(
     | SourceWorkspacePortfolioData["impact"]["claimCards"][number]
     | undefined,
 ) {
+  if (tab === "Performance" && !contractFacetIsRequired(vm, "Performance")) {
+    return {
+      headline: "Service performance is not part of this contract archetype.",
+      body: contractFacetReason(vm, "Performance"),
+      provenance: "Archetype applicability · governed education model",
+      blocker:
+        "No SLA, service-credit, or performance rows are expected unless the executed agreement declares a service-level obligation.",
+    };
+  }
   const governedTab = contractTabIntelligenceFor(
     tab,
     vm.detail?.contractTabIntelligence ?? [],
@@ -7850,17 +7595,31 @@ export function contractTabNarrative(
       headline: governedTab.headline,
       body: [
         governedTab.allowed_executive_statement,
-        governedTab.supporting_evidence_summary
+        // The basis line belongs beside the figures it supports. Story's own
+        // briefing card renders it from the same summary, so appending it here
+        // put the identical clause on the tab twice.
+        governedTab.supporting_evidence_summary && tab !== "Story"
           ? `Evidence basis: ${governedTab.supporting_evidence_summary}.`
           : null,
       ]
         .filter(Boolean)
         .join(" "),
-      provenance: `${tab} intelligence · ${governedTab.review_status}`,
-      blocker:
-        governedTab.missing_evidence_summary ??
-        governedTab.action_prompt ??
-        "Stay within the governed tab evidence.",
+      provenance: `${tab} intelligence · ${reviewStatusInWords(governedTab.review_status)}`,
+      /*
+       * A blocker is a missing input, not an authoring note.
+       *
+       * `action_prompt` is authored as an instruction to whatever renders the
+       * tab — "Show declared relationships and the boundary", "Render evidence
+       * lanes only when rows exist", "Keep contract value, actual spend,
+       * invoiced, paid and finance-confirmed outcomes in separate ledgers".
+       * Substituting it for a missing-evidence summary put those directives in
+       * front of an executive under the label "Decision consequence", on every
+       * tab that had nothing missing. Where a tab records no missing input,
+       * there is no blocker, and saying so is the honest reading.
+       */
+      blocker: asSentence(
+        withoutNotRequiredFacets(vm, governedTab.missing_evidence_summary),
+      ),
     };
   }
   if (tab === "Scope") {
@@ -7973,6 +7732,19 @@ export function contractTabNarrative(
       provenance: "Evidence basis",
       blocker:
         "No document page-span claim is allowed unless page text and source document IDs are loaded.",
+      };
+  }
+  if (tab === "Education" && vm.contractEducation) {
+    const next = vm.contractEducation.steps.find((step) => step.state === "next");
+    return {
+      headline: vm.contractEducation.headline,
+      body: vm.contractEducation.body,
+      provenance: `${vm.contractEducation.archetypeLabel} guide · ${vm.contractEducation.stateLabel}`,
+      // `focus` and `body` are the same paragraph on this record, so falling
+      // back to it printed the card's own body again, immediately beneath
+      // itself. With every applicable step loaded there is no next move, and
+      // saying nothing is the accurate reading.
+      blocker: next ? `${next.title} next: ${next.question}` : null,
     };
   }
   if (tab === "Optimize") {
@@ -8049,18 +7821,18 @@ function contractStoryHeadline(
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
-  const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
   if (opportunityTotal > 0) {
     return `${vendor}: ${money(opportunityTotal)} of governed optimization levers are ready to work.`;
   }
   if (annualValue != null && actualSpend != null && annualValue > actualSpend) {
-    return `${vendor}: commitment is ahead of observed use.`;
+    return `${vendor}: annual contract value is above observed spend.`;
   }
   if (annualValue != null && actualSpend != null && actualSpend > annualValue) {
-    return `${vendor}: spend is running above the recorded commitment.`;
+    return `${vendor}: spend is running above the recorded annual contract value.`;
+  }
+  if (annualValue == null) {
+    return `${vendor}: annual contract value is not established; action depends on loaded evidence.`;
   }
   return `${vendor}: contract header is governed; action depends on loaded evidence.`;
 }
@@ -8071,10 +7843,8 @@ function contractStoryBody(
   scopeRows: readonly SourceContractApplicationScopeRow[],
   vm: SourceWorkspaceVM,
 ) {
-  const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
@@ -8083,7 +7853,12 @@ function contractStoryBody(
     ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
     : 0;
   const phrases = [
-    `${contract.contract_name} carries ${money(annualValue)} in annual value`,
+    annualValue != null
+      ? `${contract.contract_name} carries ${money(annualValue)} in annual value`
+      : `${contract.contract_name} has no established annual contract value`,
+    annualValue == null && committedSpend != null
+      ? `${money(committedSpend)} committed spend`
+      : null,
     actualSpend != null
       ? `${money(actualSpend)} of observed annual spend`
       : null,

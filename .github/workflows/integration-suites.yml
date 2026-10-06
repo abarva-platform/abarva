@@ -1,0 +1,381 @@
+name: Integration suites
+
+# `src/__tests__/integration/source` held 92 suites no workflow ran. Wiring it
+# left the obvious question unanswered, so the whole tree was measured through
+# the census resolver rather than by reading YAML. On `2a1a87dd0`:
+#
+#   467 integration suites exist · 172 were reached by a workflow · 295 by
+#   nothing, across 21 leaf directories with zero coverage.
+#
+# Each dark directory was then run once. The ten named below passed in full,
+# with no exclusions — 99 suites, 2,969 assertions, of which 75 suites ran in no
+# workflow before this file existed. They are wired here.
+#
+# The rest failed and are deliberately NOT wired: a red directory is wired by
+# fixing it, or by quarantining named suites with named reasons the way
+# `source-integration.yml` does. Adding it to a green command would turn this
+# job red on arrival and teach everyone to ignore it. Their measured failures
+# are recorded as their own backlog items.
+#
+# TWO THINGS THAT LOOK RIGHT AND REGISTER NOTHING, both already paid for here:
+#
+#   1. A wrapper script that shells out to jest. The repository's
+#      "changed integration suites have a CI owner" gate counts a suite as
+#      registered only when a workflow command mentions a test runner AND names
+#      the suite or a containing directory. A wrapper satisfies neither.
+#   2. A trailing slash on the path. The gate requires the path to be followed
+#      by whitespace or end-of-command, so `…/nexus/` stops matching.
+#
+# A jest path argument is a regex tested against the full path, so naming a
+# directory also runs every directory whose name it prefixes — `…/agent` runs
+# `…/agents`, which is red. `integration-directory-ci-coverage.test.ts` holds
+# all three of these, and refuses a new integration directory that no workflow
+# reaches.
+#
+# 2026-09-19 · five more directories wired. `architecture`, `deployment`,
+# `knowledge`, `tenants` and `demo` were each held out of CI by a handful of
+# assertions — six in total across 38 suites, against 1,105 that were passing
+# and being collected by nothing. All six were stale contracts rather than
+# product defects, and each was repaired by asserting the property the literal
+# stood for rather than by updating the literal:
+#
+#   · a module-path string that had never named a real file
+#   · `FROM node:24`, unmatchable since the base moved behind an ARG
+#   · "not imported by app routes yet" — a migration snapshot that went red
+#     when the migration it was waiting for succeeded
+#   · a hand-typed tenant count, which AGENTS.md forbids outright
+#   · a sign-in layout that had since gained a second mode
+#
+# Wiring `demo` also selects three loose `demo-*.test.ts` files at the
+# integration root, for the regex reason in the paragraph above. They are
+# enumerated in the collision case and all three pass.
+
+# 2026-09-19 · `setup` and `agent` wired, and they are wired DIFFERENTLY on
+# purpose. `setup` is named as a directory like the rest. `agent` is named as a
+# single FILE path, because `src/__tests__/integration/agent` as a jest regex
+# also selects `src/__tests__/integration/agents/` — a different directory, five
+# of whose eight suites are red — and the loose root file
+# `agent-column-agent-answer.test.ts`. The header paragraph above described that
+# collision as the shape to watch for; this is it, arriving for real.
+#
+# A colliding FILE is loud: it runs, it is enumerated, and somebody measured it.
+# A colliding DIRECTORY is silent, because it drags in every suite written there
+# afterwards as well. So the file form is used until `agents` is green, and
+# `integration-directory-ci-coverage.test.ts` now refuses any wired directory
+# name that prefixes another integration directory.
+#
+# Between them, `setup` (2 suites) and `agent` (1 suite) held 5 red test cases
+# and 122 passing ones out of CI. All five were stale contracts rather than
+# product defects: three asserted `src/proxy.ts` by reading it as TEXT and
+# matching redirect targets with their surrounding quote characters, and two
+# asserted literal copy — a tenant tier that stopped being the only rich one,
+# and an editorial title no template has ever carried.
+#
+# THE RUNNER AND THE GATE DO NOT AGREE, which is why the eleven loose root
+# suites below are ALSO named one by one even though the directory patterns
+# already run them:
+#
+#   · jest matches a path argument as a regex against the full path, so
+#     `…/integration/demo` SELECTS `…/integration/demo-code-sign-in-panel.test.tsx`.
+#   · the visibility gate registers a suite only by its exact path or by an
+#     ANCESTOR DIRECTORY of it. `…/integration/demo` is not an ancestor
+#     directory of that file — the only ancestor is the integration root,
+#     which no command names.
+#
+# So a loose root suite selected by a directory pattern RUNS in CI and is
+# simultaneously reported as having no CI owner. It surfaced when this change
+# edited one of them and the gate blocked the PR for a suite it was running.
+# The eight `programs-*` files were already in that state before this change:
+# running since the directories were first wired, and unregistered the whole
+# time, so anyone editing one would have been blocked by a gate that was
+# wrong. Naming them changes nothing about what executes; it makes the two
+# sets agree. `integration-directory-ci-coverage.test.ts` now asserts that
+# agreement directly, so the next one fails locally instead of in CI.
+
+# 2026-09-19 · `intelligence` wired WITH A QUARANTINE, the first directory in
+# this workflow to need one. 33 suites, 26 red, 133 failing assertions — and the
+# triage found ONE cause, not 133 problems. 131 of the 133 are a source file
+# read as TEXT that does not exist: 107 ENOENT from `readFileSync` and 24
+# `existsSync(...) === true` on a path that is gone. Every one of them points at
+# `src/components/intelligence/` or a retired `src/app/intelligence/*` route
+# tree, and no file they name exists anywhere in the repository — the surface
+# was rebuilt as `src/components/intelligence-advisory/AdvisoryIntelligencePage`
+# at `src/app/(maestro)/intelligence/page.tsx`. So those 25 suites are stale
+# contracts for a surface that was deliberately replaced, not defects in
+# shipping code, and they were never governed coverage of behaviour even when
+# they were green.
+#
+# The remaining 2 failures were in a suite that DOES describe live code, and it
+# was repaired rather than excluded: one assertion matched a source literal
+# together with its quote characters, and one named copy absent from the file it
+# read — whose five sibling NEGATIVE assertions therefore passed vacuously,
+# against copy that exists nowhere in `src/`.
+#
+# Wiring this directory adds 8 suites and 131 assertions to CI. It does NOT add
+# the 609 that "pass" inside the red suites: a quarantined suite runs nowhere,
+# and reporting its passing assertions as coverage would be the same overstating
+# this backlog exists to refuse.
+#
+# Exclusions are named, with reasons, in
+# scripts/quality/intelligence-integration-quarantine.json. That list watches
+# the retired paths for RETURN: restore any file it names and
+# check:intelligence-integration-quarantine fails, so the carve-out cannot
+# outlive its reason. Each entry also DECLARES the modules it imports and what
+# happens to each when it is cleared; the check recomputes that against the
+# tree, so a module that gains a product importer or a live sibling test flips
+# class and fails. Batch 1 deleted eight modules with their tests because
+# nothing else reached them; batch 2's measurement found two that ARE reached,
+# by suites this same workflow runs.
+#
+# 2026-09-19 · `admin` wired WITH A QUARANTINE, the second directory here to
+# need one. 51 suites (46 plus a `data/` subdirectory of 5), of which exactly
+# one file was reached by any workflow: production-readiness-gate.yml names
+# production-readiness-validator.test.ts. Running the directory found 12 red
+# and 24 failing assertions, and backlog item T-032 found two causes rather
+# than 24 problems.
+#
+# 21 of the 24 asserted on copy a person reads, or on a marker inside a source
+# file, and all of it had been rewritten on purpose while the contract
+# underneath did not move: a route re-pointed at another surface (its marker
+# attribute now appears nowhere in `src/` outside test files), four navigation
+# panels that shipped with real routes, and internal release labels taken out
+# of the sentences shown beside disabled controls. Matching a release label
+# inside user copy tests the wording and not the gate - it fails on a rewrite
+# that keeps the control and passes on any rewrite that keeps the words - so
+# each of those now asserts an id, a status or a navigation entry instead. The
+# 22nd cluster was a defect in a check rather than in the code it checks: the
+# font-family sweep read the fragment before a stack's first inner quote, so
+# all 11 violations it reported were truncation artifacts and every verdict it
+# gave was about a fragment. All 22 were repaired, not excluded.
+#
+# The 2 that remain are excluded, and neither is a stale contract. Each found
+# something real and each needs a product decision: 643 non-canonical hex
+# literals in the admin tree (U-008), and two merged decisions that disagree on
+# whether admin chrome says Admin or Setup (U-009).
+#
+# Wiring this directory adds 49 suites to CI. It does NOT add the assertions
+# that pass inside the 2 excluded suites: a quarantined suite runs nowhere, and
+# reporting its passing assertions as coverage would be the same overstating
+# this backlog exists to refuse.
+#
+# Exclusions are named, with reasons and owners, in
+# scripts/quality/admin-integration-quarantine.json. Unlike the Intelligence
+# list, these reasons are live defects rather than absent files, so
+# check:admin-integration-quarantine RE-RUNS each excluded suite and fails if
+# one passes. The carve-out cannot outlive its reason.
+
+# 2026-09-19 · the loose integration-root suites were measured directly instead
+# of naming `src/__tests__/integration`, because that root path would also run
+# every red subdirectory under it. Current measurement: 45 root files exist; 22
+# were already registered by exact file paths or directory-regex collisions; of
+# the remaining 23, 13 pass and are named explicitly below, while 10 are still
+# red and stay out of the green job. They are not moved here: their ownership is
+# mixed across admin, auth, Atlas, shell, evidence, portfolio, strategic moves
+# and Tower contracts, and moving root files into nominal directories would be a
+# structure refactor rather than a CI ownership fix.
+#
+# 2026-09-23 · that paragraph was the ONLY record of the carve-out, and a
+# paragraph counting exclusions cannot fail. Enumerating by exact path inverts
+# this directory's default to EXCLUDED, so a root file nobody adds below is
+# silently unrun — which is how five of them, one red for real content loss on
+# a governed answer surface, stayed invisible. The exclusions are now named,
+# with a failing case, a reason, an owner and a triage verdict, in
+# scripts/quality/integration-root-quarantine.json, and
+# check:integration-root-quarantine fails three ways the comment could not: a
+# root file that is unrun and undeclared, a declared file that is run again,
+# and a declared suite that PASSES when re-run. Backlog item 26.
+
+# 2026-09-25 · the root carve-out is EMPTY. The last three declared entries were
+# repaired and wired here, so `integration-root-quarantine.json` holds no suites
+# and its ceiling is 0: every root-level file under this directory is now run by
+# this command. All three carried verdict `update`, all three were stale
+# contracts rather than product defects, and each had gone stale because a
+# deliberate product change updated its siblings and not it — which is what an
+# unrun file buys you.
+#
+#   · atlas-ask-route.test.ts asserted `- Evidence:` / `- Next:` labelled lines.
+#     Correct when written; `/tower` left the compaction set ONE DAY later under
+#     VOICE.STRAT-2026-05-10f, which calls that template "a Brief violation by
+#     construction". Rewritten to assert the substance the labels stood for.
+#   · marketing-nav-dropdowns.test.tsx asserted a grouped `Platform ▾` /
+#     `Company ▾` nav that #2658 retired for a narrow launch. Rewritten as a
+#     guard on the gating decision: 9 cases that described an absent nav became
+#     cases that fail if it returns by default.
+#   · sign-in-shell.test.tsx expected the invite Password field on first paint.
+#     `DemoCodeSignIn` has since gained its own email/demo toggle defaulting to
+#     email, so it now takes a click. The case asserts both gates in order.
+#
+# TWO ASSERTIONS WERE MEASURED AND NOT KEPT, which is the part worth reading.
+# Inverting the Atlas assertions to "the labelled template must not appear" is
+# the obvious repair and it is VACUOUS: the route runs
+# `assertVisibleAnswerContract` and answers 422 on a scaffolding label, so two
+# separate mutations that put the labels back both failed the status assertion
+# instead and never reached the inverted one. The same holds for "the internal
+# agent name never reaches the reader" — defended by the shared shaper's brand
+# scrub, redundantly again in the Atlas renderer, and a third time by the same
+# 422. What replaced them is the REFUSAL itself, asserted directly, which the
+# route had no integration-level coverage of at all.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  integration-suites:
+    name: Integration suites that pass on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Directories are named literally and without a trailing slash, for the
+      # two reasons in the header. Naming directories rather than file paths is
+      # what makes this cover suites nobody has written yet: a new suite in one
+      # of these directories runs the day it lands.
+      - name: Run the integration directories that pass on main
+        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/design src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/admin-context-uploads-tabs.test.tsx src/__tests__/integration/agent-column-agent-answer.test.ts src/__tests__/integration/app-rail-home-nav.test.tsx src/__tests__/integration/app-topbar-prefetch-guard.test.tsx src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx src/__tests__/integration/atlas-ask-route.test.ts src/__tests__/integration/atlas-page-state-timeout.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/evidence-registry.test.ts src/__tests__/integration/launch-user-route.test.ts src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx src/__tests__/integration/marketing-nav-dropdowns.test.tsx src/__tests__/integration/pack-j-realistic-portfolio.test.ts src/__tests__/integration/pattern-deliverable-api.test.ts src/__tests__/integration/shell-topbar-auth.test.tsx src/__tests__/integration/sign-in-route-contract.test.ts src/__tests__/integration/sign-in-shell.test.tsx src/__tests__/integration/strategic-moves-chat-shape.test.ts src/__tests__/integration/supabase.test.ts src/__tests__/integration/tenant-empty-states.test.tsx src/__tests__/integration/tower-p6-handoff-panel.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/deliverable-render-contract.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
+
+      # 2026-09-28 · item T-774. Three suites in `src/__tests__/integration/ops`
+      # are named as FILE paths, not as the directory, and the distinction is
+      # the whole point. That directory holds 14 files: two are red behind an
+      # unanswered operator-vocabulary question, and two more are source-text
+      # scanners the T-770 control refuses to see wired. Naming the directory
+      # would drag all four in, which is the silent-collision failure the header
+      # of this file describes.
+      #
+      # These three were rewritten from source-text scanners into behavioural
+      # suites in the same change, and `docs/architecture/t774-ops-scanner-rewrite-triage.json`
+      # declares them so. Delete that record and the T-770 control goes red
+      # naming these three paths, because a declared scanner that IS wired is a
+      # breach — so the wiring and the declaration hold each other up.
+      #
+      # They are wired here rather than left dark because
+      # `check-integration-ci-visibility.mjs` requires a changed integration
+      # suite to have an executable CI owner, and a rewrite nobody runs proves
+      # nothing. The directory stays unwired until its other four files are
+      # settled; that is T-774's closing change, not this one.
+      - name: Run the rewritten ops script suites (named per file, not as a directory)
+        run: npx jest --runTestsByPath src/__tests__/integration/ops/demo-pack-report-validator.test.ts src/__tests__/integration/ops/duplicate-slice-preflight.test.ts src/__tests__/integration/ops/worktree-cleanup-report.test.ts --no-coverage --ci
+
+      # 2026-09-28 · item T-495, claimable half, suite 6 of 11. One suite in
+      # `src/__tests__/integration/agents` is named as a FILE path, for the
+      # reason the header of this file gives: that directory holds eight
+      # suites, two of them red, and five still source-text scanners owned by
+      # T-495. Naming the directory would drag all of them in.
+      #
+      # This suite used to read AgentHiddenDrawer.tsx and its view module as
+      # text. It now renders the component and runs the builder, and
+      # `docs/architecture/t495-agent-hidden-drawer-triage.json` declares the
+      # rewrite, which is what lets the T-770 control see it wired. The
+      # directory stays unwired until its other suites are settled.
+      #
+      # Suite 7 of 11 joins the same step: ask-anything-bar.test.ts used to
+      # grep AskAnythingBar.tsx and ProgramCanonicalDetail.tsx for literals and
+      # was red for renames alone. It now renders the composer and drives
+      # Enter, Shift+Enter, Send and dismiss, and renders its Program-detail
+      # mount; `docs/architecture/t495-ask-anything-bar-triage.json` declares it.
+      #
+      # Suite 8 of 11 joins it: agent-inline-recommendation.test.ts used to grep
+      # AgentInlineRecommendation.tsx and strip-and-grep its view module, and
+      # ran every builder case over a seed in which all four missions are
+      # urgent. It now renders the card and runs the builder over missions each
+      # case controls; `docs/architecture/t495-agent-inline-recommendation-triage.json`
+      # declares it.
+      #
+      # Suite 9 of 11 joins it: agent-mission-panel.test.ts used to grep
+      # AgentMissionPanel.tsx and its view module for attributes, a field name
+      # and banned tokens, and rendered none of the five variants. It now
+      # renders every variant over missions each case controls and walks the
+      # component tree outside a render; `docs/architecture/t495-agent-mission-panel-triage.json`
+      # declares it.
+      - name: Run the rewritten agents suites (named per file, not as a directory)
+        run: npx jest --runTestsByPath src/__tests__/integration/agents/agent-hidden-drawer.test.ts src/__tests__/integration/agents/ask-anything-bar.test.ts src/__tests__/integration/agents/agent-inline-recommendation.test.ts src/__tests__/integration/agents/agent-mission-panel.test.ts --no-coverage --ci
+
+      - name: Refuse a stale, growing or mis-classified Intelligence quarantine list
+        # Runs the check's own unit cases first, then the check. The cases pin
+        # what clearing an entry would cost — a `covers` classification that no
+        # longer matches the tree fails here, which is what stops the next batch
+        # being cleared the cheap way.
+        run: npm run check:intelligence-integration-quarantine
+
+      # A separate step, not an extra path on the command above, because its
+      # exclusion flags are specific to this directory: folding them into the
+      # green command would apply an Intelligence-shaped ignore list to every
+      # other directory's run and make both harder to read. The runner and the
+      # path are still named literally here so the visibility gate sees them,
+      # and the path deliberately has no trailing slash.
+      # The two loose root files named after the directory are selected by the
+      # path pattern anyway — a jest path argument is a regex — so they are
+      # named here as well. Being selected is not the same as being registered:
+      # the visibility gate matches by ancestor directory, so without these two
+      # tokens the files would run in CI while the gate reported them as owned
+      # by nothing. That is the state the enumeration case in
+      # integration-directory-ci-coverage.test.ts refuses.
+      - name: Run the Intelligence integration suites that pass on main
+        run: npx jest src/__tests__/integration/intelligence src/__tests__/integration/intelligence-chat-shape.test.ts src/__tests__/integration/intelligence-pattern-manifest.test.ts --no-coverage --ci $(node scripts/quality/intelligence-integration-ignore-args.mjs)
+
+      - name: Refuse a stale or growing Admin quarantine list
+        run: npm run check:admin-integration-quarantine
+
+      # The root-level carve-out, which is the one whose default is EXCLUDED.
+      # This fails when a root file is unrun and undeclared, when a declared
+      # file is wired back in but left on the list, and when a declared suite
+      # passes on re-run. It asks the coverage census which root files no
+      # workflow runs rather than re-reading the command above, so the two
+      # cannot disagree about a directory-regex collision.
+      - name: Refuse an undeclared or expired integration-root exclusion
+        run: npm run check:integration-root-quarantine
+
+      # A separate step for the same reason the Intelligence one is separate:
+      # its exclusion flags name Admin suites, and folding them into the green
+      # command above would apply an Admin-shaped ignore list to every other
+      # directory's run. The runner and the path are named literally here so the
+      # visibility gate sees them, and the path deliberately has no trailing
+      # slash. Naming the directory also selects the loose root file
+      # `admin-context-uploads-tabs.test.tsx`, which is already registered by
+      # exact path in the green command above; it is green, so it needs no
+      # exclusion and none is added. It does run twice in this workflow as a
+      # result - the cost of the enumeration being honest rather than clever.
+      - name: Run the Admin integration suites that pass on main
+        run: npx jest src/__tests__/integration/admin --no-coverage --ci $(node scripts/quality/admin-integration-ignore-args.mjs)
+
+      - name: Refuse a stale or growing QA quarantine list
+        run: npm run check:qa-integration-quarantine
+
+      # A separate step for the same reason the Admin and Intelligence ones
+      # are separate: its exclusion flags name QA suites, and folding them
+      # into the green command would apply a QA-shaped ignore list to every
+      # other directory's run. The runner and the path are named literally so
+      # the visibility gate sees them, and the path deliberately has no
+      # trailing slash. `integration/qa` has no sibling directory it can also
+      # select, unlike `integration/agent` — checked, not assumed.
+      #
+      # Wiring this adds 31 suites and 763 assertions that no workflow ran.
+      # It does NOT add the assertions that pass inside the 6 excluded
+      # suites: a quarantined suite runs nowhere, and reporting its passing
+      # assertions as coverage would be the overstating this backlog exists
+      # to refuse.
+      - name: Run the QA integration suites that pass on main
+        run: npx jest src/__tests__/integration/qa --no-coverage --ci $(node scripts/quality/qa-integration-ignore-args.mjs)
+
+      # T-595. `integration-directory-ci-coverage.test.ts` used to be named
+      # here. It lives in `src/__tests__/behaviors`, which the required
+      # `Behavior coverage floor` job sweeps whole, and this job is not a
+      # required check — so the named, quotable run was the one that cannot
+      # block a merge. The step moved into the floor. See
+      # docs/ci/README-suite-wiring.md.

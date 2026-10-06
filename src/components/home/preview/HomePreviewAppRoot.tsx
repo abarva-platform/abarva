@@ -19,17 +19,23 @@ import type {
 export function HomePreviewAppRoot({
   bundle,
   recordSource,
+  recordToken,
   tenantKey,
+  requestedProvider,
 }: {
   bundle: HomeReviewBundle;
   recordSource?: HomeRecordRenderSource;
+  recordToken: string;
   tenantKey: HomePreviewTenantKey;
+  requestedProvider?: string;
 }) {
   return (
     <HomeV4App
       bundle={bundle}
       recordSource={recordSource}
+      recordToken={recordToken}
       tenantKey={tenantKey}
+      requestedProvider={requestedProvider}
     />
   );
 }

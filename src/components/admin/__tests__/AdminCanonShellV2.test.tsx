@@ -49,7 +49,6 @@ describe('StewardEditorial', () => {
       <StewardEditorial
         title="Access posture"
         body="Roles and SSO posture are readable."
-        contextUsed={['tenant isolation guard', 'admin shell config']}
         evidenceStrength="partial"
         blocker="No SSO configured"
         primaryAction={{ label: 'Review roles', href: '/admin/users-access' }}
@@ -57,8 +56,6 @@ describe('StewardEditorial', () => {
     );
 
     expect(html).not.toContain('Context used');
-    expect(html).not.toContain('tenant isolation guard');
-    expect(html).not.toContain('admin shell config');
     expect(html).toContain('Review roles');
   });
 });
@@ -68,8 +65,6 @@ describe('ContextBar', () => {
     const html = renderToStaticMarkup(
       <ContextBar
         tenant="Apex Retail"
-        mode="Admin workspace"
-        agent="Steward"
         data="Manifest + seeds"
         liveStatus="Deferred"
       />,

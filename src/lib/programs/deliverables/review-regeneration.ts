@@ -127,8 +127,15 @@ export function buildReviewRegenerationPlan(args: {
   const preliminaryCaveat =
     "This regenerated version applies client review feedback, but remains preliminary until the missing evidence named in the feedback is uploaded or approved.";
   const nextVersion = (args.artifact.version ?? 1) + 1;
-  const title = `${args.artifact.title} — regenerated from review feedback`;
-  const fileName = `${sanitizeFileStem(args.artifact.title)}-v${nextVersion}-review-regenerated.md`;
+  // Apply the suffix to the BASE title so regenerating an already-regenerated
+  // artifact does not stack "— regenerated from review feedback" over and over
+  // (which bloated the client-facing deliverable name on the vault and board).
+  const baseTitle = args.artifact.title.replace(
+    /\s*—\s*regenerated from review feedback\s*$/i,
+    "",
+  );
+  const title = `${baseTitle} — regenerated from review feedback`;
+  const fileName = `${sanitizeFileStem(baseTitle)}-v${nextVersion}-review-regenerated.md`;
   const generatedAt = now.toISOString();
   const feedbackList =
     feedbackItems.length > 0

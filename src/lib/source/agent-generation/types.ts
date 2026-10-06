@@ -119,6 +119,7 @@ export interface SourceGenerationContext {
     classifiedCategory?: string | null;
     rigor: string | null;
     currentStageKey: SourceStageKey;
+    approvalPolicyCode?: string | null;
     statusLabel: string;
     owner: string | null;
     triggerDescription: string | null;

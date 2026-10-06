@@ -14,7 +14,13 @@
 //   • Backward-compat keys: legacy keys ('p3_design', 'roadmap') are retained
 //     and displayed in the Evidence Hub; new keys are the canonical path forward
 
-export type DeliverableFormat = "html-word" | "excel" | "html-word-excel";
+import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+
+export type DeliverableFormat =
+  | "html-word"
+  | "excel"
+  | "html-word-excel"
+  | "pptx";
 
 export interface ExcelSheetSpec {
   /** Tab name in the workbook */
@@ -90,7 +96,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     standAlone: true,
     sections: [
       "Executive Summary (1 paragraph: problem statement, recommended approach, preliminary value hypothesis $M–$M, program duration)",
-      "Sponsor Commitment (named sponsor, role, decision rights, review cadence, documented commitment evidence)",
+      "Sponsor Contact (name, role, and explicit phase-progress email preference; no approval or commitment evidence)",
       "Stakeholder Map (decision-makers, contributors, blockers — named individuals with decision rights assigned)",
       "Success Metrics & Value Range (primary KPI with current baseline, preliminary value range $M–$M with stated assumptions labeled PRELIMINARY_ESTIMATE)",
       "Scope Boundary (explicit in-scope / out-of-scope list — specific capabilities and business processes, not generic)",
@@ -98,6 +104,29 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       "Kill Criterion (specific, observable condition that would terminate the program — not vague risk statements)",
     ],
     consultingAnalog: "McKinsey Engagement Scope & Charter Document",
+  },
+
+  {
+    deliverableTypeKey: "discovery_plan",
+    documentTitle: "Discovery Workshop Guide",
+    phase: 1,
+    phaseLabel: "P1 Charter",
+    audiencePrimary: "Sponsor · Move lead · Workshop participants",
+    documentPurpose:
+      "Working guide for P2 Discovery — sessions, evidence requests, interview prompts, and client preparation instructions derived from the approved charter",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Charter recap (what is already known and must not be re-collected)",
+      "Discovery session plan (workshops, interviews, participants, objectives, and expected outputs)",
+      "Evidence request list (what files/extracts are needed, why they matter, likely owner, required format, and priority)",
+      "Workshop facilitation guide (questions, decisions to test, evidence to capture, and how notes will be reviewed)",
+      "Readiness checklist for the next phase gate (what must be uploaded, reviewed, and accepted before Discovery closes)",
+    ],
+    consultingAnalog: "Discovery Workshop Guide / Evidence Request Pack",
+    generationPromptHint:
+      "This is the detailed working guide that the Charter must not contain. Be operational: name sessions, roles, evidence requests, intake templates, outputs, and next-gate readiness checks. Keep all assumptions labeled and cite the approved Charter or evidence where used.",
   },
 
   // ── P2: Discover & Diagnose ─────────────────────────────────────────────────
@@ -110,7 +139,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     audiencePrimary: "Sponsor · Engagement team",
     documentPurpose:
       "Establishes the evidence base: quantified current state, ranked root causes, and explicit gate recommendation",
-    formatRecommendation: "html-word",
+    formatRecommendation: "pptx",
     gateArtifact: true,
     standAlone: true,
     sections: [
@@ -131,7 +160,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     audiencePrimary: "Engagement team (working document)",
     documentPurpose:
       "Working document for root cause decomposition — shows the full causal chain for team alignment, not executive distribution",
-    formatRecommendation: "html-word",
+    formatRecommendation: "pptx",
     gateArtifact: false,
     standAlone: true,
     sections: [
@@ -144,6 +173,29 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     consultingAnalog: "Root Cause Analysis Working Paper",
   },
 
+  {
+    deliverableTypeKey: "design_workshop_guide",
+    documentTitle: "Design Workshop Guide",
+    phase: 2,
+    phaseLabel: "P2 Discover & Diagnose",
+    audiencePrimary: "Sponsor · Move lead · Workshop participants",
+    documentPurpose:
+      "Working guide for Design — design workshops, decision sessions, evidence carry-forward, and client preparation instructions derived from the accepted Discovery record",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Discovery recap (what has been proven, what is insufficient evidence, and what must not be re-litigated)",
+      "Design session plan (future-state workshops, option-decision sessions, participants, objectives, and expected outputs)",
+      "Evidence carry-forward list (root causes, metrics, constraints, source files, and open gaps needed to ground design)",
+      "Workshop facilitation guide (questions, design decisions to test, trade-offs to record, and note-review method)",
+      "Readiness checklist for the design gate (what must be uploaded, reviewed, and accepted before Design closes)",
+    ],
+    consultingAnalog: "Future-State Design Workshop Guide",
+    generationPromptHint:
+      "This is the design working guide, not a second Discovery Report. Be operational: name design sessions, decision forums, participants, evidence carry-forward, trade-off questions, outputs, and design-gate readiness checks. Preserve insufficient-evidence labels.",
+  },
+
   // ── P3: Design Future State ─────────────────────────────────────────────────
 
   {
@@ -153,21 +205,20 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     phaseLabel: "P3 Design Future State",
     audiencePrimary: "CTO · IT Leadership · Enterprise Architect",
     documentPurpose:
-      "Architecture decision record — conceptual to physical stack for sign-off by technical leadership",
+      "Estimate-ready target-state reference architecture — enough business, application, data, integration, security, and deployment detail for technical leadership and delivery teams to validate scope and size the work, without becoming a build specification",
     formatRecommendation: "html-word",
     gateArtifact: true,
     standAlone: true,
     sections: [
-      "## Conceptual Architecture\nBusiness capabilities and domains (NO technology product names in this section). What the system does, organized as capability domains. Audience: business leadership. Include a Mermaid diagram showing capability domains and their relationships.",
-      "## Logical Architecture\nSystem components, integration patterns, data flows, AI/agent placement, security boundaries. Technology-neutral (vendor-agnostic component names). Include a detailed Mermaid diagram. Audience: enterprise architect, IT leadership.",
-      "## Physical Architecture\nActual vendor products, infrastructure topology, deployment model (cloud/hybrid/on-prem), security zones, network segments, HA/DR approach. Include a Mermaid deployment diagram. Audience: delivery team, IT ops, security.",
-      "## Architecture Patterns Applied\nWhich canonical patterns from the pattern library are applied in this architecture. For each pattern: why it was selected, which root causes it addresses, known failure modes and mitigations.",
-      "## Architecture Decision Records (ADRs)\n3–5 key decisions made. Format: Decision | Options Considered | Rationale | Trade-offs Accepted | Reversibility.",
-      "## Integration Contracts\nFor every system integration: source, target, protocol, data payload, frequency, SLA, failure handling.",
+      "## Business and Solution Context\nValidated use case, outcomes, in-scope users/processes, and approved P2 evidence that drives the design. Distinguish facts, assumptions, and unresolved decisions.",
+      "## Target Architecture\nShow the major business capabilities, application/services, data sources and flows, interfaces, and trust boundaries needed for this use case. For analytics, distinguish raw/bronze, curated/silver, and serving/gold layers and map each requested report or dashboard to its source and transformation path. Use one readable architecture diagram; avoid speculative product names.",
+      "## Integration, Security, and Operations\nFor each material interface or data feed: source, target, method/frequency when known, owner, key control/privacy constraint, and unresolved sizing question. State deployment, resilience, support, and security assumptions only to the level that affects estimate or approval.",
+      "## Design Decisions and Alternatives\nRecord the few consequential architecture choices, alternatives considered, evidence basis, trade-offs, reversibility, and what would change the choice. Do not manufacture a 3–5 ADR quota.",
+      "## Estimate Drivers and Open Questions\nData volume/quality, environments, access, migration, integration complexity, non-functional needs, dependencies, and assumptions that materially change effort, cost, risk, or timeline.",
     ],
     consultingAnalog: "McKinsey / Gartner Target State Reference Architecture",
     generationPromptHint:
-      "This is a technical architecture document for a CTO audience. Include three Mermaid diagrams (conceptual capability map, logical component diagram, physical deployment diagram). Every integration must be explicitly specified. Architecture Decision Records must show rejected alternatives.",
+      "Create a concise, evidence-linked target architecture that a CTO and delivery lead can use to validate scope and size work. Prefer one legible diagram. Do not turn unknowns into facts or expand into low-level build instructions, exhaustive interface contracts, detailed network topology, or full implementation design. Label each assumption and identify who must validate it during P4 or delivery.",
   },
 
   {
@@ -178,22 +229,45 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     phaseLabel: "P3 Design Future State",
     audiencePrimary: "Delivery lead · Architect · Senior engineers",
     documentPurpose:
-      "How we build and configure it — feature specs, configuration requirements, and integration contracts for the delivery team",
+      "Estimate-ready solution scope brief — clarifies what is built, bought, configured, or integrated and the complexity drivers, without specifying the complete implementation",
     formatRecommendation: "html-word",
     gateArtifact: false,
     standAlone: true,
     sections: [
-      "Solution Scope (what is being built vs. configured vs. integrated — explicit build/buy/configure decision per component)",
-      "Functional Requirements (numbered requirements derived from root causes; each requirement must reference its parent root cause from RCA-P2)",
-      "Non-Functional Requirements (performance, availability, scalability, security, compliance — quantified targets, not qualitative)",
-      "Configuration Specifications (for COTS/SaaS: specific configuration decisions, module selections, parameterization)",
-      "Custom Build Specifications (for build components: data model, API contracts, business logic)",
-      "AI / Agent Design (for AI components: model selection rationale, prompt architecture, guardrails, fallback behavior, human-in-the-loop design)",
-      "Testing & Acceptance Criteria (per requirement: how it will be verified, who signs off, definition of done)",
+      "Solution boundary (capabilities and outcomes included/excluded; trace to approved findings)",
+      "Build / buy / configure / integrate posture by major component, with rationale and decision status (confirmed vs. assumption)",
+      "Estimate-driving functional and non-functional needs, with evidence source or explicit assumption and owner to validate",
+      "Data, integration, security, environment, testing, migration, and operational complexity drivers that affect effort or risk",
+      "AI-enabled development approach where applicable: skills, Claude Code/Codex use cases, access controls, human review, testing, and productivity assumption for P4 to model",
+      "Open design decisions and questions that belong in the delivery roadmap; do not write code-level specifications, detailed configuration, API schemas, prompts, or test scripts",
     ],
     consultingAnalog: "Solution Design Document (SDD)",
     generationPromptHint:
-      "This is a delivery-facing specification document. Every requirement must be numbered and traceable to a root cause. AI/agent design sections must specify guardrails and human-in-the-loop points explicitly. Acceptance criteria must be testable.",
+      "Keep this at estimate-ready scope. Trace requirements to approved findings, but describe implementation detail only where it changes sizing or risk. Do not produce a complete solution design, low-level requirements specification, detailed configuration/API contract, prompt specification, or execution backlog. Record human-review and security controls for AI-assisted development and carry productivity assumptions to P4 for explicit adjustment.",
+  },
+
+  {
+    deliverableTypeKey: "process_change_estimate_brief",
+    documentTitle: "Process Change Estimate Brief",
+    phase: 3,
+    phaseLabel: "P3 Design Future State",
+    audiencePrimary: "Business process owner · Delivery lead · Sponsor",
+    documentPurpose:
+      "Bounded description of the workflow delta, controls, adoption ownership, and sizing assumptions needed to estimate a limited process change",
+    formatRecommendation: "html-word",
+    gateArtifact: true,
+    standAlone: true,
+    sections: [
+      "Change boundary (affected workflow steps only; explicitly state what remains unchanged and exclude full-process redesign)",
+      "Current-to-proposed delta (affected handoffs, decisions, exceptions, and expected volumes, each traced to approved evidence or labeled as an assumption)",
+      "People and adoption impact (none / limited impacts, named accountable business owner, and the adoption responsibilities that remain with the business)",
+      "Controls and dependencies (human approvals, policy boundaries, data/security constraints, integrations, and unresolved dependencies)",
+      "Sizing basis and open inputs (work packages, evidence-backed drivers, assumptions, confidence, and questions P4 must resolve before final estimates)",
+      "Decision and conditions (recommended bounded change, alternatives rejected, evidence gaps, and conditions for roadmap approval)",
+    ],
+    consultingAnalog: "Estimate-ready process delta and decision brief",
+    generationPromptHint:
+      "Keep this at estimate-ready strategy depth. Describe only the affected workflow delta; do not create a complete future-state process map, detailed work instructions, role-by-role operating model, implementation specification, or execution plan. Separate approved evidence from assumptions and identify what must be sized or validated in P4.",
   },
 
   {
@@ -204,24 +278,25 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     phaseLabel: "P3 Design Future State",
     audiencePrimary: "CHRO · Operations lead · Sponsor",
     documentPurpose:
-      "How the organisation runs with the new capability — roles, responsibilities, governance, and Today vs. Tomorrow comparison",
+      "Estimate-ready operating-model delta for use cases with evidence-validated material workflow or accountability change; not a full organisation redesign",
     formatRecommendation: "html-word",
     gateArtifact: false,
     standAlone: true,
     sections: [
-      "Today vs. Tomorrow Operating Model (side-by-side comparison: current roles/responsibilities vs. target state — named roles, not generic)",
-      "New Role Definitions (for each new or changed role: responsibilities, decision rights, required skills, reporting line)",
-      "Handoff Map (where work crosses role/team boundaries: trigger, handoff mechanism, SLA, escalation path)",
-      "Governance Design (decision rights model: who decides what, at what threshold, with what speed)",
-      "Change Impact Assessment (per stakeholder group: what changes for them, volume of impact, readiness assessment)",
-      "Capability Gap & Training Plan (skills required vs. available; training approach by role; timeline)",
+      "Validated change boundary: what role/accountability changes, what does not, and which approved evidence supports the conclusion",
+      "Only the affected role/accountability deltas and decision rights needed to estimate; label unvalidated assignments as assumptions",
+      "Material handoffs, controls, and service expectations that alter scope, dependencies, risk, or cost",
+      "Adoption and training owner, responsibility split, and estimate-relevant effort assumption; detailed training design remains for roadmap execution",
+      "Open questions and evidence gaps that P4 must price or resolve before final approval",
     ],
-    consultingAnalog: "McKinsey Operating Model Design Document",
+    consultingAnalog: "Estimate-Ready Operating Model Delta Brief",
+    generationPromptHint:
+      "Generate this only when the evidence-validated P2 route establishes material operating-model change. Do not create a whole-org operating model, detailed role catalogue, full governance redesign, change plan, or training curriculum. If the route is technical-only or has no material accountability shift, the artifact is not applicable and must not be generated.",
   },
 
   {
     deliverableTypeKey: "requirements_traceability",
-    dependsOnDeliverableTypeKey: "operating_model_design",
+    dependsOnDeliverableTypeKey: "target_state_architecture",
     documentTitle: "Requirements Traceability Matrix",
     phase: 3,
     phaseLabel: "P3 Design Future State",
@@ -252,19 +327,46 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     phaseLabel: "P3 Design Future State",
     audiencePrimary: "Procurement · Sponsor · CTO",
     documentPurpose:
-      "Build/buy/configure/partner decisions with vendor shortlist and evaluation rationale",
+      "Delivery-model and sourcing assumptions for estimation; formal vendor selection and procurement remain in Source or later execution",
     formatRecommendation: "html-word",
     gateArtifact: true,
     standAlone: true,
     sections: [
-      "Sourcing Decision Summary (for each major component: build / buy / configure / partner — one-line rationale)",
-      "Vendor Evaluation (for COTS/SaaS components: evaluation criteria, shortlisted vendors, score matrix, recommended vendor with rationale)",
-      "Make vs. Buy Analysis (for custom build candidates: cost to build vs. buy, long-term maintenance, differentiation argument)",
-      "Partnership Model (for SI/partner-delivered components: scope, governance, IP ownership, exit provisions)",
-      "Commercial Risk Register (vendor concentration, licence risk, data sovereignty, lock-in mitigations)",
-      "Procurement Pathway (RFP/RFI/direct award rationale; timeline; approvals required)",
+      "Internal / vendor / hybrid delivery assumption by major work package, with rationale and decision status",
+      "Skills and capacity required internally, including product-development and data/AI engineering skills where applicable",
+      "Vendor or partner scope assumption and unresolved procurement dependencies; do not shortlist or select vendors",
+      "AI coding accelerator assumptions (Claude Code/Codex or equivalent): eligible work, controls, human review, quality checks, and estimated productivity effect as an adjustable assumption",
+      "Commercial, licensing, data sovereignty, access, and lock-in risks that could materially affect estimate or approach",
+      "P4 sizing inputs: role mix, duration/capacity, rate source, license/infrastructure basis, confidence, and open decisions",
     ],
-    consultingAnalog: "Sourcing Strategy & Vendor Selection Brief",
+    consultingAnalog: "Delivery Approach and Sourcing Assumptions Brief",
+    generationPromptHint:
+      "This is an estimation input, not a sourcing event. Do not recommend, rank, contact, or select vendors; do not claim procurement decisions have occurred. Put role, capacity, rate, and productivity assumptions in a form the human team can revise in P4.",
+  },
+
+  {
+    deliverableTypeKey: "planning_workshop_guide",
+    documentTitle: "Planning Workshop Guide",
+    phase: 3,
+    phaseLabel: "P3 Design Future State",
+    audiencePrimary:
+      "Sponsor · Delivery lead · Finance · Workshop participants",
+    documentPurpose:
+      "Working guide for Roadmap & Business Case — roadmap, finance, measurement, readiness, and change sessions derived from the accepted design",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Design recap (approved target state, option decisions, operating implications, and unresolved design caveats)",
+      "Planning session plan (roadmap, business case, finance, metrics, readiness/change workshops, participants, objectives, and outputs)",
+      "Planning evidence request list (cost inputs, benefit baselines, dependency evidence, resource model, metric definitions, and readiness evidence)",
+      "Workshop facilitation guide (questions, funding assumptions to validate, sequencing decisions, risk decisions, and note-review method)",
+      "Readiness checklist for the planning gate (what must be uploaded, reviewed, and accepted before planning closes)",
+    ],
+    consultingAnalog:
+      "Execution Planning Workshop Guide / Business Case Preparation Pack",
+    generationPromptHint:
+      "This is the planning working guide, not a business case or roadmap. Be operational: name sessions, owners, evidence requests, finance inputs, metric baselines, decision questions, and planning-gate readiness checks. Do not invent benefits or funding approval.",
   },
 
   // Backward-compat key for P3 monolithic doc
@@ -307,7 +409,8 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     sections: [
       "Workstream Breakdown (named workstreams with scope, lead, team composition, and interdependencies — Mermaid dependency diagram)",
       "Phased Delivery Timeline (quarters/months; value realization milestones explicitly called out; critical path identified)",
-      "Resource Model (FTEs by role and workstream; SI/partner scope; named leads for each workstream)",
+      "Resource and Estimate Model (low/base/high person-hours or FTE-months by role/workstream; internal capacity and loaded-rate basis; vendor/partner effort and rate basis; duration, dependencies, confidence, and source/assumption for each input. Make internal, vendor, and hybrid scenarios comparable.)",
+      "AI-Assisted Product Development (where relevant: Claude Code/Codex use cases, required product/data/security skills, human review and testing effort, and an explicit adjustable productivity assumption. Do not treat tool use as guaranteed savings.)",
       "Critical Path Analysis (which workstreams gate others; float in non-critical paths; risk to timeline)",
       "Change Management Timeline (stakeholder communication plan, training schedule, cutover approach)",
       "Governance Cadence (steering committee, workstream sync, escalation triggers)",
@@ -327,7 +430,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     gateArtifact: true,
     standAlone: true,
     sections: [
-      "Executive Summary (1 page: investment ask, value thesis, headline NPV/IRR, payback period, recommendation)",
+      "Executive Summary (1 page: investment ask, value thesis, headline NPV/IRR/payback only when computed from reviewed inputs; otherwise show the open decision and missing inputs)",
       "Value Architecture (benefit levers traced to root causes from P2; each lever with magnitude, confidence, and baseline reference)",
       "Investment Summary (total cost by category; phasing; peak cash requirement)",
       "Financial Returns (NPV, IRR, payback period — base case; note: detailed model in Financial Model workbook)",
@@ -368,7 +471,8 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       },
       {
         sheetName: "Implementation Costs",
-        purpose: "Cost categories with year-by-year phasing",
+        purpose:
+          "Editable role-based internal/vendor effort, rates, other cost drivers, and year-by-year phasing",
         editable: true,
         markdownSection: "IMPLEMENTATION_COSTS",
       },
@@ -387,15 +491,15 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       },
     ],
     sections: [
-      "## ASSUMPTIONS\nGenerate a markdown table with columns: Parameter | Value | Unit | Description\nInclude: Discount Rate (%), Analysis Period (years), Implementation Start Quarter, FTE Blended Rate ($/year), Adoption Curve Year 1 (%), Adoption Curve Year 2 (%), Adoption Curve Year 3+ (%)",
+      "## ASSUMPTIONS\nGenerate a markdown table with columns: Parameter | Low | Base | High | Unit | Evidence or assumption | Owner to validate. Include discount rate, analysis period, implementation start, internal loaded rates by role, vendor rate basis by role/work package, adoption curve, data readiness, integration complexity, environments, migration, security/testing, and any AI-assisted development productivity assumption. Keep every input editable and identify who reviews it.",
       "## BENEFIT_LEVERS\nGenerate a markdown table with columns: Lever Name | Category | Baseline Ref | Year 1 ($M) | Year 2 ($M) | Year 3 ($M) | Year 4 ($M) | Year 5 ($M) | Confidence | Notes\nTrace each lever to a root cause from P2. Include all identified value levers.",
-      "## IMPLEMENTATION_COSTS\nGenerate a markdown table with columns: Cost Category | Year 0 ($M) | Year 1 ($M) | Year 2 ($M) | Year 3 ($M) | One-Time or Recurring | Notes\nCategories: Software Licenses, Implementation Services, Internal FTE, Infrastructure, Training, Change Management",
+      "## IMPLEMENTATION_COSTS\nGenerate a markdown table with columns: Work Package | Role / Cost Category | Delivery Model (Internal/Vendor/Hybrid) | Effort (hours or FTE-months) | Rate | Rate Source | Low Cost | Base Cost | High Cost | Timing | Assumption / Evidence | Human Reviewer. Include software, implementation services, internal labor, vendor labor, infrastructure, data migration, security/testing, and adoption/change only when in scope. Show the arithmetic for effort × rate and phase totals; do not fabricate rates.",
       "## VALUE_MODEL\nGenerate a markdown table with columns: Year | Total Benefits ($M) | Total Costs ($M) | Net Cash Flow ($M) | Cumulative Cash Flow ($M) | Discounted Cash Flow ($M)\nAlso include a summary row: NPV ($M) | IRR (%) | Payback Period (years)",
       "## SCENARIOS\nGenerate a markdown table with columns: Scenario | Key Assumption Difference | NPV ($M) | IRR (%) | Payback (years) | Probability Weight\nRows: Conservative, Base Case, Optimistic",
     ],
     consultingAnalog: "McKinsey Financial Model / Investment Analysis Workbook",
     generationPromptHint:
-      "Generate ONLY structured markdown tables in the exact section format specified. Do NOT add narrative paragraphs between sections. If finance-grade baseline, cost, benefit, and sensitivity inputs are absent, produce an input register with open inputs and formulas rather than a filled model. Every numeric value must be cited, explicitly labelled as an assumption, or left open.",
+      "Generate ONLY structured markdown tables in the exact section format specified. Do NOT add narrative paragraphs between sections. Separate internal, vendor, and hybrid cases. Show role-level effort × rate arithmetic, confidence, evidence/assumption status, and editable inputs. Where Claude Code/Codex or similar AI coding tools may accelerate product development, model the productivity effect as a user-editable assumption and include human review, testing, security, and rework effort; never assert automatic savings. If finance-grade baseline, cost, benefit, and sensitivity inputs are absent, produce an input register with open inputs and formulas rather than a filled model. Every numeric value must be cited, explicitly labelled as an assumption, or left open. Final estimates require named human review before approval.",
   },
 
   {
@@ -446,6 +550,31 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       "Produce a compact readiness and change plan for the mobilization decision. Use tables for owners, cadence, risks, dependencies, and mobilization conditions. Do not assert funding approval, annual savings, ROI, NPV, payback, target value, or implementation authorization beyond the evidence-backed readiness recommendation.",
   },
 
+  {
+    deliverableTypeKey: "mobilization_workshop_guide",
+    documentTitle: "Mobilization Workshop Guide",
+    phase: 4,
+    phaseLabel: "P4 Roadmap & Business Case",
+    audiencePrimary:
+      "Sponsor · Delivery lead · Tower lead · Workshop participants",
+    documentPurpose:
+      "Working guide for Mobilize & Handoff — Tower handoff, value-measurement, delivery-readiness, and approval sessions derived from the approved roadmap",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Plan recap (approved roadmap, business case, metrics, readiness conditions, and open caveats)",
+      "Mobilization session plan (handoff, execution-readiness, value-measurement, governance, and Tower transition sessions)",
+      "Mobilization evidence request list (RACI, workstream plans, approval evidence, baseline locks, Tower measurement inputs, and open risks)",
+      "Workshop facilitation guide (questions, execution decisions, acceptance conditions, handoff decisions, and note-review method)",
+      "Readiness checklist for the execution handoff gate (what must be uploaded, reviewed, and accepted before execution handoff)",
+    ],
+    consultingAnalog:
+      "Mobilization Workshop Guide / Execution Handoff Preparation Pack",
+    generationPromptHint:
+      "This is the mobilization working guide, not a roadmap, business case, or handoff package. Be operational: name handoff sessions, owners, evidence requests, value-measurement inputs, readiness decisions, and execution-handoff gate checks. Do not assert execution approval unless evidence supports it.",
+  },
+
   // Backward-compat key for P4 monolithic doc
   {
     deliverableTypeKey: "roadmap",
@@ -469,13 +598,13 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     consultingAnalog: "Legacy combined P4 document",
   },
 
-  // ── P5: Approval & Mobilization ─────────────────────────────────────────────
+  // ── P5: Mobilize & Handoff ─────────────────────────────────────────────────
 
   {
     deliverableTypeKey: "handoff_package",
     documentTitle: "Mobilization & Tower Handoff Package",
     phase: 5,
-    phaseLabel: "P5 Approval & Mobilization",
+    phaseLabel: "P5 Mobilize & Handoff",
     audiencePrimary: "Delivery team · Tower team",
     documentPurpose:
       "Everything the delivery team needs to execute without returning to the program team",
@@ -496,7 +625,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     deliverableTypeKey: "value_measurement_contract",
     documentTitle: "Value Measurement Contract",
     phase: 5,
-    phaseLabel: "P5 Approval & Mobilization",
+    phaseLabel: "P5 Mobilize & Handoff",
     audiencePrimary: "Executive sponsor · Accountable owner",
     documentPurpose:
       "Formal commitment document — what outcomes are promised, how they will be measured, who is accountable",
@@ -513,6 +642,29 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     consultingAnalog: "Value Realization Contract / Benefits Realization Plan",
     generationPromptHint:
       'This is a formal accountability document. Every outcome must have a single named accountable individual. No "team" accountability. Target ranges must be specific ($M or %) not qualitative.',
+  },
+
+  {
+    deliverableTypeKey: "execution_kickoff_guide",
+    documentTitle: "Execution Kickoff Guide",
+    phase: 5,
+    phaseLabel: "P5 Mobilize & Handoff",
+    audiencePrimary: "Delivery lead · Tower lead · Accountable owners",
+    documentPurpose:
+      "Working guide for the first execution cadence — kickoff sessions, handoff validation, value-measurement startup, governance cadence, and first-review instructions after the Move leaves planning",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Execution-ready recap (approved handoff, committed measures, accountabilities, conditions, and open execution caveats)",
+      "Kickoff session plan (delivery kickoff, Tower measurement startup, risk review, governance cadence, and owner handoff sessions)",
+      "Execution evidence checklist (baseline locks, workstream artifacts, measurement feeds, approval evidence, risk triggers, and first-report inputs)",
+      "Facilitation guide for first governance cadence (questions, decisions, escalation rules, and evidence review method)",
+      "First-review readiness checklist (what must be captured before the first execution/Tower review)",
+    ],
+    consultingAnalog: "Execution Kickoff Guide / First Governance Cadence Pack",
+    generationPromptHint:
+      "This is the execution kickoff working guide, not a new phase-gate approval. Be operational: name sessions, owners, cadence, evidence checks, first-review inputs, and escalation rules. Preserve all caveats and conditions from the approved handoff.",
   },
 ];
 
@@ -556,14 +708,15 @@ export function getPhaseDocumentSet(phase: number): {
 
 /** Map phase number → ordered list of canonical deliverable type keys (non-deprecated) */
 export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
-  1: ["charter"],
-  2: ["discovery_report", "root_cause_worksheet"],
+  1: ["charter", "discovery_plan"],
+  2: ["discovery_report", "root_cause_worksheet", "design_workshop_guide"],
   3: [
     "target_state_architecture",
     "solution_design",
     "operating_model_design",
     "requirements_traceability",
     "sourcing_strategy",
+    "planning_workshop_guide",
   ],
   4: [
     "execution_roadmap",
@@ -571,13 +724,42 @@ export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
     "financial_model",
     "tower_metrics_plan",
     "readiness_and_change_plan",
+    "mobilization_workshop_guide",
   ],
-  5: ["handoff_package", "value_measurement_contract"],
+  5: [
+    "handoff_package",
+    "value_measurement_contract",
+    "execution_kickoff_guide",
+  ],
 };
+
+/** Route-specific P3 scope keeps limited changes estimate-ready, not implementation-designed. */
+export function phaseCanonicalKeysForRoute(
+  phase: number,
+  route?: ConfirmedSolutionRoute | null,
+): string[] {
+  if (phase === 3 && route?.route === "technical_product") {
+    return ["target_state_architecture", "requirements_traceability"];
+  }
+  if (
+    phase === 3 &&
+    route?.route === "process_change" &&
+    route.workflowChange !== "material" &&
+    route.roleAccountabilityChange !== "material"
+  ) {
+    return [
+      "target_state_architecture",
+      "process_change_estimate_brief",
+      "requirements_traceability",
+    ];
+  }
+  return [...(PHASE_CANONICAL_KEYS[phase] ?? [])];
+}
 
 /** Format badge labels */
 export const FORMAT_LABELS: Record<DeliverableFormat, string[]> = {
   "html-word": ["HTML", "Word"],
   excel: ["Excel"],
   "html-word-excel": ["HTML", "Word", "Excel"],
+  pptx: ["PowerPoint"],
 };

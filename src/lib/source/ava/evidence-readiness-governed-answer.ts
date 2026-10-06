@@ -22,6 +22,15 @@ import {
   listSourceArtifactsForSourceEventIdWithContent,
   type SourceArtifactRegistryRecordWithContent,
 } from "@/lib/source/artifact-registry";
+import { buildSourceArtifactLifecycleSummary } from "@/lib/source/artifact-lifecycle-matrix";
+import type {
+  SourceArtifactLifecycleArtifact,
+  SourceArtifactLifecycleRow,
+} from "@/lib/source/artifact-lifecycle-matrix";
+import {
+  listArtifactStatesForEventStage,
+  type SourceEventArtifactState,
+} from "@/lib/source/canvas-substrate";
 import {
   buildSourceArtifactParseBacklogReport,
   type SourceArtifactParseBacklogItem,
@@ -31,7 +40,22 @@ import {
   avaCitationsFromGovernedCandidates,
   governedClientKeyForSourceClientKey,
 } from "@/lib/source/ava/vendor-coverage-governed-answer";
-import { governedCandidateFromSourceArtifact } from "@/lib/source/ava/artifact-quality-governed-answer";
+import {
+  acceptedArtifactVersionsFor,
+  eventContextCandidatesForArtifactQuality,
+  governedCandidateFromSourceArtifact,
+} from "@/lib/source/ava/artifact-quality-governed-answer";
+import {
+  getLatestArtifactAcceptancesByArtifactIds,
+  type ArtifactAcceptanceRecord,
+} from "@/lib/source/artifact-acceptances";
+import {
+  buildGovernedEventContextBundle,
+  type EventContextCandidate,
+} from "@/lib/source/ava/event-context-bundle";
+import { stageArtifactReadinessFor } from "@/lib/source/stage-artifact-readiness";
+import type { SourceStageKey } from "@/lib/source/types";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 
 export interface BuildEvidenceReadinessGovernedAnswerInput {
   eventId: string;
@@ -39,6 +63,29 @@ export interface BuildEvidenceReadinessGovernedAnswerInput {
   clientKey: string;
   tenantId: string | null;
   question: string;
+  stageContext?: {
+    stageKey?: SourceStageKey | null;
+    stageLabel: string;
+    nextAction?: string | null;
+    blocker?: string | null;
+    missingInputs?: readonly string[];
+  };
+}
+
+export function looksLikeSourceStageCompletionQuestion(
+  prompt: string | undefined,
+): boolean {
+  if (!prompt) return false;
+  const q = prompt.toLowerCase();
+  const asksToCompletePhase =
+    /\b(complete|finish|close|done with|move past|advanc(?:e|ing) (?:from|past)?)\b/.test(
+      q,
+    );
+  const namesWorkflowContext =
+    /\b(stage|step|phase|request|define|supplier|suppliers|nda|rfi|rfp|market package)\b/.test(
+      q,
+    );
+  return asksToCompletePhase && namesWorkflowContext;
 }
 
 export function looksLikeEvidenceReadinessQuestion(
@@ -74,12 +121,64 @@ function normalizedAliases(input: BuildEvidenceReadinessGovernedAnswerInput) {
   ];
 }
 
+function normalizedKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function artifactMatchesEventAndTenant(args: {
+  artifact: SourceArtifactRegistryRecordWithContent;
+  eventAliases: ReadonlySet<string>;
+  tenantAliases: ReadonlySet<string>;
+}): boolean {
+  const artifactEventIds = [
+    args.artifact.sourceEventId,
+    args.artifact.sourceEventRowId,
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map(normalizedKey);
+  return (
+    artifactEventIds.some((eventId) => args.eventAliases.has(eventId)) &&
+    args.tenantAliases.has(normalizedKey(args.artifact.tenantKey))
+  );
+}
+
+/**
+ * Map every listed registry row to an event-context candidate for the fence.
+ *
+ * A row reaches this mode through any of the event's aliases (row id or event
+ * code), so a row naming one of them is canonicalised here, at the boundary, to
+ * the asked event — and only such a row: one naming another event keeps its own
+ * id and is refused by the fence's rule, not dropped by a filter above it.
+ * Tenant keys need no step here: every alias key of a governed tenant already
+ * resolves to that governed key in `eventContextCandidatesForArtifactQuality`.
+ */
+export function eventContextCandidatesForEvidenceReadiness(
+  listed: readonly SourceArtifactRegistryRecordWithContent[],
+  acceptances: ReadonlyMap<string, ArtifactAcceptanceRecord>,
+  scope: { tenantId: string; eventId: string; eventAliases: readonly string[] },
+): EventContextCandidate[] {
+  const eventAliases = new Set(scope.eventAliases.map(normalizedKey));
+  const candidates = eventContextCandidatesForArtifactQuality(
+    listed,
+    acceptances,
+    { tenantId: scope.tenantId },
+  );
+  return candidates.map((candidate, index) => {
+    const artifact = listed[index]!;
+    const namesThisEvent = [artifact.sourceEventId, artifact.sourceEventRowId]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .some((value) => eventAliases.has(normalizedKey(value)));
+    return namesThisEvent ? { ...candidate, eventId: scope.eventId } : candidate;
+  });
+}
+
 async function listArtifactsForAliases(
   aliases: readonly string[],
 ): Promise<SourceArtifactRegistryRecordWithContent[]> {
   const byId = new Map<string, SourceArtifactRegistryRecordWithContent>();
   for (const alias of aliases) {
-    const artifacts = await listSourceArtifactsForSourceEventIdWithContent(alias);
+    const artifacts =
+      await listSourceArtifactsForSourceEventIdWithContent(alias);
     for (const artifact of artifacts) {
       if (!byId.has(artifact.id)) byId.set(artifact.id, artifact);
     }
@@ -93,7 +192,9 @@ function citationIdsForArtifacts(
 ): string[] {
   const artifactIds = new Set(artifacts.map((artifact) => artifact.id));
   return citations
-    .filter((citation) => citation.recordId && artifactIds.has(citation.recordId))
+    .filter(
+      (citation) => citation.recordId && artifactIds.has(citation.recordId),
+    )
     .map((citation) => citation.id);
 }
 
@@ -113,8 +214,16 @@ function label(value: string): string {
 
 function buildEvidenceReadinessChart(args: {
   report: SourceArtifactParseBacklogReport;
+  projection: EvidenceReadinessProjection;
   citationIds: string[];
 }): AnswerChart {
+  const parserMetric =
+    args.projection.artifactStateCount > 0
+      ? { metric: "Needs parser", count: args.projection.needsParsing }
+      : {
+          metric: "Parser-ready",
+          count: args.report.counts.parserReadyArtifacts,
+        };
   return {
     id: "source-evidence-processing-readiness",
     kind: "horizontal-bar",
@@ -124,10 +233,13 @@ function buildEvidenceReadinessChart(args: {
     data: {
       type: "horizontal-bar",
       data: [
-        { metric: "Stored", count: args.report.counts.totalArtifacts },
-        { metric: "Parser-ready", count: args.report.counts.parserReadyArtifacts },
-        { metric: "Parsed", count: args.report.counts.parsedArtifacts },
-        { metric: "Search-ready", count: args.report.counts.searchReadyArtifacts },
+        { metric: "Stored", count: args.projection.totalArtifacts },
+        parserMetric,
+        { metric: "Parsed", count: args.projection.parsedArtifacts },
+        {
+          metric: "Search-ready",
+          count: args.projection.searchReadyArtifacts,
+        },
         {
           metric: "Graph-projected",
           count: args.report.counts.graphProjectedArtifacts,
@@ -143,7 +255,7 @@ function buildEvidenceReadinessChart(args: {
     unit: "artifacts",
     citationIds: args.citationIds,
     sourceNote:
-      "Counts come from existing Source artifact registry statuses; this answer does not run parser, search, graph, or enterprise-context jobs.",
+      "Counts come from the mounted Source Files projection of registry files plus current-stage artifact states; this answer does not run parser, search, graph, or enterprise-context jobs.",
   };
 }
 
@@ -179,18 +291,181 @@ function buildEvidenceReadinessTable(args: {
       graph: label(item.graphReadiness),
       nextAction: item.note,
     })),
-    note:
-      "This is a registry status view, not proof that evidence has been parsed, indexed, promoted, or made agent-ready.",
+    note: "This is a registry status view, not proof that evidence has been parsed, indexed, promoted, or made agent-ready.",
     citationIds: args.citationIds,
   };
 }
 
-function directAnswerForReport(report: SourceArtifactParseBacklogReport): string {
+interface EvidenceReadinessProjection {
+  artifactStateCount: number;
+  totalArtifacts: number;
+  parsedArtifacts: number;
+  needsParsing: number;
+  searchReadyArtifacts: number;
+}
+
+function evidenceReadinessProjection(args: {
+  report: SourceArtifactParseBacklogReport;
+  artifactStates: readonly SourceEventArtifactState[];
+}): EvidenceReadinessProjection {
+  const totalArtifacts =
+    args.report.counts.totalArtifacts + args.artifactStates.length;
+  return {
+    artifactStateCount: args.artifactStates.length,
+    totalArtifacts,
+    parsedArtifacts: args.report.counts.parsedArtifacts,
+    needsParsing: Math.max(
+      totalArtifacts - args.report.counts.parsedArtifacts,
+      0,
+    ),
+    searchReadyArtifacts: args.report.counts.searchReadyArtifacts,
+  };
+}
+
+function evidenceStatusForReport(
+  report: SourceArtifactParseBacklogReport,
+  projection: EvidenceReadinessProjection,
+): string {
   const c = report.counts;
-  if (c.totalArtifacts === 0) {
+  if (projection.totalArtifacts === 0) {
     return "No Source evidence files are registered for this event yet. Uploaded is the first proof layer; parsing, search indexing, enterprise-context promotion, and agent-ready status remain unavailable until evidence is captured.";
   }
-  return `${c.totalArtifacts} Source files are stored. ${c.parsedArtifacts} are parsed, ${c.searchReadyArtifacts} are search-ready, ${c.parserReadyArtifacts} are parser-ready, and ${countAttention(report)} need attention. I am not claiming OCR, vector indexing, enterprise-context promotion, or agent-ready status unless those states already exist in the registry.`;
+  if (projection.artifactStateCount > 0) {
+    const isAre = (count: number) => (count === 1 ? "is" : "are");
+    const requiresRequire = (count: number) =>
+      count === 1 ? "requires" : "require";
+    const exceptionCount = countAttention(report);
+    const hasHave = (count: number) => (count === 1 ? "has" : "have");
+    return `${projection.totalArtifacts} Source artifact records are stored. ${projection.parsedArtifacts} ${isAre(projection.parsedArtifacts)} parsed, ${projection.searchReadyArtifacts} ${isAre(projection.searchReadyArtifacts)} search-ready, and ${exceptionCount} ${hasHave(exceptionCount)} parser or review exceptions. ${projection.needsParsing} still ${requiresRequire(projection.needsParsing)} parsing and ${projection.totalArtifacts - projection.searchReadyArtifacts} still ${requiresRequire(projection.totalArtifacts - projection.searchReadyArtifacts)} search indexing. I am not claiming OCR, vector indexing, enterprise-context promotion, or agent-ready status unless those states already exist in the mounted projection.`;
+  }
+  const parsingGap = Math.max(c.totalArtifacts - c.parsedArtifacts, 0);
+  const searchGap = Math.max(c.totalArtifacts - c.searchReadyArtifacts, 0);
+  const isAre = (count: number) => (count === 1 ? "is" : "are");
+  const hasHave = (count: number) => (count === 1 ? "has" : "have");
+  const requiresRequire = (count: number) =>
+    count === 1 ? "requires" : "require";
+  const exceptionCount = countAttention(report);
+  return `${c.totalArtifacts} Source files are stored. ${c.parsedArtifacts} ${isAre(c.parsedArtifacts)} parsed, ${c.searchReadyArtifacts} ${isAre(c.searchReadyArtifacts)} search-ready, ${c.parserReadyArtifacts} ${isAre(c.parserReadyArtifacts)} parser-ready, and ${exceptionCount} ${hasHave(exceptionCount)} parser or review exceptions. ${parsingGap} still ${requiresRequire(parsingGap)} parsing and ${searchGap} still ${requiresRequire(searchGap)} search indexing. I am not claiming OCR, vector indexing, enterprise-context promotion, or agent-ready status unless those states already exist in the registry.`;
+}
+
+function reconcileMissingInputsWithArtifactRegistry(args: {
+  missingInputs: readonly string[];
+  artifacts: readonly SourceArtifactLifecycleArtifact[];
+}): { missing: string[]; registeredOpen: string[] } {
+  const lifecycleRows = buildSourceArtifactLifecycleSummary(
+    args.artifacts,
+  ).rows;
+  const missing: string[] = [];
+  const registeredOpen: string[] = [];
+
+  for (const rawInput of args.missingInputs) {
+    const input = rawInput.trim();
+    if (!input) continue;
+
+    const matchedRow = lifecycleRows.find((row) =>
+      missingInputMentionsArtifact(input, row),
+    );
+    if (
+      matchedRow &&
+      matchedRow.lifecycleState !== "not_registered" &&
+      looksLikeMissingArtifactClaim(input)
+    ) {
+      registeredOpen.push(
+        `${matchedRow.name} is registered as ${matchedRow.lifecycleLabel} (${matchedRow.approvalLabel})`,
+      );
+      continue;
+    }
+
+    missing.push(input);
+  }
+
+  return {
+    missing: uniqueStrings(missing),
+    registeredOpen: uniqueStrings(registeredOpen),
+  };
+}
+
+function looksLikeMissingArtifactClaim(input: string): boolean {
+  return /\b(no|not|missing|without)\b.*\b(registered|artifact|file|document)\b/i.test(
+    input,
+  );
+}
+
+function missingInputMentionsArtifact(
+  input: string,
+  row: SourceArtifactLifecycleRow,
+): boolean {
+  const normalizedInput = normalizeArtifactMatchText(input);
+  return [row.code, row.name, row.name.replace(/\bwith\b.*$/i, "").trim()]
+    .map(normalizeArtifactMatchText)
+    .filter(Boolean)
+    .some((needle) => normalizedInput.includes(needle));
+}
+
+function normalizeArtifactMatchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function uniqueStrings(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
+function directAnswerForReport(
+  report: SourceArtifactParseBacklogReport,
+  projection: EvidenceReadinessProjection,
+  stageContext?: BuildEvidenceReadinessGovernedAnswerInput["stageContext"],
+  artifacts: readonly SourceArtifactLifecycleArtifact[] = [],
+): string {
+  const evidenceStatus = evidenceStatusForReport(report, projection);
+  if (!stageContext) return evidenceStatus;
+
+  const artifactAwareInputs = reconcileMissingInputsWithArtifactRegistry({
+    missingInputs: stageContext.missingInputs ?? [],
+    artifacts,
+  });
+  const artifactReadiness = stageContext.stageKey
+    ? stageArtifactReadinessFor(
+        buildSourceArtifactLifecycleSummary(artifacts),
+        stageContext.stageKey,
+      )
+    : null;
+  const hasRecordedOpenCondition = Boolean(
+    stageContext.blocker?.trim() ||
+    artifactAwareInputs.missing.length > 0 ||
+    artifactAwareInputs.registeredOpen.length > 0 ||
+    artifactReadiness?.ready === false,
+  );
+  const phaseStatus = hasRecordedOpenCondition
+    ? `${stageContext.stageLabel} is not complete.`
+    : `${stageContext.stageLabel} completion is not proven by the evidence registry alone.`;
+  const effectiveNextAction =
+    artifactReadiness?.nextAction ?? stageContext.nextAction?.trim();
+  const nextAction = effectiveNextAction
+    ? ` Next action: ${effectiveNextAction}.`
+    : "";
+  const blocker = stageContext.blocker?.trim()
+    ? ` Recorded blocker: ${stageContext.blocker.trim()}.`
+    : " No recorded phase blocker.";
+  const missing =
+    artifactAwareInputs.missing.length > 0
+      ? ` Required inputs still missing: ${artifactAwareInputs.missing.join("; ")}.`
+      : " No required phase inputs are recorded as missing.";
+  const registeredOpen =
+    artifactAwareInputs.registeredOpen.length > 0
+      ? ` Registered artifact states requiring action: ${artifactAwareInputs.registeredOpen.join("; ")}.`
+      : "";
+  const artifactGate =
+    artifactReadiness?.ready === false
+      ? ` Artifact gate: ${artifactReadiness.line} Blockers: ${artifactReadiness.blockers.join("; ")}.`
+      : "";
+  const recordedBlocker =
+    artifactReadiness?.ready === false && !stageContext.blocker?.trim()
+      ? ""
+      : blocker;
+  return `${phaseStatus}${nextAction}${recordedBlocker}${missing}${registeredOpen}${artifactGate} Evidence processing: ${evidenceStatus}`;
 }
 
 function businessImplicationForReport(
@@ -264,32 +539,104 @@ function blockedAnswer(args: {
 export async function buildEvidenceReadinessGovernedAnswer(
   input: BuildEvidenceReadinessGovernedAnswerInput,
 ): Promise<AvaAnswerPacket | null> {
-  const governedClientKey = governedClientKeyForSourceClientKey(input.clientKey);
+  const governedClientKey = governedClientKeyForSourceClientKey(
+    input.clientKey,
+  );
   if (!governedClientKey) return null;
 
   const aliases = normalizedAliases(input);
-  const artifacts = (await listArtifactsForAliases(aliases)).filter(
-    (artifact) =>
-      artifact.tenantKey === input.clientKey ||
-      artifact.tenantKey === governedClientKey,
+  const eventAliasSet = new Set(aliases.map(normalizedKey));
+  const tenantAliasSet = new Set(
+    tenantAliasesFor(input.clientKey)
+      .concat(tenantAliasesFor(governedClientKey))
+      .map(normalizedKey),
   );
-  const candidates: GovernedCandidate[] = artifacts.map((artifact) =>
+  const [listedArtifacts, listedArtifactStates] = await Promise.all([
+    listArtifactsForAliases(aliases),
+    input.stageContext?.stageKey
+      ? listArtifactStatesForEventStage(
+          input.eventId,
+          input.stageContext.stageKey,
+        )
+      : Promise.resolve([]),
+  ]);
+  const artifacts = listedArtifacts.filter((artifact) =>
+    artifactMatchesEventAndTenant({
+      artifact,
+      eventAliases: eventAliasSet,
+      tenantAliases: tenantAliasSet,
+    }),
+  );
+  const artifactStates = listedArtifactStates.filter(
+    (state) =>
+      eventAliasSet.has(normalizedKey(state.sourceEventId)) &&
+      tenantAliasSet.has(normalizedKey(state.tenantKey)),
+  );
+  const lifecycleArtifacts: SourceArtifactLifecycleArtifact[] = [
+    ...artifactStates.map((state) => ({
+      artifactCode: state.artifactCode,
+      status: state.status,
+      body: state.body,
+      bodyGenerationMetadata: state.bodyGenerationMetadata,
+    })),
+    ...artifacts,
+  ];
+  // The render gate is unchanged: when the corpus policy refuses every one of
+  // this event's files (for example restricted ones), nothing renders — not
+  // even their names in the readiness table. It must run over the reported
+  // files themselves, not over the fence's survivors: an unaccepted
+  // restricted file is refused by the fence first and would never reach it.
+  const renderCandidates: GovernedCandidate[] = artifacts.map((artifact) =>
     governedCandidateFromSourceArtifact(artifact, {
       clientKey: governedClientKey,
       tenantId: input.tenantId,
     }),
   );
-  const bundle = buildValidatedAgentContextBundle(candidates, {
+  const renderGate = buildValidatedAgentContextBundle(renderCandidates, {
     requireAgentReady: false,
   });
-
-  if (bundle.decision === "block") {
+  if (renderGate.decision === "block") {
     return blockedAnswer({
       governedClientKey,
       question: input.question,
-      bundle,
+      bundle: renderGate,
     });
   }
+
+  // The readiness report counts what is stored; it quotes nothing. The
+  // evidence path — what the answer cites — runs through the acceptance-bound
+  // event fence (C-506), over every listed row so its tenant and event rules
+  // decide rather than the filter above.
+  const acceptances = await getLatestArtifactAcceptancesByArtifactIds(
+    listedArtifacts.map((artifact) => artifact.id),
+  );
+  const declaredTenantId = input.tenantId ?? "";
+  const fenced = buildGovernedEventContextBundle(
+    eventContextCandidatesForEvidenceReadiness(listedArtifacts, acceptances, {
+      tenantId: declaredTenantId,
+      eventId: input.eventId,
+      eventAliases: aliases,
+    }),
+    {
+      tenantId: declaredTenantId,
+      clientKey: governedClientKey,
+      eventId: input.eventId,
+      contractId: null,
+      // No `stage_plan` candidate is produced here, so no rule reads this.
+      currentStageKey: "",
+      acceptedArtifactVersions: acceptedArtifactVersionsFor(acceptances),
+    },
+    { requireAgentReady: false },
+  );
+  // Citations come only from files the fence admitted AND the policy seam
+  // passed; an accepted file the seam refuses is simply not cited.
+  const bundle = fenced.bundle;
+  // Only this tenant's own files on this event are reportable as a gap: a
+  // refusal for another tenant's or event's file is an isolation result.
+  const reportedArtifactIds = new Set(artifacts.map((artifact) => artifact.id));
+  const unboundEvidenceCount = fenced.refused.filter((refusal) =>
+    reportedArtifactIds.has(refusal.candidate.id),
+  ).length;
 
   const report = buildSourceArtifactParseBacklogReport({
     clientKey: governedClientKey,
@@ -298,6 +645,7 @@ export async function buildEvidenceReadinessGovernedAnswer(
     resolvedEventCode: aliases.find((alias) => alias !== input.eventId),
     artifacts,
   });
+  const projection = evidenceReadinessProjection({ report, artifactStates });
   const citations = avaCitationsFromGovernedCandidates(bundle.usable);
   const citationIds = citationIdsForArtifacts(artifacts, citations);
 
@@ -306,15 +654,23 @@ export async function buildEvidenceReadinessGovernedAnswer(
     mode: "SOURCE",
     tenantKey: governedClientKey,
     question: input.question,
-    intent: "evidence_processing_readiness",
-    status: report.status === "empty" ? "no_data" : "answered",
+    intent: input.stageContext
+      ? "source_stage_completion"
+      : "evidence_processing_readiness",
+    status: projection.totalArtifacts === 0 ? "no_data" : "answered",
     tenantFencePassed: true,
-    directAnswer: directAnswerForReport(report),
+    directAnswer: directAnswerForReport(
+      report,
+      projection,
+      input.stageContext,
+      lifecycleArtifacts,
+    ),
     businessImplication: businessImplicationForReport(report),
-    recommendation: recommendationForReport(report),
+    recommendation:
+      input.stageContext?.nextAction?.trim() || recommendationForReport(report),
     artifacts: [
       {
-        ...buildEvidenceReadinessChart({ report, citationIds }),
+        ...buildEvidenceReadinessChart({ report, projection, citationIds }),
         artifact: "chart" as const,
       },
       {
@@ -323,18 +679,40 @@ export async function buildEvidenceReadinessGovernedAnswer(
       },
     ],
     citations,
-    gaps:
-      report.status === "empty"
+    nextSteps: input.stageContext?.nextAction?.trim()
+      ? [
+          {
+            id: "source-stage-recorded-next-action",
+            label: input.stageContext.nextAction.trim(),
+            rationale:
+              "This is the next action recorded on the governed Source event.",
+            targetSurface: "source",
+          },
+        ]
+      : [],
+    gaps: [
+      ...(projection.totalArtifacts === 0
         ? [
             {
               id: "evidence-readiness-files-missing",
               label: "No registered evidence files",
               detail:
                 "Upload or capture workshop notes, session outputs, and client files before asking aVa to reason from persisted Source evidence.",
-              severity: "high",
+              severity: "high" as const,
             },
           ]
-        : [],
+        : []),
+      ...(unboundEvidenceCount > 0
+        ? [
+            {
+              id: "evidence-readiness-evidence-not-acceptance-bound",
+              label: "Some files are not attributable yet",
+              detail: `${unboundEvidenceCount} of this event's files are not bound to an accepted, current version, so nothing in this answer is attributed to them. Accept the current version of each file to make it quotable.`,
+              severity: "medium" as const,
+            },
+          ]
+        : []),
+    ],
     caveats: [
       {
         id: "evidence-readiness-read-only",

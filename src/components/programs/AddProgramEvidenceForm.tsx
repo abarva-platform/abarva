@@ -13,6 +13,7 @@
 
 import { useState, type CSSProperties, type FormEvent, type ChangeEvent, type FocusEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { getMovesStageLabel } from '@/lib/programs/phase-labels';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { EvidenceTagSelector } from '@/components/reasoning/EvidenceTagSelector';
 import type { EvidenceTag } from '@/lib/reasoning/evidence-tags';
@@ -136,15 +137,11 @@ interface AddProgramEvidenceFormProps {
   currentPhase: number;
 }
 
-const PHASE_OPTIONS: ReadonlyArray<{ value: number; label: string }> = [
-  { value: 0, label: 'P0 · Originate' },
-  { value: 1, label: 'P1 · Discovery' },
-  { value: 2, label: 'P2 · Synthesis' },
-  { value: 3, label: 'P3 · Design' },
-  { value: 4, label: 'P4 · Execution Roadmap' },
-  { value: 5, label: 'P5 · Approval & Mobilization' },
-  { value: 6, label: 'P6 · Tower Handoff' },
-];
+const PHASE_OPTIONS: ReadonlyArray<{ value: number; label: string }> =
+  Array.from({ length: 7 }, (_, value) => ({
+    value,
+    label: getMovesStageLabel(value),
+  }));
 
 export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramEvidenceFormProps) {
   const router = useRouter();

@@ -1,9 +1,9 @@
 check,status,evidence
 v3-inputs:meridian-health,PASS,19 standard v3 files present
 approved-home-knowledge:meridian-health,PASS,approved story blocks and visual specs present
-v3-inputs:skyharbor-air,PASS,19 standard v3 files present
+v3-inputs:skyharbor-air,FAIL,missing 00_enterprise_profile.csv;01_business_functions.csv;02_org_ownership.csv;03_workforce_roles.csv;04_applications_systems.csv;05_data_assets_integrations.csv;06_infrastructure_platforms.csv;07_vendors_contracts.csv;08_it_budget_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;11_risks_controls.csv;12_relationships.csv;13_evidence_sources.csv;14_metrics_outcomes.csv;15_industry_context_patterns.csv;16_expert_lenses.csv;17_managed_services_scope.csv;18_operational_process_evidence.csv
 approved-home-knowledge:skyharbor-air,PASS,approved story blocks and visual specs present
 v3-inputs:first-capital,PASS,19 standard v3 files present
 approved-home-knowledge:first-capital,PASS,approved story blocks and visual specs present
-candidate-invisibility-guard,PASS,default runtime requires active pointer; candidate preview is explicit
+candidate-invisibility-guard,VACUOUS,"default runtime requires active pointer; candidate preview is explicit — NOT PROVEN: src/lib/home/v7-context-browser.ts no longer exists, so this check has no subject"
 local-runtime-retrieval-proof,PASS,local runtime retrieval proof bundle exists

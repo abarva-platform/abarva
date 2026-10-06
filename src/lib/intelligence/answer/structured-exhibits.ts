@@ -111,7 +111,7 @@ const MOVES_PHASE_ROWS: AnswerTable["rows"] = [
     boundary: "Finance and sponsor review the funding case.",
   },
   {
-    phase: "P5 Approval & Mobilization",
+    phase: "P5 Mobilize & Handoff",
     focus:
       "Confirm owners, controls, vendors, adoption plan, and launch readiness.",
     artifact: "Execution-ready plan",
@@ -151,7 +151,7 @@ function hasMovesPhaseTable(tables: readonly AnswerTable[]): boolean {
     ].join("\n");
     return (
       /P0 Originate/.test(text) &&
-      /P5 Approval & Mobilization/.test(text) &&
+      /P5 Mobilize & Handoff/.test(text) &&
       /Tower Track Outcomes/.test(text)
     );
   });

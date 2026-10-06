@@ -1,0 +1,45 @@
+ACA runtime invariant passed.
+{
+  "checkedAt": "2026-09-24T06:17:51.744Z",
+  "containerAppName": "ca-abarva-web-lab-eastus",
+  "resourceGroup": "rg-abarva-controlplane-lab-eastus",
+  "productionBaseUrl": "https://app.abarva.ai",
+  "expectedImage": null,
+  "templateImage": "acrabarvalab001.azurecr.io/abarva/web@sha256:b76974f20653b4cbd29049c5706fb76996947f90642689576668f979d77a5496",
+  "activeRevisionName": "ca-abarva-web-lab-eastus--mf14558e4",
+  "activeImage": "acrabarvalab001.azurecr.io/abarva/web@sha256:b76974f20653b4cbd29049c5706fb76996947f90642689576668f979d77a5496",
+  "activeDigest": "sha256:b76974f20653b4cbd29049c5706fb76996947f90642689576668f979d77a5496",
+  "activeDigestTags": [
+    "main-f14558e4"
+  ],
+  "traffic": [
+    {
+      "revisionName": "ca-abarva-web-lab-eastus--mf14558e4",
+      "weight": 100
+    }
+  ],
+  "health": {
+    "ok": true,
+    "checks": {
+      "postgres": true,
+      "direct_postgres": true,
+      "azure_graph": "postgres"
+    }
+  },
+  "workerJobs": [
+    {
+      "name": "job-abarva-deliv-worker",
+      "containerName": "worker",
+      "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:b76974f20653b4cbd29049c5706fb76996947f90642689576668f979d77a5496",
+      "passed": true
+    },
+    {
+      "name": "job-abarva-deliv-worker-event",
+      "containerName": "worker",
+      "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:b76974f20653b4cbd29049c5706fb76996947f90642689576668f979d77a5496",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "errors": []
+}

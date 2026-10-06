@@ -1,0 +1,18 @@
+{
+  "dataset_id": "source-candidate-supplier-registry-synthetic-v1",
+  "title": "Synthetic Source Candidate Supplier Registry V1",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Product Engineering",
+  "source_basis": "public-safe synthetic candidate supplier registry authored to exercise governed Source supplier suggestion filters across every registered Source archetype",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 28,
+  "approved_by": "AbarVa Product Engineering",
+  "approved_at": "2026-10-01",
+  "notes": "Synthetic lab tenant candidate registry package with twenty-three eligible fictional supplier identities and five fail-closed negative controls. Five candidates cover managed application services. The named tenant may be loaded only through the approved digest-pinned ACA operator workflow after an exact-hash dry run. Profiles are hypotheses for workflow testing, not supplier representations or bids. This manifest does not authorize contact, invitations, awards, executed NDAs, signatures, or use for another tenant."
+}

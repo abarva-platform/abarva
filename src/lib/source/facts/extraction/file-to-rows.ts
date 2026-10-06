@@ -2,8 +2,8 @@
 // Deterministic file → rows parser — the byte-parsing half of structured-map
 // intake. Turns an uploaded CSV / XLSX into the SAME `{ headers, rows }` shape the
 // structured-map (`mapTemplateUploadToFacts`) already consumes. NO LLM: CSV via
-// papaparse (`header: true`), XLSX via exceljs (first worksheet, first row =
-// headers). This is the ONLY new step between "a file landed" and the existing,
+// papaparse, XLSX via exceljs (first worksheet by default; an explicit named
+// worksheet when requested). This is the ONLY new step between "a file landed" and the existing,
 // tested map+validate+write path — so a file becomes typed facts with no inference.
 //
 // Cell coercion is intentionally conservative and mirrors the map's own tolerance:
@@ -129,7 +129,7 @@ function parseCsv(text: string): ParsedTemplateUpload {
 }
 
 /** Parse XLSX bytes into headers + rows from the FIRST worksheet. */
-async function parseXlsx(bytes: Buffer): Promise<ParsedTemplateUpload> {
+async function parseXlsx(bytes: Buffer, preferredWorksheet?: string): Promise<ParsedTemplateUpload> {
   const workbook = new ExcelJS.Workbook();
   try {
     const workbookBytes = bytes as unknown as Parameters<
@@ -143,7 +143,7 @@ async function parseXlsx(bytes: Buffer): Promise<ParsedTemplateUpload> {
       }`,
     );
   }
-  const sheet = workbook.worksheets[0];
+  const sheet = (preferredWorksheet ? workbook.getWorksheet(preferredWorksheet) : undefined) ?? workbook.worksheets[0];
   if (!sheet) {
     throw new Error("XLSX file has no worksheet");
   }
@@ -207,6 +207,7 @@ export async function parseFileToRows(args: {
   bytes: Buffer;
   filename?: string | null;
   mimeType?: string | null;
+  preferredWorksheet?: string;
 }): Promise<ParsedTemplateUpload> {
   const kind = resolveParsableFileKind({
     filename: args.filename,
@@ -225,5 +226,5 @@ export async function parseFileToRows(args: {
   if (kind === "csv") {
     return parseCsv(args.bytes.toString("utf8"));
   }
-  return parseXlsx(args.bytes);
+  return parseXlsx(args.bytes, args.preferredWorksheet);
 }

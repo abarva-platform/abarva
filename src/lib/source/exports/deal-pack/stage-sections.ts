@@ -15,6 +15,7 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from "@/lib/source/canvas-substrate/types";
+import { sourceStagePresentationFor } from "@/lib/source/constants";
 import type { SourceStageKey } from "@/lib/source/types";
 import { buildSourceJudgmentFromDealPack } from "../../expert-judgment/source-judgment-kernel";
 import {
@@ -359,7 +360,7 @@ function synthesizeHeadline(
     : "— not recorded";
   const archetype = input.archetype ?? "— not recorded";
   const owner = input.eventOwner ?? "— not recorded";
-  const stageMap = stageNumberFor(input.currentStageKey);
+  const stageMap = sourceStagePresentationFor(input.currentStageKey);
   const stageLabel = stageMap.label;
   const stageNumber = stageMap.number;
   const facts: HeadlineFacts = {
@@ -467,20 +468,27 @@ function synthesizeHeadline(
   // the current stage. Never invent a recommendation.
   const stagePending = stageMap;
   const nextStepFor = (n: number): string => {
-    if (n <= 0)
-      return "Author the demand-challenge verdict (Stage 0) before proceeding.";
     if (n === 1)
-      return "Lock the sourcing approach (Stage 1) and approve before scoping.";
-    if (n === 2)
-      return "Complete the market scan (Stage 2) before issuing the RFP.";
-    if (n === 3) return "Finalize the scope memo + RFP package (Stage 3).";
+      return "Lock the sourcing strategy and approval basis before scoping.";
+    if (n === 2) return "Finalize the scope boundary before issuing the RFP.";
+    if (n === 3)
+      return "Finalize the RFP package before vendor response intake.";
     if (n === 4)
-      return "Receive vendor pricing submissions to populate Stage 4 comparison.";
+      return "Receive vendor submissions and preserve comparable response evidence.";
     if (n === 5)
-      return "Score finalists, close traps, draft decision brief (Stage 5).";
+      return "Score finalists with cited evaluation evidence before pricing conclusions.";
     if (n === 6)
-      return "Resolve AI clause gaps and finalize the vendor risk pack (Stage 6).";
-    return "Set renewal posture (Stage 7) before the auto-renewal lock date.";
+      return "Normalize pricing and TCO assumptions before BAFO leverage.";
+    if (n === 7)
+      return "Resolve BAFO asks and carry forward conditions before executive review.";
+    if (n === 8)
+      return "Close executive decision conditions before selection handoff.";
+    if (n === 9)
+      return "Confirm selection conditions and contract handoff before transition.";
+    if (n === 10) return "Prove transition readiness before measuring value.";
+    if (n === 11)
+      return "Separate committed, measured, finance-confirmed, and realized value.";
+    return "Lock the sourcing strategy and approval basis before scoping.";
   };
   return {
     kind: "pending",
@@ -687,7 +695,7 @@ function renderEvidenceLedger(input: DealPackInput): string {
   const rows = input.evidence
     .map((e) => {
       const stageLabel = e.stage
-        ? `Stage ${stageNumberFor(e.stage).number}`
+        ? `Stage ${sourceStagePresentationFor(e.stage).number}`
         : "—";
       const cited =
         e.sourceArtifactId && e.sourceArtifactId.trim().length > 0
@@ -717,7 +725,7 @@ function renderDecisionHistory(input: DealPackInput): string {
   const rows = input.gateCriteria
     .map((c) => {
       const stageLabel = c.fromStage
-        ? `Stage ${stageNumberFor(c.fromStage).number}`
+        ? `Stage ${sourceStagePresentationFor(c.fromStage).number}`
         : "—";
       const reviewedAt = c.reviewedAt ?? "—";
       const note = c.notes && c.notes.trim().length > 0 ? c.notes : "—";
@@ -754,42 +762,6 @@ function renderGlossary(): string {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-
-function stageNumberFor(stageKey: SourceStageKey): {
-  number: number;
-  label: string;
-} {
-  // Map the canonical canvas stage keys to the methodology §3 stage
-  // numbers (0–7). The canvas stage progression differs from the
-  // methodology stage numbering, so we approximate via the closest
-  // mapping. When a key doesn't match, default to "active stage".
-  switch (stageKey) {
-    case "strategy":
-      return { number: 1, label: "Sourcing Strategy" };
-    case "scope":
-      return { number: 3, label: "Scope & RFP" };
-    case "rfp":
-      return { number: 3, label: "Scope & RFP" };
-    case "responses":
-      return { number: 4, label: "Pricing & TCO" };
-    case "evaluation":
-      return { number: 5, label: "Evaluation, BAFO & Decision" };
-    case "pricing":
-      return { number: 4, label: "Pricing & TCO" };
-    case "bafo":
-      return { number: 5, label: "Evaluation, BAFO & Decision" };
-    case "executive_decision":
-      return { number: 5, label: "Evaluation, BAFO & Decision" };
-    case "selection":
-      return { number: 5, label: "Evaluation, BAFO & Decision" };
-    case "transition":
-      return { number: 10, label: "Transition" };
-    case "value":
-      return { number: 11, label: "Value" };
-    default:
-      return { number: 1, label: "Sourcing Strategy" };
-  }
-}
 
 function extractFirstHeading(md: string, fallback: string): string {
   const trimmed = md.trim();

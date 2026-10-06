@@ -41,11 +41,14 @@ describe("runSourceAnswerQualityGate — banned-language rejection", () => {
 
   it("does not flag 'I cannot access the event' when grounding context is genuinely absent", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "I cannot access the event right now — please check back shortly.",
+      answerText:
+        "I cannot access the event right now — please check back shortly.",
       mode: "event_status",
       hasGroundingContext: false,
     });
-    const bannedCheck = result.checks.find((c) => c.id === "no_banned_language");
+    const bannedCheck = result.checks.find(
+      (c) => c.id === "no_banned_language",
+    );
     expect(bannedCheck?.passed).toBe(true);
   });
 
@@ -56,7 +59,9 @@ describe("runSourceAnswerQualityGate — banned-language rejection", () => {
       mode: "event_status",
       hasGroundingContext: true,
     });
-    expect(result.finalText.toLowerCase()).not.toContain("i cannot access the event");
+    expect(result.finalText.toLowerCase()).not.toContain(
+      "i cannot access the event",
+    );
   });
 
   it("repairs Source record write claims into explicit chat-only wording", () => {
@@ -69,7 +74,9 @@ describe("runSourceAnswerQualityGate — banned-language rejection", () => {
 
     expect(result.repaired).toBe(true);
     expect(result.finalText).toContain(SOURCE_CHAT_UNSAVED_FACT_NOTICE);
-    expect(result.finalText.toLowerCase()).not.toContain("register it in the intake record");
+    expect(result.finalText.toLowerCase()).not.toContain(
+      "register it in the intake record",
+    );
   });
 
   it("guards legacy Source ask text even outside the streaming quality gate", () => {
@@ -227,13 +234,16 @@ describe("runSourceAnswerQualityGate — gap/caveat requirement for incomplete e
     );
     // Before repair this should have failed; after repair, the gate appends a
     // caveat, so the FINAL text should read as passing.
-    expect(result.finalText.toLowerCase()).toMatch(/not yet persisted|missing|outstanding/);
+    expect(result.finalText.toLowerCase()).toMatch(
+      /not yet persisted|missing|outstanding/,
+    );
     expect(check).toBeDefined();
   });
 
   it("does not require a caveat when evidence is not flagged incomplete", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "All provide-tasks on this stage have persisted evidence. Next: proceed to the gate.",
+      answerText:
+        "All provide-tasks on this stage have persisted evidence. Next: proceed to the gate.",
       mode: "evidence_readiness",
       hasGroundingContext: true,
       evidenceIsIncomplete: false,
@@ -242,6 +252,36 @@ describe("runSourceAnswerQualityGate — gap/caveat requirement for incomplete e
       (c) => c.id === "includes_gap_or_caveat_when_incomplete",
     );
     expect(check?.passed).toBe(true);
+  });
+
+  it("repairs a primary answer that calls a registered AI draft unregistered while preserving truly missing evidence", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Not yet registered: Scope Memo with Boundaries and Exclusion Log. Next: review the Define evidence.",
+      mode: "evidence_readiness",
+      hasGroundingContext: true,
+      evidenceIsIncomplete: true,
+      groundingBlockText: [
+        "EVIDENCE READINESS GROUNDING (authoritative — persisted facts/artifacts for the CURRENT stage's tasks):",
+        "Stage: Define.",
+        "Present (evidence already persisted): Scope Memo with Boundaries (registered artifact: Example Client Scope Memo with Boundaries.md; AI draft awaiting review).",
+        "Missing (no persisted fact/artifact yet): Exclusion Log.",
+      ].join("\n"),
+    });
+
+    expect(result.repaired).toBe(true);
+    expect(result.finalText).toContain(
+      "Scope Memo with Boundaries is registered as AI draft awaiting review.",
+    );
+    expect(result.finalText).toContain(
+      "Exclusion Log remains not yet registered.",
+    );
+    expect(result.finalText).not.toContain(
+      "Not yet registered: Scope Memo with Boundaries",
+    );
+    expect(
+      result.checks.find((c) => c.id === "matches_workflow_state")?.passed,
+    ).toBe(true);
   });
 });
 
@@ -262,12 +302,15 @@ describe("runSourceAnswerQualityGate — next-step requirement", () => {
 describe("runSourceAnswerQualityGate — read-once grounding facts threading", () => {
   it("passes matches_read_once_grounding when groundingFacts were provided for artifact_finality", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "The client-final version is authoritative. Next: proceed with it.",
+      answerText:
+        "The client-final version is authoritative. Next: proceed with it.",
       mode: "artifact_finality",
       hasGroundingContext: true,
       groundingFacts: { artifactCount: "2" },
     });
-    const check = result.checks.find((c) => c.id === "matches_read_once_grounding");
+    const check = result.checks.find(
+      (c) => c.id === "matches_read_once_grounding",
+    );
     expect(check?.passed).toBe(true);
   });
 
@@ -278,7 +321,9 @@ describe("runSourceAnswerQualityGate — read-once grounding facts threading", (
       hasGroundingContext: true,
       groundingFacts: {},
     });
-    const check = result.checks.find((c) => c.id === "matches_read_once_grounding");
+    const check = result.checks.find(
+      (c) => c.id === "matches_read_once_grounding",
+    );
     expect(check?.passed).toBe(false);
   });
 });
@@ -353,13 +398,16 @@ describe("runSourceAnswerQualityGate — Phase B value-type breakdown (includes_
       hasGroundingContext: true,
       groundingBlockText: GROUNDING_WITH_CLASSIFICATION,
     });
-    const check = result.checks.find((c) => c.id === "includes_value_type_breakdown");
+    const check = result.checks.find(
+      (c) => c.id === "includes_value_type_breakdown",
+    );
     expect(check?.passed).toBe(true);
   });
 
   it("fails and repairs by appending the grounding's own classification when the answer blends the value into one figure", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "You're locking in $5M of savings. Next: confirm the contract language.",
+      answerText:
+        "You're locking in $5M of savings. Next: confirm the contract language.",
       mode: "committed_value",
       hasGroundingContext: true,
       groundingBlockText: GROUNDING_WITH_CLASSIFICATION,
@@ -375,9 +423,12 @@ describe("runSourceAnswerQualityGate — Phase B value-type breakdown (includes_
       answerText: "The award locks $5M. Next: confirm the contract language.",
       mode: "committed_value",
       hasGroundingContext: true,
-      groundingBlockText: "COMMITTED VALUE GROUNDING: Headline: The executed award locks $5M.",
+      groundingBlockText:
+        "COMMITTED VALUE GROUNDING: Headline: The executed award locks $5M.",
     });
-    const check = result.checks.find((c) => c.id === "includes_value_type_breakdown");
+    const check = result.checks.find(
+      (c) => c.id === "includes_value_type_breakdown",
+    );
     expect(check?.passed).toBe(true);
     expect(check?.detail).toMatch(/no breakdown required/i);
   });
@@ -386,7 +437,8 @@ describe("runSourceAnswerQualityGate — Phase B value-type breakdown (includes_
 describe("runSourceAnswerQualityGate — Phase B generic-ask rejection (uses_specific_ask_when_available)", () => {
   it("fails and repairs a generic negotiation answer by appending the specific-ask pointer (append, not strip — stripping would mangle the sentence)", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "You should negotiate harder in BAFO. Next: press the vendor.",
+      answerText:
+        "You should negotiate harder in BAFO. Next: press the vendor.",
       mode: "bafo_strategy",
       hasGroundingContext: true,
       groundingFacts: { bafoOpenLeverCount: "2" },
@@ -406,18 +458,23 @@ describe("runSourceAnswerQualityGate — Phase B generic-ask rejection (uses_spe
       groundingFacts: { bafoOpenLeverCount: "1" },
       groundingHasSpecificAsk: true,
     });
-    const check = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    const check = result.checks.find(
+      (c) => c.id === "uses_specific_ask_when_available",
+    );
     expect(check?.passed).toBe(true);
   });
 
   it("does not require specificity when the grounding has no specific ask to point to (honest MODEL)", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "You should negotiate harder in BAFO. Next: press the vendor.",
+      answerText:
+        "You should negotiate harder in BAFO. Next: press the vendor.",
       mode: "bafo_strategy",
       hasGroundingContext: true,
       groundingHasSpecificAsk: false,
     });
-    const check = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    const check = result.checks.find(
+      (c) => c.id === "uses_specific_ask_when_available",
+    );
     expect(check?.passed).toBe(true);
   });
 
@@ -428,7 +485,9 @@ describe("runSourceAnswerQualityGate — Phase B generic-ask rejection (uses_spe
       hasGroundingContext: true,
       groundingHasSpecificAsk: true,
     });
-    const check = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    const check = result.checks.find(
+      (c) => c.id === "uses_specific_ask_when_available",
+    );
     expect(check?.passed).toBe(true);
     expect(check?.detail).toMatch(/not a bafo\/vendor mode/i);
   });
@@ -470,7 +529,8 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
 
   it("fails and repairs decision_recommendation when a $ figure is not in the composed grounding", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "Net negotiable value is $9.9M. Next: confirm with the vendor before award.",
+      answerText:
+        "Net negotiable value is $9.9M. Next: confirm with the vendor before award.",
       mode: "decision_recommendation",
       hasGroundingContext: true,
       groundingBlockText: DECISION_GROUNDING,
@@ -481,7 +541,8 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
 
   it("includes_value_type_breakdown applies to decision_recommendation", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "You're locking in $4.2M–$6.5M. Next: confirm with the vendor before award.",
+      answerText:
+        "You're locking in $4.2M–$6.5M. Next: confirm with the vendor before award.",
       mode: "decision_recommendation",
       hasGroundingContext: true,
       groundingBlockText: DECISION_GROUNDING,
@@ -492,7 +553,8 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
 
   it("uses_specific_ask_when_available applies to decision_recommendation (composited BAFO facet)", () => {
     const result = runSourceAnswerQualityGate({
-      answerText: "You should negotiate harder before awarding. Next: confirm with the vendor.",
+      answerText:
+        "You should negotiate harder before awarding. Next: confirm with the vendor.",
       mode: "decision_recommendation",
       hasGroundingContext: true,
       groundingHasSpecificAsk: true,
@@ -507,7 +569,8 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
       "Leakage / opportunity pool: $2.1M–$3.4M across 1 lever.",
     ].join("\n");
     const result = runSourceAnswerQualityGate({
-      answerText: "The leakage pool is $2.1M–$3.4M. Next: review the scope memo.",
+      answerText:
+        "The leakage pool is $2.1M–$3.4M. Next: review the scope memo.",
       mode: "contract_optimization",
       hasGroundingContext: true,
       groundingBlockText: CONTRACT_OPT_GROUNDING,
@@ -581,7 +644,9 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
     expect(result.passed).toBe(true);
     expect(result.finalText).toContain("becomes eligible");
     expect(result.finalText).toContain("approved realized value remains $0");
-    expect(result.finalText).not.toMatch(/moves into confirmed realized value/i);
+    expect(result.finalText).not.toMatch(
+      /moves into confirmed realized value/i,
+    );
   });
 
   it("repairs pending Finance/Tower evidence that is described as converting from pending to approved", () => {
@@ -603,7 +668,9 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
     expect(result.passed).toBe(true);
     expect(result.finalText).toContain("becomes eligible");
     expect(result.finalText).toContain("approved realized value remains $0");
-    expect(result.finalText).not.toMatch(/converts \$940K from pending to approved/i);
+    expect(result.finalText).not.toMatch(
+      /converts \$940K from pending to approved/i,
+    );
   });
 });
 
@@ -622,8 +689,12 @@ describe("runSourceAnswerQualityGate — Phase C: general_advisory has a lighter
     });
     // general_advisory is excluded from PHASE_C_VALUE_MODES / ask-mode sets —
     // these checks vacuously pass regardless of the grounding's content.
-    const valueTypeCheck = result.checks.find((c) => c.id === "includes_value_type_breakdown");
-    const askCheck = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    const valueTypeCheck = result.checks.find(
+      (c) => c.id === "includes_value_type_breakdown",
+    );
+    const askCheck = result.checks.find(
+      (c) => c.id === "uses_specific_ask_when_available",
+    );
     expect(valueTypeCheck?.passed).toBe(true);
     expect(askCheck?.passed).toBe(true);
     expect(result.passed).toBe(true);
@@ -636,6 +707,8 @@ describe("runSourceAnswerQualityGate — Phase C: general_advisory has a lighter
       hasGroundingContext: true,
     });
     expect(result.repaired).toBe(true);
-    expect(result.finalText.toLowerCase()).not.toContain("i am just a workflow assistant");
+    expect(result.finalText.toLowerCase()).not.toContain(
+      "i am just a workflow assistant",
+    );
   });
 });

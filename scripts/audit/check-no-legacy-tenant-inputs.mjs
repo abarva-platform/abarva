@@ -61,6 +61,60 @@ function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
+/**
+ * A verification step must not dirty the tree it is verifying.
+ *
+ * All six reports below are committed, and this audit runs on every
+ * `node scripts/release-check.mjs` — the command the standing rules tell every
+ * author to run before opening a PR. `summary.json` and `blocked-loader-paths.json`
+ * stamped a fresh `generatedAt` on every run whatever the findings were, so the
+ * gate left two modified files the author never touched, unconditionally. The
+ * author then either committed unrelated churn into their PR or noticed and
+ * reverted it by hand.
+ *
+ * So these writers skip the write when the report would say the same thing. For
+ * the two JSON reports `generatedAt` is excluded from that comparison, because it
+ * is the one field that moves on its own; when the findings are unchanged the
+ * existing file is left exactly as it is, older timestamp included. That is the
+ * honest reading rather than a convenience: `generatedAt` then records when this
+ * content was produced, which is what a reader of an unchanged report wants to
+ * know, instead of when a gate last looked and found nothing new.
+ *
+ * Note this is not the same shape as `existsSync(f) ? readFileSync(f) : ""`. That
+ * idiom hides a missing subject from a check; this one changes nothing a check
+ * sees. Findings are computed identically either way — only the write is skipped,
+ * and only when the computed report is byte-for-byte what is already there.
+ */
+function writeIfChanged(file, content) {
+  if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === content) return false;
+  fs.writeFileSync(file, content);
+  return true;
+}
+
+function withoutVolatileKey(value, volatileKey) {
+  const rest = { ...value };
+  delete rest[volatileKey];
+  return JSON.stringify(rest);
+}
+
+function writeJsonIfFindingsChanged(file, value, volatileKey) {
+  if (fs.existsSync(file)) {
+    try {
+      const previous = JSON.parse(fs.readFileSync(file, "utf8"));
+      if (
+        withoutVolatileKey(previous, volatileKey) === withoutVolatileKey(value, volatileKey)
+      ) {
+        return false;
+      }
+    } catch {
+      // An unparseable report on disk carries no findings to compare against, so
+      // it is replaced rather than preserved.
+    }
+  }
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+  return true;
+}
+
 function gitLsFiles() {
   const raw = execFileSync("git", ["ls-files", "-z"], { cwd: repoRoot, maxBuffer: 64 * 1024 * 1024 });
   return raw
@@ -70,6 +124,28 @@ function gitLsFiles() {
     .sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * A committed proof bundle must not name a file it has no finding about.
+ *
+ * This count feeds four committed reports: `deletedLegacyFileCount` in
+ * `summary.json`, a row per file in `deleted-legacy-files.csv`, a line in
+ * `summary.md` and the "Deleted legacy files" card in the committed HTML proof.
+ * Every one of those labels says *legacy*, and the scan applied no such test — it
+ * returned every deletion in the working tree, so deleting an ordinary source
+ * file, test or template wrote that file into the proof bundle as a deleted legacy
+ * file and rewrote all four reports. The write-if-changed guard above cannot stop
+ * that churn, because the findings really did differ between runs; they differed
+ * because they were wrong.
+ *
+ * `blockedPathPatterns` is the audit's own definition of a legacy path — the same
+ * list `blockedPathFindings` is built from — so the count is filtered through it
+ * rather than through a second list that could drift from it.
+ *
+ * The base is still `HEAD`, which means an uncommitted deletion is what this
+ * observes. That is deliberately unchanged here: choosing a different base is a
+ * decision about what the bundle is proof *of*, and it is recorded in the backlog
+ * rather than taken in a bounded repair.
+ */
 function gitDeletedFiles() {
   const raw = execFileSync("git", ["diff", "--name-status", "--diff-filter=D", "HEAD", "--"], {
     cwd: repoRoot,
@@ -84,6 +160,7 @@ function gitDeletedFiles() {
       return file;
     })
     .filter(Boolean)
+    .filter((file) => blockedPathPatterns.some((rule) => rule.pattern.test(file)))
     .sort((a, b) => a.localeCompare(b));
 }
 
@@ -104,12 +181,12 @@ function csv(value) {
 function writeCsv(file, rows, columns) {
   const lines = [columns.join(",")];
   for (const row of rows) lines.push(columns.map((column) => csv(row[column])).join(","));
-  fs.writeFileSync(file, `${lines.join("\n")}\n`);
+  writeIfChanged(file, `${lines.join("\n")}\n`);
 }
 
 function writeMarkdown(file, lines) {
   while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
-  fs.writeFileSync(file, `${lines.join("\n")}\n`);
+  writeIfChanged(file, `${lines.join("\n")}\n`);
 }
 
 function run() {
@@ -197,10 +274,11 @@ function run() {
     blockedContentFindings,
   };
 
-  fs.writeFileSync(path.join(outDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
-  fs.writeFileSync(
+  writeJsonIfFindingsChanged(path.join(outDir, "summary.json"), summary, "generatedAt");
+  writeJsonIfFindingsChanged(
     path.join(outDir, "blocked-loader-paths.json"),
-    `${JSON.stringify(blockedLoaderPaths, null, 2)}\n`,
+    blockedLoaderPaths,
+    "generatedAt",
   );
   writeCsv(
     path.join(outDir, "deleted-legacy-files.csv"),
@@ -255,7 +333,7 @@ body{font-family:Inter,Arial,sans-serif;margin:0;background:#f7f4ee;color:#07152
     .map((root) => `<tr><td><code>${root}</code></td></tr>`)
     .join("")}</tbody></table>
 </main></body></html>`;
-  fs.writeFileSync(path.join(outDir, "no-legacy-tenant-inputs-proof.html"), html);
+  writeIfChanged(path.join(outDir, "no-legacy-tenant-inputs-proof.html"), html);
 
   if (blockedPathFindings.length > 0 || blockedContentFindings.length > 0) {
     console.error("[audit:no-legacy-tenant-inputs] blocked legacy tenant inputs remain");

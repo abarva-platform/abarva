@@ -34,9 +34,10 @@ export interface DecisionBranch {
 }
 
 export interface SkyHarborCtoReadinessPacket {
+  availability: "available" | "unavailable";
   tenantKey: "skyharbor-air";
   packetId: "skyharbor-irops-cto-readiness-v1";
-  decision: "fund_readiness_before_autonomous_scale";
+  decision: "fund_readiness_before_autonomous_scale" | "unavailable";
   valueMechanism: string;
   systems: V6Record[];
   dataAssets: V6Record[];
@@ -72,20 +73,6 @@ const ACTIVE_SOURCE_FILES = {
   expertLenses: "16_expert_lenses.csv",
 } as const;
 
-const LEGACY_SOURCE_FILES = {
-  systems: "V6_05_applications_systems.csv",
-  dataAssets: "V6_06_data_assets_integrations.csv",
-  aiInitiatives: "V6_10_ai_initiatives.csv",
-  programs: "V6_09_programs_initiatives.csv",
-  spend: "V6_08_spend_value.csv",
-  risksControls: "V6_11_operations_risk_controls.csv",
-  relationships: "V6_12_relationships.csv",
-  evidenceSources: "V6_13_evidence_sources.csv",
-  metrics: "V6_14_metric_definitions.csv",
-  industryPatterns: "V6_15_industry_corpus_patterns.csv",
-  expertLenses: "V6_16_expert_lenses.csv",
-} as const;
-
 type SkyHarborPacketFileKey = keyof typeof ACTIVE_SOURCE_FILES;
 
 type SkyHarborLoadedContext = {
@@ -94,25 +81,29 @@ type SkyHarborLoadedContext = {
 };
 
 const BRANCH_MARKER = "[DECISION_BRANCH]";
+export const CTO_READINESS_UNAVAILABLE =
+  "Curated CTO readiness evidence is unavailable for the active packet. I cannot assess readiness or recommend a funding decision from this selector until the curated records are reviewed and restored.";
 
 export function buildSkyHarborCtoReadinessPacket(
   repoRoot = process.cwd(),
 ): SkyHarborCtoReadinessPacket {
   const loaded = loadSkyHarborCtoContext(repoRoot);
-  if (!loaded) {
-    throw new Error(
-      "SkyHarbor active CTO readiness context is unavailable. Active tenant context must be generated before this source can be attached.",
-    );
-  }
+  if (!loaded) return unavailablePacket([]);
   const files = loaded.rows;
-  const systems = filterCto(files.systems);
-  const dataAssets = filterCto(files.dataAssets);
-  const aiInitiatives = filterCto(files.aiInitiatives);
-  const programs = filterCto(files.programs);
-  const spend = filterCto(files.spend);
-  const risksControls = filterCto(files.risksControls);
-  const relationships = filterCto(files.relationships);
-  const evidenceSources = filterCto(files.evidenceSources);
+  const systems = filterCto(files.systems, "SYS");
+  const dataAssets = filterCto(files.dataAssets, "DATA");
+  const aiInitiatives = filterCto(files.aiInitiatives, "AI");
+  const programs = filterCto(files.programs, "PROG");
+  const spend = filterCto(files.spend, "SPEND");
+  const risksControls = filterCto(files.risksControls, "RISK");
+  const relationships = filterCto(files.relationships, "REL");
+  const evidenceSources = filterCto(files.evidenceSources, "EVID");
+  if (
+    [systems, dataAssets, aiInitiatives, programs, spend, risksControls, relationships, evidenceSources]
+      .some((rows) => rows.length === 0)
+  ) {
+    return unavailablePacket(loaded.sourceFiles);
+  }
   const expertLenses = files.expertLenses.filter((row) =>
     clean(
       firstValue(row, "expert_lens_name", "business_name", "industry_context"),
@@ -151,6 +142,7 @@ export function buildSkyHarborCtoReadinessPacket(
   const branch = defaultDecisionBranch();
 
   return {
+    availability: "available",
     tenantKey: "skyharbor-air",
     packetId: "skyharbor-irops-cto-readiness-v1",
     decision: "fund_readiness_before_autonomous_scale",
@@ -189,6 +181,7 @@ export function composeSkyHarborCtoAnswer(
   question: string,
   packet = buildSkyHarborCtoReadinessPacket(),
 ): string {
+  if (packet.availability === "unavailable") return CTO_READINESS_UNAVAILABLE;
   const lower = question.toLowerCase();
   const boardGrade = /board-grade|board grade|board ready|board-ready/.test(
     lower,
@@ -405,20 +398,44 @@ function buildClaimMaturity(inputs: {
   ];
 }
 
-function filterCto(rows: V6Record[]): V6Record[] {
-  const preferred = rows.filter((row) =>
-    /SHA-(SYS|DATA|AI|PROG|SPEND|RISK|REL|EVID)-CTO-/i.test(
-      row.record_id ?? "",
-    ),
-  );
-  if (preferred.length) return preferred;
+function filterCto(rows: V6Record[], kind: string): V6Record[] {
+  const prefix = `SHA-${kind}-CTO-`;
   return rows.filter((row) =>
-    Object.values(row).some((value) =>
-      /irops|irregular|crew|recovery|passenger|reaccommodation|mainframe|operations|flight|airport|maintenance|baggage|revenue management|mro/i.test(
-        String(value ?? ""),
-      ),
-    ),
+    row.tenant_key === "skyharbor-air" &&
+    (row.record_id ?? "").startsWith(prefix) &&
+    /^[A-Z0-9-]+$/.test((row.record_id ?? "").slice(prefix.length)),
   );
+}
+
+function unavailablePacket(sourceFiles: string[]): SkyHarborCtoReadinessPacket {
+  return {
+    availability: "unavailable",
+    tenantKey: "skyharbor-air",
+    packetId: "skyharbor-irops-cto-readiness-v1",
+    decision: "unavailable",
+    valueMechanism: "",
+    systems: [],
+    dataAssets: [],
+    aiInitiatives: [],
+    programs: [],
+    risksControls: [],
+    spend: [],
+    relationships: [],
+    evidenceSources: [],
+    metrics: [],
+    industryPatterns: [],
+    expertLenses: [],
+    missingEvidenceChecklist: [],
+    planningAssumptions: [],
+    claimMaturity: [],
+    branch: {
+      question: "Curated CTO readiness evidence is unavailable.",
+      choices: [],
+      customAllowed: false,
+      rawBlock: "",
+    },
+    sourceFiles,
+  };
 }
 
 function loadSkyHarborCtoContext(
@@ -432,16 +449,7 @@ function loadSkyHarborCtoContext(
     "skyharbor-air",
     "current",
   );
-  const active = readSourceFileSet(activeRoot, ACTIVE_SOURCE_FILES);
-  if (active) return active;
-
-  const legacyRoot = path.join(
-    repoRoot,
-    "datasets",
-    "skyharbor-air-synthetic-v6",
-    "templates",
-  );
-  return readSourceFileSet(legacyRoot, LEGACY_SOURCE_FILES);
+  return readSourceFileSet(activeRoot, ACTIVE_SOURCE_FILES);
 }
 
 function readSourceFileSet(

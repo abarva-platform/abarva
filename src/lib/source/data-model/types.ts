@@ -382,6 +382,51 @@ export interface SourceCloudCommitmentCoverageRow {
   readonly load_run_id: string | null;
 }
 
+/**
+ * When a governed package load last completed for a tenant.
+ *
+ * Both package loaders write a run row and stamp `completed_at` with `now()`
+ * on a terminal status. Nothing read it, so the portfolio's freshness control
+ * inferred a date by pattern-matching load run identifiers instead — and
+ * reported a package's version date as the refresh date.
+ */
+export interface SourceLoadRunCompletionRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly load_run_id: string;
+  readonly source_table: string;
+  readonly completed_at: string;
+}
+
+/**
+ * Monthly tag-quality observation for a cloud consumption contract.
+ *
+ * Coverage percentages are stored 0-100 by the loader, which normalises a
+ * fractional intake value on the way in.
+ */
+export interface SourceCloudTagQualityRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly tag_quality_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string | null;
+  readonly cloud_provider: string | null;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly total_spend_usd: number | null;
+  readonly owner_tagged_spend_usd: number | null;
+  readonly application_tagged_spend_usd: number | null;
+  readonly untagged_spend_usd: number | null;
+  readonly owner_tag_coverage_pct: number | null;
+  readonly application_tag_coverage_pct: number | null;
+  readonly data_quality_state: string | null;
+  readonly source_file_id: string | null;
+  readonly confidence: number | null;
+  readonly quality_state: string | null;
+  readonly load_run_id: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic Source impact layer
 //
@@ -525,6 +570,23 @@ export interface SourceContractTabIntelligenceRow {
   readonly confidence_level: "high" | "medium" | "low" | "unverified";
   readonly confidence_rationale: string;
   readonly review_status: string;
+  readonly provenance: Record<string, unknown> | null;
+  readonly derived_from_load_run_id: string | null;
+}
+
+/** One governed, load-time contract-intelligence record shared by tabs and aVa. */
+export interface SourceContractIntelligenceRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string | null;
+  readonly vendor_name: string | null;
+  readonly contract_name: string | null;
+  readonly archetype_key: string;
+  readonly archetype_label: string;
+  readonly industry_key: string;
+  readonly playbook_review_status: string;
+  readonly review_status: string;
+  readonly intelligence_record: Record<string, unknown>;
   readonly provenance: Record<string, unknown> | null;
   readonly derived_from_load_run_id: string | null;
 }

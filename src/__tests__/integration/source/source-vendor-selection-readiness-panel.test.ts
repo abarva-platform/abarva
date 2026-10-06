@@ -62,7 +62,7 @@ describe('Source vendor selection readiness panel', () => {
   it('surfaces selection readiness in event canvas when selection is active', async () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildSelectionEvent(sourceEvent!);
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event, canViewFinancialValues: true }));
 
     expect(html).toContain('Vendor selection readiness');
     expect(html).toContain('Selection-readiness readiness signal');

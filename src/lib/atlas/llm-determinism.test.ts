@@ -19,12 +19,156 @@
  *
  * These tests pin the contract so a future refactor that loosens either
  * lever fails loudly. They live alongside `llm.ts` because they exercise the
- * exact exported symbols the code path uses.
+ * exact exported symbols and mocked egress boundary the code path uses.
  */
 
-import { ATLAS_MAX_TOKENS, ATLAS_TEMPERATURE } from './llm';
+const mockMessagesCreate = jest.fn();
+const mockGetAuditedAnthropicClient = jest.fn();
+const mockQueryTowerCurrentState = jest.fn();
+const mockQueryPortfolioAggregates = jest.fn();
+const mockQuerySignals = jest.fn();
+const mockQuerySignalEvidence = jest.fn();
+const mockQueryCohortBenchmarks = jest.fn();
+const mockQueryUseCases = jest.fn();
+const mockQueryPrograms = jest.fn();
+const mockAssembleRetrievalContext = jest.fn();
+const mockLoadCuratedSemanticDossier = jest.fn();
+
+jest.mock('@/lib/agent/stream', () => ({
+  getAuditedAnthropicClient: (...args: unknown[]) =>
+    mockGetAuditedAnthropicClient(...args),
+}));
+
+jest.mock('@/lib/atlas/tool-belt', () => ({
+  query_cohort_benchmarks: (...args: unknown[]) =>
+    mockQueryCohortBenchmarks(...args),
+  query_portfolio_aggregates: (...args: unknown[]) =>
+    mockQueryPortfolioAggregates(...args),
+  query_programs: (...args: unknown[]) => mockQueryPrograms(...args),
+  query_signal_evidence: (...args: unknown[]) =>
+    mockQuerySignalEvidence(...args),
+  query_signals: (...args: unknown[]) => mockQuerySignals(...args),
+  query_tower_current_state: (...args: unknown[]) =>
+    mockQueryTowerCurrentState(...args),
+  query_use_cases: (...args: unknown[]) => mockQueryUseCases(...args),
+}));
+
+jest.mock('@/lib/agent/retrieval', () => ({
+  assembleRetrievalContext: (...args: unknown[]) =>
+    mockAssembleRetrievalContext(...args),
+}));
+
+jest.mock('@/lib/semantic-dossiers', () => ({
+  loadCuratedSemanticDossier: (...args: unknown[]) =>
+    mockLoadCuratedSemanticDossier(...args),
+}));
+
+jest.mock('@/lib/atlas/value-grounding', () => ({
+  buildAtlasValueGrounding: jest.fn(async () => ({
+    valueSeparation: {
+      projected: { label: 'Projected value', value: '$10.0M', status: 'modeled' },
+      verified: { label: 'Verified realized value', value: '$0', status: 'missing' },
+      tracked: [],
+    },
+    missingEvidence: ['Finance baseline is not attached.'],
+  })),
+  renderAtlasValueGrounding: jest.fn(
+    () => 'Value grounding: projected, tracked, and verified value are separated.',
+  ),
+}));
+
+const towerState = {
+  client: {
+    clientId: 'client-demo',
+    clientName: 'Demo Client',
+    tenantKey: 'demo-client',
+    industryCode: 'GENERAL',
+  },
+  substrateCounts: {
+    initiatives: 1,
+    vendors: 1,
+    kpiSnapshots: 0,
+    decisions: 0,
+    scenarios: 0,
+    stakeholderNotes: 0,
+    pressures: 0,
+    observations: 0,
+    alignmentDots: 0,
+  },
+  bandMetrics: { metrics: [] },
+  budgetRollups: [],
+  pressuresView: { cards: [] },
+  initiatives: [],
+  vendors: [],
+  kpiSnapshots: [],
+  decisions: [],
+  scenarios: [],
+  stakeholderNotes: [],
+  atlasObservationsView: { observations: [] },
+  alignment2x2View: { dots: [], strategicBets: [], totalPlotted: 0 },
+} as never;
+
+const portfolio = {
+  clientId: 'client-demo',
+  clientName: 'Demo Client',
+  activeUseCaseCount: 1,
+  criticalSignalCount: 0,
+  warningSignalCount: 0,
+  governedAiSpendUsd: 1_000_000,
+  shadowAiSpendUsd: 0,
+  estimatedValueUsd: 1_000_000,
+  realizedValueUsd: 0,
+  averageTrustworthinessScore: null,
+  staleIntegrationCount: 0,
+  adoptionPenetrationPctAvg: 20,
+  trackedActiveUsers: 100,
+  distinctAiVendorsCount: 1,
+  valueAttainmentPctAvg: null,
+  adoptionPercentile: null,
+  spendIntensityPercentile: null,
+  valueAttainmentPercentile: null,
+  vendorCountPercentile: null,
+  asOf: '2026-09-21',
+};
+
+import { ATLAS_MAX_TOKENS, ATLAS_TEMPERATURE, runAtlasLlm } from './llm';
 
 describe('Atlas LLM determinism and truncation guards', () => {
+  const originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
+    mockMessagesCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Your data\nDemo Client has a bounded Tower read.' }],
+    });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create: mockMessagesCreate } },
+    });
+    mockQueryTowerCurrentState.mockResolvedValue(towerState);
+    mockQueryPortfolioAggregates.mockResolvedValue(portfolio);
+    mockQuerySignals.mockResolvedValue([]);
+    mockQueryPrograms.mockResolvedValue([]);
+    mockQueryUseCases.mockResolvedValue([]);
+    mockQueryCohortBenchmarks.mockResolvedValue(null);
+    mockQuerySignalEvidence.mockResolvedValue(null);
+    mockAssembleRetrievalContext.mockResolvedValue({
+      industryChunks: [],
+      topicChunks: [],
+      clientChunks: [],
+      atlasIacComposition: null,
+    });
+    mockLoadCuratedSemanticDossier.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    if (originalAnthropicKey === undefined) {
+      delete process.env.ANTHROPIC_API_KEY;
+    } else {
+      process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
+    }
+  });
+
   it('declares ATLAS_TEMPERATURE=0 as intent (model no longer accepts temperature)', () => {
     expect(ATLAS_TEMPERATURE).toBe(0);
   });
@@ -37,24 +181,29 @@ describe('Atlas LLM determinism and truncation guards', () => {
   });
 
   it('passes max_tokens into the Anthropic call but no longer sets temperature', async () => {
-    // Walk the file source to assert the call site wires ATLAS_MAX_TOKENS into
-    // messages.create and does NOT pass `temperature` (deprecated on
-    // claude-opus-4-7). A test that only checks the constants without checking
-    // the call site would miss the case where someone re-introduces a literal
-    // `temperature: …` later — which now causes a 400 on every Atlas turn.
-    const fs = await import('node:fs/promises');
-    const path = await import('node:path');
-    const source = await fs.readFile(
-      path.join(__dirname, 'llm.ts'),
-      'utf8',
+    const result = await runAtlasLlm(
+      { clientId: 'client-demo', clientKey: 'demo-client', userId: 'user-demo' },
+      'Summarize the Tower posture without a factual-spine shortcut.',
     );
-    // Strip the constant definitions so we can verify the call site itself
-    // references the symbols (not just the constant declarations).
-    const callSite = source.split('async function runAtlasLlm')[1] ?? '';
-    expect(callSite).toContain('max_tokens: ATLAS_MAX_TOKENS');
-    expect(callSite).not.toContain('max_tokens: 500');
-    // Anthropic returns 400 invalid_request_error if `temperature` is set on
-    // claude-opus-4-7. Guard the regression so we never reintroduce it.
-    expect(callSite).not.toMatch(/\btemperature\s*:/);
+
+    expect(result.atlasMode).toBe('live');
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 'client-demo',
+        workflow: 'atlas-llm',
+        model: 'claude-opus-4-7',
+      }),
+    );
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+    expect(mockMessagesCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'claude-opus-4-7',
+        max_tokens: ATLAS_MAX_TOKENS,
+      }),
+    );
+    expect(mockMessagesCreate.mock.calls[0]?.[0]).not.toHaveProperty(
+      'temperature',
+    );
+    expect(mockQueryTowerCurrentState).toHaveBeenCalledTimes(1);
   });
 });

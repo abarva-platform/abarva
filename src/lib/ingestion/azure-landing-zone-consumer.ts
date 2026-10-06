@@ -42,6 +42,7 @@ import {
   type DefenderStorageScanGateResult,
 } from '@/lib/ingestion/defender-storage-scan-gate';
 import {
+  InvalidIngestionDocumentError,
   parseIngestionDocument,
   type ParsedIngestionDocument,
 } from '@/lib/ingestion/document-upload-parser';
@@ -297,15 +298,24 @@ export async function consumeOneMessage(
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'document_parse_failed';
     const outcome: IngestionOutcome = {
-      status: 'transient_failure',
+      status: err instanceof InvalidIngestionDocumentError ? 'rejected' : 'transient_failure',
       auditRowId: null,
       reason: `document_parse_failed:${reason}`,
       durationMs: Date.now() - t0,
     };
     try {
-      await ctx.writeAudit({ message: msg, outcome, protectionResult: protection });
-    } catch {
-      // see comment above
+      const auditRowId = await ctx.writeAudit({ message: msg, outcome, protectionResult: protection });
+      return outcome.status === 'rejected' ? { ...outcome, auditRowId } : outcome;
+    } catch (auditError) {
+      if (outcome.status === 'rejected') {
+        return {
+          status: 'transient_failure',
+          auditRowId: null,
+          reason: `document_parse_audit_failed:${auditError instanceof Error ? auditError.message : 'audit_write_failed'}`,
+          durationMs: Date.now() - t0,
+        };
+      }
+      // Let Service Bus retry a transient parse fault if audit is unavailable.
     }
     return outcome;
   }

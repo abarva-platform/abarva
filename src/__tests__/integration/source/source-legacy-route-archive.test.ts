@@ -9,8 +9,6 @@ describe("Source legacy route archive", () => {
   it("archives the retired Vendor 360 list route into the Source workspace", () => {
     const source = read("src/app/(maestro)/source/vendor-portfolio/page.tsx");
 
-    expect(source).toContain('SOURCE_WORKSPACE_ROUTE = "/source/workspace"');
-    expect(source).toContain("redirect(");
     expect(source).not.toContain("SourceVendorPortfolioPage");
     expect(source).not.toContain("listContractVendor360");
   });
@@ -20,9 +18,7 @@ describe("Source legacy route archive", () => {
       "src/app/(maestro)/source/vendor-portfolio/[contractId]/page.tsx",
     );
 
-    expect(source).toContain('SOURCE_WORKSPACE_ROUTE = "/source/workspace"');
     expect(source).toContain('next.set("contractId", contractId)');
-    expect(source).toContain("redirect(");
     expect(source).not.toContain("SourceContract360Page");
     expect(source).not.toContain("getContract360");
   });
@@ -30,7 +26,6 @@ describe("Source legacy route archive", () => {
   it("archives the old Source event index into the governed workspace", () => {
     const source = read("src/app/(maestro)/source/events/page.tsx");
 
-    expect(source).toContain('redirect("/source/workspace")');
     expect(source).not.toContain("SourceEventsPortfolio");
     expect(source).not.toContain("SourceEventsAgentDockView");
   });

@@ -9,6 +9,7 @@
 import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
+  SOURCE_ARTIFACT_STATE_METADATA_COLUMNS,
   createAzureSourceCanvasSubstrateReadAdapter,
   createSupabaseSourceCanvasSubstrateReadAdapter,
   selectSourceCanvasSubstrateReadAdapter,
@@ -119,6 +120,39 @@ describe('supabaseSourceCanvasSubstrateReadAdapter', () => {
     ).toBe(true);
   });
 
+  it('uses a bounded metadata projection for the default event page', async () => {
+    const { client, calls } = fakeSupabase({ data: [], error: null });
+    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(
+      () => client,
+    );
+
+    await adapter.listArtifactStateMetadataRows('evt-1', 'rfp');
+
+    const selectCall = calls.find((call) => call.method === 'select');
+    expect(selectCall?.args[0]).toBe(
+      SOURCE_ARTIFACT_STATE_METADATA_COLUMNS.join(','),
+    );
+    expect(SOURCE_ARTIFACT_STATE_METADATA_COLUMNS).not.toContain('body');
+    expect(SOURCE_ARTIFACT_STATE_METADATA_COLUMNS).not.toContain(
+      'body_generation_metadata',
+    );
+  });
+
+  it('reads stage-scoped review metadata without selecting draft body', async () => {
+    const { client, calls } = fakeSupabase({ data: [], error: null });
+    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(() => client);
+
+    await adapter.listArtifactStateReviewRows('evt-1', 'strategy');
+
+    expect(calls.find((call) => call.method === 'select')?.args[0]).toBe(
+      'id,body_generation_metadata',
+    );
+    expect(calls).toEqual(expect.arrayContaining([
+      { method: 'eq', args: ['source_event_id', 'evt-1'] },
+      { method: 'eq', args: ['stage_key', 'strategy'] },
+    ]));
+  });
+
   it('reads gate criterion + evidence states with their orderings', async () => {
     const gate = createSupabaseSourceCanvasSubstrateReadAdapter(
       () => fakeSupabase({ data: [], error: null }).client,
@@ -220,6 +254,43 @@ describe('azureSourceCanvasSubstrateReadAdapter', () => {
 
     expect(seen[0].sql).toContain('stage_key = $2');
     expect(seen[0].params).toEqual(['evt-1', 'rfp']);
+  });
+
+  it('uses the same bounded metadata projection in Azure Postgres', async () => {
+    const seen: { sql: string; params: unknown[] }[] = [];
+    const adapter = createAzureSourceCanvasSubstrateReadAdapter(
+      fakeSession((sql, params) => {
+        seen.push({ sql, params });
+        return [];
+      }),
+    );
+
+    await adapter.listArtifactStateMetadataRows('evt-1', 'rfp');
+
+    expect(seen[0].sql).toContain(
+      `SELECT ${SOURCE_ARTIFACT_STATE_METADATA_COLUMNS.join(',')}`,
+    );
+    expect(seen[0].sql).not.toMatch(/\bbody\b/);
+    expect(seen[0].sql).not.toContain('body_generation_metadata');
+    expect(seen[0].params).toEqual(['evt-1', 'rfp']);
+  });
+
+  it('reads only the quality receipt and edit timestamps in Azure Postgres', async () => {
+    const seen: { sql: string; params: unknown[] }[] = [];
+    const adapter = createAzureSourceCanvasSubstrateReadAdapter(
+      fakeSession((sql, params) => {
+        seen.push({ sql, params });
+        return [];
+      }),
+    );
+
+    await adapter.listArtifactStateReviewRows('evt-1', 'strategy');
+
+    expect(seen[0].sql).toContain("body_generation_metadata -> 'qualityGate'");
+    expect(seen[0].sql).toContain("body_generation_metadata ->> 'humanEditedAt'");
+    expect(seen[0].sql).not.toMatch(/\bSELECT\s+\*/i);
+    expect(seen[0].sql).not.toMatch(/\bbody\s*(?:,|FROM)/i);
+    expect(seen[0].params).toEqual(['evt-1', 'strategy']);
   });
 
   it('returns an empty array when the query yields no rows', async () => {

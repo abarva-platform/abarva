@@ -14,6 +14,7 @@ export type MovesAvaAnswerMode =
   | "phase_guidance"
   | "phase_input_draft"
   | "evidence_gap"
+  | "evidence_summary"
   | "upload_mapping"
   | "draft_final_change"
   | "next_phase_readiness"
@@ -38,6 +39,16 @@ export interface MovesAvaGateCriterion {
   label: string;
   met: boolean;
   severity: "hard" | "soft";
+}
+
+export interface MovesAvaApprovedEvidenceItem {
+  title: string;
+  summary: string | null;
+  statements: string[];
+  observations: string[];
+  assumptions: string[];
+  openQuestions: string[];
+  citations: Array<{ quote: string; locator: string }>;
 }
 
 export interface MovesAvaFeedForwardSummary {
@@ -66,12 +77,16 @@ export interface MovesAvaChatPacket extends AvaModulePacketBase<"moves"> {
   recommendedSessions: string[];
   checklistStatus: MovesAvaChecklistStatus | null;
   evidenceNeedPackets: string[];
+  approvedEvidence: MovesAvaApprovedEvidenceItem[];
+  approvedEvidenceTotal: number;
+  approvedEvidenceUnavailable: boolean;
   currentStateAssessment: string | null;
   uploadedTemplateMappings: string[];
   whatChangedSummary: string | null;
   gateCriteria: MovesAvaGateCriterion[];
   nextPhaseFeedForwardPack: MovesAvaFeedForwardSummary | null;
   approvedInputsPackPresent: boolean;
+  terminalHandoffComplete: boolean;
   sourceImplication: MovesAvaTopicAwareness;
   towerMeasurement: MovesAvaTopicAwareness;
 }

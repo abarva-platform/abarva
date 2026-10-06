@@ -17,8 +17,11 @@ import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
+import { evaluateRequestVersionApproval } from "@/lib/source/new-workspace/source-version-authority";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
+import { requesterEstimateFieldLabel } from "@/lib/source/requester-estimate-label";
 import {
   getSourcingEvent,
   isUuid,
@@ -96,20 +99,31 @@ export default async function SourceEventApprovalPage({
     }) ?? event.accountName;
   const currentUserCanApprove =
     sourceAccessPolicy?.canApproveSourceStages === true;
-  const [approvalLedger, artifactAcceptances] = await Promise.all([
-    loadApprovalLedger(
-      event.id,
-      effectiveCurrentStageKey,
-      sourceJourney.stages,
-    ).catch((error) => {
-      console.error(
-        "[SourceEventApprovalPage] approval ledger read failed",
-        error instanceof Error ? error.message : String(error),
-      );
-      return [];
-    }),
-    loadArtifactAcceptanceHistory(event.id),
-  ]);
+  // Item U-517. This page used to pass the literal `true` for
+  // `canViewFinancialValues`, so a viewer whose policy restricts exact
+  // financial values was shown the requester's exact figure. The policy is
+  // already in hand for `canApproveSourceStages` above; it is now asked this
+  // question too, and it fails CLOSED: `sourceAccessPolicy` is `null` when the
+  // read throws, and `undefined === true` is `false`, so an unreadable policy
+  // restricts the figure rather than revealing it.
+  const canViewFinancialValues =
+    sourceAccessPolicy?.canViewFinancialData === true;
+  const [approvalLedger, artifactAcceptances, requestAuthority] =
+    await Promise.all([
+      loadApprovalLedger(
+        event.id,
+        effectiveCurrentStageKey,
+        sourceJourney.stages,
+      ).catch((error) => {
+        console.error(
+          "[SourceEventApprovalPage] approval ledger read failed",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      loadArtifactAcceptanceHistory(event.id),
+      readSourceAuthorityVersionState(event.id, normalizedClientKey, "request"),
+    ]);
 
   return (
     <AppShell
@@ -136,7 +150,7 @@ export default async function SourceEventApprovalPage({
           }}
           createdAt={row.created_at}
           evidenceUpdatedAt={row.updated_at}
-          capturedFacts={buildCapturedFacts(row)}
+          capturedFacts={buildCapturedFacts(row, canViewFinancialValues)}
           intakeChatTurns={buildIntakeTrail(row)}
           approvalLedger={approvalLedger}
           artifactAcceptances={artifactAcceptances}
@@ -149,6 +163,19 @@ export default async function SourceEventApprovalPage({
           currentUserId={tenancy.userId}
           currentUserCanApprove={currentUserCanApprove}
           currentStageHref={currentStageHref}
+          requestAuthorityVersionId={
+            requestAuthority.kind === "available"
+              ? (requestAuthority.currentVersion?.id ?? null)
+              : null
+          }
+          requestAlreadyAccepted={
+            requestAuthority.kind === "available" &&
+            requestAuthority.currentVersion !== null &&
+            evaluateRequestVersionApproval({
+              currentVersionId: requestAuthority.currentVersion.id,
+              approvals: requestAuthority.approvals,
+            }).status === "accepted"
+          }
           generateMemoOnApprove={isFeatureEnabled(
             {
               clientKey: activeClient.key,
@@ -227,12 +254,25 @@ async function loadArtifactAcceptanceHistory(
     }));
 }
 
-function buildCapturedFacts(row: SourceEventRow): IntakeFact[] {
+function buildCapturedFacts(
+  row: SourceEventRow,
+  canViewFinancialValues: boolean,
+): IntakeFact[] {
   const scopeSummary = parseSourceScopeDescription(row.scope_description);
+  // Item U-514. The first branch is a value target the intake captured in its
+  // own words and is left exactly as written; the second is the requester's
+  // declared figure with nothing behind it, so it carries the provenance
+  // label. `SourceOriginatePage` writes the same label into this same field,
+  // which is why the two must not word it differently.
   const valueTarget =
     scopeSummary.valueTarget ??
     (row.estimated_value_usd && row.estimated_value_usd > 0
-      ? formatSourceFinancialValue(row.estimated_value_usd, true)
+      ? requesterEstimateFieldLabel(
+          formatSourceFinancialValue(
+            row.estimated_value_usd,
+            canViewFinancialValues,
+          ),
+        )
       : "Value target pending.");
   return [
     {

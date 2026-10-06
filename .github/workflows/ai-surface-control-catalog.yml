@@ -19,7 +19,12 @@ jobs:
   ai-surface-control-catalog:
     name: AI surface control catalog
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Raised from 5 with the Programs unit suites (T-004). The five most recent
+    # runs of this job took 135s, 138s, 147s, 218s and 281s against the old
+    # 300s ceiling, so the job was already finishing within seconds of a
+    # timeout on its slowest runs and one more step would have tipped it into
+    # failing for a reason that has nothing to do with the controls it guards.
+    timeout-minutes: 12
 
     steps:
       - name: Checkout
@@ -36,3 +41,900 @@ jobs:
 
       - name: Check AI surface controls
         run: npm run audit:ai-surface-controls
+
+      # Every step below exercises one suite. This one asks a different
+      # question of all of them at once: does the suite credited with a control
+      # still contain the case that proves it? The static gate above checks the
+      # FILE — that it exists, that this workflow runs it, that the name filter
+      # matches — and never looks inside, so a suite named by four control
+      # kinds earned four credits whatever it exercised (item C-554). Deleting
+      # the one case proving one of them left both the suite and that gate
+      # green. The names are read back from jest's own report rather than
+      # scanned out of the source, because a case name can be built from a
+      # template literal or a `describe.each` table; all 23 credited suites run
+      # in one invocation in about three seconds.
+      - name: Prove each credited control still has its case
+        run: npm run audit:ai-surface-control-cases
+
+      - name: Exercise visible agent stream controls
+        run: npx jest src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts --runInBand
+
+      - name: Exercise agent phase-advance approval gate
+        run: npx jest src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts --runInBand
+
+      - name: Exercise Source external-action gate
+        run: npx jest src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts --runInBand
+
+      - name: Exercise Moves phase-advance approval gate
+        # --runTestsByPath: jest reads a bare pattern as a regex, and the
+        # literal brackets in [programId] are a character class that matches
+        # nothing. The step passed locally and found no tests in CI.
+        run: npx jest --runTestsByPath "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts" --runInBand
+
+      - name: Exercise Intelligence promotion approval gate
+        run: npx jest --runTestsByPath src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts --runInBand
+
+      # C-544. The step above proves the SERVER gate. This one proves what the
+      # brief panel renders: the legal catalog claims this surface carries an AI
+      # label and the promotion's evidence refs, and until this step existed no
+      # job ran anything that would notice either going away.
+      - name: Exercise Intelligence promotion brief panel disclosure controls
+        run: npx jest --runTestsByPath src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx --runInBand
+
+      # C-547. The Moves Nexus current-state briefing panel's citation and
+      # confidence disclosures are real code that NO route reaches — nothing in
+      # the product imports the panel, so its catalog entry carries
+      # routeReachable: false and the audit counts both controls in its
+      # not-on-any-screen bucket. This step is still the difference between a
+      # claim and a check: it proves the two controls render when the component
+      # is mounted, which is what has to hold the day something mounts it.
+      # Listed by exact path because src/components/strategic-moves/__tests__ is
+      # not swept by any job.
+      - name: Exercise Moves Nexus current-state briefing disclosure controls
+        run: npx jest --runTestsByPath src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx --runInBand
+
+      # C-549. src/components/setup/__tests__ is also swept by directory in
+      # unit-suites.yml, but the catalog gate credits a control only when THIS
+      # workflow runs its suite, so it is named here by exact path as well.
+      - name: Exercise Setup Steward reconnect guidance assumption disclosure
+        run: npx jest --runTestsByPath src/components/setup/__tests__/ConnectorReconnectPage.assumption-disclosure.test.tsx --runInBand
+
+      - name: Exercise Moves phase-gate route approval
+        # The catalog credits the route suite for proving both the authorized
+        # workspace-user success path and the missing-rationale refusal. Keep
+        # the focused denial suite as an additional check.
+        run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts --runInBand
+
+      - name: Exercise Intelligence gate-waiver decision controls
+        run: npx jest --runTestsByPath src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts --runInBand
+
+      - name: Exercise Tower portfolio upload non-approval boundary
+        run: npx jest --runTestsByPath src/app/api/tower/upload/__tests__/route.test.ts --runInBand
+
+      - name: Exercise renewal cockpit external action
+        run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx --runInBand
+
+      - name: Exercise Source estimate assumption disclosure
+        run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitView.estimate-disclosure.test.tsx --runInBand
+
+      - name: Exercise deliverable approval actions
+        run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.controls.test.tsx --runInBand
+
+      - name: Exercise Source approval queue controls
+        run: npx jest --runTestsByPath src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx --runInBand
+
+      - name: Exercise Source canonical artifact render approval gate
+        run: npx jest --runTestsByPath "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts" --runInBand
+
+      - name: Exercise Source governed artifact download approval gate
+        run: npx jest --runTestsByPath "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts" --runInBand
+
+      - name: Exercise Moves phase-advance button
+        run: npx jest --runTestsByPath src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx --runInBand
+
+      - name: Exercise Moves decision evidence packet
+        run: npx jest --runTestsByPath src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts --runInBand
+
+      - name: Exercise agent response disclosure controls
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentResponse.controls.test.tsx --runInBand
+
+      # The `citation` control of the same surface. It is a separate suite
+      # because it needs `@/lib/agent/markdownRenderer` mocked, and the suite
+      # above deliberately runs with the repo-wide react-markdown passthrough
+      # so its four other controls are proven against the component as
+      # everything else renders it.
+      - name: Exercise agent response citation resolution
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentResponse.citation-control.test.tsx --runInBand
+
+      # Full suite: backlog T-015 closed the former pin-top and structured
+      # artifact exemptions, so the catalog can now gate the whole dock file.
+      - name: Exercise agent dock responsibility and approval notices
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.test.tsx --runInBand
+
+      - name: Exercise Atlas drawer disclosure controls
+        run: npx jest --runTestsByPath src/components/shell/__tests__/AtlasDrawer.controls.test.tsx --runInBand
+
+      # C-416. The Tower pressure brief's five controls live in a component no
+      # route mounts (routeReachable: false). This suite measures the component
+      # that DOES render on the Tower route, and asserts what it shows today:
+      # none of the five as statements. It is a measurement, not coverage — the
+      # catalog keeps all five at status "none" and cites it — so a control
+      # starting to render turns this step red until the catalog is reconciled.
+      - name: Measure Tower shell against the pressure brief controls
+        run: npx jest --runTestsByPath src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx --runInBand
+
+      - name: Exercise Moves deliverable canvas disclosure controls
+        run: npx jest --runTestsByPath src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts --runInBand
+
+      - name: Exercise programs gate approval modal
+        run: npx jest --runTestsByPath src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx --runInBand
+
+      # Not a catalog control. These two suites guard the Source artifact verdict
+      # contract — that the deal pack, the CXO report and its HTML/PPTX renders
+      # all state the verdict the expert-judgment kernel returned. They ran in no
+      # CI job, and one of them sat red for weeks while a sibling expectation was
+      # rewritten to agree with the defect. See backlog items 26 / 66 / 77.
+      - name: Exercise Source artifact verdict consistency
+        run: npx jest --runTestsByPath src/lib/source/exports/__tests__/artifact-verdict-consistency.test.ts src/lib/source/exports/cxo-report/__tests__/source-cxo-narrative-report.test.ts --runInBand
+
+      # Not a catalog control. This suite drives the real Source canvas ask
+      # handler and asserts that the payload the canvas renders describes the
+      # answer it is showing. It is deliberately NOT under
+      # `src/__tests__/behaviors`: the behavior coverage floor measures over
+      # whatever those suites load, and driving a real route pulls that route's
+      # largely unexercised dependency graph into the denominator — measured at
+      # 93.44% without this suite and 77.73% with it. Wiring it here keeps the
+      # floor honest and keeps the suite running. See backlog item 82.
+      - name: Exercise Source canvas model answer payload
+        run: npx jest --runTestsByPath "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/canvas-model-answer-payload.test.ts" --runInBand
+
+      # Not a catalog control. This suite drives the shared evidence-packet
+      # validator, which checked every field the product writes and not the one
+      # field a human writes: the rationale minimum was enforced per-surface at
+      # the two Moves builders, so a new decision surface had to remember it.
+      # See backlog item 63.
+      - name: Exercise shared evidence packet human rationale
+        run: npx jest --runTestsByPath src/lib/ai-liability/__tests__/human-decision-controls.human-rationale.test.ts --runInBand
+
+      # The shared rationale validator above already owns one file in this
+      # directory. Run the remaining liability controls as a parent so new
+      # audit/export, acknowledgment, training, and policy tests cannot land
+      # outside CI without running the rationale suite twice.
+      - name: Exercise remaining AI liability library controls
+        run: >-
+          npx jest src/lib/ai-liability/__tests__
+          --testPathIgnorePatterns src/lib/ai-liability/__tests__/human-decision-controls.human-rationale.test.ts
+          --runInBand
+
+      # These guards are imported by the production answer routes and decide
+      # whether product capability, tenant evidence, and third-party claims
+      # may reach a client-visible answer.
+      - name: Exercise product truth library controls
+        run: npx jest src/lib/agent/product-truth/__tests__ --runInBand
+
+      # Not a catalog control. `src/components/source/canvas/analytics/__tests__`
+      # runs in no npm script and no workflow — 28 suites / 173 tests over the
+      # component the Source event route mounts, reporting to nobody. Found
+      # while wiring the off-stage notice below, whose own first CI run
+      # executed it nowhere. The whole directory is wired rather than the one
+      # new file: all 28 were green on `main` when this step was added, so no
+      # failure is imported, and wiring one file would leave the other 27 in
+      # the same blind spot. See backlog items 26 / 66 / 77.
+      - name: Exercise Source canvas analytics component suites
+        run: npx jest src/components/source/canvas/analytics --runInBand
+
+      # Not a catalog control. `src/components/strategic-moves/__tests__` is the
+      # second-ranked governed-risk directory in
+      # `docs/architecture/test-ci-coverage-census.json` — declared AI surface
+      # control, approval/lifecycle write and tenant-scoped read — and ran in no
+      # npm script and no workflow. Its AI-liability suite could not run at all:
+      # importing the documents panel under jsdom reached `@clerk/backend`'s bare
+      # ESM, so the suite failed to parse and the three failures underneath it
+      # were invisible. The 13 green suites are listed rather than the directory
+      # because `MovesPhaseStandaloneClient.test.tsx` carried 4 triaged-red cases
+      # that were not that change's to fix. See backlog items 26 / 92 / 102.
+      #
+      # T-518 closed those four. The fourteenth path below was that suite, added
+      # here because the exclusion above was explicitly conditional on its red
+      # cases and they no longer exist: 76 of 76 pass on this commit. It is
+      # listed by exact path for the same reason as the other thirteen — the
+      # directory is not swept, so naming it is how it runs at all — and the
+      # job hosting this step is a required status check, so the name is one a
+      # closure note may honestly quote (T-595). New strategic-moves suites
+      # that live beside these controls must be named here deliberately.
+      - name: Exercise Moves visible AI liability controls
+        run: >-
+          npx jest --runTestsByPath
+          src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx
+          src/components/strategic-moves/__tests__/deliverable-approval-action.test.tsx
+          src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx
+          src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
+          src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx
+          src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts
+          src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx
+          src/components/strategic-moves/__tests__/composeOriginateFirstMessage.grounding.test.ts
+          src/components/strategic-moves/__tests__/move-list-format.test.ts
+          src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts
+          src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx
+          src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx
+          src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
+          src/components/strategic-moves/__tests__/CharterBasisField.test.tsx
+          src/components/strategic-moves/__tests__/MovesCaptureFlow.test.tsx
+          src/components/strategic-moves/__tests__/MovesCaptureWorkspace.test.tsx
+          src/components/strategic-moves/__tests__/ava-dock-adapter.test.ts
+          src/components/strategic-moves/__tests__/MovesHome.test.tsx
+          src/components/strategic-moves/__tests__/moves-home-adapter.test.ts
+          src/components/strategic-moves/__tests__/moves-home-mapper.test.ts
+          src/components/strategic-moves/__tests__/portfolio-reconciliation-summary.test.ts
+          src/components/strategic-moves/__tests__/CaptureNotesFill.test.tsx
+          src/components/strategic-moves/__tests__/capture-notes-basis-link.test.ts
+          src/components/strategic-moves/__tests__/charter-gate-assumption-disclosure.test.ts
+          src/components/strategic-moves/__tests__/CharterGateAssumptionNotice.test.tsx
+          src/components/strategic-moves/__tests__/charter-basis-edit-notice.test.ts
+          src/components/strategic-moves/__tests__/charter-basis-host-join.test.ts
+          src/components/strategic-moves/__tests__/capture-phase-section-totals.test.ts
+          src/components/strategic-moves/__tests__/capture-phase-progress.test.ts
+          src/components/strategic-moves/__tests__/CharterAssumptionsCarryForward.test.tsx
+          src/components/strategic-moves/__tests__/CharterStandingAfterDiscover.test.tsx
+          src/components/strategic-moves/__tests__/phase-stepper-state-label.test.ts
+          src/components/strategic-moves/__tests__/approvals-overview-labels.test.ts
+          src/components/strategic-moves/__tests__/phase-approval-standing.test.ts
+          src/components/strategic-moves/__tests__/DiagnosisFactsEditor.test.tsx
+          src/components/strategic-moves/__tests__/SolutionOptionChooser.test.tsx
+          src/components/strategic-moves/__tests__/MovesCaptureFlowRouteSteps.test.tsx
+          --runInBand
+
+      # Not a catalog control. `src/lib/agent/tools/__tests__` is the
+      # first-ranked governed-risk directory in
+      # `docs/architecture/test-ci-coverage-census.json` — declared AI surface
+      # control, approval/lifecycle write and tenant-scoped read — and ran in no
+      # npm script and no workflow. Its ten suites drive the real tool handlers
+      # for every write an agent can make to a Program: the phase advance that
+      # must never self-approve, the program commit, the deliverable sign-off
+      # and the registry's defence-in-depth surface gate. All ten were green and
+      # reporting to nobody. Nine of ten deliberate control mutations failed
+      # them; the survivor — deleting the publish-rights gate on the
+      # single-deliverable sign-off — is covered by this change and now fails
+      # them too. See backlog items 26 / 92.
+      - name: Exercise agent program-tool control suites
+        run: npx jest src/lib/agent/tools/__tests__ --runInBand
+
+      # Not a catalog control. `src/lib/agent/tools/intelligence/__tests__` is
+      # the Sentinel half of the directory above and ran in no npm script and
+      # no workflow either. It was red the whole time: three cases named a
+      # pattern id the corpus retired when it re-keyed `pattern_*` slugs to
+      # `PAT-*` codes. A fourth case guarded its assertions behind
+      # `if (depth1.success && depth2.success)`, so it stayed green while
+      # asserting nothing, and the tool's own input schema — handed verbatim to
+      # the model — still offered the retired id as its worked example. Roots
+      # are now derived from the live manifest so a future re-key cannot
+      # reproduce this. See backlog items 26 / 92 / 120.
+      - name: Exercise Sentinel intelligence-tool suites
+        run: npx jest src/lib/agent/tools/intelligence/__tests__ --runInBand
+
+      # Not a catalog control. The Programs pattern authority decides whether
+      # a pattern key may be cited as a match, and every writer treats its
+      # refusal as fatal — `commit_program` returns
+      # `program_pattern_not_promoted` instead of submitting the brief, and
+      # `originateProgram` throws before the engagement insert. So its
+      # promoted-state list is load-bearing: when it named three states
+      # `engagement_topics.promotion_state` cannot hold, the gate refused every
+      # key that exists, and every unit test stayed green because each one
+      # injects its own lookup and can return a row the database could never
+      # produce. The reachability suite checks the list against the CHECK
+      # constraint in the migration that defines the column. These suites ran
+      # in no workflow. See backlog item 126.
+      - name: Exercise the Programs pattern authority
+        run: >
+          npx jest --runTestsByPath
+          src/lib/programs/__tests__/pattern-authority-reachability.test.ts
+          src/lib/programs/__tests__/pattern-authority.test.ts
+          src/lib/programs/__tests__/program-pattern-writer-guards.test.ts
+          --runInBand
+
+      # Not a catalog control. `src/lib/programs/__tests__` holds 85 suites and
+      # a workflow reached SIX of them — three catalog controls above and the
+      # three pattern-authority suites, each named one file at a time as it
+      # became somebody's item. The other 79 ran nowhere, and one of them had
+      # been red since 2026-08-06: it pinned a tenant display label that a
+      # deliberate rename changed four days later, and nothing in the
+      # repository could report it for the 44 days since. It is repaired in
+      # this change by deriving the expectation from the exported vocabulary
+      # rather than pinning the literal.
+      #
+      # Wired as a DIRECTORY, like the sibling `src/lib/agent/tools/__tests__`:
+      # a directory named once covers the suites nobody has written yet, which
+      # is the half file-by-file wiring can never cover. Measured on
+      # `fbe56c123`: 85 suites, 770 tests, 11.8s from a cleared jest cache.
+      # `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts`
+      # holds this step in place through the census's own resolver.
+      #
+      # The six suites above now run twice in this job. Naming them is what
+      # maps a catalog control to the step that exercises it, so the duplicate
+      # execution is the cheaper half of that trade — the same one taken for
+      # `admin-context-uploads-tabs.test.tsx` in `integration-suites.yml`.
+      # See backlog item T-004.
+      - name: Exercise the Programs unit suites
+        run: npx jest src/lib/programs/__tests__ --runInBand
+
+      # Not a catalog control either. Wiring `src/lib/programs/__tests__` above
+      # left 38 directories under `src/lib/programs` — 168 test files — that a
+      # workflow reaches for none of their suites, because a jest path argument
+      # is a regex against the full path and `src/lib/programs/__tests__` does
+      # not appear anywhere in `src/lib/programs/phase-templates/__tests__/…`.
+      #
+      # This is the first of the 38, taken highest-governed-risk first: score
+      # 100, band `critical`, signal `approval_or_lifecycle_write`, rank 25 of
+      # the whole repository. It was measured before it was wired and it is
+      # GREEN — 10 suites, 63 tests, 0.5s — so unlike the directory above it,
+      # this step buys the future rather than repairing the past. That is the
+      # weaker of the two claims and it is the only one available here; a
+      # directory is worth wiring when its modules are live, not only when its
+      # suites are broken. These are live: eleven of the thirteen modules have
+      # importers outside the directory, and the barrel is imported by the
+      # `assemble-pattern` and `approved-inputs-pack` API routes.
+      #
+      # `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts`
+      # holds this step in place through the census's own four-hop resolver,
+      # and its dark-directory ratchet comes down 38 → 37 in the same change.
+      # Lowering it is what makes that number a measurement rather than a
+      # ceiling. See backlog item T-062.
+      - name: Exercise the Programs phase-template suites
+        run: npx jest src/lib/programs/phase-templates/__tests__ --runInBand
+
+      # The second of the dark directories, and the first one taken because it
+      # was RED rather than because it ranked. All 37 remaining directories were
+      # run individually: 34 were green and five suites across four directories
+      # were failing, reported to nobody. Two of the five are in this directory
+      # and both asserted tenancy behaviour, which is why this pair was read
+      # first.
+      #
+      # Neither was a product defect. Both pinned a literal that a deliberate
+      # change moved — one named a tenant that had since been promoted into the
+      # foundation list, so it no longer demonstrated the denial branch it was
+      # written for; the other pinned a display label a rename had changed. Both
+      # are repaired by DERIVING the expectation from the authority the code
+      # itself consults, so the next such change travels instead of arriving as
+      # a false defect. The guard's two denial branches are both still live and
+      # each is now asserted to have a real tenant behind it.
+      #
+      # A test file also sat loose in `board-artifacts/` rather than in
+      # `__tests__`. The census models coverage per directory, so wiring the
+      # sibling would have left it dark while reading as covered; it moved into
+      # `__tests__` rather than widening this command to the parent, which would
+      # have silently adopted every future loose file. See backlog T-063/T-065.
+      - name: Exercise the Programs board-artifact suites
+        run: npx jest src/lib/programs/board-artifacts/__tests__ --runInBand
+
+      # The third of the dark directories under `src/lib/programs`, taken from
+      # the order item T-772 declares — census rank then file count — because
+      # `T-062`'s own ordering stopped discriminating: all 17 remaining
+      # directories are band `unclassified`, score 0, `admittedBy:
+      # untriaged_unrun_work`. That is the classifier recording "no signal",
+      # not a finding of low risk, so the order had to come from somewhere and
+      # a declared one is checkable.
+      #
+      # Measured BEFORE it was wired, every suite executed individually, which
+      # is the acceptance: 4 suites, 65 tests, GREEN — attachments 28,
+      # extract-text 10, mime 15, upload-client 12. So this step buys the
+      # future rather than repairing the past, and that weaker claim is the
+      # only one a green directory can make.
+      #
+      # It is not coverage of nothing, checked before wiring rather than
+      # assumed: 19 files outside this directory reference
+      # `programs/attachments`, and the live ones are not incidental — three
+      # `/api/programs/[id]/attachments` route handlers, the v1 artifact
+      # upload and client-approval routes, the workspace upload route, the
+      # deliverable sign-off route, `AskAnythingBar`, `StewardChat`,
+      # `AttachmentChip`, `MoveArtifactUpload`, `PhaseDocumentsPanel` and the
+      # attachments write adapter. A directory whose only importer is its own
+      # test file would be an argument for deleting it, not for spending CI
+      # time on it.
+      #
+      # No suite here is a source-text scanner: not one of the four reads a
+      # file's bytes, so `T-770`'s control has nothing to refuse and the
+      # `textIsTheSubject` judgement is negative for all four. That was checked
+      # per suite, because `T-770` is a control now and a scanner wired by
+      # mistake is what it exists to stop.
+      #
+      # Wired as a DIRECTORY, and nothing nests beneath it — the four files sit
+      # directly in `__tests__` — so the jest path regex covers the whole
+      # directory including the suites nobody has written yet. No trailing
+      # slash: `T-062` recorded that one still prints green while the
+      # visibility gate reports every suite in the directory as owned by no
+      # workflow.
+      #
+      # `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts`
+      # holds this step in place through the census's own four-hop resolver,
+      # and its dark-directory ratchet comes down 17 → 16 in the same change.
+      # The directory's line also leaves
+      # `product-directory-ci-coverage.baseline.json`, because that baseline is
+      # set equality over the census's dark list and a wired directory is no
+      # longer in it. See backlog item T-772.
+      - name: Exercise the Programs attachment suites
+        run: npx jest src/lib/programs/attachments/__tests__ --runInBand
+
+      # The next dark directory under `src/lib/programs` in the order item
+      # C-415 declares (T-772's successor): census rank, then file count.
+      #
+      # Measured BEFORE it was wired, every suite executed on its own: 4
+      # suites, 28 tests, GREEN — artifact-review-decisions 4,
+      # deliverable-quality 17, move-artifacts 4, review-regeneration 3. A
+      # green directory buys the future; it does not repair the past.
+      #
+      # Not coverage of nothing, checked before wiring: the subjects are
+      # imported by live code outside this directory — the v1 artifact
+      # review-decision, review-regenerate, list, upload and
+      # stage-readiness-workbook route handlers, the strategic-move phase
+      # page, and the deliverable orchestrators that call the quality
+      # validator.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for all four, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. The path regex does not
+      # reach `deliverables/orchestrated/__tests__`, which is a separate dark
+      # directory with its own slice; nothing nests beneath this one. The
+      # directory leaves `programs-unit-directory-ci-coverage.baseline.json`
+      # and `product-directory-ci-coverage.baseline.json` in the same change.
+      - name: Exercise the Programs deliverables suites
+        run: npx jest src/lib/programs/deliverables/__tests__ --runInBand
+
+      # C-415 slice 2: the orchestrated Programs deliverables, next in the
+      # item's declared order.
+      #
+      # Measured BEFORE it was wired, each suite executed on its own: 2
+      # suites, 18 tests, GREEN — orchestrated-business-case 12,
+      # quality-bar-wiring 6.
+      #
+      # Not coverage of nothing, checked before wiring: the subjects are
+      # imported by live code outside this directory — the v1 Moves
+      # board-grade-business-case route handler, the orchestrated board
+      # artifact move route, discovery-plan auto-generation and the
+      # deliverable orchestrator's renderers.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for both, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it,
+      # and the step above does not reach it: its path regex needs
+      # `deliverables/__tests__` contiguous, which this path does not contain.
+      - name: Exercise the Programs orchestrated deliverables suites
+        run: npx jest src/lib/programs/deliverables/orchestrated/__tests__ --runInBand
+
+      # C-415 slice 3: the Programs phase success package, next in the item's
+      # declared order.
+      #
+      # Measured BEFORE it was wired, each suite executed on its own: 2
+      # suites, 8 tests, GREEN — core 4, generate 4.
+      #
+      # Not coverage of nothing, checked before wiring: the subject is
+      # imported by live code outside this directory — the v1 Programs
+      # phase-success-package route handler.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for both, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs phase success package suites
+        run: npx jest src/lib/programs/phase-success-package/__tests__ --runInBand
+
+      # C-415 slice 4: the Programs move-phase playbook, next in the item's
+      # declared order.
+      #
+      # Measured BEFORE it was wired, each suite executed on its own: 2
+      # suites, 14 tests, GREEN — design-session-pack-approval-data 6,
+      # move-phase-playbook 8.
+      #
+      # Not coverage of nothing, checked before wiring: the subject is
+      # imported by live code outside this directory — the v1 Programs
+      # playbook route handler and the phase success package (core, generate).
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for both, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs playbook suites
+        run: npx jest src/lib/programs/playbook/__tests__ --runInBand
+
+      # C-415 slice 5: the Programs suitability assessors. `source-trigger`
+      # comes first in the item's declared order and was NOT wired: its
+      # importer check found no runtime caller, which the item treats as a
+      # retire-or-mount decision rather than CI time.
+      #
+      # Measured BEFORE it was wired, each suite executed on its own: 2
+      # suites, 66 tests, GREEN — agentic-suitability 59,
+      # origination-suitability 7.
+      #
+      # Not coverage of nothing, checked before wiring: origination-suitability
+      # is imported by origination-submit (the Programs origination-submit
+      # route), and agentic-suitability by workflow decomposition, which the
+      # origination charter extensions import on that same path.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for both, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs suitability suites
+        run: npx jest src/lib/programs/suitability/__tests__ --runInBand
+
+      # C-415 slice 6: the Programs solution-architecture option scorer.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 13 tests, GREEN — solution-architecture-options 13.
+      #
+      # Not coverage of nothing, checked before wiring: the origination charter
+      # extensions import buildSolutionArchitectureOptions, and origination-submit
+      # (the Programs origination-submit route) imports those extensions.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs solution-architecture suite
+        run: npx jest src/lib/programs/architecture/__tests__ --runInBand
+
+      # C-415 slice 7: the Programs control evaluation matrix.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 22 tests, GREEN — control-eval-matrix 22.
+      #
+      # Not coverage of nothing, checked before wiring: the strategic-moves
+      # trace page imports buildControlEvalMatrix directly, and the origination
+      # charter extensions import it on the origination-submit path.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs control evaluation matrix suite
+        run: npx jest src/lib/programs/controls/__tests__ --runInBand
+
+      # C-415 slice 8: Programs workflow decomposition.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 85 tests, GREEN — workflow-decomposition 85.
+      #
+      # Not coverage of nothing, checked before wiring: the origination charter
+      # extensions import decomposeWorkflow at runtime on the origination-submit
+      # path.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs workflow decomposition suite
+        run: npx jest src/lib/programs/decomposition/__tests__ --runInBand
+
+      # C-415 slice 9: Programs move evidence-need packets.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 5 tests, GREEN — move-evidence-need-packet 5.
+      #
+      # Not coverage of nothing, checked before wiring: buildMoveEvidenceNeedPackets
+      # is imported at runtime by the strategic-move phase page, the programs
+      # workspace evidence-readiness route, the phase deliverable generator, the
+      # stage-readiness evidence pack route and the chat agent route.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs move evidence-need packet suite
+        run: npx jest src/lib/programs/evidence-readiness/__tests__ --runInBand
+
+      # C-415 slice 10: the Programs SR 11-7 control deliverable.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 19 tests, GREEN — sr-11-7-control-deliverable 19.
+      #
+      # Not coverage of nothing, checked before wiring: isSr117RegulatedTenant
+      # and resolveSolutionArchetypeForMove are imported at runtime by the
+      # strategic-move trace page and the cross-module trace view builder.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs SR 11-7 control deliverable suite
+        run: npx jest src/lib/programs/regulatory/__tests__ --runInBand
+
+      # C-415 slice 11: the Programs solution-archetype taxonomy.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 20 tests, GREEN — archetype-fixtures 20.
+      #
+      # Not coverage of nothing, checked before wiring: getSolutionArchetype
+      # and the archetype keys are imported at runtime by the SR 11-7 control
+      # deliverable, the architecture, controls, decomposition and suitability
+      # modules, and the origination charter extensions.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs solution-archetype taxonomy suite
+        run: npx jest src/lib/programs/taxonomy/__tests__ --runInBand
+
+      # C-415 slice 12: the Programs Tower-to-Moves action handoff.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 4 tests, GREEN — tower-to-moves-action-handoff 4.
+      #
+      # Not coverage of nothing, checked before wiring:
+      # runTowerToMovesActionHandoff is imported at runtime by
+      # cross-module-trace-view, which the strategic-moves trace page and the
+      # CrossModuleTraceView component render.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs Tower-to-Moves action handoff suite
+        run: npx jest src/lib/programs/tower-trigger/__tests__ --runInBand
+
+      # C-415 slice 13: the Programs vendor-platform intelligence registry.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 6 tests, GREEN — registry 6.
+      #
+      # Not coverage of nothing, checked before wiring:
+      # listVendorPlatformProfiles is imported at runtime by
+      # client-readiness-scan, which client-readiness-gate calls from the
+      # deliverable sign-off route.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs vendor-platform intelligence registry suite
+        run: npx jest src/lib/programs/vendor-platform-intelligence/__tests__ --runInBand
+
+      # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
+      # and "19 of 19 pass". Both were true locally and enforced by nothing:
+      # neither file was named by any workflow, and no scoped jest script
+      # reaches src/lib/**/__tests__ or src/components/**/__tests__. The
+      # decision-trail guard — whose whole point is that a failed read must not
+      # render as "no decisions recorded" — could have been deleted without a
+      # single check going red.
+      - name: Exercise the Source event decision trail reader
+        run: npx jest --runTestsByPath src/lib/source/__tests__/activity-log.test.ts --runInBand
+
+      - name: Exercise the Source New workspace, including the decision trail
+        run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand
+
+      # The supplier panels appeared at four call sites, each with its own
+      # phase guard. They now share one guard, so one edit can leak supplier
+      # data into every phase; this is the suite that refuses that.
+      - name: Keep the supplier panels inside the supplier phase
+        run: npx jest --runTestsByPath src/components/source/new-workspace/SupplierPhasePanels.test.tsx --runInBand
+
+      # Unread authority must never render as a decision. Request and Strategy
+      # now say the same thing when unread, so each is asserted by its own row.
+      - name: Report Strategy authority without inventing a decision
+        run: npx jest --runTestsByPath src/components/source/new-workspace/StrategyAuthorityLabel.test.tsx --runInBand
+
+      # An unreadable release store and a package that was never prepared are
+      # different facts. This refuses a surface that collapses them.
+      - name: Keep unread RFx release distinct from none prepared
+        run: npx jest --runTestsByPath src/components/source/new-workspace/ReleaseStateRow.test.tsx --runInBand
+
+      # The file cabinet is where the workspace's motion labels are actually
+      # read: the folder rail carries the accepted motion, and the artifact
+      # opened inside it carries a reused stage key that must not contradict
+      # it. The suite existed and no workflow named it, so the rule that keeps
+      # an RFI event from printing RFP on its own package ran nowhere.
+      - name: Exercise the Source New file cabinet, including solicitation labels
+        run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewFiles.test.tsx --runInBand
+
+      # The Source stage gate decides whether an event may move past a stage
+      # whose criteria are still open. It ran in no workflow, so the branch
+      # that treated a criterion the canonical catalog cannot resolve as
+      # non-blocking could not be caught by any check.
+      - name: Exercise the Source stage promotion gate
+        run: >
+          npx jest --runTestsByPath
+          src/lib/source/__tests__/source-governance-enforcement.test.ts
+          src/lib/source/__tests__/gate-advance-contract.test.ts
+          --runInBand
+
+      # Not a catalog control. These Source library suites were red on main
+      # and ran in no workflow: the stale cases hid one real dangling
+      # evidence-map identifier plus current renderer/stage-evidence behavior.
+      # The six-file scope is deliberate; the rest of src/lib/source/__tests__
+      # still contains unrelated triaged debt.
+      - name: Exercise Source library red-suite triage scope
+        run: >
+          npx jest --runTestsByPath
+          src/lib/source/__tests__/gate-auto-assessment.test.ts
+          src/lib/source/__tests__/gate-auto-assessment-persist.test.ts
+          src/lib/source/__tests__/nexus-api-live-context.test.ts
+          src/lib/source/__tests__/stage-progression.test.ts
+          src/lib/source/__tests__/artifact-binding-matrix.test.ts
+          src/lib/source/__tests__/stage-next-move.test.ts
+          --runInBand
+
+      # Not a catalog control, but credited with one. `src/components/source/canvas/__tests__`
+      # is the first-ranked governed-risk directory in
+      # `docs/architecture/test-ci-coverage-census.json` — band `critical`,
+      # signal `declared_ai_surface_control` via `agent-dock-chat-turns` — and
+      # ran in no npm script and no workflow. Its sibling
+      # `canvas/analytics/__tests__` was wired months after the same discovery;
+      # the three suites one directory up were left behind because nobody
+      # measured the directory, only the file in front of them. All three were
+      # green on `main` when this step was added, so no failure is imported.
+      # Green is not the same as load-bearing, so each was mutation-checked
+      # first: truncating the blocker list to its first entry, dropping the
+      # structured-parts renderer from the aVa answer, ungating the approval
+      # button from required-evidence readiness, deleting the artifact context
+      # manifest, and making every requirement read as ready each fail them.
+      # The directory is wired rather than the three files so the next suite
+      # added here is not in the same blind spot. See backlog items 26 / 92.
+      - name: Exercise Source canvas front-surface suites
+        run: npx jest src/components/source/canvas/__tests__ --runInBand
+
+      # Four component directories this workflow already reached into, and
+      # left dark. It named only the `*.controls.test.tsx` suites the control
+      # catalog required, so it pulled exactly its own evidence into CI: of
+      # the 22 suites across these directories, 15 ran nowhere.
+      #
+      # Measured before wiring rather than after: all 15 pass, 99 tests, and
+      # none fails to collect -- they are healthy suites that nothing ran, not
+      # a red directory being quietly admitted. The four directories together
+      # are 22 suites and 211 tests in about four seconds locally, against a
+      # job whose recent runs sit near 281s under a 720s ceiling.
+      #
+      # Directories rather than the fifteen filenames, for the same reason
+      # the canvas step above gives: a file list is a blind spot that reopens
+      # the day someone adds a suite.
+      #
+      # One suite inside them, ProbabilisticForecastCard, covers a component
+      # nothing reaches -- see the release record. It is run anyway because
+      # excluding one file would reintroduce the hand-maintained list, and
+      # what it does and does not prove is written down instead.
+      # Pattern choice for a step here versus a dedicated workflow is
+      # measured in docs/ci/README-suite-wiring.md. Short version: queue
+      # time is zero either way, this job has 66% headroom, and a dedicated
+      # workflow pays its own setup — so pick on failure attribution, and do
+      # not convert an existing one for consistency alone.
+      - name: Exercise unwired component suites (programs, agent, shell, atlas)
+        run: >-
+          npx jest
+          src/components/programs/__tests__
+          src/components/agent/__tests__
+          src/components/shell/__tests__
+          src/components/atlas/__tests__
+          --runInBand
+
+      # Shared AI-disclosure primitives and the phase-workspace controls were
+      # catalog-adjacent but ran in no workflow. The route-group action files
+      # are exact paths because unescaped parentheses are a Jest regex group.
+      - name: Exercise shared rendered AI controls
+        run: npx jest src/components/abarva/__tests__ --runInBand
+
+      - name: Exercise phase-workspace controls
+        run: npx jest src/components/strategic-moves/phase-workspace/__tests__ --runInBand
+
+      - name: Exercise program approval action controls
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/escalate-approval.test.ts"
+          --runInBand
+
+      - name: Exercise Source award and SOW handoff readiness
+        run: >-
+          npx jest --runTestsByPath
+          src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts
+          src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts
+          --runInBand
+
+      # Not catalog controls. T-556 drew twenty untriaged unrun suites from the
+      # census's own governed-risk ranking — band `high`, score 10, signal
+      # `tenant_scoped_read` — and verdicted fifteen of them `wire_into_ci`.
+      # The three steps below are that wiring (T-557). All fifteen were
+      # executed before being wired, on `9afed2c6f`: 15 suites, 280 tests, 280
+      # passed, 2.3s. No failure is imported.
+      #
+      # EXACT PATHS, not the directory, and that is the whole point of the
+      # shape. `src/app/(maestro)/source/preview/workspace/__tests__` holds 33
+      # suites, 14 of which no workflow runs: the ten below, `contractDetailRetry`
+      # which T-556's draw of twenty did not reach, and the three T-556
+      # verdicted `rewrite_as_behavior` — suites that assert substrings of
+      # source files instead of running them. A directory sweep would be
+      # shorter and would wire those three as well, admitting byte-matching
+      # into a required job as though it were behaviour. T-558 owns rewriting
+      # them; until it does, they stay unrun deliberately.
+      #
+      # That reasoning held the door and the door was already open (T-555).
+      # `WorkspaceExecutiveShell.performance.test.ts`, named below since T-557,
+      # was verdicted `wire_into_ci` rather than `rewrite_as_behavior`, and
+      # nine of its cases were byte-scans over the component and the
+      # stylesheet — exactly the shape the paragraph above refuses to admit.
+      # A verdict is a reading of a suite, so keeping byte-matching out by
+      # naming files individually only works while every verdict is right.
+      # T-555 repaired that suite in place rather than unwiring it: what could
+      # be rendered moved to the `shell-behaviour` suite added below, what was
+      # already rendered elsewhere was retired, what is genuinely a rule about
+      # the code now reads a comment-stripped copy so a comment can no longer
+      # satisfy it. The three `rewrite_as_behavior` files are untouched and
+      # still unrun; T-558 still owns them.
+      # `src/__tests__/behaviors/t557-unrun-suite-wiring.test.ts` asserts both
+      # halves — these fifteen reached, those three still not — through the
+      # census's four-hop resolver rather than a grep over this file.
+      #
+      # The route-group paths are quoted because bash reads an unquoted
+      # `(maestro)` as a subshell, and `--runTestsByPath` because jest reads a
+      # bare path argument as a regex, in which the same parentheses are a
+      # capture group.
+      - name: Exercise the Source preview workspace suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/VendorCanvas.cockpit.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.shell-behaviour.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts"
+          --runInBand
+
+      # THIRTEEN of T-556's fifteen are wired here, not fifteen. Two are held
+      # out, and deliberately so: in both cases an EARLIER record already
+      # quarantines the file for a reason T-556 did not read, and wiring past a
+      # stated reason on the strength of "it is green" is the shape of defect
+      # this backlog exists to stop. Both are filed as T-599.
+      #
+      # 1. `(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx`.
+      #    `docs/releases/records/2026-09-21-source-readiness-route-suite-ownership.md`
+      #    holds it unwired "until it is green, derives expectations from the
+      #    chosen canonical tenant authority, and proves opposite-tenant
+      #    refusal". Only the first third is discharged: the suite was rewritten
+      #    to render rather than scan source text and it is green, but it
+      #    derives from neither of the two `CANONICAL_TENANT_KEYS` exports, and
+      #    its strongest isolation case proves an UNRESOLVED tenant fails
+      #    closed — not that one tenant is refused another's data.
+      #
+      # 2. The legacy-compatibility database client's suite under
+      #    `src/lib/__tests__/` — named exactly in the `WITHHELD` constant of
+      #    the guard suite, which this file may not repeat, for the reason that
+      #    follows. The record that wired its siblings,
+      #    `2026-09-20-wire-governance-tenant-green-suites.md`, left it out
+      #    because "the architecture gate rejects newly owned legacy client
+      #    dependencies". That reason is live, not stale, and it was measured
+      #    rather than taken on trust: adding the step and running
+      #    `npm run audit:architecture-rules` returns one violation of
+      #    `NO_SUPABASE_RUNTIME` against this workflow file. The rule is a line
+      #    scan over `.github/workflows`, so the step could not be added here
+      #    even to be quarantined — which is also why the paragraph above
+      #    describes the path instead of printing it. A required check forbids
+      #    it; this one is not a judgement call at all.
+
+      # The agent-runtime unit directory, named ONCE (T-743).
+      #
+      # Three files from this directory used to be named here, and the step said
+      # why: sweeping the directory would have picked up "unrelated untriaged
+      # debt this item did not measure". That was true when it was written and
+      # it is no longer, so the reason is discharged rather than dropped —
+      # T-742 executed 19 of the 28 unrun suites individually and recorded
+      # `wire_into_ci` for every one, T-743 executed the remaining 9 the same
+      # way (73 tests, 73 passed), and the directory then ran as a unit: 33
+      # suites, 592 tests, 592 passed, under a second.
+      #
+      # Naming the directory rather than its files is the whole point. Five of
+      # 33 suites here were reached by CI and 28 by nothing, with no quarantine
+      # declared against any of them — nobody chose that, it is what named-file
+      # wiring does to every file added after the command was written. This
+      # workflow runs on every pull request with no `paths:` filter, so a suite
+      # added tomorrow is reached without editing anything.
+      #
+      # Jest reads a bare path argument as a regex, so this also selects any
+      # sibling whose name STARTS with `__tests__`; there is none, and
+      # `src/__tests__/behaviors/t743-agent-tests-directory-ci.test.ts` fails if
+      # one appears.
+      - name: Exercise the agent-runtime unit suites
+        run: npx jest src/lib/agent/__tests__ --runInBand

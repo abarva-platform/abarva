@@ -38,6 +38,12 @@ const PROVIDE_TASK: StageTaskView = {
   },
 };
 
+const SPONSOR_TASK: StageTaskView = {
+  ...PROVIDE_TASK,
+  id: "scope.sponsor",
+  title: "Sponsor commitment",
+};
+
 const EXECUTIVE_DECISION_TASK: StageTaskView = {
   id: "executive-decision.recommendation-packet",
   title: "Confirm executive recommendation packet",
@@ -62,6 +68,62 @@ function selectFile(file: File) {
 }
 
 describe("TaskChecklist provide-task upload", () => {
+  it("binds an operational Scope inventory upload to its evidence requirement without financial fact ingest", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, artifact: {
+        id: "source-artifact-1", originalName: "service_catalog_scope.csv",
+        sourceFormat: "csv", sizeBytes: 150, parseStatus: "parsed",
+      } }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[{
+      ...PROVIDE_TASK, id: "scope.app-inventory", title: "Provide the application or service inventory",
+    }]} eventId="evt-1" stageKey="scope" />);
+    selectFile(new File(["Service ID,Service Name"], "service_catalog_scope.csv", { type: "text/csv" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(form.get("evidenceRequirementId")).toBe("EVID-SRC-SCOPE-APP-INV");
+    expect(form.get("stageKey")).toBe("scope");
+    expect(routerRefresh).toHaveBeenCalled();
+    await screen.findByText("service_catalog_scope.csv");
+    expect(screen.getByTestId("task-evidence-request")).toHaveTextContent("Action needed");
+  });
+
+  it("offers an explicit sponsor review request only on the bound Scope sponsor step", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, channel: "logged_fallback" }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[SPONSOR_TASK]} eventId="evt-1" stageKey="scope" />);
+    fireEvent.click(screen.getByRole("button", { name: "Request sponsor review" }));
+    await waitFor(() => expect(screen.getByText("Notification logged; no email sent.")).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/source/events/evt-1/request-approval",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ approvalKind: "sponsor_commitment" }),
+      }),
+    );
+  });
+
+  it("does not offer a sponsor request for other steps or preview data", () => {
+    const { rerender } = render(<TaskChecklist tasks={[PROVIDE_TASK]} eventId="evt-1" stageKey="scope" />);
+    expect(screen.queryByRole("button", { name: "Request sponsor review" })).not.toBeInTheDocument();
+    rerender(<TaskChecklist tasks={[SPONSOR_TASK]} stageKey="scope" />);
+    expect(screen.queryByRole("button", { name: "Request sponsor review" })).not.toBeInTheDocument();
+  });
+
+  it("explains when a sponsor must be assigned before review can be requested", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "sponsor_assignment_required" }),
+    }) as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[SPONSOR_TASK]} eventId="evt-1" stageKey="scope" />);
+    fireEvent.click(screen.getByRole("button", { name: "Request sponsor review" }));
+    expect(await screen.findByText("Assign one sponsor to this event before requesting review.")).toBeInTheDocument();
+  });
   it("renders the evidence request as a clear upload row before file selection", () => {
     const boundTask: StageTaskView = {
       ...PROVIDE_TASK,
@@ -318,7 +380,8 @@ describe("TaskChecklist provide-task upload", () => {
   it("renders a real template download link for template-bound uploads", () => {
     const boundTask: StageTaskView = {
       ...PROVIDE_TASK,
-      factTemplateCode: "VOLUMETRICS_V1",
+      id: "scope.volumetrics",
+      factTemplateCode: "TICKET_HISTORY_V1",
     };
     render(
       <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
@@ -388,7 +451,7 @@ describe("TaskChecklist provide-task upload", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const ingestBody = fetchMock.mock.calls[1][1]?.body as FormData;
-    expect(ingestBody.get("templateCode")).toBe("VOLUMETRICS_V1");
+    expect(ingestBody.get("templateCode")).toBe("TICKET_HISTORY_V1");
     expect(ingestBody.get("artifactId")).toBe("artifact-1");
   });
 

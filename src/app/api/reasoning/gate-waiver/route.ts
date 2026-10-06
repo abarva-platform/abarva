@@ -18,6 +18,14 @@ import {
   reasoningTenantId,
 } from '@/app/api/reasoning/_auth';
 import { recordWaiver } from '@/app/api/reasoning/audit/route';
+import type {
+  AiDecisionEvidencePacket,
+  AiDecisionOwner,
+} from '@/lib/ai-liability/human-decision-controls';
+import {
+  buildMovesGateWaiverEvidencePacket,
+  validateMovesHumanRationale,
+} from '@/lib/programs/moves-ai-liability';
 
 interface GateWaiverBody {
   type: 'gate_waiver';
@@ -34,7 +42,14 @@ function jsonResponse(body: unknown, status: number): Response {
 }
 
 // In-memory store — keyed by `${tenantId}::${instanceId}::${criterionId}`.
-const waiverStore = new Map<string, { reason: string; waivedAt: string }>();
+const waiverStore = new Map<
+  string,
+  {
+    reason: string;
+    waivedAt: string;
+    aiDecisionEvidencePacket: AiDecisionEvidencePacket;
+  }
+>();
 
 /**
  * Record a waiver directly, bypassing the HTTP handler. Used by trusted
@@ -46,10 +61,31 @@ export function recordWaiverInternal(
   instanceId: string,
   criterionId: string,
   reason: string,
-): void {
+  decisionOwner: AiDecisionOwner,
+): AiDecisionEvidencePacket {
   const waivedAt = new Date().toISOString();
-  waiverStore.set(`${tenantId}::${instanceId}::${criterionId}`, { reason, waivedAt });
-  recordWaiver({ tenantId, instanceId, criterionId, reason, waivedAt });
+  const aiDecisionEvidencePacket = buildMovesGateWaiverEvidencePacket({
+    instanceId,
+    tenantName: tenantId,
+    criterionId,
+    humanRationale: reason,
+    decisionOwner,
+  });
+  waiverStore.set(`${tenantId}::${instanceId}::${criterionId}`, {
+    reason,
+    waivedAt,
+    aiDecisionEvidencePacket,
+  });
+  recordWaiver({
+    tenantId,
+    instanceId,
+    criterionId,
+    reason,
+    waivedAt,
+    actorId: decisionOwner.userId ?? decisionOwner.name,
+    aiDecisionEvidencePacket,
+  });
+  return aiDecisionEvidencePacket;
 }
 
 /** Retrieve all waiver records for a given tenant + instanceId. */
@@ -144,12 +180,45 @@ export async function POST(request: Request) {
     return jsonResponse({ error: 'reason is required' }, 400);
   }
 
+  const reasonError = validateMovesHumanRationale(reason);
+  if (reasonError) {
+    return jsonResponse(
+      { error: 'human_rationale_required', detail: reasonError },
+      400,
+    );
+  }
+
+  if (reason.length > 200) {
+    return jsonResponse(
+      { error: 'reason must be 200 characters or fewer' },
+      400,
+    );
+  }
+
   // Cross-tenant scoping: only act on instances owned by the active client.
   const scopeDenied = assertInstanceInTenant(ctx, instanceId);
   if (scopeDenied) return scopeDenied;
 
   const tenantId = reasoningTenantId(ctx);
-  recordWaiverInternal(tenantId, instanceId, criterionId, reason);
+  const evidencePacket = recordWaiverInternal(
+    tenantId,
+    instanceId,
+    criterionId,
+    reason,
+    {
+      name: ctx.email ?? ctx.userId,
+      title: ctx.role ?? 'Gate approver',
+      tenantName: tenantId,
+      userId: ctx.userId,
+    },
+  );
 
-  return jsonResponse({ ok: true, key: `${tenantId}::${instanceId}::${criterionId}` }, 200);
+  return jsonResponse(
+    {
+      ok: true,
+      key: `${tenantId}::${instanceId}::${criterionId}`,
+      evidencePacket,
+    },
+    200,
+  );
 }

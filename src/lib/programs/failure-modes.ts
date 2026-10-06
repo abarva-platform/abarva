@@ -57,7 +57,7 @@ export const FAILURE_MODES: readonly FailureMode[] = [
       },
     ],
     preventionMechanism:
-      'P0 step `p0-sponsor-candidate` is a complex step that requires a real sponsor 1:1 with notes uploaded; Gate 1 (P0 -> P1) cannot pass without an `engagement_participants` row carrying plausible authority and a calendar cadence commitment.',
+      'P0 records the sponsor as a contact and captures an explicit progress-email preference; it separately identifies the outcome owner and authorized workspace approver. Gate 1 requires the stated evidence and a deliberate approval by an authorized workspace user, never sponsor participation or approval.',
   },
   {
     id: 2,
@@ -213,7 +213,7 @@ export const FAILURE_MODES: readonly FailureMode[] = [
       },
     ],
     preventionMechanism:
-      'P3 Design includes a sourcing module: structured build-vs-buy criteria, vendor scorecard tied to pattern-specific must-haves, and a sponsor-approved sourcing decision before build commences.',
+      'P3 Design includes a sourcing module: structured build-vs-buy criteria, vendor scorecard tied to pattern-specific must-haves, and an authorized workspace-user sourcing decision before execution begins.',
   },
   {
     id: 8,

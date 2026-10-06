@@ -3,7 +3,8 @@
  */
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { ArtifactAcceptancePanel } from "../ArtifactAcceptancePanel";
+import type { ComponentProps } from "react";
+import { ArtifactAcceptancePanel as BaseArtifactAcceptancePanel } from "../ArtifactAcceptancePanel";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 import type { SourceArtifactOperation } from "@/lib/source/artifact-operations";
 
@@ -24,6 +25,12 @@ const LATEST: ArtifactAcceptanceRecord = {
   acceptedAt: "2026-07-22T00:00:00.000Z",
   createdAt: "2026-07-22T00:00:00.000Z",
 };
+
+function ArtifactAcceptancePanel(
+  props: ComponentProps<typeof BaseArtifactAcceptancePanel>,
+) {
+  return <BaseArtifactAcceptancePanel parseStatus="parsed" {...props} />;
+}
 
 const OPERATION: SourceArtifactOperation = {
   artifactCode: "d11_response_checklist",
@@ -68,6 +75,46 @@ const OPERATION: SourceArtifactOperation = {
 describe("ArtifactAcceptancePanel", () => {
   beforeEach(() => {
     global.fetch = jest.fn();
+  });
+
+  it("withholds authoritative acceptance while a file is only registered", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d01_strategy_memo"
+        artifactName="Strategy memo"
+        latestAcceptance={null}
+        parseStatus="pending"
+      />,
+    );
+    const action = screen.getByTestId(
+      "source-shell-artifact-accept-toggle-d01_strategy_memo",
+    );
+    expect(action).toBeDisabled();
+    fireEvent.click(action);
+    expect(
+      screen.queryByTestId("source-shell-artifact-accept-form-d01_strategy_memo"),
+    ).not.toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("keeps a rendered generated artifact reviewable before its parser runs", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d01_strategy_memo"
+        artifactName="Strategy memo"
+        latestAcceptance={null}
+        parseStatus="pending"
+        sourceOrigin="generated"
+      />,
+    );
+    expect(
+      screen.getByTestId("source-shell-artifact-accept-toggle-d01_strategy_memo"),
+    ).toBeEnabled();
+    expect(
+      screen.getByTestId("source-shell-artifact-quality-d01_strategy_memo"),
+    ).toHaveTextContent("rendered draft");
   });
 
   it("shows nothing extra when the artifact has never been accepted", () => {
@@ -127,6 +174,24 @@ describe("ArtifactAcceptancePanel", () => {
     expect(panel).toHaveTextContent("current");
     expect(panel).toHaveTextContent("ready");
     expect(screen.getByText("Re-accept with a new reason")).toBeInTheDocument();
+  });
+
+  it("does not expose an internal UUID when the acceptance has no display identity", () => {
+    const internalId = "288d0e2f-da24-4f95-9419-1820ca3ab254";
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d11_response_checklist"
+        artifactName="Response coverage matrix"
+        latestAcceptance={{ ...LATEST, acceptedBy: internalId }}
+      />,
+    );
+
+    const panel = screen.getByTestId(
+      "source-shell-artifact-status-d11_response_checklist",
+    );
+    expect(panel).toHaveTextContent("Accepted by Recorded user; name unresolved");
+    expect(panel).not.toHaveTextContent(internalId);
   });
 
   it("shows the artifact context manifest so acceptance is tied to source, parser, agent use, and the next gap", () => {
@@ -193,7 +258,7 @@ describe("ArtifactAcceptancePanel", () => {
     expect(gate).toHaveTextContent("Compliance");
     expect(gate).toHaveTextContent("clear");
     expect(gate).toHaveTextContent(
-      "Run parser before this artifact influences scoring, aVa, or approval.",
+      "Run parser before this uploaded evidence influences scoring, aVa, or approval.",
     );
   });
 

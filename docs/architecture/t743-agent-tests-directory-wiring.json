@@ -1,0 +1,76 @@
+{
+  "item": "T-743",
+  "title": "Wire src/lib/agent/__tests__ into CI by directory, not by named file",
+  "recordedAt": "2026-09-23",
+  "base": "54f8dde7076dacb85ee66bbc8153370131d7b822",
+  "why": "The directory held 33 suites. A workflow reached 5 of them by naming files; the other 28 ran nowhere with zero declared quarantines. Nobody chose that: a named command cannot name a file written after it, so every suite added since those commands were written fell outside CI by omission.",
+  "acceptanceEvidence": {
+    "directorySweptByAPullRequestJob": ".github/workflows/ai-surface-control-catalog.yml — `npx jest src/lib/agent/__tests__ --runInBand`, in a job with no `paths:` filter",
+    "censusReportsFullCoverage": "src/lib/agent/__tests__ appears in neither partiallyCoveredDirectories nor uncoveredDirectories after the change; it read `5 of 33 covered, 28 untriaged unrun, high band` before",
+    "newFileReachedWithoutAWorkflowEdit": "src/__tests__/behaviors/t743-agent-tests-directory-ci.test.ts writes a 34th suite into the directory, re-runs the census and asserts coverage is still complete. Before the change the same case measured `5 of 34`.",
+    "redRunInCi": "see the release record — a deliberately failing throwaway suite was added to the directory and the required job went red on it without any workflow edit, then the file was removed and the job went green"
+  },
+  "unjudgedSuitesExecutedBeforeWiring": {
+    "why": "T-743's acceptance requires it in so many words: the nine files T-742 did not judge must be executed before they are swept in, because wiring an unexamined red suite into a blocking job is how a lane gets stuck.",
+    "howMeasured": "each file run on its own with `npx jest --runTestsByPath <file>` at base 54f8dde70, before any edit to any workflow",
+    "totals": { "suites": 9, "tests": 73, "passed": 73, "failed": 0, "pending": 0 },
+    "suites": [
+      { "path": "src/lib/agent/__tests__/restricted-financial-streamer.test.ts", "tests": 11, "passed": 11, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/restricted-output-policy.test.ts", "tests": 3, "passed": 3, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/retrieval-tenant-leak.test.ts", "tests": 10, "passed": 10, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/source-ava-polish-gate-response-shape.test.ts", "tests": 8, "passed": 8, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/surface.test.ts", "tests": 19, "passed": 19, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/system-prompt-guardrails.test.ts", "tests": 6, "passed": 6, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/tenant-guardrails.test.ts", "tests": 4, "passed": 4, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/untrusted-content.test.ts", "tests": 7, "passed": 7, "failed": 0, "verdict": "wire_into_ci" },
+      { "path": "src/lib/agent/__tests__/userContext.test.ts", "tests": 5, "passed": 5, "failed": 0, "verdict": "wire_into_ci" }
+    ]
+  },
+  "directoryAsAUnit": {
+    "why": "Running nine files one at a time does not prove they pass together; the sweep runs them in one jest process and that is what CI will do.",
+    "command": "npx jest src/lib/agent/__tests__ --runInBand",
+    "suites": 33,
+    "tests": 592,
+    "passed": 592,
+    "failed": 0,
+    "pending": 0,
+    "seconds": 0.84
+  },
+  "censusCountsMoved": {
+    "note": "The committed census was ALREADY stale by +7 test files before this change, and refreshing it folds that pre-existing drift in. The split below is stated so no number here is claimed as caused by this item when it was not.",
+    "preExistingDriftNotCausedHere": { "testFiles": 7, "coveredTestFiles": 8, "uncoveredTestFiles": -1 },
+    "causedHere": { "testFiles": 1, "coveredTestFiles": 29, "uncoveredTestFiles": -28 },
+    "committedBefore": { "testFiles": 2401, "coveredTestFiles": 1917, "uncoveredTestFiles": 484, "untriagedUnrunTestFiles": 435, "highGovernedRiskDirectories": 12 },
+    "committedAfter": { "testFiles": 2409, "coveredTestFiles": 1954, "uncoveredTestFiles": 455, "untriagedUnrunTestFiles": 406, "highGovernedRiskDirectories": 11 }
+  },
+  "controlsThisChangeCollidedWith": [
+    {
+      "control": "src/__tests__/behaviors/t557-unrun-suite-wiring.test.ts",
+      "whatItFailedOn": "six cases demanding that three of this directory's files be named by EXACT PATH in a pull-request command",
+      "resolution": "updated, not weakened. The three files move to a partition whose cases assert the same subject — on disk, not in the unrun set, reached by a pull-request command — and allow the command to be the ancestor directory. The other ten keep the exact-path rule, because T-557's reason for it (an ancestor sweep there would also have wired three suites verdicted rewrite_as_behavior) is intact for them and does not apply here: this directory holds no withheld and no rewrite_as_behavior file, and all 33 suites were executed before the sweep was written."
+    },
+    {
+      "control": "src/__tests__/behaviors/named-suite-requiredness.test.ts",
+      "whatItFailedOn": "two suites named in .github/workflows/atlas-quality.yml, which does not block a merge, once the required job began running them",
+      "resolution": "the two steps were dropped from atlas-quality.yml — the remedy the control's own message names — leaving the required job as the single owner. The two path triggers for those test files went with them; the source files they guard still trigger that workflow."
+    },
+    {
+      "control": "src/__tests__/behaviors/test-ci-coverage-census.test.ts",
+      "whatItFailedOn": "the committed census no longer described the repository's coverage shape",
+      "resolution": "census refreshed with `npm run audit:test-ci-coverage:write`"
+    }
+  ],
+  "mutations": [
+    { "mutation": "restore the three named files in place of the directory sweep", "caught": true, "failingCases": 3 },
+    { "mutation": "delete the sweep step entirely", "caught": true, "failingCases": 3 },
+    { "mutation": "keep the sweep but give its workflow a `paths:` filter", "caught": true, "failingCases": 1 },
+    { "mutation": "create a sibling directory the jest regex also selects", "caught": true, "failingCases": 1 }
+  ],
+  "scopeBaseline": {
+    "scope": "npx jest src/__tests__/behaviors",
+    "before": { "suites": 112, "tests": 1009, "failed": 0 },
+    "after": { "suites": 113, "tests": 1013, "failed": 0 },
+    "howBeforeWasMeasured": "the workflow restored to HEAD and the new guard file removed, in this worktree, then re-run"
+  },
+  "followOnItems": ["T-744"]
+}

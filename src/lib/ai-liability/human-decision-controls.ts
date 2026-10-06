@@ -7,6 +7,12 @@
 
 export const HUMAN_DECISION_CONTROLS_VERSION = '2026-06-01.ai-liability-v1';
 
+/**
+ * Minimum length of a human rationale that can be audited later. A one-word
+ * rationale records that someone clicked, not why they decided.
+ */
+export const HUMAN_DECISION_RATIONALE_MIN_CHARS = 20;
+
 export const AI_DECISION_SUPPORT_WATERMARK =
   'AI-assisted decision support - human review and client approval required.';
 
@@ -69,6 +75,16 @@ export interface AiDecisionEvidencePacketInput {
   readonly humanRationale?: string | null;
   readonly overrideDisposition?: 'accepted' | 'modified' | 'rejected' | 'more_evidence_requested' | null;
   readonly riskDomains?: readonly AiDecisionRiskDomain[];
+  /**
+   * Whether this packet is the record of a decision a human took, as opposed
+   * to a brief the product composed. The packet shape remains authoritative:
+   * anything naming a decision owner, an override disposition or a rationale
+   * is a human decision even when a caller declares `false`. This prevents a
+   * decision surface from bypassing the rationale minimum with a mislabeled
+   * packet. A genuine brief may declare `false` only when it carries no human
+   * decision markers.
+   */
+  readonly recordsHumanDecision?: boolean;
 }
 
 export interface AiDecisionEvidencePacket {
@@ -85,6 +101,8 @@ export interface AiDecisionEvidencePacket {
   readonly assumptions: readonly string[];
   readonly alternativesConsidered: readonly string[];
   readonly humanRationale: string | null;
+  readonly declaredRecordsHumanDecision: boolean | null;
+  readonly recordsHumanDecision: boolean;
   readonly overrideDisposition: AiDecisionEvidencePacketInput['overrideDisposition'];
   readonly riskDomains: readonly AiDecisionRiskDomain[];
   readonly highRisk: boolean;
@@ -150,6 +168,50 @@ export function sanitizeAutonomousDecisionLanguage(text: string): string {
   );
 }
 
+export function createAutonomousDecisionTextStreamer(): {
+  push(text: string): string;
+  flush(): string;
+} {
+  let pending = "";
+  const possibleStart = /\b(?:AbarVa|Nexus|Sentinel|Atlas|Steward|the|must|automatic(?:ally)?|final)\b/i;
+
+  return {
+    push(text) {
+      pending += text;
+      const lastSentenceEnd = Math.max(
+        pending.lastIndexOf("."),
+        pending.lastIndexOf("!"),
+        pending.lastIndexOf("?"),
+        pending.lastIndexOf(";"),
+        pending.lastIndexOf(":"),
+      );
+      if (lastSentenceEnd >= 0) {
+        const ready = pending.slice(0, lastSentenceEnd + 1);
+        pending = pending.slice(lastSentenceEnd + 1);
+        return sanitizeAutonomousDecisionLanguage(ready);
+      }
+
+      const trigger = possibleStart.exec(pending);
+      if (trigger) {
+        const ready = pending.slice(0, trigger.index);
+        pending = pending.slice(trigger.index);
+        return ready;
+      }
+
+      const trailingWord = /[A-Za-z]+$/.exec(pending);
+      const readyEnd = trailingWord?.index ?? pending.length;
+      const ready = pending.slice(0, readyEnd);
+      pending = pending.slice(readyEnd);
+      return ready;
+    },
+    flush() {
+      const ready = sanitizeAutonomousDecisionLanguage(pending);
+      pending = "";
+      return ready;
+    },
+  };
+}
+
 export function classifyAiDecisionRisk(input: {
   readonly text: string;
   readonly domains?: readonly AiDecisionRiskDomain[];
@@ -190,6 +252,31 @@ export function buildMissingDataBanner(input: {
   return `Decision-support limits: missing inputs: ${missing}. Assumptions: ${assumptions}.${change}`;
 }
 
+/**
+ * Rationale text as it is measured. Trimmed and internally collapsed, so
+ * whitespace cannot pad a one-word rationale past the minimum.
+ */
+export function normalizeHumanDecisionRationale(value: unknown): string {
+  return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
+}
+
+/**
+ * Does this packet record a decision a human took? Explicit when the caller
+ * says so; otherwise inferred from the packet's own shape.
+ */
+export function packetRecordsHumanDecision(
+  input: AiDecisionEvidencePacketInput,
+): boolean {
+  const hasDecisionMarkers = Boolean(
+    input.decisionOwner ||
+      input.overrideDisposition ||
+      normalizeHumanDecisionRationale(input.humanRationale),
+  );
+  if (input.recordsHumanDecision === true) return true;
+  if (input.recordsHumanDecision === false) return hasDecisionMarkers;
+  return hasDecisionMarkers;
+}
+
 export function buildAiDecisionEvidencePacket(
   input: AiDecisionEvidencePacketInput,
 ): AiDecisionEvidencePacket {
@@ -211,6 +298,8 @@ export function buildAiDecisionEvidencePacket(
     assumptions: input.assumptions,
     alternativesConsidered: input.alternativesConsidered,
     humanRationale: input.humanRationale ?? null,
+    declaredRecordsHumanDecision: input.recordsHumanDecision ?? null,
+    recordsHumanDecision: packetRecordsHumanDecision(input),
     overrideDisposition: input.overrideDisposition ?? null,
     riskDomains: risk.domains,
     highRisk: risk.highRisk,
@@ -238,6 +327,17 @@ export function validateAiDecisionEvidencePacket(
   if (packet.assumptions.length === 0) failures.push('missing_assumptions');
   if (packet.missingInputs.length === 0) failures.push('missing_missing_inputs_record');
   if (policy.requireOverrideCapture && !packet.overrideDisposition) failures.push('missing_human_override_or_acceptance');
+  if (packet.declaredRecordsHumanDecision === false && packet.recordsHumanDecision) {
+    failures.push('mislabeled_brief_declaration');
+  }
+  // The rationale is the only part of a packet a human writes, and it was the
+  // only required field this validator did not read: every surface recording a
+  // human decision had to remember its own minimum, and nothing said so.
+  if (packet.recordsHumanDecision) {
+    const rationale = normalizeHumanDecisionRationale(packet.humanRationale);
+    if (rationale.length === 0) failures.push('missing_human_rationale');
+    else if (rationale.length < HUMAN_DECISION_RATIONALE_MIN_CHARS) failures.push('insufficient_human_rationale');
+  }
   if (policy.requireLegalEscalationForHighRisk && packet.highRisk && !packet.escalationRequired) failures.push('missing_high_risk_escalation');
   if (packet.sanitizedRecommendationText !== sanitizeAutonomousDecisionLanguage(packet.sanitizedRecommendationText)) {
     failures.push('autonomous_decision_language_present');

@@ -100,7 +100,9 @@ const PHASE_C_VALUE_MODES = new Set<SourceAnswerMode>([
 
 /** decision_recommendation's assembled BAFO facet can name a specific
  * still-open lever ask — same bar as Phase B's bafo_strategy/vendor_comparison. */
-const PHASE_C_ASK_MODES = new Set<SourceAnswerMode>(["decision_recommendation"]);
+const PHASE_C_ASK_MODES = new Set<SourceAnswerMode>([
+  "decision_recommendation",
+]);
 
 export interface SourceAnswerQualityCheckResult {
   id: SourceAnswerQualityCheckId;
@@ -158,7 +160,8 @@ export interface SourceAnswerQualityGateInput {
 /** Every $ figure appearing in a text, compact-notation aware (e.g. "$4.2M",
  * "$650K", "$1,200,000"). Used by the traceability check to compare the
  * answer's stated figures against the grounding block's cited figures. */
-const USD_FIGURE_RE = /\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b/g;
+const USD_FIGURE_RE =
+  /\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b/g;
 
 function extractUsdFigures(text: string): string[] {
   const matches = text.match(USD_FIGURE_RE) ?? [];
@@ -214,7 +217,10 @@ export function enforceSourceExistingEventWriteTruth(text: string): string {
   return repaired.replace(/[ \t]{2,}/g, " ").trim();
 }
 
-function findBannedPhrase(text: string, hasGroundingContext: boolean): string | null {
+function findBannedPhrase(
+  text: string,
+  hasGroundingContext: boolean,
+): string | null {
   if (containsSourceRecordWriteClaim(text)) {
     return "source record write claim";
   }
@@ -224,16 +230,21 @@ function findBannedPhrase(text: string, hasGroundingContext: boolean): string | 
     // "I cannot access the event" is only banned when event context IS
     // available (per spec) — when grounding is genuinely absent, honestly
     // saying so is not a banned deflection.
-    if (phrase === "i cannot access the event" && !hasGroundingContext) continue;
+    if (phrase === "i cannot access the event" && !hasGroundingContext)
+      continue;
     return phrase;
   }
   return null;
 }
 
-function stripBannedPhrases(text: string, hasGroundingContext: boolean): string {
+function stripBannedPhrases(
+  text: string,
+  hasGroundingContext: boolean,
+): string {
   let result = enforceSourceExistingEventWriteTruth(text);
   for (const phrase of BANNED_PHRASES) {
-    if (phrase === "i cannot access the event" && !hasGroundingContext) continue;
+    if (phrase === "i cannot access the event" && !hasGroundingContext)
+      continue;
     const re = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
     result = result.replace(re, "");
   }
@@ -290,6 +301,17 @@ const PENDING_VALUE_AUTOMATIC_CONVERSION_RE =
 const PENDING_VALUE_AUTOMATIC_CONVERSION_SENTENCE_RE =
   /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts?(?: into)?)[^.!?\n]*(?:confirmed|approved|booked|realized value)|(?:moves?|becomes?|turns into|converts?(?: into)?)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)|(?:converts?|moves?|turns into)[^.!?\n]*(?:pending|\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?)[^.!?\n]*(?:approved|confirmed|booked|realized value))[^.!?\n]*[.!?]?/gi;
 
+interface RegisteredArtifactGroundingStatus {
+  label: string;
+  lifecycle: string;
+}
+
+const REGISTERED_ARTIFACT_GROUNDING_RE =
+  /([^:\n;.]+?)\s+\(registered artifact:\s+[^;\n)]+;\s+([^)]+)\)/gi;
+
+const UNREGISTERED_ARTIFACT_SENTENCE_RE =
+  /[^.!?\n]*(?:not yet registered|not registered|unregistered|no registered artifact(?: yet)?|has no registered artifact(?: yet)?)[^.!?\n]*[.!?]?/gi;
+
 // Vague negotiation-posture phrases that dodge naming the SPECIFIC vendor/lever
 // ask the grounding block already carries (e.g. the archetype's `bafoAsk` text,
 // or a named vendor/lever). Flagged only when the grounding actually HAS a
@@ -308,14 +330,19 @@ function runChecks(
   checks.push({
     id: "has_direct_answer",
     passed: trimmed.length > 0,
-    detail: trimmed.length > 0 ? "Answer text is non-empty." : "Answer text is empty.",
+    detail:
+      trimmed.length > 0
+        ? "Answer text is non-empty."
+        : "Answer text is empty.",
   });
 
   // 2. Has a mode classification.
   checks.push({
     id: "has_mode_classification",
     passed: input.mode !== null,
-    detail: input.mode ? `Classified as ${input.mode}.` : "No mode was classified.",
+    detail: input.mode
+      ? `Classified as ${input.mode}.`
+      : "No mode was classified.",
   });
 
   // 3. Uses current Source event context when available.
@@ -330,7 +357,9 @@ function runChecks(
   // 4. Does not contradict structured workflow state — text-based consistency
   // check: if the grounding names a current stage label, the answer must not
   // assert the event is on a DIFFERENT canonical stage label.
-  const groundingStageLabel = input.groundingFacts?.currentStageLabel ?? input.groundingFacts?.gateStageLabel;
+  const groundingStageLabel =
+    input.groundingFacts?.currentStageLabel ??
+    input.groundingFacts?.gateStageLabel;
   let matchesWorkflowState = true;
   let matchesDetail = "No stage label asserted in grounding to cross-check.";
   if (groundingStageLabel) {
@@ -348,7 +377,10 @@ function runChecks(
       "Value",
     ].filter((label) => label !== groundingStageLabel);
     const claimsWrongStage = otherStageLabels.some((label) => {
-      const re = new RegExp(`\\b(currently|now|is)\\s+(on|in|at)\\s+(the\\s+)?${label}\\b`, "i");
+      const re = new RegExp(
+        `\\b(currently|now|is)\\s+(on|in|at)\\s+(the\\s+)?${label}\\b`,
+        "i",
+      );
       return re.test(text);
     });
     matchesWorkflowState = !claimsWrongStage;
@@ -390,6 +422,14 @@ function runChecks(
     matchesDetail =
       "Answer claims finance-confirmed or realized value while the grounding says the value-proof gate is open and Finance/Tower approval is pending.";
   }
+  const contradictedRegisteredArtifact = findRegisteredArtifactContradiction(
+    text,
+    input.groundingBlockText,
+  );
+  if (contradictedRegisteredArtifact) {
+    matchesWorkflowState = false;
+    matchesDetail = `Answer calls "${contradictedRegisteredArtifact.label}" unregistered, but the grounding says it is registered as ${contradictedRegisteredArtifact.lifecycle}.`;
+  }
   checks.push({
     id: "matches_workflow_state",
     passed: matchesWorkflowState,
@@ -401,7 +441,9 @@ function runChecks(
   checks.push({
     id: "no_banned_language",
     passed: bannedHit === null,
-    detail: bannedHit ? `Found banned phrase: "${bannedHit}".` : "No banned phrases found.",
+    detail: bannedHit
+      ? `Found banned phrase: "${bannedHit}".`
+      : "No banned phrases found.",
   });
 
   // 6. No raw internal IDs exposed.
@@ -420,7 +462,8 @@ function runChecks(
     input.mode === "evidence_readiness" ||
     input.mode === "artifact_lineage" ||
     input.mode === "artifact_finality";
-  const needsCaveat = isEvidenceOrArtifactMode && input.evidenceIsIncomplete === true;
+  const needsCaveat =
+    isEvidenceOrArtifactMode && input.evidenceIsIncomplete === true;
   const hasCaveatSignal = CAVEAT_SIGNAL_RE.test(text);
   checks.push({
     id: "includes_gap_or_caveat_when_incomplete",
@@ -453,7 +496,9 @@ function runChecks(
     input.mode === "stage_gate" ||
     input.mode === "event_status";
   const hasReadOnceFacts =
-    !needsReadOnceFacts || (input.groundingFacts !== undefined && Object.keys(input.groundingFacts).length > 0);
+    !needsReadOnceFacts ||
+    (input.groundingFacts !== undefined &&
+      Object.keys(input.groundingFacts).length > 0);
   checks.push({
     id: "matches_read_once_grounding",
     passed: !input.hasGroundingContext || hasReadOnceFacts,
@@ -472,13 +517,19 @@ function runChecks(
   // vacuously (nothing to check against).
   const isValueMode =
     input.mode !== null &&
-    (PHASE_B_VALUE_MODES.has(input.mode) || PHASE_C_VALUE_MODES.has(input.mode));
+    (PHASE_B_VALUE_MODES.has(input.mode) ||
+      PHASE_C_VALUE_MODES.has(input.mode));
   const needsTraceability =
-    isValueMode && input.hasGroundingContext && Boolean(input.groundingBlockText);
+    isValueMode &&
+    input.hasGroundingContext &&
+    Boolean(input.groundingBlockText);
   let traceableToGrounding = true;
-  let traceabilityDetail = "Not a value/pricing mode, or no grounding block to trace against.";
+  let traceabilityDetail =
+    "Not a value/pricing mode, or no grounding block to trace against.";
   if (needsTraceability) {
-    const groundingFigures = new Set(extractUsdFigures(input.groundingBlockText!));
+    const groundingFigures = new Set(
+      extractUsdFigures(input.groundingBlockText!),
+    );
     const answerFigures = extractUsdFigures(text);
     const untraceable = answerFigures.filter((f) => !groundingFigures.has(f));
     traceableToGrounding = untraceable.length === 0;
@@ -520,7 +571,9 @@ function runChecks(
     input.mode !== null &&
     (PHASE_B_ASK_MODES.has(input.mode) || PHASE_C_ASK_MODES.has(input.mode));
   const needsSpecificAsk =
-    isAskMode && input.hasGroundingContext && input.groundingHasSpecificAsk === true;
+    isAskMode &&
+    input.hasGroundingContext &&
+    input.groundingHasSpecificAsk === true;
   const hasGenericDeflection = GENERIC_ASK_DEFLECTION_RE.test(text);
   checks.push({
     id: "uses_specific_ask_when_available",
@@ -555,7 +608,10 @@ function repairAnswer(
   }
 
   if (failedIds.has("no_raw_internal_ids")) {
-    repaired = sanitizePublicText(repaired, repaired.length > 0 ? repaired : "the event");
+    repaired = sanitizePublicText(
+      repaired,
+      repaired.length > 0 ? repaired : "the event",
+    );
   }
 
   // matches_workflow_state / numeric-contradiction repair: correct any
@@ -573,7 +629,10 @@ function repairAnswer(
     const groundedTotal = input.groundingFacts.taskChecklistTotal;
     let correctedAny = false;
     repaired = repaired.replace(COUNT_CLAIM_RE, (match, done, total, word) => {
-      if (Number(total) === Number(groundedTotal) && Number(done) !== Number(groundedDone)) {
+      if (
+        Number(total) === Number(groundedTotal) &&
+        Number(done) !== Number(groundedDone)
+      ) {
         correctedAny = true;
         return `${groundedDone} of ${groundedTotal} ${word}`;
       }
@@ -605,13 +664,21 @@ function repairAnswer(
     repaired = repaired.replace(/[ \t]{2,}/g, " ").trim();
   }
 
+  if (failedIds.has("matches_workflow_state") && input.groundingBlockText) {
+    repaired = repairRegisteredArtifactContradictions(
+      repaired,
+      input.groundingBlockText,
+    );
+  }
+
   if (failedIds.has("has_direct_answer") && repaired.trim().length === 0) {
     repaired =
       "That is not computed yet from this event's evidence — tell me what you'd like to check and I can point to the exact stage or task.";
   }
 
   if (failedIds.has("includes_gap_or_caveat_when_incomplete")) {
-    repaired = `${repaired.trim()} Some of this event's evidence is not yet persisted — I've named what's outstanding above rather than guessing.`.trim();
+    repaired =
+      `${repaired.trim()} Some of this event's evidence is not yet persisted — I've named what's outstanding above rather than guessing.`.trim();
   }
 
   if (failedIds.has("includes_next_step")) {
@@ -628,22 +695,33 @@ function repairAnswer(
     // (a targeted strip, not a rewrite) and append a caveat pointing back to the
     // grounding block's own cited figures — never silently ship a self-computed
     // number as if it were cited.
-    const groundingFigures = new Set(extractUsdFigures(input.groundingBlockText));
+    const groundingFigures = new Set(
+      extractUsdFigures(input.groundingBlockText),
+    );
     repaired = repaired.replace(USD_FIGURE_RE, (match) => {
       const normalized = match.replace(/\s+/g, "").toLowerCase();
-      return groundingFigures.has(normalized) ? match : "[figure not in the grounding record]";
+      return groundingFigures.has(normalized)
+        ? match
+        : "[figure not in the grounding record]";
     });
     repaired =
       `${repaired.trim()} Every dollar figure above is quoted from the deterministic grounding record for this event — I do not compute new figures myself.`.trim();
   }
 
-  if (failedIds.has("includes_value_type_breakdown") && input.groundingBlockText) {
+  if (
+    failedIds.has("includes_value_type_breakdown") &&
+    input.groundingBlockText
+  ) {
     // Append the grounding block's own VALUE-TYPE CLASSIFICATION section
     // verbatim — quoted, never re-derived — so the answer never reads as one
     // blended savings number.
     const classificationLines = input.groundingBlockText
       .split("\n")
-      .filter((line) => /value[- ]?type|expected concession|incremental negotiated|solution tightening|protected|risk[- ]adjusted/i.test(line))
+      .filter((line) =>
+        /value[- ]?type|expected concession|incremental negotiated|solution tightening|protected|risk[- ]adjusted/i.test(
+          line,
+        ),
+      )
       .slice(0, 6);
     if (classificationLines.length > 0) {
       repaired =
@@ -660,6 +738,69 @@ function repairAnswer(
   }
 
   return repaired;
+}
+
+function registeredArtifactStatusesFromGrounding(
+  groundingBlockText?: string,
+): RegisteredArtifactGroundingStatus[] {
+  if (!groundingBlockText) return [];
+  const statuses: RegisteredArtifactGroundingStatus[] = [];
+  for (const match of groundingBlockText.matchAll(
+    REGISTERED_ARTIFACT_GROUNDING_RE,
+  )) {
+    const label = match[1]?.trim();
+    const lifecycle = match[2]?.trim();
+    if (label && lifecycle) statuses.push({ label, lifecycle });
+  }
+  return statuses;
+}
+
+function findRegisteredArtifactContradiction(
+  text: string,
+  groundingBlockText?: string,
+): RegisteredArtifactGroundingStatus | null {
+  for (const status of registeredArtifactStatusesFromGrounding(
+    groundingBlockText,
+  )) {
+    const labelRe = new RegExp(escapeRegExp(status.label), "i");
+    for (const sentenceMatch of text.matchAll(
+      UNREGISTERED_ARTIFACT_SENTENCE_RE,
+    )) {
+      const sentence = sentenceMatch[0] ?? "";
+      if (labelRe.test(sentence)) return status;
+    }
+  }
+  return null;
+}
+
+function repairRegisteredArtifactContradictions(
+  text: string,
+  groundingBlockText: string,
+): string {
+  let repaired = text;
+  for (const status of registeredArtifactStatusesFromGrounding(
+    groundingBlockText,
+  )) {
+    const labelPattern = escapeRegExp(status.label);
+    const staleSentenceRe = new RegExp(
+      `[^.!?\\n]*(?:not yet registered|not registered|unregistered|no registered artifact(?: yet)?|has no registered artifact(?: yet)?)[^.!?\\n]*${labelPattern}[^.!?\\n]*[.!?]?`,
+      "gi",
+    );
+    repaired = repaired.replace(staleSentenceRe, (sentence) => {
+      const keepsExclusionLog =
+        /\bExclusion Log\b/i.test(sentence) &&
+        !new RegExp(`\\bExclusion Log\\b`, "i").test(status.label);
+      const correction = `${status.label} is registered as ${status.lifecycle}.`;
+      return keepsExclusionLog
+        ? `${correction} Exclusion Log remains not yet registered.`
+        : correction;
+    });
+  }
+  return repaired.replace(/[ \t]{2,}/g, " ").trim();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

@@ -8,8 +8,10 @@ import {
   hydrateTaskEvidenceState,
   templateFactsPresent,
 } from "../task-evidence-hydration";
+import { evidenceRequirementIdForTask, factTemplateCodeForTask } from "../../task-evidence-requirements";
 import { templateFactMapByCode } from "../../template-fact-map";
 import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
+import type { SourceEventEvidence } from "@/lib/source/canvas-substrate";
 
 const VOLUMETRICS_TASK: StageTaskView = {
   id: "scope.volumetrics",
@@ -31,6 +33,27 @@ const APP_INVENTORY_TASK: StageTaskView = {
   guide: "Upload your application inventory.",
   cta: "Confirm inventory",
   factTemplateCode: "APP_INVENTORY_V1",
+};
+
+const RFP_CLAUSE_TASK: StageTaskView = {
+  id: "rfp.clause-coverage",
+  title: "Confirm RFP clause coverage",
+  subtitle: "One row per value lever",
+  type: "provide",
+  state: "todo",
+  guide: "Upload the checklist.",
+  cta: "Confirm clause coverage",
+  factTemplateCode: "RFP_CLAUSES_V1",
+};
+
+const PRIOR_BASELINE_TASK: StageTaskView = {
+  id: "scope.prior-baseline",
+  title: "Review the prior commercial baseline",
+  subtitle: "Prior contract or audited absence",
+  type: "provide",
+  state: "todo",
+  guide: "Review prior contract and run-cost evidence or record its absence.",
+  cta: "Review baseline",
 };
 
 const SPONSOR_LETTER_TASK: StageTaskView = {
@@ -95,6 +118,35 @@ describe("templateFactsPresent", () => {
 });
 
 describe("hydrateTaskEvidenceState", () => {
+  it("credits a fully assessed RFP checklist even when every persisted value is zero", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [RFP_CLAUSE_TASK],
+      factInputs: { rfp_clause_present: 0 },
+      stageKey: "rfp",
+      rfpClauseChecklistComplete: true,
+    });
+    expect(hydrated[0].evidenceComplete).toBe(true);
+  });
+
+  it("does not credit a partial RFP checklist merely because one fact exists", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [RFP_CLAUSE_TASK],
+      factInputs: { rfp_clause_present: 0 },
+      stageKey: "rfp",
+      rfpClauseChecklistComplete: false,
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("does not credit an RFP checklist without the collapsed persisted fact", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [RFP_CLAUSE_TASK],
+      factInputs: {},
+      stageKey: "rfp",
+      rfpClauseChecklistComplete: true,
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
   it("marks a template task complete when the event HAS its facts", () => {
     const inputs = { [volumetricsFactKey()]: 4200 };
     const hydrated = hydrateTaskEvidenceState({
@@ -124,14 +176,122 @@ describe("hydrateTaskEvidenceState", () => {
     expect(done).toBe(1);
   });
 
-  it("falls back to the canonical task id when live payload omits factTemplateCode", () => {
-    const inputs = { [volumetricsFactKey()]: 4200 };
+  it("reads the validated ticket-history receipt when the scalar map is empty", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
-      factInputs: inputs,
+      factInputs: {},
+      evidenceStates: [{
+        id: "fact-derived:event-1:EVID-SRC-SCOPE-TICKET-HISTORY",
+        requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+        currentState: "Available",
+        sourceEventFactIds: ["l2-ticket-fact", "l3-ticket-fact"],
+      }],
       stageKey: "scope",
     });
     expect(hydrated[0].evidenceComplete).toBe(true);
+  });
+
+  it("completes an operational inventory only from a usable, source-linked review receipt", () => {
+    const task = { ...APP_INVENTORY_TASK, factTemplateCode: undefined };
+    const reviewed = {
+      id: "evidence-row-1",
+      requirementId: "EVID-SRC-SCOPE-APP-INV",
+      currentState: "Usable Evidence" as const,
+      sourceArtifactId: "source-artifact-1",
+    };
+    expect(hydrateTaskEvidenceState({
+      tasks: [task], factInputs: {}, evidenceStates: [reviewed], stageKey: "scope",
+    })[0].evidenceComplete).toBe(true);
+    for (const evidence of [
+      { ...reviewed, currentState: "Available" as const },
+      { ...reviewed, sourceArtifactId: null },
+      { ...reviewed, id: "fact-derived:invented" },
+    ]) {
+      expect(hydrateTaskEvidenceState({
+        tasks: [task], factInputs: {}, evidenceStates: [evidence], stageKey: "scope",
+      })[0].evidenceComplete).toBeUndefined();
+    }
+  });
+
+  it("does not complete a legacy inventory task from an unrelated numeric fact", () => {
+    const map = templateFactMapByCode("APP_INVENTORY_V1");
+    expect(map?.columns.length).toBeGreaterThan(0);
+    expect(factTemplateCodeForTask(APP_INVENTORY_TASK)).toBeUndefined();
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [APP_INVENTORY_TASK],
+      factInputs: { [map!.columns[0].factKey]: 42 },
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("binds Scope's baseline step to the prior-contract requirement, not supplier proposal facts", () => {
+    expect(factTemplateCodeForTask(PRIOR_BASELINE_TASK)).toBeUndefined();
+    expect(factTemplateCodeForTask({ ...PRIOR_BASELINE_TASK, factTemplateCode: "CONTRACT_TERMS_V1" })).toBeUndefined();
+    expect(evidenceRequirementIdForTask(PRIOR_BASELINE_TASK)).toBe("EVID-SRC-SCOPE-FY-CONTRACT");
+    const terms = templateFactMapByCode("CONTRACT_TERMS_V1");
+    expect(terms?.columns.length).toBeGreaterThan(0);
+    expect(hydrateTaskEvidenceState({
+      tasks: [PRIOR_BASELINE_TASK],
+      factInputs: { [terms!.columns[0].factKey]: 1200 },
+      stageKey: "scope",
+    })[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("completes the prior-baseline step only from its recorded source or accountable absence", () => {
+    const absent = {
+      id: "evidence-baseline-1",
+      sourceEventId: "event-1",
+      tenantKey: "test-tenant",
+      requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+      stage: "scope",
+      currentState: "Not Requested",
+      sourceArtifactId: null,
+      applicabilityStatus: "not_applicable",
+      applicabilityReason: "This net-new service has no prior contract or verified finance baseline.",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-29T00:00:00Z",
+      notes: null,
+      lastSyncedAt: null,
+      createdAt: "2026-09-29T00:00:00Z",
+      updatedAt: "2026-09-29T00:00:00Z",
+    } as SourceEventEvidence;
+    const done = (evidence: SourceEventEvidence) => hydrateTaskEvidenceState({
+      tasks: [PRIOR_BASELINE_TASK], factInputs: {}, evidenceStates: [evidence], stageKey: "scope",
+    })[0].evidenceComplete;
+
+    expect(done(absent)).toBe(true);
+    expect(done({ ...absent, applicabilityReason: "No contract" })).toBeUndefined();
+    expect(done({ ...absent, sourceArtifactId: "artifact-1" })).toBeUndefined();
+    expect(done({ ...absent, requirementId: "EVID-SRC-SCOPE-CURRENT-SOW" })).toBeUndefined();
+    expect(done({ ...absent, applicabilityStatus: "applicable" })).toBeUndefined();
+    expect(done({ ...absent, applicabilityStatus: "applicable", currentState: "Available", sourceArtifactId: "artifact-1" })).toBe(true);
+    expect(done({ ...absent, applicabilityStatus: "applicable", currentState: "Available" })).toBeUndefined();
+  });
+
+  it.each([
+    ["a single scalar", { ticket_count: 42 }, []],
+    ["a merely uploaded file", {}, [{ requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Available" as const, sourceEventFactIds: [] }]],
+    ["stale ticket evidence", {}, [{ requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Stale" as const, sourceEventFactIds: ["l2", "l3"] }]],
+    ["an unrelated requirement", {}, [{ requirementId: "EVID-SRC-SCOPE-APP-INV", currentState: "Available" as const, sourceEventFactIds: ["l2", "l3"] }]],
+    ["an unvalidated evidence row", {}, [{ id: "stored-evidence-1", requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Available" as const, sourceEventFactIds: ["l2", "l3"] }]],
+  ])("does not complete ticket history from %s", (_label, factInputs, evidenceStates) => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
+      factInputs,
+      evidenceStates,
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("does not complete the ticket task from a financial volumetrics fact", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
+      factInputs: { [volumetricsFactKey()]: 4200 },
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
   it("leaves a task with no persisted evidence not-complete", () => {
@@ -143,14 +303,73 @@ describe("hydrateTaskEvidenceState", () => {
     expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
-  it("marks a template-less provide task complete from a stored artifact", () => {
+  it("attaches a matching stored template file without marking typed facts complete", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [VOLUMETRICS_TASK, APP_INVENTORY_TASK],
+      factInputs: {},
+      artifacts: [
+        {
+          stageKey: "intake",
+          artifactKind: "intake_attachment",
+          originalName: "client-volumetrics-VOLUMETRICS_V1.csv",
+          sourceFormat: "csv",
+          sizeBytes: 2048,
+        },
+      ],
+      stageKey: "scope",
+    });
+
+    expect(hydrated[0].file).toEqual({
+      format: "CSV",
+      name: "client-volumetrics-VOLUMETRICS_V1.csv",
+      meta: "2 KB · uploaded · awaiting extraction",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+    expect(hydrated[1].file).toBeUndefined();
+  });
+
+  it("does not treat an unrelated stage artifact as the signed sponsor letter", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [SPONSOR_LETTER_TASK],
       factInputs: {},
-      artifacts: [{ stageKey: "scope" }],
+      artifacts: [
+        {
+          stageKey: "scope",
+          artifactKind: "scope_document",
+          originalName: "application-inventory.csv",
+        },
+      ],
       stageKey: "scope",
     });
-    expect(hydrated[0].evidenceComplete).toBe(true);
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("reads back a verified delegate acknowledgement for the sponsor task", () => {
+    const result = hydrateTaskEvidenceState({
+      tasks: [SPONSOR_LETTER_TASK],
+      factInputs: {},
+      artifacts: [],
+      evidenceStates: [],
+      stageKey: "scope",
+      verifiedDelegatedSponsorAcknowledgement: true,
+    });
+    expect(result[0].evidenceComplete).toBe(true);
+  });
+
+  it("does not infer a signed commitment from a sponsor-named file alone", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [SPONSOR_LETTER_TASK],
+      factInputs: {},
+      artifacts: [
+        {
+          stageKey: "scope",
+          artifactKind: "sponsor_commitment",
+          originalName: "sponsor-commitment.pdf",
+        },
+      ],
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
   it("does not mark a template-less provide task complete when the artifact is for another stage", () => {
@@ -171,6 +390,94 @@ describe("hydrateTaskEvidenceState", () => {
       stageKey: "scope",
     });
     expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("reads back a retained/vendor decision only when its receipt still cites the current workforce and SLA sources", () => {
+    const task: StageTaskView = {
+      id: "scope.matrix", title: "Confirm retained vs. vendor", subtitle: "Decision",
+      type: "decide", state: "todo", guide: "Review the split.", cta: "Confirm matrix",
+    };
+    const workforce = {
+      requirementId: "EVID-SRC-SCOPE-WORKFORCE", currentState: "Available" as const,
+      sourceArtifactId: "workforce-v1",
+    };
+    const sla = {
+      requirementId: "EVID-SRC-SCOPE-SLA-BASELINE", currentState: "Parsed" as const,
+      sourceArtifactId: "sla-v1",
+    };
+    const receipt = {
+      requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+      currentState: "Available" as const,
+      notes: JSON.stringify({
+        kind: "scope_matrix_decision_v1", actorUserId: "owner-1",
+        decidedAt: "2026-09-30T09:00:00Z", retainedResponsibilities: "Client operations retains service ownership and security policy.",
+        vendorResponsibilities: "Prospective vendor handles L1/L2 desk and endpoint support.",
+        rationale: "Synthetic owner review of the current workforce and SLA source records.",
+        workforceArtifactId: "workforce-v1", slaArtifactId: "sla-v1",
+      }),
+    };
+    const done = (evidenceStates: NonNullable<Parameters<typeof hydrateTaskEvidenceState>[0]["evidenceStates"]>) =>
+      hydrateTaskEvidenceState({ tasks: [task], factInputs: {}, evidenceStates, stageKey: "scope" })[0]
+        .evidenceComplete;
+    expect(done([workforce, sla, receipt])).toBe(true);
+    expect(done([workforce, { ...sla, sourceArtifactId: "sla-v2" }, receipt])).toBeUndefined();
+    expect(done([{ ...workforce, currentState: "Stale" }, sla, receipt])).toBeUndefined();
+    expect(done([workforce, sla, { ...receipt, notes: null }])).toBeUndefined();
+    expect(done([workforce, sla])).toBeUndefined();
+  });
+
+  it("reads back an exclusions decision only while its SOW source or audited absence is current", () => {
+    const task: StageTaskView = {
+      id: "scope.exclusions", title: "Confirm what's out of scope", subtitle: "Decision",
+      type: "decide", state: "todo", guide: "Review exclusions.", cta: "Confirm exclusions",
+    };
+    const sow = {
+      requirementId: "EVID-SRC-SCOPE-CURRENT-SOW", currentState: "Available" as const,
+      sourceArtifactId: "sow-v1",
+    };
+    const decision = {
+      kind: "scope_exclusions_decision_v1", actorUserId: "owner-1", decidedAt: "2026-09-30T09:00:00Z",
+      excludedWork: "Security operations and application retirement are outside the proposed supplier scope.",
+      responsibleOwner: "Retained client operations and application owners remain accountable for excluded work.",
+      rationale: "Synthetic scope decision without asserting contractual exclusion or supplier acceptance.",
+      basis: { kind: "source", sourceId: "sow-v1" },
+    };
+    const receipt = {
+      requirementId: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION", currentState: "Available" as const,
+      notes: JSON.stringify(decision),
+    };
+    const done = (evidenceStates: NonNullable<Parameters<typeof hydrateTaskEvidenceState>[0]["evidenceStates"]>) =>
+      hydrateTaskEvidenceState({ tasks: [task], factInputs: {}, evidenceStates, stageKey: "scope" })[0]
+        .evidenceComplete;
+    expect(done([sow, receipt])).toBe(true);
+    expect(done([{ ...sow, sourceArtifactId: "sow-v2" }, receipt])).toBeUndefined();
+    expect(done([{ ...sow, currentState: "Stale" }, receipt])).toBeUndefined();
+    expect(done([sow, { ...receipt, notes: null }])).toBeUndefined();
+
+    const absent = {
+      requirementId: "EVID-SRC-SCOPE-CURRENT-SOW", currentState: "Not Requested" as const,
+      sourceArtifactId: null, sourceEventFactIds: [], applicabilityStatus: "not_applicable" as const,
+      applicabilityReason: "This synthetic net-new service has no current SOW or change-order history.",
+      applicabilityActorUserId: "owner-2", applicabilityDecidedAt: "2026-09-30T10:00:00Z",
+    };
+    const absenceReceipt = {
+      ...receipt,
+      notes: JSON.stringify({ ...decision, basis: {
+        kind: "audited_absence", actorUserId: absent.applicabilityActorUserId,
+        decidedAt: absent.applicabilityDecidedAt, reason: absent.applicabilityReason,
+      } }),
+    };
+    expect(done([absent, absenceReceipt])).toBe(true);
+    expect(done([{
+      ...absent,
+      applicabilityDecidedAt: new Date(absent.applicabilityDecidedAt) as unknown as string,
+    }, absenceReceipt])).toBe(true);
+    expect(done([{
+      ...absent,
+      applicabilityDecidedAt: "2026-09-30T10:00:01Z",
+    }, absenceReceipt])).toBeUndefined();
+    expect(done([{ ...absent, applicabilityReason: `${absent.applicabilityReason} Revised.` }, absenceReceipt])).toBeUndefined();
+    expect(done([{ ...absent, applicabilityStatus: "applicable" as const }, absenceReceipt])).toBeUndefined();
   });
 
   it("marks a mapped decide task complete when governed evidence meets minimum state", () => {

@@ -171,6 +171,47 @@ export interface PatternScore {
  * Score patterns by keyword overlap with the query. Used as a
  * deterministic stand-in for vector similarity until the broker
  * contract grows a vectorQuery field and pgvector retrieval is live.
+ *
+ * ---------------------------------------------------------------
+ * RETIRED, NOT REPAIRED — decided 2026-09-19, with measurements.
+ * ---------------------------------------------------------------
+ *
+ * The known complaint is that `haystack.includes(tok)` matches inside
+ * unrelated words, so `ai` hits `available`, `maintain`, `detail`. The
+ * obvious repair is word-boundary matching. It was measured over the
+ * real 3,569-entry manifest before being rejected, and the numbers say
+ * it is not a repair:
+ *
+ *   query 'AI use case portfolio', entries scoring above zero
+ *     substring         3,524 of 3,569   (98.7%)
+ *     word boundary     3,200 of 3,569   (89.7%)
+ *     boundary + stem   3,226 of 3,569   (90.4%)
+ *
+ * Returning 90% of the corpus instead of 99% is not retrieval. The
+ * cause is not the matching strategy but term frequency: on an exact
+ * word-boundary basis `governance` still appears in 2,260 entries
+ * (63%), `operating` in 2,283, `risk` in 2,512. A binary token-overlap
+ * score over a corpus like that has no discriminating power however
+ * the tokens are matched.
+ *
+ * And the repair has a real cost, which is what item 35's standing rule
+ * asks to be measured on an acronym corpus rather than assumed. Share
+ * of substring's hits that word-boundary matching keeps:
+ *
+ *     ml 6%   ·   ai 32%   ·   erp 32%   ·   sla 56%   ·   kpi 69%
+ *     sow 93%   ·   crm 100%   ·   rfp 100%
+ *
+ * So the tempting fix costs most of the recall on the shortest
+ * acronyms and buys a result set that is still almost the whole
+ * corpus. The tools' own stated plan — pgvector retrieval through the
+ * broker — remains the answer, and this stays a stand-in until it
+ * lands. Do not re-derive the boundary-matching fix; it was tried on
+ * paper and these are its numbers.
+ *
+ * What DID change is honesty at the call site, not retrieval: see
+ * `topScoreTieCount`. Nothing about scoring or ordering moved, so the
+ * documenting case in __tests__/_shared.test.ts still holds and must
+ * still fail on the day word-boundary matching actually arrives.
  */
 export function scorePatternsByKeyword(
   query: string,
@@ -190,6 +231,48 @@ export function scorePatternsByKeyword(
     })
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
+}
+
+/**
+ * How many entries share the top score.
+ *
+ * The score is a count of query tokens present, so a four-token query
+ * tops out at 4 and, on the real corpus, 72 entries reach it. The sort
+ * is stable, so `.slice(0, limit)` then returns the first few of those
+ * 72 in manifest insertion order. Which patterns the advisor is shown
+ * is decided by file order, and it is stable enough across calls to
+ * look deliberate.
+ *
+ * That is the user-visible harm, and it is independent of the matching
+ * strategy — word-boundary matching still leaves 65 tied at the top for
+ * the same query. So rather than change what is retrieved, the caller
+ * is told when the list it is holding is an arbitrary slice of a tie,
+ * and can say so instead of presenting it as a ranking.
+ */
+export function topScoreTieCount(scored: PatternScore[]): number {
+  if (scored.length === 0) return 0;
+  const top = scored[0].score;
+  return scored.filter((entry) => entry.score === top).length;
+}
+
+/**
+ * A caveat for the caller when the returned slice cannot be a ranking,
+ * or `null` when the top score genuinely separates the results.
+ */
+export function describeRankingTie(
+  scored: PatternScore[],
+  returned: number,
+): string | null {
+  const tied = topScoreTieCount(scored);
+  if (tied <= returned) return null;
+
+  return (
+    `Keyword scoring put ${tied} corpus patterns at the same top score of ${scored[0].score}, ` +
+    `and only ${returned} are returned — which ${returned} is decided by corpus order, not by ` +
+    'relevance. Treat these as examples of the shape the query matches, not as the closest ' +
+    'matches, and say so rather than presenting them as ranked. Vector retrieval is not live ' +
+    'yet; keyword overlap is a stand-in.'
+  );
 }
 
 const SCOPE_KEYWORDS: Record<

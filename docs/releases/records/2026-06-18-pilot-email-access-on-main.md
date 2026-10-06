@@ -10,14 +10,11 @@
 
 ## Plain-English Summary
 
-Production has been served by a stale feature branch that granted five real
-pilot users access to their assigned client. Main (which we want to deploy
-instead, because it carries ~1,000 commits of fixes plus the Source remediation)
-does not yet know those five users. This change ports their access onto main so
-that, when prod cuts over to main, no pilot user loses sign-in. Each user is
-pinned to exactly one client and gets the locked `client` role — the same access
-they have today. They are **not** granted admin: any Source/admin rights still
-flow from their Clerk role, not from this list.
+Production has been served by a stale feature branch with exact pilot access
+grants. Main did not yet carry those grants. This change ports the allowlist onto
+main so the cutover preserves sign-in. Each grant is pinned to exactly one
+client and gets the locked `client` role. No grant in this list creates admin
+access; Source/admin rights still flow from the separate role policy.
 
 ## Layer Impact
 
@@ -28,10 +25,9 @@ flow from their Clerk role, not from this list.
 
 ## Client Applicability
 
-- All clients: the resolver is shared, but the effect is scoped to five named
-  users.
-- Specific clients: meridian, lakeshore, arcturus (First Capital), skyharbor —
-  one pilot user each (lakeshore has two).
+- All clients: the resolver is shared, but the effect is scoped to explicit
+  allowlist entries.
+- Specific clients: the mapped pilot client keys only; no domain-wide grant.
 - Internal only: no
 - Public/demo only: no
 - Feature flag: none.
@@ -40,11 +36,11 @@ flow from their Clerk role, not from this list.
 
 | Email | Client | Role |
 |---|---|---|
-| `kmysore@gmail.com` (Kiran Mysore · CDAO / pilot sponsor) | meridian | client |
-| `surekha.durvasula@gmail.com` (VP Innovation / Delivery) | lakeshore | client |
-| `anandshp@gmail.com` | lakeshore | client |
-| `admin@abarva.ai` | arcturus (First Capital) | client |
-| `anand@abarva.ai` | skyharbor | client |
+| `kmysore@gmail.com` | mapped client key | client |
+| `surekha.durvasula@gmail.com` | mapped client key | client |
+| `anandshp@gmail.com` | mapped client key | client |
+| `admin@abarva.ai` | mapped client key | client |
+| `anand@abarva.ai` | mapped client key | client |
 
 These mirror the production pilot's `PILOT_PASSCODE_EMAILS` exactly (mapping +
 role), minus admin — the branch did not place them in its client-admin roster
@@ -79,6 +75,14 @@ image build/deploy → then production traffic is cut over to the main revision
 Revert the commit / redeploy prior `main-<sha>`. Removing an entry from either
 list immediately revokes that user's pinned access on next sign-in.
 
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps main lane.
+- Shared runtime mutators: none in this release record.
+- ACA runtime invariant: required before claiming the change is live.
+- Live signed-in client proof required: yes, for the approved exact allowlist
+  entries after deployment.
+
 ## Audit Evidence
 
 - PR: (filled on open) `fix/pilot-email-access-on-main`
@@ -88,7 +92,5 @@ list immediately revokes that user's pinned access on next sign-in.
 
 ## Known Gaps
 
-The branch's synthetic Lakeshore CXO demo emails
-(`cio@lakeshore-holdings.example.com`, `cfo@…`) are NOT ported here — they are
-demo personas, not pilot users, and out of scope for "don't break pilot access."
-Port separately if the Lakeshore demo roster is needed on main.
+Synthetic demo personas are NOT ported here — they are separate from pilot
+access and out of scope for preserving the exact allowlist.

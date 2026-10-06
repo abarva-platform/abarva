@@ -77,7 +77,22 @@ const acceptedReview = {
       acceptedBy: "user-1",
     },
   ],
-  proposals: [],
+  proposals: [
+    {
+      questionId: "q_baseline",
+      dimensionId: "baseline_metrics",
+      requirement: "required",
+      answerState: "unknown",
+      disposition: "accepted",
+    },
+    {
+      questionId: "q_volume",
+      dimensionId: "delay_volume",
+      requirement: "required",
+      answerState: "insufficient_evidence",
+      disposition: "accepted",
+    },
+  ],
 };
 
 describe("accepted stage readiness context", () => {
@@ -120,6 +135,10 @@ describe("accepted stage readiness context", () => {
       reviewArtifactVersion: 3,
     });
     expect(context?.acceptedResponses).toHaveLength(2);
+    expect(context?.proposals).toMatchObject([
+      expect.objectContaining({ answerState: "unknown" }),
+      expect.objectContaining({ answerState: "insufficient_evidence" }),
+    ]);
     const prompt = formatAcceptedStageReadinessContextForPrompt(context);
     expect(prompt).toContain("Accepted Stage Readiness Workbook Responses");
     expect(prompt).toContain("Readiness: unknown");

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 import {
-  canonicalClientDisplayName,
+  canonicalClientDisplayNameOrNull,
   demoSafeClientText,
 } from "@/lib/client-config";
 import { MONO, PAGE_X, SANS, SERIF, V4 } from "./tokens";
@@ -17,9 +17,13 @@ import { MONO, PAGE_X, SANS, SERIF, V4 } from "./tokens";
  * no way to tell the two apart.
  */
 export function HomeRecordNotServed({ tenantKey }: { tenantKey: string }) {
-  const client = demoSafeClientText(
-    canonicalClientDisplayName({ key: tenantKey }) ?? "this client",
-  );
+  // U-512: this surface must be able to say "this client". It used to ask
+  // `canonicalClientDisplayName`, which resolves an unknown key through
+  // `getClientOption` and so answers the default account's name for every
+  // input -- naming an account to a reader whose governed read had just
+  // returned nothing. `canonicalClientDisplayNameOrNull` answers null instead.
+  const resolved = canonicalClientDisplayNameOrNull({ key: tenantKey });
+  const client = resolved ? demoSafeClientText(resolved) : "this client";
   return (
     <main style={shell}>
       <span style={eyebrow}>Home</span>

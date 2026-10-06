@@ -25,6 +25,51 @@ export function redactSourceFinancialText(
   return sanitizeRestrictedFinancialText(value, RESTRICTED_POLICY);
 }
 
+/**
+ * Keys whose values are addresses, not prose, and must survive redaction.
+ *
+ * `redactSourceFinancialText` would only alter one of these if it contained a
+ * money token, which is unlikely — but a silently rewritten `href` is a broken
+ * link rather than a withheld figure, and that is not a trade this gate should
+ * ever make.
+ */
+const NON_PROSE_KEYS = new Set(['href', 'url', 'contractId', 'clientKey', 'actionId', 'milestoneId', 'targetId']);
+
+/**
+ * U-520 — redact every exact magnitude out of a view model's PROSE, in one pass
+ * at the boundary where it reaches the component.
+ *
+ * Why a deep walk rather than a named-field list. `SourceExecutionRoomPage`
+ * renders builder-authored sentences from five nested shapes — critical-path
+ * milestones, action rows and their linked drafts, the negotiation brief, the
+ * vendor email draft, rebid readiness — through five sub-components that do not
+ * take the entitlement flag. Measured on the restricted render before this
+ * change: 13 magnitude occurrences over 3 distinct values, none of them through
+ * a formatter. A named-field list is the wrong instrument for that, because the
+ * failure mode is a field nobody listed, and the next sentence the builder adds
+ * is by definition not on the list.
+ *
+ * The walk is a no-op for a granted reader — asserted, not assumed, by a case
+ * that compares the granted render against the untouched room.
+ */
+export function redactFinancialProseDeep<T>(value: T, canViewFinancialValues: boolean): T {
+  if (canViewFinancialValues) return value;
+  return walk(value) as T;
+}
+
+function walk(value: unknown): unknown {
+  if (typeof value === 'string') return redactSourceFinancialText(value, false);
+  if (Array.isArray(value)) return value.map(walk);
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value)) {
+      out[key] = NON_PROSE_KEYS.has(key) ? child : walk(child);
+    }
+    return out;
+  }
+  return value;
+}
+
 function redactLedgerSnapshot(
   snapshot: SourceValueLedgerSnapshot,
   canViewFinancialValues: boolean,

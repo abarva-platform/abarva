@@ -29,7 +29,7 @@ const FIELD_KEYS = [
 type FieldKey = (typeof FIELD_KEYS)[number];
 
 const FIELD_LABEL: Record<FieldKey, string> = {
-  sponsor: "Sponsor commitment & decision rights",
+  sponsor: "Sponsor contact & stakeholder context",
   stakeholders: "Stakeholders & decision-rights map",
   success_metrics: "Success metrics",
   value_range: "Value range (preliminary)",
@@ -78,8 +78,9 @@ export async function POST(
     }
 
     // Build the signable charter record from the saved fields. Status stays
-    // in_review until the sponsor approves (step 3). This is the record that is
-    // approved — the polished artifact (step 4) is rendered from it afterward.
+    // in_review until an authorized workspace user approves (step 3). This is
+    // the record that is approved — the polished artifact (step 4) is rendered
+    // from it afterward.
     const draftContent = [
       `# Program Charter (record) — ${program.name ?? programId}`,
       ...FIELD_KEYS.flatMap((k) => {
@@ -101,9 +102,8 @@ export async function POST(
         structuredData: { capturedCharter: merged, savedFields: saved },
       });
       deliverableId = res.deliverableId;
-      // Move draft → in_review so the sponsor can sign it off (signOffDeliverable
-      // only matches status='in_review'). Without this the record exists but
-      // Approve returns not_found.
+      // Move draft → in_review so an authorized workspace user can approve it
+      // (signOffDeliverable only matches status='in_review').
       await publishDeliverable(ctx, programId, deliverableId);
     } catch (e) {
       // Charter JSONB is already saved (tracker truthful); surface the record

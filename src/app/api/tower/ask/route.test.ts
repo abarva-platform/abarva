@@ -74,7 +74,7 @@ describe("POST /api/tower/ask", () => {
     });
     mockGetActiveClientRow.mockResolvedValue({
       id: "selected-client-id",
-      key: "selected-client",
+      key: "skyharbor",
       name: "Selected Client",
       industry_code: null,
     });
@@ -113,7 +113,7 @@ describe("POST /api/tower/ask", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: "Show me the tool rollouts",
-          clientKey: "selected-client",
+          clientKey: "skyharbor",
           pageContext: {
             activeTab: "tools",
             activeView: "rollouts",
@@ -123,16 +123,16 @@ describe("POST /api/tower/ask", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockGetActiveClientRow).toHaveBeenCalledWith("selected-client");
+    expect(mockGetActiveClientRow).toHaveBeenCalledWith("skyharbor");
     expect(mockAnswerCurrentTowerQuestion).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: "session-client-id",
         tenantKey: "session-client",
         tenantKeyCandidates: [
-          "selected-client",
+          "skyharbor",
           "selected-client-id",
           "Selected Client",
-          "selected-client",
+          "skyharbor",
           "session-client",
           "session-client-id",
         ],

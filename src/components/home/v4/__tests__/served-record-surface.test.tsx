@@ -17,7 +17,7 @@ import "@testing-library/jest-dom";
 // Must precede the served-path builder import below; see the module for why.
 import "../test-support/text-encoder-polyfill";
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import {
   buildHomeReviewBundleFromEclProjectionRows,
@@ -26,7 +26,6 @@ import {
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
 import { HomeV4App } from "../HomeV4App";
-import { isGeneratorDeferral } from "../cxo-language";
 
 jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -40,7 +39,7 @@ function servedBundle(): HomeReviewBundle {
     {
       page_key: "applications_systems",
       row_key: "app-1",
-      row_type: "application_system",
+      row_type: "application",
       title: "Claims Administration Platform",
       summary: null,
       display_payload_json: {
@@ -58,6 +57,173 @@ function servedBundle(): HomeReviewBundle {
   );
 }
 
+const CHAPTER_IDS = [
+  "executive_brief",
+  "our_business",
+  "strategy_value_creation",
+  "how_we_operate",
+  "technology_data",
+  "performance_value",
+  "leadership_perspective",
+  "what_needs_attention",
+] as const;
+
+function chapterSummaries(): HomeProjectionRow[] {
+  return CHAPTER_IDS.map(
+    (chapterId) =>
+      ({
+        page_key: chapterId,
+        row_key: `${chapterId}_summary`,
+        row_type: "summary",
+        title: `${chapterId} headline`,
+        summary: `${chapterId} summary.`,
+        display_payload_json: {},
+      }) as HomeProjectionRow,
+  );
+}
+
+function servedBundleWithPublishedTechnology(): HomeReviewBundle {
+  const base = getHomeReviewBundle("meridian-health");
+  if (!base) throw new Error("stored copy missing");
+  const rows: HomeProjectionRow[] = [
+    ...chapterSummaries(),
+    {
+      page_key: "technology_data",
+      row_key: "technology_data_claim_001",
+      row_type: "chapter_claim",
+      title: "Application and contract evidence is current",
+      summary: "Applications and contracts are counted from the served record.",
+      display_payload_json: {
+        evidence_ids: ["sig_ecl_estate_001"],
+        claim_type: "FACT",
+      },
+    } as HomeProjectionRow,
+    ...["Claims Platform", "Member Portal"].map(
+      (name, index) =>
+        ({
+          page_key: "applications_systems",
+          row_key: `APP-${index + 1}`,
+          row_type: "application",
+          title: name,
+          summary: null,
+          display_payload_json: {
+            application_name: name,
+            business_function:
+              index === 0 ? "Claims Operations" : "Member Services",
+            hosting_model: "saas",
+            annual_cost_usd: "1000000",
+          },
+        }) as HomeProjectionRow,
+    ),
+    ...[
+      ["CTR-1", "Epic Systems Corporation", "1000000"],
+      ["CTR-2", "AWS", "250000"],
+    ].map(
+      ([id, supplier, value]) =>
+        ({
+          page_key: "vendor_contracts",
+          row_key: id,
+          row_type: "contract",
+          title: supplier,
+          summary: null,
+          display_payload_json: {
+            contract_id: id,
+            supplier_name: supplier,
+            contract_name: `${supplier} agreement`,
+            annualized_value_usd: value,
+          },
+        }) as HomeProjectionRow,
+    ),
+  ];
+  return buildHomeReviewBundleFromEclProjectionRows(
+    base,
+    rows,
+    "assessment-test",
+  );
+}
+
+function bundleWithReviewedNarrativeAndLiveRows(): HomeReviewBundle {
+  const base = getHomeReviewBundle("meridian-health");
+  if (!base) throw new Error("stored copy missing");
+  const value = JSON.parse(JSON.stringify(base)) as HomeReviewBundle;
+  const estate = value.technologyEstate;
+  if (!estate) throw new Error("technology estate missing");
+
+  estate.recordTypes = estate.recordTypes.map((recordType) => {
+    if (recordType.objectType === "vendor_contract") {
+      const vendors = [
+        ["IBM Corporation", 12200000],
+        ["Oracle Corporation", 12100000],
+        ["Epic Systems Corporation", 8400000],
+        ["Microsoft Corporation", 7600000],
+      ] as const;
+      return {
+        ...recordType,
+        rows: Array.from({ length: 230 }, (_value, index) => {
+          const [vendorName, annualSpendUsd] = vendors[index] ?? [
+            `Supplier ${index + 1}`,
+            264159.29203539825,
+          ];
+          return {
+            vendorName,
+            contractName: `${vendorName} agreement ${index + 1}`,
+            annualSpendUsd,
+            serviceCategory: "Managed Services",
+            pricingHistory: index === 0 ? "Loaded pricing history" : "",
+          };
+        }),
+      };
+    }
+    if (recordType.objectType === "data_asset_or_integration") {
+      return {
+        ...recordType,
+        rows: Array.from({ length: 1710 }, (_value, index) => ({
+          assetName: `Data asset ${index + 1}`,
+          integrationPattern: index % 2 === 0 ? "api" : "etl",
+        })),
+      };
+    }
+    return recordType;
+  });
+
+  value.thesis.signalPacket.visualDatasets = {
+    ...(value.thesis.signalPacket.visualDatasets ?? {}),
+    vendor_spend_concentration: [
+      { vendor: "IBM Corporation", sharePct: 12.2 },
+      { vendor: "Oracle Corporation", sharePct: 12.1 },
+      { vendor: "Epic Systems Corporation", sharePct: 8.4 },
+      { vendor: "Microsoft Corporation", sharePct: 7.6 },
+    ],
+  };
+
+  return value;
+}
+
+function servedBundleWithModelledInterview(): HomeReviewBundle {
+  const base = getHomeReviewBundle("meridian-health");
+  if (!base) throw new Error("stored copy missing");
+  return buildHomeReviewBundleFromEclProjectionRows(
+    base,
+    [
+      {
+        page_key: "executive_interviews",
+        row_key: "INT-001",
+        row_type: "interview",
+        title: "CFO interview response",
+        summary: null,
+        display_payload_json: {
+          interview_id: "INT-001",
+          executive_area: "CFO / Finance",
+          stakeholder_role: "Chief Financial Officer",
+          priority_theme: "value realization",
+          synthetic_answer: "The value story needs clearer proof.",
+        },
+      } as HomeProjectionRow,
+    ],
+    "assessment-test",
+  );
+}
+
 function open(hash: string) {
   window.location.hash = hash;
   return render(
@@ -66,12 +232,31 @@ function open(hash: string) {
 }
 
 describe("the served path", () => {
-  it("writes chapter text that the deferral gate recognises", () => {
-    // If the gate stops matching what this generator writes, the headline reaches the reader.
-    const deferred = servedBundle().chapters.filter((c) =>
-      isGeneratorDeferral(c.headline),
+  it("preserves reviewed executive chapters when the served record has no published chapter claims", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const served = servedBundle();
+
+    expect(served.chapters.map((chapter) => chapter.headline)).toEqual(
+      base.chapters.map((chapter) => chapter.headline),
     );
-    expect(deferred.length).toBeGreaterThan(0);
+    expect(
+      served.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    ).toBe(
+      base.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    );
+    expect(served.provenance.canonical_snapshot_hash).toBe(
+      "ecl:assessment-test:serving.home_*:1",
+    );
+    expect(
+      served.technologyEstate?.recordTypes.find(
+        (recordType) => recordType.objectType === "application_system",
+      )?.rows[0],
+    ).toMatchObject({
+      systemName: "Claims Administration Platform",
+    });
   });
 
   it("states when the record on screen came from the ECL serving projection", () => {
@@ -79,7 +264,7 @@ describe("the served path", () => {
 
     expect(screen.getByText("Record on screen")).toBeInTheDocument();
     const recordSource = screen
-      .getByText("Live governed record")
+      .getByText("Live governed rows")
       .closest("[data-home-record-source]");
     expect(recordSource).toHaveAttribute(
       "data-home-record-source",
@@ -89,6 +274,63 @@ describe("the served path", () => {
       "data-home-canonical-snapshot-hash",
       "ecl:assessment-test:serving.home_*:1",
     );
+    expect(recordSource).toHaveAttribute(
+      "data-home-narrative-coherence",
+      "stored_narrative",
+    );
+    expect(
+      screen.getByText("Reviewed narrative; live rows may differ"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Live rows and the executive interpretation/),
+    ).toBeInTheDocument();
+    const provenance = document.querySelector(
+      "[data-home-declared-provenance]",
+    );
+    expect(provenance?.textContent).toContain("not client-attested");
+    expect(provenance?.textContent).not.toContain(
+      "assessment-dense-source-room",
+    );
+  });
+
+  it("puts source review state on the page without presenting it as accepted", () => {
+    const bundle = servedBundle();
+    render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: {
+            ...bundle.contextVersion!,
+            sourceFileReview: {
+              totalFiles: 14,
+              acceptedFiles: 0,
+              partialFiles: 14,
+              blockedFiles: 0,
+              supersededFiles: 0,
+            },
+            sourceDateCoverage: {
+              earliest: "2026-08-23",
+              latest: "2026-08-23",
+              datedFiles: 14,
+              totalFiles: 14,
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(
+      document.querySelector("[data-home-record-state-band]")?.textContent,
+    ).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
+    expect(
+      screen.getAllByText(/Registered source dates: 2026-08-23/),
+    ).toHaveLength(2);
+    expect(
+      document.querySelector("[data-home-mixed-executive-opening]"),
+    ).toHaveTextContent("data currency not attested");
   });
 
   it("states when the record on screen is the reviewed snapshot fallback", () => {
@@ -117,6 +359,29 @@ describe("the served path", () => {
       "data-home-canonical-snapshot-hash",
       bundle.provenance.canonical_snapshot_hash,
     );
+    expect(
+      document.querySelector("[data-home-record-state-band]")?.textContent,
+    ).toContain("The reviewed stored record is on screen.");
+  });
+
+  it("does not show a mixed-record warning on a coherent served version", () => {
+    const bundle = servedBundle();
+    render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: { ...bundle.contextVersion!, coherence: "coherent" },
+        }}
+      />,
+    );
+
+    expect(document.querySelector("[data-home-record-state-band]")).toBeNull();
+    expect(
+      document.querySelector("[data-home-mixed-executive-opening]"),
+    ).toBeNull();
   });
 
   it.each([
@@ -150,6 +415,315 @@ describe("the served path", () => {
       );
       unmount();
     }
+  });
+
+  it("renders served exhibits in executive language with counts from the same record", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App
+        bundle={servedBundleWithPublishedTechnology()}
+        tenantKey="meridian-health"
+      />,
+    );
+    document.querySelectorAll("style").forEach((n) => n.remove());
+    const text = container.textContent ?? "";
+
+    // The Technology & Data chapter reads the estate through the cross-dimensional cockpit; its scale
+    // strip counts the same live rows the exhibit used to -- two applications, two contracts at $1.3M.
+    const techScale =
+      container.querySelector("[data-home-tech-scale]")?.textContent ?? "";
+    expect(techScale).toContain("applications in the estate");
+    expect(techScale).toContain("vendor contracts");
+    expect(techScale).toContain("$1.3M");
+    expect(
+      container.querySelectorAll("[data-home-tech-table] tbody tr").length,
+    ).toBe(2);
+    expect(text).not.toMatch(/\bECL\b/);
+    expect(text).not.toMatch(/\bprojection\b/i);
+    expect(text).not.toMatch(/\bloaded\b/i);
+    expect(text).not.toMatch(/306-row legacy snapshot/i);
+  });
+
+  it("does not render stale authored counts or concentration copy over live rows", () => {
+    const concentrationCopy =
+      /Epic(?: Systems Corporation)?[^.]{0,120}Microsoft(?: Corporation)?[^.]{0,120}(?:over|more than)[^.]{0,80}quarter/i;
+    const liveBundle = bundleWithReviewedNarrativeAndLiveRows();
+
+    // Technology & Data reads the estate through the cockpit: the live contract count reaches the
+    // reader via its scale strip, counted from the 230 live rows, not the reviewed narrative's figure.
+    window.location.hash = "technology_data";
+    const tech = render(
+      <HomeV4App bundle={liveBundle} tenantKey="meridian-health" />,
+    );
+    tech.container.querySelectorAll("style").forEach((n) => n.remove());
+    const techScale =
+      tech.container.querySelector("[data-home-tech-scale]")?.textContent ?? "";
+    expect(techScale).toContain("230");
+    expect(techScale).toContain("vendor contracts");
+    const techText = tech.container.textContent ?? "";
+    expect(techText).not.toMatch(/\b72 declared vendor contracts\b/i);
+    expect(techText).not.toMatch(/\b395 of 540 tracked data assets/i);
+    expect(techText).not.toMatch(concentrationCopy);
+    tech.unmount();
+
+    // The vendor-concentration exhibit now lives on the Executive Brief; its message is the live
+    // supplier concentration (IBM, recomputed from live rows by the stale-claim guard), never the
+    // reviewed narrative's Epic/Microsoft copy.
+    window.location.hash = "executive_brief";
+    const brief = render(
+      <HomeV4App bundle={liveBundle} tenantKey="meridian-health" />,
+    );
+    brief.container.querySelectorAll("style").forEach((n) => n.remove());
+    const briefText = brief.container.textContent ?? "";
+    expect(briefText).toContain(
+      "IBM Corporation is the largest supplier group at 12.2% of the current contract value.",
+    );
+    expect(briefText).not.toMatch(concentrationCopy);
+    brief.unmount();
+  });
+
+  it("states the leadership response basis before modelled interview content can be read as testimony", () => {
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App
+        bundle={servedBundleWithModelledInterview()}
+        tenantKey="meridian-health"
+      />,
+    );
+    const note = container.querySelector("[data-leadership-basis-note]");
+
+    expect(note).not.toBeNull();
+    expect(note?.textContent ?? "").toMatch(/modelled, not transcribed/i);
+    expect(note?.textContent ?? "").toMatch(
+      /not treat modelled responses as verbatim testimony/i,
+    );
+  });
+
+  it("leads the mixed Executive Brief with current coverage and keeps old interpretation closed", () => {
+    const { container } = open("executive_brief");
+    const opening = container.querySelector(
+      "[data-home-mixed-executive-opening]",
+    )!;
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    )!;
+    const headline = container.querySelector("h1")?.textContent ?? "";
+
+    expect(headline).toBe("Current record, interpretation pending review");
+    expect(within(opening as HTMLElement).getByText("1")).toBeInTheDocument();
+    expect(opening).toHaveTextContent("vendor contracts");
+    expect(prior).not.toHaveAttribute("open");
+    expect(prior).toHaveTextContent("strategic program");
+    expect(prior).toHaveTextContent("In your first ten minutes");
+    expect(prior).toHaveTextContent("not reconciled with current rows");
+    expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
+
+    fireEvent.click(
+      within(opening as HTMLElement).getByRole("button", {
+        name: "Browse the record",
+      }),
+    );
+    expect(window.location.hash).toBe("#browse-the-data");
+    expect(
+      container.querySelector("[data-home-mixed-executive-opening]"),
+    ).toBeNull();
+  });
+
+  it("keeps mixed Executive Brief counts aligned with the live estate", () => {
+    const value = bundleWithReviewedNarrativeAndLiveRows();
+    const served = servedBundle();
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App
+        bundle={value}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: served.provenance.canonical_snapshot_hash,
+          contextVersion: served.contextVersion,
+        }}
+      />,
+    );
+    const opening = container.querySelector(
+      "[data-home-mixed-executive-opening]",
+    );
+    expect(opening).toHaveTextContent("230");
+    expect(opening).toHaveTextContent("vendor contracts");
+    expect(opening).toHaveTextContent("1,710");
+    expect(opening).toHaveTextContent("data and integration records");
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).not.toHaveAttribute("open");
+  });
+
+  it.each(CHAPTER_IDS)(
+    "keeps prior %s interpretation closed when served rows are mixed",
+    (chapterId) => {
+      const { container, unmount } = open(chapterId);
+      expect(
+        container.querySelector("[data-home-mixed-chapter-opening]"),
+      ).toHaveAttribute("data-home-mixed-chapter-opening", chapterId);
+      expect(container.querySelector("h1")).toHaveTextContent(
+        "Current record, interpretation pending review",
+      );
+      expect(
+        container.querySelector("[data-home-reviewed-interpretation]"),
+      ).not.toHaveAttribute("open");
+      unmount();
+    },
+  );
+
+  it("does not lead mixed Leadership with unserved testimony", () => {
+    const { container } = open("leadership_perspective");
+    const opening = container.querySelector(
+      '[data-home-mixed-chapter-opening="leadership_perspective"]',
+    );
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    );
+
+    expect(opening).toHaveTextContent(
+      "No leadership interview rows are served here",
+    );
+    expect(opening).toHaveTextContent("Not served");
+    expect(opening).not.toHaveTextContent("44 interviewed leaders");
+    expect(prior).not.toHaveAttribute("open");
+    expect(prior).toHaveTextContent("44 interviewed leaders");
+  });
+
+  it("does not call unverified chapter interpretation reviewed", () => {
+    const bundle = servedBundle();
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: {
+            ...bundle.contextVersion!,
+            coherence: "unverified",
+          },
+        }}
+      />,
+    );
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    );
+    expect(prior).toHaveTextContent("Earlier interpretation");
+    expect(prior).toHaveTextContent("lineage not verified");
+    expect(prior).not.toHaveTextContent("Prior reviewed interpretation");
+  });
+
+  it("closes prior interpretation when navigating to another mixed chapter", () => {
+    const { container } = open("strategy_value_creation");
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    )!;
+    fireEvent.click(prior.querySelector("summary")!);
+    expect(prior).toHaveAttribute("open");
+
+    fireEvent.click(screen.getByRole("link", { name: /Executive Brief/ }));
+    expect(window.location.hash).toBe("#executive_brief");
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).not.toHaveAttribute("open");
+    expect(container.querySelector("h1")).toHaveTextContent(
+      "Current record, interpretation pending review",
+    );
+  });
+
+  it("keeps the perspective section inside the prior interpretation", () => {
+    const value = servedBundle();
+    (
+      value.thesis.signalPacket as { analyticalLenses?: unknown[] }
+    ).analyticalLenses = [
+      {
+        kind: "expert_lens",
+        label: "A lens",
+        expertRole: "Chief Data Officer",
+        questions: "What would an answer decide?",
+      },
+    ];
+    window.location.hash = "leadership_perspective";
+    const leadership = render(
+      <HomeV4App bundle={value} tenantKey="meridian-health" />,
+    );
+    expect(
+      leadership.container
+        .querySelector("[data-home-reviewed-interpretation]")
+        ?.querySelector("[data-home-perspective]"),
+    ).not.toBeNull();
+  });
+
+  it("leaves a coherent served Leadership chapter open", () => {
+    const bundle = servedBundle();
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: { ...bundle.contextVersion!, coherence: "coherent" },
+        }}
+      />,
+    );
+    expect(
+      container.querySelector("[data-home-mixed-chapter-opening]"),
+    ).toBeNull();
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).toBeNull();
+    expect(container.querySelector("h1")).toHaveTextContent(
+      "Leaders are unanimous",
+    );
+  });
+
+  it("does not hide an undrafted chapter as prior interpretation", () => {
+    const bundle = servedBundle();
+    const chapter = bundle.chapters.find(
+      (item) => item.chapterId === "how_we_operate",
+    );
+    if (!chapter) throw new Error("chapter missing");
+    chapter.headline = "How We Operate synthesis unavailable";
+    window.location.hash = "how_we_operate";
+    const { container } = render(
+      <HomeV4App bundle={bundle} tenantKey="meridian-health" />,
+    );
+    expect(
+      container.querySelector("[data-home-mixed-chapter-opening]"),
+    ).toBeNull();
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).toBeNull();
+  });
+
+  it("keeps the prior Our Business briefing available without leading with it", () => {
+    const { container } = open("our_business");
+    const text = container.textContent ?? "";
+    const headline = container.querySelector("h1")?.textContent ?? "";
+
+    expect(headline).toBe("Current record, interpretation pending review");
+    expect(
+      container.querySelector(
+        '[data-home-mixed-chapter-opening="our_business"]',
+      ),
+    ).toHaveTextContent("business segments");
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).toHaveTextContent("provider/health-plan model");
+    expect(text).not.toMatch(/Our Business is not yet answered/i);
+    expect(text).not.toMatch(
+      /Nothing in the loaded record speaks to this question yet/i,
+    );
+    expect(text).not.toMatch(/Nothing established here yet/i);
+    expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
+    expect(text).toContain(
+      "This enterprise creates value through a 60/40 split",
+    );
   });
 });
 

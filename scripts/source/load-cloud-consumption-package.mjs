@@ -3,13 +3,17 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { readOpportunityOwnershipManifest, resolveOpportunityOwnership, selectedOpportunityOwnershipDeclaration } from "./opportunity-ownership.mjs";
+import { assertOpportunityRewriteSafe, preflightOpportunityRewrite } from "./opportunity-rewrite-guard.mjs";
+import { reconcileCloudOutputProfile } from "./cloud-output-profile.mjs";
 
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
 
-const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "apply-layer4", "verify", "verify-layer4"]);
+const MODES = new Set(["plan", "preflight-rewrite", "apply-layer2", "apply-layer3", "apply-layer4", "verify", "verify-layer4"]);
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_DATASET_VERSION = "meridian-cloud-consumption-depth-v1-20260907";
+const HISTORICAL_DUAL_OUTPUT_VERSION = "meridian-databricks-consumption-commit-v1-20260908";
 const DEFAULT_PACKAGE_DIR =
   "datasets/source/cloud-consumption/meridian-cloud-consumption-depth-v1-20260907";
 const SOURCE_SYSTEM = "source_cloud_consumption_package_loader";
@@ -84,6 +88,7 @@ const REQUIRED_LAYER3_TABLES = [
   "optimization_case",
   "case_opportunity",
   "opportunity_evidence",
+  "opportunity_claim",
   "calculation_rule",
   "calculation_run",
   "calculation_input",
@@ -120,6 +125,12 @@ function parseArgs() {
     process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_TENANT_KEY ??
     DEFAULT_TENANT_KEY;
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const loadRunId =
+    argValue("load-run-id") ??
+    process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LOAD_RUN_ID ??
+    `source-cloud-consumption-package-${datasetVersion}-${stamp}`;
+  const suppliedLayer3LoadRunId =
+    argValue("layer3-load-run-id") ?? process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LAYER3_LOAD_RUN_ID;
   return {
     mode,
     packageDir: path.resolve(
@@ -130,14 +141,14 @@ function parseArgs() {
     ),
     tenantKey,
     datasetVersion,
+    opportunityOwnershipManifestOverride: argValue("opportunity-ownership-manifest"),
     idempotencyKey:
       argValue("idempotency-key") ??
       process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_IDEMPOTENCY_KEY ??
       `${tenantKey}:${datasetVersion}:layer2-layer3`,
-    loadRunId:
-      argValue("load-run-id") ??
-      process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LOAD_RUN_ID ??
-      `source-cloud-consumption-package-${datasetVersion}-${stamp}`,
+    loadRunId,
+    layer3LoadRunId: suppliedLayer3LoadRunId ?? loadRunId,
+    layer3LoadRunIdExplicit: suppliedLayer3LoadRunId !== undefined,
     proofDir: path.resolve(
       argValue("proof-dir") ??
         process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_PROOF_DIR ??
@@ -257,6 +268,11 @@ function readSourceFiles(packageDir) {
   );
 }
 
+function readOptionalSourceFile(packageDir, fileName) {
+  const filePath = path.join(packageDir, "source-files", fileName);
+  return fs.existsSync(filePath) ? readCsv(filePath) : [];
+}
+
 function writeJson(filePath, value) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
@@ -338,23 +354,8 @@ function opportunityEvidenceGrade(row) {
   return confidence !== null && confidence < 0.5 ? "system_evidenced" : "document_evidenced";
 }
 
-function opportunityBlockingGap(row) {
-  return (
-    value(row, "blocking_gap") ||
-    "Finance confirmation and owner approval are required before realized value can be claimed."
-  );
-}
-
-function opportunityValuationBasis(row) {
-  return opportunityStage(row) === "signal"
-    ? "Cloud opportunity amount is a low-confidence signal and requires additional evidence before upgrade."
-    : "Cloud opportunity amount is evidence-backed but not finance-confirmed.";
-}
-
 function opportunityRequirementStatusDetail(row) {
-  return opportunityStage(row) === "signal"
-    ? "Candidate opportunity is signal-stage and requires supporting evidence plus finance confirmation before upgrade."
-    : "Candidate opportunity is quantified, but finance confirmation remains not_confirmed.";
+  return `Authored ${opportunityStage(row)} proposal requires an executable sizing rule and numeric input reconciliation before finance review.`;
 }
 
 function boolValue(row, key) {
@@ -446,8 +447,14 @@ function adapterCountByName(rows) {
   }, {});
 }
 
-function sourcePackageHash(sourceFiles, syntheticDocs) {
-  return sha256(JSON.stringify({ sourceFiles, syntheticDocs }));
+function sourcePackageHash(sourceFiles, syntheticDocs, companionSourceFiles, ownershipDeclaration) {
+  const inputs = { sourceFiles, syntheticDocs, companionSourceFiles };
+  return sha256(JSON.stringify(ownershipDeclaration ? { ...inputs, ownershipDeclaration } : inputs));
+}
+
+function ownedOpportunities(files, ownership) {
+  const canonicalContracts = new Set(ownership.canonical_contract_ids);
+  return files["optimization_opportunities.csv"].filter((row) => canonicalContracts.has(value(row, "contract_id")));
 }
 
 function syntheticDocs(packageDir) {
@@ -640,9 +647,30 @@ async function writeRunStatus(client, args, packageHash, status, layer2RowCount,
   );
 }
 
+async function reconcileLayer2Rows(client, args, rows) {
+  const sourceIdsByAdapter = new Map();
+  for (const row of rows) {
+    const sourceIds = sourceIdsByAdapter.get(row.adapterName) ?? [];
+    sourceIds.push(row.sourceRowId);
+    sourceIdsByAdapter.set(row.adapterName, sourceIds);
+  }
+
+  for (const [adapterName, sourceIds] of sourceIdsByAdapter) {
+    await client.query(
+      `DELETE FROM source.cloud_consumption_adapter_row
+        WHERE tenant_key = $1
+          AND dataset_version = $2
+          AND adapter_name = $3
+          AND NOT (source_row_id = ANY($4::text[]))`,
+      [args.tenantKey, args.datasetVersion, adapterName, sourceIds],
+    );
+  }
+}
+
 async function applyLayer2(client, args, rows, packageHash, qualityGate) {
   await assertTables(client, REQUIRED_LAYER2_TABLES);
   await writeRunStatus(client, args, packageHash, "running", 0, qualityGate);
+  await reconcileLayer2Rows(client, args, rows);
   for (const row of rows) {
     await client.query(
       `INSERT INTO source.cloud_consumption_adapter_row (
@@ -698,6 +726,17 @@ function assertCounts(expected, actual, label) {
     .filter(([name, count]) => actual[name] !== count)
     .map(([name, count]) => `${name}: expected ${count}, read ${actual[name] ?? 0}`);
   if (failures.length) throw new Error(`${label} count mismatch: ${failures.join("; ")}`);
+}
+
+async function reconcileSnapshots(client, args, rows) {
+  const snapshotIds = rows.map((row) => `${row.adapterName}:${row.sourceRowId}`);
+  await client.query(
+    `DELETE FROM source.source_record_snapshot
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND NOT (snapshot_id = ANY($3::text[]))`,
+    [args.tenantKey, args.datasetVersion, snapshotIds],
+  );
 }
 
 async function insertSnapshots(client, args, rows) {
@@ -1328,16 +1367,96 @@ async function upsertCloudCanonicalFacts(client, args, files) {
   }
 }
 
-async function upsertOptimizationSpine(client, args, files) {
-  const opportunities = files["optimization_opportunities.csv"];
-  const contracts = files["cloud_contract_register.csv"];
-  const contractsById = new Map(contracts.map((contract) => [value(contract, "contract_id"), contract]));
-  const spendByContract = groupBy(files["monthly_spend.csv"], "contract_id");
+function canonicalFactAssertionIds(files, pageRows = []) {
+  const ids = [];
+  for (const row of files["cloud_contract_register.csv"]) {
+    for (const contextFact of CONTRACT_CONTEXT_FACTS) {
+      ids.push(`${value(row, "source_row_id")}:${contextFact.column}`);
+    }
+  }
+  for (const row of files["monthly_spend.csv"]) ids.push(`${value(row, "source_row_id")}:actual_spend_usd`);
+  for (const row of files["cloud_service_usage_monthly.csv"]) ids.push(`${value(row, "source_row_id")}:total_spend_usd`);
+  for (const row of files["cloud_commitment_coverage_monthly.csv"]) {
+    ids.push(`${value(row, "source_row_id")}:candidate_monthly_savings_usd`);
+    ids.push(`${value(row, "source_row_id")}:commitment_coverage_pct`);
+  }
+  for (const row of files["cloud_resource_inventory.csv"]) ids.push(`${value(row, "source_row_id")}:monthly_spend_usd`);
+  for (const row of files["cloud_tag_quality.csv"]) ids.push(`${value(row, "source_row_id")}:untagged_spend_usd`);
+  for (const row of pageRows) ids.push(`${value(row, "source_row_id")}:page_text_char_count`);
+  return ids;
+}
+
+async function reconcileCanonicalFacts(client, args, files, pageRows = []) {
+  const assertionIds = canonicalFactAssertionIds(files, pageRows);
+  if (assertionIds.length === 0) {
+    throw new Error(
+      `Refusing canonical fact reconciliation with an empty target set for ${args.tenantKey}/${args.datasetVersion}`,
+    );
+  }
+  await client.query(
+    `DELETE FROM source.canonical_fact_assertion
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND NOT (assertion_id = ANY($3::text[]))`,
+    [args.tenantKey, args.datasetVersion, assertionIds],
+  );
+}
+
+async function upsertCloudPageTextFacts(client, args, pageRows) {
+  for (const row of pageRows) {
+    const pageText = value(row, "page_text");
+    await insertCanonicalFact(client, args, {
+      assertionId: `${value(row, "source_row_id")}:page_text_char_count`,
+      contractId: value(row, "contract_id"),
+      vendorId: value(row, "vendor_ref"),
+      factKey: "document.page_text_char_count",
+      numeric: pageText.length,
+      unit: "character",
+      sourceTable: "source.contract_page_text_adapter",
+      sourceRecordId: value(row, "source_row_id"),
+      sourceDocumentId: value(row, "source_file_id"),
+      assertionBasis: "Searchable page text is present for this reviewed synthetic contract evidence document.",
+      sourceRefs: [value(row, "source_row_id"), value(row, "source_file_id")],
+      payload: {
+        source_file_id: value(row, "source_file_id"),
+        source_page: value(row, "source_page"),
+        page_text_sha256: value(row, "page_text_sha256"),
+        synthetic_policy: SYNTHETIC_POLICY,
+      },
+    });
+  }
+}
+
+function opportunityRewriteTargets(args, files, ownership) {
+  const opportunities = ownedOpportunities(files, ownership);
+  const canonicalContracts = new Set(ownership.canonical_contract_ids);
+  const contracts = files["cloud_contract_register.csv"].filter((row) => canonicalContracts.has(value(row, "contract_id")));
   const opportunityIds = opportunities.map((row) => value(row, "opportunity_id"));
   const contractIds = contracts.map((row) => value(row, "contract_id"));
   const calculationRunIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:calculation`);
   const caseIds = contractIds.map((contractId) => `cloud-consumption:${contractId}:case`);
   const requirementIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:finance-review`);
+  return {
+    opportunities,
+    contracts,
+    opportunityIds,
+    contractIds,
+    calculationRunIds,
+    caseIds,
+    requirementIds,
+    scope: { tenantKey: args.tenantKey, datasetVersion: args.datasetVersion,
+      opportunityIds, caseIds, calculationRunIds, contractIds, requirementIds },
+  };
+}
+
+async function upsertOptimizationSpine(client, args, files, ownership) {
+  const targets = opportunityRewriteTargets(args, files, ownership);
+  const { opportunities, contracts, opportunityIds, contractIds, calculationRunIds, caseIds, requirementIds } = targets;
+  if (contracts.length === 0) return;
+  const contractsById = new Map(contracts.map((contract) => [value(contract, "contract_id"), contract]));
+  const spendByContract = groupBy(files["monthly_spend.csv"], "contract_id");
+
+  await assertOpportunityRewriteSafe(client, targets.scope);
 
   await client.query(`DELETE FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`, [args.tenantKey, args.datasetVersion, calculationRunIds]);
   await client.query(`DELETE FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`, [args.tenantKey, args.datasetVersion, calculationRunIds]);
@@ -1399,7 +1518,8 @@ async function upsertOptimizationSpine(client, args, files) {
     const caseId = `cloud-consumption:${value(opportunity, "contract_id")}:case`;
     const requirementId = `cloud-consumption:${opportunityId}:finance-review`;
     const evidenceRows = value(opportunity, "evidence_rows").split(";").map((item) => item.trim()).filter(Boolean);
-    const amount = requiredNumber(opportunity, "annual_value_usd");
+    // The package contains authored estimates but no executable sizing rule.
+    // Keep the proposal in payload; do not present it as a calculated amount.
 
     await client.query(
       `INSERT INTO source.optimization_opportunity (
@@ -1409,7 +1529,7 @@ async function upsertOptimizationSpine(client, args, files) {
          approval_state, narrative, payload
        )
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
-         NULL,'standalone_candidate','requires_review',$15,$16::jsonb)`,
+         NULL,'standalone_candidate','requires_sizing',$15,$16::jsonb)`,
       [
         args.tenantKey,
         args.datasetVersion,
@@ -1417,14 +1537,14 @@ async function upsertOptimizationSpine(client, args, files) {
         value(opportunity, "contract_id"),
         value(opportunity, "vendor_ref"),
         canonicalOpportunityValueType(opportunity),
-        opportunityStage(opportunity),
-        amount,
-        opportunityAmountState(opportunity),
+        "signal",
+        null,
+        "not_sized",
         opportunityEvidenceGrade(opportunity),
         numberValue(opportunity, "confidence") ?? 0.8,
         value(contract, "business_owner"),
-        value(opportunity, "recommended_action"),
-        opportunityBlockingGap(opportunity),
+        "Record the arithmetic rule and reconciled numeric inputs before submitting a value claim.",
+        "Executable sizing method and reconciled numeric inputs are not recorded; finance review follows sizing.",
         value(opportunity, "title"),
         JSON.stringify({
           ...opportunity,
@@ -1450,7 +1570,7 @@ async function upsertOptimizationSpine(client, args, files) {
                      owner = EXCLUDED.owner,
                      next_action = EXCLUDED.next_action,
                      payload = EXCLUDED.payload`,
-      [args.tenantKey, args.datasetVersion, caseId, value(opportunity, "contract_id"), value(opportunity, "vendor_ref"), `cloud-consumption:${value(opportunity, "contract_id")}:baseline`, value(contract, "business_owner"), value(opportunity, "recommended_action"), JSON.stringify({ synthetic_policy: SYNTHETIC_POLICY })],
+      [args.tenantKey, args.datasetVersion, caseId, value(opportunity, "contract_id"), value(opportunity, "vendor_ref"), `cloud-consumption:${value(opportunity, "contract_id")}:baseline`, value(contract, "business_owner"), "Record the arithmetic rule and reconciled numeric inputs before submitting a value claim.", JSON.stringify({ synthetic_policy: SYNTHETIC_POLICY })],
     );
     await client.query(`INSERT INTO source.case_opportunity (tenant_key, dataset_version, optimization_case_id, opportunity_id, selected_for_action, sequence, payload) VALUES ($1,$2,$3,$4,false,1,'{}'::jsonb)`, [args.tenantKey, args.datasetVersion, caseId, opportunityId]);
     await client.query(
@@ -1458,8 +1578,8 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, calculation_run_id, opportunity_id,
          rule_id, rule_version, run_state, run_hash, completed_at, payload
        )
-       VALUES ($1,$2,$3,$4,'source.cloud_consumption_package.opportunity.v1','1.0.0','completed',$5,now(),$6::jsonb)`,
-      [args.tenantKey, args.datasetVersion, calculationRunId, opportunityId, sha256(JSON.stringify(opportunity)), JSON.stringify({ evidence_row_count: evidenceRows.length })],
+       VALUES ($1,$2,$3,$4,'source.cloud_consumption_package.opportunity.v1','1.0.0','blocked',$5,NULL,$6::jsonb)`,
+      [args.tenantKey, args.datasetVersion, calculationRunId, opportunityId, sha256(JSON.stringify(opportunity)), JSON.stringify({ evidence_row_count: evidenceRows.length, blocked_reason: "missing_executable_sizing_rule" })],
     );
     for (const [index, evidenceRow] of evidenceRows.entries()) {
       await client.query(
@@ -1477,7 +1597,7 @@ async function upsertOptimizationSpine(client, args, files) {
            source_table, source_record_id, value_numeric, value_text, unit,
            inclusion_state, inclusion_reason, payload
          )
-         VALUES ($1,$2,$3,$4,'source.cloud_consumption_adapter_row',$5,NULL,$5,'row','included','Cloud package opportunity cites this evidence row.','{}'::jsonb)`,
+         VALUES ($1,$2,$3,$4,'source.cloud_consumption_adapter_row',$5,NULL,$5,'row','pending_review','Evidence reference only; numeric formula input is not mapped.','{}'::jsonb)`,
         [args.tenantKey, args.datasetVersion, calculationRunId, `evidence_row_${index + 1}`, evidenceRow],
       );
     }
@@ -1486,25 +1606,22 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, calculation_run_id, output_key,
          amount_usd, quantity, unit, payload
        )
-       VALUES
-         ($1,$2,$3,'calculated_amount_usd',$4,NULL,'USD','{}'::jsonb),
-         ($1,$2,$3,'evidence_row_count',NULL,$5,'row','{}'::jsonb)`,
-      [args.tenantKey, args.datasetVersion, calculationRunId, amount, evidenceRows.length],
+       VALUES ($1,$2,$3,'evidence_row_count',NULL,$4,'row','{}'::jsonb)`,
+      [args.tenantKey, args.datasetVersion, calculationRunId, evidenceRows.length],
     );
     await client.query(
       `INSERT INTO source.opportunity_valuation (
          tenant_key, dataset_version, opportunity_id, valuation_type,
          amount_usd, valuation_state, basis, source_run_id, effective_date, payload
        )
-       VALUES ($1,$2,$3,'potential',$4,'candidate_quantified',$5,$6,CURRENT_DATE,$7::jsonb)`,
+       VALUES ($1,$2,$3,'potential',NULL,'not_sized',$4,$5,NULL,$6::jsonb)`,
       [
         args.tenantKey,
         args.datasetVersion,
         opportunityId,
-        amount,
-        opportunityValuationBasis(opportunity),
+        "Authored proposal only; executable sizing inputs and rule are not recorded.",
         calculationRunId,
-        JSON.stringify({ finance_confirmation_state: "not_confirmed", stage: opportunityStage(opportunity) }),
+        JSON.stringify({ finance_confirmation_state: "not_confirmed", source_stage: opportunityStage(opportunity), source_amount_state: opportunityAmountState(opportunity) }),
       ],
     );
     await client.query(
@@ -1512,7 +1629,7 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, requirement_id, evidence_class,
          requirement_text, grain, minimum_period_months, owner_role, payload
        )
-       VALUES ($1,$2,$3,'finance_confirmation','Finance confirmation is required before this candidate amount becomes realized value.','contract_opportunity',1,$4,'{}'::jsonb)`,
+       VALUES ($1,$2,$3,'sizing_method','Record an executable formula and reconciled numeric inputs before finance reviews a candidate amount.','contract_opportunity',1,$4,'{}'::jsonb)`,
       [args.tenantKey, args.datasetVersion, requirementId, value(contract, "business_owner")],
     );
     await client.query(
@@ -1535,14 +1652,100 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, evidence_request_id, opportunity_id,
          requirement_id, request_text, owner, request_state, payload
        )
-       VALUES ($1,$2,$3,$4,$5,'Confirm finance owner acceptance before claiming realized savings.',$6,'open','{}'::jsonb)`,
+       VALUES ($1,$2,$3,$4,$5,'Provide the executable sizing rule and numeric source inputs for review.',$6,'open','{}'::jsonb)`,
       [args.tenantKey, args.datasetVersion, `cloud-consumption:${opportunityId}:finance-confirmation-request`, opportunityId, requirementId, value(contract, "business_owner")],
     );
   }
+
+  // Claim rows are the contract-level explanation layer. The legacy
+  // opportunity amount is intentionally not copied into sizing claims: this
+  // package's compatibility calculation rule is descriptive prose, not a
+  // reproducible arithmetic rule.
+  await client.query(
+    `WITH evidence AS (
+       SELECT evidence_row.opportunity_id,
+         jsonb_agg(jsonb_build_object(
+           'sourceSystem', source_system,
+           'sourceTable', source_table,
+           'sourceRecordId', source_record_id,
+           'sourceFileReport', source_file_report,
+           'pageSpan', COALESCE(source_span, source_page),
+           'reviewState', review_state
+         ) ORDER BY source_record_id)
+           FILTER (WHERE EXISTS (
+             SELECT 1
+             FROM source.source_record_snapshot snapshot
+             WHERE snapshot.tenant_key = evidence_row.tenant_key
+               AND snapshot.dataset_version = evidence_row.dataset_version
+               AND snapshot.contract_id = opportunity.contract_id
+               AND snapshot.source_record_id = evidence_row.source_record_id
+           )) AS source_refs,
+         count(*) FILTER (WHERE EXISTS (
+           SELECT 1
+           FROM source.source_record_snapshot snapshot
+           WHERE snapshot.tenant_key = evidence_row.tenant_key
+             AND snapshot.dataset_version = evidence_row.dataset_version
+             AND snapshot.contract_id = opportunity.contract_id
+             AND snapshot.source_record_id = evidence_row.source_record_id
+         )) AS resolved_ref_count
+       FROM source.opportunity_evidence evidence_row
+       JOIN source.optimization_opportunity opportunity
+         ON opportunity.tenant_key = evidence_row.tenant_key
+        AND opportunity.dataset_version = evidence_row.dataset_version
+        AND opportunity.opportunity_id = evidence_row.opportunity_id
+       WHERE evidence_row.tenant_key = $1 AND evidence_row.dataset_version = $2
+         AND evidence_row.opportunity_id = ANY($3::text[])
+       GROUP BY evidence_row.opportunity_id
+     )
+     INSERT INTO source.opportunity_claim (
+       tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
+       claim_role, statement, basis, scenario_kind, evidence_status,
+       review_status, source_refs, produced_by, load_run_id
+     )
+     SELECT $1, $2, o.opportunity_id || ':problem', o.opportunity_id, o.contract_id,
+       'problem', COALESCE(o.payload->>'label', o.opportunity_id),
+       CASE WHEN COALESCE(e.resolved_ref_count, 0) > 0
+            THEN 'client_record' ELSE 'not_recorded' END,
+       'signed_record',
+       CASE WHEN COALESCE(e.resolved_ref_count, 0) > 0
+            THEN 'partial' ELSE 'not_established' END,
+       'draft', COALESCE(e.source_refs, '[]'::jsonb), 'deterministic_loader', $4
+     FROM source.optimization_opportunity o
+     LEFT JOIN evidence e ON e.opportunity_id = o.opportunity_id
+     WHERE o.tenant_key = $1 AND o.dataset_version = $2
+       AND o.opportunity_id = ANY($3::text[])
+     ON CONFLICT (tenant_key, dataset_version, claim_id)
+     DO UPDATE SET statement = EXCLUDED.statement,
+       basis = EXCLUDED.basis, evidence_status = EXCLUDED.evidence_status,
+       source_refs = EXCLUDED.source_refs, load_run_id = EXCLUDED.load_run_id,
+       updated_at = now()` ,
+    [args.tenantKey, args.datasetVersion, opportunityIds, args.loadRunId],
+  );
+  await client.query(
+    `INSERT INTO source.opportunity_claim (
+       tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
+       claim_role, statement, basis, scenario_kind, evidence_status,
+       review_status, source_refs, produced_by, load_run_id
+     )
+     SELECT tenant_key, dataset_version, opportunity_id || ':sizing', opportunity_id,
+       contract_id, 'sizing',
+       'Sizing remains unestablished until a reproducible calculation is recorded.',
+       'not_recorded', 'signed_record', 'not_established', 'draft', '[]'::jsonb,
+       'deterministic_loader', $4
+     FROM source.optimization_opportunity
+     WHERE tenant_key = $1 AND dataset_version = $2
+       AND opportunity_id = ANY($3::text[])
+     ON CONFLICT (tenant_key, dataset_version, claim_id)
+     DO UPDATE SET statement = EXCLUDED.statement,
+       basis = EXCLUDED.basis, evidence_status = EXCLUDED.evidence_status,
+       source_refs = EXCLUDED.source_refs, load_run_id = EXCLUDED.load_run_id,
+       updated_at = now()` ,
+    [args.tenantKey, args.datasetVersion, opportunityIds, args.loadRunId],
+  );
 }
 
-function expectedLayer3(files, rows) {
-  const opportunities = files["optimization_opportunities.csv"];
+function expectedLayer3(files, rows, ownership, pageRows = []) {
+  const opportunities = ownedOpportunities(files, ownership);
   const evidenceInputCount = opportunities.reduce((sum, row) => sum + value(row, "evidence_rows").split(";").map((item) => item.trim()).filter(Boolean).length, 0);
   const canonicalFactCount =
     files["cloud_contract_register.csv"].length * CONTRACT_CONTEXT_FACTS.length +
@@ -1550,7 +1753,7 @@ function expectedLayer3(files, rows) {
     files["cloud_service_usage_monthly.csv"].length +
     files["cloud_commitment_coverage_monthly.csv"].length * 2 +
     files["cloud_resource_inventory.csv"].length +
-    files["cloud_tag_quality.csv"].length;
+    files["cloud_tag_quality.csv"].length + pageRows.length;
   return {
     source_record_snapshot: rows.length,
     source_vendor: uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").length,
@@ -1566,13 +1769,14 @@ function expectedLayer3(files, rows) {
     source_cloud_tag_quality_observation: files["cloud_tag_quality.csv"].length,
     source_cloud_ap_invoice_reconciliation: files["cloud_ap_invoice_reconciliation.csv"].length,
     source_optimization_opportunity: opportunities.length,
-    source_optimization_baseline: files["cloud_contract_register.csv"].length,
-    source_optimization_case: files["cloud_contract_register.csv"].length,
+    source_optimization_baseline: ownership.canonical_contract_ids.length,
+    source_optimization_case: ownership.canonical_contract_ids.length,
     source_case_opportunity: opportunities.length,
     source_opportunity_evidence: evidenceInputCount,
+    source_opportunity_claim: opportunities.length * 2,
     source_calculation_run: opportunities.length,
     source_calculation_input: evidenceInputCount,
-    source_calculation_output: opportunities.length * 2,
+    source_calculation_output: opportunities.length,
     source_opportunity_valuation: opportunities.length,
     source_evidence_requirement: opportunities.length,
     source_opportunity_requirement_status: opportunities.length,
@@ -1581,17 +1785,15 @@ function expectedLayer3(files, rows) {
   };
 }
 
-function expectedLayer4(files) {
-  const opportunities = files["optimization_opportunities.csv"];
+function expectedLayer4(files, ownership) {
+  const opportunities = ownedOpportunities(files, ownership);
   return {
     source_contract_360_cloud_contracts: files["cloud_contract_register.csv"].length,
     source_contract_360_actual_spend_ready: files["cloud_contract_register.csv"].length,
     source_vendor_contract_portfolio_cloud_vendors: uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").length,
     consumption_sourcing_spend_monthly_v1_cloud_rows: files["monthly_spend.csv"].length,
     consumption_sourcing_opportunity_v1_cloud_rows: opportunities.length,
-    consumption_sourcing_opportunity_v1_finance_required_rows: opportunities.filter(
-      (row) => canonicalOpportunityValueType(row) !== "control_action" && requiredNumber(row, "annual_value_usd") > 0,
-    ).length,
+    consumption_sourcing_opportunity_v1_finance_required_rows: 0,
     consumption_sourcing_opportunity_v1_control_required_rows: opportunities.filter(
       (row) => canonicalOpportunityValueType(row) === "control_action",
     ).length,
@@ -1603,9 +1805,10 @@ function expectedLayer4(files) {
   };
 }
 
-async function applyLayer3(client, args, files, rows, expectedL2) {
+async function applyLayer3(client, args, files, rows, expectedL2, ownership, pageRows = []) {
   await assertTables(client, [...REQUIRED_LAYER2_TABLES, ...REQUIRED_LAYER3_TABLES]);
   assertCounts(expectedL2, await layer2Readback(client, args), "Layer 2");
+  await reconcileSnapshots(client, args, rows);
   await insertSnapshots(client, args, rows);
   await upsertVendors(client, args, files["cloud_contract_register.csv"]);
   await upsertContracts(client, args, files["cloud_contract_register.csv"]);
@@ -1613,17 +1816,20 @@ async function applyLayer3(client, args, files, rows, expectedL2) {
   await upsertContractScope(client, args, files["cmdb_application_scope.csv"]);
   await upsertSpend(client, args, files["monthly_spend.csv"]);
   await upsertCloudTables(client, args, files);
+  await reconcileCanonicalFacts(client, args, files, pageRows);
   await upsertCloudCanonicalFacts(client, args, files);
-  await upsertOptimizationSpine(client, args, files);
-  return layer3Readback(client, args, files);
+  await upsertCloudPageTextFacts(client, args, pageRows);
+  await upsertOptimizationSpine(client, args, files, ownership);
+  await assertContractIdentityReadback(client, args, files, args.loadRunId);
+  return layer3Readback(client, args, files, ownership, args.loadRunId);
 }
 
-async function layer3Readback(client, args, files) {
+async function layer3Readback(client, args, files, ownership, loadRunId = args.layer3LoadRunId) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
   const vendorIds = uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").map((row) => value(row, "vendor_ref"));
-  const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
+  const opportunityIds = ownedOpportunities(files, ownership).map((row) => value(row, "opportunity_id"));
   const calculationRunIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:calculation`);
-  const caseIds = contractIds.map((contractId) => `cloud-consumption:${contractId}:case`);
+  const caseIds = ownership.canonical_contract_ids.map((contractId) => `cloud-consumption:${contractId}:case`);
   const result = await client.query(
     `SELECT
        (SELECT count(*)::text FROM source.source_record_snapshot WHERE tenant_key = $1 AND dataset_version = $2) AS source_record_snapshot,
@@ -1644,6 +1850,7 @@ async function layer3Readback(client, args, files) {
        (SELECT count(*)::text FROM source.optimization_case WHERE tenant_key = $1 AND dataset_version = $2 AND optimization_case_id = ANY($6::text[])) AS source_optimization_case,
        (SELECT count(*)::text FROM source.case_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_case_opportunity,
        (SELECT count(*)::text FROM source.opportunity_evidence WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_evidence,
+       (SELECT count(*)::text FROM source.opportunity_claim WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_claim,
        (SELECT count(*)::text FROM source.calculation_run WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_calculation_run,
        (SELECT count(*)::text FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($8::text[])) AS source_calculation_input,
        (SELECT count(*)::text FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($8::text[])) AS source_calculation_output,
@@ -1652,14 +1859,82 @@ async function layer3Readback(client, args, files) {
        (SELECT count(*)::text FROM source.opportunity_requirement_status WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_requirement_status,
        (SELECT count(*)::text FROM source.evidence_request WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_evidence_request,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($4::text[])) AS source_canonical_fact_assertion`,
-    [args.tenantKey, args.datasetVersion, vendorIds, contractIds, opportunityIds, caseIds, args.loadRunId, calculationRunIds],
+    [args.tenantKey, args.datasetVersion, vendorIds, contractIds, opportunityIds, caseIds, loadRunId, calculationRunIds],
   );
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
 }
 
-async function layer4Readback(client, args, files) {
+async function scopedCalculationOutputProfile(client, args, files, ownership) {
+  if (args.datasetVersion !== HISTORICAL_DUAL_OUTPUT_VERSION) return null;
+  const runIds = ownedOpportunities(files, ownership).map((row) =>
+    `cloud-consumption:${value(row, "opportunity_id")}:calculation`);
+  const result = await client.query(
+    `SELECT calculation_run_id, output_key, amount_usd IS NOT NULL AS priced
+       FROM source.calculation_output
+      WHERE tenant_key = $1 AND dataset_version = $2
+        AND calculation_run_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, runIds],
+  );
+  return reconcileCloudOutputProfile(result.rows, runIds);
+}
+
+async function assertContractIdentityReadback(client, args, files, loadRunId) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
-  const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
+  const result = await client.query(
+    `SELECT c.contract_id, c.contract_name, c.expiration_date, v.legal_name AS vendor_name
+       FROM source.contract c
+       LEFT JOIN source.vendor v
+         ON v.tenant_key = c.tenant_key
+        AND v.vendor_id = c.vendor_id
+        AND v.load_run_id = c.load_run_id
+      WHERE c.tenant_key = $1
+        AND c.contract_id = ANY($2::text[])
+        AND c.load_run_id = $3
+      ORDER BY c.contract_id`,
+    [args.tenantKey, contractIds, loadRunId],
+  );
+  const expectedIds = new Set(contractIds);
+  const actualIds = new Set(result.rows.map((row) => row.contract_id));
+  const missingIds = contractIds.filter((contractId) => !actualIds.has(contractId));
+  const incomplete = result.rows
+    .filter((row) => !row.contract_name || !row.vendor_name || !row.expiration_date)
+    .map((row) => row.contract_id);
+  if (result.rows.length !== expectedIds.size || missingIds.length || incomplete.length) {
+    throw new Error(
+      `Contract identity readback failed for ${args.tenantKey}/${args.datasetVersion}: ` +
+        `expected ${expectedIds.size} complete contract identities, got ${result.rows.length}; ` +
+        `missing=${missingIds.join(",") || "none"}; incomplete=${incomplete.join(",") || "none"}`,
+    );
+  }
+}
+
+async function resolveLayer3LoadRunId(client, args, files) {
+  if (args.layer3LoadRunIdExplicit) return args.layer3LoadRunId;
+  const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
+  const result = await client.query(
+    `SELECT DISTINCT load_run_id
+       FROM source.contract
+      WHERE tenant_key = $1
+        AND contract_id = ANY($2::text[])
+        AND load_run_id IS NOT NULL
+      ORDER BY load_run_id`,
+    [args.tenantKey, contractIds],
+  );
+  const loadRunIds = result.rows.map((row) => row.load_run_id).filter(Boolean);
+  if (loadRunIds.length !== 1) {
+    throw new Error(
+      `Unable to derive one Layer 3 load run for ${args.tenantKey}/${args.datasetVersion}: ` +
+        `found ${loadRunIds.length} (${loadRunIds.join(", ") || "none"}); ` +
+        "pass --layer3-load-run-id when the package spans phased runs",
+    );
+  }
+  args.layer3LoadRunId = loadRunIds[0];
+  return args.layer3LoadRunId;
+}
+
+async function layer4Readback(client, args, files, ownership) {
+  const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
+  const opportunityIds = ownedOpportunities(files, ownership).map((row) => value(row, "opportunity_id"));
   const result = await client.query(
     `SELECT
        (SELECT count(*)::text
@@ -1719,6 +1994,9 @@ async function layer4Readback(client, args, files) {
 }
 
 async function activateLayer4Overlay(client, args) {
+  // Layer 4 selects the source rows written by Layer 3. The operation load ID
+  // is a proof/run identifier; it is not the source projection version.
+  const projectionLoadRunId = args.layer3LoadRunId;
   await client.query(`
     CREATE TABLE IF NOT EXISTS source.l4_cube_active_load_run_overlay (
       tenant_key TEXT NOT NULL,
@@ -1729,27 +2007,37 @@ async function activateLayer4Overlay(client, args) {
       overlay_role TEXT NOT NULL,
       activated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-      PRIMARY KEY (tenant_key, load_run_id)
+      PRIMARY KEY (tenant_key, load_run_id, dataset_version)
     )`);
+
+  // Older deployments keyed the overlay only by run. Re-key it before the
+  // upsert so distinct package versions sharing an operator run coexist.
+  await client.query(`
+    ALTER TABLE source.l4_cube_active_load_run_overlay
+      DROP CONSTRAINT IF EXISTS l4_cube_active_load_run_overlay_pkey;
+    ALTER TABLE source.l4_cube_active_load_run_overlay
+      ADD CONSTRAINT l4_cube_active_load_run_overlay_pkey
+      PRIMARY KEY (tenant_key, load_run_id, dataset_version)`);
 
   await client.query(
     `INSERT INTO source.l4_cube_active_load_run_overlay
        (tenant_key, load_run_id, dataset_version, input_source_version, idempotency_key, overlay_role, raw_payload)
      VALUES ($1, $2, $3, $3, $4, 'cloud_consumption_package', $5::jsonb)
-     ON CONFLICT (tenant_key, load_run_id)
-     DO UPDATE SET dataset_version = EXCLUDED.dataset_version,
-                   input_source_version = EXCLUDED.input_source_version,
+     ON CONFLICT (tenant_key, load_run_id, dataset_version)
+     DO UPDATE SET input_source_version = EXCLUDED.input_source_version,
                    idempotency_key = EXCLUDED.idempotency_key,
                    overlay_role = EXCLUDED.overlay_role,
                    activated_at = now(),
                    raw_payload = EXCLUDED.raw_payload`,
     [
       args.tenantKey,
-      args.loadRunId,
+      projectionLoadRunId,
       args.datasetVersion,
       args.idempotencyKey,
       JSON.stringify({
         projection: "source-cloud-consumption-layer4-overlay",
+        operation_load_run_id: args.loadRunId,
+        projection_load_run_id: projectionLoadRunId,
         synthetic_policy: SYNTHETIC_POLICY,
       }),
     ],
@@ -1763,23 +2051,39 @@ async function setTenant(client, tenantKey) {
 async function main() {
   const args = parseArgs();
   const sourceFiles = readSourceFiles(args.packageDir);
+  const companionSourceFiles = {
+    contract_page_text: readOptionalSourceFile(args.packageDir, "contract_page_text.csv"),
+  };
   const docs = syntheticDocs(args.packageDir);
   const rows = adapterRows(sourceFiles);
-  const packageHash = sourcePackageHash(sourceFiles, docs);
+  const ownershipManifest = readOpportunityOwnershipManifest(args.mode, args.opportunityOwnershipManifestOverride);
+  const ownership = resolveOpportunityOwnership(
+    ownershipManifest,
+    args,
+    sourceFiles["cloud_contract_register.csv"].map((row) => value(row, "contract_id")),
+    sourceFiles["optimization_opportunities.csv"].map((row) => value(row, "contract_id")),
+  );
+  const ownershipDeclaration = selectedOpportunityOwnershipDeclaration(ownershipManifest, args);
+  const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles, ownershipDeclaration);
   const qualityGate = qualifyPackage(args, sourceFiles, docs);
   const expectedL2 = adapterCountByName(rows);
-  const expectedL3 = expectedLayer3(sourceFiles, rows);
-  const expectedL4 = expectedLayer4(sourceFiles);
+  const expectedL3 = expectedLayer3(sourceFiles, rows, ownership, companionSourceFiles.contract_page_text);
+  const expectedL4 = expectedLayer4(sourceFiles, ownership);
   const summary = {
     event: "source_cloud_consumption_package_started",
     mode: args.mode,
     tenant_key: args.tenantKey,
     dataset_version: args.datasetVersion,
     load_run_id: args.loadRunId,
+    projection_load_run_id: args.layer3LoadRunId,
     idempotency_key: args.idempotencyKey,
     package_dir: args.packageDir,
     package_sha256: packageHash,
+    opportunity_ownership: ownership,
     synthetic_evidence_documents: docs.length,
+    companion_source_rows: Object.fromEntries(
+      Object.entries(companionSourceFiles).map(([fileName, fileRows]) => [fileName, fileRows.length]),
+    ),
     layer2_expected_rows: rows.length,
     layer2_expected_by_adapter: expectedL2,
     layer3_expected_readback: expectedL3,
@@ -1799,9 +2103,17 @@ async function main() {
   await client.connect();
   try {
     await setTenant(client, args.tenantKey);
-    if (args.mode === "apply-layer2") {
+    if (args.mode === "preflight-rewrite") {
+      const targets = opportunityRewriteTargets(args, sourceFiles, ownership);
+      if (targets.contracts.length === 0) throw new Error("Rewrite preflight requires canonical-writer contracts");
+      await preflightOpportunityRewrite(client, targets.scope);
+      summary.event = "source_cloud_consumption_package_rewrite_preflight_passed";
+      summary.rewrite_scope = targets.scope;
+    } else if (args.mode === "apply-layer2") {
       requireApplyApproval(args);
       await client.query("BEGIN");
+      const targets = opportunityRewriteTargets(args, sourceFiles, ownership);
+      if (targets.contracts.length) await assertOpportunityRewriteSafe(client, targets.scope);
       await applyLayer2(client, args, rows, packageHash, qualityGate);
       await client.query("COMMIT");
       const readback = await layer2Readback(client, args);
@@ -1811,7 +2123,7 @@ async function main() {
     } else if (args.mode === "apply-layer3") {
       requireApplyApproval(args);
       await client.query("BEGIN");
-      const readback = await applyLayer3(client, args, sourceFiles, rows, expectedL2);
+      const readback = await applyLayer3(client, args, sourceFiles, rows, expectedL2, ownership, companionSourceFiles.contract_page_text);
       assertCounts(expectedL3, readback, "Layer 3");
       await writeRunStatus(client, args, packageHash, "completed", rows.length, qualityGate, readback);
       await client.query("COMMIT");
@@ -1820,26 +2132,36 @@ async function main() {
       summary.layer3_readback = readback;
     } else if (args.mode === "verify") {
       const layer2 = await layer2Readback(client, args);
-      const layer3 = await layer3Readback(client, args, sourceFiles);
+      const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
+      const outputProfile = await scopedCalculationOutputProfile(client, args, sourceFiles, ownership);
       assertCounts(expectedL2, layer2, "Layer 2");
-      assertCounts(expectedL3, layer3, "Layer 3");
+      assertCounts({ ...expectedL3, source_calculation_output: outputProfile?.output_rows ?? expectedL3.source_calculation_output }, layer3, "Layer 3");
       summary.event = "source_cloud_consumption_package_layer23_verified";
       summary.layer2_readback = layer2;
       summary.layer3_readback = layer3;
+      summary.calculation_output_profile = outputProfile;
     } else if (args.mode === "apply-layer4") {
       requireApplyApproval(args);
-      const layer3 = await layer3Readback(client, args, sourceFiles);
-      assertCounts(expectedL3, layer3, "Layer 3");
+      await resolveLayer3LoadRunId(client, args, sourceFiles);
+      await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
+      const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
+      const outputProfile = await scopedCalculationOutputProfile(client, args, sourceFiles, ownership);
+      assertCounts({ ...expectedL3, source_calculation_output: outputProfile?.output_rows ?? expectedL3.source_calculation_output }, layer3, "Layer 3");
       await client.query("BEGIN");
       await activateLayer4Overlay(client, args);
-      const layer4 = await layer4Readback(client, args, sourceFiles);
+      const layer4 = await layer4Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL4, layer4, "Layer 4");
       await client.query("COMMIT");
       summary.event = "source_cloud_consumption_package_layer4_applied";
       summary.layer3_readback = layer3;
+      summary.calculation_output_profile = outputProfile;
+      summary.projection_load_run_id = args.layer3LoadRunId;
       summary.layer4_readback = layer4;
     } else if (args.mode === "verify-layer4") {
-      const layer4 = await layer4Readback(client, args, sourceFiles);
+      await resolveLayer3LoadRunId(client, args, sourceFiles);
+      await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
+      summary.calculation_output_profile = await scopedCalculationOutputProfile(client, args, sourceFiles, ownership);
+      const layer4 = await layer4Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL4, layer4, "Layer 4");
       summary.event = "source_cloud_consumption_package_layer4_verified";
       summary.layer4_readback = layer4;
@@ -1851,6 +2173,7 @@ async function main() {
     summary.event = "source_cloud_consumption_package_failed";
     summary.error = error instanceof Error ? error.message : String(error);
     writeJson(path.join(args.proofDir, "summary.json"), summary);
+    if (args.mode === "preflight-rewrite" && shouldEmitProofBundle()) emitProofBundle(args.proofDir);
     throw error;
   } finally {
     await client.end();

@@ -1,4 +1,6 @@
 import { describe, it, expect, jest } from '@jest/globals';
+import JSZip from 'jszip';
+import mammoth from 'mammoth';
 import {
   consumeOneMessage,
   type ConsumeContext,
@@ -230,7 +232,38 @@ describe('A2b · consumeOneMessage', () => {
     expect(calls.audit).toBe(1);
   });
 
-  it('returns transient_failure when document parsing fails and does not run the pipeline', async () => {
+  it.each([
+    ['unsupported', 'archive.zip', 'application/zip', new Uint8Array([80, 75]), 'document_parse_unsupported'],
+    ['mismatched', 'contract.pdf', 'application/pdf', new TextEncoder().encode('plain text'), 'document_parse_mismatch'],
+    ['oversized', 'large.txt', 'text/plain', new Uint8Array(21 * 1024 * 1024).fill(97), 'document_parse_too_large'],
+    ['empty', 'empty.txt', 'text/plain', new TextEncoder().encode('  '), 'document_parse_empty'],
+  ])('rejects %s document bytes after auditing the correct tenant', async (_case, filename, contentType, bytes, reasonCode) => {
+    const { ctx, calls } = makeCtx({
+      download: jest.fn(async () => ({ bytes, filename })) as unknown as ConsumeContext['download'],
+    });
+    const message = {
+      ...validMessage,
+      tenantClientKey: 'test-tenant-a',
+      storage: { ...validMessage.storage, blobPath: filename, contentType },
+    };
+
+    const outcome = await consumeOneMessage(message, ctx);
+
+    expect(outcome).toMatchObject({
+      status: 'rejected',
+      auditRowId: 'audit-1',
+      reason: expect.stringContaining(reasonCode),
+    });
+    expect(ctx.writeAudit).toHaveBeenCalledWith({
+      message: expect.objectContaining({ tenantClientKey: 'test-tenant-a' }),
+      outcome: expect.objectContaining({ status: 'rejected' }),
+      protectionResult: expect.objectContaining({ decision: 'allow' }),
+    });
+    expect(calls.pipeline).toBe(0);
+    expect(calls.audit).toBe(1);
+  });
+
+  it('keeps an extractor fault retryable and does not run the pipeline', async () => {
     const { ctx, calls } = makeCtx({
       download: jest.fn(async () => {
         calls.download++;
@@ -240,7 +273,7 @@ describe('A2b · consumeOneMessage', () => {
         };
       }) as unknown as ConsumeContext['download'],
       parseDocument: jest.fn(async () => {
-        throw new Error('document_parse_empty:azure-document-intelligence-layout');
+        throw new Error('extractor unavailable');
       }) as unknown as ConsumeContext['parseDocument'],
     });
 
@@ -259,9 +292,65 @@ describe('A2b · consumeOneMessage', () => {
 
     expect(outcome).toMatchObject({
       status: 'transient_failure',
-      reason:
-        'document_parse_failed:document_parse_empty:azure-document-intelligence-layout',
+      reason: 'document_parse_failed:extractor unavailable',
       auditRowId: null,
+    });
+    expect(calls.pipeline).toBe(0);
+    expect(calls.audit).toBe(1);
+  });
+
+  it('retries a binary extractor fault that returns no text with a warning', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', '<w:document><w:t>Readable text</w:t></w:document>');
+    const bytes = await zip.generateAsync({ type: 'nodebuffer' });
+    const extractor = jest.spyOn(mammoth, 'extractRawText').mockRejectedValueOnce(new Error('extractor unavailable'));
+    const { ctx, calls } = makeCtx({
+      download: jest.fn(async () => ({ bytes, filename: 'document.docx' })) as unknown as ConsumeContext['download'],
+    });
+
+    try {
+      const outcome = await consumeOneMessage({
+        ...validMessage,
+        storage: {
+          ...validMessage.storage,
+          blobPath: 'document.docx',
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        },
+      }, ctx);
+
+      expect(outcome).toMatchObject({
+        status: 'transient_failure',
+        auditRowId: null,
+        reason: 'document_parse_failed:document_extraction_failed',
+      });
+      expect(calls.pipeline).toBe(0);
+      expect(calls.audit).toBe(1);
+    } finally {
+      extractor.mockRestore();
+    }
+  });
+
+  it('retries deterministic input when its audit cannot be written', async () => {
+    const { ctx, calls } = makeCtx({
+      download: jest.fn(async () => ({
+        bytes: new TextEncoder().encode(' '),
+        filename: 'empty.txt',
+      })) as unknown as ConsumeContext['download'],
+      writeAudit: jest.fn(async () => {
+        calls.audit++;
+        throw new Error('audit unavailable');
+      }) as unknown as ConsumeContext['writeAudit'],
+    });
+
+    const outcome = await consumeOneMessage({
+      ...validMessage,
+      storage: { ...validMessage.storage, contentType: 'text/plain' },
+    }, ctx);
+
+    expect(outcome).toMatchObject({
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: expect.stringContaining('audit unavailable'),
     });
     expect(calls.pipeline).toBe(0);
     expect(calls.audit).toBe(1);

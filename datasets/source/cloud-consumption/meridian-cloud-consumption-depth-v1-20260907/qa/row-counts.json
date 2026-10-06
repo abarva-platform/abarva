@@ -13,5 +13,6 @@
   "contract_clauses": 10,
   "optimization_opportunities": 8,
   "evidence_manifest": 10,
-  "synthetic_evidence_documents": 10
+  "synthetic_evidence_documents": 10,
+  "contract_page_text": 10
 }

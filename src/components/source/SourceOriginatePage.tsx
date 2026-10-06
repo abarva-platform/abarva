@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
@@ -28,6 +29,7 @@ import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import { parseSourceIntakeText } from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
+import { createdEventDestination } from "@/lib/source/new-workspace/navigation";
 import {
   isCapturedApprovalFact,
   isReviewableContractScope,
@@ -37,10 +39,12 @@ import {
   type SourceCategory,
   type SourceCategoryId,
 } from "@/lib/source/taxonomy/category-taxonomy";
+import type { SourceIntakeRequestSummary } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 export {
   isCapturedApprovalFact,
   isReviewableContractScope,
 } from "@/lib/source/contract-optimization-intake";
+import { requesterEstimateFieldLabel } from "@/lib/source/requester-estimate-label";
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
@@ -52,6 +56,13 @@ type SourceEventCreatePayload = {
   eventId?: string;
   eventUrl?: string;
   approvalUrl?: string;
+  detail?: string;
+  error?: string;
+};
+
+type SourceRequestReviewPayload = {
+  ok?: boolean;
+  mappingDecision?: NonNullable<SourceIntakeRequestSummary["mappingDecision"]>;
   detail?: string;
   error?: string;
 };
@@ -72,6 +83,7 @@ interface SourceOriginatePageProps {
   clientShortName?: string;
   clientKey?: string;
   contractOptimizationCandidates?: readonly ContractOptimizationCandidate[];
+  sourceRequest?: SourceIntakeRequestSummary | null;
 }
 
 export interface ContractOptimizationCandidate {
@@ -98,18 +110,18 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
   {
     id: "decisionOwner",
     label: "Decision owner",
-    prompt: "Who can make or sponsor the technology sourcing decision?",
+    prompt: "Who is accountable for the sourcing decision?",
     placeholder:
-      "CIO, CTO, VP Infrastructure, app owner, procurement sponsor...",
+      "Plan leader, hospital operations, shared-services owner, CIO, procurement sponsor...",
     agent: "aVa",
   },
   {
     id: "scopeBoundary",
     label: "Scope boundary",
     prompt:
-      "Which IT services, platforms, software, cloud, data, or delivery towers are in and out?",
+      "Which services, products, capabilities, or business functions are in and out?",
     placeholder:
-      "In: AMS for SAP and eCommerce. Out: security operations and deskside support.",
+      "In: member services operations. Out: claims processing and clinical decisions.",
     agent: "aVa",
   },
   {
@@ -126,7 +138,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     prompt:
       "Who owns the minimum baseline Source can use without pretending evidence is ready?",
     placeholder:
-      "Finance owns spend baseline; ServiceNow owner owns ticket volume extract by May 8.",
+      "Finance owns spend baseline; operations owner owns volume and service data.",
     agent: "aVa",
   },
 ];
@@ -147,6 +159,7 @@ export const SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN = true;
 
 const CATEGORY_EVENT_TYPE_BY_ID: Record<SourceCategoryId, CategoryEventType> = {
   ams: "managed_service",
+  erp_si_implementation: "software",
   data_ai_platform: "software",
   ai_engineering_partner: "consulting",
   saas_renewal: "software",
@@ -582,6 +595,39 @@ const initialIntakeState: IntakeState = {
   baselineOwner: "",
 };
 
+function intakeStateFromSourceRequest(
+  request: SourceIntakeRequestSummary,
+): IntakeState {
+  return {
+    trigger: request.trigger ?? "",
+    decisionOwner: request.decisionOwner ?? "",
+    scopeBoundary: [
+      request.scopeIncluded,
+      request.scopeExcluded ? `Out of scope: ${request.scopeExcluded}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    valueTarget:
+      request.requestedOutcome ??
+      (request.value
+        ? requesterEstimateFieldLabel(
+            `${request.value.currency} ${request.value.amount.toLocaleString("en-US")}`,
+          )
+        : ""),
+    baselineOwner: request.baselineOwner ?? "",
+  };
+}
+
+function categoryIdFromSourceRequest(
+  request: SourceIntakeRequestSummary,
+): SourceCategoryId | null {
+  const categoryId =
+    request.mappingDecision?.categoryId ?? request.mappingProposal.categoryId;
+  return SOURCE_CATEGORIES.some((category) => category.id === categoryId)
+    ? (categoryId as SourceCategoryId)
+    : null;
+}
+
 // Legacy cleanup only. Earlier builds restored /source/new drafts from
 // localStorage, which made a new intake open with stale values and even kept
 // the optional category selector expanded. A new sourcing event now starts
@@ -835,11 +881,14 @@ export function SourceOriginatePage({
   clientShortName = "Apex Retail",
   clientKey = "apexretail",
   contractOptimizationCandidates = [],
+  sourceRequest = null,
 }: SourceOriginatePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tourActive = searchParams?.get("tour") === "1";
-  const [creationRequestId, setCreationRequestId] = useState("");
+  const [creationRequestId, setCreationRequestId] = useState(
+    sourceRequest?.requestId ?? "",
+  );
 
   // Iteration-2 punch-list: `/source/new?intent=...` must reshape the intake.
   // When a known intent is present we swap in a tailored field set, a
@@ -877,9 +926,40 @@ export function SourceOriginatePage({
         ? intakeShape.eyebrow
         : "New sourcing event";
 
-  const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
+  const [intake, setIntake] = useState<IntakeState>(() =>
+    sourceRequest
+      ? intakeStateFromSourceRequest(sourceRequest)
+      : initialIntakeState,
+  );
   const [selectedCategoryId, setSelectedCategoryId] =
-    useState<SourceCategoryId | null>(null);
+    useState<SourceCategoryId | null>(() =>
+      sourceRequest ? categoryIdFromSourceRequest(sourceRequest) : null,
+    );
+  const [sourceReviewDecision, setSourceReviewDecision] = useState<
+    "accepted" | "overridden" | null
+  >(
+    sourceRequest?.mappingDecision?.state === "accepted" ||
+      sourceRequest?.mappingDecision?.state === "overridden"
+      ? sourceRequest.mappingDecision.state
+      : null,
+  );
+  const [sourceReviewRationale, setSourceReviewRationale] = useState(
+    sourceRequest?.mappingDecision?.rationale ?? "",
+  );
+  const [persistedSourceReview, setPersistedSourceReview] =
+    useState<NonNullable<SourceIntakeRequestSummary["mappingDecision"]> | null>(
+      () =>
+        sourceRequest &&
+        sourceRequest.mappingDecision?.sourceVersion ===
+          sourceRequest.sourceVersion &&
+        (sourceRequest.mappingDecision.state === "accepted" ||
+          sourceRequest.mappingDecision.state === "overridden")
+          ? sourceRequest.mappingDecision
+          : null,
+    );
+  const [reviewSubmitState, setReviewSubmitState] = useState<SubmitState>({
+    status: "idle",
+  });
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
   });
@@ -973,8 +1053,36 @@ export function SourceOriginatePage({
   );
   const capturedFactsCount = capturedFacts.length;
   const allFactsCaptured = capturedFactsCount === intakeFields.length;
+  const proposedSourceCategory = sourceRequest
+    ? categoryIdFromSourceRequest(sourceRequest)
+    : null;
+  const sourceProposalReviewable =
+    !sourceRequest ||
+    (sourceRequest.requiredFactGaps.length === 0 &&
+      proposedSourceCategory !== null &&
+      Boolean(sourceRequest.mappingProposal.archetypeId));
+  const sourceReviewDraftReady =
+    !sourceRequest ||
+    (sourceProposalReviewable &&
+      sourceReviewDecision !== null &&
+      sourceReviewRationale.trim().length >= 12 &&
+      (sourceReviewDecision === "accepted" || selectedCategory !== null));
+  const persistedSourceReviewMatchesDraft =
+    !sourceRequest ||
+    (persistedSourceReview !== null &&
+      persistedSourceReview.sourceVersion === sourceRequest.sourceVersion &&
+      persistedSourceReview.state === sourceReviewDecision &&
+      persistedSourceReview.rationale === sourceReviewRationale.trim() &&
+      (sourceReviewDecision === "accepted"
+        ? persistedSourceReview.categoryId ===
+          sourceRequest.mappingProposal.categoryId
+        : persistedSourceReview.categoryId === selectedCategory?.id));
+  const sourceReviewReady =
+    !sourceRequest ||
+    (sourceProposalReviewable && persistedSourceReviewMatchesDraft);
   const canCreate =
     allFactsCaptured &&
+    sourceReviewReady &&
     !contractOptimizationRequiresSelection &&
     submitState.status !== "submitting";
   const decisionOwnerPreview = useMemo(
@@ -1022,6 +1130,72 @@ export function SourceOriginatePage({
     });
   }, []);
 
+  async function recordSourceRequestReview() {
+    if (!sourceRequest || !sourceReviewDraftReady || !sourceReviewDecision) {
+      return;
+    }
+    setReviewSubmitState({ status: "submitting" });
+    const body =
+      sourceReviewDecision === "overridden"
+        ? {
+            requestId: sourceRequest.requestId,
+            sourceVersion: sourceRequest.sourceVersion,
+            decisionState: sourceReviewDecision,
+            categoryId: selectedCategory?.id,
+            rationale: sourceReviewRationale,
+          }
+        : {
+            requestId: sourceRequest.requestId,
+            sourceVersion: sourceRequest.sourceVersion,
+            decisionState: sourceReviewDecision,
+            rationale: sourceReviewRationale,
+          };
+
+    let response: Response;
+    let payload: SourceRequestReviewPayload | null = null;
+    try {
+      response = await fetch("/api/v1/source/intake/servicenow/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      payload = (await response
+        .json()
+        .catch(() => null)) as SourceRequestReviewPayload | null;
+    } catch (error) {
+      setReviewSubmitState({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Request review failed before the server responded.",
+      });
+      return;
+    }
+
+    if (!response.ok || !payload?.mappingDecision) {
+      setReviewSubmitState({
+        status: "error",
+        message:
+          payload?.detail ??
+          payload?.error ??
+          "Request review could not be recorded.",
+      });
+      return;
+    }
+
+    setPersistedSourceReview(payload.mappingDecision);
+    setSourceReviewDecision(
+      payload.mappingDecision.state === "accepted" ||
+        payload.mappingDecision.state === "overridden"
+        ? payload.mappingDecision.state
+        : null,
+    );
+    setSourceReviewRationale(payload.mappingDecision.rationale);
+    setReviewSubmitState({ status: "idle" });
+    setSubmitState({ status: "idle" });
+  }
+
   async function createEvent() {
     if (contractOptimizationRequiresSelection) {
       setSubmitState({
@@ -1060,20 +1234,32 @@ export function SourceOriginatePage({
         response = await fetch("/api/v1/source/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            eventName,
-            eventType: inferEventType(intake.scopeBoundary, selectedCategory),
-            triggerDescription: intake.trigger,
-            decisionOwner: intake.decisionOwner || undefined,
-            scopeDescription: intake.scopeBoundary || undefined,
-            valueTargetDescription: intake.valueTarget || undefined,
-            baselineOwnerDescription: intake.baselineOwner || undefined,
-            categoryId: selectedCategory?.id,
-            categoryLabel: selectedCategory?.label,
-            sourcingMotion,
-            creationRequestId: requestId,
-            estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
-          }),
+          body: JSON.stringify(
+            sourceRequest
+              ? {
+                  sourceRequest: {
+                    requestId: sourceRequest.requestId,
+                    sourceVersion: sourceRequest.sourceVersion,
+                  },
+                }
+              : {
+                  eventName,
+                  eventType: inferEventType(
+                    intake.scopeBoundary,
+                    selectedCategory,
+                  ),
+                  triggerDescription: intake.trigger,
+                  decisionOwner: intake.decisionOwner || undefined,
+                  scopeDescription: intake.scopeBoundary || undefined,
+                  valueTargetDescription: intake.valueTarget || undefined,
+                  baselineOwnerDescription: intake.baselineOwner || undefined,
+                  categoryId: selectedCategory?.id,
+                  categoryLabel: selectedCategory?.label,
+                  sourcingMotion,
+                  creationRequestId: requestId,
+                  estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
+                },
+          ),
         });
       }
       payload = (await response
@@ -1119,10 +1305,14 @@ export function SourceOriginatePage({
       payload?.approvalUrl && payload.approvalUrl.includes(sourceEventId)
         ? payload.approvalUrl
         : `/source/events/${sourceEventId}/approval`;
-    // Forward the tour into approval; the canvas unlocks after approval.
-    const finalUrl = tourActive
-      ? approvalUrl + (approvalUrl.includes("?") ? "&tour=1" : "?tour=1")
-      : approvalUrl;
+    // The guided tour stays on its existing route; regular creation opens
+    // the event workspace with approval as its next governed action.
+    const finalUrl = createdEventDestination(
+      sourceEventId,
+      approvalUrl,
+      tourActive,
+      sourcingMotion,
+    );
     router.push(finalUrl);
     window.setTimeout(() => {
       if (window.location.pathname === "/source/new") {
@@ -1240,6 +1430,124 @@ export function SourceOriginatePage({
             ))}
           </div>
         )}
+
+        {sourceRequest ? (
+          <section
+            aria-label="Imported request review"
+            style={SOURCE_REQUEST_REVIEW}
+          >
+            <div style={REQUEST_REVIEW_HEADER}>
+              <div>
+                <div style={SECTION_LABEL}>Imported request review</div>
+                <div style={REQUEST_REVIEW_TITLE}>
+                  {sourceRequest.requestNumber} · {sourceRequest.sourceSystem}
+                </div>
+              </div>
+              <span style={STATUS_CHIP}>
+                {sourceReviewReady
+                  ? "Routing recorded"
+                  : sourceReviewDecision
+                    ? "Review not recorded"
+                    : "Named review required"}
+              </span>
+            </div>
+            <p style={REQUEST_REVIEW_COPY}>
+              Proposed{" "}
+              {sourceRequest.mappingProposal.archetypeId ??
+                "unmapped archetype"}
+              {sourceRequest.mappingProposal.categoryId
+                ? ` · ${sourceRequest.mappingProposal.categoryId}`
+                : ""}
+              . Supplier contact remains blocked; this review only confirms how
+              the request should enter Source.
+            </p>
+            <ul style={REQUEST_REVIEW_REASONS}>
+              {sourceRequest.mappingProposal.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+            <div style={REQUEST_REVIEW_ACTIONS}>
+              <button
+                type="button"
+                disabled={!sourceProposalReviewable}
+                onClick={() => {
+                  if (!proposedSourceCategory) return;
+                  setSelectedCategoryId(proposedSourceCategory);
+                  setSourceReviewDecision("accepted");
+                  setSubmitState({ status: "idle" });
+                  setReviewSubmitState({ status: "idle" });
+                }}
+                aria-pressed={sourceReviewDecision === "accepted"}
+                style={{
+                  ...SECONDARY_ACTION_BUTTON,
+                  opacity: sourceProposalReviewable ? 1 : 0.55,
+                  cursor: sourceProposalReviewable ? "pointer" : "not-allowed",
+                }}
+              >
+                Accept proposed routing
+              </button>
+              <span style={REQUEST_REVIEW_HINT}>
+                Choose another category below to record an override.
+              </span>
+            </div>
+            <label style={{ display: "grid", gap: 5 }}>
+              <span style={FIELD_LABEL}>Review rationale</span>
+              <textarea
+                aria-label="Mapping review rationale"
+                value={sourceReviewRationale}
+                onChange={(event) => {
+                  setSourceReviewRationale(event.target.value);
+                  setSubmitState({ status: "idle" });
+                  setReviewSubmitState({ status: "idle" });
+                }}
+                rows={2}
+                placeholder="Why is this category and archetype the right route?"
+                style={REQUEST_REVIEW_TEXTAREA}
+              />
+            </label>
+            <div style={REQUEST_REVIEW_ACTIONS}>
+              <button
+                type="button"
+                disabled={
+                  !sourceReviewDraftReady ||
+                  sourceReviewReady ||
+                  reviewSubmitState.status === "submitting"
+                }
+                onClick={recordSourceRequestReview}
+                style={{
+                  ...SECONDARY_ACTION_BUTTON,
+                  opacity:
+                    sourceReviewDraftReady &&
+                    !sourceReviewReady &&
+                    reviewSubmitState.status !== "submitting"
+                      ? 1
+                      : 0.55,
+                  cursor:
+                    sourceReviewDraftReady &&
+                    !sourceReviewReady &&
+                    reviewSubmitState.status !== "submitting"
+                      ? "pointer"
+                      : "not-allowed",
+                }}
+              >
+                {reviewSubmitState.status === "submitting"
+                  ? "Recording review..."
+                  : sourceReviewReady
+                    ? "Review recorded"
+                    : "Record mapping review"}
+              </button>
+              <span style={REQUEST_REVIEW_HINT}>
+                Create event unlocks after this current source version is
+                recorded.
+              </span>
+            </div>
+            {reviewSubmitState.status === "error" ? (
+              <div role="alert" style={REVIEW_REQUIRED_NOTICE}>
+                {reviewSubmitState.message}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         {contractOptimizationRequiresSelection && (
           <ContractOptimizationSelectionGate
@@ -1412,7 +1720,15 @@ export function SourceOriginatePage({
                     setSelectedCategoryId((prev) =>
                       prev === category.id ? null : category.id,
                     );
+                    if (sourceRequest) {
+                      setSourceReviewDecision(
+                        category.id === sourceRequest.mappingProposal.categoryId
+                          ? null
+                          : "overridden",
+                      );
+                    }
                     setSubmitState({ status: "idle" });
+                    setReviewSubmitState({ status: "idle" });
                   }}
                 />
               ))}
@@ -1443,6 +1759,20 @@ export function SourceOriginatePage({
               </div>
             )}
 
+          {sourceRequest && allFactsCaptured && !sourceReviewReady ? (
+            <div
+              role="status"
+              aria-live="polite"
+              style={REVIEW_REQUIRED_NOTICE}
+            >
+              {sourceReviewDraftReady
+                ? "Record the mapping review before creating an event."
+                : sourceProposalReviewable
+                  ? "Accept the proposed route or choose an override, then record the review rationale."
+                  : "Resolve the request's missing facts or routing proposal before creating an event."}
+            </div>
+          ) : null}
+
           {!contractOptimizationRequiresSelection && (
             <IntakeCompletionFooter
               capturedFacts={capturedFacts}
@@ -1451,6 +1781,10 @@ export function SourceOriginatePage({
               capturedFactsCount={capturedFactsCount}
               totalFactsCount={intakeFields.length}
               submitting={submitState.status === "submitting"}
+              actionBlocked={!sourceReviewReady}
+              actionLabel={
+                sourceRequest ? "Create event from request" : "Open event"
+              }
               draftSaved={draftSaved}
               onOpenEvent={createEvent}
               onSaveDraft={saveDraft}
@@ -1474,8 +1808,8 @@ export function SourceOriginatePage({
             </div>
           )}
 
-          <a
-            href="/source"
+          <Link
+            href="/source/new"
             style={{
               textAlign: "center",
               fontFamily: SHELL.MONO,
@@ -1486,8 +1820,8 @@ export function SourceOriginatePage({
               textDecoration: "none",
             }}
           >
-            ← Back to Source portfolio
-          </a>
+            ← Back to Source New
+          </Link>
         </div>
       </section>
 
@@ -1524,7 +1858,7 @@ export function SourceOriginatePage({
         sourceSourcingMotion: sourcingMotion,
         context: intakeShape
           ? `Source intake — ${intakeContextLabel} (aVa guided)`
-          : "New IT sourcing event intake — aVa guided",
+          : "New sourcing event intake - aVa guided",
       }}
       topBarProps={{
         tenantName: clientName,
@@ -1685,7 +2019,7 @@ function SourceOriginateDock({
       initialQuote={
         intakeShape
           ? intakeShape.initialQuote
-          : `Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I will help you capture the five facts needed for approval.`
+          : `Ready to stand up a new sourcing event for ${clientName}. Tell me the trigger and I will help you capture the five facts needed for approval.`
       }
       thread={thread}
       onMessage={onMessage}
@@ -2103,6 +2437,98 @@ const FIELD_PROMPT: CSSProperties = {
 // and lexical — picks up vendor names, system names, person names that
 // appear in agent text. Capped at the most-recent 6 assistant turns so the
 // list stays current rather than accumulating across the whole session.
+
+const SOURCE_REQUEST_REVIEW: CSSProperties = {
+  display: "grid",
+  gap: 10,
+  border: `1px solid ${SHELL.BLUE_LINE}`,
+  borderRadius: 8,
+  background: SHELL.BLUE_BG,
+  padding: 12,
+};
+
+const REQUEST_REVIEW_HEADER: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 10,
+};
+
+const REQUEST_REVIEW_TITLE: CSSProperties = {
+  marginTop: 4,
+  fontFamily: SHELL.SANS,
+  fontSize: 14,
+  fontWeight: 700,
+  color: SHELL.INK,
+};
+
+const REQUEST_REVIEW_COPY: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: SHELL.INK_SOFT,
+};
+
+const REQUEST_REVIEW_REASONS: CSSProperties = {
+  margin: 0,
+  paddingLeft: 18,
+  fontFamily: SHELL.SANS,
+  fontSize: 11.5,
+  lineHeight: 1.45,
+  color: SHELL.INK_MUTED,
+};
+
+const REQUEST_REVIEW_ACTIONS: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: 8,
+};
+
+const SECONDARY_ACTION_BUTTON: CSSProperties = {
+  minHeight: 34,
+  border: `1px solid ${SHELL.INK}`,
+  borderRadius: 7,
+  background: SHELL.CARD_WHITE,
+  color: SHELL.INK,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 700,
+  padding: "7px 10px",
+  cursor: "pointer",
+};
+
+const REQUEST_REVIEW_HINT: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  color: SHELL.INK_MUTED,
+};
+
+const REQUEST_REVIEW_TEXTAREA: CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 7,
+  background: SHELL.CARD_WHITE,
+  color: SHELL.INK,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  padding: "8px 10px",
+  resize: "vertical",
+};
+
+const REVIEW_REQUIRED_NOTICE: CSSProperties = {
+  border: `1px solid ${SHELL.PEACH_LINE}`,
+  borderRadius: 8,
+  background: SHELL.PEACH_BG,
+  padding: "8px 10px",
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: SHELL.PEACH_TEXT,
+};
 
 interface RelatedContextItem {
   kind: "vendor" | "system" | "person" | "amount";

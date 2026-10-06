@@ -49,7 +49,6 @@ import {
   extractExecutiveCanvasPayloads,
   hasExecutiveCanvasPayload,
 } from "@/lib/intelligence/executive-canvas-payload";
-import { buildIndustrialCioBackofficeNativeCanvasBlock } from "./industrial-cio-backoffice-source";
 import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "./skyharbor-cto-readiness-source";
 import {
   createIntelligenceLatencyTrace,
@@ -1244,22 +1243,6 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       args.richText &&
       requiresNativeExecutiveCanvas(args.query) &&
       !hasExecutiveCanvasPayload(text) &&
-      args.sources.some(
-        (source) => source.id === "industrial-cio-backoffice-readiness",
-      )
-    ) {
-      text = appendNativeCanvasToDecisionTab(
-        text,
-        buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
-          args.tenantClientKey,
-          args.tenantId,
-        ]),
-      );
-    }
-    if (
-      args.richText &&
-      requiresNativeExecutiveCanvas(args.query) &&
-      !hasExecutiveCanvasPayload(text) &&
       args.sources.some((source) => source.id === "skyharbor-cto-readiness")
     ) {
       text = appendNativeCanvasToDecisionTab(
@@ -1618,22 +1601,12 @@ function buildFallbackTabBlock(
   ].join("\n");
 }
 
-function buildFallbackNativeCanvasBlock(args: {
+export function buildFallbackNativeCanvasBlock(args: {
   query: string;
   sources: AskSource[];
   tenantClientKey?: string | null;
   tenantId?: string | null;
 }): string {
-  if (
-    args.sources.some(
-      (source) => source.id === "industrial-cio-backoffice-readiness",
-    )
-  ) {
-    return buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
-      args.tenantClientKey,
-      args.tenantId,
-    ]);
-  }
   if (args.sources.some((source) => source.id === "skyharbor-cto-readiness")) {
     return buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
       args.tenantClientKey,

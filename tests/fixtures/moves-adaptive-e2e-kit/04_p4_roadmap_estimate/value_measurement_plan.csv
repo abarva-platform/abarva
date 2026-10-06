@@ -1,0 +1,6 @@
+metric,baseline_source,definition_status,proposed_measurement,owner_role,value_claim_status,gate_to_claim
+Average handle time,SYN-KPI-01 and SYN-CONFLICT-01,conflicted,Report talk plus hold plus after-call work separately,Contact Center Analytics Lead,blocked,Finance validates formula and capacity conversion
+First contact resolution,SYN-KPI-01,synthetic_unvalidated,Use unchanged denominator and matched contact rule,Contact Center Operations Lead,blocked,Validate definitions and data quality
+Repeat contact within 7 days,SYN-KPI-01,identity matching unvalidated,Report matched repeat contacts with method,Analytics Lead,blocked,Privacy approves matching and Finance signs baseline
+Knowledge answer accuracy,SYN-KNOW-01,not measured,Sample source-grounded answers and stale/conflict abstention,Knowledge Owner,not yet measured,Approve rubric and sampling design
+Agent adoption,SYN-CHANGE-01,not measured,Measure eligible sessions exposed and agent-confirmed use,Operations Lead,not yet measured,Agree cohort denominator and monitoring

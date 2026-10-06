@@ -57,14 +57,14 @@ jest.mock("@/lib/source/pricing-submissions/dao", () => ({
 }));
 
 const buildSourceDeliverableSpecMock = jest.fn();
-jest.mock("@/lib/source/exports/spec-builder", () => ({
-  buildSourceDeliverableSpec: (...args: unknown[]) =>
-    buildSourceDeliverableSpecMock(...args),
-  kindForArtifactCode: (artifactCode: string, variant?: string) => {
-    if (artifactCode !== "d19_pricing_workbook") return null;
-    return variant === "comparison" ? "pricing-comparison" : "pricing-template";
-  },
-}));
+jest.mock("@/lib/source/exports/spec-builder", () => {
+  const actual = jest.requireActual("@/lib/source/exports/spec-builder");
+  return {
+    ...actual,
+    buildSourceDeliverableSpec: (...args: unknown[]) =>
+      buildSourceDeliverableSpecMock(...args),
+  };
+});
 
 const renderSourceDeliverableMock = jest.fn();
 jest.mock("@/lib/source/exports/dispatch", () => ({
@@ -76,6 +76,7 @@ import { POST as postVendorSubmission } from "@/app/api/v1/source/[eventId]/arti
 import { GET as getVendorSubmissions } from "@/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submissions/route";
 import { GET as renderArtifact } from "@/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route";
 import { buildPricingComparisonPayloadFromContext } from "@/lib/source/exports/payloads/pricing-comparison-payload";
+import { kindForArtifactCode } from "@/lib/source/exports/spec-builder";
 
 const EVENT_ID = "apex-retail-ams-outsourcing-2026";
 const EVENT_ROW_ID = "event-row-1";
@@ -224,6 +225,15 @@ beforeEach(() => {
 });
 
 describe("Source d19 pricing upload/list/download route binding", () => {
+  it("keeps template and comparison dispatch distinct", () => {
+    expect(kindForArtifactCode("d19_pricing_workbook", "template")).toBe(
+      "pricing-template",
+    );
+    expect(kindForArtifactCode("d19_pricing_workbook", "comparison")).toBe(
+      "pricing-comparison",
+    );
+  });
+
   it("uploads a filled vendor pricing workbook and persists parsed metadata", async () => {
     const formData = new FormData();
     formData.append(

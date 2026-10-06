@@ -3,6 +3,8 @@ const tenancyErrorResponse = jest.fn();
 const getProgramById = jest.fn();
 const getModuleState = jest.fn();
 const getPhaseSnapshots = jest.fn();
+const loadApprovedMoveEvidenceSnapshot = jest.fn();
+const loadP0MinimumEvidenceStatus = jest.fn();
 const loadUserProgramAccessPolicy = jest.fn();
 const getAzureWriteFluentClient = jest.fn();
 const writeProgramAuditLogBestEffort = jest.fn();
@@ -22,6 +24,14 @@ jest.mock("@/lib/programs/queries", () => ({
   getProgramById,
   getModuleState,
   getPhaseSnapshots,
+}));
+
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  loadApprovedMoveEvidenceSnapshot,
+}));
+
+jest.mock("@/lib/programs/p0-source-evidence", () => ({
+  loadP0MinimumEvidenceStatus,
 }));
 
 jest.mock("@/lib/auth/program-access-policy", () => ({
@@ -112,6 +122,16 @@ describe("Moves signed-in phase capture/gate routes", () => {
     getProgramById.mockResolvedValue(program);
     getModuleState.mockResolvedValue([]);
     getPhaseSnapshots.mockResolvedValue([]);
+    loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "approved-evidence-revision",
+      latestEvidenceActivityAt: "2026-09-29T17:00:00.000Z",
+    });
+    loadP0MinimumEvidenceStatus.mockResolvedValue({
+      available: true,
+      approvedSourceFileCount: 1,
+      pendingReviewCount: 0,
+      evidenceTitles: ["P0 source file"],
+    });
     loadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: true });
     getAzureWriteFluentClient.mockReturnValue(makeWriteClient());
     writeProgramAuditLogBestEffort.mockResolvedValue(undefined);
@@ -141,7 +161,10 @@ describe("Moves signed-in phase capture/gate routes", () => {
       business_trigger: "AP exception volume is delaying close.",
       problem_statement: "Invoice exceptions are fragmented across email, ERP, and manual follow-up.",
       affected_function_process: "Back-office AP invoice exception handling.",
+      scope_out: "Supplier onboarding and payment execution remain outside this Move.",
       initial_value_hypothesis: "Reduce cycle time, duplicate payments, and manual rework.",
+      outcomes_success: "Validate shorter exception aging, fewer duplicate payments, and less manual rework.",
+      discovery_questions: "Which exception classes and handoffs create the most delay and control risk?",
       stakeholder_owner_view: "CIO, Finance Operations, AP manager, procurement operations.",
       known_evidence: "Uploaded exception logs, aging baseline, process notes, controls checklist, interviews.",
       missing_evidence_open_questions: "Final HR owner mapping and finance validation remain open.",
@@ -265,10 +288,15 @@ describe("Moves signed-in phase capture/gate routes", () => {
           sponsor_candidate: "Chief Digital and Information Officer",
           scope_boundary:
             "In: claims status, prior auth, eligibility, benefits, CRM history, knowledge lookup. Out: clinical decisions.",
+          scope_out: "Clinical decisions and autonomous benefit determinations remain outside scope.",
           evidence_family:
             "Member-service metrics, call transcripts, CRM history, claims/auth/benefits samples, knowledge base, systems inventory.",
           value_hypothesis:
             "Reduce avoidable handle time, repeat contact, transfers, and after-call work.",
+          outcomes_success:
+            "Validate lower avoidable handle time, repeat contact, transfers, and after-call work without weakening service quality.",
+          discovery_questions:
+            "Which intents, systems, and knowledge gaps drive avoidable time and repeat contact?",
           foundation_readiness:
             "Cloud data foundation must prove source ownership, quality, access, and PHI controls.",
         },
@@ -320,7 +348,10 @@ describe("Moves signed-in phase capture/gate routes", () => {
         "business_trigger",
         "problem_statement",
         "affected_function_process",
+        "scope_out",
         "initial_value_hypothesis",
+        "outcomes_success",
+        "discovery_questions",
         "stakeholder_owner_view",
         "known_evidence",
         "missing_evidence_open_questions",
@@ -359,6 +390,27 @@ describe("Moves signed-in phase capture/gate routes", () => {
       ...program,
       currentPhase: 5,
     });
+    loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "approved-evidence-revision",
+      latestEvidenceActivityAt: "2026-09-29T17:00:00.000Z",
+    });
+    getPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 4
+          ? [
+              {
+                id: "phase-4-approved",
+                phaseNumber: 4,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:01:00.000Z",
+                createdAt: "2026-09-29T17:01:00.000Z",
+                snapshot: {
+                  evidenceSnapshotHash: "approved-evidence-revision",
+                },
+              },
+            ]
+          : [],
+    );
     getModuleState.mockResolvedValue(
       [
         "mobilization_plan",
@@ -405,6 +457,14 @@ describe("Moves signed-in phase capture/gate routes", () => {
     );
     expect(advancePhase).not.toHaveBeenCalled();
     expect(getAzureWriteFluentClient().from).toHaveBeenCalledWith("phase_snapshots");
+    expect(getAzureWriteFluentClient().__builder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase_number: 5,
+        snapshot_jsonb: expect.stringContaining(
+          '"evidenceSnapshotHash":"approved-evidence-revision"',
+        ),
+      }),
+    );
     const updateCalls = (getAzureWriteFluentClient().__builder.update as jest.Mock).mock.calls;
     expect(updateCalls).toEqual(
       expect.arrayContaining([

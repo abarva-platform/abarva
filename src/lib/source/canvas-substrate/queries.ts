@@ -52,12 +52,37 @@ export async function listArtifactStatesForEventStage(
   stageKey: string,
 ): Promise<SourceEventArtifactState[]> {
   try {
-    const rows =
-      await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
+    const adapter = selectSourceCanvasSubstrateReadAdapter();
+    const rows = await adapter.listArtifactStateMetadataRows(
+      sourceEventId,
+      stageKey,
+    );
+    let reviewRows: Awaited<
+      ReturnType<typeof adapter.listArtifactStateReviewRows>
+    > = [];
+    try {
+      reviewRows = await adapter.listArtifactStateReviewRows(
         sourceEventId,
         stageKey,
       );
-    return rows.map(artifactStateRowToView);
+    } catch (error) {
+      console.error(
+        '[listArtifactStatesForEventStage:review]',
+        error instanceof Error ? error.message : error,
+      );
+    }
+    const reviewsById = new Map(
+      reviewRows.map((row) => [row.id, row.body_generation_metadata]),
+    );
+    return rows.map((row) =>
+      artifactStateRowToView({
+        ...row,
+        body: null,
+        body_generation_metadata: currentReviewReceipt(
+          reviewsById.get(row.id),
+        ),
+      }),
+    );
   } catch (error) {
     console.error(
       '[listArtifactStatesForEventStage]',
@@ -65,6 +90,46 @@ export async function listArtifactStatesForEventStage(
     );
     return [];
   }
+}
+
+function currentReviewReceipt(
+  metadata: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (
+    !metadata ||
+    typeof metadata.qualityGate !== 'object' ||
+    !metadata.qualityGate ||
+    Array.isArray(metadata.qualityGate)
+  ) {
+    return null;
+  }
+  const generatedAt =
+    typeof metadata.generatedAt === 'string'
+      ? Date.parse(metadata.generatedAt)
+      : NaN;
+  if (metadata.humanEditedAt != null) {
+    const humanEditedAt =
+      typeof metadata.humanEditedAt === 'string'
+        ? Date.parse(metadata.humanEditedAt)
+        : NaN;
+    if (
+      !Number.isFinite(generatedAt) ||
+      !Number.isFinite(humanEditedAt) ||
+      humanEditedAt > generatedAt
+    ) {
+      return null;
+    }
+  }
+  const gate = metadata.qualityGate as Record<string, unknown>;
+  return {
+    qualityGate: {
+      passed: gate.passed === true,
+      overallScore: gate.overallScore,
+      finalSummary: gate.finalSummary,
+      unsupportedClaims: gate.unsupportedClaims,
+      missingEvidence: gate.missingEvidence,
+    },
+  };
 }
 
 export async function listGateCriterionStatesForEvent(

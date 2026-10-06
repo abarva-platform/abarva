@@ -1,2 +1,6 @@
-path,term,status,evidence
-,,PASS,No blocked visible/generated/proof legacy terms remain.
+path,term,status,evidence,occurrences,visible_occurrences,classification,action
+datasets/context-artifacts/approved/apex-retail/home-knowledge/approved-home-knowledge-design-contract-pack.json,V4,FAIL,2 occurrence(s) in generated/proof artifact.,2,2,blocked-generated-or-proof-content,replace_visible_language
+datasets/context-artifacts/approved/apex-retail/home-knowledge/approved-home-knowledge-design-contract-pack.json,synthetic demo,FAIL,2 occurrence(s) in generated/proof artifact.,2,2,blocked-generated-or-proof-content,replace_visible_language
+datasets/context-artifacts/approved/first-capital/home-knowledge/approved-home-knowledge-design-contract-pack.json,V4,FAIL,3 occurrence(s) in generated/proof artifact.,3,3,blocked-generated-or-proof-content,replace_visible_language
+datasets/context-artifacts/approved/first-capital/home-knowledge/approved-home-knowledge-design-contract-pack.json,synthetic demo,FAIL,2 occurrence(s) in generated/proof artifact.,2,2,blocked-generated-or-proof-content,replace_visible_language
+datasets/context-artifacts/approved/lakeshore-holdings/home-knowledge/approved-home-knowledge-design-contract-pack.json,synthetic demo,FAIL,1 occurrence(s) in generated/proof artifact.,1,1,blocked-generated-or-proof-content,replace_visible_language

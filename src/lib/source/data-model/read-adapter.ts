@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { leverPriorityRank, leverSequenceRank } from "./source-lever-order";
 import {
   appClientKeyForTenant,
   canonicalTenantKey,
@@ -27,6 +28,7 @@ import {
   buildContractOptimizationOpportunitySet,
   type ContractOptimizationOpportunity,
   type ContractOptimizationOpportunitySet,
+  type ContractOpportunityClaim,
   type FinanceRealizationLink,
   type OptimizationApprovalDecisionRead,
   type OptimizationApprovalRequestRead,
@@ -60,7 +62,10 @@ import type {
   SourceContractPerformancePeriodRow,
   SourceAvaGroundingBundleRow,
   SourceCloudCommitmentCoverageRow,
+  SourceCloudTagQualityRow,
+  SourceLoadRunCompletionRow,
   SourceContractTabIntelligenceRow,
+  SourceContractIntelligenceRow,
   SourcePageStorylineRow,
   SourceContractSpendMonthlyRow,
   SourceContractVendor360Row,
@@ -229,6 +234,68 @@ async function withMeridianFallback<R>(
   return legacyRead();
 }
 
+async function enrichContractNarrativeFacts(
+  tenantKey: string,
+  contract: SourceContract360Row,
+): Promise<SourceContract360Row> {
+  const missingKeys = [
+    ["purpose_summary", "contract.purpose_summary"],
+    ["scope_summary", "contract.scope_summary"],
+    ["commercial_thesis", "contract.commercial_thesis"],
+    ["relationship_summary", "contract.relationship_summary"],
+    ["evidence_boundary_summary", "contract.evidence_boundary"],
+  ].filter(
+    ([field]) =>
+      !String(contract[field as keyof SourceContract360Row] ?? "").trim(),
+  );
+  if (missingKeys.length === 0) return contract;
+
+  const facts = await safeCanonicalSourceQueryForTenant<{
+    fact_key: string;
+    value_text: string | null;
+  }>(
+    tenantKey,
+    `SELECT facts.fact_key, facts.payload ->> 'value_text' AS value_text
+       FROM source.canonical_fact_assertion facts
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = facts.tenant_key
+        AND current_contract.contract_id = facts.contract_id
+        AND current_contract.raw_payload ->> 'dataset_version' = facts.dataset_version
+      WHERE facts.tenant_key = ANY($1::text[])
+        AND facts.contract_id = $2
+        AND facts.fact_key = ANY($3::text[])
+        AND facts.review_state IN ('reviewed', 'approved', 'system_extracted_synthetic_demo')
+      ORDER BY facts.fact_key, facts.updated_at DESC NULLS LAST`,
+    [contract.contract_id, missingKeys.map(([, factKey]) => factKey)],
+  );
+  if (facts.length === 0) return contract;
+
+  const byKey = new Map(
+    facts
+      .filter((fact) => fact.value_text?.trim())
+      .map((fact) => [fact.fact_key, fact.value_text!.trim()]),
+  );
+  return {
+    ...contract,
+    purpose_summary:
+      contract.purpose_summary ?? byKey.get("contract.purpose_summary") ?? null,
+    scope_summary:
+      contract.scope_summary ?? byKey.get("contract.scope_summary") ?? null,
+    commercial_thesis:
+      contract.commercial_thesis ??
+      byKey.get("contract.commercial_thesis") ??
+      null,
+    relationship_summary:
+      contract.relationship_summary ??
+      byKey.get("contract.relationship_summary") ??
+      null,
+    evidence_boundary_summary:
+      contract.evidence_boundary_summary ??
+      byKey.get("contract.evidence_boundary") ??
+      null,
+  };
+}
+
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
@@ -261,13 +328,13 @@ export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
   const governedRows =
-    await queryCanonicalSourceForTenant<SourceContract360Row>(
+    await queryCanonicalSourceWithFallback<SourceContract360Row>(
       tenantKey,
-      "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+      contract360ReadSql(),
     );
   const governedWithGolden = await mergeGoldenContract360Overlay(
     tenantKey,
-    governedRows,
+    resolveContractArchetypes(governedRows),
   );
   if (governedWithGolden.length > 0) return governedWithGolden;
   if (isMeridianTenantKey(tenantKey)) {
@@ -283,7 +350,7 @@ export async function listContract360(
     () =>
       queryForTenant<SourceContract360Row>(
         tenantKey,
-        "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+        contract360ReadSql(),
       ),
     () =>
       meridianCanaryRows<SourceContract360Row>(
@@ -363,7 +430,56 @@ export async function listContract360(
          order by annual_value desc nulls last`,
       ),
   );
-  return mergeGoldenContract360Overlay(tenantKey, rows);
+  return mergeGoldenContract360Overlay(
+    tenantKey,
+    resolveContractArchetypes(rows),
+  );
+}
+
+type Contract360ReadRow = SourceContract360Row & {
+  readonly __declared_contract_archetype?: string | null;
+};
+
+/**
+ * The contract read model historically exposed only vendor_category. Loaders
+ * also persist the reviewed archetype on source.contract.raw_payload, so the
+ * product must read that declared field before falling back to the legacy
+ * category column. This keeps the classification contract-level and avoids
+ * guessing from vendor names or evidence lanes.
+ */
+function contract360ReadSql(contractIdFilter = false): string {
+  return `
+    SELECT
+      c.*,
+      COALESCE(
+        NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
+        NULLIF(canonical.raw_payload ->> 'archetype', ''),
+        NULLIF(c.vendor_category, '')
+      ) AS __declared_contract_archetype
+    FROM source.contract_360 c
+    LEFT JOIN source.contract canonical
+      ON canonical.tenant_key = c.tenant_key
+     AND canonical.contract_id = c.contract_id
+    WHERE c.tenant_key = ANY($1::text[])
+    ${contractIdFilter ? "AND c.contract_id = $2" : ""}
+    ORDER BY c.annual_value DESC NULLS LAST`;
+}
+
+function resolveContractArchetypes(
+  rows: readonly Contract360ReadRow[],
+): SourceContract360Row[] {
+  return rows.map(({ __declared_contract_archetype, ...row }) => {
+    const declared =
+      typeof __declared_contract_archetype === "string"
+        ? __declared_contract_archetype.trim()
+        : "";
+    if (!declared) return row;
+    return {
+      ...row,
+      contract_archetype: declared,
+      vendor_category: declared,
+    };
+  });
 }
 
 async function mergeGoldenContract360Overlay<
@@ -519,23 +635,34 @@ export async function getContract360(
   contractId: string,
 ): Promise<SourceContract360Row | null> {
   const governedRows =
-    await queryCanonicalSourceForTenant<SourceContract360Row>(
+    await queryCanonicalSourceWithFallback<SourceContract360Row>(
       tenantKey,
-      "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
+      `${contract360ReadSql(true)} LIMIT 1`,
       [contractId],
     );
-  if (governedRows[0]) return governedRows[0];
+  if (governedRows[0]) {
+    return enrichContractNarrativeFacts(
+      tenantKey,
+      resolveContractArchetypes(governedRows)[0],
+    );
+  }
   if (isMeridianTenantKey(tenantKey)) {
     const rows = await listContract360(tenantKey);
-    return rows.find((row) => row.contract_id === contractId) ?? null;
+    const contract = rows.find((row) => row.contract_id === contractId) ?? null;
+    return contract ? enrichContractNarrativeFacts(tenantKey, contract) : null;
   }
 
   const rows = await queryForTenant<SourceContract360Row>(
     tenantKey,
-    "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
+    `${contract360ReadSql(true)} LIMIT 1`,
     [contractId],
   );
-  return rows[0] ?? null;
+  return rows[0]
+    ? enrichContractNarrativeFacts(
+        tenantKey,
+        resolveContractArchetypes(rows)[0],
+      )
+    : null;
 }
 
 export async function listVendorContractPortfolio(
@@ -812,6 +939,11 @@ export async function listContractPerformancePeriods(
      INNER JOIN consumption.sourcing_performance_v1 active
        ON active.tenant_key = o.tenant_key
       AND active.observation_id = o.observation_id
+      AND active.load_run_id = o.load_run_id
+     INNER JOIN source.contract current_contract
+       ON current_contract.tenant_key = o.tenant_key
+      AND current_contract.contract_id = o.contract_id
+      AND current_contract.load_run_id = o.load_run_id
 	   WHERE o.tenant_key = ANY($1::text[])
 	     AND o.contract_id = $2
 	   ORDER BY o.period_start, o.observation_id`,
@@ -828,30 +960,34 @@ export async function listContractSpendMonthly(
     await queryCanonicalSourceWithFallback<SourceContractSpendMonthlyRow>(
       tenantKey,
       `SELECT
-	     tenant_key,
-	     observation_id,
-       contract_id,
-       service_id,
-       business_unit,
-       cost_center,
-       period_start AS month,
-       period_start,
-       period_end,
-       committed_amount,
-       invoice_amount,
-       paid_amount,
-       actual_spend,
-       currency,
-       source_system,
-       source_record_id,
-       as_of_date,
-       quality_state,
-       evidence_reference,
-       load_run_id
-     FROM source.contract_consumption_observation
-	   WHERE tenant_key = ANY($1::text[])
-	     AND contract_id = $2
-	   ORDER BY period_start, observation_id`,
+	     o.tenant_key,
+	     o.observation_id,
+       o.contract_id,
+       o.service_id,
+       o.business_unit,
+       o.cost_center,
+       o.period_start AS month,
+       o.period_start,
+       o.period_end,
+       o.committed_amount,
+       o.invoice_amount,
+       o.paid_amount,
+       o.actual_spend,
+       o.currency,
+       o.source_system,
+       o.source_record_id,
+       o.as_of_date,
+       o.quality_state,
+       o.evidence_reference,
+       o.load_run_id
+	   FROM source.contract_consumption_observation o
+	   INNER JOIN source.contract current_contract
+	     ON current_contract.tenant_key = o.tenant_key
+	    AND current_contract.contract_id = o.contract_id
+	    AND current_contract.load_run_id = o.load_run_id
+	   WHERE o.tenant_key = ANY($1::text[])
+	     AND o.contract_id = $2
+	   ORDER BY o.period_start, o.observation_id`,
       [contractId],
     );
   return rows.map(normalizeSpendMonthlyRow);
@@ -894,6 +1030,95 @@ export async function listCloudCommitmentCoverageRows(
   return rows.map(normalizeCloudCommitmentCoverageRow);
 }
 
+/**
+ * Monthly tag-quality observations for one contract.
+ *
+ * These rows were being loaded and asserted as canonical facts while nothing
+ * read them, so the attribution gap they record could not reach any surface.
+ */
+/**
+ * The most recent completed package load per source table, newest first.
+ *
+ * `completed_at` is written by both package loaders on a terminal status. A
+ * caller wanting "when did this data last change" should read this rather than
+ * infer a date from a run identifier: an identifier may carry the dataset
+ * version's stamp, the run's, both, or neither, and cannot be told apart.
+ *
+ * Only `completed` rows are returned. A failed run also carries a timestamp,
+ * and reporting it as a refresh would state that data landed when it did not.
+ */
+export async function listSourceLoadRunCompletions(
+  tenantKey: string,
+): Promise<SourceLoadRunCompletionRow[]> {
+  // Canonical only, deliberately. The fallback helper retries under the legacy
+  // tenant alias, and the ECL path must never scope to it — a freshness read is
+  // not worth widening tenant scope for. The load-run ledger is canonical, so a
+  // canonical miss means no completed run is recorded, which the caller reports
+  // as such rather than guessing.
+  const rows = await safeCanonicalSourceQueryForTenant<SourceLoadRunCompletionRow>(
+      tenantKey,
+      `SELECT
+         tenant_key,
+         dataset_version,
+         load_run_id,
+         'source.cloud_consumption_package_load_run' AS source_table,
+         completed_at
+       FROM source.cloud_consumption_package_load_run
+        WHERE tenant_key = ANY($1::text[])
+          AND status = 'completed'
+          AND completed_at IS NOT NULL
+       UNION ALL
+       SELECT
+         tenant_key,
+         dataset_version,
+         load_run_id,
+         'source.contract_depth_package_load_run' AS source_table,
+         completed_at
+       FROM source.contract_depth_package_load_run
+        WHERE tenant_key = ANY($1::text[])
+          AND status = 'completed'
+          AND completed_at IS NOT NULL
+       ORDER BY completed_at DESC`,
+    );
+  return rows;
+}
+
+export async function listCloudTagQualityRows(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceCloudTagQualityRow[]> {
+  const rows = await queryCanonicalSourceWithFallback<SourceCloudTagQualityRow>(
+    tenantKey,
+    `SELECT
+	     tenant_key,
+       dataset_version,
+       tag_quality_id,
+       contract_id,
+       vendor_id AS vendor_ref,
+       vendor_name,
+       cloud_provider,
+       period_start,
+       period_end,
+       total_spend_usd,
+       owner_tagged_spend_usd,
+       application_tagged_spend_usd,
+       untagged_spend_usd,
+       owner_tag_coverage_pct,
+       application_tag_coverage_pct,
+       data_quality_state,
+       source_file_id,
+       confidence,
+       quality_state,
+       load_run_id
+     FROM source.cloud_tag_quality_observation
+	    WHERE tenant_key = ANY($1::text[])
+	      AND contract_id = $2
+	    ORDER BY period_start, tag_quality_id`,
+    [contractId],
+  );
+  return rows.map(normalizeCloudTagQualityRow);
+}
+
 export async function listSourceContractEvidenceCoverage(
   tenantKey: string,
 ): Promise<SourceContractEvidenceCoverageRow[]> {
@@ -908,6 +1133,28 @@ export async function listSourceContractEvidenceCoverage(
   return rows.map(normalizeSourceContractEvidenceCoverageRow);
 }
 
+export async function getSourceContractEvidenceCoverage(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractEvidenceCoverageRow | null> {
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractEvidenceCoverageRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_evidence_coverage_v1
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      LIMIT 1`,
+      [contractId],
+    );
+  const row = rows[0];
+  return row &&
+    row.contract_id === contractId &&
+    tenantKeyAliases(tenantKey).includes(row.tenant_key)
+    ? normalizeSourceContractEvidenceCoverageRow(row)
+    : null;
+}
+
 export async function listSourceContractActionCandidates(
   tenantKey: string,
 ): Promise<SourceContractActionCandidateRow[]> {
@@ -920,6 +1167,29 @@ export async function listSourceContractActionCandidates(
 	    ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id`,
     );
   return rows.map(normalizeSourceContractActionCandidateRow);
+}
+
+export async function getSourceContractActionCandidate(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractActionCandidateRow | null> {
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractActionCandidateRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_action_candidate_v1
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id
+      LIMIT 1`,
+      [contractId],
+    );
+  const row = rows[0];
+  return row &&
+    row.contract_id === contractId &&
+    tenantKeyAliases(tenantKey).includes(row.tenant_key)
+    ? normalizeSourceContractActionCandidateRow(row)
+    : null;
 }
 
 export async function listSourceContractClaimCards(
@@ -979,6 +1249,38 @@ export async function listContractTabIntelligence(
   return rows.map(normalizeSourceContractTabIntelligenceRow);
 }
 
+export async function getContractIntelligence(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractIntelligenceRow | null> {
+  const hardenedRows =
+    await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_intelligence_v2
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      LIMIT 1`,
+      [contractId],
+    );
+  if (hardenedRows[0]) {
+    return normalizeSourceContractIntelligenceRow(hardenedRows[0]);
+  }
+  const compatibilityRows =
+    await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_intelligence_v1
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      LIMIT 1`,
+      [contractId],
+    );
+  return compatibilityRows[0]
+    ? normalizeSourceContractIntelligenceRow(compatibilityRows[0])
+    : null;
+}
+
 export async function listSourceAvaGroundingBundles(
   tenantKey: string,
 ): Promise<SourceAvaGroundingBundleRow[]> {
@@ -997,6 +1299,61 @@ export async function getContractEvidenceOverview(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidenceOverviewRow | null> {
+  const canonicalRows = await queryCanonicalSourceWithFallback<SourceContractEvidenceOverviewRow>(
+    tenantKey,
+    `WITH scope AS (
+       SELECT
+         tenant_key,
+         contract_id,
+         string_agg(DISTINCT NULLIF(business_function, ''), ', ')
+           FILTER (WHERE NULLIF(business_function, '') IS NOT NULL) AS business_functions_supported,
+         string_agg(DISTINCT NULLIF(hosting_model, ''), ', ')
+           FILTER (WHERE NULLIF(hosting_model, '') IS NOT NULL) AS systems_services_supported
+       FROM source.contract_application_scope
+       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY tenant_key, contract_id
+     )
+     SELECT
+       c.tenant_key,
+       NULL::text AS dataset_version,
+       c.contract_id,
+       c.vendor_ref AS vendor_id,
+       c.vendor_name,
+       c.contract_name,
+       c.vendor_category AS contract_archetype,
+       COALESCE(NULLIF(c.purpose_summary, ''), NULLIF(c.scope_summary, '')) AS contract_english_overview,
+       scope.business_functions_supported,
+       scope.systems_services_supported,
+       c.annual_value AS annual_value_usd,
+       c.actual_annual_spend AS actual_annual_spend_usd,
+       c.total_committed_value AS total_committed_value_usd,
+       NULL::date AS start_date,
+       c.end_date,
+       CASE
+         WHEN c.end_date IS NOT NULL AND c.notice_period_days IS NOT NULL
+           THEN c.end_date - c.notice_period_days::int
+         ELSE NULL::date
+       END AS notice_deadline,
+       c.notice_period_days,
+       c.auto_renew,
+       c.renewal_owner_ref AS decision_owner_role_ref,
+       'canonical_source'::text AS source_system,
+       NULL::text AS source_system_examples,
+       NULL::text AS source_file_report,
+       concat('contract:', c.contract_id) AS source_record_id,
+       'canonical contract projection'::text AS extraction_grain,
+       NULL::text AS refresh_frequency,
+       'system_extracted_synthetic_demo'::text AS review_status
+     FROM source.contract_360 c
+     LEFT JOIN scope
+       ON scope.tenant_key = c.tenant_key
+      AND scope.contract_id = c.contract_id
+     WHERE c.tenant_key = ANY($1::text[]) AND c.contract_id = $2
+     LIMIT 1`,
+    [contractId],
+  );
+  if (canonicalRows[0]) return canonicalRows[0];
+
   const rows = await safeQueryForTenant<SourceContractEvidenceOverviewRow>(
     tenantKey,
     `SELECT *
@@ -1013,6 +1370,36 @@ export async function listContractEvidenceScope(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidenceScopeRow[]> {
+  const canonicalRows = await queryCanonicalSourceWithFallback<SourceContractEvidenceScopeRow>(
+    tenantKey,
+    `SELECT
+       tenant_key,
+       NULL::text AS dataset_version,
+       contract_id,
+       vendor_ref AS vendor_id,
+       vendor_name,
+       application_ref,
+       application_name,
+       business_function,
+       criticality,
+       NULL::text AS service_or_platform_component,
+       annual_run_cost AS annual_run_cost_usd,
+       'reviewed_mapping'::text AS relationship_method,
+       0.8::numeric AS relationship_confidence,
+       'canonical_source'::text AS source_system,
+       NULL::text AS source_system_examples,
+       NULL::text AS source_record_id,
+       NULL::text AS source_file_report,
+       'canonical scope projection'::text AS extraction_grain,
+       NULL::text AS refresh_frequency,
+       'system_extracted_synthetic_demo'::text AS review_status
+      FROM source.contract_application_scope
+     WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+     ORDER BY annual_run_cost DESC NULLS LAST, application_name`,
+    [contractId],
+  );
+  if (canonicalRows.length > 0) return canonicalRows;
+
   return safeQueryForTenant<SourceContractEvidenceScopeRow>(
     tenantKey,
     `SELECT *
@@ -1041,6 +1428,55 @@ export async function getContractEvidencePerformanceSummary(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidencePerformanceSummary | null> {
+  const canonicalRows = await queryCanonicalSourceWithFallback<SourceContractEvidencePerformanceSummary>(
+    tenantKey,
+    `WITH sla AS (
+       SELECT
+         contract_id,
+         MIN(period_start) AS period_start,
+         MAX(period_end) AS period_end,
+         COUNT(*)::int AS sla_months,
+         COALESCE(SUM(breach_count), 0)::int AS breach_count,
+         COALESCE(SUM(credit_calculated), 0)::numeric AS credit_calculated,
+         COALESCE(SUM(credit_claimed), 0)::numeric AS credit_claimed,
+         COALESCE(SUM(credit_recovered), 0)::numeric AS credit_recovered,
+         ARRAY_AGG(DISTINCT source_system) FILTER (WHERE source_system IS NOT NULL) AS source_systems
+       FROM source.contract_performance_observation
+       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY contract_id
+     ), invoice AS (
+       SELECT COUNT(*)::int AS invoice_line_count
+       FROM source.contract_consumption_observation
+       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+     )
+     SELECT
+       sla.contract_id,
+       NULL::text AS dataset_version,
+       sla.period_start,
+       sla.period_end,
+       sla.sla_months,
+       0::int AS sev1_incidents,
+       0::int AS sev2_incidents,
+       sla.credit_calculated AS service_credits_earned_usd,
+       sla.credit_claimed AS service_credits_claimed_usd,
+       sla.credit_recovered AS service_credits_received_usd,
+       COALESCE(invoice.invoice_line_count, 0)::int AS invoice_line_count,
+       0::int AS invoice_exception_count,
+       0::numeric AS invoice_exception_amount_usd,
+       0::numeric AS rate_card_variance_usd,
+       0::numeric AS recoverable_leakage_usd,
+       0::numeric AS avoided_cost_usd,
+       0::numeric AS negotiated_improvement_usd,
+       0::numeric AS realized_value_usd,
+       COALESCE(sla.source_systems, ARRAY[]::text[]) AS source_systems,
+       NULL::text AS refresh_frequency,
+       'system_extracted_synthetic_demo'::text AS review_status
+      FROM sla
+      CROSS JOIN invoice`,
+    [contractId],
+  );
+  if (canonicalRows[0]) return normalizeEvidencePerformanceSummary(canonicalRows[0]);
+
   const rows =
     await safeQueryForTenant<SourceContractEvidencePerformanceSummary>(
       tenantKey,
@@ -1188,12 +1624,8 @@ function normalizeCloudCommitmentCoverageRow(
     eligible_stable_workload_spend_usd: numberValue(
       row.eligible_stable_workload_spend_usd,
     ),
-    commitment_covered_spend_usd: numberValue(
-      row.commitment_covered_spend_usd,
-    ),
-    on_demand_eligible_spend_usd: numberValue(
-      row.on_demand_eligible_spend_usd,
-    ),
+    commitment_covered_spend_usd: numberValue(row.commitment_covered_spend_usd),
+    on_demand_eligible_spend_usd: numberValue(row.on_demand_eligible_spend_usd),
     commitment_coverage_pct: numberValue(row.commitment_coverage_pct),
     commitment_utilization_pct: numberValue(row.commitment_utilization_pct),
     recommended_step_up_usd: numberValue(row.recommended_step_up_usd),
@@ -1201,6 +1633,21 @@ function normalizeCloudCommitmentCoverageRow(
     candidate_monthly_savings_usd: numberValue(
       row.candidate_monthly_savings_usd,
     ),
+    confidence: numberValue(row.confidence),
+  };
+}
+
+function normalizeCloudTagQualityRow(
+  row: SourceCloudTagQualityRow,
+): SourceCloudTagQualityRow {
+  return {
+    ...row,
+    total_spend_usd: numberValue(row.total_spend_usd),
+    owner_tagged_spend_usd: numberValue(row.owner_tagged_spend_usd),
+    application_tagged_spend_usd: numberValue(row.application_tagged_spend_usd),
+    untagged_spend_usd: numberValue(row.untagged_spend_usd),
+    owner_tag_coverage_pct: numberValue(row.owner_tag_coverage_pct),
+    application_tag_coverage_pct: numberValue(row.application_tag_coverage_pct),
     confidence: numberValue(row.confidence),
   };
 }
@@ -1289,6 +1736,16 @@ function normalizeSourceContractTabIntelligenceRow(
   return {
     ...row,
     sort_order: numberValue(row.sort_order) ?? 0,
+    provenance: jsonObject(row.provenance),
+  };
+}
+
+function normalizeSourceContractIntelligenceRow(
+  row: SourceContractIntelligenceRow,
+): SourceContractIntelligenceRow {
+  return {
+    ...row,
+    intelligence_record: jsonObject(row.intelligence_record) ?? {},
     provenance: jsonObject(row.provenance),
   };
 }
@@ -1436,10 +1893,10 @@ async function getPersistedContractOptimizationOpportunitySet(
 ): Promise<ContractOptimizationOpportunitySet | null> {
   const versionRows = await safeQueryForTenant<{ dataset_version: string }>(
     tenantKey,
-    `SELECT dataset_version
-       FROM source.optimization_opportunity
-      WHERE tenant_key = ANY($1::text[])
-        AND contract_id = $2
+    `SELECT opportunity.dataset_version AS dataset_version
+       FROM source.optimization_opportunity opportunity
+      WHERE opportunity.tenant_key = ANY($1::text[])
+        AND opportunity.contract_id = $2
       GROUP BY dataset_version
       ORDER BY max(updated_at) DESC NULLS LAST
       LIMIT 1`,
@@ -1463,6 +1920,8 @@ async function getPersistedContractOptimizationOpportunitySet(
     outcomeRows,
     financeRows,
     financeEvidenceRows,
+    claimRows,
+    actionRows,
   ] = await Promise.all([
     safeQueryForTenant<NumericRow>(
       tenantKey,
@@ -1579,7 +2038,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
+      `SELECT *, COUNT(*) OVER ()::int AS case_count
          FROM source.optimization_case
         WHERE tenant_key = ANY($1::text[])
           AND dataset_version = $2
@@ -1666,6 +2125,24 @@ async function getPersistedContractOptimizationOpportunitySet(
         ORDER BY evidence.realization_id, evidence.source_table, evidence.source_record_id`,
       [datasetVersion, contractId],
     ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT claim.*
+         FROM source.opportunity_claim claim
+        WHERE claim.tenant_key = ANY($1::text[])
+          AND claim.dataset_version = $2
+          AND claim.contract_id = $3
+        ORDER BY claim.opportunity_id, claim.claim_role, claim.claim_id`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT opportunity_id, accountable_role, priority, decision_due_date
+         FROM source.contract_action_candidate_v1
+        WHERE tenant_key = ANY($1::text[])
+          AND contract_id = $2`,
+      [contractId],
+    ),
   ]);
 
   if (opportunityRows.length === 0) return null;
@@ -1689,6 +2166,17 @@ async function getPersistedContractOptimizationOpportunitySet(
     "calculation_run_id",
   );
 
+  const claims = claimRows.map(persistedClaimFromRow);
+  const sizingClaimByOpportunity = new Map(
+    claims
+      .filter((claim) => claim.role === "sizing")
+      .map((claim) => [claim.opportunityId, claim]),
+  );
+  const claimsRead = claimRows.length > 0;
+  const actionByOpportunity = new Map(
+    actionRows.map((row) => [textValue(row.opportunity_id) ?? "", row]),
+  );
+
   const opportunities = opportunityRows.map((row) =>
     persistedOpportunityFromRow({
       row,
@@ -1703,8 +2191,22 @@ async function getPersistedContractOptimizationOpportunitySet(
         null,
       calculationInputsByRun,
       calculationOutputsByRun,
+      sizingClaim: claimsRead
+        ? sizingClaimByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? null
+        : undefined,
+      actionRow: actionByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? null,
     }),
-  );
+  ).sort((left, right) => {
+    const leftPriority = leverPriorityRank(
+      textValue(actionByOpportunity.get(left.opportunityId)?.priority) ?? left.negotiationDetail?.priority,
+    );
+    const rightPriority = leverPriorityRank(
+      textValue(actionByOpportunity.get(right.opportunityId)?.priority) ?? right.negotiationDetail?.priority,
+    );
+    return leftPriority - rightPriority ||
+      (leftPriority === Number.MAX_SAFE_INTEGER ? 0 :
+        leverSequenceRank(left.label) - leverSequenceRank(right.label));
+  });
 
   const financeEvidenceByRealization = groupByString(
     financeEvidenceRows,
@@ -1774,12 +2276,15 @@ async function getPersistedContractOptimizationOpportunitySet(
     opportunities,
     approvalRequests,
     negotiatedOutcomes,
+    priorityByOpportunity: actionByOpportunity,
   });
   const blockingRequirements = requirementRows
     .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
     .filter((row) => textValue(row.status) !== "met")
     .map((row) => textValue(row.status_detail))
     .filter((value): value is string => Boolean(value));
+  const baseline = persistedBaselineRead(baselineRow, contract);
+  const baselineConflict = baseline.status === "conflict";
 
   return {
     tenantKey,
@@ -1789,24 +2294,26 @@ async function getPersistedContractOptimizationOpportunitySet(
       textValue(opportunityRows[0]?.vendor_id) ?? contract?.vendor_ref ?? null,
     vendorName: contract?.vendor_name ?? null,
     contractName: contract?.contract_name ?? null,
-    recommendation: opportunities.some(
+    recommendation: baselineConflict || opportunities.some(
       (opportunity) => opportunity.stage === "baseline_conflict",
     )
       ? "Build evidence before optimizing."
       : "Act now on governed evidence.",
-    recommendationDetail:
-      opportunities[0]?.narrative ??
-      "Optimization opportunities are loaded from the governed opportunity spine.",
-    actionState: opportunities.some(
+    recommendationDetail: baselineConflict
+      ? baseline.detail
+      : opportunities[0]?.narrative ??
+        "Optimization opportunities are loaded from the governed opportunity spine.",
+    actionState: baselineConflict || opportunities.some(
       (opportunity) => opportunity.stage === "baseline_conflict",
     )
       ? "request_evidence"
       : selectedOpportunityId
         ? "review_calculation"
         : "request_evidence",
-    baseline: persistedBaselineRead(baselineRow, contract),
+    baseline,
     selectedOpportunityId,
     opportunities,
+    claims,
     optimizationCase,
     approvalRequests,
     negotiatedOutcomes,
@@ -1816,6 +2323,65 @@ async function getPersistedContractOptimizationOpportunitySet(
     potentialAvoidableUsd,
     potentialNegotiableUsd,
     financeConfirmedUsd,
+  };
+}
+
+function persistedClaimFromRow(row: NumericRow): ContractOpportunityClaim {
+  const sourceRefs = jsonObjectArray(row.source_refs)
+    .map((value) => ({
+      sourceSystem:
+        textValue(value.sourceSystem) ?? textValue(value.source_system) ?? "Contract intelligence",
+      sourceRecordId: textValue(value.sourceRecordId) ?? textValue(value.source_record_id),
+      sourceFileReport: textValue(value.sourceFileReport) ?? textValue(value.source_file_report),
+      tableName: textValue(value.sourceTable) ?? textValue(value.source_table) ?? "source.opportunity_claim",
+      pageSpan:
+        textValue(value.pageSpan) ??
+        textValue(value.page) ??
+        textValue(value.source_span),
+      reviewState: textValue(value.reviewState) ?? textValue(value.review_state),
+    }));
+  return {
+    claimId: textValue(row.claim_id) ?? "",
+    opportunityId: textValue(row.opportunity_id) ?? "",
+    contractId: textValue(row.contract_id) ?? "",
+    role: textValue(row.claim_role) ?? "",
+    statement: textValue(row.statement) ?? "",
+    basis: textValue(row.basis) ?? "not_recorded",
+    scenarioKind:
+      readLiteral(row.scenario_kind, [
+        "signed_record",
+        "proposed_target",
+        "benchmark_comparable",
+      ]) ?? "signed_record",
+    amountUsd: numberValue(row.amount_usd),
+    amountLowUsd: numberValue(row.amount_low_usd),
+    amountHighUsd: numberValue(row.amount_high_usd),
+    evidenceStatus:
+      readLiteral(row.evidence_status, [
+        "supported",
+        "partial",
+        "missing",
+        "conflicted",
+        "not_established",
+      ]) ?? "not_established",
+    reviewStatus:
+      readLiteral(row.review_status, ["draft", "reviewed", "approved", "blocked"]) ??
+      "draft",
+    sourceRefs,
+    calculationRunId: textValue(row.calculation_run_id),
+    benchmarkId: textValue(row.benchmark_id),
+    playbookRuleId: textValue(row.playbook_rule_id),
+    playbookRuleVersion: textValue(row.playbook_rule_version),
+    producedBy:
+      readLiteral(row.produced_by, [
+        "package_author",
+        "deterministic_loader",
+        "human_reviewer",
+        "claude",
+      ]) ?? "deterministic_loader",
+    generationRef: textValue(row.generation_ref),
+    reviewerRef: textValue(row.reviewer_ref),
+    reviewedAt: textValue(row.reviewed_at),
   };
 }
 
@@ -1833,11 +2399,12 @@ function optimizationCaseFromRow(row: NumericRow): OptimizationCaseRead {
         "outcome_recorded",
         "finance_handoff",
         "closed",
-      ]) ?? "intake",
+      ]) ?? "unverified",
+    caseCount: numberValue(row.case_count) ?? 1,
     owner: textValue(row.owner),
     nextAction:
       textValue(row.next_action) ??
-      "Review the optimization case before taking vendor action.",
+      "Next action not recorded.",
   };
 }
 
@@ -1908,10 +2475,16 @@ function persistedBaselineRead(
   contract: SourceContract360Row | null,
 ): OptimizationBaselineRead {
   const hasPersistedBaseline = Object.keys(baselineRow).length > 0;
-  const annualValueUsd =
-    numberValue(baselineRow.annual_value_usd) ??
-    numberValue(contract?.resolved_annual_value) ??
-    numberValue(contract?.annual_value);
+  const contractAnnualValueUsd =
+    numberValue(contract?.annual_value) ??
+    numberValue(contract?.resolved_annual_value);
+  const persistedAnnualValueUsd = numberValue(baselineRow.annual_value_usd);
+  const annualValueUsd = contractAnnualValueUsd ?? persistedAnnualValueUsd;
+  const annualValueDriftUsd =
+    contractAnnualValueUsd != null && persistedAnnualValueUsd != null
+      ? Math.abs(contractAnnualValueUsd - persistedAnnualValueUsd)
+      : 0;
+  const annualValueConflict = annualValueDriftUsd > 1;
   const actualAnnualSpendUsd =
     numberValue(baselineRow.actual_annual_spend_usd) ??
     numberValue(contract?.actual_annual_spend);
@@ -1920,18 +2493,25 @@ function persistedBaselineRead(
     numberValue(contract?.resolved_total_committed_value) ??
     numberValue(contract?.total_committed_value);
   const status =
-    readLiteral(baselineRow.baseline_state, ["ready", "conflict", "missing"]) ??
-    "missing";
+    annualValueConflict
+      ? "conflict"
+      : readLiteral(baselineRow.baseline_state, ["ready", "conflict", "missing"]) ??
+        "missing";
   const headline =
-    textValue(jsonObject(baselineRow.payload).headline) ??
-    (hasPersistedBaseline
-      ? "Commercial baseline is incomplete."
-      : "Commercial baseline needs pricing schedule tie-out.");
+    annualValueConflict
+      ? "Contract annual value and optimization baseline disagree."
+      : textValue(jsonObject(baselineRow.payload).headline) ??
+        (hasPersistedBaseline
+          ? "Commercial baseline is incomplete."
+          : "Commercial baseline needs pricing schedule tie-out.");
   const detail =
-    textValue(baselineRow.detail) ??
-    (hasPersistedBaseline
-      ? "Contract register values are available, but baseline detail still needs review before approving a value case."
-      : "Contract register values are loaded from Contract 360; pricing schedule rows are still pending, so value approval remains blocked.");
+    annualValueConflict
+      ? "Contract 360 and the persisted optimization baseline state different annual values. Resolve the source records before approving a value case."
+      : textValue(baselineRow.detail) ??
+        (hasPersistedBaseline
+          ? "Contract register values are available, but baseline detail still needs review before approving a value case."
+          : "Contract register values are loaded from Contract 360; pricing schedule rows are still pending, so value approval remains blocked.");
+  const baselineSourceRefs = jsonArray(baselineRow.source_refs);
 
   return {
     status,
@@ -1943,15 +2523,19 @@ function persistedBaselineRead(
     ),
     actualAnnualSpendUsd,
     totalCommittedValueUsd,
-    conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
+    conflictAmountUsd: annualValueConflict
+      ? annualValueDriftUsd
+      : numberValue(baselineRow.conflict_amount_usd),
     sourceRefs:
-      jsonArray(baselineRow.source_refs).length > 0
-        ? jsonArray(baselineRow.source_refs)
-        : [
-            "source.contract_360.annual_value",
-            "source.contract_360.actual_annual_spend",
-            "source.contract_360.total_committed_value",
-          ],
+      annualValueConflict
+        ? [...new Set([...baselineSourceRefs, "source.contract_360.annual_value"])]
+        : baselineSourceRefs.length > 0
+          ? baselineSourceRefs
+          : [
+              "source.contract_360.annual_value",
+              "source.contract_360.actual_annual_spend",
+              "source.contract_360.total_committed_value",
+            ],
   };
 }
 
@@ -1963,6 +2547,9 @@ function persistedOpportunityFromRow(input: {
   readonly calculationRun: NumericRow | null;
   readonly calculationInputsByRun: Map<string, NumericRow[]>;
   readonly calculationOutputsByRun: Map<string, NumericRow[]>;
+  /** undefined means the compatibility claim table is unavailable; null is a deliberate unsized result. */
+  readonly sizingClaim?: ContractOpportunityClaim | null;
+  readonly actionRow?: NumericRow | null;
 }): ContractOptimizationOpportunity {
   const payload = jsonObject(input.row.payload);
   const opportunityId = textValue(input.row.opportunity_id) ?? "";
@@ -1983,10 +2570,45 @@ function persistedOpportunityFromRow(input: {
   const blockingRequirement = input.requirementRows.find(
     (row) => textValue(row.status) !== "met",
   );
-  const valuationAmount =
-    input.valuationRows.find(
-      (row) => textValue(row.valuation_type) === "potential",
-    )?.amount_usd ?? input.row.amount_usd;
+  const valuationAmount = input.valuationRows.find(
+    (row) => textValue(row.valuation_type) === "potential",
+  )?.amount_usd;
+  const governedSizing = input.sizingClaim;
+  const calculatedOutput = input.calculationRun
+    ? input.calculationOutputsByRun
+        .get(textValue(input.calculationRun.calculation_run_id) ?? "")
+        ?.find((row) => textValue(row.output_key) === "calculated_amount_usd")
+    : undefined;
+  const calculatedAmount = numberValue(calculatedOutput?.amount_usd);
+  const calculatedClaimMatches =
+    governedSizing?.basis !== "calculated" ||
+    (calculation != null &&
+      governedSizing.calculationRunId ===
+        textValue(input.calculationRun?.calculation_run_id) &&
+      calculatedAmount != null &&
+      (governedSizing.amountUsd != null
+        ? Math.abs(governedSizing.amountUsd - calculatedAmount) <= 1
+        : governedSizing.amountLowUsd != null &&
+          governedSizing.amountHighUsd != null &&
+          calculatedAmount >= governedSizing.amountLowUsd &&
+          calculatedAmount <= governedSizing.amountHighUsd));
+  const sizingIsSupported =
+    governedSizing !== undefined &&
+    governedSizing !== null &&
+    ["calculated", "benchmark"].includes(governedSizing.basis) &&
+    ["supported", "partial"].includes(governedSizing.evidenceStatus) &&
+    governedSizing.sourceRefs.length > 0 &&
+    (governedSizing.basis === "calculated"
+      ? Boolean(governedSizing.calculationRunId)
+      : Boolean(governedSizing.benchmarkId)) &&
+    (governedSizing.amountUsd != null ||
+      (governedSizing.amountLowUsd != null && governedSizing.amountHighUsd != null)) &&
+    calculatedClaimMatches;
+  const governedAmount = sizingIsSupported
+    ? governedSizing.amountUsd ?? governedSizing.amountHighUsd ?? null
+    : null;
+  const compatibilityAmount =
+    input.sizingClaim === undefined ? valuationAmount ?? input.row.amount_usd : null;
 
   return {
     opportunityId,
@@ -1999,19 +2621,33 @@ function persistedOpportunityFromRow(input: {
       textValue(payload.label) ??
       opportunityId,
     valueType: readValueType(input.row.value_type),
-    amountUsd:
-      numberValue(input.row.amount_usd) ?? numberValue(valuationAmount),
+    amountUsd: numberValue(governedAmount ?? compatibilityAmount),
+    amountLowUsd: sizingIsSupported
+      ? governedSizing?.amountLowUsd ?? null
+      : null,
+    amountHighUsd: sizingIsSupported
+      ? governedSizing?.amountHighUsd ?? null
+      : null,
     amountState:
-      readLiteral(input.row.amount_state, ["exact", "range", "not_sized"]) ??
-      "not_sized",
+      governedAmount != null
+        ? readLiteral(input.row.amount_state, ["exact", "range", "not_sized"]) ?? "exact"
+        : "not_sized",
     stage: readStage(input.row.stage),
     evidenceGrade: readEvidenceGrade(input.row.evidence_grade),
     confidence: numberValue(input.row.confidence),
     deadline: textValue(input.row.deadline),
-    owner: textValue(input.row.owner),
+    owner:
+      textValue(input.actionRow?.accountable_role) ??
+      negotiationDetailFromPayload(payload)?.ownerRole ??
+      textValue(input.row.owner),
     blockingGap:
-      textValue(input.row.blocking_gap) ??
-      textValue(blockingRequirement?.status_detail),
+      governedSizing?.basis === "calculated" && !calculatedClaimMatches
+        ? "The authored sizing claim disagrees with its calculation run or the run output is missing. Reconcile the claim before using an amount."
+        : input.sizingClaim === null &&
+          /finance confirmation|owner approval/i.test(textValue(input.row.blocking_gap) ?? "")
+        ? "No supported sizing calculation or accepted benchmark is recorded."
+        : textValue(input.row.blocking_gap) ??
+          textValue(blockingRequirement?.status_detail),
     nextAction:
       textValue(input.row.next_action) ?? "Review the opportunity evidence.",
     sourceSystems:
@@ -2196,10 +2832,12 @@ function selectDefaultOptimizationOpportunityId({
   opportunities,
   approvalRequests,
   negotiatedOutcomes,
+  priorityByOpportunity,
 }: {
   readonly opportunities: readonly ContractOptimizationOpportunity[];
   readonly approvalRequests: readonly OptimizationApprovalRequestRead[];
   readonly negotiatedOutcomes: readonly OptimizationNegotiatedOutcomeRead[];
+  readonly priorityByOpportunity?: ReadonlyMap<string, NumericRow>;
 }): string | null {
   const opportunityIds = new Set(
     opportunities.map((opportunity) => opportunity.opportunityId),
@@ -2223,8 +2861,12 @@ function selectDefaultOptimizationOpportunityId({
   const tracedOpportunities = opportunities.filter(
     (opportunity) => classifyOpportunityTrace(opportunity).state === "traced",
   );
-  const selectFrom = (candidates: readonly ContractOptimizationOpportunity[]) =>
-    candidates.find((opportunity) => opportunity.stage === "target_position")
+  const selectFrom = (candidates: readonly ContractOptimizationOpportunity[]) => {
+    const p0 = candidates.find((opportunity) =>
+      leverPriorityRank(textValue(priorityByOpportunity?.get(opportunity.opportunityId)?.priority)) === 0,
+    );
+    if (p0) return p0.opportunityId;
+    return candidates.find((opportunity) => opportunity.stage === "target_position")
       ?.opportunityId ??
     candidates.find((opportunity) => opportunity.stage === "approval_required")
       ?.opportunityId ??
@@ -2235,6 +2877,7 @@ function selectDefaultOptimizationOpportunityId({
       ?.opportunityId ??
     candidates[0]?.opportunityId ??
     null;
+  };
 
   const tracedOpportunityId = selectFrom(tracedOpportunities);
   if (tracedOpportunityId) return tracedOpportunityId;
@@ -2360,6 +3003,27 @@ function jsonArray(value: unknown): string[] {
     }
   }
   return [];
+}
+
+function jsonObjectArray(value: unknown): Record<string, unknown>[] {
+  const parsed =
+    Array.isArray(value)
+      ? value
+      : typeof value === "string" && value.trim()
+        ? (() => {
+            try {
+              return JSON.parse(value) as unknown;
+            } catch {
+              return [];
+            }
+          })()
+        : [];
+  return Array.isArray(parsed)
+    ? parsed.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item && typeof item === "object" && !Array.isArray(item)),
+      )
+    : [];
 }
 
 function jsonRecordArray(value: unknown): Record<string, unknown>[] {
@@ -2516,7 +3180,21 @@ export async function listDocExtractionsForSubject(
 ): Promise<DocExtractionRow[]> {
   return queryForTenant<DocExtractionRow>(
     tenantKey,
-    "SELECT * FROM doc.extraction WHERE tenant_key = ANY($1::text[]) AND subject_ref = $2 ORDER BY extracted_at DESC",
+    `SELECT extraction.*
+       FROM doc.extraction extraction
+       JOIN doc.file file
+         ON file.tenant_key = extraction.tenant_key
+        AND file.file_id = extraction.source_file_id
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = file.tenant_key
+        AND current_contract.contract_id = file.contract_ref
+        AND (
+          current_contract.load_run_id = file.load_run_id
+          OR file.metadata_json ->> 'dataset_version' = current_contract.raw_payload ->> 'dataset_version'
+        )
+      WHERE extraction.tenant_key = ANY($1::text[])
+        AND extraction.subject_ref = $2
+      ORDER BY extraction.extracted_at DESC, extraction.extraction_id`,
     [subjectRef],
   );
 }
@@ -2528,11 +3206,18 @@ export async function listDocFilesForContract(
 ): Promise<DocFileRow[]> {
   return queryForTenant<DocFileRow>(
     tenantKey,
-    `SELECT file_id, tenant_key, file_name, media_type, page_count, load_run_id,
+    `SELECT file.file_id, file.tenant_key, file.file_name, file.media_type, file.page_count, file.load_run_id,
             document_role, document_type, contract_ref, visibility_class,
             content_authenticity, uploaded_at, metadata_json
-       FROM doc.file
-      WHERE tenant_key = ANY($1::text[]) AND contract_ref = $2
+       FROM doc.file file
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = file.tenant_key
+        AND current_contract.contract_id = file.contract_ref
+        AND (
+          current_contract.load_run_id = file.load_run_id
+          OR file.metadata_json ->> 'dataset_version' = current_contract.raw_payload ->> 'dataset_version'
+        )
+      WHERE file.tenant_key = ANY($1::text[]) AND file.contract_ref = $2
       ORDER BY document_role, document_type, file_name, file_id`,
     [contractId],
   );

@@ -1,0 +1,748 @@
+{
+  "note": "Every audit:/validate:/check: npm script, and whether it gates a PR. Generated skeleton by scripts/audit/ci-gate-registry-check.mjs --update; the kind and reason on each entry are human judgment, not derived. A gate that nobody runs looks exactly like a tool nobody needs to run, and this file is where that difference is written down. pr-gate must be invoked by a workflow. quarantined is a pr-gate failing on main today, recorded rather than wired. unclassified is the backlog: allowed for what was here when this file was created, refused for anything added after. Entries are sorted by key, and audit:ci-gate-registry-order enforces it: the file is appended to by nearly every change that adds a check, so a stable order keeps concurrent appends landing in their own place instead of producing phantom diffs when a tool re-serialises it.",
+  "entries": {
+    "audit:active-candidate-separation": {
+      "kind": "unclassified"
+    },
+    "audit:active-module-context-promotion": {
+      "kind": "unclassified"
+    },
+    "audit:active-tenant-access-promotion": {
+      "kind": "unclassified"
+    },
+    "audit:active-tenant-access-rollback-proof": {
+      "kind": "unclassified"
+    },
+    "audit:admin-data-control-center": {
+      "kind": "unclassified"
+    },
+    "audit:admin-data-layer-explorer": {
+      "kind": "unclassified"
+    },
+    "audit:agent-2task": {
+      "kind": "unclassified"
+    },
+    "audit:agent-substrate": {
+      "kind": "pr-gate"
+    },
+    "audit:agent-substrate:strict": {
+      "kind": "unclassified"
+    },
+    "audit:ai-control-schema-drift": {
+      "kind": "unclassified"
+    },
+    "audit:ai-surface-control-cases": {
+      "kind": "pr-gate"
+    },
+    "audit:ai-surface-controls": {
+      "kind": "pr-gate"
+    },
+    "audit:ai-value-realization-day1": {
+      "kind": "unclassified"
+    },
+    "audit:all-tenant-candidate-batch": {
+      "kind": "unclassified"
+    },
+    "audit:all-tenant-readiness-closure": {
+      "kind": "unclassified"
+    },
+    "audit:approved-content-path-convergence": {
+      "kind": "unclassified"
+    },
+    "audit:architecture-boundaries": {
+      "kind": "pr-gate"
+    },
+    "audit:architecture-rules": {
+      "kind": "pr-gate"
+    },
+    "audit:architecture-rules:full": {
+      "kind": "unclassified"
+    },
+    "audit:architecture-rules:self-test": {
+      "kind": "unclassified"
+    },
+    "audit:ava-readiness-ledger": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-coverage:all-tenants": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-invisibility": {
+      "kind": "quarantined",
+      "reason": "Triaged. Only 2 of its 8 checks test live code, and both are the repo-wide scans, which do work. The other 6 are per-file checks against a Home/Intelligence/Tower V7 read path that no longer exists: four files were deleted, one component is mounted by no route, and the Home route now reads an ECL projection bundle. Three of those six were passing because readRel returns an empty string for a missing file and activePointerQuery early-returns true on it. The guard now reports them as VACUOUS instead. Clears when the per-surface checks are rewritten against the current read paths, or removed in favour of the repo-wide scans."
+    },
+    "audit:candidate-module-derived-plan": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-graph-plan": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-preview": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-readiness-preview": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-workbench-preview": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-preview-enablement": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-preview-mode": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-promotion-gate": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-readiness-control": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-tenant-version": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-version": {
+      "kind": "unclassified"
+    },
+    "audit:canonical-data-build": {
+      "kind": "unclassified"
+    },
+    "audit:canonical-tenant-inputs": {
+      "kind": "unclassified"
+    },
+    "audit:categories": {
+      "kind": "unclassified"
+    },
+    "audit:ci-gate-registry": {
+      "kind": "pr-gate"
+    },
+    "audit:ci-gate-registry-order": {
+      "kind": "pr-gate",
+      "reason": "Keeps docs/architecture/ci-gate-registry.json sorted by key. The file is appended to by nearly every change that adds a check, so it is a rebase hotspot; it was one key out of 217 away from sorted, and that single misplacement was enough for a re-serialising tool to produce a diff moving unrelated entries, which was mistaken for a real change and reverted by hand. Sorted order is checkable where an insertion-order convention is not. Invoked by architecture-boundary.yml beside the registry check itself."
+    },
+    "audit:client-pilot-runtime-profile": {
+      "kind": "unclassified"
+    },
+    "audit:control-plane-purity": {
+      "kind": "report",
+      "reason": "Report mode. scripts/audit/control-plane-tenant-purity.mjs exits non-zero only in checkMode, reached under --check; without it the script prints per-tenant counts against the baseline and exits 0. The gating mode is audit:control-plane-purity:check, which production-readiness-gate.yml runs."
+    },
+    "audit:control-plane-purity:baseline": {
+      "kind": "operator",
+      "reason": "A baseline writer. Running it rewrites scripts/audit/control-plane-tenant-purity.baseline.json, which is the standard its sibling audit:control-plane-purity:check measures against \u2014 so running it after adding debt makes that gate pass by moving the goalposts rather than by fixing anything. Never a PR gate and never invoked by a workflow; run it deliberately when paying debt down, and commit the reduced baseline as the evidence."
+    },
+    "audit:control-plane-purity:check": {
+      "kind": "pr-gate"
+    },
+    "audit:data-intelligence-redesign": {
+      "kind": "unclassified"
+    },
+    "audit:data-quality:all-tenants": {
+      "kind": "unclassified"
+    },
+    "audit:default-runtime-invisibility": {
+      "kind": "unclassified"
+    },
+    "audit:deprecated-pattern-table-writes": {
+      "kind": "pr-gate"
+    },
+    "audit:end-to-end-data-flow": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-data-design": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-knowledge-assembler": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-knowledge-cache": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-knowledge-layer": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-naming": {
+      "kind": "pr-gate"
+    },
+    "audit:enterprise-profile-foundation": {
+      "kind": "unclassified"
+    },
+    "audit:enum-reachability": {
+      "kind": "pr-gate",
+      "reason": "Compares every literal value set in src/ SQL against the CHECK constraint on the column it reads, and refuses a comparison no row can satisfy. Backlog item T-003, after a shipped gate named three promotion states the column could not hold and therefore refused every row that existed. Invoked by coverage-threshold.yml; its behaviour is enforced by src/__tests__/behaviors/enum-reachability.test.ts."
+    },
+    "audit:financial": {
+      "kind": "unclassified"
+    },
+    "audit:fs-airline-active-promotion-review": {
+      "kind": "unclassified"
+    },
+    "audit:fs-airline-azure-candidate": {
+      "kind": "unclassified"
+    },
+    "audit:graph-disposition-status": {
+      "kind": "unclassified"
+    },
+    "audit:graph-quarantine-alias-analysis": {
+      "kind": "unclassified"
+    },
+    "audit:graph-quarantine-reduction": {
+      "kind": "unclassified"
+    },
+    "audit:graph-semantic-alias-activation": {
+      "kind": "unclassified"
+    },
+    "audit:graph-source-data-gated-matrix": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-build-readiness": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-context-contract": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-representation": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-snapshot-alignment": {
+      "kind": "unclassified"
+    },
+    "audit:home-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:home-cxo-story-quality": {
+      "kind": "unclassified"
+    },
+    "audit:home-data-quality": {
+      "kind": "unclassified"
+    },
+    "audit:home-dimension-data-tab": {
+      "kind": "unclassified"
+    },
+    "audit:home-dimension-evidence-tab": {
+      "kind": "unclassified"
+    },
+    "audit:home-dimension-story-claims": {
+      "kind": "unclassified"
+    },
+    "audit:home-english-summary": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-cutover": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-design-contract-ui": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-pressure": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-preview": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-story-quality": {
+      "kind": "unclassified"
+    },
+    "audit:home-layer4-boundary": {
+      "kind": "unclassified"
+    },
+    "audit:home-summary-snapshot": {
+      "kind": "unclassified"
+    },
+    "audit:home-v3-preview-columns": {
+      "kind": "unclassified"
+    },
+    "audit:home-v3-runtime-reachability": {
+      "kind": "unclassified"
+    },
+    "audit:home:claude-story-report": {
+      "kind": "unclassified"
+    },
+    "audit:home:content-quality": {
+      "kind": "unclassified"
+    },
+    "audit:intake-file-disposition": {
+      "kind": "unclassified"
+    },
+    "audit:intake-file-disposition:pilot-gate": {
+      "kind": "unclassified"
+    },
+    "audit:integrated-layer-refresh-inventory": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-cxo-narrative": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-quality": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-stream-polish": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-visual-contract": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-candidate-retrieval": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-context-pack-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-knowledge-pressure": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-knowledge-runtime": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-cxo-story-blocks": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-dimension-narratives": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-home-insights": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-layer-live-preview": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-layer-signed-in-preview": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-module-preview": {
+      "kind": "unclassified"
+    },
+    "audit:l1-undeclared-source-classification": {
+      "kind": "unclassified"
+    },
+    "audit:layer-boundaries": {
+      "kind": "unclassified"
+    },
+    "audit:layer-refresh-status": {
+      "kind": "unclassified"
+    },
+    "audit:layer3-canonical-write-plan": {
+      "kind": "unclassified"
+    },
+    "audit:legacy-context-retirement": {
+      "kind": "quarantined",
+      "reason": "Fails on main with 7 failures; the report lands in reports/legacy-context-retirement. Clears when each remaining legacy-context reference is retired or the audit's expectation is corrected."
+    },
+    "audit:legacy-dataset-sunset": {
+      "kind": "quarantined",
+      "reason": "Fails on main with 19 failures. Clears when each dataset named in the failure list is sunset or the sunset list is corrected to current reality."
+    },
+    "audit:lib-orphans": {
+      "kind": "pr-gate",
+      "reason": "Reports modules under src/lib that no product or operator entry point reaches, separating the ones only a test reaches from the ones nothing reaches. Gates on a change against the baseline in both directions. audit:route-reachability answers the same question for src/components and cannot answer it for src/lib, where an operator script or an ACA job is a legitimate entry point and a test is not."
+    },
+    "audit:loaded-datasets": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-approved-claude-content": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-candidate-ai-portfolio-boundary": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-data-state-reconciliation": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-executive-interviews": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-home-context-view": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-interview-graph-edges": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-interview-insight-projection": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-moves-context-view": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-runtime-module-access": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-sa08-benefits-posture": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-tower-dashboard-view": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-v3-cio-tower-projection": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-v3-derived-layer-build": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-v3-reload-readiness": {
+      "kind": "unclassified"
+    },
+    "audit:module-context-serving": {
+      "kind": "unclassified"
+    },
+    "audit:module-readiness-proof": {
+      "kind": "unclassified"
+    },
+    "audit:moves-adaptive-depth-proof": {
+      "kind": "unclassified"
+    },
+    "audit:moves-agent-assist-blueprint": {
+      "kind": "unclassified"
+    },
+    "audit:moves-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:moves-context-extract": {
+      "kind": "unclassified"
+    },
+    "audit:moves-context-pack-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:moves-evidence-lifecycle": {
+      "kind": "unclassified"
+    },
+    "audit:moves-gate-consistency": {
+      "kind": "unclassified"
+    },
+    "audit:moves-knowledge-runtime": {
+      "kind": "unclassified"
+    },
+    "audit:moves-shadow-proof": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-cxo-context-proof-gate": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-cxo-runtime-proof": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-cxo-story-generation": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-runtime-retrieval-proof": {
+      "kind": "unclassified"
+    },
+    "audit:named-suite-requiredness": {
+      "kind": "pr-gate",
+      "reason": "T-595. Refuses a workflow step that names a test suite by path inside a job that is not a required status check, when a required job already runs that suite. Run by the required `Behavior coverage floor` job."
+    },
+    "audit:new-client-onboarding-proof": {
+      "kind": "unclassified"
+    },
+    "audit:nexus-navigation": {
+      "kind": "pr-gate"
+    },
+    "audit:no-auto-action-boundary": {
+      "kind": "pr-gate"
+    },
+    "audit:no-legacy-context-language": {
+      "kind": "unclassified"
+    },
+    "audit:no-legacy-tenant-inputs": {
+      "kind": "unclassified"
+    },
+    "audit:operator-promotion-workflow": {
+      "kind": "unclassified"
+    },
+    "audit:planes": {
+      "kind": "unclassified"
+    },
+    "audit:post-promotion-module-read-proof": {
+      "kind": "unclassified"
+    },
+    "audit:promotion-execution-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:qa-inventory-claims": {
+      "kind": "pr-gate"
+    },
+    "audit:render-snapshot": {
+      "kind": "unclassified"
+    },
+    "audit:retired-tenant-inventory": {
+      "kind": "unclassified"
+    },
+    "audit:route-archive": {
+      "kind": "unclassified"
+    },
+    "audit:route-reachability": {
+      "kind": "pr-gate"
+    },
+    "audit:runtime-supabase-imports": {
+      "kind": "report",
+      "reason": "Census mode. Every failure path in scripts/audit/runtime-supabase-import-census.mjs is behind --fail with a threshold or allowlist argument; the bare script prints the count and exits 0. The gating mode is audit:runtime-supabase-imports:guard, which production-readiness-gate.yml runs."
+    },
+    "audit:runtime-supabase-imports:guard": {
+      "kind": "pr-gate"
+    },
+    "audit:sanity": {
+      "kind": "unclassified"
+    },
+    "audit:skyharbor-applications-candidate": {
+      "kind": "unclassified"
+    },
+    "audit:skyharbor-candidate-version": {
+      "kind": "unclassified"
+    },
+    "audit:skyharbor-compatibility-snapshot": {
+      "kind": "unclassified"
+    },
+    "audit:source-ava-hard-qa": {
+      "kind": "unclassified"
+    },
+    "audit:source-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:source-projection:all-tenants": {
+      "kind": "unclassified"
+    },
+    "audit:source-shadow-proof": {
+      "kind": "unclassified"
+    },
+    "audit:source-substrate-lineage": {
+      "kind": "unclassified"
+    },
+    "audit:stranded-intelligence-report": {
+      "kind": "unclassified"
+    },
+    "audit:synthetic-tenant-richness": {
+      "kind": "unclassified"
+    },
+    "audit:target-writer-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:tenancy-fence-coverage": {
+      "kind": "report",
+      "reason": "Default mode prints the census and the top of the ranking and asserts nothing. It is the mode a person runs to read the current state; the ranking it prints is what the next fence-repair item is drawn from."
+    },
+    "audit:tenancy-fence-coverage:check": {
+      "kind": "pr-gate",
+      "reason": "Runs the census suite and then fails on per-route drift against docs/security/tenancy-fence-coverage.json, in either direction \u2014 a route whose coverage got worse, got better, appeared or disappeared. Invoked by tenancy-fence-coverage.yml. Unlike the test-CI coverage census it is safe to invoke directly from a workflow: this census reads the route tree and the test tree, not the set of commands workflows reach, so running it from CI does not alter the measurement it takes."
+    },
+    "audit:tenancy-fence-coverage:write": {
+      "kind": "operator",
+      "reason": "Regenerates the committed census after a route gains or loses a fence, or gains or loses proof. It carries the executed mutation evidence forward rather than discarding it, and the suite asserts every carried sample still describes the tree, so a stale exemption cannot survive a regeneration quietly. The author of the change owns the refresh."
+    },
+    "audit:tenant-candidate-version": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-display-name-authority": {
+      "kind": "pr-gate",
+      "reason": "The tenant registry is the authority for a display name \u2014 the data operating model says identity is declared, never inferred, and names datasets/tenant-inputs/tenant-input-registry.json as the source. Two other vocabularies disagree with it and with each other; 64 non-test files carry a name it does not declare. This holds that count from rising while the rename is scheduled separately. Invoked by architecture-boundary.yml."
+    },
+    "audit:tenant-graph-reconciliation": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-input-quality": {
+      "kind": "pr-gate"
+    },
+    "audit:tenant-isolation:data-quality": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-isolation:moves": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-manifest-completeness": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-packet-contract": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-packet-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-quality": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-v3-data": {
+      "kind": "unclassified"
+    },
+    "audit:test-ci-coverage": {
+      "kind": "report",
+      "reason": "Default census mode measures which Jest suites under src/ a workflow reaches and reports count drift without failing. Coverage-shape drift is enforced by the behavior suite because invoking this self-scanning script directly from a workflow changes the measurement it is taking."
+    },
+    "audit:test-ci-coverage:check": {
+      "kind": "operator",
+      "reason": "Operator mirror of the behavior-suite gate. It fails when a directory changes uncovered or partial coverage state without a census refresh, while count-only drift remains a report. The command is not invoked directly by CI because that would make the self-scanning census alter its own reachable-command set."
+    },
+    "audit:test-ci-coverage:write": {
+      "kind": "operator",
+      "reason": "Refreshes docs/architecture/test-ci-coverage-census.json after a directory changes uncovered or partial coverage state, or after census semantics change. Write-if-changed keeps unchanged trees clean; the author of the shape-changing PR owns the refresh and review."
+    },
+    "audit:tower-active-budget-envelopes": {
+      "kind": "unclassified"
+    },
+    "audit:tower-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:tower-cxo-claude-story": {
+      "kind": "unclassified"
+    },
+    "audit:tower-data-path-fix": {
+      "kind": "unclassified"
+    },
+    "audit:tower-demo-story-data": {
+      "kind": "unclassified"
+    },
+    "audit:tower-fact-lineage": {
+      "kind": "unclassified"
+    },
+    "audit:tower-governed-candidate-load": {
+      "kind": "unclassified"
+    },
+    "audit:tower-knowledge-pressure": {
+      "kind": "unclassified"
+    },
+    "audit:tower-mart-data-loading-qa": {
+      "kind": "unclassified"
+    },
+    "audit:tower-tab-data-lineage": {
+      "kind": "unclassified"
+    },
+    "audit:tower-v3-meridian-context-pack": {
+      "kind": "unclassified"
+    },
+    "audit:tower-v3-runtime-wiring": {
+      "kind": "unclassified"
+    },
+    "audit:tower-v3-source-of-truth-alignment": {
+      "kind": "unclassified"
+    },
+    "audit:triage-record-reconciliation": {
+      "kind": "report",
+      "reason": "Report mode, and deliberately not a gate. It always exits 0: it cross-references the CI coverage census against every docs/architecture/*triage*.json and prints which untriaged unrun test files already carry a verdict, which is the hand-written derivation T-763 exists to stop repeating. The gate on the same subject is the workflow step running check-source-workspace-quarantine.mjs, which is scoped to verdicts that declare a hold; the rows this prints under any other verdict are work that is owed, and failing on them would turn a queue into a red build."
+    },
+    "audit:v3-only-active-architecture": {
+      "kind": "unclassified"
+    },
+    "audit:v6-v7-phase1-cleanup": {
+      "kind": "unclassified"
+    },
+    "audit:v6-v7-sunset": {
+      "kind": "unclassified"
+    },
+    "audit:vercel-production-runtime": {
+      "kind": "report",
+      "reason": "Report mode. scripts/audit/vercel-production-runtime-guard.mjs exits non-zero only under --check; without it the script prints the hit count against the baseline and exits 0. The gating mode is audit:vercel-production-runtime:check, which production-readiness-gate.yml runs."
+    },
+    "audit:vercel-production-runtime:check": {
+      "kind": "pr-gate"
+    },
+    "check:aca-worker-job-set-derived": {
+      "kind": "pr-gate",
+      "reason": "Refuses an ACA runtime invariant whose worker-job scope is wider than what the deploy enforces. The invariant is stated over \"all required worker job images\", and which jobs those are was written twice: scripts/deploy/update-worker-jobs.sh decides which jobs the deploy re-images, and check-aca-runtime-invariant.mjs carried its own hand-typed array deciding which jobs the proof checks. Neither deploy workflow passes --worker-job-names, so that array was the whole of the enforcement and the two lists agreed only because somebody kept them agreeing \u2014 add a job to the deploy script and the proof keeps reporting PASSED over the old set, which is unfalsifiable in the one direction that matters. The enforced set is now derived from the deploy script's own WORKER_JOB_NAMES default, and this runs the suite that proves the derivation FOLLOWS that script rather than that today's two job names appear somewhere: the cases that matter mutate a fixture deploy script, because today's digests agree by accident. It then runs the real checker in --print-worker-jobs mode, which resolves the set and exits before any az or curl call, so the live derivation is proved without touching Azure and the gate is safe to run on every PR. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
+    },
+    "check:admin-integration-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses a stale, expired or growing Admin integration quarantine list. The list is what keeps 2 red suites out of the Integration suites workflow while the other 49 run. It differs from the Intelligence list in the control that expires it: those entries name retired paths whose ABSENCE is the reason, while these two name live defects that need a product decision, so this check RE-RUNS each excluded suite and fails if one passes. An exclusion whose cause has been fixed therefore cannot sit in the list quietly. The ceiling is a ratchet in both directions, so clearing an entry cannot leave silent headroom for the next one. Invoked by integration-suites.yml alongside the run it protects."
+    },
+    "check:cli-invocation-guard": {
+      "kind": "pr-gate",
+      "reason": "Refuses a control gate that silently declines to run. Every script in scripts/quality/ and scripts/release-control/ is a module with a CLI attached, so each must decide whether it was run or imported; seven of them decided it by comparing the path the caller typed against their own resolved location, which differ whenever any path component is a symlink. All seven skipped their entire body, printed nothing and exited 0 when reached that way, and one of them inverted its verdict from exit 1 to exit 0 (item T-741, and item T-723 before it for the same defect in scripts/exec/). This gate discovers every guarded CLI in both directories at run time and runs each one twice, once through a real path and once through a symlink it creates itself rather than borrowing /tmp, which is a symlink on macOS and is not one on a Linux runner. It requires the same exit code and the same bytes, and it refuses a run that says nothing and exits 0 on its real path, because such a run cannot tell a gate that ran from one that declined. It asserts against the process rather than the predicate: a guard inverted to always answer 'imported' satisfies every import-shaped assertion anyone can write about it and leaves every CLI dead. An exemption from running twice is allowed only for a file that already uses the shared isDirectInvocation, so a broken guard cannot be exempted into silence. Invoked by quality-cli-invocation-guard.yml."
+    },
+    "check:export-reachability": {
+      "kind": "pr-gate",
+      "reason": "Refuses a component that holds code nothing can reach. A component can lose its mount site and keep compiling, keep linting and keep reading as live product code: no-unused-vars is satisfied the moment one dead declaration references another, so a CLOSURE hides where a single orphan would not \u2014 ten declarations and 567 lines survived a fortnight in WorkspaceExecutiveShell.tsx with thirteen assertions about it green (item U-503). The walk that repaired that shipped inside one test file and read exactly one path; item U-504 moved it to one repo-owned module, measured the corpus, and wired it. It walks each module's own reference graph out from its exports and never asks who imports a FILE, which is what makes it safe over route modules: a Next.js page or layout is reached by the router and a test-only component by a suite, so under an inter-module walk both are false positives, while here an export is a root. The measurement mattered: ported unchanged the walk reported 22 findings of which 15 were FALSE POSITIVES from one mechanism \u2014 a JSX text node containing the glob src/lib/reasoning/* opens a block comment to a hand-written stripper, which blanked the whole component body and with it every reference the page made to its own tables \u2014 and two further errors ran the other way and made it miss dead code via string literals and module-level statements. None is reachable by a better regex, so the walk asks the TypeScript parser; the corrected census is 7 declarations over 1611 component files, every one an unused colour or font constant. Those 7 are recorded per declaration in a baseline rather than as a count, because a count-based ceiling would pass a brand-new dead renderer the moment somebody deleted an unused constant. It fails in BOTH directions: a recorded finding that is no longer unreachable also fails, so an exemption cannot outlive its defect and hide the next one, and a cleanup must delete its line in the same change. A missing or unparseable baseline is refused rather than read as acceptance. Runs its own 19 cases before the check. Invoked by export-reachability.yml, whose paths filter names src/app/** and src/components/** \u2014 the corpus, not just the script, since a gate triggered only by changes to its own file could never see the defect it exists for."
+    },
+    "check:fixture-row-identity": {
+      "kind": "pr-gate",
+      "reason": "Refuses an intake file in which two rows share a row name. The depth-pass generator appended rows by spreading the file's first row, so the columns that NAME a row were inherited rather than declared, and one governed tenant's infrastructure file carried 14 rows under one original_row_id while the programmes file carried 11. Home keyed its rendered rows on that identifier, so clicking the 34th platform opened the 1st platform's detail panel in any build. The gate runs the generator's own 4 cases and then invokes it with --check, which reads the COMMITTED bytes and exits non-zero on a duplicate. That is deliberately not the dry run the same script offers: a dry run reports what the repair pass would fix, so it passes on a file that is broken today as long as the repair could fix it, which is exactly the state these files were in. Proven in both directions before wiring: exit 1 against the pre-fix files, exit 0 against the corrected ones, measured from a clean detached worktree rather than a stash. Invoked by fixture-row-identity.yml, whose paths filter names the two CSV globs as well as the script, since a gate triggered only by changes to its own file could never see the defect it exists for."
+    },
+    "check:identity-ledger": {
+      "kind": "pr-gate",
+      "reason": "Refuses an object id in a governed tenant's committed intake that the identity ledger cannot stand behind. scripts/data/assign-stable-identity.mjs is the only minter of object ids and records each in datasets/tenant-inputs/<tenant>/identity-ledger.json, but nothing checked that the files still agreed with it. Measured on main before item D-501: 200 findings in one tenant -- 9 ids each carried by several rows (rows appended from a template inherit its id, so every edge naming any of them resolved to whichever row came first), 133 ids a second generator stamped by sequence that no ledger declares, and 58 named rows carrying no id. Five failure kinds: shared_id, undeclared_id (including a declared id of another type), unstamped_row, edge_id_undeclared, and edge_id_unreached -- an edge whose id is real but belongs to a row other than the one it names. A declared entry no row carries is printed, not failed, because the ledger is append-only by rule. A registered tenant with no ledger is printed as NOT MEASURED rather than passed silently, and the gate refuses when no tenant is measured at all. It reads the COMMITTED files, deliberately not a dry run of the minter, which would pass on exactly the files that need minting. Proven in both directions from clean worktrees: exit 1 against main, exit 0 against the minted files. Runs the minter's 4 cases and its own 10 before the check. Invoked by tenant-identity-ledger.yml, whose paths filter names the intake CSV and ledger globs as well as the scripts, since a gate triggered only by changes to its own file could never see the defect it exists for."
+    },
+    "check:integration-root-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses an undeclared or expired exclusion at the ROOT of src/__tests__/integration. This is the one carve-out whose default is EXCLUDED rather than included: the workflow enumerates root-level files by exact path, deliberately, because naming the directory would also run every red subdirectory under it \u2014 so a root file nobody adds to that command is silently unrun, and the sibling quarantine checks cannot notice that because their directories are named wholesale. Before this gate the carve-out existed only as a workflow comment counting how many files were red, and a comment cannot fail; five root files were unrun and untriaged, one of them red for live content loss on a governed answer surface. Three failure directions: a root file that is unrun and undeclared, a declared file wired back in but left on the list, and a declared suite that PASSES on re-run. It asks the coverage census which root files no workflow runs rather than re-reading the workflow command, so the two cannot disagree about a directory-regex collision. The ceiling is a ratchet in both directions. Runs its own 23 cases before the check, and is invoked by integration-suites.yml alongside the run it protects."
+    },
+    "check:intelligence-integration-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses a stale, expired or growing Intelligence integration quarantine list. The list is what keeps 25 red suites out of the Integration suites workflow while the other 8 run. It also does something the Source list does not: every entry names the retired paths whose ABSENCE is its reason, and this check fails when one of them comes back. Without that, an exclusion outlives its cause silently, which is the exact failure this backlog exists to refuse. Invoked by integration-suites.yml alongside the run it protects."
+    },
+    "check:qa-integration-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses a stale, expired or growing QA integration quarantine list. The list is what keeps 6 red suites out of the Integration suites workflow while the other 31 run. src/__tests__/integration/qa held 37 suites and 915 assertions that no workflow ran, because the changed-suite visibility gate fires only on suites a diff touches and a directory never wired is invisible to it. Modelled on the Admin check rather than the Intelligence one: these reasons are measurable states of the repository rather than absent paths, so this RE-RUNS each excluded suite and fails if one passes, and an exclusion whose cause has been fixed cannot sit in the list quietly. The ceiling is a ratchet in both directions, so clearing an entry cannot leave silent headroom for the next one. Invoked by integration-suites.yml alongside the run it protects."
+    },
+    "check:release-check-runs-every-gate": {
+      "kind": "pr-gate",
+      "reason": "Refuses a release check that stops before the end of its gate list. The gates were imported into one process in order, so the first gate that called process.exit(0) on a success path ended the run with status 0 and every gate listed after it was never evaluated, with nothing in the output to say so. The runner now starts each gate as its own process and prints a verdict per gate. This suite copies the real entry point and the real runner into a scratch directory beside a fixture gate list and asserts on what the fixture gates themselves recorded: every listed gate ran whatever the gates before it did; exiting non-zero, throwing, setting process.exitCode, dying to a signal, failing to start, or having no file each fail the check on their own; an empty list fails; and the arguments reach every gate. One case imports the same fixtures into a single process and requires the old behaviour to appear, so the fixtures are known to be able to produce the defect. A last case runs the context truth script the final gate wraps: it must pass in its static mode, refuse any other mode instead of exiting 0 having checked nothing, and not run when imported. Invoked by release-control.yml immediately before the release check it protects."
+    },
+    "check:release-record-lane-guard": {
+      "kind": "pr-gate"
+    },
+    "check:release-record-template-contract": {
+      "kind": "pr-gate"
+    },
+    "check:release-record-tenant-narrative-guard": {
+      "kind": "pr-gate"
+    },
+    "check:source-integration-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses a stale or growing Source integration quarantine list. The list is what keeps 24 red suites out of the Source integration workflow while the other 68 run; without this, an entry naming a deleted suite would keep excluding nothing and the list could grow by quiet append until the carve-out became the standard. Invoked by source-integration.yml alongside the run it protects."
+    },
+    "check:tenant-narrative-term-drift": {
+      "kind": "pr-gate"
+    },
+    "check:triage-deferral-authority": {
+      "kind": "pr-gate",
+      "reason": "Refuses a triage verdict of already_verdicted_elsewhere that holds a test file out of the stale-suite draw on an authority that does not resolve. That word is one of the verdicts test-ci-coverage-census.mjs treats as owned residual work, so a file carrying it is held out of the draw and listed in triageVerdicts.heldTestPaths; it is the only held verdict that describes no work at all. The other six say what is owed - wire it, repair it, rewrite it. This one says somebody else already said, and the entire weight of the hold rests on that claim being true. Nothing checked it. Measured when this was added: 39 rows defer and hold 36 of the census's 112 held files, while drawableUntriagedUnrunTestFiles reads 0, so a scheduled run reaching fallback step 3 is told there is no stale-suite work by a count these rows are the second-largest contributor to. All 39 resolve today, which was luck rather than a control: a referent could be renamed, re-verdicted, or point at another deferral and the file would stay held with no verdict anywhere and nothing able to say so. Two authority shapes exist and both are legitimate. Record-shaped (alreadyVerdictedIn plus verdictThere, 10 rows) is fully checked here: the record must exist, hold a row for the same path, agree with verdictThere, and not itself be a deferral. Item-shaped (ownerItem alone, 29 rows, 25 of them on T-775) names a backlog item, and the backlog is operator-owned and outside this repository, so the gate requires the field and reports authorityResolvedInRepo false rather than implying it verified what it cannot reach. Scoped to stay disjoint from check:triage-verdict-discharge, which owns the case where the row's own SUBJECT is gone: a row with an absent subject is skipped here by construction, so neither gate reports the other's rows. The two sets do not intersect today (0 of 39), which is exactly the accident the scope exists to stop anyone relying on. Runs the suite that proves all seven refusal branches fail independently over fixtures, then the real audit. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
+    },
+    "check:triage-verdict-discharge": {
+      "kind": "pr-gate",
+      "reason": "Refuses a triage verdict that addresses a test file no longer in the tree without saying where the subject went. docs/architecture/*triage*.json rows carry a verdict, an owner item and a currentAction written at a base commit; when the subject is later deleted the row keeps instructing a future reader about a path that cannot be opened, and no amount of executing closes it. The sibling report audit:triage-record-reconciliation already counts these rows and is deliberately classified report, because the rows it prints under an OPEN verdict are work that is owed and failing on owed work turns a queue into a red build. That reasoning is untouched: this gate is scoped to the disjoint sub-case where the subject itself is absent, which is not owed work because there is nothing left to execute. The other gate on this subject, check-source-workspace-quarantine.mjs, reaches only held_unwired verdicts carrying a quarantine entry, so it never sees these rows. Measured when this was added: five rows of t509-stale-suite-triage.json read Leave untouched for T-513 for five files that T-513 itself deleted in the same change that replaced each with a rendering suite, and the instruction outlived its subject by two weeks with nothing able to say so. A discharge must also RESOLVE, meaning movedTo or replacedBy has to name a file that exists, or a dead row is dischargeable by pointing it at another dead row. Runs the suite that proves both branches fail independently over fixtures, then the real audit. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
+    },
+    "validate:context-corpus": {
+      "kind": "pr-gate"
+    },
+    "validate:context-corpus:agent-readiness": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:duplicates": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:exceptions": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:manifests": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:tenant-coverage": {
+      "kind": "unclassified"
+    },
+    "validate:fact-basis": {
+      "kind": "unclassified"
+    },
+    "validate:fact-basis:strict": {
+      "kind": "unclassified"
+    },
+    "validate:fact-duplication": {
+      "kind": "unclassified"
+    },
+    "validate:fixture-fitness": {
+      "kind": "unclassified"
+    },
+    "validate:fixture-fitness:strict": {
+      "kind": "unclassified"
+    },
+    "validate:no-real-vendor-parties": {
+      "kind": "unclassified"
+    },
+    "validate:no-sunset-tenant-residue": {
+      "kind": "unclassified"
+    },
+    "validate:pricing-role-coverage": {
+      "kind": "unclassified"
+    },
+    "validate:spend-plausibility": {
+      "kind": "unclassified"
+    },
+    "validate:spend-plausibility:strict": {
+      "kind": "unclassified"
+    }
+  }
+}

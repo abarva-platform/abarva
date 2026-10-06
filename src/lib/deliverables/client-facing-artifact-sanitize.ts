@@ -5,6 +5,38 @@
 
 import type { RenderableDeliverable } from "./orchestrator/types";
 
+// Builder vocabulary — how an artifact was GENERATED is never the client's
+// concern. Kept as its own list so a surface that must NOT run the full
+// client-facing rewrite (which also rewrites legitimate domain terms like
+// "data plane") can still scrub just these — e.g. the board-grade export deck,
+// which speaks its own provenance voice. Ordered specific-first so
+// "Moves Expert Kernel" wins before "Expert Kernel".
+const BUILDER_VOCAB_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bMoves Expert Kernel\b/gi, "Moves analysis"],
+  [/\bExpert Kernel\b/gi, "AbarVa analysis"],
+  [/\bDomain Function Packs\b/gi, "domain reference models"],
+  [/\bDomain Function Pack\b/gi, "domain reference model"],
+  [/\bFunction Packs\b/gi, "domain reference models"],
+  [/\bFunction Pack\b/gi, "domain reference model"],
+  [
+    /\bthe agent does not improvise(?:\s+the\s+structure)?\b/gi,
+    "the structure is not improvised",
+  ],
+  [/\baudited substrate\b/gi, "audited enterprise data"],
+];
+
+/**
+ * Scrub ONLY builder vocabulary (how the artifact was generated), leaving every
+ * legitimate domain and architecture term untouched. For surfaces that compose
+ * their own client-facing HTML and cannot run the full sanitizer safely.
+ */
+export function scrubBuilderVocabulary(value: string): string {
+  return BUILDER_VOCAB_REPLACEMENTS.reduce(
+    (cleaned, [pattern, replacement]) => cleaned.replace(pattern, replacement),
+    value,
+  );
+}
+
 const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\[CLIENT TO COMPLETE:\s*([^\]]+)\]/gi, "Client input required: $1"],
   [/\bCLIENT TO COMPLETE:\s*/gi, "Client input required: "],
@@ -51,6 +83,9 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bcanonical internal id\b/gi, "internal reference"],
   [/\bdebug\b/gi, "diagnostic"],
   [/\bsubstrate\b/gi, "enterprise data foundation"],
+  // The builder-vocabulary rewrites (how the artifact was generated) — shared
+  // with scrubBuilderVocabulary so the two can never drift.
+  ...BUILDER_VOCAB_REPLACEMENTS,
   [/\bcontext rows\b/gi, "evidence records"],
   [/\btower rows\b/gi, "measurement records"],
   [/\bentity graph\b/gi, "operating relationship map"],

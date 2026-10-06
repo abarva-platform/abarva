@@ -23,6 +23,8 @@ export function publicAnswerLeakIssues(text: string): string[] {
 
 export function scrubInternalVisibleAvaTerms(value: string): string {
   return value
+    .replace(/\bECL\s+projection\b/gi, "available Home record")
+    .replace(/\bserving\s+projection\b/gi, "available Home record")
     .replace(/\bV\d+\s+substrate\b/gi, "active enterprise context")
     .replace(/\bV\d+\s+data\s+layer\b/gi, "active enterprise context")
     .replace(/\bV\d+\s+context\s+layer\b/gi, "active enterprise context")

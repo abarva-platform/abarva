@@ -391,6 +391,16 @@ export interface SynthesisContext {
     unmet: number;
     /** Unmet hard-gate criterion results — the primary blockers. */
     blocked: GateCriterionResult[];
+    /**
+     * What `total`/`met` counted. `criteria` means the gate evaluator ran and
+     * these are evaluated criteria. `gate-standing` means no typed pattern was
+     * available, so there were no criteria to count and the pair reports the
+     * phase gate's own approval state as `total: 1`. Absent on contexts built
+     * before this field existed; read it through
+     * `gateSummaryBasis()` in `./gate-summary-basis`, and format the pair with
+     * `describeGateSummary()` rather than as a bare `met / total` ratio.
+     */
+    basis?: 'criteria' | 'gate-standing';
   };
 
   /** All active contradiction detections for this instance. */

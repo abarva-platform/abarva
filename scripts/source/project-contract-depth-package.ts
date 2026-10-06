@@ -1,22 +1,26 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-import { adaptContractDepthPackage } from '../../src/lib/source/contract-depth-package/adapter';
-import { projectContractDepthPackage } from '../../src/lib/source/contract-depth-package/projection';
+import { adaptContractDepthPackage } from "../../src/lib/source/contract-depth-package/adapter";
+import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 
 type CsvRecord = Record<string, string>;
 
-const DEFAULT_PACKAGE_DIR = '/Users/anand/Downloads/meridian-source-contract-depth-package-20260828';
+const DEFAULT_PACKAGE_DIR =
+  "/Users/anand/Downloads/meridian-source-contract-depth-package-20260828";
 
 function argValue(name: string, fallback: string): string {
   const prefix = `--${name}=`;
-  return process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ?? fallback;
+  return (
+    process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ??
+    fallback
+  );
 }
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
-  let cell = '';
+  let cell = "";
   let quoted = false;
   for (let i = 0; i < text.length; i += 1) {
     const ch = text[i];
@@ -34,15 +38,15 @@ function parseCsv(text: string): string[][] {
     }
     if (ch === '"') {
       quoted = true;
-    } else if (ch === ',') {
+    } else if (ch === ",") {
       row.push(cell);
-      cell = '';
-    } else if (ch === '\n') {
+      cell = "";
+    } else if (ch === "\n") {
       row.push(cell);
       rows.push(row);
       row = [];
-      cell = '';
-    } else if (ch !== '\r') {
+      cell = "";
+    } else if (ch !== "\r") {
       cell += ch;
     }
   }
@@ -50,17 +54,24 @@ function parseCsv(text: string): string[][] {
     row.push(cell);
     rows.push(row);
   }
-  return rows.filter((candidate) => candidate.some((value) => value.length > 0));
+  return rows.filter((candidate) =>
+    candidate.some((value) => value.length > 0),
+  );
 }
 
 function readCsv(filePath: string): CsvRecord[] {
   if (!fs.existsSync(filePath)) return [];
-  const parsed = parseCsv(fs.readFileSync(filePath, 'utf8'));
+  const parsed = parseCsv(fs.readFileSync(filePath, "utf8"));
   const headers = parsed[0] ?? [];
-  return parsed.slice(1).map((values) => {
+  return parsed.slice(1).map((values, index) => {
+    if (values.length !== headers.length) {
+      throw new Error(
+        `Malformed CSV ${filePath}: row ${index + 2} has ${values.length} fields; expected ${headers.length}. Quote every field containing a comma before loading.`,
+      );
+    }
     const row: CsvRecord = {};
     headers.forEach((header, index) => {
-      row[header] = values[index] ?? '';
+      row[header] = values[index] ?? "";
     });
     return row;
   });
@@ -72,76 +83,216 @@ function writeJson(filePath: string, value: unknown): void {
 }
 
 function main(): void {
-  const packageDir = argValue('package-dir', DEFAULT_PACKAGE_DIR);
-  const outDir = argValue('out-dir', path.join(packageDir, 'qa', 'layer-projection-preview'));
-  const adapterOutDir = argValue('adapter-out-dir', path.join(packageDir, 'qa', 'layer-2-adapter-preview'));
-  const sourceDir = path.join(packageDir, 'source-files');
+  const packageDir = argValue("package-dir", DEFAULT_PACKAGE_DIR);
+  const outDir = argValue(
+    "out-dir",
+    path.join(packageDir, "qa", "layer-projection-preview"),
+  );
+  const adapterOutDir = argValue(
+    "adapter-out-dir",
+    path.join(packageDir, "qa", "layer-2-adapter-preview"),
+  );
+  const sourceDir = path.join(packageDir, "source-files");
 
   const sourceFiles = {
-    contracts: readCsv(path.join(sourceDir, 'contracts.csv')),
-    applications: readCsv(path.join(sourceDir, 'cmdb_applications.csv')),
-    applicationScope: readCsv(path.join(sourceDir, 'cmdb_application_scope.csv')),
-    changeOrders: readCsv(path.join(sourceDir, 'change_orders.csv')),
-    contractPageText: readCsv(path.join(sourceDir, 'contract_page_text.csv')),
-    resourceModel: readCsv(path.join(sourceDir, 'resource_model.csv')),
-    pricingBridge: readCsv(path.join(sourceDir, 'pricing_bridge.csv')),
-    invoiceLineDetail: readCsv(path.join(sourceDir, 'invoice_line_detail.csv')),
-    batchJobVolumetrics: readCsv(path.join(sourceDir, 'batch_job_volumetrics.csv')),
-    qbrScorecards: readCsv(path.join(sourceDir, 'qbr_scorecards.csv')),
-    monthlySpend: readCsv(path.join(sourceDir, 'monthly_spend.csv')),
-    saasUsage: readCsv(path.join(sourceDir, 'saas_usage.csv')),
-    slaPerformance: readCsv(path.join(sourceDir, 'sla_performance.csv')),
-    ticketVolumetrics: readCsv(path.join(sourceDir, 'ticket_volumetrics.csv')),
-    contractClauses: readCsv(path.join(sourceDir, 'contract_clauses.csv')),
-    evidenceManifest: readCsv(path.join(sourceDir, 'evidence_manifest.csv')),
-    optimizationOpportunities: readCsv(path.join(sourceDir, 'optimization_opportunities.csv')),
+    contracts: readCsv(path.join(sourceDir, "contracts.csv")),
+    applications: readCsv(path.join(sourceDir, "cmdb_applications.csv")),
+    applicationScope: readCsv(
+      path.join(sourceDir, "cmdb_application_scope.csv"),
+    ),
+    changeOrders: readCsv(path.join(sourceDir, "change_orders.csv")),
+    contractPageText: readCsv(path.join(sourceDir, "contract_page_text.csv")),
+    resourceModel: readCsv(path.join(sourceDir, "resource_model.csv")),
+    pricingBridge: readCsv(path.join(sourceDir, "pricing_bridge.csv")),
+    invoiceLineDetail: readCsv(path.join(sourceDir, "invoice_line_detail.csv")),
+    batchJobVolumetrics: readCsv(
+      path.join(sourceDir, "batch_job_volumetrics.csv"),
+    ),
+    qbrScorecards: readCsv(path.join(sourceDir, "qbr_scorecards.csv")),
+    monthlySpend: readCsv(path.join(sourceDir, "monthly_spend.csv")),
+    saasUsage: readCsv(path.join(sourceDir, "saas_usage.csv")),
+    slaPerformance: readCsv(path.join(sourceDir, "sla_performance.csv")),
+    ticketVolumetrics: readCsv(path.join(sourceDir, "ticket_volumetrics.csv")),
+    contractClauses: readCsv(path.join(sourceDir, "contract_clauses.csv")),
+    evidenceManifest: readCsv(path.join(sourceDir, "evidence_manifest.csv")),
+    optimizationOpportunities: readCsv(
+      path.join(sourceDir, "optimization_opportunities.csv"),
+    ),
+    negotiationFindings: readCsv(
+      path.join(sourceDir, "negotiation_findings.csv"),
+    ),
+    negotiationLevers: readCsv(path.join(sourceDir, "negotiation_levers.csv")),
   };
 
   const adapted = adaptContractDepthPackage(sourceFiles);
-  writeJson(path.join(adapterOutDir, 'contract_register_adapter.json'), adapted.contractRegisterAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_clause_adapter.json'), adapted.contractClauseAdapter);
-  writeJson(path.join(adapterOutDir, 'change_order_adapter.json'), adapted.changeOrderAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_page_text_adapter.json'), adapted.contractPageTextAdapter);
-  writeJson(path.join(adapterOutDir, 'cmdb_application_adapter.json'), adapted.cmdbApplicationAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_scope_adapter.json'), adapted.contractScopeAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_consumption_adapter.json'), adapted.spendAdapter);
-  writeJson(path.join(adapterOutDir, 'usage_entitlement_adapter.json'), adapted.usageAdapter);
-  writeJson(path.join(adapterOutDir, 'ticket_volumetrics_adapter.json'), adapted.ticketVolumeAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_performance_adapter.json'), adapted.performanceAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_resource_model_adapter.json'), adapted.resourceModelAdapter);
-  writeJson(path.join(adapterOutDir, 'contract_pricing_bridge_adapter.json'), adapted.pricingBridgeAdapter);
-  writeJson(path.join(adapterOutDir, 'invoice_line_adapter.json'), adapted.invoiceLineAdapter);
-  writeJson(path.join(adapterOutDir, 'batch_operations_adapter.json'), adapted.batchOperationsAdapter);
-  writeJson(path.join(adapterOutDir, 'qbr_scorecard_adapter.json'), adapted.qbrAdapter);
-  writeJson(path.join(adapterOutDir, 'optimization_opportunity_adapter.json'), adapted.optimizationAdapter);
-  writeJson(path.join(adapterOutDir, 'evidence_document_adapter.json'), adapted.evidenceDocumentAdapter);
-  writeJson(path.join(adapterOutDir, 'adapter-quality-gate.json'), adapted.qualityGate);
+  writeJson(
+    path.join(adapterOutDir, "contract_register_adapter.json"),
+    adapted.contractRegisterAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_clause_adapter.json"),
+    adapted.contractClauseAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "change_order_adapter.json"),
+    adapted.changeOrderAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_page_text_adapter.json"),
+    adapted.contractPageTextAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "cmdb_application_adapter.json"),
+    adapted.cmdbApplicationAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_scope_adapter.json"),
+    adapted.contractScopeAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_consumption_adapter.json"),
+    adapted.spendAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "usage_entitlement_adapter.json"),
+    adapted.usageAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "ticket_volumetrics_adapter.json"),
+    adapted.ticketVolumeAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_performance_adapter.json"),
+    adapted.performanceAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_resource_model_adapter.json"),
+    adapted.resourceModelAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "contract_pricing_bridge_adapter.json"),
+    adapted.pricingBridgeAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "invoice_line_adapter.json"),
+    adapted.invoiceLineAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "batch_operations_adapter.json"),
+    adapted.batchOperationsAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "qbr_scorecard_adapter.json"),
+    adapted.qbrAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "optimization_opportunity_adapter.json"),
+    adapted.optimizationAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "negotiation_finding_adapter.json"),
+    adapted.negotiationFindingAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "negotiation_lever_adapter.json"),
+    adapted.negotiationLeverAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "evidence_document_adapter.json"),
+    adapted.evidenceDocumentAdapter,
+  );
+  writeJson(
+    path.join(adapterOutDir, "adapter-quality-gate.json"),
+    adapted.qualityGate,
+  );
 
   const projection = projectContractDepthPackage(sourceFiles);
 
-  writeJson(path.join(outDir, 'source.contract_360.json'), projection.contract360);
-  writeJson(path.join(outDir, 'source.contract_vendor_360.json'), projection.contractVendor360);
-  writeJson(path.join(outDir, 'source.vendor_contract_portfolio.json'), projection.vendorContractPortfolio);
-  writeJson(path.join(outDir, 'source.contract_application_scope.json'), projection.contractApplicationScope);
-  writeJson(path.join(outDir, 'source.contract_financial_exposure.json'), projection.contractFinancialExposure);
-  writeJson(path.join(outDir, 'source.contract_operational_performance.json'), projection.contractOperationalPerformance);
-  writeJson(path.join(outDir, 'source.contract_pdf_document_inventory.json'), projection.contractPdfDocumentInventory);
-  writeJson(path.join(outDir, 'source.contract_pdf_clause_extractions.json'), projection.contractPdfClauseExtractions);
-  writeJson(path.join(outDir, 'source.contract_pdf_page_text.json'), projection.contractPdfPageText);
-  writeJson(path.join(outDir, 'source.contract_change_orders.json'), projection.contractChangeOrders);
-  writeJson(path.join(outDir, 'source.contract_resource_model.json'), projection.contractResourceModel);
-  writeJson(path.join(outDir, 'source.contract_pricing_bridge.json'), projection.contractPricingBridge);
-  writeJson(path.join(outDir, 'source.contract_invoice_line.json'), projection.contractInvoiceLines);
-  writeJson(path.join(outDir, 'source.contract_batch_observation.json'), projection.contractBatchObservations);
-  writeJson(path.join(outDir, 'source.contract_qbr_observation.json'), projection.contractQbrObservations);
-  writeJson(path.join(outDir, 'source.contract_evidence_coverage.json'), projection.contractEvidenceCoverage);
-  writeJson(path.join(outDir, 'source.optimization_opportunity.json'), projection.optimizationOpportunities);
-  writeJson(path.join(outDir, 'projection-quality-gate.json'), projection.qualityGate);
+  writeJson(
+    path.join(outDir, "source.contract_360.json"),
+    projection.contract360,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_vendor_360.json"),
+    projection.contractVendor360,
+  );
+  writeJson(
+    path.join(outDir, "source.vendor_contract_portfolio.json"),
+    projection.vendorContractPortfolio,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_application_scope.json"),
+    projection.contractApplicationScope,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_financial_exposure.json"),
+    projection.contractFinancialExposure,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_operational_performance.json"),
+    projection.contractOperationalPerformance,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_pdf_document_inventory.json"),
+    projection.contractPdfDocumentInventory,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_pdf_clause_extractions.json"),
+    projection.contractPdfClauseExtractions,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_pdf_page_text.json"),
+    projection.contractPdfPageText,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_change_orders.json"),
+    projection.contractChangeOrders,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_resource_model.json"),
+    projection.contractResourceModel,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_pricing_bridge.json"),
+    projection.contractPricingBridge,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_invoice_line.json"),
+    projection.contractInvoiceLines,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_batch_observation.json"),
+    projection.contractBatchObservations,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_qbr_observation.json"),
+    projection.contractQbrObservations,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_evidence_coverage.json"),
+    projection.contractEvidenceCoverage,
+  );
+  writeJson(
+    path.join(outDir, "source.optimization_opportunity.json"),
+    projection.optimizationOpportunities,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_intelligence.json"),
+    projection.contractIntelligence,
+  );
+  writeJson(
+    path.join(outDir, "source.contract_intelligence_readout.json"),
+    projection.contractIntelligenceReadout,
+  );
+  writeJson(
+    path.join(outDir, "projection-quality-gate.json"),
+    projection.qualityGate,
+  );
 
   console.log(
     JSON.stringify(
       {
-        event: 'source_contract_depth_projection_preview',
+        event: "source_contract_depth_projection_preview",
         packageDir,
         adapterOutDir,
         outDir,
@@ -153,7 +304,10 @@ function main(): void {
     ),
   );
 
-  if (adapted.qualityGate.status !== 'PASS' || projection.qualityGate.status !== 'PASS') {
+  if (
+    adapted.qualityGate.status !== "PASS" ||
+    projection.qualityGate.status !== "PASS"
+  ) {
     process.exitCode = 1;
   }
 }

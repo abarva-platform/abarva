@@ -1,7 +1,7 @@
 // Source — IT Sourcing Category Taxonomy (Slice 0.1)
 //
 // Encoded expert backbone for the Source surface. This module is the typed
-// contract layer for the 8 IT sourcing categories Source reasons over. It is
+// contract layer for the IT sourcing categories Source reasons over. It is
 // data + types only: no UI, no runtime behavior, no I/O. The category
 // *classifier* (which maps a real sourcing event onto one of these
 // categories) is Slice 1.1 and intentionally NOT in this module.
@@ -13,12 +13,13 @@
 // static in-process constant with no database or service dependency.
 
 /**
- * Stable identifiers for the 8 IT sourcing categories. The discriminated
+ * Stable identifiers for the IT sourcing categories. The discriminated
  * union below keys on this field; `SOURCE_CATEGORY_IDS` and the exhaustive
  * tests guarantee the set stays closed.
  */
 export type SourceCategoryId =
   | 'ams'
+  | 'erp_si_implementation'
   | 'data_ai_platform'
   | 'ai_engineering_partner'
   | 'saas_renewal'
@@ -31,6 +32,7 @@ export type SourceCategoryId =
 /** Frozen list of every category id — used for exhaustiveness checks. */
 export const SOURCE_CATEGORY_IDS = [
   'ams',
+  'erp_si_implementation',
   'data_ai_platform',
   'ai_engineering_partner',
   'saas_renewal',
@@ -222,6 +224,129 @@ const AMS: SourceCategoryDefinition<'ams'> = {
       id: 'ams-x3',
       trap: 'Accepting uptime SLAs that pay the provider per ticket resolved.',
       correction: 'Require XLAs and ticket-reduction incentives so the provider is paid to remove demand.',
+    },
+  ],
+};
+
+const ERP_SI_IMPLEMENTATION: SourceCategoryDefinition<'erp_si_implementation'> = {
+  id: 'erp_si_implementation',
+  label: 'ERP / Enterprise Platform SI Implementation',
+  summary:
+    'Implementation or major transformation of ERP and enterprise platforms with a systems-integration partner.',
+  decisionQuestions: [
+    {
+      id: 'erp-si-q1',
+      stage: 0,
+      question:
+        'Is the organization buying a platform, implementation capacity, or an accountable business transformation outcome?',
+    },
+    {
+      id: 'erp-si-q2',
+      stage: 1,
+      question:
+        'Which business processes, countries, integrations, data migrations, and customizations are inside the implementation boundary?',
+    },
+    {
+      id: 'erp-si-q3',
+      stage: 3,
+      question:
+        'Which deliverables are fixed-price and acceptance-based, and which genuinely require controlled time and materials?',
+    },
+    {
+      id: 'erp-si-q4',
+      stage: 4,
+      question:
+        'Does the proposed role mix, onshore/offshore model, and named-leadership capacity match the delivery plan?',
+    },
+    {
+      id: 'erp-si-q5',
+      stage: 6,
+      question:
+        'Are design authority, data ownership, testing, cutover, warranty, and knowledge-transfer obligations explicit?',
+    },
+  ],
+  evidenceInputs: [
+    {
+      segment: 'program_inventory',
+      whatItProves:
+        'Transformation scope, milestones, dependencies, rollout waves, and accountable business outcomes.',
+      required: true,
+    },
+    {
+      segment: 'it_landscape',
+      whatItProves:
+        'Applications, integrations, data objects, environments, customizations, and retirement dependencies.',
+      required: true,
+    },
+    {
+      segment: 'it_financials',
+      whatItProves:
+        'Approved funding, internal cost baseline, implementation budget, and retained-cost assumptions.',
+      required: true,
+    },
+    {
+      segment: 'vendor_contracts',
+      whatItProves:
+        'Platform entitlements, incumbent obligations, partner terms, rate cards, warranty, and exit rights.',
+      required: true,
+    },
+    {
+      segment: 'compliance',
+      whatItProves:
+        'Control, privacy, security, data-residency, and regulated-process requirements.',
+      required: false,
+    },
+  ],
+  outputArtifacts: [
+    {
+      id: 'erp-si-a1',
+      name: 'ERP implementation sourcing strategy',
+      purpose:
+        'Defines the delivery model, commercial structure, integrator accountability, and retained organization.',
+    },
+    {
+      id: 'erp-si-a2',
+      name: 'Implementation scope and responsibility matrix',
+      purpose:
+        'Binds processes, countries, integrations, data, testing, cutover, and acceptance to named owners.',
+    },
+    {
+      id: 'erp-si-a3',
+      name: 'Role-mix and milestone pricing model',
+      purpose:
+        'Normalizes staffing, location mix, rates, deliverables, milestones, and change-control assumptions.',
+    },
+    {
+      id: 'erp-si-a4',
+      name: 'Implementation risk and contract-protection matrix',
+      purpose:
+        'Connects delivery risks to acceptance, warranty, service credits, knowledge transfer, and transition rights.',
+    },
+  ],
+  antiPatterns: [
+    {
+      id: 'erp-si-x1',
+      trap: 'Buying a large T&M team before process, integration, data, and acceptance scope is stable.',
+      correction:
+        'Gate commercial comparison on a buyer-owned scope baseline and acceptance model.',
+    },
+    {
+      id: 'erp-si-x2',
+      trap: 'Comparing blended rates while ignoring role mix, offshore leverage, productivity, and milestone accountability.',
+      correction:
+        'Normalize the complete resource model and milestone economics, not the headline rate.',
+    },
+    {
+      id: 'erp-si-x3',
+      trap: 'Leaving data migration, testing, cutover, and knowledge transfer as shared responsibilities.',
+      correction:
+        'Assign one accountable owner, evidence, and acceptance criteria for every critical deliverable.',
+    },
+    {
+      id: 'erp-si-x4',
+      trap: 'Allowing change orders to become the integrator margin model.',
+      correction:
+        'Define a scope baseline, assumptions register, rate protections, and governed change thresholds before award.',
     },
   ],
 };
@@ -960,6 +1085,7 @@ const BPO_SHARED_SERVICES: SourceCategoryDefinition<'bpo_shared_services'> = {
  */
 export const SOURCE_CATEGORY_TAXONOMY: Readonly<Record<SourceCategoryId, SourceCategory>> = {
   ams: AMS,
+  erp_si_implementation: ERP_SI_IMPLEMENTATION,
   data_ai_platform: DATA_AI_PLATFORM,
   ai_engineering_partner: AI_ENGINEERING_PARTNER,
   saas_renewal: SAAS_RENEWAL,
@@ -970,7 +1096,7 @@ export const SOURCE_CATEGORY_TAXONOMY: Readonly<Record<SourceCategoryId, SourceC
   staff_aug_vs_managed_service: STAFF_AUG_VS_MANAGED_SERVICE,
 };
 
-/** Flat list of all 9 categories, in canonical order. */
+/** Flat list of all categories, in canonical order. */
 export const SOURCE_CATEGORIES: readonly SourceCategory[] =
   SOURCE_CATEGORY_IDS.map((id) => SOURCE_CATEGORY_TAXONOMY[id]);
 

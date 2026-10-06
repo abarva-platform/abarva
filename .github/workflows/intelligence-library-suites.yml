@@ -1,0 +1,124 @@
+name: Intelligence library suites
+
+# These libraries carry tenant isolation, event isolation, and private-plane
+# controls. Run every reachable suite by default. A small named quarantine is
+# allowed only while its primary subject remains unreachable from the product.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  intelligence-library-suites:
+    name: Intelligence library suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refuse a stale or growing quarantine
+        run: node --test scripts/quality/check-intelligence-library-quarantine.test.mjs && node scripts/quality/check-intelligence-library-quarantine.mjs
+
+      # Item T-497 wired the three NAMED FILES below on 2026-09-27, in the same
+      # change that repaired them. Every one had been red since the commit that
+      # introduced it, and no workflow ran any of them, which is why nothing
+      # reported it.
+      #
+      # They are named individually rather than by directory, and that is the
+      # second attempt: wiring `src/lib/intelligence/canonical` and
+      # `src/lib/intelligence/synthesis/__tests__` as whole directories was
+      # REFUSED by three of this repository's own controls, correctly.
+      #
+      #   - Each of those directories holds a declared source-text scanner owned
+      #     by item T-495 -- `canonical/persistence-contract.test.ts` and
+      #     `synthesis/__tests__/violationsMigration.test.ts`. T-550's standing
+      #     rule refuses to wire a scanner whether it passes or not, because it
+      #     goes green on a comment or a rename. Green was never the criterion,
+      #     which is the mistake the first attempt made.
+      #   - `synthesis/__tests__` is additionally T-493's declared HELD directory.
+      #     Its hold is asserted by a control, not left to prose, and covers all
+      #     five of its files -- so nothing in it is wired here, including the
+      #     suite T-497 repaired inside it.
+      #
+      # `ask-guardrails.test.ts` is also repaired but deliberately not wired: one
+      # of its cases is gated on an owner decision and is still red on purpose.
+      #
+      # Item T-495 added `strategy-to-moves-contract.test.ts` on 2026-09-27, in
+      # the same change that rewrote it. Its one byte-scanning case is deleted --
+      # not sharpened -- and replaced by cases that drive the real
+      # `synthesizeStream` with only the audited Anthropic client mocked. It is
+      # named individually for the same reason as the three above: the directory
+      # still holds `ask-guardrails.test.ts`, red on purpose behind the owner
+      # decision named below, so `src/lib/intelligence/ask/__tests__` cannot be
+      # wired whole yet and the census keeps reporting it PARTIAL.
+      #
+      # `docs/architecture/t495-strategy-to-moves-contract-triage.json` is what
+      # lets this pass T-770's control: that control resolves a suite's scanner
+      # classification from the LATEST triage record, so the rewrite is declared
+      # rather than the T-492 draw being edited.
+      #
+      # Wire these directories properly once T-495 rewrites the remaining scanners
+      # and the gated decision lands. Until then the coverage census reports all three
+      # directories honestly -- two PARTIAL, one still dark -- so the remaining
+      # files stay in its ranking instead of being silenced.
+      #
+      # Item C-412 added `c412-ask-answer-mode-wiring.test.ts` on 2026-09-28, in
+      # the change that wrote it. T-495's rewrite above drives `synthesizeStream`
+      # and left `ask/index.ts` itself with no assertion that answer-mode
+      # classification and the deterministic fallback are still wired into the
+      # path a reader's question travels; this suite drives the real
+      # `askIntelligence` with retrieval and the audited Anthropic client mocked
+      # at their own boundaries and asserts that wiring by execution. Named
+      # individually for the same reason as the four above.
+      #
+      # Item T-495 added `source-contract360-synthesis-context.test.ts` on
+      # 2026-09-28, in the change that rewrote it. Its one case read
+      # `ask/index.ts` as text and compared the positions of two substrings; it
+      # is deleted, not sharpened, and replaced by cases that drive the real
+      # `askIntelligence` with a Contract 360 surface context and read what
+      # reached the model through `onModelInput`: the selected contract's block
+      # is sent, ahead of the caller's conversation context, and is absent when
+      # no contract is selected. Named individually for the same reason as the
+      # five above. Record:
+      # `docs/architecture/t495-source-contract360-synthesis-context-triage.json`.
+      #
+      # Item T-495 added `answer-length-depth.test.ts` on 2026-09-28, in the
+      # change that rewrote it. Three of its five cases read `synthesizer.ts` as
+      # text -- one sliced the file from the literal "ANSWER-ONLY STREAMING
+      # MODE" to its end -- and are deleted, not sharpened. They are replaced by
+      # cases that drive the real `synthesizeStream` down both paths and read the
+      # exact system and user input through `onModelInput`: the streaming path
+      # carries the deep-dive allowance, every "Target 90-160 words" line the
+      # model reads also allows roughly 400, and no "200-word target" is sent.
+      # Named individually for the same reason as the six above. Record:
+      # `docs/architecture/t495-answer-length-depth-triage.json`.
+      #
+      # The quarantine ignore list below applies only to
+      # src/lib/intelligence/__tests__; it names no file added here.
+      - name: Run reachable Intelligence library suites
+        run: |
+          npx jest \
+            src/lib/intelligence/__tests__ \
+            src/lib/intelligence/canonical/normalizers.test.ts \
+            src/lib/intelligence/canonical/build-canonical-pattern.test.ts \
+            src/lib/intelligence/ask/__tests__/tenant-identity-pin.test.ts \
+            src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts \
+            src/lib/intelligence/ask/__tests__/c412-ask-answer-mode-wiring.test.ts \
+            src/lib/intelligence/ask/__tests__/source-contract360-synthesis-context.test.ts \
+            src/lib/intelligence/ask/__tests__/answer-length-depth.test.ts \
+            --no-coverage --ci $(node scripts/quality/intelligence-library-ignore-args.mjs)

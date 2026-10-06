@@ -22,8 +22,9 @@ import {
   sourceEventRowToDetail,
 } from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
-import { composeSentinelSystemPrompt } from "@/lib/agent/voice-doctrine/sentinel";
+import { callSourceCanvasChatModel } from "@/lib/source/source-canvas-chat";
+import { applySourceSentinelModelAnswer } from "@/lib/source/sentinel-chat-llm";
+import type { SourceAnswerEvidenceCitation } from "@/lib/source/source-answer-engine";
 import { loadContractEvidenceRuntimeSummary } from "@/lib/source/contract-evidence/read-model";
 import type { ContractEvidenceMetricSummary } from "@/lib/source/contract-evidence/read-model";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -44,7 +45,12 @@ import {
 import {
   buildEvidenceReadinessGovernedAnswer,
   looksLikeEvidenceReadinessQuestion,
+  looksLikeSourceStageCompletionQuestion,
 } from "@/lib/source/ava/evidence-readiness-governed-answer";
+import {
+  sourceNewCurrentPhaseLabel,
+  sourceNewNextAction,
+} from "@/lib/source/new-workspace/phase-state";
 import {
   buildValueLedgerGovernedAnswer,
   looksLikeValueLedgerQuestion,
@@ -68,6 +74,11 @@ import {
   looksLikeAwardReadinessQuestion,
 } from "@/lib/source/ava/award-readiness-governed-answer";
 import {
+  buildCrossPhaseAuditGovernedAnswer,
+  looksLikeCrossPhaseAuditQuestion,
+} from "@/lib/source/ava/cross-phase-audit-governed-answer";
+import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import {
   combineSourceEventDecisionAndValueAnswers,
   looksLikeSourceEventDecisionAndValueQuestion,
 } from "@/lib/source/ava/source-event-summary-governed-answer";
@@ -76,11 +87,17 @@ import {
   looksLikeRfpDesignQuestion,
 } from "@/lib/source/ava/rfp-design-governed-answer";
 import { buildSourceAvaModuleHandoffForRuntime } from "@/lib/source/ava/module-handoff-runtime";
+import { reconcileGovernedAnswerSummary } from "@/lib/source/ava/governed-answer-stream";
 import {
   resolveAuthoritativeArtifactSlots,
   type AuthoritativeArtifactCandidate,
 } from "@/lib/source/client-final-artifacts";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
+import {
+  buildGovernedEventContextBundle,
+  compareEventContextAdoption,
+  type EventContextCandidate,
+} from "@/lib/source/ava/event-context-bundle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -252,22 +269,61 @@ export async function POST(
     // Build context + deterministic briefing (always needed for fallback + suggested actions).
     const stubResponse = createSourceNexusApiStubResponse(stubInput);
 
-    // Attempt a real Claude call. Falls back to stub summary on any failure.
-    const claudeSummary = await callSentinelWithClaude({
-      prompt: normalizedBody.prompt ?? "",
-      briefingContext: stubResponse.summary ?? "",
-      tenantKey: activeClient?.key ?? null,
-      tenantId: tenancy.clientId,
-    }).catch(() => null);
+    // Attempt a real Claude call, grounded in the evidence assembled above.
+    // A failure falls back to the deterministic briefing, but it says so: the
+    // previous `.catch(() => null)` made a denied egress, a provider outage and
+    // an empty answer indistinguishable from a deliberate deterministic answer.
+    let claudeSummary: string | null = null;
+    let modelCitations: SourceAnswerEvidenceCitation[] = [];
+    let modelWarnings: string[] = [];
+    try {
+      const modelResult = await callSourceCanvasChatModel({
+        prompt: normalizedBody.prompt ?? "",
+        briefingContext: stubResponse.summary ?? "",
+        tenantKey: activeClient?.key ?? null,
+        tenantId: tenancy.clientId,
+        userId: tenancy.userId,
+        liveTenantContext,
+      });
+      claudeSummary = modelResult.text;
+      modelCitations = modelResult.evidenceCitations;
+      modelWarnings = modelResult.warnings;
+    } catch (error) {
+      const detail =
+        error instanceof Error ? error.message : "unknown model error";
+      console.warn(
+        "[source.nexus-ask.canvas-chat-model.failed]",
+        JSON.stringify({ eventId: eventId ?? null, detail }),
+      );
+      modelWarnings = [
+        `Sentinel canvas chat fell back to the deterministic briefing: ${detail}. No model answer was produced for this turn.`,
+      ];
+    }
 
     const guardedClaudeSummary =
       claudeSummary && eventId
         ? enforceSourceExistingEventWriteTruth(claudeSummary)
         : claudeSummary;
 
-    const response = guardedClaudeSummary
-      ? { ...stubResponse, summary: guardedClaudeSummary, noModel: false }
+    // The canvas renders `agentResponseParts` instead of the prose when parts
+    // are present, so replacing only `summary` left the deterministic advisor
+    // answer and the deterministic composer's "Evidence used" card sitting
+    // under a model answer that used neither. Every field that states the
+    // answer is re-derived from the answer being shown, through the same helper
+    // the Sentinel chat path uses, so the two cannot drift apart again.
+    const baseResponse = guardedClaudeSummary
+      ? applySourceSentinelModelAnswer({
+          fallbackResponse: stubResponse,
+          answerText: guardedClaudeSummary,
+          evidenceCitations: modelCitations,
+        })
       : stubResponse;
+    const response = modelWarnings.length
+      ? {
+          ...baseResponse,
+          warnings: [...baseResponse.warnings, ...modelWarnings],
+        }
+      : baseResponse;
 
     // Opt-in structured-answer branch (mirrors /api/intelligence/ask's
     // Accept: application/x-ndjson convention). Every existing caller sends
@@ -322,6 +378,136 @@ export async function POST(
               eventId,
               clientKey: activeClientKey,
               message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
+        liveEventDetail &&
+        looksLikeCrossPhaseAuditQuestion(normalizedBody.prompt)
+      ) {
+        const resolvedEventId = liveEventDetail.id ?? eventId;
+        const question = normalizedBody.prompt ?? "";
+        const asOf = liveEventDetail.valueLedger.updatedAt.slice(0, 10);
+        const evidenceAnswer = await buildEvidenceReadinessGovernedAnswer({
+          eventId: resolvedEventId,
+          eventAliases: [
+            eventId,
+            liveEventDetail.id,
+            liveEventDetail.code,
+          ].filter((value): value is string => Boolean(value)),
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question,
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.cross-phase-evidence-readiness.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
+        });
+        const ndaCoverage = await readSourceNewStage05NdaCoverage({
+          clientKey: activeClientKey,
+          eventId: resolvedEventId,
+          asOf,
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.cross-phase-nda-readiness.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return {
+            status: "unavailable" as const,
+            asOf,
+            suppliers: [],
+            nextAction: {
+              label: "Restore candidate and NDA authority",
+              detail:
+                "Supplier and NDA authority could not be read, so cross-phase audit readiness remains blocked.",
+            },
+          };
+        });
+        agentAnswer = evidenceAnswer
+          ? buildCrossPhaseAuditGovernedAnswer({
+              question,
+              event: {
+                id: resolvedEventId,
+                name: liveEventDetail.name,
+                lifecycle: liveEventDetail.status,
+                currentStageKey: liveEventDetail.currentStageKey,
+                currentStageLabel: liveEventDetail.currentStageLabel,
+                triggerDescription: liveEventDetail.triggerDescription,
+                scopeDescription: liveEventDetail.scopeDescription,
+                decisionOwner: liveEventDetail.decisionOwner,
+                stages: liveEventDetail.stages,
+                artifacts: liveEventDetail.artifacts,
+              },
+              evidence: evidenceAnswer,
+              ndaCoverage,
+            })
+          : null;
+      } else if (
+        eventId &&
+        (looksLikeSourceStageCompletionQuestion(normalizedBody.prompt) ||
+          looksLikeEvidenceReadinessQuestion(normalizedBody.prompt))
+      ) {
+        const asksForStageCompletion = looksLikeSourceStageCompletionQuestion(
+          normalizedBody.prompt,
+        );
+        const sourceNewEventContext = {
+          currentStage:
+            liveEventDetail?.currentStageKey ??
+            stubResponse.context.stageLabel ??
+            "",
+          lifecycle: liveEventDetail?.status ?? "active",
+        };
+        agentAnswer = await buildEvidenceReadinessGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventAliases: [
+            eventId,
+            liveEventDetail?.id,
+            liveEventDetail?.code,
+          ].filter((value): value is string => Boolean(value)),
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+          ...(asksForStageCompletion
+            ? {
+                stageContext: {
+                  stageKey: liveEventDetail?.currentStageKey,
+                  stageLabel: sourceNewCurrentPhaseLabel(sourceNewEventContext),
+                  nextAction: sourceNewNextAction(sourceNewEventContext).label,
+                  blocker: liveEventDetail?.blocker,
+                  missingInputs: stubResponse.context.missingInputs,
+                },
+              }
+            : {}),
+        }).catch((err) => {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : JSON.stringify(err);
+          console.error(
+            "[source.nexus-ask.evidence-readiness-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId: liveEventDetail?.id ?? eventId,
+              eventCode: liveEventDetail?.code ?? null,
+              clientKey: activeClientKey,
+              message: errorMessage,
+              stack: err instanceof Error ? err.stack : undefined,
             }),
           );
           return null;
@@ -411,10 +597,7 @@ export async function POST(
           );
           return null;
         });
-      } else if (
-        eventId &&
-        looksLikeRfpDesignQuestion(normalizedBody.prompt)
-      ) {
+      } else if (eventId && looksLikeRfpDesignQuestion(normalizedBody.prompt)) {
         agentAnswer = await buildRfpDesignGovernedAnswer({
           eventId: liveEventDetail?.id ?? eventId,
           eventName: liveEventDetail?.name ?? null,
@@ -527,48 +710,11 @@ export async function POST(
           );
           return null;
         });
-      } else if (
-        eventId &&
-        looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)
-      ) {
-        agentAnswer = await buildEvidenceReadinessGovernedAnswer({
-          eventId: liveEventDetail?.id ?? eventId,
-          eventAliases: [
-            eventId,
-            liveEventDetail?.id,
-            liveEventDetail?.code,
-          ].filter((value): value is string => Boolean(value)),
-          clientKey: activeClientKey,
-          tenantId: tenancy.clientId ?? null,
-          question: normalizedBody.prompt ?? "",
-        }).catch((err) => {
-          const errorMessage =
-            err instanceof Error
-              ? err.message
-              : typeof err === "string"
-                ? err
-                : JSON.stringify(err);
-          console.error(
-            "[source.nexus-ask.evidence-readiness-governed-answer.failed]",
-            JSON.stringify({
-              eventId,
-              resolvedEventId: liveEventDetail?.id ?? eventId,
-              eventCode: liveEventDetail?.code ?? null,
-              clientKey: activeClientKey,
-              message: errorMessage,
-              stack: err instanceof Error ? err.stack : undefined,
-            }),
-          );
-          return null;
-        });
       }
-      const ndjsonSummary = agentAnswer
-        ? {
-            ...response,
-            summary: agentAnswer.directAnswer,
-            noModel: true,
-          }
-        : response;
+      const ndjsonSummary = reconcileGovernedAnswerSummary(
+        response,
+        agentAnswer,
+      );
       const moduleHandoff = buildSourceAvaModuleHandoffForRuntime({
         sourceAnalyticsEnabled: isFeatureEnabled(
           {
@@ -810,7 +956,11 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     clientKey === APEX_RETAIL_BROKER_TENANT_KEY
       ? APEX_RETAIL_BROKER_TENANT_KEY
       : clientKey;
-  const artifactContext = await loadSourceEventArtifactContext(args.event.id);
+  const artifactContext = await loadSourceEventArtifactContext(args.event.id, {
+    clientKey: brokerTenantKey,
+    tenantId: args.activeClientKey ?? null,
+    stageKey: args.event.currentStageKey ?? "unknown",
+  });
   const artifactStandards = buildSourceArtifactStandardsContext({
     artifacts: artifactContext.artifacts.map((artifact) => ({
       artifactKind: artifact.artifact_kind,
@@ -1149,7 +1299,96 @@ function sourceEventEvidenceDoc(item: unknown): string {
     : "Source intake record";
 }
 
-async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
+/**
+ * Measure the acceptance-bound event-context fence (item C-008) against the
+ * artifact set this route already sends to the model, and log the difference.
+ * Read-only by construction: it returns nothing and no caller uses its result.
+ */
+function reportEventContextFenceShadow(input: {
+  sourceEventId: string;
+  identity: { clientKey: string; tenantId: string | null; stageKey: string };
+  artifacts: SourceArtifactContextRow[];
+  acceptanceByArtifactId: Map<
+    string,
+    { authoritativeVersionId: string; contentDriftStatus: string; downstreamContextPolicy: string }
+  >;
+  currentAuthoritativeIds: string[];
+}): void {
+  try {
+    const accepted: Record<string, string> = {};
+    for (const [artifactId, acceptance] of input.acceptanceByArtifactId) {
+      accepted[artifactId] = acceptance.authoritativeVersionId;
+    }
+    const candidates: EventContextCandidate[] = input.artifacts.map(
+      (artifact) => {
+        const acceptance = input.acceptanceByArtifactId.get(artifact.id);
+        return {
+          id: artifact.id,
+          kind: "accepted_artifact",
+          tenantId: input.identity.tenantId,
+          clientKey: input.identity.clientKey,
+          eventId: input.sourceEventId,
+          contractId: null,
+          artifactId: artifact.id,
+          // The accept route stores the source artifact row id as the
+          // authoritative version id, so a superseded row is a different id and
+          // fails the binding — which is the behaviour being measured.
+          versionId: artifact.id,
+          contentDriftStatus:
+            acceptance?.contentDriftStatus === "current" ||
+            acceptance?.contentDriftStatus === "stale"
+              ? acceptance.contentDriftStatus
+              : "unknown",
+          downstreamContextPolicy:
+            acceptance?.downstreamContextPolicy === "exclude" ||
+            acceptance?.downstreamContextPolicy === "restricted"
+              ? acceptance.downstreamContextPolicy
+              : "include",
+          reviewState: acceptance ? "accepted" : "unreviewed",
+          sourceLayer: "artifact",
+          sourceBasis: "source_artifacts",
+          classification: "internal",
+          retrievability: "committed_not_indexed",
+          agentReadinessStatus: "committed_not_indexed",
+          confidenceLevel: "medium",
+          citedRenderVerifiedAt: null,
+        };
+      },
+    );
+    const bundle = buildGovernedEventContextBundle(candidates, {
+      tenantId: input.identity.tenantId ?? "",
+      clientKey: input.identity.clientKey,
+      eventId: input.sourceEventId,
+      contractId: null,
+      currentStageKey: input.identity.stageKey,
+      acceptedArtifactVersions: accepted,
+    });
+    const comparison = compareEventContextAdoption(
+      input.currentAuthoritativeIds,
+      bundle,
+    );
+    if (comparison.agrees) return;
+    console.info("[source-nexus-ask] C-008 event-context fence (shadow)", {
+      sourceEventId: input.sourceEventId,
+      currentCount: comparison.currentCount,
+      fencedCount: comparison.fencedCount,
+      wouldRemoveCount: comparison.wouldRemove.length,
+      wouldAddCount: comparison.wouldAdd.length,
+      refusalsByCode: comparison.refusalsByCode,
+    });
+  } catch (error) {
+    // A measurement must never be able to fail an answer.
+    console.warn("[source-nexus-ask] C-008 shadow comparison skipped", {
+      sourceEventId: input.sourceEventId,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function loadSourceEventArtifactContext(
+  sourceEventId: string,
+  identity: { clientKey: string; tenantId: string | null; stageKey: string },
+): Promise<{
   artifacts: SourceArtifactContextRow[];
   chunks: SourceArtifactChunkContextRow[];
   facts: SourceArtifactFactContextRow[];
@@ -1249,6 +1488,22 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     (artifact) => !authoritativeArtifactIdSet.has(artifact.id),
   );
   const artifactIds = authoritativeArtifacts.map((artifact) => artifact.id);
+  // C-008, SHADOW ONLY — this changes nothing about what the model reads.
+  //
+  // The authority resolver above admits an artifact with no acceptance row at
+  // all, falling back to `status`/`is_current_authoritative`. The
+  // acceptance-bound fence would not. Whether that fallback should end is a
+  // product decision, so AGENTS.md's module-adoption rule applies: run the new
+  // path in shadow, measure the divergence against the read path already in
+  // production, and adopt only once answer quality and tenant safety are
+  // same-or-better. `artifactIds` below is the unchanged production list.
+  reportEventContextFenceShadow({
+    sourceEventId,
+    identity,
+    artifacts: authoritativeArtifacts,
+    acceptanceByArtifactId,
+    currentAuthoritativeIds: artifactIds,
+  });
   if (!artifactIds.length) {
     return { artifacts, chunks: [], facts: [], artifactEvidence: [] };
   }
@@ -1685,57 +1940,6 @@ async function linkAttachmentsToEvent(args: {
     tenantId,
     eventId,
   });
-}
-
-/**
- * Call Claude with Sentinel voice for Source canvas chat.
- * Returns the answer string, or throws so the caller can fall back to stub.
- */
-async function callSentinelWithClaude(args: {
-  prompt: string;
-  briefingContext: string;
-  tenantKey: string | null;
-  tenantId: string;
-}): Promise<string> {
-  if (!args.prompt.trim()) throw new Error("empty prompt");
-
-  const preflight = await preflightAnthropicDirectClient({
-    tenantId: args.tenantId,
-    workflow: "source-canvas-chat",
-    model: "claude-sonnet-4-6",
-    prompt: args.prompt,
-    dataClass: "confidential",
-    metadata: { surface: "source", tenantKey: args.tenantKey ?? "unknown" },
-  });
-  if (!preflight.ok) throw new Error(`egress blocked: ${preflight.reason}`);
-
-  const systemPrompt = composeSentinelSystemPrompt({
-    mode: "tenant",
-    tenantKey: args.tenantKey,
-    surface: "/source",
-    vectorIndexPending: false,
-    worldviewPending: false,
-    worldviewHitsPresent: false,
-  });
-
-  const userMessage = args.briefingContext
-    ? `${args.briefingContext}\n\nUser question: ${args.prompt}`
-    : args.prompt;
-
-  const msg = await preflight.client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 512,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  });
-
-  const text = msg.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("");
-
-  if (!text.trim()) throw new Error("empty Claude response");
-  return text;
 }
 
 async function parseSourceNexusRequestBody(request: NextRequest): Promise<

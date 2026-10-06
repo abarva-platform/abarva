@@ -5,10 +5,17 @@ import {
   getClientOption,
 } from "@/lib/client-config";
 import { SourceOriginatePage } from "@/components/source/SourceOriginatePage";
+import {
+  SourceNewRequestFirstPage,
+  type SourceNewEventWorkspaceSummary,
+  type SourceNewRequestQueueStatus,
+} from "@/components/source/new-workspace/SourceNewRequestFirstPage";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
+import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
+import { listSourcingEvents } from "@/lib/source/queries";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
-export const metadata: Metadata = { title: "New IT Sourcing Intake · AbarVa" };
+export const metadata: Metadata = { title: "Source Requests · AbarVa" };
 
 export default async function Page({
   searchParams,
@@ -17,6 +24,8 @@ export default async function Page({
     intent?: string;
     contractId?: string;
     opportunityId?: string;
+    mode?: string;
+    requestId?: string;
   }>;
 }) {
   const tenant = await resolveTenant().catch(() => null);
@@ -32,11 +41,80 @@ export default async function Page({
       name: tenant?.displayName,
     }) ?? clientOption.name;
 
+  if (params.mode !== "intake" && !params.intent) {
+    const { status, importedRequests, eventWorkspaces } =
+      await loadRequestFirstWorkspace(clientKey);
+    return (
+      <SourceNewRequestFirstPage
+        clientName={activeClientDisplayName}
+        clientKey={clientOption.id}
+        requestQueueStatus={status}
+        importedRequests={importedRequests}
+        eventWorkspaces={eventWorkspaces}
+      />
+    );
+  }
+
+  const sourceRequest = params.requestId
+    ? await readSourceIntakeRequestQueue(clientKey ?? "").then((read) =>
+        read.registryAvailable
+          ? (read.requests.find(
+              (request) => request.requestId === params.requestId,
+            ) ?? null)
+          : null,
+      )
+    : null;
+  if (params.requestId && !sourceRequest) {
+    redirect("/source/new");
+  }
+
   return (
     <SourceOriginatePage
       clientName={activeClientDisplayName}
       clientShortName={clientOption.shortName}
       clientKey={clientOption.id}
+      sourceRequest={sourceRequest}
     />
   );
+}
+
+async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
+  status: SourceNewRequestQueueStatus;
+  importedRequests: Awaited<
+    ReturnType<typeof readSourceIntakeRequestQueue>
+  >["requests"];
+  eventWorkspaces: SourceNewEventWorkspaceSummary[];
+}> {
+  if (!clientKey) {
+    return {
+      status: "unauthorized",
+      importedRequests: [],
+      eventWorkspaces: [],
+    };
+  }
+  const [requestRead, events] = await Promise.all([
+    readSourceIntakeRequestQueue(clientKey),
+    listSourcingEvents().catch(() => null),
+  ]);
+  return {
+    status: !requestRead.registryAvailable
+      ? "unavailable"
+      : requestRead.requests.length > 0
+        ? "loaded"
+        : "empty",
+    importedRequests: requestRead.registryAvailable ? requestRead.requests : [],
+    eventWorkspaces: (events ?? []).map((event) => ({
+      id: event.id,
+      code: event.code,
+      name: event.name,
+      currentStageKey: event.currentStageKey,
+      currentStageLabel: event.currentStageLabel,
+      lifecycleLabel: event.statusLabel,
+      lifecycle: event.status,
+      trigger: event.triggerDescription ?? null,
+      scope: event.scopeDescription ?? null,
+      decisionOwner: event.decisionOwner ?? null,
+      href: `/source/new/${encodeURIComponent(event.id)}`,
+    })),
+  };
 }

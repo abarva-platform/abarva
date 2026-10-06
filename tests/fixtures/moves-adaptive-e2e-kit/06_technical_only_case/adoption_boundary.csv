@@ -1,0 +1,6 @@
+question,answer,evidence_reference,status
+Will the solution change HR workflow or approval rights?,No change stated in current synthetic request,06_technical_only_case/intake.md,synthetic_hypothesis_human_validate
+Who owns training and adoption?,Business HR leadership,06_technical_only_case/intake.md,owner_role_needs_human_assignment
+What is the technical scope?,Workday feed landing plus bronze/silver/gold models and ten reports,06_technical_only_case/data_pipeline_inventory.csv,synthetic
+What should P3 estimate?,Data contracts lineage quality privacy access report acceptance refresh support and internal/vendor effort,06_technical_only_case/report_catalog.csv,synthetic
+What should not be demanded by default?,Detailed process redesign absent evidence of workflow/role impact,06_technical_only_case/intake.md,route_depth_assertion

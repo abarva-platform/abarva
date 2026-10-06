@@ -507,7 +507,7 @@ function SourceEmptyState() {
           Source events track vendor consolidation, RFP processes, and
           procurement exercises from plan through award.
         </p>
-        <a
+        <Link
           href="/source/new"
           style={{
             fontFamily: SHELL.MONO,
@@ -523,7 +523,7 @@ function SourceEmptyState() {
           }}
         >
           + Originate source event
-        </a>
+        </Link>
       </div>
     </AppShell>
   );
@@ -845,7 +845,7 @@ export function SourceIndexPage() {
             borderTop: `1px solid ${SHELL.CARD_LINE}`,
           }}
         >
-          <a
+          <Link
             href="/source/new"
             style={{
               display: "inline-flex",
@@ -859,7 +859,7 @@ export function SourceIndexPage() {
           >
             <span>+</span>
             <span>Originate new source event</span>
-          </a>
+          </Link>
         </div>
       </div>
 

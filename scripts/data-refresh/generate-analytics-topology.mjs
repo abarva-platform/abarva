@@ -152,9 +152,7 @@ const headers = [...five.headers];
 for (const c of ["source_system_ref_id", "target_system_ref_id"]) if (!headers.includes(c)) headers.push(c);
 
 const stamp = new Date(0).toISOString().slice(0, 10);
-let seq = 0;
 const generated = [...feeds.values(), ...servings].map((f) => {
-  seq += 1;
   const row = Object.fromEntries(headers.map((h) => [h, ""]));
   row.tenant_key = tenantKey;
   row.data_asset_name = servings.includes(f)
@@ -176,7 +174,9 @@ const generated = [...feeds.values(), ...servings].map((f) => {
   row.known_gaps = `Modelled analytics edge, not client-stated. Generator ${GENERATOR_VERSION}; routed from recorded data_domain and system_category.`;
   row.source_classification = "synthetic_modeled";
   row.consolidation_rule_used = GENERATOR_VERSION;
-  if (headers.includes("data_asset_id")) row.data_asset_id = `GEN-ANL-${String(seq).padStart(4, "0")}`;
+  // data_asset_id stays blank. `scripts/data/assign-stable-identity.mjs` is the only minter and
+  // records every id in the tenant's identity ledger; a sequence id stamped here is declared by no
+  // ledger and renumbers whenever row order changes. Run the minter after --apply.
   return row;
 });
 
@@ -205,3 +205,4 @@ for (const [t, s] of [...fanIn].sort((a, b) => b[1].size - a[1].size).slice(0, 8
 if (!APPLY) { console.log(`\n(dry run — pass --apply to write)`); process.exit(0); }
 fs.writeFileSync(fivePath, toCsv(headers, all), "utf8");
 console.log(`\nwrote ${path.relative(ROOT, fivePath)}`);
+console.log(`next: node scripts/data/assign-stable-identity.mjs --tenant ${tenantKey}  (mints and records the ids of the generated rows)`);

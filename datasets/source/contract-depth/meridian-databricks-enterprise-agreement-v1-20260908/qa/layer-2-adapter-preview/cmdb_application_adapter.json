@@ -1,0 +1,54 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "application_id": "MER-APP-CLAIMSDENIAL",
+    "application_name": "Claims Denials Pattern Analysis (Pilot)",
+    "business_unit": "Revenue Cycle Analytics",
+    "lifecycle_status": "active_pilot",
+    "target_go_live": "2025-11-01",
+    "source_row_id": "SRC-APP-001",
+    "adapter_name": "cmdb_application_adapter",
+    "adapter_row_number": "1",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "application_id": "MER-APP-LAAMSMIG",
+    "application_name": "Legacy Analytics Migration Workload",
+    "business_unit": "Enterprise Data & Analytics",
+    "lifecycle_status": "planned",
+    "target_go_live": "2027-03-01",
+    "source_row_id": "SRC-APP-002",
+    "adapter_name": "cmdb_application_adapter",
+    "adapter_row_number": "2",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "application_id": "MER-APP-MEDEEXIT",
+    "application_name": "MedeAnalytics Exit — Reporting Consolidation",
+    "business_unit": "Enterprise Data & Analytics",
+    "lifecycle_status": "planned",
+    "target_go_live": "2027-09-01",
+    "source_row_id": "SRC-APP-003",
+    "adapter_name": "cmdb_application_adapter",
+    "adapter_row_number": "3",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "application_id": "MER-APP-EPICINTEG",
+    "application_name": "Epic Clarity/Caboodle Integration Layer",
+    "business_unit": "Clinical Platforms",
+    "lifecycle_status": "planned",
+    "target_go_live": "2027-01-15",
+    "source_row_id": "SRC-APP-004",
+    "adapter_name": "cmdb_application_adapter",
+    "adapter_row_number": "4",
+    "adapter_version": "source-contract-depth-v1"
+  }
+]

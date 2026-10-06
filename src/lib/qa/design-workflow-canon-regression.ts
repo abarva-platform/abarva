@@ -203,6 +203,59 @@ export const WORKFLOW_CONTRACT: WorkflowContractRule[] = [
   },
 ];
 
+/**
+ * A target this list used to require, and the answer to whether it should.
+ *
+ * The Wave-15/16 target list asserted `/platform/admin/architecture` exists.
+ * It does not, and the suite was excluded rather than answered, because "is
+ * this a missing surface or a stale entry" is not a question a file-existence
+ * check can settle on its own.
+ *
+ * Measured rather than decided:
+ *
+ *   - **No commit on this branch's history has ever touched
+ *     `src/app/(maestro)/platform/admin/architecture/`** -- not an add, not a
+ *     delete. The route never existed here, so this was never a regression.
+ *   - The admin tree was consolidated under `/admin/*` (ADMIN8), and the
+ *     Architecture panel went with that consolidation -- recorded in the
+ *     admin shell enforcement suite, which also notes the legacy
+ *     `/platform/admin/architecture` redirect was removed.
+ *   - There is no `/admin/architecture` either, so the surface is not
+ *     somewhere else under a new name. It is nowhere.
+ *   - The only product reference left is a `clickTarget` in
+ *     `src/lib/admin/admin-action-strip-view.ts`, and that module has no
+ *     non-test importer and is not reachable from any of the 3,366 files the
+ *     routes reach. Nobody can click it.
+ *
+ * So the entry is stale, not aspirational, and it is recorded here instead of
+ * being deleted -- the item that owns this forbids settling it by removing
+ * the assertion without saying which answer was chosen.
+ *
+ * The record is checked in both directions. If one of these files appears,
+ * the retirement claim is wrong and the suite says so, so this cannot quietly
+ * become a lie the way the original entry did.
+ */
+export interface RetiredTargetPage {
+  pageId: string;
+  routePath: string;
+  filePath: string;
+  /** Why it is not a target, in terms of what was measured. */
+  basis: string;
+}
+
+export const RETIRED_TARGET_PAGES: RetiredTargetPage[] = [
+  {
+    pageId: 'admin-architecture',
+    routePath: '/platform/admin/architecture',
+    filePath: 'src/app/(maestro)/platform/admin/architecture/page.tsx',
+    basis:
+      'Never existed on this history — no commit has added or removed it. The admin tree '
+      + 'was consolidated under /admin/* and the Architecture panel went with it; there is no '
+      + '/admin/architecture either. The one remaining reference is a clickTarget in an '
+      + 'unreachable module.',
+  },
+];
+
 export const TARGET_PAGES: TargetPage[] = [
   {
     pageId: 'admin-home',
@@ -210,22 +263,6 @@ export const TARGET_PAGES: TargetPage[] = [
     filePath: 'src/app/(maestro)/platform/admin/page.tsx',
     primaryAgent: 'steward',
     requiredWorkflowSections: ['platform readiness', 'next actions'],
-  },
-  {
-    pageId: 'admin-architecture',
-    routePath: '/platform/admin/architecture',
-    filePath: 'src/app/(maestro)/platform/admin/architecture/page.tsx',
-    primaryAgent: 'atlas',
-    requiredWorkflowSections: [
-      'planes',
-      'request flow',
-      'private data plane',
-      'azure',
-      'gateway',
-      'mission runtime',
-      'built vs deferred',
-      'next actions',
-    ],
   },
   {
     pageId: 'admin-production-readiness',

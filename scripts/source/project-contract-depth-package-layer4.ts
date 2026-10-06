@@ -7,6 +7,15 @@ import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
 
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
+import { packageOpportunityAmountFailure } from "./contract-depth-layer4-amount-gate";
+import {
+  canonicalWriterOpportunityCount,
+  evidenceOnlyPairs,
+  expectedOpportunityCounts,
+  selectedEvidenceOnlyPairs,
+  sourcingExclusionSql,
+  type EvidenceOnlyPair,
+} from "./contract-depth-projection-ownership";
 
 loadEnv({ path: path.resolve(process.cwd(), ".env.local") });
 loadEnv();
@@ -42,6 +51,7 @@ const TARGET_VIEWS = [
   ["source", "vendor_position_v1"],
   ["source", "source_page_storyline_v1"],
   ["source", "contract_tab_intelligence_v1"],
+  ["source", "contract_intelligence_v1"],
   ["source", "ava_grounding_bundle_v1"],
   ["consumption", "sourcing_vendor_v1"],
   ["consumption", "sourcing_vendor_semantic_v1"],
@@ -170,6 +180,18 @@ async function tableScalar(
 ): Promise<number> {
   const result = await client.query(sql, params);
   return num(result.rows[0]?.value);
+}
+
+async function readCanonicalWriterOpportunityCount(
+  client: Client,
+  selectedPairs: readonly EvidenceOnlyPair[],
+): Promise<number | null> {
+  return canonicalWriterOpportunityCount(selectedPairs, (pair) => tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.optimization_opportunity
+        WHERE tenant_key = $1 AND contract_id = $2 AND dataset_version = $3`,
+      [pair.tenantKey, pair.contractId, pair.writerDatasetVersion],
+    ));
 }
 
 async function objectKinds(client: Client) {
@@ -421,7 +443,24 @@ async function l4Readback(
   return result;
 }
 
-function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
+function baseLayer3ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (
+    datasetVersion === "meridian-databricks-enterprise-agreement-v1-20260908"
+  ) {
+    return {
+      source_contract: 1,
+      source_contract_scope: 4,
+      source_contract_consumption_observation: 12,
+      source_contract_performance_observation: 4,
+      source_contract_service_credit: 0,
+      source_contract_term: 8,
+      source_optimization_opportunity: 4,
+      opportunities_not_finance_confirmed: 4,
+      source_page_text_fact_assertion: 6,
+      source_change_order_fact_assertion: 5,
+      contracts_with_assessed_alternatives: 0,
+    };
+  }
   if (datasetVersion === "meridian-laams-new-event-rich-v2-20260908") {
     return {
       source_contract: 1,
@@ -484,7 +523,35 @@ function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
   };
 }
 
-function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
+function baseL4ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (
+    datasetVersion === "meridian-databricks-enterprise-agreement-v1-20260908"
+  ) {
+    return {
+      source_contract_360_package: 1,
+      source_contract_financial_exposure_package: 1,
+      source_contract_operational_performance_package: 1,
+      source_contract_application_scope_package: 4,
+      consumption_sourcing_spend_monthly_v1_package: 12,
+      consumption_sourcing_performance_v1_package: 4,
+      consumption_sourcing_opportunity_v1_package: 4,
+      source_contract_evidence_coverage_v1_package: 1,
+      source_contract_action_candidate_v1_package: 4,
+      source_contract_claim_card_v1_package: 4,
+      source_vendor_position_v1_package: 1,
+      source_page_storyline_v1_rows: 5,
+      source_contract_tab_intelligence_v1_package: 7,
+      source_ava_grounding_bundle_v1_rows: 4,
+      source_contract_360_page_text_rows_package: 6,
+      source_contract_360_change_order_rows_package: 1,
+      source_contract_360_resource_role_rows_package: 0,
+      source_contract_360_invoice_line_rows_package: 12,
+      source_contract_360_batch_rows_package: 11,
+      source_contract_360_qbr_rows_package: 2,
+      package_contracts_with_assessed_alternatives: 0,
+      skyharbor_strings_in_scope: 0,
+    };
+  }
   if (datasetVersion === "meridian-laams-new-event-rich-v2-20260908") {
     return {
       source_contract_360_package: 1,
@@ -583,11 +650,26 @@ function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
   };
 }
 
+function layer3ExpectedCounts(datasetVersion: string, selectedPairs: readonly EvidenceOnlyPair[]): Record<string, number> {
+  return expectedOpportunityCounts(baseLayer3ExpectedCounts(datasetVersion), {}, selectedPairs, null).layer3;
+}
+
+function l4ExpectedCounts(
+  datasetVersion: string,
+  selectedPairs: readonly EvidenceOnlyPair[],
+  canonicalWriterCount: number | null,
+): Record<string, number> {
+  return expectedOpportunityCounts(
+    {}, baseL4ExpectedCounts(datasetVersion), selectedPairs, canonicalWriterCount,
+  ).layer4;
+}
+
 function assertLayer3Ready(
   rows: Record<string, number>,
   datasetVersion: string,
+  selectedPairs: readonly EvidenceOnlyPair[],
 ): void {
-  const expected = layer3ExpectedCounts(datasetVersion);
+  const expected = layer3ExpectedCounts(datasetVersion, selectedPairs);
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
     .map(
@@ -605,8 +687,13 @@ function assertL4Ready(
   rows: Record<string, number>,
   beforeContractCount: number,
   datasetVersion: string,
+  selectedPairs: readonly EvidenceOnlyPair[],
+  canonicalWriterCount: number | null,
 ): void {
-  const expected = l4ExpectedCounts(datasetVersion);
+  const expectedLayer3 = layer3ExpectedCounts(datasetVersion, selectedPairs);
+  const expected = l4ExpectedCounts(datasetVersion, selectedPairs, canonicalWriterCount);
+  const packageHasServiceCreditEvidence =
+    (expectedLayer3.source_contract_service_credit ?? 0) > 0;
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
     .map(
@@ -621,17 +708,22 @@ function assertL4Ready(
       `source_contract_360_total regressed from ${beforeContractCount} to ${rows.source_contract_360_total}`,
     );
   }
-  if (rows.package_unclaimed_credit_usd <= 0) {
+  if (
+    packageHasServiceCreditEvidence &&
+    rows.package_unclaimed_credit_usd <= 0
+  ) {
     failures.push("package_unclaimed_credit_usd expected > 0");
   }
-  if (rows.package_opportunity_amount_usd <= 0) {
-    failures.push("package_opportunity_amount_usd expected > 0");
-  }
-  if (rows.deterministic_layer_unclaimed_credit_usd <= 0) {
+  const opportunityAmountFailure = packageOpportunityAmountFailure(rows.package_opportunity_amount_usd);
+  if (opportunityAmountFailure) failures.push(opportunityAmountFailure);
+  if (
+    packageHasServiceCreditEvidence &&
+    rows.deterministic_layer_unclaimed_credit_usd <= 0
+  ) {
     failures.push("deterministic_layer_unclaimed_credit_usd expected > 0");
   }
-  if (rows.deterministic_layer_candidate_amount_usd <= 0) {
-    failures.push("deterministic_layer_candidate_amount_usd expected > 0");
+  if (rows.deterministic_layer_candidate_amount_usd < 0) {
+    failures.push("deterministic_layer_candidate_amount_usd cannot be negative");
   }
   if (failures.length > 0) {
     throw new Error(`Layer 4 readback failed: ${failures.join("; ")}`);
@@ -641,10 +733,13 @@ function assertL4Ready(
 async function applyLayer4(
   client: Client,
   args: Args,
+  selectedPairs: readonly EvidenceOnlyPair[],
+  allPairs: readonly EvidenceOnlyPair[],
 ): Promise<Record<string, number>> {
   await assertReplaceableViews(client);
   const layer3 = await layer3Readback(client, args);
-  assertLayer3Ready(layer3, args.datasetVersion);
+  assertLayer3Ready(layer3, args.datasetVersion, selectedPairs);
+  const canonicalWriterCount = await readCanonicalWriterOpportunityCount(client, selectedPairs);
   await setTenant(client, args.tenantKey);
   const beforeContractCount = await tableScalar(
     client,
@@ -663,16 +758,24 @@ async function applyLayer4(
         overlay_role TEXT NOT NULL,
         activated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-        PRIMARY KEY (tenant_key, load_run_id)
+        PRIMARY KEY (tenant_key, load_run_id, dataset_version)
       )`);
+
+    // Older deployments keyed the overlay only by run. Re-key it before the
+    // upsert so distinct package versions sharing an operator run coexist.
+    await client.query(`
+      ALTER TABLE source.l4_cube_active_load_run_overlay
+        DROP CONSTRAINT IF EXISTS l4_cube_active_load_run_overlay_pkey;
+      ALTER TABLE source.l4_cube_active_load_run_overlay
+        ADD CONSTRAINT l4_cube_active_load_run_overlay_pkey
+        PRIMARY KEY (tenant_key, load_run_id, dataset_version)`);
 
     await client.query(
       `INSERT INTO source.l4_cube_active_load_run_overlay
          (tenant_key, load_run_id, dataset_version, input_source_version, idempotency_key, overlay_role, raw_payload)
        VALUES ($1, $2, $3, $3, $4, 'contract_depth_package', $5::jsonb)
-       ON CONFLICT (tenant_key, load_run_id)
-       DO UPDATE SET dataset_version = EXCLUDED.dataset_version,
-                     input_source_version = EXCLUDED.input_source_version,
+       ON CONFLICT (tenant_key, load_run_id, dataset_version)
+       DO UPDATE SET input_source_version = EXCLUDED.input_source_version,
                      idempotency_key = EXCLUDED.idempotency_key,
                      overlay_role = EXCLUDED.overlay_role,
                      activated_at = now(),
@@ -689,9 +792,9 @@ async function applyLayer4(
       ],
     );
 
-    await rebuildViews(client);
+    await rebuildViews(client, allPairs);
     const readback = await l4Readback(client, args, beforeContractCount);
-    assertL4Ready(readback, beforeContractCount, args.datasetVersion);
+    assertL4Ready(readback, beforeContractCount, args.datasetVersion, selectedPairs, canonicalWriterCount);
     await client.query("COMMIT");
     return readback;
   } catch (error) {
@@ -702,23 +805,28 @@ async function applyLayer4(
   }
 }
 
-async function rebuildViews(client: Client): Promise<void> {
+async function rebuildViews(client: Client, allPairs: readonly EvidenceOnlyPair[]): Promise<void> {
   const activeRuns = `
-    SELECT DISTINCT ON (tenant_key, load_run_id)
+    SELECT
       tenant_key,
       load_run_id,
       dataset_version
-    FROM (
-      SELECT tenant_key, load_run_id, NULL::text AS dataset_version, 0::int AS precedence
-      FROM source.l4_cube_active_load_run
-      UNION ALL
-      SELECT tenant_key, load_run_id, dataset_version, 1::int AS precedence
-      FROM source.l4_cube_active_load_run_overlay
-    ) runs
-    ORDER BY tenant_key, load_run_id, precedence DESC
+    FROM source.l4_cube_active_load_run_overlay
+    UNION ALL
+    SELECT
+      base.tenant_key,
+      base.load_run_id,
+      NULL::text AS dataset_version
+    FROM source.l4_cube_active_load_run base
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM source.l4_cube_active_load_run_overlay overlay
+      WHERE overlay.tenant_key = base.tenant_key
+        AND overlay.load_run_id = base.load_run_id
+    )
   `;
   const activeContractVersions = `
-    SELECT
+    SELECT DISTINCT
       c.tenant_key,
       c.contract_id,
       c.load_run_id,
@@ -728,11 +836,15 @@ async function rebuildViews(client: Client): Promise<void> {
       ON active.tenant_key = c.tenant_key
      AND active.load_run_id = c.load_run_id
   `;
+  const activeContractRuns = `
+    SELECT DISTINCT tenant_key, contract_id, load_run_id
+    FROM (${activeContractVersions}) active_contract_versions
+  `;
 
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_application_scope AS
     WITH active_runs AS (${activeRuns}),
-    active_contract_versions AS (${activeContractVersions})
+    active_contract_runs AS (${activeContractRuns})
     SELECT
       cs.tenant_key,
       cs.contract_id,
@@ -752,7 +864,7 @@ async function rebuildViews(client: Client): Promise<void> {
       cs.scope_ref AS it_portfolio_ref,
       cs.load_run_id
     FROM source.contract_scope cs
-    JOIN active_contract_versions active
+    JOIN active_contract_runs active
       ON active.tenant_key = cs.tenant_key
      AND active.contract_id = cs.contract_id
      AND active.load_run_id = cs.load_run_id
@@ -767,7 +879,7 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_financial_exposure AS
     WITH active_runs AS (${activeRuns}),
-    active_contract_versions AS (${activeContractVersions}),
+    active_contract_runs AS (${activeContractRuns}),
     consumption AS (
       SELECT
         o.tenant_key,
@@ -781,7 +893,7 @@ async function rebuildViews(client: Client): Promise<void> {
         sum(o.committed_amount)::numeric AS linked_committed_amount,
         count(*)::bigint AS linked_budget_lines
       FROM source.contract_consumption_observation o
-      JOIN active_contract_versions active
+      JOIN active_contract_runs active
         ON active.tenant_key = o.tenant_key
        AND active.contract_id = o.contract_id
        AND active.load_run_id = o.load_run_id
@@ -803,7 +915,7 @@ async function rebuildViews(client: Client): Promise<void> {
       COALESCE(consumption.linked_budget_lines, 0)::bigint AS linked_budget_lines,
       c.load_run_id
     FROM source.contract c
-    JOIN active_contract_versions active
+    JOIN active_contract_runs active
       ON active.tenant_key = c.tenant_key
      AND active.contract_id = c.contract_id
      AND active.load_run_id = c.load_run_id
@@ -819,7 +931,7 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_operational_performance AS
     WITH active_runs AS (${activeRuns}),
-    active_contract_versions AS (${activeContractVersions}),
+    active_contract_runs AS (${activeContractRuns}),
     scope AS (
       SELECT
         s.tenant_key,
@@ -830,7 +942,7 @@ async function rebuildViews(client: Client): Promise<void> {
           WHERE s.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
         )::bigint AS critical_application_count
       FROM source.contract_scope s
-      JOIN active_contract_versions active
+      JOIN active_contract_runs active
         ON active.tenant_key = s.tenant_key
        AND active.contract_id = s.contract_id
        AND active.load_run_id = s.load_run_id
@@ -847,7 +959,7 @@ async function rebuildViews(client: Client): Promise<void> {
         COALESCE(sum(p.credit_claimed), 0)::numeric AS credit_claimed,
         COALESCE(sum(p.credit_recovered), 0)::numeric AS credit_recovered
       FROM source.contract_performance_observation p
-      JOIN active_contract_versions active
+      JOIN active_contract_runs active
         ON active.tenant_key = p.tenant_key
        AND active.contract_id = p.contract_id
        AND active.load_run_id = p.load_run_id
@@ -871,7 +983,7 @@ async function rebuildViews(client: Client): Promise<void> {
       CASE WHEN perf.period_count IS NULL THEN 'true' ELSE 'false' END AS evidence_gap,
       c.load_run_id
     FROM source.contract c
-    JOIN active_contract_versions active
+    JOIN active_contract_runs active
       ON active.tenant_key = c.tenant_key
      AND active.contract_id = c.contract_id
      AND active.load_run_id = c.load_run_id
@@ -892,6 +1004,7 @@ async function rebuildViews(client: Client): Promise<void> {
     CREATE OR REPLACE VIEW source.contract_vendor_360 AS
     WITH active_runs AS (${activeRuns}),
     active_contract_versions AS (${activeContractVersions}),
+    active_contract_runs AS (${activeContractRuns}),
     consumption AS (
       SELECT
         o.tenant_key,
@@ -900,7 +1013,7 @@ async function rebuildViews(client: Client): Promise<void> {
         sum(o.committed_amount)::numeric AS committed_annual_spend,
         sum(o.actual_spend)::numeric AS actual_annual_spend
       FROM source.contract_consumption_observation o
-      JOIN active_contract_versions active
+      JOIN active_contract_runs active
         ON active.tenant_key = o.tenant_key
        AND active.contract_id = o.contract_id
        AND active.load_run_id = o.load_run_id
@@ -931,7 +1044,7 @@ async function rebuildViews(client: Client): Promise<void> {
         'contract.relationship_summary',
         'contract.evidence_boundary'
       )
-        AND facts.review_state IN ('reviewed', 'approved')
+        AND facts.review_state IN ('reviewed', 'approved', 'system_extracted_synthetic_demo')
       GROUP BY facts.tenant_key, facts.contract_id, active.load_run_id
     )
     SELECT
@@ -939,7 +1052,11 @@ async function rebuildViews(client: Client): Promise<void> {
       c.contract_id,
       c.vendor_id AS vendor_ref,
       COALESCE(v.legal_name, c.vendor_id, 'Unknown vendor') AS vendor_name,
-      COALESCE(NULLIF(c.raw_payload ->> 'archetype', ''), v.supplier_category) AS vendor_category,
+      COALESCE(
+        NULLIF(c.raw_payload ->> 'contract_archetype', ''),
+        NULLIF(c.raw_payload ->> 'archetype', ''),
+        v.supplier_category
+      ) AS vendor_category,
       c.contract_name,
       COALESCE(
         NULLIF(context_brief.scope_summary, ''),
@@ -974,7 +1091,7 @@ async function rebuildViews(client: Client): Promise<void> {
       NULLIF(context_brief.relationship_summary, '') AS relationship_summary,
       NULLIF(context_brief.evidence_boundary_summary, '') AS evidence_boundary_summary
     FROM source.contract c
-    JOIN active_contract_versions active
+    JOIN active_contract_runs active
       ON active.tenant_key = c.tenant_key
      AND active.contract_id = c.contract_id
      AND active.load_run_id = c.load_run_id
@@ -1331,7 +1448,7 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_spend_monthly_v1 AS
     WITH active_runs AS (${activeRuns}),
-    active_contract_versions AS (${activeContractVersions})
+    active_contract_runs AS (${activeContractRuns})
     SELECT
       o.tenant_key,
       o.observation_id,
@@ -1366,7 +1483,7 @@ async function rebuildViews(client: Client): Promise<void> {
       CASE WHEN o.actual_spend IS NULL AND o.invoice_amount IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
       o.load_run_id
     FROM source.contract_consumption_observation o
-    JOIN active_contract_versions active
+    JOIN active_contract_runs active
       ON active.tenant_key = o.tenant_key
      AND active.contract_id = o.contract_id
      AND active.load_run_id = o.load_run_id
@@ -1375,7 +1492,7 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_performance_v1 AS
     WITH active_runs AS (${activeRuns}),
-    active_contract_versions AS (${activeContractVersions})
+    active_contract_runs AS (${activeContractRuns})
     SELECT
       o.tenant_key,
       o.observation_id,
@@ -1410,7 +1527,7 @@ async function rebuildViews(client: Client): Promise<void> {
       CASE WHEN o.actual_value IS NULL AND o.value_num IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
       o.load_run_id
     FROM source.contract_performance_observation o
-    JOIN active_contract_versions active
+    JOIN active_contract_runs active
       ON active.tenant_key = o.tenant_key
      AND active.contract_id = o.contract_id
      AND active.load_run_id = o.load_run_id
@@ -1419,7 +1536,49 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
     WITH active_runs AS (${activeRuns}),
+    active_contract_runs AS (${activeContractRuns}),
     active_contract_versions AS (${activeContractVersions}),
+    accepted_sizing AS (
+      SELECT
+        claim.tenant_key,
+        claim.dataset_version,
+        claim.opportunity_id,
+        MAX(claim.amount_usd) AS amount_usd,
+        MAX(claim.amount_low_usd) AS amount_low_usd,
+        MAX(claim.amount_high_usd) AS amount_high_usd
+      FROM source.opportunity_claim claim
+      JOIN source.optimization_opportunity opportunity
+        ON opportunity.tenant_key = claim.tenant_key
+       AND opportunity.dataset_version = claim.dataset_version
+       AND opportunity.opportunity_id = claim.opportunity_id
+      WHERE claim.claim_role = 'sizing'
+        AND claim.basis IN ('calculated', 'benchmark')
+        AND (
+          (
+            claim.basis = 'calculated'
+            AND NULLIF(TRIM(claim.calculation_run_id), '') IS NOT NULL
+            AND NULLIF(TRIM(claim.calculation_rule_id), '') IS NOT NULL
+            AND NULLIF(TRIM(claim.calculation_rule_version), '') IS NOT NULL
+          )
+          OR (
+            claim.basis = 'benchmark'
+            AND NULLIF(TRIM(claim.benchmark_id), '') IS NOT NULL
+          )
+        )
+        AND claim.evidence_status IN ('supported', 'partial')
+        AND jsonb_array_length(claim.source_refs) > 0
+        AND opportunity.stage IN (
+          'quantified', 'validated', 'approval_required',
+          'target_position', 'agreed', 'finance_confirmed'
+        )
+        AND opportunity.amount_state IN ('exact', 'range')
+        AND (
+          claim.amount_usd IS NOT NULL
+          OR (claim.amount_low_usd IS NOT NULL AND claim.amount_high_usd IS NOT NULL)
+        )
+      GROUP BY claim.tenant_key, claim.dataset_version, claim.opportunity_id
+      HAVING COUNT(*) = 1
+    ),
     sourcing AS (
       SELECT
         o.tenant_key,
@@ -1458,7 +1617,7 @@ async function rebuildViews(client: Client): Promise<void> {
         'available'::text AS availability_state,
         o.load_run_id
       FROM source.sourcing_opportunity o
-      JOIN active_contract_versions active
+      JOIN active_contract_runs active
         ON active.tenant_key = o.tenant_key
        AND active.contract_id = o.contract_id
        AND active.load_run_id = o.load_run_id
@@ -1479,19 +1638,22 @@ async function rebuildViews(client: Client): Promise<void> {
         COALESCE(o.payload->>'title', o.narrative) AS title,
         COALESCE(o.payload->>'finding_summary', o.narrative) AS finding_summary,
         COALESCE(o.payload->>'deterministic_basis', o.blocking_gap) AS deterministic_basis,
-        o.amount_usd AS value_low,
-        o.amount_usd AS value_high,
+        COALESCE(accepted.amount_low_usd, accepted.amount_usd)::numeric(18,2) AS value_low,
+        COALESCE(accepted.amount_high_usd, accepted.amount_usd)::numeric(18,2) AS value_high,
         COALESCE(o.payload->>'timing_window', o.deadline::text) AS timing_window,
-        o.amount_usd AS annual_value_exposed,
-        o.amount_usd AS addressable_spend,
-        CASE WHEN COALESCE(o.amount_usd, 0) >= 10000000 THEN 'high' WHEN COALESCE(o.amount_usd, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
+        COALESCE(accepted.amount_high_usd, accepted.amount_usd)::numeric(18,2) AS annual_value_exposed,
+        COALESCE(accepted.amount_low_usd, accepted.amount_usd) AS addressable_spend,
+        CASE WHEN COALESCE(accepted.amount_high_usd, accepted.amount_usd, 0) >= 10000000 THEN 'high' WHEN COALESCE(accepted.amount_high_usd, accepted.amount_usd, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
         o.confidence,
         CASE
+          WHEN o.value_type = 'control_action' THEN 'control_required'
+          WHEN accepted.opportunity_id IS NULL THEN 'review_required'
+          WHEN o.stage = 'finance_confirmed' THEN 'ready_to_act'
           WHEN o.payload->>'finance_confirmation_state' = 'not_confirmed' THEN 'finance_confirmation_required'
           WHEN o.stage IN ('validated', 'approval_required') THEN 'review_required'
           ELSE 'review_required'
         END AS readiness_state,
-        CASE WHEN o.evidence_grade IN ('missing', 'not_loaded') THEN 'missing' ELSE 'present' END AS evidence_state,
+        CASE WHEN accepted.opportunity_id IS NULL OR o.evidence_grade IN ('missing', 'not_loaded') THEN 'missing' ELSE 'present' END AS evidence_state,
         o.next_action AS recommended_action,
         o.owner AS accountable_role,
         o.evidence_grade AS quality_state,
@@ -1502,7 +1664,7 @@ async function rebuildViews(client: Client): Promise<void> {
         'sourcing-consumption-v1'::text AS projection_contract_version,
         o.approval_state AS authority_state,
         'current'::text AS freshness_state,
-        'available'::text AS availability_state,
+        CASE WHEN accepted.opportunity_id IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
         c.load_run_id
       FROM source.optimization_opportunity o
       JOIN active_contract_versions active
@@ -1512,6 +1674,10 @@ async function rebuildViews(client: Client): Promise<void> {
          active.dataset_version IS NULL
          OR o.dataset_version = active.dataset_version
        )
+      LEFT JOIN accepted_sizing accepted
+        ON accepted.tenant_key = o.tenant_key
+       AND accepted.dataset_version = o.dataset_version
+       AND accepted.opportunity_id = o.opportunity_id
       JOIN source.contract c
         ON c.tenant_key = active.tenant_key
        AND c.contract_id = active.contract_id
@@ -1519,6 +1685,7 @@ async function rebuildViews(client: Client): Promise<void> {
     )
     SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
+    ${sourcingExclusionSql(allPairs)}
     UNION ALL
     SELECT * FROM optimization
     WHERE source.can_read_sourcing_tenant(tenant_key)`);
@@ -1555,43 +1722,47 @@ async function rebuildViews(client: Client): Promise<void> {
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS spend_rows,
         COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
         COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
       FROM consumption.sourcing_spend_monthly_v1
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     ),
     performance AS (
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS performance_rows,
         count(*) FILTER (WHERE performance_state = 'breached')::bigint AS breach_rows,
         COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
         COALESCE(sum(credit_claimed), 0)::numeric AS credit_claimed_usd,
         COALESCE(sum(credit_recovered), 0)::numeric AS credit_recovered_usd
       FROM consumption.sourcing_performance_v1
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     ),
     opportunities AS (
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS opportunity_rows,
         COALESCE(sum(annual_value_exposed), 0)::numeric AS candidate_amount_usd,
         count(*) FILTER (WHERE readiness_state = 'finance_confirmation_required')::bigint AS finance_confirmation_required_rows,
         count(*) FILTER (WHERE evidence_state = 'present')::bigint AS opportunities_with_evidence
       FROM consumption.sourcing_opportunity_v1
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     ),
     scope AS (
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS scope_rows,
         count(*) FILTER (WHERE critical_application_flag)::bigint AS critical_scope_rows
       FROM consumption.sourcing_contract_scope_v1
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     )
     SELECT
       c.tenant_key,
@@ -1657,15 +1828,19 @@ async function rebuildViews(client: Client): Promise<void> {
     LEFT JOIN spend
       ON spend.tenant_key = c.tenant_key
      AND spend.contract_id = c.contract_id
+     AND spend.load_run_id = c.load_run_id
     LEFT JOIN performance
-      ON performance.tenant_key = c.tenant_key
+     ON performance.tenant_key = c.tenant_key
      AND performance.contract_id = c.contract_id
+     AND performance.load_run_id = c.load_run_id
     LEFT JOIN opportunities
-      ON opportunities.tenant_key = c.tenant_key
+     ON opportunities.tenant_key = c.tenant_key
      AND opportunities.contract_id = c.contract_id
+     AND opportunities.load_run_id = c.load_run_id
     LEFT JOIN scope
-      ON scope.tenant_key = c.tenant_key
+     ON scope.tenant_key = c.tenant_key
      AND scope.contract_id = c.contract_id
+     AND scope.load_run_id = c.load_run_id
     WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
 
   await client.query(`
@@ -1714,6 +1889,7 @@ async function rebuildViews(client: Client): Promise<void> {
     LEFT JOIN source.contract_evidence_coverage_v1 cov
       ON cov.tenant_key = o.tenant_key
      AND cov.contract_id = o.contract_id
+     AND cov.load_run_id = o.load_run_id
     WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
 
   await client.query(`
@@ -1915,28 +2091,36 @@ async function rebuildViews(client: Client): Promise<void> {
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS scope_rows,
         count(*) FILTER (WHERE annual_run_cost IS NULL)::bigint AS missing_run_cost_rows,
         string_agg(DISTINCT NULLIF(business_function, ''), ', ') FILTER (WHERE NULLIF(business_function, '') IS NOT NULL) AS business_functions,
         string_agg(DISTINCT NULLIF(hosting_model, ''), ', ') FILTER (WHERE NULLIF(hosting_model, '') IS NOT NULL) AS hosting_models,
         string_agg(DISTINCT NULLIF(criticality, ''), ', ') FILTER (WHERE NULLIF(criticality, '') IS NOT NULL) AS criticality_values
       FROM source.contract_application_scope
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     ),
     opportunity_ranked AS (
       SELECT
         a.tenant_key,
         a.contract_id,
+        a.load_run_id,
         a.action_candidate_id,
         NULLIF(a.title, '') AS title,
         NULLIF(a.next_action, '') AS next_action,
         NULLIF(a.accountable_role, '') AS accountable_role,
         a.candidate_amount_usd,
-        COALESCE(NULLIF(o.stage, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'quantified' ELSE 'signal' END) AS source_stage,
-        COALESCE(NULLIF(o.amount_state, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'exact' ELSE 'not_sized' END) AS source_amount_state,
+        CASE
+          WHEN a.candidate_amount_usd IS NULL THEN 'signal'
+          ELSE COALESCE(NULLIF(o.stage, ''), 'quantified')
+        END AS source_stage,
+        CASE
+          WHEN a.candidate_amount_usd IS NULL THEN 'not_sized'
+          ELSE COALESCE(NULLIF(o.amount_state, ''), 'exact')
+        END AS source_amount_state,
         o.confidence AS source_confidence,
         row_number() OVER (
-          PARTITION BY a.tenant_key, a.contract_id
+          PARTITION BY a.tenant_key, a.contract_id, a.load_run_id
           ORDER BY
             CASE a.priority
               WHEN 'high' THEN 1
@@ -1952,11 +2136,18 @@ async function rebuildViews(client: Client): Promise<void> {
         ON o.tenant_key = a.tenant_key
        AND o.contract_id = a.contract_id
        AND o.opportunity_id = a.opportunity_id
+       AND o.dataset_version IN (
+         SELECT active.dataset_version
+           FROM source.l4_cube_active_load_run_overlay active
+          WHERE active.tenant_key = a.tenant_key
+            AND active.load_run_id = a.load_run_id
+       )
     ),
     opportunity AS (
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS opportunity_rows,
         count(*) FILTER (
           WHERE candidate_amount_usd IS NOT NULL
@@ -1978,7 +2169,7 @@ async function rebuildViews(client: Client): Promise<void> {
         string_agg(DISTINCT next_action, '; ') FILTER (WHERE next_action IS NOT NULL AND action_rank <= 3) AS next_actions,
         string_agg(DISTINCT accountable_role, ', ') FILTER (WHERE accountable_role IS NOT NULL) AS accountable_roles
       FROM opportunity_ranked
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     ),
     contract_rows AS (
       SELECT
@@ -2032,12 +2223,15 @@ async function rebuildViews(client: Client): Promise<void> {
     LEFT JOIN source.contract_evidence_coverage_v1 cov
       ON cov.tenant_key = c.tenant_key
      AND cov.contract_id = c.contract_id
+     AND cov.load_run_id = c.load_run_id
     LEFT JOIN scope
       ON scope.tenant_key = c.tenant_key
      AND scope.contract_id = c.contract_id
+     AND scope.load_run_id = c.load_run_id
     LEFT JOIN opportunity
       ON opportunity.tenant_key = c.tenant_key
      AND opportunity.contract_id = c.contract_id
+     AND opportunity.load_run_id = c.load_run_id
     CROSS JOIN LATERAL (
       VALUES
         (
@@ -2258,6 +2452,7 @@ async function rebuildViews(client: Client): Promise<void> {
       source.vendor_position_v1,
       source.source_page_storyline_v1,
       source.contract_tab_intelligence_v1,
+      source.contract_intelligence_v1,
       source.ava_grounding_bundle_v1
     TO authenticated, service_role`);
 
@@ -2276,6 +2471,11 @@ async function rebuildViews(client: Client): Promise<void> {
 
 async function main(): Promise<void> {
   const args = parseArgs();
+  const ownershipManifest = JSON.parse(fs.readFileSync(
+    path.resolve(process.cwd(), "datasets/source/opportunity-ownership-manifest.json"), "utf8",
+  )) as unknown;
+  const allPairs = evidenceOnlyPairs(ownershipManifest);
+  const selectedPairs = selectedEvidenceOnlyPairs(ownershipManifest, args.tenantKey, args.datasetVersion);
   fs.mkdirSync(args.proofDir, { recursive: true });
 
   const client = new Client(
@@ -2299,11 +2499,12 @@ async function main(): Promise<void> {
           "Refusing to mutate Azure without SOURCE_CONTRACT_DEPTH_PACKAGE_L4_APPLY_APPROVED=true.",
         );
       }
-      layer4 = await applyLayer4(client, args);
+      layer4 = await applyLayer4(client, args, selectedPairs, allPairs);
     } else if (args.mode === "verify") {
-      assertLayer3Ready(layer3, args.datasetVersion);
+      assertLayer3Ready(layer3, args.datasetVersion, selectedPairs);
+      const canonicalWriterCount = await readCanonicalWriterOpportunityCount(client, selectedPairs);
       layer4 = await l4Readback(client, args);
-      assertL4Ready(layer4, 0, args.datasetVersion);
+      assertL4Ready(layer4, 0, args.datasetVersion, selectedPairs, canonicalWriterCount);
     }
 
     const event = {

@@ -7,20 +7,28 @@ import { SHELL } from "@/lib/shell/shell-tokens";
 const ROUTES = [
   { label: 'Knowledge', path: '/home', surface: 'Knowledge', key: 'knw' },
   { label: 'Moves · Portfolio', path: '/strategic-moves', surface: 'Moves', key: 'mov' },
-  { label: 'APX-CDP-2026 · Apex Retail CDP', path: '/strategic-moves/apx-cdp-2026', surface: 'Moves', key: 'mov' },
   { label: 'New Move', path: '/strategic-moves/new', surface: 'Moves', key: 'mov' },
   { label: 'Source · Events', path: '/source', surface: 'Source', key: 'src' },
   { label: 'Intelligence · Library', path: '/intelligence', surface: 'Intelligence', key: 'int' },
-  { label: 'Intelligence · Solutions', path: '/intelligence/solutions', surface: 'Intelligence', key: 'int' },
   { label: 'Tower', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Tower · Value', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Tower · Spend', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Tower · Actions', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Setup · Connectors', path: '/admin', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Users', path: '/admin/users', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Policies', path: '/admin/policies', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Tenant', path: '/admin?tab=tenant', surface: 'Setup', key: 'set' },
+  { label: 'Tower · Value', path: '/tower?tab=initiatives&view=proof', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Spend', path: '/tower?tab=budget&view=shape', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Actions', path: '/tower?tab=decisions&view=review', surface: 'Tower', key: 'twr' },
+  { label: 'Admin · Overview', path: '/admin', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Connectors', path: '/admin/connectors', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Users & Access', path: '/admin/users-access', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Policies', path: '/admin/policies', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Tenant profile', path: '/admin?tab=tenant', surface: 'Admin', key: 'adm' },
 ] as const;
+
+/**
+ * Exported so a test can assert that every destination offered here resolves to
+ * a real page route. The palette navigates with `router.push`, so an entry
+ * pointing at a path with no route sends the user to a 404 with no warning —
+ * see `src/__tests__/behaviors/command-palette-destinations.test.tsx`, which
+ * also proves a click travels to the path listed here.
+ */
+export const COMMAND_PALETTE_ROUTES = ROUTES;
 
 type Route = (typeof ROUTES)[number];
 
@@ -190,7 +198,7 @@ export function CommandPalette() {
           ) : (
             filteredRoutes.map((route, i) => (
               <div
-                key={route.path}
+                key={route.label}
                 onClick={() => navigate(route.path)}
                 style={{
                   display: "flex",

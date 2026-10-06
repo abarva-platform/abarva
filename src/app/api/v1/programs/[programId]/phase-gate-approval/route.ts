@@ -5,33 +5,9 @@
 // P0 close helper or governed advancePhase path to create approved phase
 // snapshots and advance the Move.
 //
-// INCIDENT 2026-07-20 (fixed here): this route used to call
-// `preparePhaseGateApprovalRecords`, which — for EVERY phase, unconditionally
-// — auto-CREATED a placeholder `deliverables_v2` row (content: literally
-// "P{phase} gate approval record\n\n{rationale}", no real generated content)
-// for a hardcoded `PHASE_GATE_DELIVERABLES` map, then immediately called
-// `signOffDeliverable` on it, all BEFORE `evaluateGate` ever ran. For P3 the
-// map's keys (`design_spec`, `requirements_traceability`) were STALE — the
-// real orchestrator registry (deliverable-registry.ts) has never produced
-// those exact type keys since it was restructured to produce
-// `target_state_architecture`/`solution_design`/`operating_model_design`/
-// `sourcing_strategy` instead. Because no real row with those stale keys
-// could ever exist, this branch fabricated-and-signed-off a fake stand-in
-// EVERY time, regardless of whether real P3 generation had run at all — this
-// is exactly how a real Move (MEMBER AI ASSIST) advanced P3→P4 with zero real
-// P3 deliverables ever generated. `evaluateGate`'s `design_approved`/
-// `requirements_design_outcome_trace` hard checks then genuinely found these
-// fabricated, self-signed rows and passed — this was never a gate bypass or
-// an override; it was a real hard-gate pass on fabricated evidence.
-//
-// Fix: this route no longer creates or signs off ANYTHING. `evaluateGate`
-// (governance.ts) already independently and correctly checks every phase's
-// REAL required deliverables against REAL `deliverables_v2` rows (updated
-// this session to also require role approvals where applicable, and to
-// require a genuinely completed phase module before any free-text fallback
-// can contribute) — that is the single, authoritative gate. Duplicating a
-// subset of that logic here with a second, stale, unmaintained map was the
-// root cause; the fix is to delete the duplicate, not patch it again.
+// Gate approval relies on the single authoritative `evaluateGate` check.
+// This route must not synthesize deliverable rows or mark generated content
+// signed off; only reviewed deliverables and completed phase inputs count.
 
 import { NextRequest } from "next/server";
 import {
@@ -48,13 +24,29 @@ import {
 import { evaluateGate } from "@/lib/programs/governance";
 import { advancePhase } from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
+import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
+import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
+import { loadAcceptedStageReadinessContext } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+import {
+  phaseApprovalMatchesEvidence,
+  type PhaseGateEvidenceState,
+} from "@/lib/programs/phase-gate-evidence-binding";
+import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +105,41 @@ function terminalTowerHandoffComplete(
   );
 }
 
+async function transitionEvidenceReadiness(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  moveName: string,
+  phase: number,
+): Promise<{ available: boolean; gaps: ReturnType<typeof currentPhaseRequiredEvidenceGaps> }> {
+  if (phase < 1 || phase > 4) return { available: true, gaps: [] };
+  try {
+    const readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
+    const packets = buildMoveEvidenceNeedPackets({
+      moveId: programId,
+      moveName,
+      currentPhase: phase,
+      readiness,
+    });
+    const workbook = await loadAcceptedStageReadinessContext(
+      ctx,
+      programId,
+      phase + 1,
+    );
+    const assessedPackets = applyStageReadinessToEvidencePackets(
+      packets,
+      phase,
+      workbook?.proposals ?? null,
+      programId,
+    );
+    return {
+      available: true,
+      gaps: currentPhaseRequiredEvidenceGaps(assessedPackets, phase),
+    };
+  } catch {
+    return { available: false, gaps: [] };
+  }
+}
+
 async function captureCompletion(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
@@ -120,16 +147,56 @@ async function captureCompletion(
   program?: Awaited<ReturnType<typeof getProgramById>> | null,
 ): Promise<{ complete: boolean; missing: string[] }> {
   const modules = await getModuleState(ctx, programId);
-  const missing: string[] = [];
-  for (const section of getPhaseCaptureSections(phase)) {
-    const capturedModule = modules.find(
-      (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+  // P3 asks for a different, smaller set of inputs once the solution route is
+  // confirmed. Check the set this Move was actually asked for — resolved the
+  // same way the capture endpoint resolves it — not the default list.
+  const moduleValue = (capturePhase: number, key: string): string => {
+    const row = modules.find(
+      (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
     );
-    if (
-      !capturedModule ||
-      !["completed", "skipped"].includes(capturedModule.status)
-    ) {
-      missing.push(section.label);
+    const value = (row?.state as Record<string, unknown> | null | undefined)
+      ?.value;
+    return typeof value === "string" ? value : "";
+  };
+  const confirmedSolutionRoute =
+    phase === 3
+      ? resolveConfirmedSolutionRoute({
+          businessChangeAssessment: moduleValue(
+            1,
+            "business_change_assessment",
+          ),
+          routeValidation: moduleValue(2, "solution_route_validation"),
+          approvedEvidenceReferences: (
+            await listApprovedPhaseEvidence(ctx, programId, 2)
+          ).map((item) => item.evidenceId),
+        })
+      : null;
+  const missing: string[] = [];
+  const sections = getPhaseCaptureSections(phase, confirmedSolutionRoute);
+  const approvedP1Evidence =
+    phase === 1 ? await listApprovedPhaseEvidence(ctx, programId, 1) : [];
+  if (phase === 1) {
+    const requireBasis = isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_charter_basis_v1",
+    );
+    missing.push(
+      ...missingP1CaptureSections(sections, modules, approvedP1Evidence, {
+        requireBasis,
+      }),
+    );
+  } else {
+    for (const section of sections) {
+      const capturedModule = modules.find(
+        (entry) =>
+          entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+      );
+      if (
+        !capturedModule ||
+        !["completed", "skipped"].includes(capturedModule.status)
+      ) {
+        missing.push(section.label);
+      }
     }
   }
   if (missing.length === 0) return { complete: true, missing: [] };
@@ -155,70 +222,40 @@ async function isPhaseApproved(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
   phase: number,
+  evidence: PhaseGateEvidenceState | null,
 ): Promise<boolean> {
-  const program = await getProgramById(ctx, programId);
-  const gatesPassed = Array.isArray(program?.gatesPassed)
-    ? program.gatesPassed
-    : [];
-  if (
-    gatesPassed.some(
-      (entry) =>
-        entry === phase || entry === String(phase) || entry === `P${phase}`,
-    )
-  ) {
-    return true;
-  }
   const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(
     () => [],
   );
-  return snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
+  if (!phaseApprovalMatchesEvidence(phase, snapshots, evidence)) return false;
+  if (phase === 0) return true;
+  const gate = await evaluateGate(ctx, programId, phase, phase + 1, {
+    allowHistoricalPhase: true,
+  });
+  return !gate.failedChecks.some((check) => check.severity === "hard");
 }
 
-async function ensureSponsorAuthorityForApprover(
-  sb: ReturnType<typeof getAzureWriteFluentClient>,
-  programId: string,
+async function loadEvidenceState(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
-): Promise<void> {
-  const { data: sponsorRows, error: sponsorError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("approval_authority", "sponsor")
-    .limit(1);
-  if (sponsorError) throw sponsorError;
-  if (((sponsorRows as Array<{ id: string }> | null) ?? []).length > 0) return;
-
-  const { data: currentRows, error: currentError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("user_id", ctx.userId)
-    .limit(1);
-  if (currentError) throw currentError;
-
-  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ??
-    [])[0];
-  if (currentParticipant) {
-    const { error } = await sb
-      .from("engagement_participants")
-      .update({
-        role: "Sponsor",
-        approval_authority: "sponsor",
-      })
-      .eq("id", currentParticipant.id)
-      .eq("engagement_id", programId);
-    if (error) throw error;
-    return;
+  programId: string,
+): Promise<PhaseGateEvidenceState | null> {
+  try {
+    const snapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: ctx.clientKey ?? ctx.clientId,
+      moveId: programId,
+    });
+    return snapshot
+      ? {
+          revision: snapshot.revision,
+          latestEvidenceActivityAt: snapshot.latestEvidenceActivityAt,
+          revisionByPhase: snapshot.revisionByPhase,
+          latestEvidenceActivityAtByPhase:
+            snapshot.latestEvidenceActivityAtByPhase,
+        }
+      : null;
+  } catch {
+    return null;
   }
-
-  const { error } = await sb.from("engagement_participants").insert({
-    engagement_id: programId,
-    user_id: ctx.userId,
-    user_name: ctx.email ?? ctx.userId,
-    role: "Sponsor",
-    approval_authority: "sponsor",
-  });
-  if (error) throw error;
 }
 
 async function completeTerminalTowerHandoff(
@@ -227,6 +264,8 @@ async function completeTerminalTowerHandoff(
   programId: string,
   rationale: string,
   gatesPassed: unknown,
+  evidenceRevision: string,
+  phaseEvidenceRevision: string,
 ): Promise<{ snapshotId: string }> {
   const nowIso = new Date().toISOString();
   const snapshot = {
@@ -234,6 +273,9 @@ async function completeTerminalTowerHandoff(
     signed_in_phase_gate_approval: true,
     terminal_tower_handoff: true,
     capture_path: `/api/v1/programs/${programId}/phase-capture`,
+    evidenceSnapshotHash: evidenceRevision,
+    phaseEvidenceSnapshotHash: phaseEvidenceRevision,
+    evidenceSnapshotScope: "phase",
   };
   const { data: snap, error: snapError } = await sb
     .from("phase_snapshots")
@@ -283,6 +325,31 @@ async function completeTerminalTowerHandoff(
   return { snapshotId };
 }
 
+async function recordReapprovalSnapshot(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  phase: number,
+  snapshot: Record<string, unknown>,
+): Promise<string> {
+  const { data, error } = await sb
+    .from("phase_snapshots")
+    .insert({
+      engagement_id: programId,
+      phase_number: phase,
+      snapshot_jsonb: toJsonbParam(snapshot),
+      locked_by_user_id: ctx.userId,
+      locked_at: new Date().toISOString(),
+      approval_status: "approved",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const snapshotId = (data as { id?: string } | null)?.id;
+  if (!snapshotId) throw new Error("Phase reapproval snapshot returned no id");
+  return snapshotId;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
@@ -299,10 +366,45 @@ export async function GET(
     }
     const program = await getProgramById(ctx, programId);
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
-    const [capture, approved] = await Promise.all([
+    const evidence = await loadEvidenceState(ctx, programId);
+    const p0Evidence =
+      phase === 0
+        ? await loadP0MinimumEvidenceStatus({
+            tenantKey: ctx.clientKey ?? ctx.clientId,
+            moveId: programId,
+          })
+        : null;
+    const [capture, snapshots] = await Promise.all([
       captureCompletion(ctx, programId, phase, program),
-      isPhaseApproved(ctx, programId, phase),
+      getPhaseSnapshots(ctx, programId, phase).catch(() => []),
     ]);
+    const snapshotApproved = phaseApprovalMatchesEvidence(
+      phase,
+      snapshots,
+      evidence,
+    );
+    const gate =
+      phase === 0
+        ? null
+        : await evaluateGate(ctx, programId, phase, phase + 1, {
+            allowHistoricalPhase: true,
+          });
+    const governanceGateReady =
+      !gate || !gate.failedChecks.some((check) => check.severity === "hard");
+    const transitionReadiness = await transitionEvidenceReadiness(
+      ctx,
+      programId,
+      program.name ?? "Move",
+      phase,
+    );
+    const gateReady =
+      governanceGateReady &&
+      transitionReadiness.available &&
+      transitionReadiness.gaps.length === 0;
+    const approved = snapshotApproved && gateReady;
+    const approvalStale =
+      !approved &&
+      snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
     return Response.json({
       ok: true,
       programId,
@@ -315,7 +417,32 @@ export async function GET(
       currentPhase: program.currentPhase,
       capture,
       approved,
-      canApprove: capture.complete && !approved,
+      approvalStale,
+      gate,
+      transitionReadiness: {
+        available: transitionReadiness.available,
+        ready: transitionReadiness.available && transitionReadiness.gaps.length === 0,
+        openCount: transitionReadiness.gaps.length,
+        blockers: transitionReadiness.gaps.map((gap) => ({
+          evidenceSlot: gap.evidenceSlot,
+          status: gap.status,
+          nextAction: gap.nextAction,
+        })),
+      },
+      evidenceSnapshotAvailable: Boolean(evidence),
+      p0Evidence,
+      canApprove:
+        capture.complete &&
+        gateReady &&
+        transitionReadiness.available &&
+        transitionReadiness.gaps.length === 0 &&
+        !approved &&
+        Boolean(evidence) &&
+        (phase === 0
+          ? Boolean(
+              p0Evidence?.available && p0Evidence.approvedSourceFileCount >= 1,
+            )
+          : true),
       approvePath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
   } catch (err) {
@@ -352,7 +479,11 @@ export async function POST(
     }
 
     const policy = await loadUserProgramAccessPolicy(ctx, { programId });
-    if (!policy.canApproveGates) {
+    if (
+      !policy.canApproveGates ||
+      (Array.isArray(policy.programIdsAllowed) &&
+        !policy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
         {
           error: "forbidden",
@@ -363,8 +494,35 @@ export async function POST(
       );
     }
 
+    const evidence = await loadEvidenceState(ctx, programId);
+    if (!evidence) {
+      return Response.json(
+        {
+          error: "evidence_snapshot_unavailable",
+          phase,
+          detail:
+            "Approved evidence could not be verified. The phase gate was not submitted.",
+        },
+        { status: 503 },
+      );
+    }
+    if (
+      phase > 1 &&
+      !(await isPhaseApproved(ctx, programId, phase - 1, evidence))
+    ) {
+      return Response.json(
+        {
+          error: "prior_gate_stale",
+          phase,
+          stalePhase: phase - 1,
+          detail: `P${phase - 1} must be current against approved evidence before P${phase} can be approved.`,
+        },
+        { status: 409 },
+      );
+    }
+
     const capture = await captureCompletion(ctx, programId, phase, program);
-    if (phase === 0 && !capture.complete) {
+    if ((phase === 0 || phase === 1) && !capture.complete) {
       return Response.json(
         {
           error: "capture_incomplete",
@@ -378,7 +536,50 @@ export async function POST(
       );
     }
 
-    const approved = await isPhaseApproved(ctx, programId, phase);
+    if (phase === 0) {
+      const p0Evidence = await loadP0MinimumEvidenceStatus({
+        tenantKey: ctx.clientKey ?? ctx.clientId,
+        moveId: programId,
+      });
+      if (!p0Evidence.available) {
+        return Response.json(
+          {
+            error: "p0_evidence_status_unavailable",
+            phase,
+            detail:
+              "P0 evidence review could not be verified. The phase gate was not submitted.",
+          },
+          { status: 503 },
+        );
+      }
+      if (p0Evidence.approvedSourceFileCount < 1) {
+        return Response.json(
+          {
+            error: "p0_evidence_required",
+            phase,
+            requiredSourceFiles: 1,
+            approvedSourceFiles: p0Evidence.approvedSourceFileCount,
+            pendingReviewCount: p0Evidence.pendingReviewCount,
+            evidenceTitles: p0Evidence.evidenceTitles,
+            detail:
+              "Upload at least one P0 source file in Files & Evidence and approve its extraction before approving P0.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    const approved = await isPhaseApproved(ctx, programId, phase, evidence);
+    const existingSnapshots = await getPhaseSnapshots(
+      ctx,
+      programId,
+      phase,
+    ).catch(() => []);
+    const approvalStale =
+      !approved &&
+      existingSnapshots.some(
+        (snapshot) => snapshot.approvalStatus === "approved",
+      );
     const terminalHandoffNeedsCompletion =
       phase === 5 && approved && !terminalTowerHandoffComplete(program);
     if (approved && !terminalHandoffNeedsCompletion) {
@@ -394,6 +595,40 @@ export async function POST(
             ? "tower_handoff_complete_or_already_terminal"
             : `open_phase_${phase + 1}`,
       });
+    }
+
+    const transitionReadiness = await transitionEvidenceReadiness(
+      ctx,
+      programId,
+      program.name ?? "Move",
+      phase,
+    );
+    if (!transitionReadiness.available) {
+      return Response.json(
+        {
+          error: "transition_evidence_readiness_unavailable",
+          phase,
+          detail:
+            "The current transition evidence and workbook review could not be verified. The phase gate was not submitted.",
+        },
+        { status: 503 },
+      );
+    }
+    if (transitionReadiness.gaps.length > 0) {
+      return Response.json(
+        {
+          error: "transition_evidence_incomplete",
+          phase,
+          requiredEvidenceGaps: transitionReadiness.gaps.map((gap) => ({
+            evidenceSlot: gap.evidenceSlot,
+            status: gap.status,
+            nextAction: gap.nextAction,
+          })),
+          detail:
+            "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+        },
+        { status: 409 },
+      );
     }
 
     const rationale =
@@ -442,14 +677,11 @@ export async function POST(
     const toPhase = phase + 1;
     // No deliverable is created or signed off here — evaluateGate below is
     // the single, authoritative check against REAL deliverables_v2 rows.
-    // ensureSponsorAuthorityForApprover is unrelated to deliverable
-    // fabrication (it only grants the approving user sponsor authority when
-    // none exists yet for P0→P1) and is kept as-is.
-    if (phase === 1) {
-      await ensureSponsorAuthorityForApprover(sb, programId, ctx);
-    }
+    // The authenticated actor remains the approver; sponsor contacts are never
+    // promoted or rewritten as a side effect of approving a gate.
     const gate = await evaluateGate(ctx, programId, phase, toPhase, {
       supabase: sb,
+      allowHistoricalPhase: phase < (program.currentPhase ?? 0),
     });
     const hardFails = gate.failedChecks.filter(
       (check) => check.severity === "hard",
@@ -459,6 +691,7 @@ export async function POST(
         {
           error: "gate_blocked",
           phase,
+          approvalStale,
           gateId: gateIdFor(programId, phase),
           gate,
           capture,
@@ -481,8 +714,32 @@ export async function POST(
             severity: "soft" as const,
           }))
         : [];
-    const advanced =
-      phase === 5
+    const evidenceBoundSnapshot = {
+      humanRationale: rationale,
+      signed_in_phase_gate_approval: true,
+      capture_path: `/api/v1/programs/${programId}/phase-capture`,
+      ...(evidence
+        ? {
+            evidenceSnapshotHash: evidence.revision,
+            phaseEvidenceSnapshotHash: evidence.revisionByPhase?.[phase] ?? "",
+            evidenceSnapshotScope: "phase",
+          }
+        : {}),
+    };
+    const reapprovingEarlierPhase = phase < (program.currentPhase ?? 0);
+    const advanced = reapprovingEarlierPhase
+      ? {
+          programId,
+          newPhase: program.currentPhase ?? phase + 1,
+          snapshotId: await recordReapprovalSnapshot(
+            sb,
+            ctx,
+            programId,
+            phase,
+            evidenceBoundSnapshot,
+          ),
+        }
+      : phase === 5
         ? {
             programId,
             newPhase: 6,
@@ -492,6 +749,8 @@ export async function POST(
               programId,
               rationale,
               program.gatesPassed,
+              evidence?.revision ?? "",
+              evidence?.revisionByPhase?.[phase] ?? "",
             )),
           }
         : await advancePhase(
@@ -500,11 +759,7 @@ export async function POST(
               programId,
               fromPhase: phase,
               toPhase,
-              snapshot: {
-                humanRationale: rationale,
-                signed_in_phase_gate_approval: true,
-                capture_path: `/api/v1/programs/${programId}/phase-capture`,
-              },
+              snapshot: evidenceBoundSnapshot,
               approvedByUserId: ctx.userId,
             },
             { supabase: sb },
@@ -536,6 +791,13 @@ export async function POST(
       toState: `P${toPhase}`,
       rationale,
     });
+    await sendMoveProgressUpdate({
+      ctx,
+      programId,
+      moveName: program.name ?? `Move ${programId}`,
+      fromPhase: phase,
+      toPhase: advanced.newPhase,
+    });
 
     return Response.json({
       ok: true,
@@ -553,6 +815,8 @@ export async function POST(
           ? "open_tower_handoff"
           : `open_phase_${advanced.newPhase}`,
       terminalHandoff: toPhase === 6,
+      reapproved: reapprovingEarlierPhase,
+      reapprovedPhase: reapprovingEarlierPhase ? phase : undefined,
       snapshotId: advanced.snapshotId,
       carriedGaps: [
         ...carried.map((check) => check.check),

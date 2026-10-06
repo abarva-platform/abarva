@@ -4,10 +4,9 @@
 // This is the integration seam the event route calls when `source_analytics` is
 // ON: read the event's facts → run the deterministic evaluators for the event's
 // archetype → roll them into the value waterfall → build the canvas view. The
-// value-waterfall beat is fully live (real facts, real math, cited). The intake
-// beats (intel points / tasks / gate) are not fact-derived in this slice, so the
-// builder reuses the sample scaffold's STRUCTURE for those beats and states the
-// live value proof through the waterfall — the intel lead is rewritten to reflect
+// value-waterfall beat is fully live (real facts, real math, cited). Selected
+// stages derive tasks and gates; the others explicitly carry sample structure.
+// The builder states the live value proof through the waterfall — the intel lead reflects
 // the real computed/insufficient counts so nothing is dressed as more than it is.
 //
 // Returns null when there are not enough facts to compute at least one lever; the
@@ -24,6 +23,14 @@ import {
   archetypeForEventType,
   listSourceArchetypes,
 } from '@/lib/source/archetypes/registry';
+import {
+  EVENT_TYPE_TO_ARCHETYPE_ID,
+  resolveArchetypeForEvent,
+} from '@/lib/source/archetypes/event-archetype-resolver';
+import {
+  SOURCE_CATEGORY_IDS,
+  type SourceCategoryId,
+} from '@/lib/source/taxonomy/category-taxonomy';
 import type { SourceEventArchetype } from '@/lib/source/archetypes/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 import type { EvaluatorInputs } from '@/lib/source/facts/evaluators/types';
@@ -44,31 +51,90 @@ import {
   SAMPLE_VALUE_STAGE,
 } from '@/components/source/canvas/analytics/sample-view-model';
 import {
+  BAFO_STAGE_KEY,
+  buildBafoFactDerivedGate,
+  buildBafoFactDerivedTasks,
+} from './bafo-fact-beats';
+import {
+  EVALUATION_STAGE_KEY,
+  buildEvaluationFactDerivedGate,
+  buildEvaluationFactDerivedTasks,
+} from './evaluation-fact-beats';
+import {
+  RESPONSES_STAGE_KEY,
+  buildResponsesFactDerivedGate,
+  buildResponsesFactDerivedTasks,
+  type VendorResponseCoverage,
+} from './responses-fact-beats';
+import {
+  RFP_STAGE_KEY,
+  buildRfpFactDerivedGate,
+  buildRfpFactDerivedTasks,
+} from './rfp-fact-beats';
+import {
+  SELECTION_STAGE_KEY,
+  buildSelectionFactDerivedGate,
+  buildSelectionFactDerivedTasks,
+} from './selection-fact-beats';
+import {
+  VALUE_STAGE_KEY,
+  buildValueFactDerivedGate,
+  buildValueFactDerivedTasks,
+} from './value-fact-beats';
+import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
+import { withTerminalGateContract } from '@/lib/source/stage-terminal-contract';
 import type {
   IntelPointView,
   StageAnalyticsView,
+  StageBeatProvenanceView,
 } from '@/components/source/canvas/analytics/view-model';
 
 /**
  * Resolve the archetype whose value-lever rules should evaluate this event.
- * Prefers the archetype mapped from the event's `event_type` WHEN it declares
- * value-lever rules; otherwise falls back to the first archetype that has rules
- * (today only AMS is authored). Returns null when no archetype carries rules.
+ * Prefers the event's classified category, then accepts an unambiguous exact
+ * event-type match. It never substitutes another archetype merely because that
+ * archetype happens to have authored rules.
  */
 export function resolveValueArchetype(
   eventType: string | null | undefined,
+  classifiedCategory?: string | null,
 ): SourceEventArchetype | null {
-  if (eventType) {
-    const mapped = archetypeForEventType(eventType);
-    if (mapped && (mapped.valueLeverRules?.length ?? 0) > 0) return mapped;
+  const categoryId =
+    classifiedCategory &&
+    (SOURCE_CATEGORY_IDS as readonly string[]).includes(classifiedCategory)
+      ? (classifiedCategory as SourceCategoryId)
+      : null;
+  const resolution = resolveArchetypeForEvent({ categoryId, eventType });
+  if (
+    resolution.archetype &&
+    (resolution.archetype.valueLeverRules?.length ?? 0) > 0
+  ) {
+    return resolution.archetype;
   }
-  const withRules = listSourceArchetypes().find(
-    (a) => (a.valueLeverRules?.length ?? 0) > 0,
+
+  // A valid classifier result is authoritative. If that archetype has no rules,
+  // report not-ready instead of falling back to a different raw event type.
+  if (categoryId) return null;
+
+  if (!eventType) return null;
+  // The canonical resolver explicitly leaves coarse legacy types unresolved.
+  // Do not re-resolve one by matching a pack's broad eventType label.
+  if (
+    Object.hasOwn(EVENT_TYPE_TO_ARCHETYPE_ID, eventType) &&
+    EVENT_TYPE_TO_ARCHETYPE_ID[eventType] === null
+  ) return null;
+  const exactMatches = listSourceArchetypes().filter(
+    (candidate) =>
+      candidate.eventType === eventType &&
+      (candidate.valueLeverRules?.length ?? 0) > 0,
   );
-  return withRules ?? null;
+  if (exactMatches.length === 1) return exactMatches[0];
+
+  const mapped = archetypeForEventType(eventType);
+  return mapped && (mapped.valueLeverRules?.length ?? 0) > 0 ? mapped : null;
 }
 
 export interface BuildLiveStageInput {
@@ -78,6 +144,8 @@ export interface BuildLiveStageInput {
   citations: Record<string, FactSourceCitation | null>;
   /** The event's raw event_type (used to resolve the archetype). */
   eventType?: string | null;
+  /** Preferred deterministic classifier category for archetype resolution. */
+  classifiedCategory?: string | null;
   /** Explicit archetype id override (skips event_type resolution) — used in tests. */
   archetypeId?: string;
   /** The value baseline label / amount to show the movements against. */
@@ -86,55 +154,75 @@ export interface BuildLiveStageInput {
   /** Stage identity for the canvas (defaults to the sample Scope exemplar). */
   stageKey?: string;
   stageName?: string;
+  /** Existing tenant-scoped vendor-by-lever response signal, when available. */
+  vendorResponses?: VendorResponseCoverage;
+  /** Existing tenant-scoped per-lever included-clause signal, when available. */
+  rfpClausePresentLeverKeys?: ReadonlySet<string>;
+  /**
+   * Existing tenant-scoped per-lever committed-value-at-award signal, when
+   * available (`readCommittedValueLevers`). `undefined` means NO award fact has
+   * been read — NOT that nothing committed; `selection-fact-beats` keeps those
+   * two states apart and this field is where the distinction enters.
+   */
+  committedValueByLeverKey?: ReadonlyMap<string, number>;
+  /**
+   * Existing tenant-scoped per-lever realized-to-date signal, when available
+   * (`readRealizedValueLevers`). `undefined` means NO realized fact has been read
+   * — NOT that nothing has realized; `value-fact-beats` keeps those two states
+   * apart and this field is where the distinction enters.
+   */
+  realizedValueByLeverKey?: ReadonlyMap<string, number>;
 }
 
 /**
- * Build a live StageAnalyticsView, or null when the facts are too thin to compute
- * a single lever. The waterfall beat is live + cited; the intel lead reflects the
- * real computed / needs-evidence counts.
+ * Build a live StageAnalyticsView when value facts compute, or when a complete
+ * RFP clause assessment is supplied. The latter never creates a value waterfall.
  */
 export function buildLiveStageView(
   input: BuildLiveStageInput,
 ): StageAnalyticsView | null {
   const archetype = input.archetypeId
     ? getSourceArchetype(input.archetypeId) ?? null
-    : resolveValueArchetype(input.eventType);
+    : resolveValueArchetype(input.eventType, input.classifiedCategory);
   if (!archetype) return null;
 
   const factMap: EventFactMap = input.inputs;
   const leverResults = evaluateValueLevers(archetype, factMap);
   const waterfall = buildValueWaterfall(leverResults);
+  const hasQuantifiedValue = waterfall.computedLeverCount > 0;
+  const hasRfpChecklist = input.stageKey === RFP_STAGE_KEY &&
+    input.rfpClausePresentLeverKeys !== undefined &&
+    (input.inputs.rfp_clause_present === 0 || input.inputs.rfp_clause_present === 1);
 
-  // Gate: only go live when at least one lever actually computed. Otherwise the
-  // canvas falls back to the honestly-marked sample view.
-  if (waterfall.computedLeverCount < 1) return null;
+  if (!hasQuantifiedValue && !hasRfpChecklist) return null;
 
-  const waterfallView = buildLiveWaterfallView({
+  const waterfallView = hasQuantifiedValue ? buildLiveWaterfallView({
     leverResults,
     archetypeId: archetype.id,
     citations: input.citations,
     baselineLabel: input.baselineLabel ?? 'Committed value baseline',
     baselineAmount: input.baselineAmount ?? 0,
-  });
+  }) : undefined;
 
-  const rollup = quantifiedRollup(waterfallView.bands);
+  const rollup = waterfallView ? quantifiedRollup(waterfallView.bands) : null;
   const insufficientCount = waterfall.insufficientLevers.length;
 
-  const intelPoints: IntelPointView[] = [
-    {
+  const intelPoints: IntelPointView[] = hasQuantifiedValue && rollup ? [{
       tone: 'found',
       tag: 'Computed',
       text:
         `${rollup.quantifiedBandCount} value ${rollup.quantifiedBandCount === 1 ? 'lever' : 'levers'} ` +
         `computed from committed facts — every figure traces to a cited ${'source_event_facts'} row.`,
-    },
-    {
+    }, {
       tone: 'archetype',
       tag: 'Archetype',
       text: `${archetype.name} value-lever rules drove the classification into the five value types.`,
-    },
-  ];
-  if (insufficientCount > 0) {
+    }] : [{
+      tone: 'found',
+      tag: 'Checklist reviewed',
+      text: `${input.rfpClausePresentLeverKeys?.size ?? 0} of ${archetype.valueLeverRules?.length ?? 0} value-lever clauses have an included-clause fact. An explicit absence is not an included clause.`,
+    }];
+  if (hasQuantifiedValue && insufficientCount > 0) {
     intelPoints.push({
       tone: 'muted',
       tag: 'Needs evidence',
@@ -156,23 +244,183 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
+  // Items U-534, U-535, U-538, U-540, U-542 and U-545. Six stages' intake beats
+  // are derived from event facts and the resolved archetype. The other four carry
+  // exemplar content and say so below. `factBeats`
+  // is the single switch: nothing downstream infers which stage is derived, and
+  // the beat provenance is declared from the same value so the label cannot
+  // drift from what this function actually returned.
+  //
+  // Kept as a lookup rather than a chain of `if`s so that adding the next stage
+  // is one entry: a second derived stage arriving as a second ternary was how
+  // this would have grown into the ten-arm switch below it, which is the shape
+  // `liveStageScaffoldFor` is and the reason `LIVE_STAGE_SCAFFOLD_SOURCE` has to
+  // exist beside it.
+  const beatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    nextStageName,
+  };
+  const responsesBeatInput = {
+    archetype,
+    vendorResponses: input.vendorResponses,
+    nextStageName,
+  };
+  const rfpBeatInput = {
+    archetype,
+    presentLeverKeys: input.rfpClausePresentLeverKeys,
+    nextStageName,
+  };
+  const selectionBeatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    committedByLeverKey: input.committedValueByLeverKey,
+    nextStageName,
+  };
+  // Item U-545. No `nextStageName`: this is the terminal stage, and the gate
+  // reads its onward target (there is none) from the terminal contract rather
+  // than from a computed label a caller could hand it.
+  const valueBeatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    realizedByLeverKey: input.realizedValueByLeverKey,
+  };
+  const FACT_DERIVED_BEATS: Readonly<
+    Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
+  > = {
+    [BAFO_STAGE_KEY]: () => ({
+      tasks: buildBafoFactDerivedTasks(beatInput),
+      gate: buildBafoFactDerivedGate(beatInput),
+    }),
+    [EVALUATION_STAGE_KEY]: () => ({
+      tasks: buildEvaluationFactDerivedTasks(beatInput),
+      gate: buildEvaluationFactDerivedGate(beatInput),
+    }),
+    [RESPONSES_STAGE_KEY]: () => ({
+      tasks: buildResponsesFactDerivedTasks(responsesBeatInput),
+      gate: buildResponsesFactDerivedGate(responsesBeatInput),
+    }),
+    [RFP_STAGE_KEY]: () => ({
+      tasks: buildRfpFactDerivedTasks(rfpBeatInput),
+      gate: buildRfpFactDerivedGate(rfpBeatInput),
+    }),
+    [SELECTION_STAGE_KEY]: () => ({
+      tasks: buildSelectionFactDerivedTasks(selectionBeatInput),
+      gate: buildSelectionFactDerivedGate(selectionBeatInput),
+    }),
+    [VALUE_STAGE_KEY]: () => ({
+      tasks: buildValueFactDerivedTasks(valueBeatInput),
+      gate: buildValueFactDerivedGate(valueBeatInput),
+    }),
+  };
+  const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;
+
   return {
     stageKey,
     stageName: input.stageName ?? scaffold.stageName,
     purpose: scaffold.purpose,
     intel: {
       provenance: 'live',
-      lead:
-        "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      lead: hasQuantifiedValue
+        ? "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate."
+        : 'The RFP clause checklist has persisted decisions. No monetary value is computed from this review.',
       points: intelPoints,
     },
-    // The intake beats are not fact-derived in this slice; reuse the sample
-    // structure so the page renders, while the value proof above is fully live.
-    tasks: scaffold.tasks,
-    // Reuse the sample gate's confirm boxes + generates (not yet fact-derived per
-    // stage) but correct the next-stage label for the stage being built.
-    gate: { ...scaffold.gate, nextStageName },
+    // Derived where `factBeats` is present; otherwise the intake beats are not
+    // fact-derived on this stage, so reuse the sample structure to render while
+    // the value proof above stays fully live.
+    tasks: factBeats?.tasks ?? scaffold.tasks,
+    // Derived where `factBeats` is present. Otherwise reuse the sample gate's
+    // confirm boxes + generates (not yet fact-derived on this stage) but correct
+    // the next-stage label for the stage being built.
+    // ITEM U-406. The terminal contract is applied to whichever gate this
+    // returns -- derived or carried -- rather than as a second `=== 'value'`
+    // branch inside the carried arm. The literal it replaces was correct and
+    // unreachable from the derived arm, so a future fact-derived terminal gate
+    // would have silently lost the role and could have reintroduced an onward
+    // target. The contract also states the absence of that target, which is what
+    // the exemplar used to fill with `'Closed'`.
+    gate: withTerminalGateContract(
+      factBeats?.gate ?? { ...scaffold.gate, nextStageName },
+      requestedStageKey,
+    ),
     waterfall: waterfallView,
+    // Item U-533. Say so at the boundary. The two comments above were the only
+    // record that `tasks` and `gate` are exemplar content, and a comment is
+    // readable by a maintainer and by nothing else -- the canvas and the chat
+    // grounding builder both consumed this view with no way to tell carried
+    // copy from computed fact, and the grounding block called the exemplar's
+    // task titles and its fixture approver "authoritative". This field is the
+    // machine-readable form of those two comments, written HERE because this is
+    // where the carriage happens.
+    beatProvenance: liveStageBeatProvenanceFor(requestedStageKey, factBeats !== null),
+  };
+}
+
+/**
+ * The exemplar constant `liveStageScaffoldFor` returns for a stage key.
+ *
+ * Kept as a table beside that switch rather than derived from it, because the
+ * constants are imported bindings: at runtime a `SAMPLE_*_STAGE` object carries
+ * no name to read back, and `.stageKey` is the exemplar's OWN key, which is not
+ * the same thing (nine arms match their key; `default` catches every unlisted
+ * key and returns the Scope exemplar). `u533-stage-scaffold-provenance` asserts
+ * the two agree arm for arm, so a new arm cannot land here unnamed.
+ */
+const LIVE_STAGE_SCAFFOLD_SOURCE: Readonly<Record<string, string>> = {
+  rfp: 'SAMPLE_RFP_STAGE',
+  responses: 'SAMPLE_RESPONSES_STAGE',
+  evaluation: 'SAMPLE_EVALUATION_STAGE',
+  pricing: 'SAMPLE_PRICING_STAGE',
+  bafo: 'SAMPLE_BAFO_STAGE',
+  executive_decision: 'SAMPLE_EXECUTIVE_DECISION_STAGE',
+  selection: 'SAMPLE_SELECTION_STAGE',
+  transition: 'SAMPLE_TRANSITION_STAGE',
+  value: 'SAMPLE_VALUE_STAGE',
+  scope: 'SAMPLE_SCOPE_STAGE',
+};
+
+/** The exemplar `liveStageScaffoldFor` resolves `stageKey` to, by name. */
+export function liveStageScaffoldSourceFor(stageKey: string): string {
+  return LIVE_STAGE_SCAFFOLD_SOURCE[stageKey] ?? 'SAMPLE_SCOPE_STAGE';
+}
+
+/**
+ * Per-beat provenance for a view built by `buildLiveStageView`.
+ *
+ * Item U-533 recorded the measured before-state -- both beats `scaffold` on all
+ * ten armed stages -- in `docs/architecture/u533-stage-scaffold-provenance.json`.
+ * Item U-534 flipped ONE stage, so this now has two answers, and `derived` is
+ * passed in by the caller rather than re-derived from `stageKey` here: the label
+ * must be a reading of what the builder ACTUALLY returned, not a second opinion
+ * about it that can drift.
+ *
+ * `scaffoldSource` is null on the derived stage because neither declared beat was
+ * carried from an exemplar, which is the field's documented contract. Note that
+ * this stage's `purpose` IS still exemplar copy -- `beatProvenance` covers the two
+ * intake beats only, and the per-field artifact above is where the remaining
+ * carriage stays visible.
+ */
+/*
+ * Module-private on purpose. Exporting it would add a second exported gate with
+ * no caller outside this file, which is the exact shape item C-408 is filed
+ * about; `buildLiveStageView` is the only thing that should decide a view's
+ * provenance, and the suite drives the builder rather than this function.
+ */
+function liveStageBeatProvenanceFor(
+  stageKey: string,
+  derived: boolean,
+): StageBeatProvenanceView {
+  if (derived) {
+    return { tasks: 'fact_derived', gate: 'fact_derived', scaffoldSource: null };
+  }
+  return {
+    tasks: 'scaffold',
+    gate: 'scaffold',
+    scaffoldSource: liveStageScaffoldSourceFor(stageKey),
   };
 }
 

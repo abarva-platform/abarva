@@ -98,8 +98,14 @@ export interface WorkshopReadiness {
   type: WorkshopType;
   title: string;
   objective: WorkshopObjective;
-  requiredAttendees: ReadonlyArray<{ role: WorkshopParticipantRole; reason: string }>;
-  optionalSmes: ReadonlyArray<{ role: WorkshopParticipantRole; reason: string }>;
+  requiredAttendees: ReadonlyArray<{
+    role: WorkshopParticipantRole;
+    reason: string;
+  }>;
+  optionalSmes: ReadonlyArray<{
+    role: WorkshopParticipantRole;
+    reason: string;
+  }>;
   preReadList: ReadonlyArray<string>;
   agenda: ReadonlyArray<{ minutes: number; activity: string }>;
   questionsToAsk: ReadonlyArray<string>;
@@ -116,7 +122,11 @@ export interface WorkshopReadiness {
 export interface WorkshopReadinessSummary {
   totalCount: number;
   byType: Record<WorkshopType, number>;
-  perTenant: ReadonlyArray<{ tenantKey: string; tenantName: string; count: number }>;
+  perTenant: ReadonlyArray<{
+    tenantKey: string;
+    tenantName: string;
+    count: number;
+  }>;
 }
 
 // ---------------------------------------------------------------------
@@ -135,16 +145,17 @@ export const WORKSHOP_TYPES_IN_ORDER: ReadonlyArray<WorkshopType> = [
   'executive_decision_review',
 ];
 
-export const WORKSHOP_PARTICIPANT_ROLES_IN_ORDER: ReadonlyArray<WorkshopParticipantRole> = [
-  'client_maestro',
-  'executive_sponsor',
-  'business_owner',
-  'technical_lead',
-  'data_owner',
-  'compliance_reviewer',
-  'abarva_sme',
-  'abarva_consultant',
-];
+export const WORKSHOP_PARTICIPANT_ROLES_IN_ORDER: ReadonlyArray<WorkshopParticipantRole> =
+  [
+    'client_maestro',
+    'executive_sponsor',
+    'business_owner',
+    'technical_lead',
+    'data_owner',
+    'compliance_reviewer',
+    'abarva_sme',
+    'abarva_consultant',
+  ];
 
 // ---------------------------------------------------------------------
 // Public API
@@ -192,7 +203,10 @@ export function summarizeWorkshopReadiness(
   workshops: ReadonlyArray<WorkshopReadiness>,
 ): WorkshopReadinessSummary {
   const byType = emptyByType();
-  const perTenantMap = new Map<string, { tenantKey: string; tenantName: string; count: number }>();
+  const perTenantMap = new Map<
+    string,
+    { tenantKey: string; tenantName: string; count: number }
+  >();
   for (const ws of workshops) {
     byType[ws.type] += 1;
     const existing = perTenantMap.get(ws.tenantKey);
@@ -226,7 +240,9 @@ export function summarizeWorkshopReadiness(
  * Returns canonical-ordered workshop types — same input → identical
  * output. Always returns ≥3 entries.
  */
-function workshopTypesForPhaseSpec(specPhase: number): ReadonlyArray<WorkshopType> {
+function workshopTypesForPhaseSpec(
+  specPhase: number,
+): ReadonlyArray<WorkshopType> {
   switch (specPhase) {
     case 1: // Charter
       return ['current_state_discovery', 'use_case_framing', 'value_framing'];
@@ -422,7 +438,7 @@ function objectiveTextFor(type: WorkshopType): string {
     case 'data_foundation_assessment':
       return 'Assess data readiness for the prioritized use cases and name the gaps that block progress.';
     case 'value_framing':
-      return 'Frame projected value with confidence band, baseline anchor, and ledger entry the sponsor can sign.';
+      return 'Frame projected value with confidence band, baseline anchor, and ledger entry for authorized-user approval.';
     case 'governance_risk_review':
       return 'Surface the governance, regulatory, and operational risks the program must mitigate before advance.';
     case 'architecture_solution_design':
@@ -432,7 +448,7 @@ function objectiveTextFor(type: WorkshopType): string {
     case 'adoption_change_readiness':
       return 'Stress-test adoption, training, and change readiness signals the program needs before scale.';
     case 'executive_decision_review':
-      return 'Run the executive decision review and capture the outcome record the sponsor signs.';
+      return 'Run the executive decision review and capture the outcome record for an authorized workspace user to approve.';
   }
 }
 
@@ -451,7 +467,8 @@ function composeRequiredAttendees(
         ...base,
         {
           role: 'business_owner',
-          reason: 'Ground-truth on the operating reality the program must improve.',
+          reason:
+            'Ground-truth on the operating reality the program must improve.',
         },
         {
           role: 'executive_sponsor',
@@ -507,7 +524,8 @@ function composeRequiredAttendees(
         },
         {
           role: 'technical_lead',
-          reason: 'Confirms which projections the platform can produce evidence for.',
+          reason:
+            'Confirms which projections the platform can produce evidence for.',
         },
       ];
     case 'governance_risk_review':
@@ -605,7 +623,8 @@ function composeOptionalSmes(
       return [
         {
           role: 'abarva_consultant',
-          reason: 'Carries the AbarVa discovery method and prior pattern matches.',
+          reason:
+            'Carries the AbarVa discovery method and prior pattern matches.',
         },
       ];
     case 'use_case_framing':
@@ -630,43 +649,50 @@ function composeOptionalSmes(
       return [
         {
           role: 'abarva_consultant',
-          reason: 'Carries the AbarVa value-framing template and prior baselines.',
+          reason:
+            'Carries the AbarVa value-framing template and prior baselines.',
         },
       ];
     case 'governance_risk_review':
       return [
         {
           role: 'abarva_sme',
-          reason: 'Governance and regulatory SME aligned to the program archetype.',
+          reason:
+            'Governance and regulatory SME aligned to the program archetype.',
         },
         {
           role: 'abarva_consultant',
-          reason: 'Carries prior risk register patterns from comparable engagements.',
+          reason:
+            'Carries prior risk register patterns from comparable engagements.',
         },
       ];
     case 'architecture_solution_design':
       return [
         {
           role: 'abarva_sme',
-          reason: 'Solution architect SME for the target stack and vendor stance.',
+          reason:
+            'Solution architect SME for the target stack and vendor stance.',
         },
         {
           role: 'abarva_consultant',
-          reason: 'Carries prior reference architectures and integration patterns.',
+          reason:
+            'Carries prior reference architectures and integration patterns.',
         },
       ];
     case 'operating_model_alignment':
       return [
         {
           role: 'abarva_consultant',
-          reason: 'Carries the AbarVa operating-model reference for the archetype.',
+          reason:
+            'Carries the AbarVa operating-model reference for the archetype.',
         },
       ];
     case 'adoption_change_readiness':
       return [
         {
           role: 'abarva_consultant',
-          reason: 'Carries the AbarVa change-readiness rubric and prior adoption curves.',
+          reason:
+            'Carries the AbarVa change-readiness rubric and prior adoption curves.',
         },
         {
           role: 'abarva_sme',
@@ -753,74 +779,169 @@ function composeAgenda(
     case 'current_state_discovery':
       return [
         { minutes: 10, activity: 'Welcome, framing, intent for the session.' },
-        { minutes: 30, activity: 'Walk the current operating reality with the business owner.' },
-        { minutes: 20, activity: 'Surface contradictions and gaps that the program must fix.' },
-        { minutes: 15, activity: 'Capture evidence references and assign owners.' },
+        {
+          minutes: 30,
+          activity:
+            'Walk the current operating reality with the business owner.',
+        },
+        {
+          minutes: 20,
+          activity:
+            'Surface contradictions and gaps that the program must fix.',
+        },
+        {
+          minutes: 15,
+          activity: 'Capture evidence references and assign owners.',
+        },
         { minutes: 15, activity: 'Decisions and next-session recommendation.' },
       ];
     case 'use_case_framing':
       return [
-        { minutes: 10, activity: 'Welcome and framing of the use-case prioritization rubric.' },
+        {
+          minutes: 10,
+          activity:
+            'Welcome and framing of the use-case prioritization rubric.',
+        },
         { minutes: 30, activity: 'Walk the candidate use-case longlist.' },
-        { minutes: 20, activity: 'Prioritize the first wave by value and feasibility.' },
-        { minutes: 15, activity: 'Surface tensions and capture the rationale.' },
+        {
+          minutes: 20,
+          activity: 'Prioritize the first wave by value and feasibility.',
+        },
+        {
+          minutes: 15,
+          activity: 'Surface tensions and capture the rationale.',
+        },
         { minutes: 15, activity: 'Lock the wave and record the decision.' },
       ];
     case 'data_foundation_assessment':
       return [
         { minutes: 10, activity: 'Welcome and framing the assessment rubric.' },
-        { minutes: 25, activity: 'Walk the data inventory for the prioritized use cases.' },
-        { minutes: 20, activity: 'Surface lineage, freshness, and access gaps.' },
-        { minutes: 20, activity: 'Adjudicate which gaps block progress and which can wait.' },
+        {
+          minutes: 25,
+          activity: 'Walk the data inventory for the prioritized use cases.',
+        },
+        {
+          minutes: 20,
+          activity: 'Surface lineage, freshness, and access gaps.',
+        },
+        {
+          minutes: 20,
+          activity: 'Adjudicate which gaps block progress and which can wait.',
+        },
         { minutes: 15, activity: 'Capture decisions and assign owners.' },
       ];
     case 'value_framing':
       return [
         { minutes: 10, activity: 'Welcome and framing the value rubric.' },
-        { minutes: 25, activity: 'Walk the baseline anchor for the prioritized use cases.' },
-        { minutes: 25, activity: 'Frame projected value ranges with confidence band.' },
+        {
+          minutes: 25,
+          activity: 'Walk the baseline anchor for the prioritized use cases.',
+        },
+        {
+          minutes: 25,
+          activity: 'Frame projected value ranges with confidence band.',
+        },
         { minutes: 15, activity: 'Surface tensions on baseline definitions.' },
-        { minutes: 15, activity: 'Lock the value ledger entry and record the decision.' },
+        {
+          minutes: 15,
+          activity: 'Lock the value ledger entry and record the decision.',
+        },
       ];
     case 'governance_risk_review':
       return [
         { minutes: 10, activity: 'Welcome and framing the regulatory map.' },
-        { minutes: 30, activity: 'Walk the risk register for the candidate design.' },
-        { minutes: 20, activity: 'Surface the controls the design pack must carry.' },
+        {
+          minutes: 30,
+          activity: 'Walk the risk register for the candidate design.',
+        },
+        {
+          minutes: 20,
+          activity: 'Surface the controls the design pack must carry.',
+        },
         { minutes: 15, activity: 'Adjudicate severity and assign owners.' },
-        { minutes: 15, activity: 'Capture decisions and the next-session recommendation.' },
+        {
+          minutes: 15,
+          activity: 'Capture decisions and the next-session recommendation.',
+        },
       ];
     case 'architecture_solution_design':
       return [
-        { minutes: 10, activity: 'Welcome and framing the architecture target.' },
-        { minutes: 30, activity: 'Walk the candidate target architecture and trade-offs.' },
-        { minutes: 20, activity: 'Lock the vendor stance and integration boundary.' },
-        { minutes: 15, activity: 'Surface tensions on cost, latency, and migration risk.' },
-        { minutes: 15, activity: 'Capture decisions and update the design pack.' },
+        {
+          minutes: 10,
+          activity: 'Welcome and framing the architecture target.',
+        },
+        {
+          minutes: 30,
+          activity: 'Walk the candidate target architecture and trade-offs.',
+        },
+        {
+          minutes: 20,
+          activity: 'Lock the vendor stance and integration boundary.',
+        },
+        {
+          minutes: 15,
+          activity: 'Surface tensions on cost, latency, and migration risk.',
+        },
+        {
+          minutes: 15,
+          activity: 'Capture decisions and update the design pack.',
+        },
       ];
     case 'operating_model_alignment':
       return [
-        { minutes: 10, activity: 'Welcome and framing the run-state operating model.' },
+        {
+          minutes: 10,
+          activity: 'Welcome and framing the run-state operating model.',
+        },
         { minutes: 30, activity: 'Walk the RACI for the run-state.' },
-        { minutes: 20, activity: 'Surface ownership gaps and on-call boundaries.' },
+        {
+          minutes: 20,
+          activity: 'Surface ownership gaps and on-call boundaries.',
+        },
         { minutes: 15, activity: 'Adjudicate ownership and assign owners.' },
-        { minutes: 15, activity: 'Capture decisions and update the operating-model artifact.' },
+        {
+          minutes: 15,
+          activity:
+            'Capture decisions and update the operating-model artifact.',
+        },
       ];
     case 'adoption_change_readiness':
       return [
         { minutes: 10, activity: 'Welcome and framing the readiness rubric.' },
-        { minutes: 25, activity: 'Walk adoption signals from the pilot population.' },
-        { minutes: 20, activity: 'Stress-test training plan and change-management coverage.' },
+        {
+          minutes: 25,
+          activity: 'Walk adoption signals from the pilot population.',
+        },
+        {
+          minutes: 20,
+          activity: 'Stress-test training plan and change-management coverage.',
+        },
         { minutes: 15, activity: 'Surface tensions on readiness for scale.' },
-        { minutes: 20, activity: 'Capture decisions and the next-session recommendation.' },
+        {
+          minutes: 20,
+          activity: 'Capture decisions and the next-session recommendation.',
+        },
       ];
     case 'executive_decision_review':
       return [
-        { minutes: 10, activity: 'Welcome, framing, and confirmation of the decision in question.' },
-        { minutes: 25, activity: 'Walk the evidence chain that supports the decision.' },
-        { minutes: 20, activity: 'Walk the value ledger entries that frame the outcome.' },
+        {
+          minutes: 10,
+          activity:
+            'Welcome, framing, and confirmation of the decision in question.',
+        },
+        {
+          minutes: 25,
+          activity: 'Walk the evidence chain that supports the decision.',
+        },
+        {
+          minutes: 20,
+          activity: 'Walk the value ledger entries that frame the outcome.',
+        },
         { minutes: 15, activity: 'Surface tensions and adjudicate.' },
-        { minutes: 20, activity: 'Capture the decision record and the executive readout.' },
+        {
+          minutes: 20,
+          activity: 'Capture the decision record and the executive readout.',
+        },
       ];
   }
 }
@@ -978,7 +1099,7 @@ function composeDecisionsNeeded(type: WorkshopType): ReadonlyArray<string> {
       ];
     case 'executive_decision_review':
       return [
-        'Capture the executive decision the sponsor signs.',
+        'Capture the executive decision for an authorized workspace user to approve.',
         'Approve the executive readout for distribution.',
       ];
   }
@@ -997,7 +1118,8 @@ function composeEvidenceToCapture(
         },
         {
           label: 'Open questions list',
-          reason: 'Records the discovery gaps Nexus must close before next session.',
+          reason:
+            'Records the discovery gaps Nexus must close before next session.',
           required: false,
         },
       ];
@@ -1028,7 +1150,8 @@ function composeEvidenceToCapture(
         },
         {
           label: 'Pre-existing data inventory snapshot',
-          reason: 'Provides the deterministic baseline the assessment grew from.',
+          reason:
+            'Provides the deterministic baseline the assessment grew from.',
           required: false,
         },
       ];
@@ -1046,7 +1169,8 @@ function composeEvidenceToCapture(
         },
         {
           label: 'Variance attribution placeholder',
-          reason: 'Reserves a line for projected-vs-realized attribution after Verify.',
+          reason:
+            'Reserves a line for projected-vs-realized attribution after Verify.',
           required: false,
         },
       ];
@@ -1064,7 +1188,8 @@ function composeEvidenceToCapture(
         },
         {
           label: 'Regulatory map reference',
-          reason: 'Documents the regulatory anchors the controls are mapped to.',
+          reason:
+            'Documents the regulatory anchors the controls are mapped to.',
           required: false,
         },
       ];
@@ -1082,7 +1207,8 @@ function composeEvidenceToCapture(
         },
         {
           label: 'Trade-off log',
-          reason: 'Records the cost, latency, and migration trade-offs the room accepted.',
+          reason:
+            'Records the cost, latency, and migration trade-offs the room accepted.',
           required: false,
         },
       ];
@@ -1095,12 +1221,14 @@ function composeEvidenceToCapture(
         },
         {
           label: 'On-call boundary memo',
-          reason: 'Captures the on-call structure between platform and business.',
+          reason:
+            'Captures the on-call structure between platform and business.',
           required: true,
         },
         {
           label: 'Operating-model deviations list',
-          reason: 'Notes how the operating model differs from prior comparable programs.',
+          reason:
+            'Notes how the operating model differs from prior comparable programs.',
           required: false,
         },
       ];
@@ -1126,7 +1254,8 @@ function composeEvidenceToCapture(
       return [
         {
           label: 'Executive decision record',
-          reason: 'Captures the decision the sponsor signs.',
+          reason:
+            'Captures the decision for an authorized workspace user to approve.',
           required: true,
         },
         {
@@ -1143,24 +1272,29 @@ function composeEvidenceToCapture(
   }
 }
 
-function composeExpectedOutputs(type: WorkshopType): ReadonlyArray<WorkshopOutput> {
+function composeExpectedOutputs(
+  type: WorkshopType,
+): ReadonlyArray<WorkshopOutput> {
   switch (type) {
     case 'current_state_discovery':
       return [
         {
           kind: 'evidence_capture',
-          description: 'Current-state findings captured as evidence references for downstream phases.',
+          description:
+            'Current-state findings captured as evidence references for downstream phases.',
         },
         {
           kind: 'next_session_recommendation',
-          description: 'Recommendation for the next workshop with named objective and attendees.',
+          description:
+            'Recommendation for the next workshop with named objective and attendees.',
         },
       ];
     case 'use_case_framing':
       return [
         {
           kind: 'updated_charter',
-          description: 'Charter updated with the prioritized first-wave use cases.',
+          description:
+            'Charter updated with the prioritized first-wave use cases.',
         },
         {
           kind: 'decision_record',
@@ -1171,7 +1305,8 @@ function composeExpectedOutputs(type: WorkshopType): ReadonlyArray<WorkshopOutpu
       return [
         {
           kind: 'evidence_capture',
-          description: 'Data gap register and owner roster captured as evidence.',
+          description:
+            'Data gap register and owner roster captured as evidence.',
         },
         {
           kind: 'risk_register_entry',
@@ -1186,14 +1321,16 @@ function composeExpectedOutputs(type: WorkshopType): ReadonlyArray<WorkshopOutpu
         },
         {
           kind: 'decision_record',
-          description: 'Decision record locking the baseline anchor and target metric.',
+          description:
+            'Decision record locking the baseline anchor and target metric.',
         },
       ];
     case 'governance_risk_review':
       return [
         {
           kind: 'risk_register_entry',
-          description: 'Risk register entries with severity, owner, and mitigation.',
+          description:
+            'Risk register entries with severity, owner, and mitigation.',
         },
         {
           kind: 'updated_design_pack',
@@ -1204,18 +1341,21 @@ function composeExpectedOutputs(type: WorkshopType): ReadonlyArray<WorkshopOutpu
       return [
         {
           kind: 'updated_design_pack',
-          description: 'Design pack updated with the locked target architecture and vendor stance.',
+          description:
+            'Design pack updated with the locked target architecture and vendor stance.',
         },
         {
           kind: 'decision_record',
-          description: 'Decision record capturing the architecture trade-offs the room accepted.',
+          description:
+            'Decision record capturing the architecture trade-offs the room accepted.',
         },
       ];
     case 'operating_model_alignment':
       return [
         {
           kind: 'updated_design_pack',
-          description: 'Design pack updated with the run-state RACI and on-call boundary.',
+          description:
+            'Design pack updated with the run-state RACI and on-call boundary.',
         },
         {
           kind: 'decision_record',
@@ -1226,22 +1366,26 @@ function composeExpectedOutputs(type: WorkshopType): ReadonlyArray<WorkshopOutpu
       return [
         {
           kind: 'evidence_capture',
-          description: 'Readiness signals captured as evidence for the scale gate.',
+          description:
+            'Readiness signals captured as evidence for the scale gate.',
         },
         {
           kind: 'next_session_recommendation',
-          description: 'Recommendation for the next readiness or executive review session.',
+          description:
+            'Recommendation for the next readiness or executive review session.',
         },
       ];
     case 'executive_decision_review':
       return [
         {
           kind: 'decision_record',
-          description: 'Executive decision record signed by the sponsor.',
+          description:
+            'Executive decision record for authorized workspace-user approval.',
         },
         {
           kind: 'executive_readout',
-          description: 'Atlas-style executive readout published after the session.',
+          description:
+            'Atlas-style executive readout published after the session.',
         },
       ];
   }
@@ -1323,7 +1467,8 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
         },
         {
           id: 'risk:csd:owner',
-          description: 'No business owner can ground-truth the operating reality in the room.',
+          description:
+            'No business owner can ground-truth the operating reality in the room.',
           severity: 'medium',
         },
       ];
@@ -1331,12 +1476,14 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:ucf:wave',
-          description: 'Sponsor priority and technical feasibility do not converge on a wave.',
+          description:
+            'Sponsor priority and technical feasibility do not converge on a wave.',
           severity: 'high',
         },
         {
           id: 'risk:ucf:data',
-          description: 'Data owner cannot commit to the data needed for the candidate wave.',
+          description:
+            'Data owner cannot commit to the data needed for the candidate wave.',
           severity: 'medium',
         },
       ];
@@ -1357,12 +1504,14 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:vf:baseline',
-          description: 'Baseline anchor is contested between business and technical owners.',
+          description:
+            'Baseline anchor is contested between business and technical owners.',
           severity: 'medium',
         },
         {
           id: 'risk:vf:band',
-          description: 'Sponsor wants a tighter confidence band than the evidence supports.',
+          description:
+            'Sponsor wants a tighter confidence band than the evidence supports.',
           severity: 'medium',
         },
       ];
@@ -1370,7 +1519,8 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:grr:control',
-          description: 'A required control cannot land in the design pack within the mitigation window.',
+          description:
+            'A required control cannot land in the design pack within the mitigation window.',
           severity: 'high',
         },
         {
@@ -1383,12 +1533,14 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:asd:tradeoff',
-          description: 'Cost, latency, and migration trade-offs do not converge on a target.',
+          description:
+            'Cost, latency, and migration trade-offs do not converge on a target.',
           severity: 'high',
         },
         {
           id: 'risk:asd:vendor',
-          description: 'Vendor stance is contested between procurement and technical leads.',
+          description:
+            'Vendor stance is contested between procurement and technical leads.',
           severity: 'medium',
         },
       ];
@@ -1396,7 +1548,8 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:oma:oncall',
-          description: 'On-call ownership is contested between platform and business teams.',
+          description:
+            'On-call ownership is contested between platform and business teams.',
           severity: 'medium',
         },
         {
@@ -1409,12 +1562,14 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:acr:pilot',
-          description: 'Pilot population does not represent the scale population.',
+          description:
+            'Pilot population does not represent the scale population.',
           severity: 'high',
         },
         {
           id: 'risk:acr:training',
-          description: 'Training coverage is thinner than the readiness rubric requires.',
+          description:
+            'Training coverage is thinner than the readiness rubric requires.',
           severity: 'medium',
         },
       ];
@@ -1422,12 +1577,14 @@ function composeRisks(type: WorkshopType): ReadonlyArray<WorkshopRisk> {
       return [
         {
           id: 'risk:edr:evidence',
-          description: 'Evidence chain has gaps the sponsor flags during the review.',
+          description:
+            'Evidence chain has gaps the sponsor flags during the review.',
           severity: 'high',
         },
         {
           id: 'risk:edr:deferred',
-          description: 'Deferred items create asymmetric risk the room has not adjudicated.',
+          description:
+            'Deferred items create asymmetric risk the room has not adjudicated.',
           severity: 'medium',
         },
       ];

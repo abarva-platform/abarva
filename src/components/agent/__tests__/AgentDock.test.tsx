@@ -233,8 +233,7 @@ describe("AgentDock · default mode", () => {
             id: "budget-by-portfolio",
             label:
               "Show the holding-company IT budget by portfolio company and shared services.",
-            body:
-              "Show the holding-company IT budget by portfolio company and shared services.",
+            body: "Show the holding-company IT budget by portfolio company and shared services.",
           },
         ]}
         onMessage={jest.fn()}
@@ -268,22 +267,19 @@ describe("AgentDock · default mode", () => {
             id: "drift-threshold",
             label:
               "How do we operationalize the drift alert threshold in real time during the pilot, and what manual escalation SLA applies once the threshold is breached?",
-            body:
-              "How do we operationalize the drift alert threshold in real time during the pilot, and what manual escalation SLA applies once the threshold is breached?",
+            body: "How do we operationalize the drift alert threshold in real time during the pilot, and what manual escalation SLA applies once the threshold is breached?",
           },
           {
             id: "sox-control",
             label:
               "The SOX payment approval evidence control is blocked and owned by the CFO. What dependency chain must be cleared before charter approval?",
-            body:
-              "The SOX payment approval evidence control is blocked and owned by the CFO. What dependency chain must be cleared before charter approval?",
+            body: "The SOX payment approval evidence control is blocked and owned by the CFO. What dependency chain must be cleared before charter approval?",
           },
           {
             id: "data-validation",
             label:
               "If the AP, AR, and S&OP input feeds are not stable yet, should we define a data validation checkpoint before model training?",
-            body:
-              "If the AP, AR, and S&OP input feeds are not stable yet, should we define a data validation checkpoint before model training?",
+            body: "If the AP, AR, and S&OP input feeds are not stable yet, should we define a data validation checkpoint before model training?",
           },
         ]}
         onMessage={jest.fn()}
@@ -373,7 +369,9 @@ describe("AgentDock · default mode", () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId("agent-dock-suggestion-drift-escalation"));
+    fireEvent.click(
+      screen.getByTestId("agent-dock-suggestion-drift-escalation"),
+    );
 
     await waitFor(() =>
       expect(onMessage).toHaveBeenCalledWith(
@@ -396,7 +394,9 @@ describe("AgentDock · default mode", () => {
       />,
     );
     await waitFor(() =>
-      expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument(),
+      expect(
+        screen.getByTestId("agent-dock-expand-overlay"),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -415,9 +415,13 @@ describe("AgentDock · default mode", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByTestId("agent-dock-side-rail-shell")).toBeInTheDocument(),
+      expect(
+        screen.getByTestId("agent-dock-side-rail-shell"),
+      ).toBeInTheDocument(),
     );
-    expect(screen.queryByTestId("agent-dock-expand-overlay")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("agent-dock-expand-overlay"),
+    ).not.toBeInTheDocument();
   });
 
   it("marks agent turns as AI drafts while leaving user turns unmarked", () => {
@@ -622,6 +626,130 @@ describe("AgentDock · mode picker", () => {
     expect(splitStorageKey("source/new")).toBe(
       "abarva.agent-dock.source/new.split",
     );
+  });
+});
+
+describe("AgentDock · expanded conversation", () => {
+  it("uses a full viewport canvas even when a caller supplies legacy width caps", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        expandedWidth="60vw"
+        expandedMaxWidth={800}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-dock-expand-overlay")).toHaveStyle({
+      inset: "0",
+      padding: "0",
+    });
+    expect(screen.getByTestId("agent-dock-expand-panel")).toHaveStyle({
+      width: "100%",
+      height: "100%",
+      maxWidth: "none",
+    });
+    expect(screen.getByTestId("agent-dock-thread")).toHaveStyle({
+      overflowY: "auto",
+    });
+    expect(screen.getByTestId("agent-dock-form")).toBeVisible();
+  });
+
+  it("puts opening suggestions in the conversation scroll area", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[]}
+        suggestedActions={[
+          { id: "first", label: "What can I do?", body: "What can I do?" },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    expect(
+      within(screen.getByTestId("agent-dock-thread")).getByTestId(
+        "agent-dock-suggestion-first",
+      ),
+    ).toBeVisible();
+    expect(screen.getAllByTestId("agent-dock-suggestion-first")).toHaveLength(
+      1,
+    );
+  });
+
+  it("keeps turns and follow-up prompts in the same scroll area", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        keepSuggestedActionsVisible
+        thread={[
+          { id: "u1", role: "user", body: "What changed?" },
+          { id: "a1", role: "agent", body: "The approved evidence changed." },
+        ]}
+        suggestedActions={[
+          { id: "next", label: "Show evidence", body: "Show evidence" },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    const transcript = screen.getByTestId("agent-dock-thread");
+    expect(within(transcript).getByText("What changed?")).toHaveStyle({
+      background: "#F1F3F5",
+    });
+    expect(
+      within(transcript).getByText("The approved evidence changed."),
+    ).toBeVisible();
+    expect(
+      within(transcript).getByTestId("agent-dock-suggestion-next"),
+    ).toBeVisible();
+    expect(document.body.style.overflow).toBe("hidden");
+  });
+
+  it("clears opening prompts after a reply in expanded mode", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[{ id: "a1", role: "agent", body: "Here is the answer." }]}
+        suggestedActions={[
+          { id: "opening", label: "What can I do?", body: "What can I do?" },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    expect(screen.queryByTestId("agent-dock-suggestion-opening")).toBeNull();
+    expect(screen.getByTestId("agent-dock-form")).toBeVisible();
+  });
+
+  it("reserves a wider lane for rich answers without widening prose", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[{ id: "a1", role: "agent", body: "A readable answer." }]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    const prose = screen.getByText("A readable answer.").parentElement;
+    expect(prose).toHaveStyle({ width: "min(100%, 860px)" });
+    expect(prose?.parentElement).toHaveStyle({ width: "min(100%, 1180px)" });
   });
 });
 
@@ -1240,6 +1368,47 @@ describe("AgentDock · thread render", () => {
     expect(screen.queryByTestId("evidence-basis")).not.toBeInTheDocument();
   });
 
+  it("shows a focused Home direct answer and its source basis", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="home-preview"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "Two priorities need review.",
+            citations: [
+              {
+                type: "SURFACE",
+                name: "Program investment record",
+                id: "internal-row-1",
+                detail: "Approved budget and current forecast.",
+              },
+            ],
+            agentAnswer: {
+              directAnswer: "The forecast exceeds the approved budget.",
+              prose: "Two priorities need review.",
+              citations: [],
+              artifacts: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("The forecast exceeds the approved budget.");
+    expect(turn).toHaveTextContent("Two priorities need review.");
+    expect(screen.getByTestId("evidence-basis")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Evidence basis/ }));
+    expect(screen.getByText("Governed record")).toBeInTheDocument();
+    expect(screen.getByText("Program investment record")).toBeInTheDocument();
+    expect(turn).not.toHaveTextContent("internal-row-1");
+  });
+
   it("exports the current chat session without making a model call", async () => {
     const submitSpy = jest
       .spyOn(HTMLFormElement.prototype, "submit")
@@ -1291,7 +1460,13 @@ describe("AgentDock · thread render", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Export chat session as HTML" }));
+    expect(screen.getByText("Chat export")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Export aVa chat session only as HTML",
+      }),
+    );
 
     await waitFor(() => expect(submitSpy).toHaveBeenCalledTimes(1));
     const form = document.querySelector(
@@ -1307,7 +1482,9 @@ describe("AgentDock · thread render", () => {
     expect(request.format).toBe("html");
     expect(request.session.surface).toBe("intelligence");
     expect(request.session.turns).toHaveLength(2);
-    expect(request.session.turns[1].answer.tenantKey).toBe("lakeshore-holdings");
+    expect(request.session.turns[1].answer.tenantKey).toBe(
+      "lakeshore-holdings",
+    );
     await waitFor(() => expect(screen.getByText("Ready")).toBeInTheDocument());
 
     document
@@ -1327,13 +1504,23 @@ describe("AgentDock · thread render", () => {
       <AgentDock
         agent={{ ...AGENT, name: "aVa" }}
         surface="intelligence"
-        thread={[{ id: "u1", role: "user", body: "Rank supply chain AI bets." }]}
+        thread={[
+          { id: "u1", role: "user", body: "Rank supply chain AI bets." },
+        ]}
         onMessage={jest.fn()}
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Export chat session as HTML" }));
+    expect(
+      screen.getByLabelText("Export aVa chat session only"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Export aVa chat session only as HTML",
+      }),
+    );
 
     await waitFor(() => expect(submitSpy).toHaveBeenCalledTimes(1));
     const payload = document.querySelector(
@@ -1419,7 +1606,7 @@ describe("AgentDock · thread render", () => {
 
     const turn = screen.getByTestId("agent-dock-turn-agent");
     expect(turn).toHaveTextContent("Fund IROPS recovery automation");
-    expect(turn).toHaveTextContent("Airline Demo AI investment posture");
+    expect(turn).toHaveTextContent("Global AI investment posture");
     expect(turn).toHaveTextContent("IROPS agentic recovery");
   });
 
@@ -1505,8 +1692,7 @@ describe("AgentDock · thread render", () => {
           {
             id: "a",
             role: "agent",
-            body:
-              "Sequence the roadmap before funding scale.\n\n| AI Use Case | Value (1-5) | Complexity (1-5) |\n|---|---|---|\n| Structured lookup | 4 | 2 |\n\nGate the LLM tier on transcript governance.",
+            body: "Sequence the roadmap before funding scale.\n\n| AI Use Case | Value (1-5) | Complexity (1-5) |\n|---|---|---|\n| Structured lookup | 4 | 2 |\n\nGate the LLM tier on transcript governance.",
             agentAnswer: {
               surface: "intelligence",
               mode: "ANALYZE",
@@ -1563,8 +1749,12 @@ describe("AgentDock · thread render", () => {
     );
 
     const turn = screen.getByTestId("agent-dock-turn-agent");
-    expect(turn).toHaveTextContent("Sequence the roadmap before funding scale.");
-    expect(turn).toHaveTextContent("Gate the LLM tier on transcript governance.");
+    expect(turn).toHaveTextContent(
+      "Sequence the roadmap before funding scale.",
+    );
+    expect(turn).toHaveTextContent(
+      "Gate the LLM tier on transcript governance.",
+    );
     expect(turn).toHaveTextContent("Value / Complexity Tradeoff");
     expect(turn).toHaveTextContent("Structured lookup");
     expect(turn).not.toHaveTextContent("Requested Visual Boundary");
@@ -1581,8 +1771,7 @@ describe("AgentDock · thread render", () => {
           {
             id: "a",
             role: "agent",
-            body:
-              'Anchor on measured production assets.\n```abarva-canvas\n{"canvasType":"value-readiness-matrix","signals":[{"label":"Incident copilot","value":"$24.7M"}]}\n```\nThen clear the MRM gate before scaling Tier-1 assets.',
+            body: 'Anchor on measured production assets.\n```abarva-canvas\n{"canvasType":"value-readiness-matrix","signals":[{"label":"Incident copilot","value":"$24.7M"}]}\n```\nThen clear the MRM gate before scaling Tier-1 assets.',
             agentAnswer: {
               surface: "intelligence",
               mode: "ANALYZE",
@@ -1682,6 +1871,54 @@ describe("AgentDock · thread render", () => {
         delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
       }
     }
+  });
+
+  it("follows streaming text near the bottom without pulling a reader away from earlier turns", () => {
+    const renderDock = (body: string, nextUser = false) => (
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[
+          { id: "a1", role: "agent", body },
+          ...(nextUser
+            ? ([
+                { id: "u2", role: "user", body: "Follow up." },
+              ] as ChatMessage[])
+            : []),
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />
+    );
+
+    const { rerender } = render(renderDock("First sentence."));
+    const transcript = screen.getByTestId("agent-dock-thread");
+    Object.defineProperty(transcript, "scrollHeight", {
+      value: 1000,
+      configurable: true,
+    });
+    Object.defineProperty(transcript, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(renderDock("First sentence. Second sentence."));
+    expect(transcript.scrollTop).toBe(100);
+
+    transcript.scrollTop = 795;
+    fireEvent.scroll(transcript);
+    rerender(renderDock("First sentence. Second sentence. Third sentence."));
+    expect(transcript.scrollTop).toBe(1000);
+
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(
+      renderDock("First sentence. Second sentence. Third sentence.", true),
+    );
+    expect(transcript.scrollTop).toBe(1000);
   });
 
   it("renders structured response parts with tables and charts", () => {

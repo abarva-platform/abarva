@@ -72,15 +72,25 @@ import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
+import {
+  isProgramPatternAuthorityError,
+  programPatternLookupFromClient,
+  resolvePromotedProgramPatternKey,
+} from '@/lib/programs/pattern-authority';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
 // otherwise throw an opaque uuid-cast error.
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function originatingIntelligenceSessionIdFromContext(ctx: { surfaceContext?: Record<string, unknown> }): string | null {
+function originatingIntelligenceSessionIdFromContext(ctx: {
+  surfaceContext?: Record<string, unknown>;
+}): string | null {
   const raw = ctx.surfaceContext?.originatingIntelligenceSessionId;
-  return typeof raw === 'string' && UUID_RE.test(raw.trim()) ? raw.trim() : null;
+  return typeof raw === 'string' && UUID_RE.test(raw.trim())
+    ? raw.trim()
+    : null;
 }
 
 interface CommitProgramInput {
@@ -89,6 +99,7 @@ interface CommitProgramInput {
   target_outcome?: string;
   timeline?: string;
   sponsor_person_id: string;
+  sponsor_progress_emails?: boolean;
   lead_person_id?: string;
   classification?: ArchetypeKey | null;
   matched_pattern_id?: string;
@@ -110,7 +121,9 @@ function slugifyTopicCode(value: string): string {
   return slug || 'program_origination';
 }
 
-function classifyCommitProgram(input: CommitProgramInput): CommitProgramClassification {
+function classifyCommitProgram(
+  input: CommitProgramInput,
+): CommitProgramClassification {
   const text = [
     input.program_name,
     input.problem_statement,
@@ -122,7 +135,8 @@ function classifyCommitProgram(input: CommitProgramInput): CommitProgramClassifi
     .join(' ')
     .toLowerCase();
 
-  let functionCode: CommitProgramClassification['functionCode'] = 'MIDDLE_OFFICE';
+  let functionCode: CommitProgramClassification['functionCode'] =
+    'MIDDLE_OFFICE';
   if (
     /\b(finance|financial close|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(
       text,
@@ -144,9 +158,17 @@ function classifyCommitProgram(input: CommitProgramInput): CommitProgramClassifi
   }
 
   let objectiveCode: CommitProgramClassification['objectiveCode'] = 'OPTIMISE';
-  if (/\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(text)) {
+  if (
+    /\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(
+      text,
+    )
+  ) {
     objectiveCode = 'CONTROL';
-  } else if (/\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(text)) {
+  } else if (
+    /\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(
+      text,
+    )
+  ) {
     objectiveCode = 'GROW';
   }
 
@@ -166,8 +188,16 @@ function briefProgressArtifact(input: {
 }): string {
   const fields = [
     { id: 'program-name', label: 'Program name', value: input.form.name },
-    { id: 'problem-statement', label: 'Problem statement', value: input.form.useCase },
-    { id: 'target-outcome', label: 'Target outcome', value: input.form.targetOutcome },
+    {
+      id: 'problem-statement',
+      label: 'Problem statement',
+      value: input.form.useCase,
+    },
+    {
+      id: 'target-outcome',
+      label: 'Target outcome',
+      value: input.form.targetOutcome,
+    },
     { id: 'timeline', label: 'Timeline', value: input.input.timeline ?? '' },
     { id: 'sponsor', label: 'Sponsor', value: input.sponsorName },
     { id: 'lead', label: 'Lead', value: input.leadName },
@@ -230,30 +260,40 @@ async function insertParticipant(input: {
   programId: string;
   personId: string;
   role: string;
-  approvalAuthority: 'sponsor' | 'contributor';
+  approvalAuthority: 'contributor';
+  sendProgressEmails?: boolean;
 }): Promise<void> {
   const sb = getAzureWriteFluentClient();
   const userName = await resolvePersonName(input.personId);
+  const sponsorContact = /^(co[- ]?)?sponsor$/i.test(input.role.trim());
   const basePayload = {
     engagement_id: input.programId,
     user_id: input.personId,
     user_name: userName,
     role: input.role,
-    notify_on: ['phase_gate', 'approval'],
+    notify_on:
+      sponsorContact && input.sendProgressEmails === true ? ['phase_gate'] : [],
     approval_authority: input.approvalAuthority,
     last_touchpoint_at: new Date().toISOString(),
   };
   const { error } = await sb.from('engagement_participants').insert({
     ...basePayload,
-    program_access_level: 'program_member',
+    program_access_level: sponsorContact ? 'program_viewer' : 'program_member',
     can_view_financial: false,
-    can_upload: true,
-    can_generate_deliverables: true,
-    can_publish_deliverables: input.approvalAuthority === 'sponsor',
-    can_approve_phase_gates: input.approvalAuthority === 'sponsor',
+    can_upload: !sponsorContact,
+    can_generate_deliverables: !sponsorContact,
+    can_publish_deliverables: false,
+    can_approve_phase_gates: false,
   });
-  if (error && /program_access_level|can_view_financial|can_upload|can_generate_deliverables|can_publish_deliverables|can_approve_phase_gates/i.test(error.message)) {
-    const { error: retryError } = await sb.from('engagement_participants').insert(basePayload);
+  if (
+    error &&
+    /program_access_level|can_view_financial|can_upload|can_generate_deliverables|can_publish_deliverables|can_approve_phase_gates/i.test(
+      error.message,
+    )
+  ) {
+    const { error: retryError } = await sb
+      .from('engagement_participants')
+      .insert(basePayload);
     if (retryError) throw retryError;
     return;
   }
@@ -271,7 +311,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     'On success, tell the user — in your own words — that the brief has been submitted for approval, ' +
     'name what happens next (a tenant admin will review and approve before Phase 0 unlocks), and say the ' +
     'new program is visible in the Programs workspace. Do NOT mention raw program IDs, database IDs, UUIDs, ' +
-    'or /programs/<engagement_id> in chat prose. Do NOT say ' +
+    'or "/programs/<engagement_id>" in chat prose. Do NOT say ' +
     '"the program is now active" or "registered" — the program is QUEUED, not running. ' +
     'Call this only after the user says yes to your "Shall I submit this for approval?" question — never ' +
     'speculatively. ' +
@@ -296,15 +336,18 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       },
       problem_statement: {
         type: 'string',
-        description: 'The use case / problem statement, as a natural-language paragraph.',
+        description:
+          'The use case / problem statement, as a natural-language paragraph.',
       },
       target_outcome: {
         type: 'string',
-        description: 'The target outcome the user committed to (optional but encouraged).',
+        description:
+          'The target outcome the user committed to (optional but encouraged).',
       },
       timeline: {
         type: 'string',
-        description: 'Free-form timeline hint (e.g., "9 months", "BAFO by May").',
+        description:
+          'Free-form timeline hint (e.g., "9 months", "BAFO by May").',
       },
       sponsor_person_id: {
         type: 'string',
@@ -312,6 +355,11 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           'UUID from persons table for the named program sponsor. If the user said a role ' +
           '("CIO") or a name without a UUID, call lookup_person FIRST to resolve them — do not ' +
           'ask the user to paste a UUID.',
+      },
+      sponsor_progress_emails: {
+        type: 'boolean',
+        description:
+          'Explicitly opt the listed sponsor contact into informational phase-progress emails. Defaults to false.',
       },
       lead_person_id: {
         type: 'string',
@@ -326,7 +374,15 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       },
       matched_pattern_id: {
         type: 'string',
-        description: 'Pattern key matched during classification (e.g., PAT-PRG-AMS-CONSOLIDATION-001).',
+        // No worked id here on purpose. This description is handed to
+        // the model verbatim, so an id written here is an instruction to
+        // use it, and the value lands in `pattern_match_logs.pattern_key`
+        // unvalidated. The corpus has been re-keyed once already; the
+        // example that used to sit here no longer resolved.
+        description:
+          'Pattern key produced by classification, when classification produced one. ' +
+          'Omit it when it did not — it is written to the match log as evidence, so ' +
+          'an invented or remembered key records a match that never happened.',
       },
     },
     required: ['program_name', 'problem_statement', 'sponsor_person_id'],
@@ -375,7 +431,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       throw err;
     }
 
-    const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch(() => null);
+    const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch(
+      () => null,
+    );
     if (!accessPolicy?.canCreatePrograms) {
       return {
         success: false,
@@ -405,7 +463,8 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     }
     const tenantKey = activeClient.key;
     const industryCode = (
-      activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[tenantKey]
+      activeClient.industry_code?.trim() ||
+      CLIENT_KEY_TO_INDUSTRY_CODE[tenantKey]
     ).toUpperCase();
 
     const originationForm: OriginationForm = {
@@ -415,7 +474,6 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       sponsorPersonId: input.sponsor_person_id,
       leadPersonId: input.lead_person_id ?? input.sponsor_person_id,
     };
-    const derivedClassification = classifyCommitProgram(input);
     const programArchetype = normalizeProgramArchetype(input.classification);
 
     // Idempotency guard: if a program with the same name was created
@@ -426,6 +484,28 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // already-pending approval request on that engagement so we don't
     // double-queue.)
     const sb = getAzureWriteFluentClient();
+    let matchedPatternId: string | null;
+    try {
+      matchedPatternId = await resolvePromotedProgramPatternKey(
+        input.matched_pattern_id,
+        programPatternLookupFromClient(sb),
+      );
+    } catch (error) {
+      if (!isProgramPatternAuthorityError(error)) throw error;
+      return {
+        success: false,
+        error: error.code,
+        recovery:
+          error.code === 'program_pattern_lookup_failed'
+            ? 'The Programs pattern catalog is unavailable, so I did not submit the brief. Try again when the catalog is reachable.'
+            : 'That pattern is not an active Programs pattern, so I did not submit the brief. Re-run classification or omit the pattern.',
+      };
+    }
+    const governedInput: CommitProgramInput = {
+      ...input,
+      matched_pattern_id: matchedPatternId ?? undefined,
+    };
+    const derivedClassification = classifyCommitProgram(governedInput);
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
       const { data: existing } = await sb
@@ -464,16 +544,22 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           tenantId: tenancy.clientId,
           moveId: row.id,
         }).catch((err) => {
-          console.error('[commit_program] Intelligence ask session link failed for existing move', {
-            programId: row.id,
-            err: err instanceof Error ? err.message : String(err),
-          });
+          console.error(
+            '[commit_program] Intelligence ask session link failed for existing move',
+            {
+              programId: row.id,
+              err: err instanceof Error ? err.message : String(err),
+            },
+          );
         });
         // Use the existing `program-created` sentinel — the client's
         // StewardChat component watches for it specifically and
         // navigates to /programs/<id>. The wording is a hint to the
         // browser, not user-visible; renaming would break navigation.
-        if (ctx.surface === '/programs/new' || ctx.surface === '/demo/programs/new') {
+        if (
+          ctx.surface === '/programs/new' ||
+          ctx.surface === '/demo/programs/new'
+        ) {
           ctx.writer?.write(`\n[[program-created:${row.id}]]`);
         }
         return {
@@ -583,7 +669,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       objective_code: derivedClassification.objectiveCode,
       topic_code: derivedClassification.topicCode,
       classification: programArchetype,
-      matched_pattern_id: input.matched_pattern_id ?? null,
+      matched_pattern_id: matchedPatternId,
       submitted_from_surface: ctx.surface,
       submitted_at: new Date().toISOString(),
     };
@@ -597,7 +683,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // ── Step 2 · submit for approval (transactional with rollback) ──
     let approvalRequestId: string;
     try {
-      const sponsorName = await resolvePersonName(originationForm.sponsorPersonId);
+      const sponsorName = await resolvePersonName(
+        originationForm.sponsorPersonId,
+      );
       const leadName =
         originationForm.leadPersonId === originationForm.sponsorPersonId
           ? sponsorName
@@ -631,7 +719,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         error: `approval_submit_failed: ${message}`,
         recovery:
           "Couldn't queue the brief for tenant-admin approval — the approval-request write failed " +
-          'and I rolled back the engagement so we don\'t have an orphan record. Want me to retry, ' +
+          "and I rolled back the engagement so we don't have an orphan record. Want me to retry, " +
           'or capture this as a local draft and you can submit later?',
       };
     }
@@ -646,7 +734,8 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         programId,
         personId: originationForm.sponsorPersonId,
         role: 'Sponsor',
-        approvalAuthority: 'sponsor',
+        approvalAuthority: 'contributor',
+        sendProgressEmails: input.sponsor_progress_emails === true,
       });
       if (originationForm.leadPersonId !== originationForm.sponsorPersonId) {
         await insertParticipant({
@@ -656,10 +745,10 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           approvalAuthority: 'contributor',
         });
       }
-      if (input.matched_pattern_id) {
+      if (matchedPatternId) {
         await sb.from('pattern_match_logs').insert({
           engagement_id: programId,
-          pattern_key: input.matched_pattern_id,
+          pattern_key: matchedPatternId,
           match_confidence: null,
           match_context_jsonb: {
             use_case: originationForm.useCase,
@@ -679,7 +768,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         new_state: 'submitted_for_approval',
         changed_by_user_id: tenancy.userId,
         context_jsonb: {
-          pattern_key: input.matched_pattern_id ?? null,
+          pattern_key: matchedPatternId,
           origin: 'maestro_console',
           approval_request_id: approvalRequestId,
         },
@@ -716,7 +805,10 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // sentinel is a navigation hint stripped client-side before
     // display; the user-visible message that Steward generates is
     // what carries the new "submitted for approval" semantics.
-    if (ctx.surface === '/programs/new' || ctx.surface === '/demo/programs/new') {
+    if (
+      ctx.surface === '/programs/new' ||
+      ctx.surface === '/demo/programs/new'
+    ) {
       ctx.writer?.write(`\n[[program-created:${programId}]]`);
     }
 

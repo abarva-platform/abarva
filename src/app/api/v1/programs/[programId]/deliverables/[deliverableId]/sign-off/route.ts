@@ -1,5 +1,5 @@
 // POST /api/v1/programs/:programId/deliverables/:deliverableId/sign-off
-// in_review → signed_off. Requires sponsor or approver authority per Packet 4 matrix.
+// in_review → signed_off. Requires an authorized workspace-user capability.
 //
 // Two modes, both real client approval — not just an AI-generation trigger:
 //   - JSON body (or no body): approve the AI-drafted content as-is.
@@ -8,8 +8,8 @@
 //     (artifact_family=generated_deliverable) via the existing File Cabinet
 //     write path, then linked back via deliverables_v2.approved_artifact_id.
 // Either way, deliverables_v2.signed_off_version is set to the version being
-// approved so later regeneration (v2-generator.ts) can never silently clobber
-// the approval record, and moves-generate-deps.ts / deliverable-content-signals.ts
+// approved so later governed regeneration can never silently clobber the
+// approval record, and moves-generate-deps.ts / deliverable-content-signals.ts
 // prefer this version when feeding content forward to the next phase.
 //
 // PHASE CAPTURE EVIDENCE INTEGRITY: this route accepts only deliberately
@@ -36,7 +36,7 @@ import {
   extractOfficeText,
   type OfficeFormat,
 } from "@/lib/deliverables/shared/office-text-extract";
-import { hasAuthority } from "@/lib/programs/governance";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
@@ -60,6 +60,11 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -91,9 +96,9 @@ type GeneratedOfficeReadinessContent =
     }
   | {
       ok: false;
-      artifactId: string;
-      fileName: string;
-      fileFormat: string;
+      artifactId?: string;
+      fileName?: string;
+      fileFormat?: string;
       detail: string;
     };
 
@@ -128,6 +133,7 @@ async function buildClientReadinessScanContent(
     deliverableId: string;
     versionId: string;
     htmlContent?: string | null;
+    requiresOfficeCompanionScan?: boolean;
   },
 ): Promise<GeneratedOfficeReadinessContent> {
   const scanParts: string[] = [];
@@ -148,6 +154,13 @@ async function buildClientReadinessScanContent(
       input.versionId,
     ),
   );
+  if (input.requiresOfficeCompanionScan && officeCompanions.length === 0) {
+    return {
+      ok: false,
+      detail:
+        "No current generated Office companion matched this deliverable version.",
+    };
+  }
 
   for (const artifact of officeCompanions) {
     const downloaded = await downloadArtifactBytes(ctx, artifact.artifact_id);
@@ -217,13 +230,17 @@ export async function POST(
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-    const canApprove =
-      (await hasAuthority(ctx, programId, "approver", { supabase })) ||
-      ctx.role === "founder" ||
-      ctx.role === "maestro";
-    if (!canApprove) {
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
-        { error: "forbidden", detail: "approver authority or higher required" },
+        {
+          error: "forbidden",
+          detail: "Authorized Move approval permission required.",
+        },
         { status: 403 },
       );
     }
@@ -246,6 +263,10 @@ export async function POST(
       title: string;
       current_version: number | null;
     };
+    const deliverablePhase =
+      DELIVERABLE_REGISTRY.find(
+        (spec) => spec.deliverableTypeKey === deliverableTypeKey,
+      )?.phase ?? 0;
 
     if (!RECOGNIZED_DELIVERABLE_TYPE_KEYS.has(deliverableTypeKey)) {
       return Response.json(
@@ -263,23 +284,90 @@ export async function POST(
     // The JSON path historically accepts no body at all, so an absent or
     // unparseable body must stay valid — it means "approve as drafted".
     let acknowledgeReadinessBlockers = false;
-    if (!isFileUploadApproval) {
+    let approvalRationale: string | null = null;
+    let uploadForm: FormData | null = null;
+    if (isFileUploadApproval) {
+      uploadForm = await req.formData();
+      acknowledgeReadinessBlockers =
+        uploadForm.get("acknowledgeReadinessBlockers") === "true";
+      const rationaleValue = uploadForm.get("approvalRationale");
+      if (rationaleValue !== null && typeof rationaleValue !== "string") {
+        return Response.json(
+          {
+            error: "invalid_approval_rationale",
+            detail: "Approval note must be text.",
+          },
+          { status: 400 },
+        );
+      }
+      approvalRationale =
+        typeof rationaleValue === "string"
+          ? rationaleValue.trim() || null
+          : null;
+      const uploadedFile = uploadForm.get("file");
+      if (!(uploadedFile instanceof File) || uploadedFile.size === 0) {
+        return Response.json(
+          {
+            error: "file_required",
+            detail: "Select a non-empty replacement file before sign-off.",
+          },
+          { status: 400 },
+        );
+      }
+    } else {
       const parsedBody = (await req.json().catch(() => null)) as {
         acknowledgeReadinessBlockers?: unknown;
+        approvalRationale?: unknown;
       } | null;
       acknowledgeReadinessBlockers =
         parsedBody?.acknowledgeReadinessBlockers === true;
+      if (
+        parsedBody?.approvalRationale !== undefined &&
+        typeof parsedBody.approvalRationale !== "string"
+      ) {
+        return Response.json(
+          {
+            error: "invalid_approval_rationale",
+            detail: "Approval note must be text.",
+          },
+          { status: 400 },
+        );
+      }
+      approvalRationale =
+        typeof parsedBody?.approvalRationale === "string"
+          ? parsedBody.approvalRationale.trim() || null
+          : null;
+    }
+    if (approvalRationale && approvalRationale.length > 1000) {
+      return Response.json(
+        {
+          error: "invalid_approval_rationale",
+          detail: "Approval note must be 1,000 characters or fewer.",
+        },
+        { status: 400 },
+      );
     }
 
     let readinessOutcome: ReturnType<
       typeof evaluateClientReadinessForSignOff
     > | null = null;
     let readinessScannedArtifacts: GeneratedOfficeScanArtifact[] = [];
+    let generatedApprovalLineage:
+      | {
+          source: "moves_program_generate";
+          generatedArtifactId?: string;
+          evidenceSnapshotHash: string;
+          phaseEvidenceSnapshotHash: string;
+          evidenceSnapshotScope: "phase";
+          approvalMode: "approve_generated_deliverable_as_is";
+        }
+      | undefined;
+    let generatedApprovalArtifactId: string | undefined;
 
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
         .from("deliverable_versions")
-        .select("id, structured_data, content")
+        .select("id, structured_data, content, created_at")
         .eq("deliverable_id", deliverableId)
         .eq("version", currentVersion)
         .maybeSingle();
@@ -289,6 +377,12 @@ export async function POST(
           structured_data?: Record<string, unknown> | null;
         } | null
       )?.structured_data?.source;
+      const versionStructuredData =
+        (
+          versionRow as {
+            structured_data?: Record<string, unknown> | null;
+          } | null
+        )?.structured_data ?? {};
       if (source === "phase_capture") {
         return Response.json(
           {
@@ -300,6 +394,102 @@ export async function POST(
           },
           { status: 422 },
         );
+      }
+
+      const generatedVersion =
+        source === "generated_by_orchestrator" ||
+        source === "generated_artifact_acceptance" ||
+        source === "moves_program_generate" ||
+        typeof versionStructuredData.generated_artifact_id === "string" ||
+        typeof versionStructuredData.generatedArtifactId === "string";
+      if (generatedVersion) {
+        const evidenceSnapshot = ctx.clientKey
+          ? await loadApprovedMoveEvidenceSnapshot({
+              tenantKey: ctx.clientKey,
+              moveId: programId,
+            }).catch(() => null)
+          : null;
+        const recordedRevision =
+          typeof versionStructuredData.phaseEvidenceSnapshotHash === "string"
+            ? versionStructuredData.phaseEvidenceSnapshotHash
+            : typeof versionStructuredData.evidenceSnapshotHash === "string"
+              ? versionStructuredData.evidenceSnapshotHash
+              : null;
+        if (
+          deliverablePhase < 1 ||
+          !evidenceSnapshot ||
+          !isApprovedMoveEvidenceBasisCurrent({
+            snapshot: evidenceSnapshot,
+            phase: deliverablePhase,
+            recordedRevision,
+            scope:
+              typeof versionStructuredData.evidenceSnapshotScope === "string"
+                ? versionStructuredData.evidenceSnapshotScope
+                : null,
+            generatedAt:
+              typeof (versionRow as { created_at?: string | null } | null)
+                ?.created_at === "string"
+                ? (versionRow as { created_at: string }).created_at
+                : null,
+          })
+        ) {
+          return Response.json(
+            {
+              error: "generated_artifact_evidence_not_current",
+              detail:
+                "This generated version is not bound to the current approved evidence. Rebuild it from the current evidence set before approval.",
+            },
+            { status: 409 },
+          );
+        }
+        const versionId = (versionRow as { id?: string | null } | null)?.id;
+        if (versionId) {
+          const currentArtifacts = await listMoveArtifacts(ctx, programId, {
+            family: "generated_deliverable",
+            currentOnly: true,
+          });
+          const versionArtifact = currentArtifacts.find((artifact) => {
+            const metadata = asRecord(artifact.metadata);
+            return (
+              metadata.deliverableId === deliverableId &&
+              metadata.versionId === versionId &&
+              isApprovedMoveEvidenceBasisCurrent({
+                snapshot: evidenceSnapshot,
+                phase: deliverablePhase,
+                recordedRevision:
+                  typeof metadata.phaseEvidenceSnapshotHash === "string"
+                    ? metadata.phaseEvidenceSnapshotHash
+                    : typeof metadata.evidenceSnapshotHash === "string"
+                      ? metadata.evidenceSnapshotHash
+                      : null,
+                scope:
+                  typeof metadata.evidenceSnapshotScope === "string"
+                    ? metadata.evidenceSnapshotScope
+                    : null,
+                generatedAt: artifact.created_at,
+              })
+            );
+          });
+          generatedApprovalArtifactId = versionArtifact?.artifact_id;
+        }
+        generatedApprovalLineage = {
+          source: "moves_program_generate",
+          ...(typeof versionStructuredData.generatedArtifactId === "string"
+            ? { generatedArtifactId: versionStructuredData.generatedArtifactId }
+            : typeof versionStructuredData.generated_artifact_id === "string"
+              ? {
+                  generatedArtifactId:
+                    versionStructuredData.generated_artifact_id,
+                }
+              : {}),
+          evidenceSnapshotHash: evidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            evidenceSnapshot,
+            deliverablePhase,
+          ),
+          evidenceSnapshotScope: "phase",
+          approvalMode: "approve_generated_deliverable_as_is",
+        };
       }
 
       // Client-readiness gate. Signing off is the moment a document becomes
@@ -325,6 +515,9 @@ export async function POST(
             deliverableId,
             versionId,
             htmlContent: currentVersionRow?.content,
+            requiresOfficeCompanionScan:
+              currentVersionRow?.structured_data
+                ?.requiresOfficeCompanionScan === true,
           })
         : {
             ok: true as const,
@@ -337,11 +530,16 @@ export async function POST(
             error: "generated_artifact_not_scannable",
             detail:
               "A generated Office companion must be readable before this deliverable can be signed off.",
-            artifact: {
-              artifactId: scanContent.artifactId,
-              fileName: scanContent.fileName,
-              fileFormat: scanContent.fileFormat,
-            },
+            ...(scanContent.artifactId
+              ? {
+                  artifact: {
+                    artifactId: scanContent.artifactId,
+                    fileName: scanContent.fileName,
+                    fileFormat: scanContent.fileFormat,
+                  },
+                }
+              : {}),
+            requiredMetadata: { deliverableId, versionId },
             scannerDetail: scanContent.detail,
             remedy:
               "Regenerate the deliverable or repair the stored generated Office artifact, then retry sign-off.",
@@ -425,7 +623,7 @@ export async function POST(
       }
     }
 
-    let approvedArtifactId: string | undefined;
+    let approvedArtifactId: string | undefined = generatedApprovalArtifactId;
     let approvedContent:
       | {
           content: string;
@@ -437,8 +635,7 @@ export async function POST(
       | undefined;
 
     if (isFileUploadApproval) {
-      const form = await req.formData();
-      const file = form.get("file");
+      const file = uploadForm?.get("file");
       if (file instanceof File && file.size > 0) {
         if (!isWithinSizeLimit(file.size)) {
           return Response.json(
@@ -459,10 +656,7 @@ export async function POST(
         const title = deliverableTitle;
         const ext = (file.name.split(".").pop() || "bin").toLowerCase();
         const body = Buffer.from(await file.arrayBuffer());
-        const phase =
-          DELIVERABLE_REGISTRY.find(
-            (spec) => spec.deliverableTypeKey === deliverableTypeKey,
-          )?.phase ?? 0;
+        const phase = deliverablePhase;
         const parsed = await extractProgramEvidenceFromUploadBuffer({
           filename: file.name,
           mimeType: file.type || "application/octet-stream",
@@ -480,6 +674,50 @@ export async function POST(
               warnings: parsed.extractedStructured.warnings,
             },
             { status: 422 },
+          );
+        }
+
+        // A client-edited replacement is still client-facing content. Scan
+        // the exact extracted upload before persisting or signing it; upload
+        // approval must not become a way around the readiness gate.
+        const readiness = evaluateClientReadinessForSignOff({
+          content: parsedText,
+          acknowledgeBlockers: acknowledgeReadinessBlockers,
+        });
+        if (!readiness.allowed) {
+          return Response.json(
+            {
+              error: "client_readiness_blockers",
+              detail: readiness.summary,
+              blockers: readiness.blockers.map((finding) => ({
+                kind: finding.kind,
+                match: finding.match,
+                why: finding.why,
+                context: finding.context,
+              })),
+              reviewItems: readiness.reviewItems.length,
+              acknowledgeField: "acknowledgeReadinessBlockers",
+            },
+            { status: 422 },
+          );
+        }
+        readinessOutcome = readiness;
+
+        const approvalEvidenceSnapshot =
+          phase > 0 && ctx.clientKey
+            ? await loadApprovedMoveEvidenceSnapshot({
+                tenantKey: ctx.clientKey,
+                moveId: programId,
+              }).catch(() => null)
+            : null;
+        if (phase > 0 && !approvalEvidenceSnapshot) {
+          return Response.json(
+            {
+              error: "evidence_snapshot_unavailable",
+              detail:
+                "Approved evidence could not be verified. The replacement was not signed off.",
+            },
+            { status: 503 },
           );
         }
 
@@ -503,6 +741,17 @@ export async function POST(
             uploadedBy: ctx.email ?? null,
             mime: file.type || null,
             deliverableId,
+            ...(approvalEvidenceSnapshot
+              ? {
+                  evidenceSnapshotHash: approvalEvidenceSnapshot.revision,
+                  phaseEvidenceSnapshotHash:
+                    approvedMoveEvidenceRevisionForPhase(
+                      approvalEvidenceSnapshot,
+                      phase,
+                    ),
+                  evidenceSnapshotScope: "phase",
+                }
+              : {}),
             clientApprovedReplacement: true,
             parseMethod: parsed.extractedStructured.parse_method,
             parseWarnings: parsed.extractedStructured.warnings,
@@ -523,6 +772,8 @@ export async function POST(
       supabase,
       approvedArtifactId,
       approvedContent,
+      approvalLineage: generatedApprovalLineage,
+      approvalRationale,
     });
     if (!signedOff)
       return Response.json({ error: "not_found" }, { status: 404 });

@@ -24,6 +24,26 @@ describe("module context serving contract", () => {
     ["skyharbor", "candidate:skyharbor-air:"],
   ] as const;
 
+  it.each([
+    ["skyharbor", "skyharbor-air"],
+    ["skyharbor_global", "skyharbor-air"],
+    ["meridian_health_global", "meridian-health"],
+  ])("resolves active access for request alias %s", async (tenantKey, recordTenantKey) => {
+    const packet = await getModuleContext(
+      {
+        tenantKey,
+        moduleKey: "home",
+        purpose: "context_summary",
+        requestedDomains: ["enterprise_profile"],
+      },
+      { repoRoot: process.cwd(), generatedAt: "2026-07-14T00:00:00.000Z" },
+    );
+
+    expect(packet.sourceMode).toBe("active_tenant_access");
+    expect(packet.activeTenantAccessVersionId).toContain(`candidate:${recordTenantKey}:`);
+    expect(packet.candidateVersionId).toBeNull();
+  });
+
   it("defaults to active mode and does not consume candidate data", async () => {
     const packet = await getModuleContext(
       {

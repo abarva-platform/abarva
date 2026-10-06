@@ -50,6 +50,28 @@ const TEMPLATE_PAYLOAD: PricingTemplatePayload = {
   escalator: 0.04,
 };
 
+/**
+ * The Cover sheet's vendor-name slot, found by its label rather than by a
+ * fixed coordinate. These cases used to write to `B16`; the Cover sheet grew
+ * and the slot moved, so the writes landed in an unlabeled cell, three cases
+ * went red and three more stopped exercising the vendor-name read at all
+ * (T-795). Locating the slot by label keeps the fixture on the slot the
+ * renderer actually emits, and the single-match assertion keeps a renamed or
+ * duplicated label from silently passing.
+ */
+function vendorNameCell(wb: ExcelJS.Workbook): ExcelJS.Cell {
+  const cover = wb.getWorksheet('Cover')!;
+  const rows: number[] = [];
+  cover.eachRow((row, rowNumber) => {
+    const label = row.getCell(1).value;
+    if (typeof label === 'string' && /^vendor\s*name\b/i.test(label.trim())) {
+      rows.push(rowNumber);
+    }
+  });
+  expect(rows).toHaveLength(1);
+  return cover.getCell(rows[0]!, 2);
+}
+
 async function fillAndSerialize(
   fill: (wb: ExcelJS.Workbook) => void,
 ): Promise<Uint8Array> {
@@ -62,9 +84,7 @@ async function fillAndSerialize(
 describe('parseVendorPricingSubmission', () => {
   it('round-trips a vendor-filled template into a structured submission', async () => {
     const bytes = await fillAndSerialize((wb) => {
-      const cover = wb.getWorksheet('Cover')!;
-      // Cover row 16 = Vendor name slot
-      cover.getCell('B16').value = 'Acme Cloud Solutions';
+      vendorNameCell(wb).value = 'Acme Cloud Solutions';
       const detail = wb.getWorksheet('Pricing Detail')!;
       detail.getCell('F2').value = 380; // L-CMP-01 unit
       detail.getCell('F3').value = 95;  // L-OPS-01 unit
@@ -98,7 +118,7 @@ describe('parseVendorPricingSubmission', () => {
 
   it('flags partial status when some line items are unpriced', async () => {
     const bytes = await fillAndSerialize((wb) => {
-      wb.getWorksheet('Cover')!.getCell('B16').value = 'Beta';
+      vendorNameCell(wb).value = 'Beta';
       const detail = wb.getWorksheet('Pricing Detail')!;
       detail.getCell('F2').value = 400;
       // Leave F3 + F4 blank
@@ -114,11 +134,15 @@ describe('parseVendorPricingSubmission', () => {
     const codes = result.insert.parseWarnings.map((w) => w.code);
     expect(codes).toContain('missing_unit_price');
     expect(codes).toContain('incomplete_pricing');
+    // `partial` must come from the unpriced lines, not from a vendor name the
+    // fixture failed to place: a missing name also yields `partial`.
+    expect(result.insert.vendorName).toBe('Beta');
+    expect(codes).not.toContain('missing_vendor_name');
   });
 
   it('falls back to vendorNameOverride when Cover sheet has no name', async () => {
     const bytes = await fillAndSerialize((wb) => {
-      // Don't write to B16 — leave the vendor name slot blank
+      // Leave the vendor name slot blank
       wb.getWorksheet('Pricing Detail')!.getCell('F2').value = 400;
       wb.getWorksheet('Pricing Detail')!.getCell('F3').value = 95;
       wb.getWorksheet('Pricing Detail')!.getCell('F4').value = 18000;
@@ -154,7 +178,7 @@ describe('parseVendorPricingSubmission', () => {
 
   it('extracts multiple assumption deviations with severity inference', async () => {
     const bytes = await fillAndSerialize((wb) => {
-      wb.getWorksheet('Cover')!.getCell('B16').value = 'Gamma';
+      vendorNameCell(wb).value = 'Gamma';
       const detail = wb.getWorksheet('Pricing Detail')!;
       detail.getCell('F2').value = 500;
       detail.getCell('F3').value = 110;
@@ -172,6 +196,7 @@ describe('parseVendorPricingSubmission', () => {
       sourceEventId: 'event-1',
       tenantKey: 'meridian',
     });
+    expect(result.insert.vendorName).toBe('Gamma');
     const devs = result.insert.assumptionDeviations;
     expect(devs.length).toBeGreaterThanOrEqual(2);
     const escalatorDev = devs.find((d) => d.assumptionKey === 'Annual escalator');
@@ -182,7 +207,7 @@ describe('parseVendorPricingSubmission', () => {
 
   it('does not turn explicit no-deviation notes into assumption deviations', async () => {
     const bytes = await fillAndSerialize((wb) => {
-      wb.getWorksheet('Cover')!.getCell('B16').value = 'Delta';
+      vendorNameCell(wb).value = 'Delta';
       const detail = wb.getWorksheet('Pricing Detail')!;
       detail.getCell('F2').value = 500;
       detail.getCell('F3').value = 110;
@@ -201,6 +226,7 @@ describe('parseVendorPricingSubmission', () => {
     });
 
     expect(result.status).toBe('parsed');
+    expect(result.insert.vendorName).toBe('Delta');
     expect(result.insert.assumptionDeviations).toEqual([]);
   });
 
@@ -240,7 +266,7 @@ describe('parseVendorPricingSubmission', () => {
     const bytes = await fillAndSerialize((wb) => {
       // Vendor name written with a leading single-quote (simulating the
       // safeCell escape applied during render). Parser should strip it.
-      wb.getWorksheet('Cover')!.getCell('B16').value = "'Quoted Vendor";
+      vendorNameCell(wb).value = "'Quoted Vendor";
       wb.getWorksheet('Pricing Detail')!.getCell('F2').value = 400;
       wb.getWorksheet('Pricing Detail')!.getCell('F3').value = 95;
       wb.getWorksheet('Pricing Detail')!.getCell('F4').value = 18000;

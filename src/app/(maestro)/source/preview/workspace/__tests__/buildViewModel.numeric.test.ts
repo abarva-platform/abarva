@@ -184,6 +184,7 @@ const WORKSPACE_DIAGNOSTICS = {
   datasetVersion: "v4",
   analyticsProvider: "CubeSourceProvider",
   activeLoadRunId: "source-v4-load-20260803",
+  lastCompletedLoadAtIso: null,
   asOfDateIso: "2027-06-30T00:00:00Z",
   v4ContractCount: 100,
   v4VendorCount: 60,
@@ -704,6 +705,13 @@ describe("buildViewModel numeric coercion", () => {
             sourceRefs: [],
           },
         ],
+        optimizationCase: {
+          caseId: "case-1",
+          door1EventId: null,
+          caseState: "evidence_review",
+          owner: "Category Management",
+          nextAction: "Attach reviewed pricing evidence.",
+        },
         evidenceRequirements: ["No recoverable leakage evidence gap remains."],
         potentialRecoverableUsd: 365_000,
         potentialAvoidableUsd: 0,
@@ -714,6 +722,7 @@ describe("buildViewModel numeric coercion", () => {
 
     const built = buildViewModel(vm) as {
       opportunityView: {
+        caseThread: { state: string; owner: string; nextAction: string };
         selectedOpportunity: {
           label: string;
           shortLabel: string;
@@ -730,6 +739,12 @@ describe("buildViewModel numeric coercion", () => {
       };
     };
 
+    expect(built.opportunityView.caseThread).toEqual({
+      state: "Evidence Review",
+      caseCount: 1,
+      owner: "Category Management",
+      nextAction: "Attach reviewed pricing evidence.",
+    });
     expect(built.opportunityView.selectedOpportunity).toMatchObject({
       label: "Invoice billing-rate variance",
       shortLabel: "Invoice billing-rate variance",
@@ -879,6 +894,7 @@ describe("buildViewModel numeric coercion", () => {
       "Relationship",
       "Evidence",
       "Optimize",
+      "Education",
     ]);
     expect(built.cOverview).toBe(true);
     expect(built.cRelationship).toBe(false);
@@ -1135,6 +1151,89 @@ describe("buildViewModel numeric coercion", () => {
     expect(actualSpendStripItem?.sub).not.toBe("Not established");
     expect(built.thesis).toContain("$8.6M actual spend");
     expect(built.thesis).not.toContain("Not established actual spend");
+  });
+
+  it("prefers positive detail spend over a stale zero on the contract summary row", () => {
+    const selectedContract = contractRow({
+      contract_id: "c1",
+      vendor_ref: "vendor-one",
+      vendor_name: "Vendor One",
+      actual_annual_spend: 0,
+    });
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        sel: { kind: "contract", id: "c1" },
+        tabs: { ...INITIAL_STATE.tabs, contract: "Story" },
+        contractDetail: {
+          c1: {
+            contract: selectedContract,
+            financialExposure: null,
+            operationalPerformance: null,
+            initiativeDependencies: [],
+            scopeTiers: {
+              explicit: [],
+              reviewed: [],
+              vendorInferred: [],
+              unresolved: [],
+              totalCount: 0,
+            },
+            towerObservations: [],
+            towerValueClaims: [],
+            hasTowerOverlay: false,
+            docExtractions: [],
+            optimizationEvidence: null,
+            optimizationOpportunitySet: null,
+            evidenceOverview: null,
+            evidenceScope: [],
+            evidencePricing: [],
+            evidencePerformance: null,
+            performancePeriods: [],
+            spendMonths: [
+              {
+                tenant_key: "test_tenant",
+                observation_id: "spend-1",
+                contract_id: "c1",
+                service_id: "claims-processing",
+                business_unit: "Ops",
+                cost_center: "ops",
+                month: "2026-01-01",
+                period_start: "2026-01-01",
+                period_end: "2026-01-31",
+                committed_amount: null,
+                invoice_amount: null,
+                paid_amount: null,
+                actual_spend: 8588000,
+                currency: "USD",
+                source_system: "governed_source_depth_loader",
+                source_record_id: "spend-1",
+                as_of_date: "2026-08-01",
+                quality_state: "reviewed",
+                evidence_reference: "source_contract_depth:test",
+                load_run_id: "test",
+              },
+            ],
+          },
+        },
+      },
+      () => undefined,
+      {
+        ...PORTFOLIO,
+        contracts: [selectedContract],
+      },
+      "Airline Demo",
+      () => undefined,
+    );
+
+    const built = buildViewModel(vm) as {
+      c: { spend: string } | null;
+      valueStrip: Array<{ label: string; value: string }>;
+    };
+    expect(built.c?.spend).toBe("$8.6M");
+    expect(
+      built.valueStrip.find((item) => item.label === "Actual annual spend")
+        ?.value,
+    ).toBe("$8.6M");
   });
 
   it("keeps the Source v4 semantic catalog on the workspace payload", () => {

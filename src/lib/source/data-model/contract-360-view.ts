@@ -33,7 +33,9 @@ import type {
   SourceContractPerformancePeriodRow,
   SourceContractSpendMonthlyRow,
   SourceContractTabIntelligenceRow,
+  SourceContractIntelligenceRow,
   SourceCloudCommitmentCoverageRow,
+  SourceCloudTagQualityRow,
   TowerMetricObservationRow,
   TowerValueClaimRow,
 } from "./types";
@@ -64,8 +66,12 @@ export interface Contract360View {
   readonly spendMonths: readonly SourceContractSpendMonthlyRow[];
   /** Same-tenant cloud commitment coverage rows for portfolio-relative comparator context. */
   readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
+  /** Monthly tag-quality observations: how much consumption can be attributed. */
+  readonly cloudTagQuality?: readonly SourceCloudTagQualityRow[];
   /** Load-time governed stories, one per Contract 360 tab. */
   readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
+  /** One governed record shared by Contract 360, Education, anatomy, and aVa. */
+  readonly contractIntelligence?: SourceContractIntelligenceRow | null;
 }
 
 export interface BuildContract360ViewInput {
@@ -87,7 +93,9 @@ export interface BuildContract360ViewInput {
   readonly performancePeriods?: readonly SourceContractPerformancePeriodRow[];
   readonly spendMonths?: readonly SourceContractSpendMonthlyRow[];
   readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
+  readonly cloudTagQuality?: readonly SourceCloudTagQualityRow[];
   readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
+  readonly contractIntelligence?: SourceContractIntelligenceRow | null;
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -114,7 +122,9 @@ export function buildContract360View(
     performancePeriods = [],
     spendMonths = [],
     cloudCommitmentPeerCoverage = [],
+    cloudTagQuality = [],
     contractTabIntelligence = [],
+    contractIntelligence = null,
     explicitApplicationPairs,
   } = input;
 
@@ -155,9 +165,16 @@ export function buildContract360View(
       (r) => r.contract_id === contract.contract_id,
     ),
     cloudCommitmentPeerCoverage,
+    cloudTagQuality: cloudTagQuality.filter(
+      (r) => r.contract_id === contract.contract_id,
+    ),
     contractTabIntelligence: contractTabIntelligence.filter(
       (r) => r.contract_id === contract.contract_id,
     ),
+    contractIntelligence:
+      contractIntelligence?.contract_id === contract.contract_id
+        ? contractIntelligence
+        : null,
   };
 }
 

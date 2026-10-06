@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { getActiveClientRow } from "@/lib/active-client";
-import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
@@ -65,22 +64,6 @@ type SelectedOptimizationOpportunityContext = Pick<
 };
 
 export async function POST(request: Request, { params }: RouteContext) {
-  let tenancy;
-  try {
-    tenancy = await requireTenancy();
-  } catch (err) {
-    if (err instanceof TenancyError && err.code === "unauthenticated") {
-      return NextResponse.json(
-        { ok: false, error: "unauthenticated" },
-        { status: 401 },
-      );
-    }
-    return NextResponse.json(
-      { ok: false, error: "tenancy_unavailable" },
-      { status: 503 },
-    );
-  }
-
   const { contractId: rawContractId } = await params;
   const contractId = decodeURIComponent(rawContractId);
   const requestUrl = new URL(request.url);
@@ -93,21 +76,25 @@ export async function POST(request: Request, { params }: RouteContext) {
       { status: 404 },
     );
   }
-  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
-    const access = await checkTenantAccessByKey(requestedClientKey);
-    if (!access.ok) {
-      const status =
-        access.reason === "unauthenticated"
-          ? 401
-          : access.reason === "forbidden"
-            ? 403
-            : 404;
+  let tenancy;
+  try {
+    tenancy = await requireTenancy({ requestedClientKey: requestedClientKey ?? undefined });
+  } catch (err) {
+    if (err instanceof TenancyError && err.code === "unauthenticated") {
       return NextResponse.json(
-        { ok: false, error: access.reason },
-        { status },
+        { ok: false, error: "unauthenticated" },
+        { status: 401 },
       );
     }
+    if (err instanceof TenancyError && err.code === "forbidden") {
+      return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+    }
+    return NextResponse.json(
+      { ok: false, error: "tenancy_unavailable" },
+      { status: 503 },
+    );
   }
+
   const activeClient = requestedClientKey
     ? null
     : await getActiveClientRow().catch(() => null);

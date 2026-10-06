@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "package_dir": "datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908",
+      "tenant_key": "meridian-health",
+      "dataset_version": "meridian-databricks-consumption-commit-v1-20260908",
+      "contracts": [
+        {
+          "contract_id": "MER-TECH-DBX-001",
+          "role": "canonical_writer",
+          "evidence_only_dataset_versions": [
+            "meridian-databricks-enterprise-agreement-v1-20260908"
+          ]
+        }
+      ]
+    },
+    {
+      "package_dir": "datasets/source/contract-depth/meridian-databricks-enterprise-agreement-v1-20260908",
+      "tenant_key": "meridian-health",
+      "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+      "contracts": [
+        {
+          "contract_id": "MER-TECH-DBX-001",
+          "role": "evidence_only",
+          "canonical_writer_dataset_version": "meridian-databricks-consumption-commit-v1-20260908"
+        }
+      ]
+    }
+  ]
+}

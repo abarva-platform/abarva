@@ -2,19 +2,16 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
+import yaml from "js-yaml";
+import ts from "typescript";
 
 const repoRoot = process.cwd();
-const scriptPath = path.join(repoRoot, "scripts/ecl/build_home_ecl_narrative_layer.ts");
-const readbackPath = path.join(repoRoot, "scripts/ecl/readback_home_ecl_narrative_layer.ts");
-const thesisPath = path.join(repoRoot, "scripts/data-build/build-enterprise-thesis.ts");
-const chaptersPath = path.join(repoRoot, "scripts/data-build/build-home-chapters.ts");
-const operatorJobPath = path.join(repoRoot, "scripts/ops/submit-aca-operator-job.mjs");
-const packagePath = path.join(repoRoot, "package.json");
-const pagePromptContractPath = path.join(
-  repoRoot,
-  "docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json",
-);
-const runtimePagePromptContractPath = path.join(repoRoot, "scripts/ecl/home_page_prompt_contracts.ts");
+const workflowPath = ".github/workflows/ecl-home-narrative-boundary.yml";
+const behaviourTestPaths = [
+  "scripts/ecl/__tests__/home-narrative-readiness.test.ts",
+  "scripts/ecl/__tests__/home-narrative-admission-boundary.test.ts",
+];
 
 function assert(condition, message) {
   if (!condition) {
@@ -25,14 +22,21 @@ function assert(condition, message) {
   }
 }
 
-const script = fs.readFileSync(scriptPath, "utf8");
-const readback = fs.readFileSync(readbackPath, "utf8");
-const thesis = fs.readFileSync(thesisPath, "utf8");
-const chapters = fs.readFileSync(chaptersPath, "utf8");
-const operatorJob = fs.readFileSync(operatorJobPath, "utf8");
-const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-const pagePromptContract = JSON.parse(fs.readFileSync(pagePromptContractPath, "utf8"));
-const runtimePagePromptContractSource = fs.readFileSync(runtimePagePromptContractPath, "utf8");
+// Every file this suite reads is recorded, so the workflow's path filter can be held to the list.
+const filesRead = [];
+function readRepoFile(relativePath) {
+  filesRead.push(relativePath);
+  return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
+}
+
+const script = readRepoFile("scripts/ecl/build_home_ecl_narrative_layer.ts");
+const readback = readRepoFile("scripts/ecl/readback_home_ecl_narrative_layer.ts");
+const thesis = readRepoFile("scripts/data-build/build-enterprise-thesis.ts");
+const chapters = readRepoFile("scripts/data-build/build-home-chapters.ts");
+const operatorJob = readRepoFile("scripts/ops/submit-aca-operator-job.mjs");
+const packageJson = JSON.parse(readRepoFile("package.json"));
+const pagePromptContract = JSON.parse(readRepoFile("docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json"));
+const runtimePagePromptContractSource = readRepoFile("scripts/ecl/home_page_prompt_contracts.ts");
 const runtimePagePromptContractMatch = runtimePagePromptContractSource.match(
   /export const HOME_PAGE_PROMPT_CONTRACT = (?<json>[\s\S]+) as const;\s*$/,
 );
@@ -246,13 +250,14 @@ assert(
   script.includes("candidateIsReady") &&
     script.includes("sourceRefIds") &&
     script.includes("source_record_id") &&
-    script.includes("row.quality_state === \"passed\"") &&
+    script.includes("[\"passed\", \"warning\", \"accepted\", \"usable\"].includes(row.quality_state)") &&
     script.includes("\"warning\"") &&
-    script.includes("confidenceForRow") &&
+    script.includes("verifiedReadiness") &&
+    script.includes("readNarrativeReadinessProofs") &&
     script.includes("row.value_state === \"known\"") &&
     script.includes("row.admission_status === \"admitted\"") &&
     script.includes("sourceRefs.length > 0"),
-  "ECL narrative job requires usable quality, value, admission, source refs, and source hash before a row can enter the packet",
+  "ECL narrative job requires local eligibility and independent readiness proof before a row can enter the packet",
 );
 assert(
   script.includes("text(ref.source_record_id)") &&
@@ -270,38 +275,58 @@ assert(
   "ECL narrative job emits safe policy-gap and readiness metadata without copying blocked payloads into model context",
 );
 assert(
-  script.includes("readEclSourceRecordRows") &&
-    script.includes("readActiveTenantSourceRows") &&
-    script.includes("client_intake_repo_package") &&
-    script.includes("__source_file_hash") &&
-    script.includes("active_source_file_rows") &&
-    script.includes("buildEclSourceSummaries") &&
-    script.includes("ecl_source.source_file") &&
-    script.includes("ecl_source.source_record") &&
-    script.includes("sourceSummaries") &&
-    script.includes("source_summary_count") &&
-    script.includes("coverage_context_not_citable"),
-  "ECL narrative job passes source-ledger breadth summaries as non-citable packet context",
+  !script.includes("readActiveTenantSourceRows") &&
+    !script.includes("client_intake_repo_package") &&
+    script.includes("const sourceRows: EclSourceRecordSummaryRow[] = []") &&
+    script.includes("const sourceSummaries: SourceSummary[] = []") &&
+    script.includes("active_source_file_rows: 0") &&
+    script.includes("public.governed_object_readiness") &&
+    script.includes("provenance->>'source_hash'"),
+  "ECL narrative job quarantines unadmitted source rows and reads independent, versioned governance proof",
 );
 assert(
   script.includes("buildSourceRecordContextItems") &&
-    script.includes("ctx_ecl_source_enterprise_profile_001") &&
-    script.includes("ctx_ecl_source_business_segments_001") &&
-    script.includes("ctx_ecl_source_strategic_priorities_001") &&
-    script.includes("ctx_ecl_source_leadership_excerpts_001") &&
-    script.includes("ctx_ecl_source_org_accountability_001") &&
-    script.includes("ctx_ecl_source_spend_value_001") &&
-    script.includes("ctx_ecl_source_metrics_outcomes_001") &&
-    script.includes("ctx_ecl_source_ai_value_001") &&
-    script.includes("ctx_ecl_source_risks_controls_001") &&
-    script.includes("SA10_AI_Value_Interview_Evidence"),
-  "ECL narrative job promotes source-backed profile, segment, strategy, org, value, risk, AI, and interview records into citable ctx_* context",
+    script.includes("const sourceContextItems = buildSourceRecordContextItems(sourceRows)") &&
+    script.includes("sourceRows: EclSourceRecordSummaryRow[] = []") &&
+    script.includes("source-record context has no admitted readiness path yet"),
+  "ECL narrative job keeps source-derived context empty until it has its own admission path",
+);
+
+// The behaviour tests need neither a database nor a model key, so they are handed neither.
+const behaviourTestEnv = { ...process.env };
+delete behaviourTestEnv.DATABASE_URL;
+delete behaviourTestEnv.ANTHROPIC_API_KEY;
+
+// A run counts only if it found tests and every one of them passed; an empty or skipped file exits 0 too.
+function runBehaviourTests(testPath) {
+  const run = spawnSync(process.execPath, ["--import", "tsx", "--test", "--test-reporter=tap", testPath], {
+    cwd: repoRoot,
+    env: behaviourTestEnv,
+    encoding: "utf8",
+  });
+  const count = (label) => Number(run.stdout.match(new RegExp(`^# ${label} (\\d+)$`, "m"))?.[1] ?? Number.NaN);
+  const passed = run.status === 0 && count("tests") > 0 && count("pass") === count("tests");
+  return { passed, summary: `${count("pass")} of ${count("tests")}`, output: passed ? "" : `\n${run.stdout}${run.stderr}` };
+}
+const [readinessTest, boundaryTest] = behaviourTestPaths.map(runBehaviourTests);
+assert(readinessTest.passed, `narrative readiness planted cases pass: ${readinessTest.summary}${readinessTest.output}`);
+assert(
+  boundaryTest.passed,
+  `narrative builder keeps unadmitted rows, signals, and source context out of the packet: ${boundaryTest.summary}${boundaryTest.output}`,
 );
 assert(
   script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&
     script.includes("contextPolicyProof.usable_count === 0") &&
-    script.includes("signalPacket.signals.length === 0"),
+    script.includes("signalPacket.signals.length === 0") &&
+    script.includes("const refusal = narrativeEvidenceRefusal({ signalPacket, contextPolicyProof });") &&
+    script.includes("if (refusal) throw new Error(refusal);"),
   "ECL narrative job refuses before generation when the governed packet has zero usable evidence",
+);
+assert(
+  !script.includes("buildVisibleIdentifierLabels(rows)") &&
+    script.includes("scrubThesisResultVisibleIds(rawThesisResult, visibleIdentifierLabels)") &&
+    script.includes("scrubVisibleIdsInValue(generatedChapters, visibleIdentifierLabels)"),
+  "ECL narrative job labels raw identifiers in generated prose from admitted rows only",
 );
 assert(
   script.includes("HOME_ECL_NARRATIVE_WRITE === \"true\"") &&
@@ -700,6 +725,14 @@ assert(
   "Home ECL narrative approved writes commit a hash-gated plan artifact instead of regenerating chapter prose",
 );
 assert(
+  script.includes("createHomeNarrativePacketArtifact") &&
+    script.includes("readNarrativeSourceLinks") &&
+    script.includes("plan_narrative_packet_artifact_mismatch") &&
+    script.includes("narrative_packet_artifact: narrativePacketArtifact") &&
+    script.includes("signal_packet_hash: narrativePacketArtifact.packetHash"),
+  "Home ECL narrative writer persists a versioned packet tied to its factual and source-link basis",
+);
+assert(
   thesis.includes("OPENING THESIS BAR") &&
     thesis.includes("business-strategy thesis for a new CEO/CXO") &&
     thesis.includes("Do not open with a vendor") &&
@@ -798,6 +831,67 @@ assert(
     readback.includes("process.env.ECL_DENSE_ASSESSMENT_ID"),
   "Home ECL narrative readback accepts operator tenant and assessment env overrides",
 );
+
+// The workflow's path filter is a hand-kept copy of what this suite loads and reads. A file left
+// out of it is a change this suite never runs on, so the copy is checked against the real list.
+{
+  const { options } = ts.convertCompilerOptionsFromJson(
+    ts.readConfigFile(path.join(repoRoot, "tsconfig.json"), ts.sys.readFile).config.compilerOptions,
+    repoRoot,
+  );
+  const loaded = new Set();
+  const unresolved = [];
+  const queue = [...behaviourTestPaths];
+  const follow = (file, specifier) => {
+    const resolved = ts.resolveModuleName(specifier, path.join(repoRoot, file), options, ts.sys).resolvedModule;
+    if (resolved && !resolved.isExternalLibraryImport) queue.push(path.relative(repoRoot, resolved.resolvedFileName));
+    else if (!resolved && /^(\.|@\/)/.test(specifier)) unresolved.push(`${file} imports ${specifier}`);
+  };
+  // What runs when the tests load: static imports and require() calls. A type-only import is
+  // erased, and the dynamic import inside main() is never reached by a test.
+  const visit = (file, node) => {
+    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
+      const named = node.importClause?.namedBindings;
+      const erased =
+        node.isTypeOnly ||
+        node.importClause?.isTypeOnly ||
+        (named && ts.isNamedImports(named) && !node.importClause.name && named.elements.every((element) => element.isTypeOnly));
+      if (!erased) follow(file, node.moduleSpecifier.text);
+    } else if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "require" &&
+      node.arguments.length === 1 &&
+      ts.isStringLiteralLike(node.arguments[0])
+    ) {
+      follow(file, node.arguments[0].text);
+    }
+    ts.forEachChild(node, (child) => visit(file, child));
+  };
+  while (queue.length > 0) {
+    const file = queue.pop();
+    if (loaded.has(file)) continue;
+    loaded.add(file);
+    visit(file, ts.createSourceFile(file, fs.readFileSync(path.join(repoRoot, file), "utf8"), ts.ScriptTarget.Latest));
+  }
+
+  const workflowPaths = new Set(yaml.load(readRepoFile(workflowPath)).on.pull_request.paths);
+  const required = new Set([
+    ...loaded,
+    ...filesRead,
+    "scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs",
+    "tsconfig.json",
+  ]);
+  const uncovered = [...required].filter((file) => !workflowPaths.has(file)).sort();
+  const absent = [...workflowPaths].filter((file) => !fs.existsSync(path.join(repoRoot, file))).sort();
+  assert(
+    unresolved.length === 0 && uncovered.length === 0 && absent.length === 0,
+    `${workflowPath} runs this suite on a change to any of the ${required.size} files it loads or reads` +
+      (unresolved.length ? `; could not follow: ${unresolved.join(", ")}` : "") +
+      (uncovered.length ? `; add to on.pull_request.paths: ${uncovered.join(", ")}` : "") +
+      (absent.length ? `; listed but not on disk: ${absent.join(", ")}` : ""),
+  );
+}
 
 if (process.exitCode) {
   process.exit(process.exitCode);

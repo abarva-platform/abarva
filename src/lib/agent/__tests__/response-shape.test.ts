@@ -4,6 +4,7 @@ import {
   shapeStreamingAgentTextForSurface,
   stripChatMarkdownFormatting,
 } from '../response-shape';
+import { UNMAPPED_IDENTIFIER_PLACEHOLDER } from '@/lib/answer/shared-response-shaper';
 
 describe('agent response shape', () => {
   it('removes raw markdown emphasis without losing readable text', () => {
@@ -64,6 +65,18 @@ describe('agent response shape', () => {
     expect(shaped).toContain('the referenced portfolio signal');
   });
 
+  // Backlog item 43, the half left untriaged when its sibling case was updated.
+  // This asserted 'the referenced record' against
+  // `shapeAgentResponseForSurface`, and had been red on `main` ever since the
+  // shared shaper took over scrubbing on the settled path. Neither side was
+  // simply stale: two passes over the same answer carried two literals for one
+  // replacement, so a bare UUID read as 'the referenced record' while streaming
+  // and 'the referenced item' once settled. Both now use
+  // `UNMAPPED_IDENTIFIER_PLACEHOLDER`; the agreement between the passes — which
+  // is the thing that was broken — is pinned in
+  // `src/__tests__/behaviors/agent-identifier-placeholder-consistency.test.ts`,
+  // in the tree CI runs. This case keeps its original job: the settled Tower
+  // answer does not leak the id.
   it('scrubs bare UUIDs from Tower copy even without a signal prefix', () => {
     const shaped = shapeAgentResponseForSurface(
       '/tower',
@@ -71,16 +84,26 @@ describe('agent response shape', () => {
     );
 
     expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');
-    expect(shaped).toContain('the referenced record');
+    expect(shaped).toContain(UNMAPPED_IDENTIFIER_PLACEHOLDER);
   });
 
-  it('adds an executable next action when Tower prose has no action cue', () => {
-    const shaped = shapeAgentResponseForSurface(
-      '/tower',
-      'Apex Retail has pressure in value attainment. The evidence points to adoption and gate timing.',
-    );
+  // Backlog items 41 and 43. This case used to assert the opposite — that the
+  // shaper *adds* `- Next: open the cited initiative` when Tower prose carries
+  // no action cue. #4038 deliberately removed that manufactured closing and
+  // recorded the drop in
+  // `docs/releases/records/2026-06-27-tower-stock-closing-contract.md`; the
+  // same PR made plain `Next:` scaffolding a visible-answer-contract
+  // violation. The assertion has been red ever since, pinning a behaviour the
+  // product now forbids, in a suite outside `test:before-commit` scope where
+  // nobody saw it. It is updated here rather than deleted so the reason stays
+  // attached to the case that once claimed the opposite.
+  it('manufactures no next action when Tower prose has no action cue', () => {
+    const prose =
+      'Apex Retail has pressure in value attainment. The evidence points to adoption and gate timing.';
+    const shaped = shapeAgentResponseForSurface('/tower', prose);
 
-    expect(shaped).toMatch(/^- Next: open the cited initiative/m);
+    expect(shaped).toBe(prose);
+    expect(shaped).not.toMatch(/(?:^|\n)\s*[-–—*]?\s*Next\s*:/i);
   });
 
   it('scrubs internal evidence plumbing terms from Tower copy', () => {

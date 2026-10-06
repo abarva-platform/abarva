@@ -27,7 +27,7 @@ export function ApprovalRoutingPanel({
       <div style={EYEBROW_STYLE}>Approval Route</div>
       <h2 style={TITLE_STYLE}>Who must say yes</h2>
       <div style={ROUTE_LIST_STYLE}>
-        <RoutePerson label="Sponsor" person={sponsor} status="Primary" />
+        <RoutePerson label="Event Owner" person={sponsor} status="Primary" />
         {coApprover ? (
           <RoutePerson
             label="Co-approver"
@@ -40,7 +40,9 @@ export function ApprovalRoutingPanel({
           />
         ) : (
           <div style={EMPTY_ROUTE_STYLE}>
-            No co-approver has been routed yet.
+            {lifecycleState === "waiting_on_co_approver"
+              ? "A co-approver is pending assignment."
+              : "No additional approver is required."}
           </div>
         )}
       </div>

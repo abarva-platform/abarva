@@ -43,12 +43,21 @@ describe('buildProgramResumeState · determinism', () => {
     }
   });
 
-  it('all four canonical demo tenants surface resume states', () => {
-    expect(plan.tenants.length).toBeGreaterThanOrEqual(4);
+  it('surfaces resume states only for tenants with seeded programs', () => {
     const states = buildAllProgramResumeStates(plan.tenants);
     const tenantKeys = new Set(states.map((s) => s.tenantKey));
-    for (const tenant of plan.tenants) {
+
+    const programTenants = plan.tenants.filter((tenant) => tenant.programs.length > 0);
+    const routeStubTenants = plan.tenants.filter((tenant) => tenant.programs.length === 0);
+
+    expect(programTenants.length).toBeGreaterThan(0);
+    expect(routeStubTenants.length).toBeGreaterThan(0);
+
+    for (const tenant of programTenants) {
       expect(tenantKeys.has(tenant.tenantKey)).toBe(true);
+    }
+    for (const tenant of routeStubTenants) {
+      expect(tenantKeys.has(tenant.tenantKey)).toBe(false);
     }
   });
 

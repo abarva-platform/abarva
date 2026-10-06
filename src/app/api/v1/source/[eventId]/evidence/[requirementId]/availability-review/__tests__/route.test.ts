@@ -1,4 +1,5 @@
 import type { SourceEventEvidenceStateRow } from "@/lib/source/canvas-substrate/types";
+import { createHash } from "node:crypto";
 
 const tenancy = {
   clientId: "client-1",
@@ -64,6 +65,18 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(() => fakeFluentClient()),
 }));
 
+jest.mock("@/lib/data-plane/objectStorage", () => ({
+  getObjectStorageAdapter: jest.fn(() => ({
+    download: jest.fn(async () => inventoryBytes),
+  })),
+}));
+
+jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
+  clientKeyToInventorySubstrateKey: jest.fn((key: string) =>
+    key === "client-one" ? "client-one-global" : key,
+  ),
+}));
+
 import { GET, POST } from "../route";
 
 const evidenceRow: SourceEventEvidenceStateRow = {
@@ -86,14 +99,59 @@ let personRow: { id: string; name: string | null; email: string | null } | null 
   name: "Evidence Reviewer",
   email: "reviewer@example.test",
 };
+let queriedPersonId: string | null = null;
+let parsedArtifacts: Array<{
+  id: string;
+  tenant_key: string;
+  source_event_row_id: string;
+  stage_key: string;
+  original_name: string;
+  parse_status: string;
+  updated_at: string;
+}> = [];
+const inventoryBytes = Buffer.from([
+  "Service ID,Service Name,Scope Boundary,Criticality,Lifecycle State,Service Owner,Source Basis,As Of Date",
+  "SVC-001,Service desk,Intake and triage,high,active,IT operations,Synthetic service catalog,2026-09-29",
+].join("\n"));
+let inventoryArtifact: Record<string, unknown> | null = null;
 
 function fakeFluentClient() {
   return {
     from(table: string) {
       let updatePayload: Record<string, unknown> | null = null;
+      const equalityFilters = new Map<string, unknown>();
       const chain: Record<string, unknown> = {
         select: () => chain,
-        eq: () => chain,
+        eq: (column: string, value: unknown) => {
+          equalityFilters.set(column, value);
+          if (table === "persons" && column === "id") {
+            queriedPersonId = typeof value === "string" ? value : null;
+          }
+          return chain;
+        },
+        is: () => chain,
+        then: (
+          resolve: (value: {
+            data: typeof parsedArtifacts;
+            error: null;
+          }) => unknown,
+        ) => {
+          if (table === "source_artifacts") {
+            return Promise.resolve(
+              resolve({
+                data: parsedArtifacts.filter((artifact) =>
+                  Array.from(equalityFilters.entries()).every(
+                    ([column, value]) =>
+                      !(column in artifact) ||
+                      artifact[column as keyof typeof artifact] === value,
+                  ),
+                ),
+                error: null,
+              }),
+            );
+          }
+          return Promise.resolve(resolve({ data: [], error: null }));
+        },
         update: (payload: Record<string, unknown>) => {
           updatePayload = payload;
           writes.push({ table, payload });
@@ -107,10 +165,22 @@ function fakeFluentClient() {
             };
           }
           if (table === "persons") {
-            return { data: personRow, error: null };
+            return {
+              data:
+                personRow && queriedPersonId === personRow.id ? personRow : null,
+              error: null,
+            };
           }
           if (table === "source_event_evidence_states") {
             return { data: existingEvidence, error: null };
+          }
+          if (table === "source_artifacts") {
+            return {
+              data: inventoryArtifact && Array.from(equalityFilters.entries()).every(
+                ([column, value]) => inventoryArtifact?.[column] === value,
+              ) ? inventoryArtifact : null,
+              error: null,
+            };
           }
           return { data: null, error: null };
         },
@@ -146,7 +216,11 @@ beforeEach(() => {
   jest.clearAllMocks();
   writes.length = 0;
   existingEvidence = evidenceRow;
+  tenancy.userId = "person-1";
   currentUser.personId = "person-1";
+  queriedPersonId = null;
+  parsedArtifacts = [];
+  inventoryArtifact = null;
   personRow = {
     id: "person-1",
     name: "Evidence Reviewer",
@@ -155,6 +229,125 @@ beforeEach(() => {
 });
 
 describe("Source parsed-evidence availability review", () => {
+  const inventoryCtx = {
+    params: Promise.resolve({
+      eventId: "evt-1",
+      requirementId: "EVID-SRC-SCOPE-APP-INV",
+    }),
+  };
+
+  function setupInventory() {
+    existingEvidence = {
+      ...evidenceRow,
+      requirement_id: "EVID-SRC-SCOPE-APP-INV",
+      stage_key: "scope",
+    };
+    inventoryArtifact = {
+      id: "artifact-1",
+      tenant_key: "client-one-global",
+      source_event_id: "evt-1",
+      source_event_row_id: "evt-1",
+      stage_key: "scope",
+      original_name: "service_catalog_scope.csv",
+      mime_type: "text/csv",
+      blob_uri: "private/evt-1/artifact-1.csv",
+      parse_status: "parsed",
+      deleted_at: null,
+      sha256: createHash("sha256").update(inventoryBytes).digest("hex"),
+    };
+  }
+
+  it("offers and records usable operational inventory only after validated file review", async () => {
+    setupInventory();
+    const preview = await GET(request(), inventoryCtx);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toEqual(expect.objectContaining({
+      review: expect.objectContaining({
+        targetState: "Usable Evidence",
+        reviewScope: "validated_operational_inventory",
+        sourceArtifactId: "artifact-1",
+        sourceSha256: inventoryArtifact?.sha256,
+      }),
+    }));
+    const response = await POST(request({
+      rationale: "I reviewed the service rows and their source for this synthetic scope boundary.",
+      stage: "scope",
+      sourceArtifactId: "artifact-1",
+      sourceSha256: inventoryArtifact?.sha256,
+    }), inventoryCtx);
+    expect(response.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        current_state: "Usable Evidence",
+        source_artifact_id: "artifact-1",
+        notes: expect.stringContaining("sha256="),
+      }),
+    }));
+    expect(writeAdapter.insertActivityLog).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: expect.objectContaining({
+        reviewScope: "validated_operational_inventory",
+        rowCount: 1,
+        sourceArtifactId: "artifact-1",
+      }),
+    }));
+  });
+
+  it("refuses a review when the linked inventory changed after preview", async () => {
+    setupInventory();
+    const response = await POST(request({
+      rationale: "I reviewed the prior inventory version for this synthetic scope.",
+      stage: "scope",
+      sourceArtifactId: "artifact-old",
+      sourceSha256: "0".repeat(64),
+    }), inventoryCtx);
+    expect(response.status).toBe(409);
+    expect(writes).toHaveLength(0);
+  });
+
+  it.each([
+    ["other-tenant artifact", { tenant_key: "other-client" }],
+    ["other-event artifact", { source_event_id: "evt-other" }],
+    ["other-stage artifact", { stage_key: "strategy" }],
+    ["unparsed artifact", { parse_status: "failed" }],
+    ["wrong registered hash", { sha256: "0".repeat(64) }],
+  ])("does not promote inventory from %s", async (_label, change) => {
+    setupInventory();
+    inventoryArtifact = { ...inventoryArtifact, ...change };
+    const response = await POST(request({
+      rationale: "I reviewed this inventory for the synthetic operational boundary.",
+      stage: "scope",
+      sourceArtifactId: "artifact-1",
+      sourceSha256: inventoryArtifact?.sha256,
+    }), inventoryCtx);
+    expect(response.status).toBe(409);
+    expect(writes).toHaveLength(0);
+  });
+
+  it("does not promote inventory via a filename-matched parsed artifact", async () => {
+    setupInventory();
+    existingEvidence = {
+      ...existingEvidence!,
+      current_state: "Loaded",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [{
+      id: "artifact-1",
+      tenant_key: "client-one",
+      source_event_row_id: "evt-1",
+      stage_key: "scope",
+      original_name: "service_catalog_scope.csv",
+      parse_status: "parsed",
+      updated_at: "2026-09-29T00:00:00Z",
+    }];
+    const response = await POST(request({
+      rationale: "I reviewed the linked inventory for this synthetic scope.",
+      stage: "scope",
+    }), inventoryCtx);
+    expect(response.status).toBe(409);
+    expect(writes).toHaveLength(0);
+  });
+
   it("previews the exact named audit record without granting approval", async () => {
     const response = await GET(request(), ctx);
     expect(response.status).toBe(200);
@@ -225,12 +418,229 @@ describe("Source parsed-evidence availability review", () => {
     );
   });
 
+  it("reconciles a parsed artifact that deterministically matches a legacy evidence row", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-parsed-legacy",
+        tenant_key: "client-one",
+        source_event_row_id: "evt-1",
+        stage_key: "rfp",
+        original_name: "source-legal-template.docx",
+        parse_status: "parsed",
+        updated_at: "2026-09-21T00:00:00.000Z",
+      },
+    ];
+
+    const previewResponse = await GET(request(), ctx);
+    expect(previewResponse.status).toBe(200);
+    await expect(previewResponse.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          currentState: "Parsed",
+          targetState: "Available",
+        }),
+      }),
+    );
+
+    const writeResponse = await POST(
+      request({
+        rationale:
+          "Reviewed the parsed legacy artifact for workflow availability only.",
+        stage: "rfp",
+      }),
+      ctx,
+    );
+
+    expect(writeResponse.status).toBe(200);
+    expect(writes).toContainEqual(
+      expect.objectContaining({
+        table: "source_event_evidence_states",
+        payload: expect.objectContaining({
+          current_state: "Available",
+          source_artifact_id: "artifact-parsed-legacy",
+        }),
+      }),
+    );
+  });
+
+  it("does not reconcile a parsed artifact that maps to another requirement", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-other-requirement",
+        tenant_key: "client-one",
+        source_event_row_id: "evt-1",
+        stage_key: "rfp",
+        original_name: "supplier-market-intelligence.pdf",
+        parse_status: "parsed",
+        updated_at: "2026-09-21T00:00:00.000Z",
+      },
+    ];
+
+    const response = await GET(request(), ctx);
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "parsed_evidence_required" }),
+    );
+  });
+
+  it("reconciles an exact event artifact across an accepted tenant-key alias", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      requirement_id: "EVID-SRC-SCOPE-FY-CONTRACT",
+      stage_key: "scope",
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-fiscal-baseline",
+        tenant_key: "client-one-global",
+        source_event_row_id: "evt-1",
+        stage_key: "scope",
+        original_name: "meridian-prior-fiscal-run-cost-baseline_spend.csv",
+        parse_status: "parsed",
+        updated_at: "2026-09-22T00:00:00.000Z",
+      },
+    ];
+    const scopeCtx = {
+      params: Promise.resolve({
+        eventId: "evt-1",
+        requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+      }),
+    };
+
+    const response = await GET(request(), scopeCtx);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          currentState: "Parsed",
+          targetState: "Available",
+        }),
+      }),
+    );
+  });
+
+  it("never reconciles a matching artifact from another event", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      requirement_id: "EVID-SRC-SCOPE-FY-CONTRACT",
+      stage_key: "scope",
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-other-event",
+        tenant_key: "client-one-global",
+        source_event_row_id: "evt-other",
+        stage_key: "scope",
+        original_name: "meridian-prior-fiscal-run-cost-baseline_spend.csv",
+        parse_status: "parsed",
+        updated_at: "2026-09-22T00:00:00.000Z",
+      },
+    ];
+    const scopeCtx = {
+      params: Promise.resolve({
+        eventId: "evt-1",
+        requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+      }),
+    };
+
+    const response = await GET(request(), scopeCtx);
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "parsed_evidence_required" }),
+    );
+  });
+
   it("requires a resolved tenant person before attributing a review", async () => {
     currentUser.personId = null;
     const response = await GET(request(), ctx);
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({ error: "reviewer_identity_required" }),
+    );
+  });
+
+  it("uses the canonical person provisioned by tenancy during the request", async () => {
+    const provisionedPersonId = "00000000-0000-4000-8000-000000000321";
+    currentUser.personId = null;
+    tenancy.userId = provisionedPersonId;
+    personRow = {
+      id: provisionedPersonId,
+      name: "Provisioned Evidence Reviewer",
+      email: "reviewer@example.test",
+    };
+
+    const response = await GET(request(), ctx);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          reviewer: expect.objectContaining({
+            personId: provisionedPersonId,
+            displayName: "Provisioned Evidence Reviewer",
+          }),
+        }),
+      }),
+    );
+
+    const writeResponse = await POST(
+      request({
+        rationale:
+          "Reviewed the parsed evidence for workflow availability during the synthetic smoke test.",
+        stage: "rfp",
+      }),
+      ctx,
+    );
+    expect(writeResponse.status).toBe(200);
+    expect(writeAdapter.insertActivityLog).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        actorUserId: provisionedPersonId,
+        actorDisplayName: "Provisioned Evidence Reviewer",
+      }),
+    );
+  });
+
+  it("prefers the request-resolved tenant person over a stale current-user person id", async () => {
+    const stalePersonId = "00000000-0000-4000-8000-000000000111";
+    const canonicalPersonId = "00000000-0000-4000-8000-000000000321";
+    currentUser.personId = stalePersonId;
+    tenancy.userId = canonicalPersonId;
+    personRow = {
+      id: canonicalPersonId,
+      name: "Canonical Evidence Reviewer",
+      email: "reviewer@example.test",
+    };
+
+    const response = await GET(request(), ctx);
+
+    expect(response.status).toBe(200);
+    expect(queriedPersonId).toBe(canonicalPersonId);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          reviewer: expect.objectContaining({
+            personId: canonicalPersonId,
+            displayName: "Canonical Evidence Reviewer",
+          }),
+        }),
+      }),
     );
   });
 

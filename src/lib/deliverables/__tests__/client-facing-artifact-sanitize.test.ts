@@ -143,6 +143,25 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).not.toMatch(/client_judgment/i);
   });
 
+  it("scrubs builder vocabulary (how the deck was generated) from a client slide", () => {
+    // The exact shape of a real leak onto a slide.
+    const leaked =
+      "This Solution Architecture Pack inherits the curated outline from the " +
+      "bound Domain Function Pack. The agent does not improvise the structure. " +
+      "Every figure is produced by the Moves Expert Kernel from the audited substrate.";
+    const clean = sanitizeClientFacingArtifactMarkdown(leaked);
+    expect(clean).not.toMatch(/Domain Function Pack/i);
+    expect(clean).not.toMatch(/Expert Kernel/i);
+    expect(clean).not.toMatch(/the agent does not improvise/i);
+    expect(clean).not.toMatch(/\bsubstrate\b/i);
+    // And the gate agrees nothing machinery remains.
+    const findings = scanMachinery({
+      profile: getDeliverableProfile("target_state_architecture"),
+      narrativeText: clean,
+    });
+    expect(findings).toHaveLength(0);
+  });
+
   it("rewrites the full machinery lexicon before the quality gate scans client narrative", () => {
     const body = CLIENT_NARRATIVE_BANNED_TERMS.map(
       (term) => `<p>The draft repeated ${term} in the client narrative.</p>`,

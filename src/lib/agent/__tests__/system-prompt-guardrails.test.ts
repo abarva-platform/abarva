@@ -13,6 +13,8 @@
  * prompt refactor that drops the clause fails loudly.
  */
 
+import { createHash } from 'node:crypto';
+
 import { buildAtlasSystemPrompt, ATLAS_PROMPT_VERSION } from '@/lib/atlas/prompt';
 
 const BANNED_PHRASES = [
@@ -48,9 +50,35 @@ describe('Atlas system prompt — banned-phrase guardrail', () => {
     expect(prompt).toMatch(/cohort|peer|survey|vendor report/i);
   });
 
-  it('bumps the prompt version so downstream caches invalidate', () => {
-    // Prompt versions are part of telemetry; the guardrail change must be
-    // reflected so we can attribute behavior shifts in post-merge dashboards.
-    expect(ATLAS_PROMPT_VERSION).toContain('banned-phrase-guard');
+  // T-010 (2026-09-19). This case asserted that ATLAS_PROMPT_VERSION contains
+  // 'banned-phrase-guard'. ATLAS_PROMPT_VERSION is a single mutable token
+  // naming the LATEST prompt change, so #4037 renamed it to
+  // 'tower-w7-visible-answer-contract' on 2026-06-27 and the case has been
+  // unsatisfiable ever since — no prompt change could ever make it pass
+  // again without reverting a later one. Pinning a historical token was
+  // never the control anyway. The control the comment describes is that the
+  // version MOVES whenever the prompt text moves, so downstream caches
+  // invalidate and telemetry can attribute a behaviour shift. That is what
+  // is asserted now: the composed prompt is fingerprinted and paired with
+  // the version that shipped it.
+  it('moves the prompt version whenever the composed prompt changes', () => {
+    const SHIPPED_WITH_VERSION = 'tower-w7-visible-answer-contract';
+    const SHIPPED_PROMPT_DIGEST =
+      '55069f950f1760b90c27b6b631b44311e53804d8d69800262d1e4ceb806598eb';
+
+    const digest = createHash('sha256')
+      .update(buildAtlasSystemPrompt('Apex Retail'))
+      .digest('hex');
+
+    if (ATLAS_PROMPT_VERSION === SHIPPED_WITH_VERSION) {
+      expect(
+        digest === SHIPPED_PROMPT_DIGEST
+          ? digest
+          : `the Atlas system prompt changed while ATLAS_PROMPT_VERSION stayed ` +
+            `"${SHIPPED_WITH_VERSION}". Bump the version so downstream caches ` +
+            `invalidate, then update SHIPPED_WITH_VERSION and ` +
+            `SHIPPED_PROMPT_DIGEST (${digest}) in this test.`,
+      ).toBe(SHIPPED_PROMPT_DIGEST);
+    }
   });
 });

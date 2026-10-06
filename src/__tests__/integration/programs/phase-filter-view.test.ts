@@ -29,16 +29,16 @@ describe('getPhaseLabel', () => {
     expect(getPhaseLabel('design')).toBe('Design');
   });
 
-  it('returns Build for build', () => {
-    expect(getPhaseLabel('build')).toBe('Build');
+  it('returns Execution Roadmap for build', () => {
+    expect(getPhaseLabel('build')).toBe('Execution Roadmap');
   });
 
-  it('returns Activate for activate', () => {
-    expect(getPhaseLabel('activate')).toBe('Activate');
+  it('returns Approval & Mobilization for activate', () => {
+    expect(getPhaseLabel('activate')).toBe('Approval & Mobilization');
   });
 
-  it('returns Operate for operate', () => {
-    expect(getPhaseLabel('operate')).toBe('Operate');
+  it('returns Tower Handoff for operate', () => {
+    expect(getPhaseLabel('operate')).toBe('Tower Handoff');
   });
 });
 

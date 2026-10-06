@@ -22,9 +22,6 @@ describe("semantic2 runtime contract", () => {
     expect(normalizeSemantic2RuntimeTenantKey("arcturus")).toBe(
       "first-capital",
     );
-    expect(normalizeSemantic2RuntimeTenantKey("mona street")).toBe(
-      "lakeshore-holdings",
-    );
   });
 
   it("rejects archived, unknown, UUID, and lab-only tenant scopes", () => {
@@ -34,6 +31,8 @@ describe("semantic2 runtime contract", () => {
       "0834e0e7-5b56-46fe-9912-5aa9bc0d66c9",
       "northstar-clinical",
       "lakefront-capital",
+      // Retired holdco alias: it no longer resolves to a canonical tenant.
+      "mona street",
     ]) {
       expect(() => normalizeSemantic2RuntimeTenantKey(tenantKey)).toThrow(
         Semantic2RuntimeContractError,

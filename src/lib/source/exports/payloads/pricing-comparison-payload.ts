@@ -62,6 +62,10 @@ function submissionRowToRendererSubmission(
     vendorName: row.vendorName,
     submittedAt: row.submittedAt,
     unitPricesById: row.unitPricesById,
+    // Existing persisted rows carry vendor-entered raw unit prices only.
+    // Do not infer currency, period, scenario, or normalized values here:
+    // the renderer's comparability guard will render these rows as raw-only
+    // until an upstream record supplies an explicit normalized basis.
     vendorNotesById: row.vendorNotesById,
     pricingNotes: row.pricingNotes,
     assumptionDeviations: row.assumptionDeviations,

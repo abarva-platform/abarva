@@ -72,6 +72,45 @@ assert.deepEqual(
     .join("\n")}`,
 );
 
+// And the other direction, which this gate used to leave open.
+//
+// The baseline could only be appended to. An entry whose script was deleted,
+// whose target came back, or whose script stopped naming that token kept
+// sitting in the list describing nothing, and the gate stayed green — so the
+// baseline slowly stopped describing the repository. One entry was already
+// stale when this check was written.
+//
+// It is the same shape the repository's quarantine checks already refuse,
+// where a list BELOW its ceiling fails because silent headroom is how a
+// carve-out becomes permanent. Cleaning an entry is one line in the change
+// that made it stale; leaving it is a claim nobody re-measures.
+const missingKeys = new Set(
+  missing.map((item) => `${item.scriptName}\u0000${item.token}`),
+);
+const staleBaselineEntries = (baseline.known_missing ?? [])
+  .filter(
+    (item) => !missingKeys.has(`${item.scriptName}\u0000${item.token}`),
+  )
+  .map((item) => {
+    const command = packageJson.scripts?.[item.scriptName];
+    const why =
+      typeof command !== "string"
+        ? "the script no longer exists"
+        : gitPathExists(item.token)
+          ? "the target file exists again"
+          : "the script no longer names that token";
+    return { scriptName: item.scriptName, token: item.token, why };
+  });
+
+assert.deepEqual(
+  staleBaselineEntries,
+  [],
+  `the reconciliation baseline holds entries that no longer describe anything at ${REF}. `
+    + `Remove each one in the change that made it stale:\n${staleBaselineEntries
+      .map((item) => `- ${item.scriptName}: ${item.token} (${item.why})`)
+      .join("\n")}`,
+);
+
 console.log(
   JSON.stringify(
     {
@@ -81,6 +120,8 @@ console.log(
       missing_targets: missing.length,
       baselined_missing_targets: missing.length - unbaselinedMissing.length,
       unbaselined_missing_targets: unbaselinedMissing.length,
+      stale_baseline_entries: staleBaselineEntries.length,
+      baseline_entries: (baseline.known_missing ?? []).length,
     },
     null,
     2,

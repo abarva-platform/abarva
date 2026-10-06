@@ -336,7 +336,7 @@ async function authenticate(browser: Browser, tenant: Tenant): Promise<{
   const context = await browser.newContext();
   const page = await context.newPage();
   const testingToken = await createClerkTestingTokenForCrawl();
-  await installClerkTestingTokenInterceptor(page, testingToken);
+  await installClerkTestingTokenInterceptor(page, testingToken, PROD_URL);
   if (testingToken) {
     console.log(`[atlas-prod-surface] clerk testing token installed for ${tenant.slug}`);
   }

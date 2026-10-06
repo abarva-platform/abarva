@@ -3,6 +3,7 @@ import {
   validateKpiTable,
   isDocumentFamily,
   documentFamilyKeys,
+  ensureEvidenceReviewForUploadedEvidence,
 } from "../current-state-doc-ingest";
 import { assessExtractedTextSensitivity } from "../current-state-doc-ingest";
 import { extractTextFromSlideXml } from "../evidence-ingestion";
@@ -12,6 +13,25 @@ import { evaluateSensitiveUpload } from "@/lib/security/sensitive-upload-guard";
 import { structuredCurrentStateUploadDetail } from "../current-state-routing";
 
 describe("current-state document path — governance helpers", () => {
+  it("refuses to create an approved upload review without the human-reviewed snapshot", async () => {
+    await expect(
+      ensureEvidenceReviewForUploadedEvidence(
+        {
+          clientId: "tenant-id",
+          clientKey: "tenant-key",
+          userId: "reviewer-id",
+        } as never,
+        {
+          moveId: "move-id",
+          evidenceId: "evidence-id",
+          familyKey: "baseline",
+          initialDecision: "approved",
+          autoPromoted: false,
+        },
+      ),
+    ).rejects.toThrow("reviewed_extraction_required");
+  });
+
   it("isDocumentFamily: structured (with backing) is NOT a document family", () => {
     const dora = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.evidenceFamilies.find(
       (f) => f.key === "eng_performance_dora",

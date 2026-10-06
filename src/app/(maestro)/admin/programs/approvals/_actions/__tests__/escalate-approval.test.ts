@@ -24,20 +24,37 @@ jest.mock('@/lib/programs/approval', () => ({
 
 const requireAdminDecideMock = jest.fn();
 
-class FakeAdminAuthError extends Error {
-  constructor(
-    public readonly status: 401 | 403,
-    public readonly code: string,
-  ) {
-    super(code);
-    this.name = 'AdminAuthError';
+// The fake lives INSIDE the factory on purpose. Declared outside, it is read
+// while this module is still evaluating -- the static `import` of the subject
+// below is hoisted above the class statement, so the factory runs first and
+// the class is still in its temporal dead zone. That threw
+// `ReferenceError: Cannot access 'FakeAdminAuthError' before initialization`
+// and the suite failed to RUN at all: zero tests, while presenting in the log
+// as an ordinary red suite.
+//
+// Sibling suites that use this same declare-outside shape work only because
+// they import their subject lazily (`await import(...)` inside a case), which
+// defers the factory past module evaluation. Declaring the class in the
+// factory is immune to that difference rather than dependent on it.
+jest.mock('@/app/api/admin/programs/approvals/_auth', () => {
+  class FakeAdminAuthError extends Error {
+    constructor(
+      public readonly status: 401 | 403,
+      public readonly code: string,
+    ) {
+      super(code);
+      this.name = 'AdminAuthError';
+    }
   }
-}
+  return {
+    requireAdminDecide: (...args: unknown[]) => requireAdminDecideMock(...args),
+    AdminAuthError: FakeAdminAuthError,
+  };
+});
 
-jest.mock('@/app/api/admin/programs/approvals/_auth', () => ({
-  requireAdminDecide: (...args: unknown[]) => requireAdminDecideMock(...args),
-  AdminAuthError: FakeAdminAuthError,
-}));
+// Same class object the factory installed, so `instanceof` in the subject
+// still matches what these cases construct.
+import { AdminAuthError as FakeAdminAuthError } from '@/app/api/admin/programs/approvals/_auth';
 
 const writeApprovalEscalationAuditMock = jest.fn();
 jest.mock('../_audit-writer', () => ({

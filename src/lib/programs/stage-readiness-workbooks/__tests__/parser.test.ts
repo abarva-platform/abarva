@@ -10,6 +10,8 @@ const readiness: DiscoveryEvidenceReadiness = {
   blueprintId: "test_blueprint",
   blueprintVersion: "2026-08-20",
   archetypeLabel: "Data-Intensive Predictive Use Case",
+  blueprintBasis: "declared",
+  unknownDeclaredArchetype: null,
   requiredTotal: 2,
   requiredCovered: 1,
   requiredMissing: 1,
@@ -58,6 +60,40 @@ async function buildWorkbookBuffer(): Promise<Buffer> {
 }
 
 describe("parseStageReadinessWorkbookXlsx", () => {
+  it("does not count generated context, evidence references, or status as a response", async () => {
+    const workbookBytes = await buildWorkbookBuffer();
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(workbookBytes as unknown as ArrayBuffer);
+    const coveredSheet = workbook.getWorksheet("Data & Quality");
+    expect(coveredSheet?.getCell("B2").value).toBe("");
+    expect(coveredSheet?.getCell("F2").value).toBe(
+      "prefilled_needs_confirmation",
+    );
+    expect(coveredSheet?.getCell("B3").value).toBe("");
+    expect(coveredSheet?.getCell("F3").value).toBe("needs_answer");
+
+    const parsed = await parseStageReadinessWorkbookXlsx(workbookBytes, {
+      expectedMoveId: "move-1",
+      expectedPhase: 1,
+    });
+
+    expect(parsed.summary).toMatchObject({
+      totalQuestions: 8,
+      answeredQuestions: 0,
+      requiredAnswered: 0,
+      requiredTotal: 8,
+      errorCount: 0,
+    });
+    expect(parsed.responses[0]).toMatchObject({
+      response: "",
+      hasUserInput: false,
+    });
+    expect(parsed.responses[1]).toMatchObject({
+      response: "",
+      hasUserInput: false,
+    });
+  });
+
   it("round-trips generated workbook responses into proposed response rows", async () => {
     const original = await buildWorkbookBuffer();
     const workbook = new ExcelJS.Workbook();
@@ -88,14 +124,14 @@ describe("parseStageReadinessWorkbookXlsx", () => {
       nextPhase: 2,
     });
     expect(parsed.summary).toMatchObject({
-      totalQuestions: 2,
-      answeredQuestions: 2,
-      requiredAnswered: 2,
-      requiredTotal: 2,
+      totalQuestions: 8,
+      answeredQuestions: 1,
+      requiredAnswered: 1,
+      requiredTotal: 8,
       errorCount: 0,
     });
     expect(parsed.responses[0]).toMatchObject({
-      questionId: "q_data_analytics_estate",
+      questionId: "q_data_analytics_estate_confirm_currency",
       dimensionId: "data_analytics_estate",
       response: "Confirmed",
       context: "Data estate profile reviewed with analytics owner.",

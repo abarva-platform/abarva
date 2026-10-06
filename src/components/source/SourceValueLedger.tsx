@@ -198,11 +198,11 @@ function buildAssumptions(snapshot: SourceValueLedgerSnapshot): string[] {
 
 export function SourceValueLedger({
   snapshot,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
   isDegraded = false,
 }: {
   snapshot: SourceValueLedgerSnapshot;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
   isDegraded?: boolean;
 }) {
   const rollup = getLedgerRollup(snapshot);

@@ -193,6 +193,28 @@ describe("a chapter never shows the generator's status", () => {
     // The rows answer it: the strongest finding on this chapter becomes the lead.
     expect(headline.length).toBeGreaterThan(20);
   });
+
+  it.each(["executive_brief", "our_business"] as const)(
+    "%s opens from a briefing readout when authored copy is deferred",
+    (chapterId) => {
+      const value = bundle();
+      const chapter = value.chapters.find((c) => c.chapterId === chapterId)!;
+      chapter.headline = `${chapter.title} is deferred pending stronger evidence`;
+      chapter.executive_synthesis =
+        "This chapter is not ready for executive review.";
+      window.location.hash = chapterId;
+      const { container } = render(
+        <HomeV4App bundle={value} tenantKey="meridian-health" />,
+      );
+      expect(
+        container.querySelector("[data-home-briefing-opening]"),
+      ).not.toBeNull();
+      expect(container.querySelector("[data-home-findings]")).toBeNull();
+      expect(container.querySelector("h1")?.textContent ?? "").not.toMatch(
+        /applications carry|estate is self-hosted|contracts carry|records carry/i,
+      );
+    },
+  );
 });
 
 describe("the visual grammar", () => {
@@ -213,7 +235,7 @@ describe("the visual grammar", () => {
     );
   });
 
-  it("marks an absence as absence, with the view it cannot build", () => {
+  it("marks an absence as absence, with the view still visible", () => {
     window.location.hash = "technology_data";
     const { container } = render(
       <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
@@ -224,7 +246,9 @@ describe("the visual grammar", () => {
       ),
     ];
     expect(marks.length).toBeGreaterThan(0);
-    expect(marks[0].textContent ?? "").toMatch(/not carried by the record/i);
+    expect(marks[0].textContent ?? "").toMatch(
+      /record does not carry this yet|evidence not yet served/i,
+    );
   });
 
   // Written against the shape, not one expression of it. The original assertion matched only the

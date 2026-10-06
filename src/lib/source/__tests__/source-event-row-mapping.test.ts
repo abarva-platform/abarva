@@ -42,6 +42,8 @@ describe("Source persisted event row mapping", () => {
     expect(summary.currentStageLabel).toBe("Scope");
     expect(summary.status).toBe("active");
     expect(summary.valueAtStakeUsd).toBe(25_000_000);
+    expect(summary.triggerDescription).toBe(baseRow.trigger_description);
+    expect(summary.scopeDescription).toBe(baseRow.scope_description);
   });
 
   it("coerces pg NUMERIC strings before computing value fields", () => {
@@ -50,7 +52,7 @@ describe("Source persisted event row mapping", () => {
         ...baseRow,
         estimated_value_usd: "35000000" as unknown as number,
       },
-      "Apex Retail Group",
+      "Example Organization",
     );
 
     expect(summary.valueAtStakeUsd).toBe(35_000_000);
@@ -74,6 +76,15 @@ describe("Source persisted event row mapping", () => {
       detail.artifacts.some((artifact) => artifact.id.includes(baseRow.id)),
     ).toBe(true);
     expect(detail.dataReadiness[0]?.id).toContain(baseRow.id);
+    expect(detail.approvalPolicyCode).toBeNull();
+  });
+
+  it("carries an explicit SELF policy from the persisted row to the signed-in event detail", () => {
+    const detail = sourceEventRowToDetail(
+      { ...baseRow, approval_policy_code: "self_v1" },
+      "Apex Retail Group",
+    );
+    expect(detail.approvalPolicyCode).toBe("self_v1");
   });
 
   it("marks the current stage as needing approval when the event is waiting on client approval", () => {

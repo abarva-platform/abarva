@@ -15,41 +15,48 @@ file structure.
 
 ## Checks
 
-| Check ID | Description                                                    | Pre-integration state | Post-integration state |
-|----------|----------------------------------------------------------------|-----------------------|------------------------|
-| CH-01    | Source commercial demo scenario module exists                  | PASS                  | PASS                   |
-| CH-02    | Source scenario is buildable and has a non-empty scenarioId    | PASS                  | PASS                   |
-| CH-03    | Source scenario scenarioId references "apex-retail" (SRC32)    | DEFERRED              | PASS                   |
-| CH-04    | Program flagship view module exists                            | PASS                  | PASS                   |
-| CH-05    | Program flagship defaults to APX-CDP-2026 for Apex Retail      | PASS                  | PASS                   |
-| CH-06    | Program flagship tenantLabel defaults to "Apex Retail"         | PASS                  | PASS                   |
-| CH-07    | Source index.ts re-exports source-commercial-demo-scenario     | PASS                  | PASS                   |
-| CH-08    | Source scenario carries deterministic-seed caveats             | PASS                  | PASS                   |
-| CH-09    | LINK1: source↔program link contract module exists             | DEFERRED              | PASS                   |
-| CH-10    | SRC33: Apex Retail source event route/seed exists              | DEFERRED              | PASS                   |
-| CH-11    | PROG15: Apex Retail CDP program seed module exists             | DEFERRED              | PASS                   |
-| CH-12    | PROG16: Apex program-source link view exists                   | DEFERRED              | PASS                   |
-| CH-13    | Deliverable export contract carries Apex Retail artifact IDs   | PASS                  | PASS                   |
-| CH-14    | Source scenario vendors carry deterministicSeed:true marker    | PASS                  | PASS                   |
+| Check ID | Description                                                    | State (measured 2026-09-20) | How it is decided        |
+|----------|----------------------------------------------------------------|-----------------------------|--------------------------|
+| CH-01    | Source commercial demo scenario module exists                  | PASS                        | observed on disk         |
+| CH-02    | Source scenario is buildable and has a non-empty scenarioId    | PASS                        | observed on disk         |
+| CH-03    | Source scenario scenarioId references "apex-retail" (SRC32)    | PASS                        | observed on disk         |
+| CH-04    | Program flagship view module exists                            | PASS                        | observed on disk         |
+| CH-05    | Program flagship defaults to APX-CDP-2026 for Apex Retail      | PASS                        | observed on disk         |
+| CH-06    | Program flagship tenantLabel defaults to "Apex Retail"         | PASS                        | observed on disk         |
+| CH-07    | Source index.ts re-exports source-commercial-demo-scenario     | PASS                        | observed on disk         |
+| CH-08    | Source scenario carries deterministic-seed caveats             | PASS                        | observed on disk         |
+| CH-09    | LINK1: source↔program link contract module exists             | PASS                        | declared: superseded             |
+| CH-10    | SRC33: Apex Retail source event route/seed exists              | PASS                        | declared: superseded             |
+| CH-11    | PROG15: Apex Retail CDP program seed module exists             | PASS                        | declared: superseded             |
+| CH-12    | PROG16: Apex program-source link view exists                   | PASS                        | observed on disk         |
+| CH-13    | Deliverable export contract carries Apex Retail artifact IDs   | PASS                        | observed on disk         |
+| CH-14    | Source scenario vendors carry deterministicSeed:true marker    | PASS                        | observed on disk         |
 
 ---
 
-## Deferred Checks (Pre-integration)
+## Slice integration — re-measured 2026-09-20 (T-527)
 
-The following Wave 19 slices have **not merged** into this branch. Their checks
-return `status: 'deferred'` and do not cause test failures.
+This section previously said the Wave 19 slices "have **not merged** into this
+branch", and CH-09, CH-10 and CH-11 reported `Deferred pending <SLICE>
+integration` on that basis. **All three claims were false.** Every slice below
+is `code_complete` in `docs/build/build-slices.json` and every module is on
+disk — under the name the slice actually chose, not the name the check guessed.
 
-| Slice  | Description                                    | Unblocks  |
-|--------|------------------------------------------------|-----------|
-| SRC32  | Re-seeds Source scenario to Apex Retail event  | CH-03     |
-| LINK1  | Source↔Program link contract                  | CH-09     |
-| SRC33  | Apex-specific Source event route               | CH-10     |
-| PROG15 | Apex Retail CDP program seed module            | CH-11     |
-| PROG16 | Apex program-source link view                  | CH-12     |
-| MW9    | Cross-surface merge wave                       | (all)     |
+| Slice  | The check searched for                                  | Where it actually landed                                     |
+|--------|---------------------------------------------------------|--------------------------------------------------------------|
+| SRC32  | —                                                       | `src/lib/source/source-commercial-demo-scenario.ts`           |
+| LINK1  | `src/lib/source/source-program-link-contract.ts`        | `src/lib/source/source-program-link.ts`                       |
+| SRC33  | an Apex-specific event route or seed (3 names)          | `src/lib/source/linked-program-badge-view.ts`                 |
+| PROG15 | an `apex-`-prefixed program seed (3 names)              | `src/lib/programs/program-future-phase-deliverables.ts`       |
+| PROG16 | `src/lib/programs/apex-program-source-link-view.ts`     | `src/lib/programs/program-source-link-view.ts` (already found)|
+| MW9    | —                                                       | `src/lib/programs/workshop-five-outcomes.ts`                  |
 
-After each slice merges, its corresponding check should be re-run. When all
-deferred checks return `pass`, `overallStatus` promotes from `partial` → `pass`.
+A filename search that misses cannot tell *not built* from *built elsewhere*,
+so the disposition of an absent path is no longer inferred from the miss. It is
+declared in `STORYLINE_PATH_REGISTER` and resolved through the shared
+`src/lib/qa/path-disposition.ts`, where a `superseded` entry becomes a `pass`
+only once the landing path has been **observed present**. A path that is absent
+and undeclared is a `fail` that asks for the declaration — never a deferral.
 
 ---
 
@@ -78,14 +85,17 @@ PASS src/__tests__/integration/qa/apex-source-program-storyline-verification.tes
 
 All checks are deterministic seed verification only. No live data, no model
 calls, no database queries. This suite exercises demo story connectivity across
-the Source and Program surfaces. Checks marked "deferred" will be promoted after
-SRC32 / LINK1 / SRC33 / PROG15 / PROG16 / MW9 integrate.
+the Source and Program surfaces. The disposition of an absent path is declared
+in `STORYLINE_PATH_REGISTER` and never inferred: a check that misses every
+filename it searches for reports what the register says, verified against the
+tree, or fails and asks for the declaration.
 
 ---
 
-## Post-integration Expected State
+## Current measured state
 
-After all Wave 19 slices merge:
+Measured on `origin/main` `d621b34b9`, 2026-09-20 — this is the report's actual
+output, not an expectation:
 
 - `overallStatus`: `pass`
 - `passCount`: 14

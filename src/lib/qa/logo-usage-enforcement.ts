@@ -1,7 +1,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type LogoCheckStatus = 'pass' | 'fail' | 'deferred' | 'not_applicable';
+import {
+  resolvePathStatus,
+  type PathDispositionRegister,
+} from './path-disposition';
+
+export type LogoCheckStatus =
+  | 'pass'
+  | 'fail'
+  | 'deferred'
+  | 'removed'
+  | 'not_applicable';
 
 export interface LogoUsageCheck {
   checkId: string;
@@ -20,6 +30,7 @@ export interface LogoUsageEnforcementReport {
   passCount: number;
   failCount: number;
   deferredCount: number;
+  removedCount: number;
   overallStatus: 'pass' | 'fail' | 'partial';
   bannedPatterns: string[];
   caveat: string;
@@ -51,6 +62,119 @@ const RETIRED_TOPBAR_VARIANTS = [
   'src/components/shell/AppTopBarEditorial.tsx',
   'src/components/shell/AppTopBarTwoBar.tsx',
 ];
+
+/** Every path this report expects to be gone, in one list for the register. */
+export const RETIRED_BRAND_PATHS = [
+  ...RETIRED_ROOT_LOGO_ASSETS,
+  ...RETIRED_TOPBAR_VARIANTS,
+];
+
+const BRAND_RETIREMENT_COMMIT = 'f1d8bc95c';
+const BRAND_RETIREMENT_SLICE = 'BRAND1 option-2 nav logo adoption (#3108)';
+
+function retiredByBrand1(
+  note: string,
+  restoredAt?: { commit: string; note: string },
+) {
+  return {
+    retired: {
+      scope: 'path' as const,
+      commit: BRAND_RETIREMENT_COMMIT,
+      slice: BRAND_RETIREMENT_SLICE,
+      replacement: CANONICAL_LOGO_ASSET,
+      note,
+      ...(restoredAt ? { restoredAt } : {}),
+    },
+  };
+}
+
+/**
+ * Why each of these paths is expected to be absent, with the commit.
+ *
+ * Before T-528 the two lists above were bare arrays and the checks below said
+ * "correctly absent" or "still exists" — the right verdict in both directions
+ * with none of the evidence behind it. A reader could not tell a deliberate
+ * retirement from a list somebody guessed at.
+ *
+ * Every commit here was derived with `git log origin/main` and confirmed with
+ * `git merge-base --is-ancestor`. All ten paths were added by `5d795a397`
+ * (2026-05-30) and deleted by `f1d8bc95c` (2026-06-05). Seven stayed gone.
+ * Three came back later; their restoration commits remain recorded here even
+ * after T-504 removes those aliases again.
+ *
+ * T-504 follows the canonical decision already encoded above: Option 2 compact
+ * assets are authoritative. The aliases clear only by being absent, never by
+ * widening the allowed set.
+ */
+export const BRAND_PATH_REGISTER: PathDispositionRegister = {
+  // Absent, and no commit on this history has ever added or removed it —
+  // re-measured with `git log origin/main --diff-filter=AD` rather than
+  // trusting the row that reported it. So nothing retired it, and the
+  // "retired in Wave 29 SHELL8" sentence this check used to print was an
+  // attribution with nothing behind it.
+  //
+  // `undecided` rather than `retired` for exactly that reason: the honest
+  // statement is that the path is absent and nobody has ruled on whether it
+  // should exist. Naming a wave that cannot be shown to have done it is the
+  // defect, not the fix for it.
+  'src/components/chrome/TopBar.tsx': {
+    undecided: {
+      owner: 'T-532',
+      note:
+        'It sits in neither RETIRED_ROOT_LOGO_ASSETS nor RETIRED_TOPBAR_VARIANTS, so no '
+        + 'brand decision covers it either. Whether a chrome TopBar should exist is a '
+        + 'shell question, not a brand one.',
+    },
+  },
+  'public/brand/abarva-logo-inverse.svg': retiredByBrand1(
+    'Root-level inverse mark from the pre-option-2 brand.',
+    {
+      commit: '8b556c126',
+      note:
+        'restored by a Home v2 fix that repointed frame asset paths at the ' +
+        'root-level brand files rather than at the option-2 asset directory',
+    },
+  ),
+  'public/brand/abarva-logo-lockup-v2.svg': retiredByBrand1(
+    'Root-level v2 lockup from the pre-option-2 brand.',
+    {
+      commit: '6ebe6d4a9',
+      note:
+        'came back inside a large squashed merge that restored it without a ' +
+        'brand decision being recorded anywhere',
+    },
+  ),
+  'public/brand/abarva-logo.svg': retiredByBrand1(
+    'Root-level primary mark from the pre-option-2 brand.',
+    {
+      commit: '6ebe6d4a9',
+      note:
+        'came back inside a large squashed merge that restored it without a ' +
+        'brand decision being recorded anywhere',
+    },
+  ),
+  'public/brand/abarva-monogram-v-blue.svg': retiredByBrand1(
+    'Root-level V monogram from the pre-option-2 brand.',
+  ),
+  'public/brand/abarva-monogram-v-white.svg': retiredByBrand1(
+    'Root-level V monogram from the pre-option-2 brand.',
+  ),
+  'public/brand/abarva-wordmark-color.svg': retiredByBrand1(
+    'Root-level wordmark from the pre-option-2 brand.',
+  ),
+  'public/brand/abarva-wordmark-monoblack.svg': retiredByBrand1(
+    'Root-level wordmark from the pre-option-2 brand.',
+  ),
+  'public/brand/abarva-wordmark-monoblue.svg': retiredByBrand1(
+    'Root-level wordmark from the pre-option-2 brand.',
+  ),
+  'src/components/shell/AppTopBarEditorial.tsx': retiredByBrand1(
+    'Experimental top-bar variant carrying the pre-option-2 lockup.',
+  ),
+  'src/components/shell/AppTopBarTwoBar.tsx': retiredByBrand1(
+    'Experimental top-bar variant carrying the pre-option-2 lockup.',
+  ),
+};
 
 const ROOT = process.cwd();
 
@@ -103,16 +227,26 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
     });
   }
 
-  // Check 4: legacy TopBar.tsx retired (SHELL8) — absence is the expected state
-  const topBarContent = readFileIfExists('src/components/chrome/TopBar.tsx');
+  // Check 4: the disposition of the legacy chrome TopBar.
+  //
+  // This printed "correctly absent — retired in Wave 29 SHELL8" and reported
+  // `pass`. Re-measured, no commit on this history has ever added or removed
+  // the path, so no wave retired it and the attribution was invented. The
+  // answer now comes from BRAND_PATH_REGISTER like the ten paths beside it,
+  // which is what stops a call-site sentence from standing in for evidence.
+  const topBarPath = 'src/components/chrome/TopBar.tsx';
+  const topBar = resolvePathStatus(
+    topBarPath,
+    checkFileExists(topBarPath),
+    BRAND_PATH_REGISTER,
+    'BRAND_PATH_REGISTER',
+  );
   checks.push({
     checkId: 'BRAND2-C4',
-    targetFile: 'src/components/chrome/TopBar.tsx',
-    description: 'Legacy TopBar.tsx retired in SHELL8 — should be absent',
-    status: topBarContent ? 'fail' : 'pass',
-    detail: topBarContent
-      ? 'TopBar.tsx still exists — expected to be absent after SHELL8 cleanup. Remove the file.'
-      : 'TopBar.tsx correctly absent — retired in Wave 29 SHELL8.',
+    targetFile: topBarPath,
+    description: 'Legacy chrome TopBar disposition is declared, not asserted',
+    status: topBar.status,
+    detail: topBar.detail,
     deterministicSeed: true,
   });
 
@@ -175,30 +309,39 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
     deterministicSeed: true,
   });
 
+  // The disposition comes from BRAND_PATH_REGISTER, not from a sentence
+  // written here. A call-site sentence is how "correctly absent" came to stand
+  // over ten paths without naming the commit that removed any of them.
   for (const retiredAsset of RETIRED_ROOT_LOGO_ASSETS) {
-    const exists = checkFileExists(retiredAsset);
+    const { status, detail } = resolvePathStatus(
+      retiredAsset,
+      checkFileExists(retiredAsset),
+      BRAND_PATH_REGISTER,
+      'BRAND_PATH_REGISTER',
+    );
     checks.push({
       checkId: `BRAND2-C9-${path.basename(retiredAsset).replace(/[^a-z0-9]/gi, '')}`,
       targetFile: retiredAsset,
       description: 'Retired root-level brand asset is absent so stale paths cannot resolve',
-      status: exists ? 'fail' : 'pass',
-      detail: exists
-        ? `${retiredAsset} still exists — remove it so runtime paths cannot pick up the old brand.`
-        : `${retiredAsset} correctly absent`,
+      status,
+      detail,
       deterministicSeed: true,
     });
   }
 
   for (const retiredVariant of RETIRED_TOPBAR_VARIANTS) {
-    const exists = checkFileExists(retiredVariant);
+    const { status, detail } = resolvePathStatus(
+      retiredVariant,
+      checkFileExists(retiredVariant),
+      BRAND_PATH_REGISTER,
+      'BRAND_PATH_REGISTER',
+    );
     checks.push({
       checkId: `BRAND2-C10-${path.basename(retiredVariant).replace(/[^a-z0-9]/gi, '')}`,
       targetFile: retiredVariant,
       description: 'Retired experimental AppTopBar variant is absent',
-      status: exists ? 'fail' : 'pass',
-      detail: exists
-        ? `${retiredVariant} still exists — remove the ghost top-bar variant.`
-        : `${retiredVariant} correctly absent`,
+      status,
+      detail,
       deterministicSeed: true,
     });
   }
@@ -206,6 +349,7 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
   const passCount = checks.filter(c => c.status === 'pass').length;
   const failCount = checks.filter(c => c.status === 'fail').length;
   const deferredCount = checks.filter(c => c.status === 'deferred').length;
+  const removedCount = checks.filter(c => c.status === 'removed').length;
 
   return {
     reportId: 'BRAND2-ENFORCEMENT-2026-04-26',
@@ -215,6 +359,7 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
     passCount,
     failCount,
     deferredCount,
+    removedCount,
     overallStatus: failCount > 0 ? 'fail' : deferredCount > 0 ? 'partial' : 'pass',
     bannedPatterns: BANNED_LOGO_PATTERNS,
     caveat: 'All checks are deterministic filesystem scans. BRAND1 and DES9 must land before deferred checks resolve.',

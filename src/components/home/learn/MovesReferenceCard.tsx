@@ -23,12 +23,12 @@ const PHASE_ROWS = [
   {
     id: 'P0',
     name: 'Originate',
-    goal: 'Turn a signal into a structured hypothesis with sponsor candidate',
+    goal: 'Turn a signal into a structured hypothesis with a listed sponsor progress contact',
     gateArtifact: 'Origination Scaffold',
     hardCriteria: [
       'Falsifiable hypothesis',
       'Archetype classified',
-      'Sponsor candidate (human-confirmed)',
+      'Sponsor contact and progress-email preference recorded',
       'Value hypothesis (UNVALIDATED)',
       'Scope boundary (human deliberated)',
     ],
@@ -38,16 +38,21 @@ const PHASE_ROWS = [
   {
     id: 'P1',
     name: 'Charter',
-    goal: 'Sponsor committed, charter signed, value range locked',
+    goal: 'Charter approved by authorized workspace user; sponsor listed as progress contact',
     gateArtifact: 'Program Charter',
     hardCriteria: [
-      'Sponsor committed (document or confirmed)',
+      'Sponsor contact and email preference recorded',
       'Primary success metric defined',
       'Value range (low–high with assumptions, PRELIMINARY)',
       'Scope boundary confirmed',
       'Stakeholder map with decision rights',
     ],
-    deliverables: ['Program Charter', 'Stakeholder Map', 'Baseline Timeline', 'RACI Matrix'],
+    deliverables: [
+      'Program Charter',
+      'Stakeholder Map',
+      'Baseline Timeline',
+      'RACI Matrix',
+    ],
     color: T.navy,
   },
   {
@@ -61,7 +66,12 @@ const PHASE_ROWS = [
       'Continue/Discontinue decision recorded',
       'Risk register populated',
     ],
-    deliverables: ['Current State Assessment', 'Root Cause Analysis', 'Problem Statement', 'Risk Register'],
+    deliverables: [
+      'Current State Assessment',
+      'Root Cause Analysis',
+      'Problem Statement',
+      'Risk Register',
+    ],
     color: T.navy,
   },
   {
@@ -75,7 +85,12 @@ const PHASE_ROWS = [
       'Architecture reviewed with technical stakeholders',
       'Operating model changes identified',
     ],
-    deliverables: ['Target State Architecture', 'Solution Design', 'Operating Model Design', 'Sourcing Strategy'],
+    deliverables: [
+      'Target State Architecture',
+      'Solution Design',
+      'Operating Model Design',
+      'Sourcing Strategy',
+    ],
     color: T.navy,
   },
   {
@@ -86,10 +101,15 @@ const PHASE_ROWS = [
     hardCriteria: [
       'Financial model with 3-year projection',
       'Roadmap with milestones and owners',
-      'Executive sponsor sign-off on business case',
+      'Business case approved by authorized workspace user',
       'Tower metrics defined and agreed',
     ],
-    deliverables: ['Execution Roadmap', 'Business Case', 'Financial Model (Excel)', 'Tower Metrics Plan'],
+    deliverables: [
+      'Execution Roadmap',
+      'Business Case',
+      'Financial Model (Excel)',
+      'Tower Metrics Plan',
+    ],
     color: T.navy,
   },
   {
@@ -101,7 +121,7 @@ const PHASE_ROWS = [
       'Delivery team assembled with named PM',
       'Handoff package generated and complete',
       'Tower acceptance confirmed',
-      'All deliverables reviewed by sponsor',
+      'Required handoff deliverables reviewed by authorized workspace user',
     ],
     deliverables: ['Handoff Package', 'Readiness Assessment'],
     color: T.teal,
@@ -118,7 +138,9 @@ export function MovesReferenceCard() {
         <Eyebrow>Quick Reference</Eyebrow>
         <SectionTitle level={1}>Strategic Moves reference card</SectionTitle>
         <Lead>
-          Everything you need in a single view — all six phases, their gate criteria, and key deliverables. Use this as a checklist when running a Move.
+          Everything you need in a single view — all six phases, their gate
+          criteria, and key deliverables. Use this as a checklist when running a
+          Move.
         </Lead>
       </Section>
 
@@ -127,7 +149,8 @@ export function MovesReferenceCard() {
         <Eyebrow>Six phases</Eyebrow>
         <SectionTitle>P0 → P5 at a glance</SectionTitle>
         <Lead>
-          Every Move follows the same path. Hard criteria must be met before advancing. Soft criteria appear as advisory warnings.
+          Every Move follows the same path. Hard criteria must be met before
+          advancing. Soft criteria appear as advisory warnings.
         </Lead>
 
         <div style={{ overflowX: 'auto', margin: '24px 0' }}>
@@ -264,7 +287,9 @@ export function MovesReferenceCard() {
                   >
                     Deliverables generated
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                  >
                     {phase.deliverables.map((d, i) => (
                       <span
                         key={d}
@@ -310,7 +335,9 @@ export function MovesReferenceCard() {
         <Eyebrow>Value tracking</Eyebrow>
         <SectionTitle>How value labels evolve</SectionTitle>
         <Lead>
-          The value figure you start with in P0 is labeled UNVALIDATED. It upgrades as evidence comes in. The label tells you how much to trust the number.
+          The value figure you start with in P0 is labeled UNVALIDATED. It
+          upgrades as evidence comes in. The label tells you how much to trust
+          the number.
         </Lead>
 
         <div
@@ -325,11 +352,36 @@ export function MovesReferenceCard() {
           }}
         >
           {[
-            { phase: 'P0', label: 'UNVALIDATED HYPOTHESIS', bg: '#4B5563', desc: 'From initial signal. No baseline data. Order-of-magnitude only.' },
-            { phase: 'P1', label: 'PRELIMINARY ESTIMATE', bg: T.navy, desc: 'Range with stated assumptions. Sponsor has reviewed.' },
-            { phase: 'P2', label: 'EVIDENCE-GROUNDED ESTIMATE', bg: T.navy, desc: 'Validated against baseline data. Root causes quantified.' },
-            { phase: 'P3–4', label: 'INVESTMENT CASE', bg: T.navy, desc: 'Full financial model. Sponsor-signed. Investment decision quality.' },
-            { phase: 'P5+', label: 'COMMITTED PLAN', bg: T.teal, desc: 'Delivery team named. Tower tracking live actuals vs. projection.' },
+            {
+              phase: 'P0',
+              label: 'UNVALIDATED HYPOTHESIS',
+              bg: '#4B5563',
+              desc: 'From initial signal. No baseline data. Order-of-magnitude only.',
+            },
+            {
+              phase: 'P1',
+              label: 'PRELIMINARY ESTIMATE',
+              bg: T.navy,
+              desc: 'Range with stated assumptions. Authorized workspace user reviews.',
+            },
+            {
+              phase: 'P2',
+              label: 'EVIDENCE-GROUNDED ESTIMATE',
+              bg: T.navy,
+              desc: 'Validated against baseline data. Root causes quantified.',
+            },
+            {
+              phase: 'P3–4',
+              label: 'INVESTMENT CASE',
+              bg: T.navy,
+              desc: 'Full financial model. Authorized workspace-user approval.',
+            },
+            {
+              phase: 'P5+',
+              label: 'COMMITTED PLAN',
+              bg: T.teal,
+              desc: 'Delivery team named. Tower tracking live actuals vs. projection.',
+            },
           ].map((step, i) => (
             <div
               key={step.phase}
@@ -401,34 +453,52 @@ export function MovesReferenceCard() {
 
         <TermGrid>
           <Term name="Strategic Move">
-            A phase-gated transformation program on the <InlineAbarvaLogo /> platform. Moves run P0 → P5 and hand off to Control Tower at P5.
+            A phase-gated transformation program on the <InlineAbarvaLogo />{' '}
+            platform. Moves run P0 → P5 and hand off to Control Tower at P5.
           </Term>
           <Term name="Archetype">
-            The category of the Move: <em>Cost Reduction, Revenue Growth, Risk Mitigation,</em> or <em>Operational Excellence.</em> Classified in P0, confirmed by the user.
+            The category of the Move:{' '}
+            <em>Cost Reduction, Revenue Growth, Risk Mitigation,</em> or{' '}
+            <em>Operational Excellence.</em> Classified in P0, confirmed by the
+            user.
           </Term>
           <Term name="Scaffold">
-            The 7-field structure Ava fills during P0. Fields 1–4 are required (gate-blocking). Feeds every downstream document.
+            The 7-field structure Ava fills during P0. Fields 1–4 are required
+            (gate-blocking). Feeds every downstream document.
           </Term>
           <Term name="Hard criterion">
-            A blocking gate requirement. The Advance button stays locked until satisfied. Examples: named sponsor, signed charter, scope boundary.
+            A blocking gate requirement. The Advance button stays locked until
+            satisfied. Examples: progress contact preference recorded,
+            authorized-user-approved charter, scope boundary.
           </Term>
           <Term name="Soft criterion">
-            Advisory gate requirement. Gate can clear even if open — appears as a warning in the gate view and audit trail.
+            Advisory gate requirement. Gate can clear even if open — appears as
+            a warning in the gate view and audit trail.
           </Term>
           <Term name="Gate artifact">
-            The document that must reach "Signed Off" status before a gate can clear. One per phase. Blue border in the Evidence Hub.
+            The document that must reach "Signed Off" status before a gate can
+            clear. One per phase. Blue border in the Evidence Hub.
           </Term>
           <Term name="Continue / Discontinue">
-            The formal binary decision at P2. Discontinue = formally close the Move with documented rationale. Not a failure — a discipline.
+            The formal binary decision at P2. Discontinue = formally close the
+            Move with documented rationale. Not a failure — a discipline.
           </Term>
           <Term name="Sourcing decision">
-            Build / Buy / Partner. Made in P3 with explicit rationale against Foundation Readiness from P0. Drives P4 financial model.
+            Build / Buy / Partner. Made in P3 with explicit rationale against
+            Foundation Readiness from P0. Drives P4 financial model.
           </Term>
           <Term name="Tower acceptance">
-            The P5 gate confirmation that Control Tower has received the handoff. A hard gate — cannot be waived. Ava keeps watching the Move in Tower after acceptance, drawing on her portfolio-monitoring expertise.
+            The P5 gate confirmation that Control Tower has received the
+            handoff. A hard gate — cannot be waived. Ava keeps watching the Move
+            in Tower after acceptance, drawing on her portfolio-monitoring
+            expertise.
           </Term>
           <Term name="Evidence Hub">
-            The document store for a Move: generated deliverables, uploads, and status history. Access at <code style={{ fontFamily: T.fMono, fontSize: 11, color: T.navy }}>/strategic-moves/{'{id}'}/evidence</code>
+            The document store for a Move: generated deliverables, uploads, and
+            status history. Access at{' '}
+            <code style={{ fontFamily: T.fMono, fontSize: 11, color: T.navy }}>
+              /strategic-moves/{'{id}'}/evidence
+            </code>
           </Term>
         </TermGrid>
       </Section>
@@ -449,9 +519,15 @@ export function MovesReferenceCard() {
           {[
             { label: 'All Strategic Moves', path: '/strategic-moves' },
             { label: 'Start a new Move', path: '/strategic-moves/new' },
-            { label: 'Phase workspace', path: '/strategic-moves/{id}/phase/{0–5}' },
+            {
+              label: 'Phase workspace',
+              path: '/strategic-moves/{id}/phase/{0–5}',
+            },
             { label: 'Evidence Hub', path: '/strategic-moves/{id}/evidence' },
-            { label: 'Generate deliverables', path: '/strategic-moves/{id}/phase/{n} → Generate tab' },
+            {
+              label: 'Generate deliverables',
+              path: '/strategic-moves/{id}/phase/{n} → Generate tab',
+            },
             { label: 'Portfolio overview', path: '/tower' },
             { label: 'Intelligence signals', path: '/intelligence' },
           ].map((item, i) => (
@@ -466,7 +542,14 @@ export function MovesReferenceCard() {
                 alignItems: 'center',
               }}
             >
-              <div style={{ fontFamily: T.fBody, fontSize: 13, color: T.body, fontWeight: 500 }}>
+              <div
+                style={{
+                  fontFamily: T.fBody,
+                  fontSize: 13,
+                  color: T.body,
+                  fontWeight: 500,
+                }}
+              >
                 {item.label}
               </div>
               <code
@@ -488,7 +571,9 @@ export function MovesReferenceCard() {
         </div>
 
         <Callout kind="info" icon="📚" label="Full training guide">
-          This is the quick reference card. For the full training guide — including a step-by-step walkthrough of your first Move and the complete phase sections — use the left navigation in this guide.
+          This is the quick reference card. For the full training guide —
+          including a step-by-step walkthrough of your first Move and the
+          complete phase sections — use the left navigation in this guide.
         </Callout>
       </Section>
     </>

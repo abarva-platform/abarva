@@ -7,6 +7,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { fireEvent, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import type {
   SourceEventArtifactState,
   SourceEventGateCriterion,
@@ -150,7 +151,10 @@ describe("GateTab · required input checklist", () => {
     expect(html).toContain("source-gate-required-inputs");
     expect(html).toContain("0 of 2 cleared");
     expect(html).toContain("Missing");
-    expect(html).toContain("Application inventory");
+    expect(html).toContain(
+      'data-testid="source-canvas-gate-criterion-evidence-GATE-SCOPE-01"',
+    );
+    expect(html).toContain("Application and service inventory: Usable Evidence");
     expect(html).toContain("L2/L3 ticket history");
     expect(html).not.toContain("hard criterion");
     expect(html).not.toContain("source-canvas-gate-blockers");

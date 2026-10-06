@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState, type CSSProperties } from "react";
+import { presentOverlapTreatment } from "@/lib/source/data-model/overlap-treatment-narrative";
 import { DataTable } from "../DataTable";
 import { EvidenceLineageGraph } from "./EvidenceLineageGraph";
 import type { SourceWorkspaceVM } from "../buildViewModel";
@@ -688,6 +689,64 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
           <DetailPanel vm={vm} kind="evidence" />
           <EvidenceLineageGraph vm={vm} />
         </>
+      ) : null}
+
+      {vm.cEducation && vm.contractEducation ? (
+        <section
+          style={{
+            background: "#fff",
+            border: "1px solid rgba(10,10,11,.12)",
+            borderRadius: 8,
+            padding: "22px 26px",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              color: "#0f6e56",
+              marginBottom: 8,
+            }}
+          >
+            Archetype coaching guide
+          </div>
+          <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>
+            {vm.contractEducation.headline}
+          </h2>
+          <p style={{ color: "#5f5e5a", lineHeight: 1.55, maxWidth: 900 }}>
+            {vm.contractEducation.body}
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+              gap: 10,
+              marginTop: 16,
+            }}
+          >
+            {vm.contractEducation.steps.map((step) => (
+              <div
+                key={step.key}
+                style={{
+                  border: "1px solid rgba(10,10,11,.12)",
+                  borderTop: `3px solid ${step.state === "loaded" ? "#2f9e78" : "#c27a13"}`,
+                  borderRadius: 7,
+                  padding: "14px 15px",
+                  minHeight: 170,
+                }}
+              >
+                <b>{step.title}</b>
+                <p style={{ fontWeight: 700, lineHeight: 1.35 }}>{step.question}</p>
+                <p style={{ color: "#5f5e5a", lineHeight: 1.45, fontSize: 12 }}>
+                  {step.guidance}
+                </p>
+                <small style={{ color: "#888780" }}>Basis: {step.evidence}.</small>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {vm.cRenewal ? (
@@ -1743,8 +1802,7 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         <div style={{ fontSize: 12.2, color: "#5f5e5a", lineHeight: 1.45 }}>
           <b style={{ color: "#0a0a0b" }}>Overlap:</b>{" "}
-          {selected?.overlapTreatment ??
-            "No opportunity value is approved until evidence is resolved."}
+          {presentOverlapTreatment(selected?.overlapTreatment).text}
         </div>
       </div>
     </section>
@@ -2508,6 +2566,14 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const selectedSpine = vm.optSpine?.selected ?? null;
   const conflict = view.baseline.status === "conflict";
   const visibleOpportunities = view.opportunities.slice(0, 5);
+  // Item U-518. The sentences above count the whole set; the queue below shows
+  // five. Without this the difference is silent, and the densest opportunity
+  // fixture in the repository carries six rows for one contract, so the cap is
+  // reached rather than theoretical.
+  const cappedDisclosure =
+    view.opportunities.length > visibleOpportunities.length
+      ? `Showing ${visibleOpportunities.length} of ${view.opportunities.length}`
+      : null;
   const blockedCount = view.opportunities.filter(
     (opportunity) =>
       opportunity.stageRaw === "baseline_conflict" ||
@@ -2778,6 +2844,9 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
           <div style={{ fontSize: 11.5, color: "#5f5e5a" }}>
             Fact-backed lines only; values are potential until workflow and
             finance prove outcome.
+            {cappedDisclosure
+              ? ` ${cappedDisclosure} identified opportunities, highest value first.`
+              : ""}
           </div>
         </div>
         <div
@@ -3257,6 +3326,22 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                     </text>
                   </g>
                 ))}
+                {/*
+                  Item U-518. The box holds five rows; the set can hold more.
+                  Plotting the first five under an unqualified heading reads as
+                  the whole set.
+                */}
+                {view.opportunities.length > 5 ? (
+                  <text
+                    x="606"
+                    y="282"
+                    fontSize="9.6"
+                    fontWeight="700"
+                    fill="#5f5e5a"
+                  >
+                    {`Showing 5 of ${view.opportunities.length}`}
+                  </text>
+                ) : null}
               </g>
 
               <g filter="url(#relShadow)">

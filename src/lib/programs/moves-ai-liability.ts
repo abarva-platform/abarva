@@ -1,13 +1,18 @@
 import {
   AI_DECISION_SUPPORT_WATERMARK,
   HUMAN_DECISION_ATTESTATION_TEXT,
+  HUMAN_DECISION_RATIONALE_MIN_CHARS,
   buildAiDecisionEvidencePacket,
   validateAiDecisionEvidencePacket,
   type AiDecisionEvidencePacket,
   type AiDecisionOwner,
 } from "@/lib/ai-liability/human-decision-controls";
 
-export const MOVES_HUMAN_RATIONALE_MIN_CHARS = 20;
+/**
+ * Moves states the minimum its UI counts against; the number itself is the
+ * shared one, so the surface and the shared validator cannot drift apart.
+ */
+export const MOVES_HUMAN_RATIONALE_MIN_CHARS = HUMAN_DECISION_RATIONALE_MIN_CHARS;
 
 export interface MovesPhaseDecisionInput {
   readonly programId: string;
@@ -41,6 +46,18 @@ export interface MovesGateApprovalDecisionInput {
   readonly alternativesConsidered?: readonly string[];
 }
 
+export interface MovesGateWaiverDecisionInput {
+  readonly instanceId: string;
+  readonly tenantName: string;
+  readonly criterionId: string;
+  readonly humanRationale: string;
+  readonly decisionOwner: AiDecisionOwner;
+  readonly evidenceIds?: readonly string[];
+  readonly missingInputs?: readonly string[];
+  readonly assumptions?: readonly string[];
+  readonly alternativesConsidered?: readonly string[];
+}
+
 export function normalizeMovesHumanRationale(value: unknown): string {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 }
@@ -51,6 +68,23 @@ export function validateMovesHumanRationale(value: unknown): string | null {
     return `Human rationale must be at least ${MOVES_HUMAN_RATIONALE_MIN_CHARS} characters.`;
   }
   return null;
+}
+
+/**
+ * The rationale is the only part of an evidence packet a human wrote. Every UI
+ * and route that builds one already refuses a rationale too short to audit.
+ * `validateAiDecisionEvidencePacket` now reads the field too, for any packet
+ * that records a human decision, so this throw is the earlier and more
+ * specific of two checks rather than the only one. It is kept because it names
+ * the surface in the error and fails at assembly, before a packet exists.
+ */
+function requireAuditableHumanRationale(value: unknown, context: string): string {
+  const rationale = normalizeMovesHumanRationale(value);
+  const error = validateMovesHumanRationale(rationale);
+  if (error) {
+    throw new Error(`${context} failed validation: ${error}`);
+  }
+  return rationale;
 }
 
 export function coerceDecisionSupportList(value: unknown): readonly string[] {
@@ -97,7 +131,10 @@ export function buildMovesPhaseDecisionEvidencePacket(
     missingInputs,
     assumptions,
     alternativesConsidered,
-    humanRationale: normalizeMovesHumanRationale(input.humanRationale),
+    humanRationale: requireAuditableHumanRationale(
+      input.humanRationale,
+      "Moves decision evidence packet",
+    ),
     overrideDisposition: input.overrideDisposition ?? "accepted",
     riskDomains: ["financial_commitment", "general_business"],
   });
@@ -142,7 +179,10 @@ export function buildMovesGateApprovalEvidencePacket(
     missingInputs,
     assumptions,
     alternativesConsidered,
-    humanRationale: normalizeMovesHumanRationale(input.humanRationale),
+    humanRationale: requireAuditableHumanRationale(
+      input.humanRationale,
+      "Moves gate approval evidence packet",
+    ),
     overrideDisposition: input.action === "approve" ? "accepted" : "rejected",
     riskDomains: ["financial_commitment", "general_business"],
   });
@@ -151,6 +191,54 @@ export function buildMovesGateApprovalEvidencePacket(
   if (!validation.passed) {
     throw new Error(
       `Moves gate approval evidence packet failed validation: ${validation.failures.join(", ")}`,
+    );
+  }
+
+  return packet;
+}
+
+export function buildMovesGateWaiverEvidencePacket(
+  input: MovesGateWaiverDecisionInput,
+): AiDecisionEvidencePacket {
+  const evidenceIds = input.evidenceIds?.length
+    ? input.evidenceIds
+    : [`reasoning-gate:${input.instanceId}:${input.criterionId}`];
+  const missingInputs = input.missingInputs?.length
+    ? input.missingInputs
+    : ["The waived gate criterion remains unresolved at decision time."];
+  const assumptions = input.assumptions?.length
+    ? input.assumptions
+    : ["The waiver is temporary and does not satisfy the underlying criterion."];
+  const alternativesConsidered = input.alternativesConsidered?.length
+    ? input.alternativesConsidered
+    : [
+        "Hold the gate until the criterion is satisfied.",
+        "Request more evidence instead of granting a waiver.",
+      ];
+
+  const packet = buildAiDecisionEvidencePacket({
+    recommendationId: `moves-gate-waiver:${input.instanceId}:${input.criterionId}`,
+    surface: "Moves gate waiver",
+    agentName: "Nexus",
+    tenantName: input.tenantName,
+    decisionOwner: input.decisionOwner,
+    recommendationText: `Waive gate criterion ${input.criterionId} for ${input.instanceId}`,
+    evidenceIds,
+    missingInputs,
+    assumptions,
+    alternativesConsidered,
+    humanRationale: requireAuditableHumanRationale(
+      input.humanRationale,
+      "Moves gate waiver evidence packet",
+    ),
+    overrideDisposition: "modified",
+    riskDomains: ["financial_commitment", "general_business"],
+  });
+
+  const validation = validateAiDecisionEvidencePacket(packet);
+  if (!validation.passed) {
+    throw new Error(
+      `Moves gate waiver evidence packet failed validation: ${validation.failures.join(", ")}`,
     );
   }
 

@@ -40,11 +40,12 @@ export const P1_DISCOVERY: PhasePack = {
   definitionOfDone: [
     {
       id: 'p0-seed-ingested',
-      label: 'P0 seed ingested: value hypothesis, sponsor candidate, classification',
+      label:
+        'P0 seed ingested: value hypothesis, sponsor contact, classification',
       severity: 'hard',
       evaluationHint:
         'Discovery notes or program seed references the P0 handoff fields: value ' +
-        'hypothesis seed, sponsor candidate, classification, first cohort/use case, ' +
+        'hypothesis seed, sponsor contact, classification, first cohort/use case, ' +
         'and first evidence request. If P1 starts from a blank page, the P0 handoff failed.',
       preventsFailureModes: [1, 2, 4],
     },
@@ -78,8 +79,8 @@ export const P1_DISCOVERY: PhasePack = {
       severity: 'hard',
       evaluationHint:
         'Stakeholder Map artifact or engagement_participants rows identify named ' +
-        'people for sponsor, business owner, technical/data/security owner as ' +
-        'applicable, adoption owner, approver, and at least one dissenter or blocker. ' +
+        'people for sponsor contact, business owner, technical/data/security owner as ' +
+        'applicable, adoption owner, reviewer, and at least one dissenter or blocker. ' +
         'A department-only RACI is not a stakeholder map.',
       preventsFailureModes: [1, 4],
     },
@@ -93,7 +94,7 @@ export const P1_DISCOVERY: PhasePack = {
         'and repository/IP inventory; Copilot oversharing audit and time-spent ' +
         'baseline; contact-center AI intent inventory and automation baseline; ' +
         'data fabric source-system inventory, data-quality baseline, and use-case ' +
-        'readiness matrix. Waivers must name sponsor rationale.',
+        'readiness matrix. Any waiver is recorded and approved by an authorized workspace user.',
       preventsFailureModes: [2, 3],
     },
     {
@@ -102,7 +103,7 @@ export const P1_DISCOVERY: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Discovery notes identify where evidence contradicted P0 assumptions: ' +
-        'problem smaller than expected, sponsor authority weaker, data unavailable, ' +
+        'problem smaller than expected, data unavailable, ' +
         'classification changed, or baseline source unreliable. Absence of any ' +
         'contradiction is suspicious on complex programs.',
       preventsFailureModes: [2],
@@ -123,8 +124,7 @@ export const P1_DISCOVERY: PhasePack = {
     open: [
       {
         id: 'p0-hypothesis-check',
-        text:
-          'What exactly did P0 claim, and what evidence would make us change or kill that claim?',
+        text: 'What exactly did P0 claim, and what evidence would make us change or kill that claim?',
         why:
           'Discovery must test the seed, not admire it. This establishes falsifiers ' +
           'before interviews and baselines become confirmation work.',
@@ -135,8 +135,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'current-state-system-of-record',
-        text:
-          'Where does the current-state number live today, and who trusts that source?',
+        text: 'Where does the current-state number live today, and who trusts that source?',
         why:
           'Locks the baseline source early. P2 cannot charter an OKR if P1 cannot ' +
           'name the system/report and the owner who will defend it.',
@@ -148,11 +147,11 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'who-feels-the-pain',
-        text:
-          'Who feels the pain weekly, and who only hears about it in status meetings?',
+        text: 'Who feels the pain weekly, and who only hears about it in status meetings?',
         why:
           'Separates operators from sponsors. P1 needs both: operators reveal the ' +
-          'real workflow; sponsors decide whether it matters enough to fund.',
+          'real workflow; business owners clarify outcomes and adoption context. ' +
+          'The authorized workspace user records the product decision.',
         expectedAnswerShape:
           'Named operators and named executive/business owner, with the cadence at ' +
           'which each sees the pain.',
@@ -160,8 +159,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'pattern-evidence-family',
-        text:
-          'Given the P0 classification, which evidence family are we collecting first?',
+        text: 'Given the P0 classification, which evidence family are we collecting first?',
         why:
           'Keeps Discovery pattern-specific. CDP, Copilot, data fabric, AI coding, ' +
           'and contact-center AI fail in different ways and need different baselines.',
@@ -172,8 +170,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'scope-boundary-now',
-        text:
-          'What is definitely out of scope for Discovery, even if stakeholders keep bringing it up?',
+        text: 'What is definitely out of scope for Discovery, even if stakeholders keep bringing it up?',
         why:
           'Discovery sprawl is one of the fastest ways to lose P2 signal. Boundary ' +
           'lets Nexus distinguish adjacent issues from the problem being validated.',
@@ -199,8 +196,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'baseline-grain',
-        text:
-          'At what grain is the baseline measured, and is that the same grain P4/P5 will use?',
+        text: 'At what grain is the baseline measured, and is that the same grain P4/P5 will use?',
         why:
           'Prevents aggregate baselines that cannot evaluate pilot or activation ' +
           'results later. Grain mismatch is a common value-attribution failure.',
@@ -212,8 +208,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'stakeholder-map-gaps',
-        text:
-          'Which critical role on the stakeholder map is still a blank name?',
+        text: 'Which critical role on the stakeholder map is still a blank name?',
         why:
           'Blank roles become P2/P3 blockers. P1 must expose missing owners before ' +
           'Synthesis recommends a path that no one can operate or approve.',
@@ -223,8 +218,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'evidence-contradicts-p0',
-        text:
-          'Where did the evidence contradict the P0 hypothesis or classification?',
+        text: 'Where did the evidence contradict the P0 hypothesis or classification?',
         why:
           'Healthy Discovery changes the seed. If nothing changed, either the seed ' +
           'was unusually precise or Discovery avoided uncomfortable evidence.',
@@ -235,8 +229,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'p2-option-inputs',
-        text:
-          'What are the two or three option dimensions P2 must compare because Discovery found real trade-offs?',
+        text: 'What are the two or three option dimensions P2 must compare because Discovery found real trade-offs?',
         why:
           'Prepares Synthesis. P1 should not recommend the answer, but it should ' +
           'surface the trade-off terrain P2 must evaluate.',
@@ -250,8 +243,7 @@ export const P1_DISCOVERY: PhasePack = {
     close: [
       {
         id: 'discovery-package-ready',
-        text:
-          'Can P2 read the package and know the validated problem, OKR baseline, stakeholder map, contradictions, and option dimensions without asking us to redo Discovery?',
+        text: 'Can P2 read the package and know the validated problem, OKR baseline, stakeholder map, contradictions, and option dimensions without asking us to redo Discovery?',
         why:
           'Closes P1 as a usable handoff, not a collection of notes. P2 should ' +
           'synthesize, not reconstruct.',
@@ -262,8 +254,7 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'baseline-owner-attestation',
-        text:
-          'Who owns the baseline source, and have they confirmed the number is fit for decision-making?',
+        text: 'Who owns the baseline source, and have they confirmed the number is fit for decision-making?',
         why:
           'Prevents P2 charters built on numbers the operating team later rejects. ' +
           'Baseline ownership matters as much as the number.',
@@ -273,14 +264,13 @@ export const P1_DISCOVERY: PhasePack = {
       },
       {
         id: 'sponsor-readout-decision',
-        text:
-          'What did the sponsor decide from Discovery: proceed, re-scope, reclassify, collect more evidence, or stop?',
+        text: 'What does the authorized workspace user decide based on Discovery: proceed, re-scope, reclassify, collect more evidence, or stop?',
         why:
-          'Discovery without a sponsor decision becomes endless analysis. P2 should ' +
-          'start only after the sponsor accepts the evidence-backed direction.',
+          'Discovery without a recorded product decision becomes endless analysis. P2 should ' +
+          'start only after the authorized workspace user accepts the evidence-backed direction.',
         expectedAnswerShape:
-          'One of proceed/re-scope/reclassify/more evidence/stop, with sponsor name ' +
-          'and rationale.',
+          'One of proceed/re-scope/reclassify/more evidence/stop, with authorized-user ' +
+          'decision record and rationale. Stakeholder views remain evidence, not approvals.',
         preventsFailureModes: [1],
       },
     ],
@@ -362,11 +352,11 @@ export const P1_DISCOVERY: PhasePack = {
       id: 'missing-business-owner',
       label: 'Missing Business Owner',
       detectionHint:
-        'Sponsor is named but no operating business owner is accountable for ' +
+        'Sponsor contact is named but no operating business owner is accountable for ' +
         'use-case priority, adoption, process change, or value realization.',
       whatToFlag:
-        'Flag adoption risk. Sponsor authority can fund the program; a business ' +
-        'owner makes the capability used after launch.',
+        'Flag adoption risk. A business owner makes the capability used after ' +
+        'launch; a sponsor contact does not substitute for that accountability.',
       mitigation:
         'Find the named business owner before P2. If the program is IT-owned only, ' +
         'P2 must treat adoption ownership as a gate risk.',
@@ -390,7 +380,7 @@ export const P1_DISCOVERY: PhasePack = {
 
   coachingArc: {
     entry:
-      'Open by restating the P0 value hypothesis, sponsor candidate, classification, ' +
+      'Open by restating the P0 value hypothesis, sponsor contact, classification, ' +
       'first cohort/use case, and falsifiers. Then select the pattern-specific ' +
       'evidence family. P1 posture is investigative: test the seed before expanding it.',
     midPhase:
@@ -407,7 +397,7 @@ export const P1_DISCOVERY: PhasePack = {
   dependencies: {
     requiresFromPrior: [
       'P0 Originate: value hypothesis seed with causal mechanism',
-      'P0 Originate: sponsor candidate and expected decision rights',
+      'P0 Originate: sponsor contact and progress-email preference; product decision rights belong to the authorized workspace user',
       'P0 Originate: classification / lead lifecycle pattern',
       'P0 Originate: first cohort or consuming use case and first evidence request',
       'P0 Originate: Discovery capacity and stop condition',
@@ -415,7 +405,7 @@ export const P1_DISCOVERY: PhasePack = {
     producesForNext: [
       'Validated problem statement - P2 compares options against this problem, not the P0 slogan',
       'OKR baseline with source, grain, method, owner, and caveats - P2 charter and P5 value attestation depend on it',
-      'Stakeholder map with named sponsor, business owner, technical/data/security owners, approvers, dissenters, and blockers - P2 uses it for sign-off and politics',
+      'Stakeholder map with sponsor contact, business owner, technical/data/security owners, decision stakeholders, dissenters, and blockers - P2 uses it as evidence and context, not as a separate approval chain',
       'Pattern-specific evidence package - P2 knows which architecture/value trade-offs are real',
       'Contradiction log and falsifier results - P2 can avoid single-option rationalization',
       'Option dimensions surfaced by Discovery - P2 turns them into target-state alternatives and trade-offs',
@@ -445,7 +435,8 @@ export const P1_DISCOVERY: PhasePack = {
     // `okr-baseline-captured`, which is captured by the next step.
     {
       id: 'p1-data-discovery',
-      label: 'Identify data sources / system-of-record / ownership / accessibility',
+      label:
+        'Identify data sources / system-of-record / ownership / accessibility',
       complexity: 'complex',
       agentRole: 'coach_workshop',
       inputs: ['p0-seed-ingested'],
@@ -513,23 +504,22 @@ export const P1_DISCOVERY: PhasePack = {
       label: 'Log contradictions surfaced during Discovery for P2',
       complexity: 'simple',
       agentRole: 'extract',
-      inputs: ['validated-problem-statement', 'pattern-specific-evidence-complete'],
+      inputs: [
+        'validated-problem-statement',
+        'pattern-specific-evidence-complete',
+      ],
       outputs: ['discovery-contradictions-logged'],
       templateRefs: [],
       preventsFailureModes: [2],
       intentCaptureRequired: false,
       postMeetingUploadExpected: false,
     },
-    // Design doc D.1.4 marks this step "medium" with role "coach_interview +
-    // request_approval"; StepComplexity has no `medium` value and agentRole is
-    // single-valued, so we encode it as `simple` (chat-resolvable sponsor
-    // briefing, no off-platform workshop) with `coach_interview` as the
-    // dominant role. The `request_approval` action is a side effect at the
-    // end (sponsor sign-off on the proceed/pivot/kill recommendation).
+    // This is a stakeholder briefing, not a product approval request. The
+    // authorized workspace user records the proceed/pivot/kill decision.
     {
       id: 'p1-p2-readiness-call',
       label:
-        'Sponsor briefing + P2 readiness recommendation (proceed / pivot / kill)',
+        'Stakeholder briefing + P2 readiness recommendation (proceed / pivot / kill)',
       complexity: 'simple',
       agentRole: 'coach_interview',
       inputs: [

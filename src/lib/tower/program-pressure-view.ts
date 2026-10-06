@@ -297,6 +297,11 @@ function buildAtlasBriefAccountability(input: {
     surface: 'Tower / Atlas program pressure brief',
     agentName: 'Atlas',
     tenantName: input.tenantName,
+    // A pressure brief is composed from read-model signals; no human took a
+    // decision here, so there is no rationale for one to have written. Stated
+    // rather than inferred, so the shared validator's rationale minimum is
+    // declined on the record rather than by omission.
+    recordsHumanDecision: false,
     recommendationText: input.recommendedExecutiveAction,
     evidenceIds,
     missingInputs:

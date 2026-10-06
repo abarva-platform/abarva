@@ -1,4 +1,5 @@
-import { COL, money, pct, fmtDate } from "./viewModel";
+import { COL, money, moneyPrecise, pct, fmtDate } from "./viewModel";
+import { displaySourceLeverTitle, displaySourceLeverTiming } from "@/lib/source/data-model/source-lever-order";
 import type {
   WorkspaceViewModel,
   EnrichedContract,
@@ -12,9 +13,16 @@ import {
 import { focusableContractRows } from "./contractDiscovery";
 import { buildContractOptimizationLedger } from "@/lib/source/data-model/contract-optimization-ledger";
 import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
+import { buildContractOptimizationEvidenceReadiness } from "@/lib/source/data-model/contract-optimization-evidence-readiness";
+import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
+import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract-optimization-workflow-step";
 import type { SourcingOpportunityReason } from "@/lib/source/data-model/sourcing-opportunities";
 import { isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
+import {
+  buildContractEducation,
+  contractEducationFromRecord,
+} from "@/lib/source/contract-intelligence/education";
 
 /**
  * `node-postgres` returns NUMERIC/DECIMAL columns as strings; a lone value
@@ -47,6 +55,24 @@ const textOrNull = (value: unknown): string | null => {
   const text = String(value).trim();
   return text.length > 0 ? text : null;
 };
+const isContractSourceFile = (file: {
+  readonly document_role?: string | null;
+  readonly document_type?: string | null;
+  readonly file_name?: string | null;
+}): boolean =>
+  [file.document_role, file.document_type, file.file_name].some((value) =>
+    /contract|agreement|master|order[ _-]?form|sow|amendment|change[ _-]?order/i.test(
+      value ?? "",
+    ),
+  );
+const isContractTermConcept = (conceptRef: string | null | undefined): boolean =>
+  /contract|agreement|pricing|scope|term|renewal|notice|auto[._-]?renew|benchmark|termination|exit[._-]?rights/i.test(
+    conceptRef ?? "",
+  );
+const isRenewalTermConcept = (conceptRef: string | null | undefined): boolean =>
+  /renewal|notice|end[._-]?date|auto[._-]?renew|benchmark|termination|exit[._-]?rights|cure/i.test(
+    conceptRef ?? "",
+  );
 const normalizedVendorKey = (name: string | null | undefined): string =>
   (name ?? "")
     .toLowerCase()
@@ -338,8 +364,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     0,
   );
   const effectiveActualAnnualSpend =
-    numberFromDb(contract?.row.actual_annual_spend) ??
-    (detailActualAnnualSpend > 0 ? detailActualAnnualSpend : null);
+    detailActualAnnualSpend > 0
+      ? detailActualAnnualSpend
+      : numberFromDb(contract?.row.actual_annual_spend);
 
   // ── explorer tree ──
   interface TreeNode {
@@ -580,6 +607,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       "Relationship",
       "Evidence",
       "Optimize",
+      "Education",
     ],
     evidence: [
       "Coverage",
@@ -2013,7 +2041,48 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const evidencePerformance = detail?.evidencePerformance ?? null;
   const performancePeriods = detail?.performancePeriods ?? [];
   const spendMonths = detail?.spendMonths ?? [];
+  const documentFiles = detail?.documentFiles ?? [];
+  const documentExtractions = detail?.docExtractions ?? [];
+  const contractTermRows =
+    documentFiles.filter(isContractSourceFile).length +
+    documentExtractions.filter((row) => isContractTermConcept(row.concept_ref)).length;
+  const renewalTermRows = documentExtractions.filter((row) =>
+    isRenewalTermConcept(row.concept_ref),
+  ).length;
   const opportunitySet = detail?.optimizationOpportunitySet ?? null;
+  const contractCoverage = c
+    ? vm.portfolio.impact.evidenceCoverage.find(
+        (row) => row.contract_id === c.contract_id,
+      )
+    : null;
+  const persistedEducation = detail?.contractIntelligence
+    ? contractEducationFromRecord(
+        detail.contractIntelligence.intelligence_record,
+      )
+    : null;
+  const contractEducation = c
+    ? persistedEducation ?? buildContractEducation({
+        archetype: c.contract_archetype ?? contractCoverage?.contract_archetype,
+        vendorName: c.vendor_name,
+        contractName: c.contract_name,
+        scopeRows: numberFromDb(contractCoverage?.scope_rows) ?? evidenceScope.length,
+        spendRows: numberFromDb(contractCoverage?.spend_rows) ?? spendMonths.length,
+        invoiceRows: detail?.evidencePerformance?.invoice_line_count ?? 0,
+        performanceRows:
+          numberFromDb(contractCoverage?.performance_rows) ?? performancePeriods.length,
+        documentRows:
+          numberFromDb(contractCoverage?.document_page_text_rows) ??
+          detail?.docExtractions.length ??
+          0,
+        opportunityRows:
+          numberFromDb(contractCoverage?.opportunity_rows) ??
+          opportunitySet?.opportunities.length ??
+          0,
+        changeOrderRows: contractCoverage?.change_order_rows ?? 0,
+        hasReviewedPurpose: Boolean(textOrNull(c.purpose_summary)),
+        benchmarkingClause: textOrNull(c.benchmarking_clause),
+      })
+    : null;
   const cVm = c
     ? {
         id: c.contract_id,
@@ -2381,6 +2450,44 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         leverage: contract.leverage,
       })
     : null;
+  /**
+   * Where this optimization case actually stands, from the governed state
+   * machine. The seven steps are derived from baseline status, required-evidence
+   * readiness, amount traceability and opportunity maturity — never from an
+   * index — so a case cannot appear to have advanced past work it has not done.
+   */
+  const optWorkflow = contract
+    ? deriveOptimizeWorkflowPosition({
+        hasSelectedContract: true,
+        opportunitySet,
+        readiness: buildContractOptimizationEvidenceReadiness({
+          evidencePack: detail?.optimizationEvidence ?? null,
+          /*
+           * The curation ledger is empty until a reviewer attaches evidence to
+           * an opportunity, and nothing populates it at load time. Scoring from
+           * it alone reported every required family missing on contracts
+           * carrying hundreds of loaded rows. Pass what the contract actually
+           * holds so a family can be satisfied by the evidence that exists.
+           */
+          lanes: {
+            scopeRows: scopeRows.length,
+            spendMonths: detail?.spendMonths?.length ?? 0,
+            invoicedMonths: (detail?.spendMonths ?? []).filter(
+              (row) => numberFromDb(row.invoice_amount) != null,
+            ).length,
+            performancePeriods: detail?.performancePeriods?.length ?? 0,
+            documentRows: documentExtractions.length + documentFiles.length,
+            contractTermRows,
+            renewalTermRows,
+            changeOrderRows:
+              numberFromDb(contractCoverage?.change_order_rows) ?? 0,
+          },
+        }),
+        traceability: summarizeOpportunityTraceability(
+          opportunitySet?.opportunities ?? [],
+        ),
+      })
+    : null;
   const optSpine = contract
     ? buildContractOptimizationSpine({
         contract: contract.row,
@@ -2630,6 +2737,18 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : opportunity.shortLabel;
         return {
           contractId: opportunitySet.contractId,
+          caseThread: opportunitySet.optimizationCase
+            ? {
+                state: opportunitySet.optimizationCase.caseState === "unverified"
+                  ? "State unverified"
+                  : fmtStage(opportunitySet.optimizationCase.caseState),
+                caseCount: opportunitySet.optimizationCase.caseCount ?? 1,
+                owner: opportunitySet.optimizationCase.owner,
+                nextAction:
+                  clientFacingOpportunityText(opportunitySet.optimizationCase.nextAction) ??
+                  opportunitySet.optimizationCase.nextAction,
+              }
+            : null,
           recommendation: opportunitySet.recommendation,
           recommendationDetail: opportunitySet.recommendationDetail,
           actionState: fmtStage(opportunitySet.actionState),
@@ -2665,8 +2784,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           selectedOpportunity: selected
             ? {
                 id: selected.opportunityId,
-                label: displayOpportunityLabel(selected),
-                shortLabel: displayOpportunityShortLabel(selected),
+                label: displaySourceLeverTitle(displayOpportunityLabel(selected)),
+                shortLabel: displaySourceLeverTitle(displayOpportunityShortLabel(selected)),
                 valueType: fmtStage(selected.valueType),
                 amount: amount(selected.amountUsd),
                 amountUsd: selected.amountUsd,
@@ -2721,11 +2840,17 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : null,
           opportunities: opportunitySet.opportunities.map((opportunity) => ({
             id: opportunity.opportunityId,
-            label: displayOpportunityLabel(opportunity),
-            shortLabel: displayOpportunityShortLabel(opportunity),
+            label: displaySourceLeverTitle(displayOpportunityLabel(opportunity)),
+            shortLabel: displaySourceLeverTitle(displayOpportunityShortLabel(opportunity)),
             valueType: fmtStage(opportunity.valueType),
-            amount: amount(opportunity.amountUsd),
+            amount:
+              opportunity.amountLowUsd != null &&
+              opportunity.amountHighUsd != null
+                ? `${amount(opportunity.amountLowUsd)}–${amount(opportunity.amountHighUsd)}`
+                : amount(opportunity.amountUsd),
             amountUsd: opportunity.amountUsd,
+            amountLowUsd: opportunity.amountLowUsd ?? null,
+            amountHighUsd: opportunity.amountHighUsd ?? null,
             stage: fmtStage(opportunity.stage),
             stageRaw: opportunity.stage,
             grade: fmtGrade(opportunity.evidenceGrade),
@@ -2763,7 +2888,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             vendorConcession:
               opportunity.negotiationDetail?.vendorConcession ?? null,
             timingDependency:
-              opportunity.negotiationDetail?.timingDependency ?? null,
+              opportunity.negotiationDetail?.timingDependency
+                ? displaySourceLeverTiming(opportunity.negotiationDetail.timingDependency)
+                : null,
             ownerRole: opportunity.negotiationDetail?.ownerRole ?? null,
             riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored ?? null,
             priority: opportunity.negotiationDetail?.priority ?? null,
@@ -2881,13 +3008,16 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       : effectiveActualAnnualSpend < committedAnnualSpend * 0.9
         ? {
             value: "Commitment ahead of usage",
-            detail: `${money(Math.abs(commitmentDelta ?? 0))} below committed annual baseline; use this as renegotiation-shape evidence, not realized savings.`,
+            // Names the measure and disclaims the inference. This figure and
+            // the sized ask sit in adjacent strips on Story and were rendering
+            // as the same string, which read as "the ask is the gap".
+            detail: `${moneyPrecise(Math.abs(commitmentDelta ?? 0))} of committed capacity was not drawn on. This is the shape of the renegotiation, not the size of the ask, and not realized savings.`,
             tone: COL.amber,
           }
         : effectiveActualAnnualSpend > committedAnnualSpend * 1.05
           ? {
               value: "Spend above commitment",
-              detail: `${money(Math.abs(commitmentDelta ?? 0))} above committed annual baseline; test committed-use coverage before renewal or re-baseline.`,
+              detail: `${moneyPrecise(Math.abs(commitmentDelta ?? 0))} drawn above the committed annual baseline. Test committed-use coverage before renewal or re-baseline; this is not an ask.`,
               tone: COL.red,
             }
           : {
@@ -2955,6 +3085,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               "At least one opportunity still has missing or conflicted evidence; keep blockers visible.",
             tone: COL.amber,
           }
+        : opportunitySet?.opportunities.every(
+            (opportunity) => opportunity.amountUsd == null,
+          )
+          ? {
+              value: "Loaded · sizing open",
+              detail:
+                "Source rows and documents are loaded, but no supported sizing calculation or accepted benchmark is recorded for these levers.",
+              tone: COL.amber,
+            }
         : {
             value: "Loaded",
             detail:
@@ -3003,12 +3142,23 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               "Owner comes from the opportunity owner when loaded, otherwise the Contract 360 renewal owner.",
             tone: COL.ink,
           },
-          {
-            label: "Next action",
-            value: topOpportunity ? "Work the lever" : "Load evidence",
-            detail: topOpportunity?.nextAction ?? recWhy,
-            tone: topOpportunity ? COL.blue : COL.gray,
-          },
+          // "Next action" is only a card when there is no lever to work.
+          //
+          // With a lever loaded its value read "Work the lever", which says
+          // nothing, and its detail was the lever's own nextAction — the exact
+          // string the Top lever card two positions above already carries. The
+          // lever card is the action; a second card restating it is not a
+          // second step.
+          ...(topOpportunity
+            ? []
+            : [
+                {
+                  label: "Next action",
+                  value: "Load evidence",
+                  detail: recWhy,
+                  tone: COL.gray,
+                },
+              ]),
         ],
       }
     : null;
@@ -4155,6 +4305,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     cLeverage: false,
     cEvidence: activeTab === "Evidence",
     cActions: activeTab === "Optimize",
+    cEducation: activeTab === "Education",
     termRows,
     econBars,
     scopeRows,
@@ -4178,6 +4329,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     optScenarios,
     optLedger: optLedgerView,
     optSpine: optSpineView,
+    optWorkflow,
     opportunityView,
     commercialPosture,
     optCtaLabel,
@@ -4194,6 +4346,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     goActions: () => vm.setTab("contract", "Optimize"),
     detailState,
     detail,
+    contractIntelligence: detail?.contractIntelligence ?? null,
+    contractEducation,
 
     isOpp: kind === "opportunity" && !!opp,
     oppLevers,

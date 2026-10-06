@@ -3,6 +3,7 @@ import {
   MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES,
   MERIDIAN_PHASE0_CONTEXT_TEMPLATES,
   NORTHSTAR_CONTEXT_TEMPLATES,
+  UNIVERSAL_CONTEXT_TEMPLATES,
   SUPPORTED_CONTEXT_UPLOAD_FORMATS,
   getTemplateById,
   getTemplateFormatCoverage,
@@ -53,7 +54,8 @@ describe("context template library exception coverage", () => {
     });
     expect(MERIDIAN_PHASE0_CONTEXT_TEMPLATES).toHaveLength(6);
     expect(CONTEXT_TEMPLATE_REGISTRY.length).toBe(
-      NORTHSTAR_CONTEXT_TEMPLATES.length +
+      UNIVERSAL_CONTEXT_TEMPLATES.length +
+        NORTHSTAR_CONTEXT_TEMPLATES.length +
         MERIDIAN_PHASE0_CONTEXT_TEMPLATES.length +
         MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES.length,
     );
@@ -131,6 +133,7 @@ describe("context template library exception coverage", () => {
         "document_purpose",
         "authoritative_sections",
         "metric_dictionary",
+        "pdf_page_anchor",
       ],
     });
 

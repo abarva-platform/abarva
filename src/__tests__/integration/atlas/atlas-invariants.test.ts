@@ -137,7 +137,11 @@ describe('Atlas Tier-1 invariants', () => {
       }
     });
 
-    it.skip('no hardcoded APEX_RETAIL_PROGRAM_INSTANCES import survives in Atlas runtime (enable after sibling fix A)', () => {
+    // Re-measured 2026-09-19 (T-038): still true and still needed. The
+    // import survives at src/lib/agent/agent-mission-derived.ts:26, which
+    // is inside ATLAS_RUNTIME_DIRS, so enabling this today fails on a real
+    // finding rather than a stale one.
+    it.skip('no hardcoded APEX_RETAIL_PROGRAM_INSTANCES import survives in Atlas runtime (blocked: the import survives in src/lib/agent/agent-mission-derived.ts)', () => {
       const findings = scanForToken(atlasRuntimeFiles, 'APEX_RETAIL_PROGRAM_INSTANCES');
       if (findings.length > 0) {
         const msg = findings.map((f) => `${f.file}:${f.line}\n  ${f.excerpt}`).join('\n\n');
@@ -186,7 +190,13 @@ describe('Atlas Tier-1 invariants', () => {
      * response-shape.ts:209-210. Sibling fix B replaces them with `'—'` or an
      * omitted row. This invariant is the source-level guard.
      */
-    it.skip('no "Needs validation." boilerplate string survives in Atlas runtime (enable after sibling fix B)', () => {
+    // Re-measured 2026-09-19 (T-038): the BEHAVIOUR landed — no runtime
+    // path emits this string. What survives in scope is prose in
+    // src/lib/agent/response-shape.ts describing what the code refuses to
+    // emit, and this assertion reads file text, so enabling it today fails
+    // on its own documentation. It needs to exclude comments before it can
+    // be turned on; that is the remaining work, not "sibling fix B".
+    it.skip('no "Needs validation." boilerplate string survives in Atlas runtime (blocked: needs to exclude comments before it can be enabled)', () => {
       const findings = scanForToken(atlasRuntimeFiles, 'Needs validation.');
       if (findings.length > 0) {
         const msg = findings.map((f) => `${f.file}:${f.line}\n  ${f.excerpt}`).join('\n\n');
@@ -197,7 +207,13 @@ describe('Atlas Tier-1 invariants', () => {
       }
     });
 
-    it.skip('no "Medium pending evidence." boilerplate string survives in Atlas runtime (enable after sibling fix B)', () => {
+    // Re-measured 2026-09-19 (T-038): the BEHAVIOUR landed — no runtime
+    // path emits this string. What survives in scope is prose in
+    // src/lib/agent/response-shape.ts describing what the code refuses to
+    // emit, and this assertion reads file text, so enabling it today fails
+    // on its own documentation. It needs to exclude comments before it can
+    // be turned on; that is the remaining work, not "sibling fix B".
+    it.skip('no "Medium pending evidence." boilerplate string survives in Atlas runtime (blocked: needs to exclude comments before it can be enabled)', () => {
       const findings = scanForToken(atlasRuntimeFiles, 'Medium pending evidence.');
       if (findings.length > 0) {
         const msg = findings.map((f) => `${f.file}:${f.line}\n  ${f.excerpt}`).join('\n\n');
@@ -225,7 +241,13 @@ describe('Atlas Tier-1 invariants', () => {
      * (`buildCohortPosition`) is closed by sibling fix B. This test is `.skip`d
      * until sibling B lands; flip to `it(` to activate the regression guard.
      */
-    it.skip('every percentile rendering path references metric + cohort context (enable after sibling fix B)', () => {
+    // Re-measured 2026-09-19 (T-038): the BEHAVIOUR landed — no runtime
+    // path emits this string. What survives in scope is prose in
+    // src/lib/agent/response-shape.ts describing what the code refuses to
+    // emit, and this assertion reads file text, so enabling it today fails
+    // on its own documentation. It needs to exclude comments before it can
+    // be turned on; that is the remaining work, not "sibling fix B".
+    it.skip('every percentile rendering path references metric + cohort context (blocked: shares the same comment-matching problem, unverified separately)', () => {
       const offenders: ForbiddenTokenFinding[] = [];
       for (const file of atlasRuntimeFiles) {
         const contents = readFileSync(file, 'utf8');
@@ -257,43 +279,20 @@ describe('Atlas Tier-1 invariants', () => {
     });
   });
 
-  describe('Determinism (audit C3)', () => {
-    /**
-     * Audit P1 — F5: every Anthropic call must set `temperature: 0`. Sibling
-     * fix C closes the source-level setting. This invariant is the regression
-     * guard: any `messages.create` or `messages.stream` call in the Atlas
-     * runtime must have a `temperature` field nearby (within 25 lines after).
-     *
-     * NOTE: pre-existing offenders (atlas/llm.ts:189, synthesis/route.ts:236,
-     * + the sibling agent/* call sites) are closed by sibling fix C. This test
-     * is `.skip`d until sibling C lands; flip to `it(` to activate the
-     * regression guard.
-     */
-    it.skip('every Anthropic messages.* call in Atlas runtime sets temperature (enable after sibling fix C)', () => {
-      const offenders: ForbiddenTokenFinding[] = [];
-      const anthropicCallPattern = /\.messages\.(create|stream)\s*\(/;
-      for (const file of atlasRuntimeFiles) {
-        const contents = readFileSync(file, 'utf8');
-        const lines = contents.split('\n');
-        for (let i = 0; i < lines.length; i += 1) {
-          if (!anthropicCallPattern.test(lines[i])) continue;
-          // Look in the next 25 lines for "temperature"
-          const window = lines.slice(i, Math.min(lines.length, i + 25)).join('\n');
-          if (/temperature\s*:/.test(window)) continue;
-          offenders.push({
-            file: file.replace(`${REPO_ROOT}/`, ''),
-            line: i + 1,
-            excerpt: lines[i].trim().slice(0, 200),
-          });
-        }
-      }
-      if (offenders.length > 0) {
-        const msg = offenders.map((f) => `${f.file}:${f.line}\n  ${f.excerpt}`).join('\n\n');
-        throw new Error(
-          `Anthropic messages.* call missing temperature parameter. ` +
-            `Atlas is an audit-bearing surface — temperature must be 0 for determinism (audit C3).\n\n${msg}`,
-        );
-      }
-    });
-  });
+  // ── Determinism (audit C3) — REMOVED 2026-09-19 (T-038) ──────────────
+  //
+  // This block held `it.skip('every Anthropic messages.* call in Atlas
+  // runtime sets temperature (enable after sibling fix C)')`, waiting on a
+  // fix that will not come, because the decision reversed.
+  //
+  // `src/lib/atlas/llm-determinism.test.ts` now asserts the OPPOSITE and
+  // runs: the Atlas call must NOT pass `temperature`, which is deprecated on
+  // the model and returns a 400 on every Atlas turn if set. Enabling the
+  // skipped guard would have failed correct code and sent whoever did it to
+  // "fix" a working call path.
+  //
+  // Deleted rather than left skipped: a skip labelled "enable after sibling
+  // fix C" is a promise that the assertion is still wanted. This one is not.
+  // Determinism is still guarded — by the live test, against the current
+  // policy.
 });

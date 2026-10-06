@@ -1,4 +1,9 @@
-export function SourceWorkspaceLoadingShell() {
+export function SourceWorkspaceLoadingShell({
+  contractId,
+}: {
+  readonly contractId?: string | null;
+}) {
+  const openingContract = Boolean(contractId?.trim());
   return (
     <section
       aria-label="Source 360 is preparing"
@@ -34,7 +39,9 @@ export function SourceWorkspaceLoadingShell() {
             lineHeight: 1.1,
           }}
         >
-          Preparing Source command center.
+          {openingContract
+            ? "Opening Contract 360."
+            : "Opening Source command center."}
         </h1>
         <p
           style={{
@@ -45,17 +52,20 @@ export function SourceWorkspaceLoadingShell() {
             lineHeight: 1.55,
           }}
         >
-          Opening portfolio rows and vendor rollups first. Evidence coverage and
-          action candidates hydrate after the executive view is visible.
+          {openingContract
+            ? `Restoring ${contractId} in the governed Source workspace. The selected contract and tab will remain stable through refresh.`
+            : "Opening portfolio rows and vendor rollups first. Evidence coverage and action candidates hydrate after the executive view is visible."}
         </p>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(5, minmax(112px, 1fr))",
-            gap: 24,
-            borderBottom: "1px solid rgba(10,10,11,.22)",
+            gridTemplateColumns: "repeat(5, minmax(140px, 1fr))",
+            gap: 6,
+            borderBottom: "1px solid rgba(211,209,199,.72)",
             background: "#f5f1eb",
-            maxWidth: 1280,
+            maxWidth: "100%",
+            overflowX: "auto",
+            padding: "14px 0 12px",
           }}
         >
           {["Command", "Contracts", "Levers", "Evidence", "Coverage"].map(
@@ -63,20 +73,16 @@ export function SourceWorkspaceLoadingShell() {
               <div
                 key={label}
                 style={{
-                  minHeight: 48,
+                  minHeight: 44,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: "1px solid transparent",
-                  borderBottom: 0,
-                  borderRadius: "8px 8px 0 0",
-                  padding: "0 14px",
-                  background: label === "Command" ? "#e1f5ee" : "transparent",
-                  color: label === "Command" ? "#0f6e56" : "#0a0a0b",
-                  fontWeight: 800,
+                  borderRadius: 6,
+                  padding: "0 10px",
+                  background: label === "Command" ? "#0f6e56" : "#f1efe8",
+                  color: label === "Command" ? "#fff" : "#5f5e5a",
+                  fontWeight: label === "Command" ? 700 : 500,
                   textAlign: "center",
-                  boxShadow:
-                    label === "Command" ? "inset 0 -3px 0 #1d9e75" : "none",
                 }}
               >
                 {label}

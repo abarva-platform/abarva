@@ -21,8 +21,7 @@ export const SOURCE_REQUIREMENT_LEVELS = [
   "Informational",
 ] as const;
 
-export type SourceRequirementLevel =
-  (typeof SOURCE_REQUIREMENT_LEVELS)[number];
+export type SourceRequirementLevel = (typeof SOURCE_REQUIREMENT_LEVELS)[number];
 
 export const SOURCE_RESPONSE_DISPOSITIONS = [
   "Comply",
@@ -33,6 +32,15 @@ export const SOURCE_RESPONSE_DISPOSITIONS = [
 
 export type SourceResponseDisposition =
   (typeof SOURCE_RESPONSE_DISPOSITIONS)[number];
+
+export type SourceNormalizedResponseCategory =
+  | "comply"
+  | "partial"
+  | "exception"
+  | "not_applicable"
+  | "unanswered";
+
+export type SourceNormalizedResponseReviewState = "accepted";
 
 export const SOURCE_RESPONSE_TYPES = [
   "Narrative",
@@ -53,6 +61,12 @@ export type SourceResponseType = (typeof SOURCE_RESPONSE_TYPES)[number];
  * after submission without inventing an answer.
  */
 export interface NormalizedRequirementResponse {
+  /**
+   * Stable question identity at the tenant/event/vendor/requirement grain.
+   * Deliberately excludes artifact id so a reviewed replacement workbook
+   * does not create a new question.
+   */
+  questionId?: string;
   requirementId: string;
   category: SourceRequirementCategory;
   section: string;
@@ -68,6 +82,15 @@ export interface NormalizedRequirementResponse {
   slaRef?: string | null;
   exceptionRef?: string | null;
   vendorOwner?: string | null;
+  responseCategory?: SourceNormalizedResponseCategory;
+  reviewState?: SourceNormalizedResponseReviewState;
+  provenance?: {
+    artifactId: string;
+    artifactName: string;
+    receivedAt: string;
+    parser: "source_normalized_vendor_response_v1";
+    factKey: string;
+  };
 }
 
 export interface NormalizedResponseQualityAnalytics {
@@ -94,4 +117,11 @@ export interface NormalizedVendorResponsePackage {
   analytics: NormalizedResponseQualityAnalytics;
   parserWarnings: string[];
   syntheticDemo?: boolean;
+  reviewState?: SourceNormalizedResponseReviewState;
+  authority?: {
+    acceptedArtifactOnly: true;
+    source: "artifact_acceptance" | "client_final_artifact";
+    acceptedAt: string;
+    downstreamContextPolicy: "include";
+  };
 }

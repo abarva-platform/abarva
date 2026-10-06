@@ -6,10 +6,10 @@
 // row pointing at the original via `parent_id`, never an update — which is
 // exactly the `appendAudit` contract.
 //
-// `quarantine-audit-supabase.ts` keeps the original, hard-wired Supabase
-// implementation untouched (used by the listing path and as the reference).
-// This module reuses its parent-row lookup (a read — transitive per design
-// doc §4) but routes the lifecycle INSERT through `selectWriteAdapter()`, so
+// `quarantine-audit-supabase.ts` keeps the original listing implementation as
+// the reference. This module reads the parent through the Azure/Postgres
+// compatibility client and routes the lifecycle INSERT through
+// `selectWriteAdapter()`, so
 // the same code path commits to Supabase today and to Azure Postgres after
 // the cutover-flip — selected by `ABARVA_DATA_PLANE`, default `supabase`.
 //
@@ -41,7 +41,7 @@ interface ParentRow {
   storage_path: string | null;
 }
 
-/** Look up the parent quarantine row (a read — stays on Supabase, transitive). */
+/** Look up the parent quarantine row through the canonical Azure read path. */
 async function loadParent(id: string, failurePrefix: string): Promise<ParentRow> {
   const sb = getAzureWriteFluentClient();
   const { data, error } = await sb

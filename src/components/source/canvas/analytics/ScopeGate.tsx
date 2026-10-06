@@ -3,6 +3,10 @@
 import { useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { ANALYTICS } from './analytics-tokens';
+import {
+  SOURCE_TERMINAL_GATE_CONTRACT,
+  isTerminalSourceStage,
+} from '@/lib/source/stage-terminal-contract';
 import type { StageGateView } from './view-model';
 
 interface ScopeGateProps {
@@ -19,11 +23,20 @@ interface ScopeGateProps {
  * because the evidence reached its target state — never because someone clicked
  * "mark met."
  */
-export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
+export function ScopeGate({ gate, stageName, eventId, stageKey }: ScopeGateProps) {
   const router = useRouter();
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set());
   const allConfirmed = confirmed.size === gate.confirms.length;
-  const last = gate.nextStageName === null;
+  /**
+   * ITEM U-406. `stageKey` was already a declared prop and was destructured by
+   * nobody, so terminality was read off `gate.nextStageName` — a field the
+   * exemplar could fill with an invented target, and did. The stage decides it;
+   * the missing label is a consequence, not the evidence. The label stays in the
+   * fallback for a caller that renders a gate without a stage key.
+   */
+  const last = stageKey
+    ? isTerminalSourceStage(stageKey)
+    : gate.nextStageName === null;
   const canOpenApprovalWorkspace = allConfirmed && Boolean(eventId);
 
   const cardStyle: CSSProperties = {
@@ -56,10 +69,12 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
           maxWidth: '58ch',
         }}
       >
-        {gate.approver} confirms three things before {stageName} advances
         {last
-          ? ' and the event closes.'
-          : `. This page prepares the gate; the formal decision happens in the event approval workspace.`}
+          ? `${gate.approver} confirms three things before the ${stageName} completion review. `
+          : `${gate.approver} confirms three things before ${stageName} advances. `}
+        {last
+          ? SOURCE_TERMINAL_GATE_CONTRACT.outcomeSentence
+          : 'This page prepares the gate; the formal decision happens in the event approval workspace.'}
       </p>
 
       <div
@@ -75,8 +90,16 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
         }}
       >
         <b>What good looks like here:</b> inputs are complete, exceptions are
-        visible, and the approval packet is ready to review. The event approval
-        workspace records the human rationale and advances the event.
+        visible, and the approval packet is ready to review.{' '}
+        {/*
+          * ITEM U-406. This sentence promised that the workspace "advances the
+          * event" on EVERY stage, including the terminal one, where there is
+          * nothing onward to advance to. The terminal wording is the stated
+          * contract's, not a second phrasing invented at the surface.
+          */}
+        {last
+          ? SOURCE_TERMINAL_GATE_CONTRACT.gateSummarySentence
+          : 'The event approval workspace records the human rationale and advances the event.'}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -190,6 +213,35 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
             background: ANALYTICS.SOFT,
           }}
         >
+          {/*
+            * Item U-535. An EMPTY `generates` is a real derived answer, not a
+            * missing one: `evaluation` derives this list from the resolved
+            * archetype's `deliverablePack` at that stage, and no rule-bearing
+            * archetype declares a deliverable there. Until this branch existed
+            * the heading and its dashed box rendered unconditionally, so the
+            * honest answer drew an empty box under "Prepared for approval" and
+            * then promised, in the footer below, that "these" are prepared after
+            * approval — a promise about nothing. The alternative was to backfill
+            * the stage exemplar's deliverable to keep the box full, which would
+            * assert a document no archetype declares.
+            */}
+          {gate.generates.length === 0 ? (
+            <div
+              style={{
+                fontSize: 12.5,
+                color: ANALYTICS.MUTED,
+                lineHeight: 1.5,
+              }}
+            >
+              <b style={{ color: ANALYTICS.INK_2 }}>
+                No deliverable is declared for this stage.
+              </b>{' '}
+              This event&rsquo;s archetype names no document that this gate
+              generates, so nothing is listed here rather than a placeholder
+              standing in for one. The approval still advances the stage.
+            </div>
+          ) : (
+          <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {gate.generates.map((deliverable) => (
               <div
@@ -243,6 +295,8 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
             prepared automatically after the approval decision — there is no build step on
             this stage page.
           </div>
+          </>
+          )}
         </div>
       </div>
 
@@ -266,7 +320,9 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
             cursor: canOpenApprovalWorkspace ? 'pointer' : 'not-allowed',
           }}
         >
-          {last ? 'Open final approval ->' : 'Open event approval page ->'}
+          {last
+            ? `${SOURCE_TERMINAL_GATE_CONTRACT.decisionLabel} ->`
+            : 'Open event approval page ->'}
         </button>
         {!canOpenApprovalWorkspace ? (
           <span style={{ fontSize: 11.5, color: ANALYTICS.FAINT }}>

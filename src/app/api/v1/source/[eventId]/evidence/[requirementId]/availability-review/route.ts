@@ -6,6 +6,8 @@ import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { evidenceById } from "@/lib/source/canonical-specs";
 import {
@@ -14,7 +16,9 @@ import {
   type SourceEventEvidenceStateRow,
 } from "@/lib/source/canvas-substrate/types";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
+import { matchEvidenceRequirementForUpload } from "@/lib/source/canvas-substrate/upload-sync";
 import { resolveSourceEventUuidForClient } from "@/lib/source/queries";
+import { reviewOperationalInventory } from "@/lib/source/evidence-review/operational-inventory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,12 +39,28 @@ type ReviewContext = {
     role: string;
   };
   requirement: NonNullable<ReturnType<typeof evidenceById>>;
+  inventoryProof?: { rowCount: number; sourceSha256: string; sourceArtifactId: string };
+};
+
+type InventoryArtifactRow = {
+  id: string;
+  original_name: string;
+  mime_type: string;
+  sha256: string;
+  blob_uri: string;
 };
 
 type ReviewPersonRow = {
   id: string;
   name: string | null;
   email: string | null;
+};
+
+type ParsedSourceArtifactRow = {
+  id: string;
+  original_name: string;
+  parse_status: string;
+  updated_at: string;
 };
 
 const STATE_RANK: Record<SourceEventEvidenceCurrentState, number> = {
@@ -55,6 +75,7 @@ const STATE_RANK: Record<SourceEventEvidenceCurrentState, number> = {
 
 const REVIEW_PROVENANCE = "uploaded-evidence-human-review";
 const REVIEW_SCOPE = "availability_only";
+const INVENTORY_REVIEW_SCOPE = "validated_operational_inventory";
 const REVIEW_DISCLAIMER =
   "Confirms that parsed evidence is available for this workflow requirement. It does not approve legal, security, commercial, supplier, or finance content.";
 const PLACEHOLDER_REVIEWER_NAMES = new Set([
@@ -85,7 +106,22 @@ function cleanReviewerName(value: string | null | undefined): string | null {
   return trimmed;
 }
 
+function canonicalPersonId(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      trimmed,
+    )
+    ? trimmed
+    : null;
+}
+
 function reviewPreview(context: ReviewContext) {
+  const targetState = context.inventoryProof
+    ? "Usable Evidence"
+    : STATE_RANK[context.evidence.current_state] > STATE_RANK.Available
+      ? context.evidence.current_state
+      : "Available";
   return {
     actionType: "evidence_reviewed",
     actionLabel: `Reviewed parsed evidence: ${context.requirement.label}`,
@@ -94,14 +130,18 @@ function reviewPreview(context: ReviewContext) {
     requirementLabel: context.requirement.label,
     stage: context.requirement.stage,
     currentState: context.evidence.current_state,
-    targetState:
-      STATE_RANK[context.evidence.current_state] > STATE_RANK.Available
-        ? context.evidence.current_state
-        : "Available",
+    targetState,
     provenance: REVIEW_PROVENANCE,
-    reviewScope: REVIEW_SCOPE,
+    reviewScope: context.inventoryProof ? INVENTORY_REVIEW_SCOPE : REVIEW_SCOPE,
     approvalGranted: false,
-    disclaimer: REVIEW_DISCLAIMER,
+    disclaimer: context.inventoryProof
+      ? "Confirms this source-bound operational inventory is valid for Scope. It does not validate costs, approve a contract, or create canonical service records."
+      : REVIEW_DISCLAIMER,
+    ...(context.inventoryProof ? {
+      rowCount: context.inventoryProof.rowCount,
+      sourceArtifactId: context.inventoryProof.sourceArtifactId,
+      sourceSha256: context.inventoryProof.sourceSha256,
+    } : {}),
   };
 }
 
@@ -140,7 +180,11 @@ async function resolveReviewContext(
       { status: 403 },
     );
   }
-  if (!currentUser?.personId || !currentUser.email) {
+  // requireTenancy may reconcile a stale Clerk-linked person during this request.
+  // Prefer that canonical result over the pre-reconciliation current-user snapshot.
+  const resolvedReviewerPersonId =
+    canonicalPersonId(tenancy?.userId) ?? currentUser?.personId;
+  if (!currentUser || !resolvedReviewerPersonId || !currentUser.email) {
     return Response.json(
       {
         ok: false,
@@ -156,7 +200,7 @@ async function resolveReviewContext(
   const { data: reviewerPerson, error: reviewerError } = await db
     .from("persons")
     .select("id, name, email")
-    .eq("id", currentUser.personId)
+    .eq("id", resolvedReviewerPersonId)
     .maybeSingle<ReviewPersonRow>();
   if (reviewerError) {
     return Response.json(
@@ -241,7 +285,52 @@ async function resolveReviewContext(
       { status: 500 },
     );
   }
-  if (!evidence || STATE_RANK[evidence.current_state] < STATE_RANK.Parsed) {
+  let reviewEvidence = evidence;
+  if (
+    evidence &&
+    requirementId !== "EVID-SRC-SCOPE-APP-INV" &&
+    STATE_RANK[evidence.current_state] < STATE_RANK.Parsed
+  ) {
+    const { data: parsedArtifacts, error: artifactError } = await db
+      .from("source_artifacts")
+      .select("id, original_name, parse_status, updated_at")
+      .eq("source_event_row_id", persistedEvent.id)
+      .eq("stage_key", requirement.stage)
+      .eq("parse_status", "parsed")
+      .is("deleted_at", null);
+    if (artifactError) {
+      return Response.json(
+        { ok: false, error: "lookup_failed", detail: artifactError.message },
+        { status: 500 },
+      );
+    }
+    const matchedArtifact = (
+      (parsedArtifacts ?? []) as ParsedSourceArtifactRow[]
+    )
+      .filter(
+        (artifact) =>
+          matchEvidenceRequirementForUpload({
+            stageKey: requirement.stage,
+            filename: artifact.original_name,
+          })?.requirementId === requirementId,
+      )
+      .sort(
+        (left, right) =>
+          new Date(right.updated_at).getTime() -
+          new Date(left.updated_at).getTime(),
+      )[0];
+    if (matchedArtifact) {
+      reviewEvidence = {
+        ...evidence,
+        current_state: "Parsed",
+        source_artifact_id: matchedArtifact.id,
+      };
+    }
+  }
+  if (
+    !reviewEvidence ||
+    STATE_RANK[reviewEvidence.current_state] < STATE_RANK.Parsed
+  ) {
     return Response.json(
       {
         ok: false,
@@ -253,11 +342,72 @@ async function resolveReviewContext(
     );
   }
 
+  let inventoryProof: ReviewContext["inventoryProof"];
+  if (requirementId === "EVID-SRC-SCOPE-APP-INV") {
+    if (!reviewEvidence.source_artifact_id) {
+      return Response.json(
+        { ok: false, error: "source_artifact_required" },
+        { status: 409 },
+      );
+    }
+    const { data: artifact, error: artifactError } = await db
+      .from("source_artifacts")
+      .select("id, original_name, mime_type, sha256, blob_uri")
+      .eq("id", reviewEvidence.source_artifact_id)
+      .eq("tenant_key", clientKeyToInventorySubstrateKey(effectiveClientKey))
+      .eq("source_event_id", persistedEvent.id)
+      .eq("source_event_row_id", persistedEvent.id)
+      .eq("stage_key", "scope")
+      .eq("parse_status", "parsed")
+      .is("deleted_at", null)
+      .maybeSingle<InventoryArtifactRow>();
+    if (artifactError) {
+      return Response.json(
+        { ok: false, error: "lookup_failed", detail: artifactError.message },
+        { status: 500 },
+      );
+    }
+    if (!artifact) {
+      return Response.json(
+        { ok: false, error: "inventory_artifact_not_found" },
+        { status: 409 },
+      );
+    }
+    let bytes: Buffer;
+    try {
+      bytes = Buffer.from(await getObjectStorageAdapter().download("source-artifacts", artifact.blob_uri));
+    } catch {
+      return Response.json(
+        { ok: false, error: "inventory_file_unavailable" },
+        { status: 409 },
+      );
+    }
+    const validated = await reviewOperationalInventory({
+      artifact: {
+        originalName: artifact.original_name,
+        mimeType: artifact.mime_type,
+        sha256: artifact.sha256,
+      },
+      bytes,
+    });
+    if (!validated.ok) {
+      return Response.json(
+        { ok: false, error: "inventory_invalid", detail: validated.reason },
+        { status: 409 },
+      );
+    }
+    inventoryProof = {
+      rowCount: validated.rowCount,
+      sourceSha256: validated.sourceSha256,
+      sourceArtifactId: artifact.id,
+    };
+  }
+
   return {
     currentUser,
     effectiveClientKey,
     eventId: persistedEvent.id,
-    evidence,
+    evidence: reviewEvidence,
     reviewer: {
       personId: reviewerPersonId,
       displayName: reviewerName,
@@ -265,6 +415,7 @@ async function resolveReviewContext(
       role: currentUser.primaryRole,
     },
     requirement,
+    inventoryProof,
   };
 }
 
@@ -292,6 +443,8 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
     const body = (await request.json().catch(() => null)) as {
       rationale?: unknown;
       stage?: unknown;
+      sourceArtifactId?: unknown;
+      sourceSha256?: unknown;
     } | null;
     const rationale = cleanRationale(body?.rationale);
     if (!rationale)
@@ -299,6 +452,15 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
 
     const context = await resolveReviewContext(eventId, requirementId);
     if (context instanceof Response) return context;
+    if (context.inventoryProof && (
+      body?.sourceArtifactId !== context.inventoryProof.sourceArtifactId ||
+      body?.sourceSha256 !== context.inventoryProof.sourceSha256
+    )) {
+      return Response.json(
+        { ok: false, error: "stale_inventory_review", detail: "The linked inventory changed. Review the current file before confirming." },
+        { status: 409 },
+      );
+    }
     const requestedStage =
       typeof body?.stage === "string"
         ? normalizeSourceStageKey(body.stage)
@@ -310,15 +472,17 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
     }
 
     const nowIso = new Date().toISOString();
-    const targetState =
-      STATE_RANK[context.evidence.current_state] > STATE_RANK.Available
-        ? context.evidence.current_state
-        : "Available";
+    const targetState = reviewPreview(context).targetState;
     const reviewNote = [
       `Evidence lifecycle review (${nowIso})`,
       `reviewer=${context.reviewer.displayName}`,
       `person_id=${context.reviewer.personId}`,
-      `scope=${REVIEW_SCOPE}`,
+      `scope=${context.inventoryProof ? INVENTORY_REVIEW_SCOPE : REVIEW_SCOPE}`,
+      ...(context.inventoryProof ? [
+        `source_artifact_id=${context.inventoryProof.sourceArtifactId}`,
+        `sha256=${context.inventoryProof.sourceSha256}`,
+        `validated_rows=${context.inventoryProof.rowCount}`,
+      ] : []),
       "approval_granted=false",
       rationale,
     ].join("; ");
@@ -327,16 +491,23 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
       : reviewNote;
 
     const db = getAzureWriteFluentClient();
-    const { data: row, error: updateError } = await db
+    let updateQuery = db
       .from("source_event_evidence_states")
       .update({
         current_state: targetState,
+        source_artifact_id: context.evidence.source_artifact_id,
         notes,
         last_synced_at: nowIso,
         updated_at: nowIso,
       })
       .eq("id", context.evidence.id)
-      .eq("tenant_key", context.effectiveClientKey)
+      .eq("tenant_key", context.effectiveClientKey);
+    if (context.inventoryProof) {
+      updateQuery = updateQuery
+        .eq("source_artifact_id", context.inventoryProof.sourceArtifactId)
+        .eq("current_state", context.evidence.current_state);
+    }
+    const { data: row, error: updateError } = await updateQuery
       .select("*")
       .single<SourceEventEvidenceStateRow>();
     if (updateError) {
@@ -376,11 +547,16 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
         requirementId,
         label: context.requirement.label,
         provenance: REVIEW_PROVENANCE,
-        reviewScope: REVIEW_SCOPE,
+        reviewScope: context.inventoryProof ? INVENTORY_REVIEW_SCOPE : REVIEW_SCOPE,
         approvalGranted: false,
         rationale,
         state: targetState,
-        disclaimer: REVIEW_DISCLAIMER,
+        disclaimer: preview.disclaimer,
+        ...(context.inventoryProof ? {
+          rowCount: context.inventoryProof.rowCount,
+          sourceArtifactId: context.inventoryProof.sourceArtifactId,
+          sourceSha256: context.inventoryProof.sourceSha256,
+        } : {}),
       },
       occurredAtIso: nowIso,
     });

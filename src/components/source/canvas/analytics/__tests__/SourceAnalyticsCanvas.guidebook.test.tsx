@@ -209,15 +209,17 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
     const volumetricsRow = screen.getByTestId(
       "source-shell-guidebook-prep-row-scope.volumetrics",
     );
-    expect(volumetricsRow).toHaveTextContent("Provide the volumetrics");
-    expect(volumetricsRow).toHaveTextContent("ITSM / finance baseline");
-    expect(volumetricsRow).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(volumetricsRow).toHaveTextContent("Volumetrics file");
+    expect(volumetricsRow).toHaveTextContent("Provide ticket volumes");
+    expect(volumetricsRow).toHaveTextContent("ITSM ticket export");
+    expect(volumetricsRow).toHaveTextContent("ITSM owner");
+    expect(volumetricsRow).toHaveTextContent("Ticket-history file");
     expect(volumetricsRow).toHaveTextContent("CSV or XLSX");
     expect(volumetricsRow).toHaveTextContent(
-      "Tickets, SLA misses, change orders, run volumes",
+      "Ticket counts and SLA breach counts",
     );
-    expect(volumetricsRow).toHaveTextContent("VOLUMETRICS_V1");
+    expect(volumetricsRow).toHaveTextContent(
+      "ITSM ticket history by tier and time window",
+    );
   });
 
   it("does not call a completed stage gate-ready while required artifacts still need review", () => {

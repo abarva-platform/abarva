@@ -1,0 +1,120 @@
+{
+  "item": "T-777",
+  "title": "Repair the one suite holding src/lib/security/__tests__ dark, then wire the directory",
+  "recordedAt": "2026-09-30T06:32:40Z",
+  "base": "2b750dd78d85bb836864c332bd48b1c00ed6bbaa",
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair",
+    "already_verdicted_elsewhere"
+  ],
+  "scope": {
+    "drawnFrom": "The directory T-776 held (heldDirectories.src/lib/security/__tests__, successorFiledAs T-777). Judged whole: every test file in it is a row here.",
+    "drawSize": 4,
+    "everyFileWasExecuted": "Each file run on its own with npx jest --runTestsByPath after the repair; the directory ran 3 failing / 19 passing of 22 on the base and 0 failing / 25 passing of 25 after.",
+    "greenOnRun": 4,
+    "redOnRun": 0
+  },
+  "wiring": {
+    "workflow": ".github/workflows/unit-suites.yml",
+    "directories": [
+      "src/lib/security/__tests__"
+    ],
+    "suitesWired": 4,
+    "casesWired": 25,
+    "namedAsADirectory": "Named as a DIRECTORY without a trailing slash, and the line leaves src/__tests__/behaviors/product-directory-ci-coverage.baseline.json in the same change.",
+    "provenBy": "src/__tests__/behaviors/t777-security-suite-wiring.test.ts, answering through the census resolver (collectReachableCommands + reachableEntrySelects), never by grepping the workflow."
+  },
+  "heldDirectories": {},
+  "grantCheckRelocatedTo": {
+    "instrument": "src/scripts/assert-sensitive-upload-audit-immutability.ts",
+    "command": "npm run assert:sensitive-upload-audit-immutability",
+    "why": "It asserts the behaviour the grants exist for (UPDATE and DELETE blocked for authenticated observer and tenant-admin claims) against a real database, which no in-process jest run can answer. It is an operator-run live assertion, not a CI step; this item does not change that."
+  },
+  "claimedWriteFiles": [
+    "src/lib/security/__tests__/quarantine-audit-supabase.test.ts",
+    ".github/workflows/unit-suites.yml",
+    "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
+    "docs/architecture/t777-security-suite-repair-triage.json",
+    "src/__tests__/behaviors/t777-security-suite-wiring.test.ts",
+    "docs/architecture/test-ci-coverage-census.json",
+    "docs/releases/records/2026-09-30-t777-quarantine-audit-suite-repair.md"
+  ],
+  "suites": [
+    {
+      "path": "src/lib/security/__tests__/preingest-sensitive-scanner.test.ts",
+      "directory": "src/lib/security/__tests__",
+      "draw": "T-777 repair of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "passedTests": 5,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-777",
+      "wiredInThisItem": true,
+      "rationale": "Green 5 of 5, behavioural, reads no repository file. Wired with its directory now that the sibling is repaired."
+    },
+    {
+      "path": "src/lib/security/__tests__/purview-classification.test.ts",
+      "directory": "src/lib/security/__tests__",
+      "draw": "T-777 repair of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "passedTests": 4,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-777",
+      "wiredInThisItem": true,
+      "rationale": "Green 4 of 4, behavioural, reads no repository file. Wired with its directory now that the sibling is repaired."
+    },
+    {
+      "path": "src/lib/security/__tests__/quarantine-audit-supabase.test.ts",
+      "directory": "src/lib/security/__tests__",
+      "draw": "T-777 repair of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 7,
+      "passedTests": 7,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-777",
+      "wiredInThisItem": true,
+      "rationale": "Repaired. The three data-source cases now mock @/lib/data-plane/postgresCompat, the client quarantine-audit-supabase.ts actually calls, and assert the tenant filter, the parent_id IS NULL exclusion, error surfacing, and that release and hardDelete append one lifecycle row with no update, delete or upsert on any table handle. The migration-text case is deleted, not sharpened: the grants of an append-only audit table are a database property and are asserted against live Postgres by npm run assert:sensitive-upload-audit-immutability (src/scripts/assert-sensitive-upload-audit-immutability.ts), which attempts UPDATE and DELETE under authenticated claims. Green 7 of 7 on the real module; with the old mock target restored, 7 of 7 fail. Five subject mutations, five caught. Only list() is live (quarantine-audit-data-plane.ts delegates listing to it); release and hardDelete here are the reference implementation the data-plane module mirrors.",
+      "supersedes": "docs/architecture/t776-stale-suite-triage.json row for this path (sourceTextScanner true, verdict repair)"
+    },
+    {
+      "path": "src/lib/security/__tests__/sensitive-upload-guard.test.ts",
+      "directory": "src/lib/security/__tests__",
+      "draw": "T-777 repair of the T-776 held directory",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 9,
+      "passedTests": 9,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-777",
+      "wiredInThisItem": true,
+      "rationale": "Green 9 of 9, behavioural, reads no repository file. Wired with its directory now that the sibling is repaired."
+    }
+  ]
+}

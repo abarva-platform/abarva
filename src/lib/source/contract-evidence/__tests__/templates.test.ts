@@ -4,6 +4,17 @@ import {
 } from "../templates";
 
 describe("Source contract evidence templates", () => {
+  // Re-baselined 2026-09-24 (item T-756) against `e38e5b4f5` "Bind structured
+  // evidence to Source artifact generation" (2026-09-08), which prepended the
+  // `application_inventory` family to CONTRACT_EVIDENCE_TEMPLATES so the
+  // in-scope application estate binds to the sourcing event. The family list
+  // stays an ordered `toEqual` — the position of the new family is part of what
+  // this pins, and loosening the assertion to a set or a subset is how the next
+  // silent insertion would go unnoticed. The family is `required: false`, so the
+  // two `getRequiredContractEvidenceFamilies` cases below are unaffected and
+  // were not edited. The two assertions after the family list had never run
+  // since 2026-09-08, because this ordered compare failed ahead of them; both
+  // are unchanged and both pass.
   it("prescribes the AMS minimum viable evidence pack without asking for raw invoice dumps", () => {
     const pack = getContractEvidenceTemplatePack("ams_contract_optimization");
 
@@ -11,6 +22,7 @@ describe("Source contract evidence templates", () => {
     expect(pack.operatingRule).toContain("summarized extracts");
     expect(pack.operatingRule).toContain("Full raw invoices");
     expect(pack.templates.map((template) => template.family)).toEqual([
+      "application_inventory",
       "contract_baseline",
       "invoice_summary",
       "invoice_exception",

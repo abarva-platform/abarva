@@ -44,6 +44,15 @@ export interface ProvisionResult {
   accessLevel: "client_admin" | "program_viewer";
 }
 
+const PLACEHOLDER_PERSON_NAMES = new Set(["user", "unknown", "unknown user"]);
+
+function usablePersonName(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && !PLACEHOLDER_PERSON_NAMES.has(trimmed.toLowerCase())
+    ? trimmed
+    : null;
+}
+
 function isCanonical(key: string | null | undefined): boolean {
   return !!key && (CANONICAL_TENANT_KEYS as readonly string[]).includes(key);
 }
@@ -90,13 +99,23 @@ export async function ensureOperatorPersonProvisioned(
     // 1) persons — dedupe by email (idempotent).
     const { data: existing } = await sb
       .from("persons")
-      .select("id, primary_role")
+      .select("id, name, primary_role")
       .eq("email", email)
       .maybeSingle();
 
     let personId: string;
     if (existing?.id) {
       personId = existing.id as string;
+      const authenticatedName = usablePersonName(input.name);
+      if (
+        !usablePersonName(existing.name as string | null) &&
+        authenticatedName
+      ) {
+        await sb
+          .from("persons")
+          .update({ name: authenticatedName })
+          .eq("id", personId);
+      }
       // Repair role only upward to admin if Clerk says admin (never downgrade).
       if (isAdmin && existing.primary_role !== "maestro") {
         await sb

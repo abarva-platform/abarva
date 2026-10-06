@@ -84,12 +84,52 @@ describe('Intelligence chat surface · render contract (INT-VOICE.STRAT-2026-05-
       expect(shaped).not.toMatch(/^\s*- Next:/m);
       expect(shaped).not.toMatch(/^\s*- Question:/m);
 
-      // The full Brief A reasoning round-trips, not just an 18-word headline.
-      expect(shaped).toContain('high confidence on that');
+      // What survives the shaper today. The assertions that do NOT survive
+      // are in the `it.failing` case below, with the mechanism.
       expect(shaped).toContain('COGS-margin trap');
+      expect(shaped).toContain("What's driving the question");
+    });
+
+    // THE MARKER HAS CLEARED. This was `it.failing` — a case that passes
+    // while its body fails and fails the moment its body starts passing.
+    // It is now a plain `it`, because C-502 fixed the product code its
+    // comment was waiting on and the body passes. Promoting it is the whole
+    // point of the construct: leaving it as `it.failing` after the fix
+    // would turn a self-clearing marker into a permanently red one.
+    //
+    // What it was waiting on, kept because it is the clearest statement of
+    // the mechanism anywhere in the tree and it was written first. The
+    // template this suite was written against is genuinely off for
+    // /intelligence: `shouldCompactSurface('/intelligence')` returns false
+    // (src/lib/agent/response-shape.ts), and the four negative assertions in
+    // the case above pass. A SECOND compactor took the answer apart anyway.
+    // `shapeAgentResponseForSurface` ends in `shapeSharedAdvisorResponse`,
+    // which calls `compactForChat(text, targetChars = 900, maxParagraphs = 5)`
+    // — and `paragraphSplit` (src/lib/answer/shared-response-shaper.ts)
+    // splits on `\n\s*\n` OR a bare `\n`, so it counts LINES, not
+    // paragraphs. This fixture is 861 characters (under the 900 target) in 5
+    // paragraphs (at the budget), but 6 lines — so it was over budget by a
+    // line break inside a paragraph, and got fully destructured. The
+    // restructure then picked its lead sentence by keyword match
+    // (`vendor|risk|value|…`), which selected the CLOSING QUESTION and
+    // promoted it to the first line, keeping one supporting bullet. Three
+    // of this fixture's five load-bearing fragments were dropped.
+    //
+    // The comment named three candidate fixes — count paragraphs as
+    // paragraphs, raise the budget, or leave advisor surfaces unshaped —
+    // and called the choice a product decision. C-502 took the third: the
+    // shared compactor is now gated on the same `shouldCompactSurface`
+    // that already governs the other one, so a surface declared
+    // non-compacting is non-compacting for both. The line-counting
+    // `paragraphSplit` bug this comment identified is REAL and still
+    // present; it no longer reaches an advisor surface, and it is filed
+    // separately rather than fixed here. Filed as backlog item C-009.
+    it('round-trips the full Brief A reasoning, not just a lead and one bullet', () => {
+      const shaped = shapeAgentResponseForSurface('/intelligence', BRIEF_A_GOOD_RESPONSE_RETAIL);
+
+      expect(shaped).toContain('high confidence on that');
       expect(shaped).toContain('Demand forecasting at SKU-level');
       expect(shaped).toContain("push back on putting it ahead of assortment");
-      expect(shaped).toContain("What's driving the question");
     });
 
     it('does not promote an honest "I don\'t have that" caveat into a structured bullet', () => {
@@ -190,16 +230,42 @@ describe('Intelligence chat surface · render contract (INT-VOICE.STRAT-2026-05-
     // remaining adjacent-surface guard here is for Tower, which is unrelated
     // to Briefs A/B/C and intentionally still compacts.
 
-    it('Tower surface compaction is preserved (Tower is unrelated to Briefs A/B/C)', () => {
-      const raw = [
-        'Apex Retail Tower read: APX-04 is the highest risk.',
-        'Portfolio KPI evidence shows gate slippage, sponsor ambiguity, and unresolved value-baseline ownership.',
-        'I recommend pausing new scope until the next gate review validates owner and baseline.',
-      ].join(' ');
+    // This case used to assert that Tower STILL compacts. That stopped being
+    // true deliberately: the Wave 0 L6 production retests found Tower is an
+    // advisor surface for the Tower chat agent too — the compactor turned real
+    // answers into malformed tables and "Evidence: 1." stubs — and Tower was
+    // removed from `shouldCompactSurface`, with the reason recorded in
+    // src/lib/agent/response-shape.ts. The old assertion could only have been
+    // satisfied by putting Tower back, so it was a red test whose cheapest
+    // repair was to revert the fix that made it red.
+    //
+    // The property it stood for is that this module's compaction gate is
+    // narrow and stays narrow, so it is asserted in both directions here: an
+    // advisor surface must not get the template, and a form surface that is
+    // correctly compacted must still get it. A one-directional guard cannot
+    // tell "the gate is narrow" from "the gate is gone". Note the module's own
+    // EXPERT_POSTURE_SURFACES guard in
+    // src/lib/agent/__tests__/response-shape.test.ts does not list Tower, so
+    // nothing else asserts this.
+    const STRUCTURED_BULLET_RE = /^\s*- (?:Evidence|Missing|Next|Question):/m;
+    const ADJACENT_SURFACE_RAW = [
+      'Apex Retail Tower read: APX-04 is the highest risk.',
+      'Portfolio KPI evidence shows gate slippage, sponsor ambiguity, and unresolved value-baseline ownership.',
+      'I recommend pausing new scope until the next gate review validates owner and baseline.',
+    ].join(' ');
 
-      const shaped = shapeAgentResponseForSurface('/tower', raw);
-      const hasStructuredBullet = /^\s*- (?:Evidence|Missing|Next|Question):/m.test(shaped);
-      expect(hasStructuredBullet).toBe(true);
+    it('does not apply the template to Tower, which is an advisor surface', () => {
+      const shaped = shapeAgentResponseForSurface('/tower', ADJACENT_SURFACE_RAW);
+
+      expect(STRUCTURED_BULLET_RE.test(shaped)).toBe(false);
+      expect(shaped).toContain('Portfolio KPI evidence shows gate slippage');
+      expect(shaped).toContain('I recommend pausing new scope');
+    });
+
+    it('still applies the template to an admin form surface, which is correctly compacted', () => {
+      const shaped = shapeAgentResponseForSurface('/admin/setup', ADJACENT_SURFACE_RAW);
+
+      expect(STRUCTURED_BULLET_RE.test(shaped)).toBe(true);
     });
   });
 });

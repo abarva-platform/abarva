@@ -1,3 +1,5 @@
+import { UNMAPPED_IDENTIFIER_PLACEHOLDER } from '../../answer/shared-response-shaper';
+
 export type AgentOutputContractViolation =
   | 'raw_markdown_emphasis'
   | 'raw_visible_entity_id'
@@ -14,6 +16,10 @@ const BARE_RAW_ENTITY_ID_REGEX = /\b((?:P|UC|V)-[A-Z0-9]+(?:-[A-Z0-9]+){1,5})\b/
 const BARE_UUID_REGEX = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 const SENTENCE_SPLIT_REGEX = /(?<=[.!?])\s+/;
 const VS_DOT_SENTINEL = 'ABARVA_VS_DOT_SENTINEL';
+const IDENTIFIER_PLACEHOLDER_REGEX = UNMAPPED_IDENTIFIER_PLACEHOLDER.replace(
+  /[.*+?^${}()|[\]\\]/g,
+  '\\$&',
+);
 
 function splitContractSentences(text: string): string[] {
   return text
@@ -28,7 +34,18 @@ function stripRawEntityIds(text: string): string {
     .replace(BRACKETED_RAW_ID_REGEX, '')
     .replace(BARE_RAW_ENTITY_ID_REGEX, 'the cited pattern')
     .replace(/\bsignal\s*:\s*/gi, 'signal: ')
-    .replace(BARE_UUID_REGEX, 'the referenced record')
+    // This repair is authoritative for transient streaming chunks. The shared
+    // shaper separately owns the stored/settled answer. Their UUID scrubs are
+    // intentionally redundant because each path is independently user-visible;
+    // neither guard should be removed on the assumption that the other ran.
+    // Importing the shared wording keeps those independent passes consistent.
+    .replace(BARE_UUID_REGEX, UNMAPPED_IDENTIFIER_PLACEHOLDER)
+    // Match the settled shaper's punctuation cleanup. Without these rules, a
+    // reader briefly sees a parenthesized or em-dash placeholder while the
+    // answer streams, then watches it disappear when the settled text arrives.
+    .replace(new RegExp(`\\((?:\\s*${IDENTIFIER_PLACEHOLDER_REGEX}\\s*)\\)`, 'gi'), '')
+    .replace(new RegExp(`\\s+—\\s+${IDENTIFIER_PLACEHOLDER_REGEX}\\b`, 'gi'), '')
+    .replace(new RegExp(`\\b${IDENTIFIER_PLACEHOLDER_REGEX}\\s+—\\s+`, 'gi'), '')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1');
 }

@@ -5,7 +5,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceSetupConfigPage } from "@/components/source/setup/SourceSetupConfigPage";
 import { getActiveClientRow } from "@/lib/active-client";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalClientDisplayNameOrNull } from "@/lib/client-config";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import {
@@ -601,8 +601,13 @@ export default async function SourceSetupPage() {
     return <SourceSetupArtifactOperationsPage />;
   }
 
+  // U-512: this name lands in "…who can approve gates for {tenantName}."
+  // `canonicalClientDisplayName` answers the default account for anything it
+  // cannot resolve, so a failed client-row read told the reader they were
+  // configuring another tenant's approvals. The neutral literal is now
+  // reachable.
   const tenantName =
-    canonicalClientDisplayName({
+    canonicalClientDisplayNameOrNull({
       key: activeClient?.key,
       name: activeClient?.name,
     }) ?? "your tenant";

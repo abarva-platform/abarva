@@ -1,0 +1,5 @@
+tenant_key,dataset_version,contract_id,application_id,scope_status,platform_dependency,notes,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,MER-APP-CLAIMSDENIAL,in_scope_active,Databricks Enterprise tier,"Only live workload on the platform as of Sep 2026.",SRC-SCP-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,MER-APP-LAAMSMIG,in_scope_planned,Databricks Enterprise tier (PHI),"Target go-live Q1 2027 per program roadmap; not yet onboarded.",SRC-SCP-002
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,MER-APP-MEDEEXIT,in_scope_planned,Databricks Enterprise tier (PHI),"Target go-live Q3 2027 per program roadmap; not yet onboarded.",SRC-SCP-003
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,MER-APP-EPICINTEG,in_scope_planned,Databricks Enterprise tier (PHI),"Target go-live Q1 2027 per program roadmap; not yet onboarded.",SRC-SCP-004

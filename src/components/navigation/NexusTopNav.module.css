@@ -262,7 +262,7 @@
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1050px) {
   .root {
     grid-template-columns: auto 1fr auto;
     min-height: 68px;

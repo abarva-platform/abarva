@@ -4,16 +4,28 @@
 // All verification is deterministic: it checks exported constants, file
 // existence via fs.readFileSync, and structural invariants of seed data.
 //
-// Pre-integration notes:
-//   - SRC32 (Apex Source event seed), LINK1 (Source↔Program link contract),
-//     SRC33 (Apex-specific source event route), PROG15 (Apex program seed),
-//     PROG16 (Apex program-source link view), MW9 (cross-surface merge wave)
-//     do NOT exist on this branch. Checks that depend on those slices return
-//     status: 'deferred' with an explicit reason.
-//   - After integration those deferrals must be promoted to 'pass' or 'fail'.
+// Slice-integration notes (re-measured against origin/main, 2026-09-20, T-527):
+//   - SRC32, LINK1, SRC33, PROG15, PROG16 and MW9 are ALL `code_complete` in
+//     docs/build/build-slices.json, and every module is on disk. The note that
+//     stood here said they "do NOT exist on this branch", and CH-09, CH-10 and
+//     CH-11 reported "Deferred pending <SLICE> integration" on that basis.
+//     All three were false: the slices shipped under the names they chose, not
+//     the names these checks guessed. LINK1 is source-program-link.ts, not
+//     source-program-link-contract.ts; SRC33 is linked-program-badge-view.ts;
+//     PROG15 is program-future-phase-deliverables.ts.
+//   - A check that searches for a filename and reports the slice as pending
+//     when it misses cannot tell "not built" from "built elsewhere". So the
+//     disposition of an absent path is now DECLARED, in the shared register
+//     src/lib/qa/path-disposition.ts, and a 'superseded' entry resolves to a
+//     pass only once the landing path has been observed present.
 
 import fs from 'node:fs';
 import path from 'node:path';
+
+import {
+  resolvePathStatus,
+  type PathDispositionRegister,
+} from './path-disposition';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -82,6 +94,91 @@ function deferred(
   detail: string,
 ): StorylineVerificationResult {
   return { checkId, description, status: 'deferred', detail };
+}
+
+// ---------------------------------------------------------------------------
+// Path disposition register
+// ---------------------------------------------------------------------------
+
+/**
+ * Why each absent path this report looks for is absent.
+ *
+ * Every `landedAt` below was derived by reading the module's own header and
+ * confirming the slice id against docs/build/build-slices.json, and every one
+ * is observed present at resolve time rather than trusted.
+ */
+const STORYLINE_PATH_REGISTER: PathDispositionRegister = {
+  'src/lib/source/source-program-link-contract.ts': {
+    superseded: {
+      slice: 'LINK1 (Source Program Link Model)',
+      landedAt: 'src/lib/source/source-program-link.ts',
+      note:
+        'No commit on this branch history ever added a file named ' +
+        '"...-contract.ts"; the check guessed the name. The module that ' +
+        'shipped opens "// LINK1 — Source Program Link Model" and LINK1 is ' +
+        'code_complete in docs/build/build-slices.json.',
+    },
+  },
+  'src/app/(maestro)/source/events/apex-retail-cdp/page.tsx': {
+    superseded: {
+      slice: 'SRC33 (Linked Program Badge)',
+      landedAt: 'src/lib/source/linked-program-badge-view.ts',
+      note:
+        'SRC33 shipped as a view model consumed by the existing Source event ' +
+        'surface, not as a tenant-specific route. All three names this check ' +
+        'searched for describe a route or seed that was never the shape of ' +
+        'the slice. Its module opens "// SRC33 — Linked Program Badge View ' +
+        'Model" and SRC33 is code_complete.',
+    },
+  },
+  'src/lib/programs/apex-retail-cdp-program-seed.ts': {
+    superseded: {
+      slice: 'PROG15 (Complete Future Phase Deliverables)',
+      landedAt: 'src/lib/programs/program-future-phase-deliverables.ts',
+      note:
+        'PROG15 is tenant-agnostic and carries the Apex Retail CDP phases as ' +
+        'seed entries, so it was never going to be found under an ' +
+        '"apex-"-prefixed filename. Its module opens "// PROG15 · Complete ' +
+        'Future Phase Deliverables" and PROG15 is code_complete.',
+    },
+  },
+};
+
+/**
+ * Resolve one slice-integration check.
+ *
+ * Searching a candidate list is kept, because a slice that later lands at one
+ * of the guessed names should pass without an edit here. What changed is the
+ * miss: it no longer invents a reason. An unfound path is resolved through the
+ * register, which either names where the slice landed — verified — or fails
+ * and asks for the declaration.
+ */
+export function resolveSliceCheck(
+  checkId: string,
+  description: string,
+  candidates: string[],
+): StorylineVerificationResult {
+  for (const candidate of candidates) {
+    if (fileExists(candidate)) {
+      return pass(checkId, description, `Found at ${candidate}.`);
+    }
+  }
+
+  const primary = candidates[0];
+  const { status, detail } = resolvePathStatus(
+    primary,
+    false,
+    STORYLINE_PATH_REGISTER,
+    'STORYLINE_PATH_REGISTER',
+    fileExists,
+  );
+
+  // This report has three statuses and the register has five. Only 'pass' and
+  // 'deferred' map across; anything else — including an undeclared absence —
+  // is a fail, so a new path cannot enter this report without a declaration.
+  if (status === 'pass') return pass(checkId, description, detail);
+  if (status === 'deferred') return deferred(checkId, description, detail);
+  return fail(checkId, description, detail);
 }
 
 // ---------------------------------------------------------------------------
@@ -393,103 +490,47 @@ function checkSourceScenarioCaveats(): StorylineVerificationResult {
   );
 }
 
-/**
- * CH-09 · LINK1 source↔program link contract module exists (post-integration).
- * Deferred until LINK1 merges.
- */
+/** CH-09 · LINK1 source↔program link module is integrated. */
 function checkLink1ContractExists(): StorylineVerificationResult {
-  // LINK1 has not merged; the file does not exist yet.
-  const exists = fileExists('src/lib/source/source-program-link-contract.ts');
-  if (exists) {
-    return pass(
-      'CH-09',
-      'LINK1: source↔program link contract module exists',
-      'src/lib/source/source-program-link-contract.ts found. LINK1 is integrated.',
-    );
-  }
-  return deferred(
+  return resolveSliceCheck(
     'CH-09',
-    'LINK1: source↔program link contract module exists',
-    'src/lib/source/source-program-link-contract.ts not found. Deferred pending LINK1 integration.',
+    'LINK1: source↔program link module is integrated',
+    ['src/lib/source/source-program-link-contract.ts'],
   );
 }
 
-/**
- * CH-10 · SRC33 Apex source event route file exists (post-integration).
- * Deferred until SRC33 merges.
- */
+/** CH-10 · SRC33 is integrated. */
 function checkSrc33ApexRouteExists(): StorylineVerificationResult {
-  // Try a few plausible locations for the Apex-specific Source event route.
-  const candidates = [
+  return resolveSliceCheck('CH-10', 'SRC33: linked program badge is integrated', [
     'src/app/(maestro)/source/events/apex-retail-cdp/page.tsx',
     'src/lib/source/apex-retail-source-event.ts',
     'src/lib/source/source-apex-event-seed.ts',
-  ];
-  for (const candidate of candidates) {
-    if (fileExists(candidate)) {
-      return pass(
-        'CH-10',
-        'SRC33: Apex Retail source event route/seed exists',
-        `Found at ${candidate}. SRC33 is integrated.`,
-      );
-    }
-  }
-  return deferred(
-    'CH-10',
-    'SRC33: Apex Retail source event route/seed exists',
-    'No Apex Retail source event route or seed file found. Deferred pending SRC33 integration.',
-  );
+  ]);
 }
 
-/**
- * CH-11 · PROG15 Apex CDP program seed module exists (post-integration).
- * Deferred until PROG15 merges.
- */
+/** CH-11 · PROG15 is integrated. */
 function checkProg15ApexCdpSeedExists(): StorylineVerificationResult {
-  const candidates = [
-    'src/lib/programs/apex-retail-cdp-program-seed.ts',
-    'src/lib/programs/apex-cdp-seed.ts',
-    'src/lib/programs/program-seed-apex-retail.ts',
-  ];
-  for (const candidate of candidates) {
-    if (fileExists(candidate)) {
-      return pass(
-        'CH-11',
-        'PROG15: Apex Retail CDP program seed module exists',
-        `Found at ${candidate}. PROG15 is integrated.`,
-      );
-    }
-  }
-  return deferred(
+  return resolveSliceCheck(
     'CH-11',
-    'PROG15: Apex Retail CDP program seed module exists',
-    'No Apex Retail CDP program seed module found. Deferred pending PROG15 integration.',
+    'PROG15: future-phase deliverable seed is integrated',
+    [
+      'src/lib/programs/apex-retail-cdp-program-seed.ts',
+      'src/lib/programs/apex-cdp-seed.ts',
+      'src/lib/programs/program-seed-apex-retail.ts',
+    ],
   );
 }
 
-/**
- * CH-12 · PROG16 Apex program-source link view exists (post-integration).
- * Deferred until PROG16 merges.
- */
+/** CH-12 · PROG16 is integrated. */
 function checkProg16LinkViewExists(): StorylineVerificationResult {
-  const candidates = [
-    'src/lib/programs/apex-program-source-link-view.ts',
-    'src/lib/programs/program-source-link-view.ts',
-    'src/lib/programs/apex-retail-program-source-link.ts',
-  ];
-  for (const candidate of candidates) {
-    if (fileExists(candidate)) {
-      return pass(
-        'CH-12',
-        'PROG16: Apex program-source link view exists',
-        `Found at ${candidate}. PROG16 is integrated.`,
-      );
-    }
-  }
-  return deferred(
+  return resolveSliceCheck(
     'CH-12',
-    'PROG16: Apex program-source link view exists',
-    'No Apex program-source link view found. Deferred pending PROG16 integration.',
+    'PROG16: program-source link view is integrated',
+    [
+      'src/lib/programs/apex-program-source-link-view.ts',
+      'src/lib/programs/program-source-link-view.ts',
+      'src/lib/programs/apex-retail-program-source-link.ts',
+    ],
   );
 }
 
@@ -624,6 +665,8 @@ export function runApexStorylineVerification(): StorylineVerificationReport {
       'All checks are deterministic seed verification only. ' +
       'No live data, no model calls, no DB queries. ' +
       'This suite exercises demo story connectivity across the Source and Program surfaces. ' +
-      'Checks marked "deferred" will be promoted after SRC32 / LINK1 / SRC33 / PROG15 / PROG16 / MW9 integrate.',
+      'The disposition of an absent path is declared in STORYLINE_PATH_REGISTER and never inferred: ' +
+      'a check that misses every filename it searches for reports what the register says, ' +
+      'verified against the tree, or fails and asks for the declaration.',
   };
 }

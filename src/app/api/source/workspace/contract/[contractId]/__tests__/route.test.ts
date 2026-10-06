@@ -27,10 +27,12 @@ jest.mock("@/lib/source/data-model/contract-360-view", () => ({
 jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContract360: jest.fn(),
   getContractEvidenceOverview: jest.fn(),
+  getContractIntelligence: jest.fn(),
   getContractEvidencePerformanceSummary: jest.fn(),
   getContractOptimizationEvidencePack: jest.fn(),
   getContractOptimizationOpportunitySet: jest.fn(),
   listCloudCommitmentCoverageRows: jest.fn(),
+  listCloudTagQualityRows: jest.fn(),
   listContractApplicationScope: jest.fn(),
   listContractEvidencePricing: jest.fn(),
   listContractEvidenceScope: jest.fn(),
@@ -44,12 +46,16 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listDocFilesForContract: jest.fn(),
   listLatestTowerObservationsForSubjects: jest.fn(),
   listTowerValueClaimsForSubjects: jest.fn(),
+  getSourceContractEvidenceCoverage: jest.fn(),
+  getSourceContractActionCandidate: jest.fn(),
 }));
 
 jest.mock(
   "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter",
   () => ({
     loadSourceWorkspacePortfolio: jest.fn(),
+    loadSourceWorkspaceContractDetailFallback: jest.fn(),
+    loadSourceWorkspaceDirectImpactContract: jest.fn(),
     sourceWorkspaceProvider: jest.fn(
       (provider: string | null | undefined) => provider ?? "legacy",
     ),
@@ -62,6 +68,8 @@ import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import {
   loadSourceWorkspacePortfolio,
+  loadSourceWorkspaceContractDetailFallback,
+  loadSourceWorkspaceDirectImpactContract,
   sourceWorkspaceProvider,
 } from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
 import {
@@ -71,10 +79,12 @@ import {
 import {
   getContract360,
   getContractEvidenceOverview,
+  getContractIntelligence,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
   listCloudCommitmentCoverageRows,
+  listCloudTagQualityRows,
   listContractApplicationScope,
   listContractEvidencePricing,
   listContractEvidenceScope,
@@ -88,13 +98,20 @@ import {
   listDocFilesForContract,
   listLatestTowerObservationsForSubjects,
   listTowerValueClaimsForSubjects,
+  getSourceContractEvidenceCoverage,
+  getSourceContractActionCandidate,
 } from "@/lib/source/data-model/read-adapter";
 
 const mockRequireTenancy = requireTenancy as jest.Mock;
 const mockGetActiveClientRow = getActiveClientRow as jest.Mock;
 const mockCheckTenantAccessByKey = checkTenantAccessByKey as jest.Mock;
 const mockBuildContract360View = buildContract360View as jest.Mock;
-const mockLoadSourceWorkspacePortfolio = loadSourceWorkspacePortfolio as jest.Mock;
+const mockLoadSourceWorkspacePortfolio =
+  loadSourceWorkspacePortfolio as jest.Mock;
+const mockLoadSourceWorkspaceContractDetailFallback =
+  loadSourceWorkspaceContractDetailFallback as jest.Mock;
+const mockLoadSourceWorkspaceDirectImpactContract =
+  loadSourceWorkspaceDirectImpactContract as jest.Mock;
 const mockSourceWorkspaceProvider = sourceWorkspaceProvider as jest.Mock;
 const mockCollectContractSubjectRefs = collectContractSubjectRefs as jest.Mock;
 const mockGetContract360 = getContract360 as jest.Mock;
@@ -108,6 +125,7 @@ const mockListContractOperationalPerformance =
   listContractOperationalPerformance as jest.Mock;
 const mockGetContractEvidenceOverview =
   getContractEvidenceOverview as jest.Mock;
+const mockGetContractIntelligence = getContractIntelligence as jest.Mock;
 const mockGetContractEvidencePerformanceSummary =
   getContractEvidencePerformanceSummary as jest.Mock;
 const mockGetContractOptimizationEvidencePack =
@@ -119,6 +137,7 @@ const mockListContractEvidencePricing =
 const mockListContractEvidenceScope = listContractEvidenceScope as jest.Mock;
 const mockListCloudCommitmentCoverageRows =
   listCloudCommitmentCoverageRows as jest.Mock;
+const mockListCloudTagQualityRows = listCloudTagQualityRows as jest.Mock;
 const mockListContractPerformancePeriods =
   listContractPerformancePeriods as jest.Mock;
 const mockListContractSpendMonthly = listContractSpendMonthly as jest.Mock;
@@ -131,6 +150,10 @@ const mockListLatestTowerObservationsForSubjects =
   listLatestTowerObservationsForSubjects as jest.Mock;
 const mockListTowerValueClaimsForSubjects =
   listTowerValueClaimsForSubjects as jest.Mock;
+const mockGetSourceContractEvidenceCoverage =
+  getSourceContractEvidenceCoverage as jest.Mock;
+const mockGetSourceContractActionCandidate =
+  getSourceContractActionCandidate as jest.Mock;
 
 const contract = {
   tenant_key: "meridian",
@@ -171,7 +194,9 @@ beforeEach(() => {
   mockListContractPerformancePeriods.mockResolvedValue([]);
   mockListContractSpendMonthly.mockResolvedValue([]);
   mockListCloudCommitmentCoverageRows.mockResolvedValue([]);
+  mockListCloudTagQualityRows.mockResolvedValue([]);
   mockListContractTabIntelligence.mockResolvedValue([]);
+  mockGetContractIntelligence.mockResolvedValue(null);
   mockCollectContractSubjectRefs.mockReturnValue(["CTR-0006", "VEN-0006"]);
   mockListLatestTowerObservationsForSubjects.mockResolvedValue([]);
   mockListTowerValueClaimsForSubjects.mockResolvedValue([]);
@@ -188,6 +213,10 @@ beforeEach(() => {
     applicationScope: [],
     initiativeDependencies: [],
   });
+  mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValue(null);
+  mockLoadSourceWorkspaceDirectImpactContract.mockResolvedValue(null);
+  mockGetSourceContractEvidenceCoverage.mockResolvedValue(null);
+  mockGetSourceContractActionCandidate.mockResolvedValue(null);
   mockSourceWorkspaceProvider.mockImplementation(
     (provider: string | null | undefined) => provider ?? "legacy",
   );
@@ -198,7 +227,7 @@ function params(contractId = "CTR-0006") {
 }
 
 describe("GET /api/source/workspace/contract/[contractId]", () => {
-  it("uses a requested client that matches trusted tenancy without a secondary access lookup", async () => {
+  it("authorizes an explicit requested client without depending on active tenancy lookup", async () => {
     const res = await GET(
       new Request(
         "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",
@@ -207,7 +236,8 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(checkTenantAccessByKey).not.toHaveBeenCalled();
+    expect(checkTenantAccessByKey).toHaveBeenCalledWith("meridian");
+    expect(requireTenancy).not.toHaveBeenCalled();
     expect(getActiveClientRow).not.toHaveBeenCalled();
     expect(getContract360).toHaveBeenCalledWith("meridian", "CTR-0006");
     expect(listContractApplicationScope).toHaveBeenCalledWith(
@@ -222,12 +252,6 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
   });
 
   it("authorizes a cross-session requested client before reading contract detail", async () => {
-    mockRequireTenancy.mockResolvedValueOnce({
-      clientId: "client-arcturus",
-      clientKey: "arcturus",
-      userId: "user-1",
-    });
-
     const res = await GET(
       new Request(
         "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",
@@ -305,6 +329,45 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
     await expect(res.json()).resolves.toEqual({ error: "not_found" });
   });
 
+  it("returns a retryable error when every contract read fails, not a false 404", async () => {
+    mockGetContract360.mockRejectedValueOnce(new Error("canonical read unavailable"));
+    mockLoadSourceWorkspaceContractDetailFallback.mockRejectedValueOnce(
+      new Error("projection read unavailable"),
+    );
+    mockLoadSourceWorkspacePortfolio.mockRejectedValueOnce(
+      new Error("portfolio read unavailable"),
+    );
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(503);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    await expect(res.json()).resolves.toEqual({ error: "contract_detail_unavailable" });
+  });
+
+  it("can still use projection detail when the canonical read fails", async () => {
+    mockGetContract360.mockRejectedValueOnce(new Error("canonical read unavailable"));
+    mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValueOnce({
+      contract,
+      applicationScope: [],
+      initiativeDependencies: [],
+    });
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+  });
+
   it("hydrates detail from the active ECL projection provider when legacy detail has no row", async () => {
     mockGetContract360.mockResolvedValueOnce(null);
     const projectionScope = [
@@ -313,8 +376,8 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
         application_ref: "ehr-core",
       },
     ];
-    mockLoadSourceWorkspacePortfolio.mockResolvedValueOnce({
-      contracts: [contract],
+    mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValueOnce({
+      contract,
       applicationScope: projectionScope,
       initiativeDependencies: [],
     });
@@ -328,17 +391,243 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
 
     expect(res.status).toBe(200);
     expect(sourceWorkspaceProvider).toHaveBeenCalledWith("ecl_projection_db");
-    expect(loadSourceWorkspacePortfolio).toHaveBeenCalledWith(
+    expect(loadSourceWorkspaceContractDetailFallback).toHaveBeenCalledWith(
       "meridian",
-      expect.any(String),
+      "CTR-0006",
       "ecl_projection_db",
     );
+    expect(loadSourceWorkspacePortfolio).not.toHaveBeenCalled();
     expect(buildContract360View).toHaveBeenCalledWith(
       expect.objectContaining({
         contract,
         applicationScope: projectionScope,
       }),
     );
+  });
+
+  it("hydrates detail for a supplemental evidence contract promoted into the workspace list", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspacePortfolio.mockResolvedValueOnce({
+      contracts: [],
+      applicationScope: [],
+      initiativeDependencies: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "meridian",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-DBX-VENDOR",
+            vendor_name: "Databricks, Inc.",
+            contract_name:
+              "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+            contract_archetype: "cloud_consumption_commit",
+            coverage_state: "partial",
+            committed_spend_usd: 1550000,
+            actual_spend_usd: 66000,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+        vendorPositions: [],
+        storyline: [],
+        avaGroundingBundles: [],
+      },
+    });
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/MER-TECH-DBX-001?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params("MER-TECH-DBX-001"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(buildContract360View).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contract: expect.objectContaining({
+          contract_id: "MER-TECH-DBX-001",
+          vendor_name: "Databricks, Inc.",
+        }),
+      }),
+    );
+  });
+
+  it("resolves an action-only contract when portfolio impact is deferred without inventing contract value", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockGetSourceContractActionCandidate.mockResolvedValueOnce({
+      tenant_key: "meridian_health_global",
+      contract_id: "CTR-ACTION-1",
+      vendor_ref: "VEN-1",
+      vendor_name: "Example Vendor",
+      title: "Review terms",
+      action_type: "renewal",
+      opportunity_type: "renewal",
+      finding_summary: "Candidate action only",
+      candidate_amount_usd: 12000,
+      readiness_state: "candidate",
+      accountable_role: "Category Manager",
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-1?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-1"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(loadSourceWorkspacePortfolio).toHaveBeenCalledWith(
+      "meridian", expect.any(String), "ecl_projection_db", { impactMode: "deferred" },
+    );
+    expect(getSourceContractActionCandidate).toHaveBeenCalledWith("meridian", "CTR-ACTION-1");
+    expect(buildContract360View).toHaveBeenCalledWith(expect.objectContaining({
+      contract: expect.objectContaining({
+        contract_id: "CTR-ACTION-1",
+        annual_value: null,
+        total_committed_value: null,
+        resolved_annual_value: null,
+        resolved_total_committed_value: null,
+      }),
+    }));
+  });
+
+  it("does not resolve a supplemental row from another tenant", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockGetSourceContractActionCandidate.mockResolvedValueOnce({
+      tenant_key: "skyharbor_global",
+      contract_id: "CTR-ACTION-1",
+      vendor_ref: "VEN-1",
+      vendor_name: "Other Tenant Vendor",
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-1?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-1"),
+    );
+
+    expect(res.status).toBe(404);
+    expect(buildContract360View).not.toHaveBeenCalled();
+  });
+
+  it("resolves evidence-only detail without waiting for impact fanout", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockGetSourceContractEvidenceCoverage.mockResolvedValueOnce({
+      tenant_key: "meridian",
+      contract_id: "CTR-EVIDENCE-1",
+      vendor_ref: "VEN-1",
+      vendor_name: "Example Vendor",
+      contract_name: "Supplemental depth record",
+      coverage_state: "partial",
+      scope_rows: 2,
+      critical_scope_rows: 1,
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-EVIDENCE-1?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-EVIDENCE-1"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(getSourceContractEvidenceCoverage).toHaveBeenCalledWith("meridian", "CTR-EVIDENCE-1");
+    expect(buildContract360View).toHaveBeenCalledWith(expect.objectContaining({
+      contract: expect.objectContaining({
+        contract_id: "CTR-EVIDENCE-1",
+        annual_value: null,
+        total_committed_value: null,
+        scoped_application_count: 2,
+      }),
+    }));
+  });
+
+  it("uses the workspace direct impact producer when the summary views have no action row", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspaceDirectImpactContract.mockResolvedValueOnce({
+      action: {
+        tenant_key: "meridian_health_global",
+        contract_id: "CTR-ACTION-2",
+        vendor_ref: "VEN-2",
+        vendor_name: "Example Vendor",
+        title: "Review renewal evidence",
+        candidate_amount_usd: null,
+        readiness_state: "review_required",
+      },
+      coverage: null,
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-2?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-2"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(loadSourceWorkspaceDirectImpactContract).toHaveBeenCalledWith("meridian", "CTR-ACTION-2");
+    expect(buildContract360View).toHaveBeenCalledWith(expect.objectContaining({
+      contract: expect.objectContaining({
+        contract_id: "CTR-ACTION-2",
+        annual_value: null,
+        total_committed_value: null,
+      }),
+    }));
+  });
+
+  it("rejects a direct impact row for another tenant", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspaceDirectImpactContract.mockResolvedValueOnce({
+      action: { tenant_key: "skyharbor_global", contract_id: "CTR-ACTION-2" },
+      coverage: null,
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-2?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-2"),
+    );
+
+    expect(res.status).toBe(404);
+    expect(buildContract360View).not.toHaveBeenCalled();
+  });
+
+  it("uses direct coverage when a supplemental evidence row is absent from summary views", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspaceDirectImpactContract.mockResolvedValueOnce({
+      action: null,
+      coverage: {
+        tenant_key: "meridian_health_global",
+        contract_id: "CTR-EVIDENCE-2",
+        vendor_ref: "VEN-2",
+        vendor_name: "Example Vendor",
+        contract_name: "Supplemental depth record",
+        coverage_state: "partial",
+        scope_rows: 2,
+        critical_scope_rows: 1,
+      },
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-EVIDENCE-2?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-EVIDENCE-2"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(buildContract360View).toHaveBeenCalledWith(expect.objectContaining({
+      contract: expect.objectContaining({ contract_id: "CTR-EVIDENCE-2", annual_value: null }),
+    }));
+  });
+
+  it("reports a retryable read failure when the direct impact producer fails", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspaceDirectImpactContract.mockRejectedValueOnce(
+      new Error("direct read unavailable"),
+    );
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-2?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-2"),
+    );
+
+    expect(res.status).toBe(503);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(buildContract360View).not.toHaveBeenCalled();
   });
 
   it("passes governed tab intelligence into the contract-detail view builder", async () => {
@@ -364,6 +653,39 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
       expect.objectContaining({
         contractTabIntelligence: tabIntelligence,
       }),
+    );
+  });
+
+  it("reads the contract's tag-quality observations and passes them through", async () => {
+    // These rows were loaded and asserted as canonical facts for weeks while
+    // no read selected them, so the attribution gap they record could not
+    // reach a surface. This pins the read and the hand-off, which is the step
+    // that was missing rather than the load.
+    const tagQuality = [
+      {
+        tenant_key: "meridian",
+        contract_id: "CTR-0006",
+        tag_quality_id: "tq-1",
+        owner_tag_coverage_pct: 74,
+        application_tag_coverage_pct: 68,
+      },
+    ];
+    mockListCloudTagQualityRows.mockResolvedValueOnce(tagQuality);
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockListCloudTagQualityRows).toHaveBeenCalledWith(
+      "meridian",
+      "CTR-0006",
+    );
+    expect(buildContract360View).toHaveBeenCalledWith(
+      expect.objectContaining({ cloudTagQuality: tagQuality }),
     );
   });
 });

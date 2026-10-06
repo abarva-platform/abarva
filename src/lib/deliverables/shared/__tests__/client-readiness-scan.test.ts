@@ -96,6 +96,23 @@ describe("implementation detail", () => {
     expect(kinds(text)).not.toContain("schema_identifier");
   });
 
+  it("blocks raw render-package payload fields in client-facing artifacts", () => {
+    const result = scanClientReadiness(
+      '8. Maturity Assessment { "key": "maturity", "title": "8. Maturity Assessment", "bodyMarkdown": "## 8. Maturity Assessment\\nThe document body belongs here." }',
+    );
+
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "render_package_payload",
+          match: '"bodyMarkdown":',
+          severity: "blocker",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
   it("blocks generated-artifact enum pairs in client-facing source registers", () => {
     const result = scanClientReadiness(
       "Source Register: Delivery Handoff Pack generated_artifact:handoff_package high.",
@@ -302,6 +319,169 @@ describe("client-facing implementation vocabulary", () => {
       ]),
     );
     expect(result.blockers).toBe(0);
+  });
+});
+
+describe("fixture control language", () => {
+  it("blocks smoke-test upload/control prose masquerading as a deliverable", () => {
+    const result = scanClientReadiness(
+      "Status: simulated client approved upload. This is synthetic aggregate evidence only. Must mention in generated output: shadow registry.",
+    );
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "fixture_control_language",
+          match: expect.stringMatching(/simulated client approved upload/i),
+          severity: "blocker",
+        }),
+        expect.objectContaining({
+          kind: "fixture_control_language",
+          match: expect.stringMatching(/must mention in generated output/i),
+          severity: "blocker",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBeGreaterThanOrEqual(2);
+  });
+
+  it("does not block ordinary client approval and evidence language", () => {
+    const result = scanClientReadiness(
+      "The client approved the discovery packet after reviewing the evidence summary and open assumptions.",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "fixture_control_language",
+    );
+  });
+});
+
+describe("evidence passed through instead of interpreted", () => {
+  // The schema list is closed over OUR identifiers. A client's column name is
+  // on no list, so these rules must fire on shape — proven here on names that
+  // appear in no allowlist anywhere in this module.
+  it.each([
+    "Item K-014 carries conflict_flag = true in the knowledge extract.",
+    "Rows where is_active=false were excluded.",
+    "Filtered on review_status == 'open' before counting.",
+    "Records with retry_count >= 3 were set aside.",
+  ])("blocks a source field compared to a raw value: %j", (text) => {
+    const result = scanClientReadiness(text);
+    expect(result.findings.map((f) => f.kind)).toContain(
+      "source_field_expression",
+    );
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
+  it("reports the comparison once, not also as a bare field name", () => {
+    const found = kinds("Item 14 carries conflict_flag = true.");
+    expect(found).toEqual(["source_field_expression"]);
+  });
+
+  it.each(["conflict_flag", "member_id", "queue_cd", "handle_time_pct"])(
+    "flags the bare column name %j for review",
+    (field) => {
+      const result = scanClientReadiness(`The ${field} column drives this.`);
+      expect(result.findings.map((f) => f.kind)).toContain("source_field_name");
+      expect(result.blockers).toBe(0);
+    },
+  );
+
+  it("does not flag ordinary prose that states the same finding", () => {
+    expect(
+      kinds(
+        "Fourteen knowledge articles are marked as conflicting with a newer " +
+          "policy, and 3 of them remain in active use. The share rose to 12% " +
+          "in the second quarter, so x = 12 is not how a reader would see it.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not flag snake_case compounds that are not column-shaped", () => {
+    expect(
+      kinds(
+        "A human_approval flow precedes certification, tagged " +
+          "external_benchmark until confirmed.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not flag a cited file name", () => {
+    expect(
+      kinds("Source: contact_volume_by_queue_id.csv, March extract."),
+    ).toEqual([]);
+  });
+
+  it("leaves our own schema identifiers to the rule that owns them", () => {
+    expect(kinds("See engagement_id on every row.")).toEqual([
+      "schema_identifier",
+    ]);
+  });
+});
+
+describe("authoring scaffolding", () => {
+  it.each([
+    "Section verdict.\nThe baseline cannot be certified.",
+    "Section boundary. This covers the service desk only.",
+    "The prior point stands. Section verdict: hold the decision.",
+    "Governing message: proceed to bounded design.",
+    "Speaker notes: mention the baseline caveat.",
+    "- Section boundary. The evidence base is synthetic.",
+    // A label nobody enumerated: the rule matches the shape, not a word list.
+    "Section stance.\nAn explicit escalation route exists for exceptions.",
+    "Slide takeaway: integration is unproven.",
+    "**Section verdict.** The readout supports a bounded design phase.",
+  ])("blocks a label that names the paragraph's job: %j", (text) => {
+    const result = scanClientReadiness(text);
+    expect(result.findings.map((f) => f.kind)).toContain(
+      "authoring_scaffold_label",
+    );
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
+  it.each([
+    "Section summary tables follow the narrative in the appendix.",
+    "This section summary shows three open gates.",
+    "The governing message of the charter was cost discipline.",
+    "Bottom line: hold the investment decision.",
+    "Each section boundary was agreed with the sponsor.",
+    "Section two: findings are summarised below.",
+    "Section 4. Current-state findings.",
+    "Slide decks were not part of the evidence base.",
+  ])("does not flag the ordinary sentence %j", (text) => {
+    expect(kinds(text)).not.toContain("authoring_scaffold_label");
+  });
+});
+
+describe("truncated claims", () => {
+  it.each([
+    // Verbatim shape of a slide point cut at a word cap.
+    "The value hypothesis is excluded from scoring. The planning-stage annual value figure...",
+    "Handle time and first-contact resolution are reported on different…",
+    "First point is whole.\nThe second point was cut after the comma,...\nThird point is whole.",
+  ])("blocks a statement that ends in an ellipsis: %j", (text) => {
+    const result = scanClientReadiness(text);
+    expect(result.findings.map((f) => f.kind)).toContain("truncated_claim");
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
+  it("reports the defect once however many points were cut", () => {
+    const text = Array.from(
+      { length: 20 },
+      (_, i) => `Point ${i} was cut before it finished...`,
+    ).join("\n");
+    expect(
+      scanClientReadiness(text).findings.filter(
+        (f) => f.kind === "truncated_claim",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it.each([
+    "The sponsor paused... then approved the scope in full.",
+    "Options A, B, C ... are compared below in the table.",
+    "The plan is complete.",
+    "...",
+  ])("does not flag %j", (text) => {
+    expect(kinds(text)).not.toContain("truncated_claim");
   });
 });
 

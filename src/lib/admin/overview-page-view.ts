@@ -41,8 +41,6 @@ export interface OverviewPageView {
   subtitle: string;
   context: {
     tenant: string;
-    mode: string;
-    agent: string;
     data: string;
     liveStatus: string;
     liveStatusKind: ContextLiveStatus;
@@ -50,7 +48,6 @@ export interface OverviewPageView {
   editorial: {
     title: string;
     body: string;
-    contextUsed: ReadonlyArray<string>;
     evidenceStrength: EvidenceStrength;
     blocker?: string;
     primaryAction: { label: string; href: string };
@@ -99,8 +96,6 @@ export async function buildOverviewPageView(): Promise<OverviewPageView> {
       'What needs Admin readiness before AbarVa can run a tenant in pilot. The Steward holds this control plane.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Admin workspace',
-      agent: 'Steward',
       data: dataMode === 'live' ? 'Live DB' : 'Manifest + seeds',
       liveStatus: dataMode === 'live' ? 'Live' : 'Fixture',
       liveStatusKind: dataMode === 'live' ? 'live' : 'deferred',
@@ -108,7 +103,6 @@ export async function buildOverviewPageView(): Promise<OverviewPageView> {
     editorial: {
       title: editorial.title,
       body: editorial.body,
-      contextUsed: editorial.contextUsed,
       evidenceStrength: editorial.evidenceStrength,
       blocker: editorial.blocker ?? undefined,
       primaryAction: editorial.primaryAction,

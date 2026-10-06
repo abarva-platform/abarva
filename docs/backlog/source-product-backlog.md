@@ -15,6 +15,22 @@ unauthorized-mutation, (2) evidence-integrity and governed-migration correctness
 live runtime failures, (4) approval/authority/lineage controls, (5) deliverable/content
 quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 
+## Active file claims
+
+### SOURCE-NEW-F10-FILE-DETAIL — Source New mobile file detail
+
+- **Status**: `In Progress`
+- **Claimed by branch**: `codex/source-new-file-detail-f10`
+- **Scope**: `src/components/source/new-workspace/SourceNewFiles.tsx`,
+  `src/components/source/new-workspace/SourceNewFiles.test.tsx`, the Source New event
+  page row mapping, and the release record for this slice.
+- **Boundaries**: Layer 4 presentation only. No data schema, migration, loader,
+  adapter, file-cabinet popup, data-plane mutation, or Moves authority reuse.
+- **Acceptance focus**: selecting a file on mobile opens a defined detail view with
+  existing file metadata, version/authenticity/evidence/approval/comment fields when
+  present, honest missing-field states, authorization-gated controls, keyboard access,
+  and return to the prior filtered list position.
+
 ---
 
 ## Active Source 360 execution

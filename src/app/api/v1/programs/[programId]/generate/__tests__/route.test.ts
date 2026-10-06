@@ -4,6 +4,7 @@ const mockGenerateArtifact = jest.fn();
 const mockCreateDeliverableRun = jest.fn();
 const mockAssertPhaseReady = jest.fn();
 const mockPersist = jest.fn();
+const mockLoadEvidenceSnapshot = jest.fn();
 
 jest.mock("../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -62,6 +63,12 @@ jest.mock("@/lib/deliverables/persist-move-generated-artifact", () => ({
   persistMoveGeneratedArtifact: (...args: unknown[]) => mockPersist(...args),
 }));
 
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadEvidenceSnapshot(...args),
+}));
+
 function req(body: unknown): Request {
   return new Request("http://test/api/v1/programs/move-1/generate", {
     method: "POST",
@@ -96,6 +103,26 @@ beforeEach(() => {
     draftCaveats: [{ reason: "Phase 2 gate is not approved." }],
   });
   mockCreateDeliverableRun.mockResolvedValue({ id: "run-p2-1" });
+  mockLoadEvidenceSnapshot.mockResolvedValue({
+    revision: "approved-revision-1",
+    approvedEvidenceCount: 1,
+    rows: [],
+    revisionByPhase: {
+      1: "approved-revision-1",
+      2: "approved-revision-1",
+      3: "approved-revision-1",
+      4: "approved-revision-1",
+      5: "approved-revision-1",
+    },
+    latestEvidenceActivityAt: null,
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
+  });
   mockGenerateArtifact.mockResolvedValue({
     status: "generated",
     html: "<html><body><svg></svg><table></table>Charter</body></html>",
@@ -159,6 +186,7 @@ describe("POST /api/v1/programs/[programId]/generate", () => {
           phase: 2,
           artifact: "discovery_report",
           generationMode: "draft",
+          evidenceSnapshotHash: "approved-revision-1",
         }),
       }),
     );
@@ -208,6 +236,7 @@ describe("POST /api/v1/programs/[programId]/generate", () => {
           artifact: "target_state_architecture",
           generationMode: "draft",
           title: "P3 Future-State Blueprint Draft",
+          evidenceSnapshotHash: "approved-revision-1",
         }),
       }),
     );
@@ -260,6 +289,10 @@ describe("POST /api/v1/programs/[programId]/generate", () => {
     });
     expect(mockCreateDeliverableRun).not.toHaveBeenCalled();
     expect(mockGenerateArtifact).toHaveBeenCalled();
-    expect(mockPersist).toHaveBeenCalled();
+    expect(mockPersist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        evidenceSnapshotHash: "approved-revision-1",
+      }),
+    );
   });
 });

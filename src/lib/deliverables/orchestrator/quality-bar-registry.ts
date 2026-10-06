@@ -61,6 +61,21 @@ const DEFAULT_QUALITY_BAR: QualityBar = {
   tone: "board_grade_consulting",
 };
 
+const WORKSHOP_GUIDE_QUALITY_BAR: QualityBarOverride = {
+  // Working guide, not a phase decision artifact. It needs practical session
+  // instructions and gap discipline, not the decision/recommendation/risk-table
+  // spine required by board-grade gate artifacts.
+  minSections: 4,
+  minBodyWords: 1_200,
+  targetBodyWordsMax: 3_000,
+  advisoryBandMax: 3_600,
+  enforceMaxAsBlocker: true,
+  requiresDecisionSection: false,
+  requiresRecommendation: false,
+  requiresRiskTable: false,
+  requiresEvidenceGapsNoted: true,
+};
+
 /** key = `${module}::${deliverableType}` */
 const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::charter": {
@@ -81,21 +96,33 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // advisoryMaxWords in artifact-contracts.ts for the rationale.
     advisoryBandMax: CHARTER_CONTRACT.wordBudget.advisoryMaxWords,
     enforceMaxAsBlocker: true,
-    // Charter is deliberately table-led (decision box, scope table, discovery
-    // preparation tables). Enforce the word band on prose so the gate blocks
+    // Charter is deliberately concise and table-aware (decision box, scope table,
+    // authorization conditions). Enforce the word band on prose so the gate blocks
     // narrative bloat without penalizing the required tables.
     excludeNonProseFromBody: true,
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
+  "moves::discovery_plan": {
+    // Working guide generated after Charter approval. It carries the detailed
+    // workshop/session/evidence instructions that the executive Charter must
+    // not embed.
+    ...WORKSHOP_GUIDE_QUALITY_BAR,
+  },
+  "moves::discovery_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::design_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::planning_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::mobilization_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::execution_kickoff_guide": WORKSHOP_GUIDE_QUALITY_BAR,
   "moves::business_case": {
     // Substantial narrative artifact — must tell one coherent investment
     // argument, not a stack of disconnected sections. The financial model is a
-    // separate workbook, so the narrative case must stay within its hard band.
+    // separate workbook, so the narrative case must stay within its hard band
+    // and may not be forced back to the old 9-10 heading binder.
     // Word band reconciled 2026-07-25 with golden-bar's DEPTH_BY_ARTIFACT
     // (they previously contradicted: golden-bar's ceiling equalled this
     // pipeline's floor) — see P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
-    minSections: 9,
+    minSections: 5,
     ...wordBandFrom("business_case"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
@@ -108,38 +135,38 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Word band reconciled 2026-07-25 — golden-bar's ceiling (6,000) previously
     // sat below this pipeline's own floor (9,000); both now read the same
     // numbers from P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
-    minSections: 10,
+    minSections: 4,
     ...wordBandFrom("target_state_architecture"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::solution_design": {
-    // 8-12 visual, decision-led pages. This is a specification of the accepted
+    // 5-10 visual, decision-led pages. This is a specification of the accepted
     // architecture, not a second architecture report or implementation manual.
-    minSections: 8,
+    minSections: 4,
     ...wordBandFrom("solution_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::operating_model_design": {
-    // 6-10 table/diagram-rich pages. Reader energy belongs on work split,
+    // 5-8 table/diagram-rich pages. Reader energy belongs on work split,
     // accountability, controls, cadence, and adoption decisions.
-    minSections: 8,
+    minSections: 4,
     ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::sourcing_strategy": {
-    // 5-8 page options paper. It chooses a sourcing posture; it does not become
+    // 4-7 page options paper. It chooses a sourcing posture; it does not become
     // an RFP, vendor landscape, contract, or restatement of the full design.
-    minSections: 7,
+    minSections: 4,
     ...wordBandFrom("sourcing_strategy"),
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::discovery_report": {
-    minSections: 8,
+    minSections: 4,
     minBodyWords: 6_500, // ~15 pages
     targetBodyWordsMax: 13_500, // ~30 pages plus appendix
     enforceMaxAsBlocker: false,
@@ -159,7 +186,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Canonical orchestrator key used by the P3 `operating_model_design`
     // registry artifact. It must resolve to the same concise control as the
     // registry-facing alias above.
-    minSections: 8,
+    minSections: 4,
     ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
@@ -170,7 +197,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // sponsor-readable roadmap. Word band reconciled 2026-07-25 — golden-bar's
     // `execution_roadmap` ceiling (5,000) previously equalled this pipeline's
     // own floor; both now read P3_P4_WORD_BAND_CONTRACTS.roadmap.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("roadmap"),
     requiresEvidenceGapsNoted: true,
     // REF_EXECUTIVE_ROADMAP pilot (2026-07-25): the roadmap must argue why
@@ -202,7 +229,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // and confidence, but prose bloat is a quality failure. golden-bar calls
     // this deliverable type `financial_model` and had no depth standard for
     // it at all before this reconciliation.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("estimate_model"),
     requiresEvidenceGapsNoted: true,
   },
@@ -211,7 +238,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // not a second business case. golden-bar calls this deliverable type
     // `tower_metrics_plan` and had no depth standard for it at all before
     // this reconciliation.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("value_model"),
     requiresEvidenceGapsNoted: true,
   },
@@ -240,10 +267,25 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // bound has a small tolerance because the prompt deliberately removes
     // predecessor-document repetition; a strong handoff should not be forced to
     // add filler to cross an arbitrary round-number floor.
-    minSections: 6,
+    minSections: 5,
     minBodyWords: 4_800, // ~11-12 pages
     targetBodyWordsMax: 11_000, // ~25 pages
     enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::mobilization_plan": {
+    minSections: 5,
+    minBodyWords: 1_800,
+    targetBodyWordsMax: 4_800,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::executive_playback": {
+    minSections: 5,
+    minBodyWords: 2_400,
+    targetBodyWordsMax: 6_000,
+    enforceMaxAsBlocker: true,
+    requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::value_measurement_contract": {

@@ -41,6 +41,8 @@ interface WaiverRecord {
   criterionId: string;
   reason: string;
   waivedAt: string;
+  actorId?: string;
+  aiDecisionEvidencePacket?: AiDecisionEvidencePacket;
 }
 
 // Module-level store — populated by the gate-waiver route via `recordWaiver`.
@@ -189,9 +191,13 @@ function buildLiveEntries(ctx: TenancyCtx): AuditEntry[] {
     entries.push({
       id: `waiver::${w.instanceId}::${w.criterionId}`,
       type: 'gate_waiver',
-      actor: 'demo-user',
+      actor: w.actorId ?? 'demo-user',
       instanceId: w.instanceId,
-      detail: `Gate criterion "${w.criterionId}" waived — ${w.reason}`,
+      detail:
+        `Gate criterion "${w.criterionId}" waived — ${w.reason}` +
+        (w.aiDecisionEvidencePacket
+          ? ` Evidence packet: ${w.aiDecisionEvidencePacket.recommendationId}`
+          : ''),
       timestamp: w.waivedAt,
     });
   }

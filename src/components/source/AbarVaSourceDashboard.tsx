@@ -14,7 +14,7 @@ import {
   adaptSentinelBriefingToMultiAgent,
 } from '@/lib/source/sentinel-source-orchestrator';
 import type { AbarvaSourceDashboardData } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 import { SourceAlertPanel, type SourceAlertEventContext } from './SourceAlertPanel';
 import { SourcingEventTable } from './SourcingEventTable';
 
@@ -151,7 +151,13 @@ const LIGHT_ACTION_LINK: CSSProperties = {
 
 const DASHBOARD_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
-export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardData }) {
+export function AbarVaSourceDashboard({
+  data,
+  canViewFinancialValues,
+}: {
+  data: AbarvaSourceDashboardData;
+  canViewFinancialValues: boolean;
+}) {
   const waitingOrBlockedEvents = data.events.filter(
     (event) => event.blocker || event.status.startsWith('waiting_on'),
   );
@@ -258,7 +264,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
               }}
             >
               {data.metrics.atRiskEvents} at-risk event, {waitingOrBlockedEvents.length} waiting or blocked states,{' '}
-              {formatUsd(data.metrics.valueAtStakeUsd)} under management.
+              {formatSourceFinancialValue(data.metrics.valueAtStakeUsd, canViewFinancialValues)} under management.
             </div>
             <p style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 760, color: 'rgba(248,250,252,0.72)' }}>
               {data.nexusSummary}
@@ -300,7 +306,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                 <div>
                   <div style={{ ...SOURCE_METRIC_LABEL, color: 'rgba(248,250,252,0.58)' }}>Value exposed</div>
                   <div style={{ color: '#F8FAFC', fontWeight: 700 }}>
-                    {formatUsd(mostExposedEvent.valueAtStakeUsd)}
+                    {formatSourceFinancialValue(mostExposedEvent.valueAtStakeUsd, canViewFinancialValues)}
                   </div>
                 </div>
               </div>
@@ -368,6 +374,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
           title="Executive pressure signals"
           eventContextById={eventContextById}
           variant="light"
+          canViewFinancialValues={canViewFinancialValues}
         />
       </section>
 
@@ -399,15 +406,21 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ ...SOURCE_METRIC_LABEL, color: LIGHT.muted }}>Value At Stake</div>
-            <div style={{ ...KPI_VALUE, fontSize: '24px' }}>{formatUsd(data.metrics.valueAtStakeUsd)}</div>
+            <div style={{ ...KPI_VALUE, fontSize: '24px' }}>
+              {formatSourceFinancialValue(data.metrics.valueAtStakeUsd, canViewFinancialValues)}
+            </div>
           </div>
           <div style={{ ...SOURCE_METRIC_DETAIL, color: LIGHT.muted }}>
-            {formatUsd(valueInWaitingOrBlocked)} sits in waiting or blocked events.
+            {formatSourceFinancialValue(valueInWaitingOrBlocked, canViewFinancialValues)} sits in waiting or blocked events.
           </div>
         </div>
       </section>
 
-      <SourcingEventTable events={data.events} variant="light" />
+      <SourcingEventTable
+        events={data.events}
+        variant="light"
+        canViewFinancialValues={canViewFinancialValues}
+      />
 
       <section
         style={{

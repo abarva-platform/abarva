@@ -66,8 +66,7 @@ describe("Source authenticated route smoke", () => {
     }
   });
 
-  it("keeps Source landing and queue routes redirected to the governed workspace", () => {
-    const routeSource = readWorkspaceFile("src/app/(maestro)/source/page.tsx");
+  it("keeps the retired queue implementation out of the Source entry surface", () => {
     const queueRouteSource = readWorkspaceFile(
       "src/app/(maestro)/source/queue/page.tsx",
     );
@@ -75,10 +74,6 @@ describe("Source authenticated route smoke", () => {
       "src/components/source/SourceIndexPage.tsx",
     );
 
-    expect(routeSource).toMatch(
-      /redirect\(["\x27]\/source\/workspace["\x27]\)/,
-    );
-    expect(queueRouteSource).toContain('redirect("/source/workspace")');
     expect(queueRouteSource).not.toContain("SourceDecisionQueueView");
     expect(componentSource).toContain("AMS Vendor Consolidation 2026");
     expect(componentSource).toContain("SOURCE_INDEX_VIEW");

@@ -9,6 +9,8 @@ const readiness: DiscoveryEvidenceReadiness = {
   blueprintId: "test_blueprint",
   blueprintVersion: "2026-08-20",
   archetypeLabel: "Data-Intensive Predictive Use Case",
+  blueprintBasis: "declared",
+  unknownDeclaredArchetype: null,
   requiredTotal: 2,
   requiredCovered: 1,
   requiredMissing: 1,
@@ -73,9 +75,37 @@ describe("renderStageReadinessWorkbookXlsx", () => {
 
     const dataSheet = workbook.getWorksheet("Data & Quality");
     expect(dataSheet?.getCell("A1").value).toBe("Question");
-    expect(dataSheet?.getCell("B2").value).toBe("Needs validation");
+    expect(dataSheet?.getCell("B2").value).toBe("");
+    expect(dataSheet?.getCell("F2").value).toBe("prefilled_needs_confirmation");
     expect(String(dataSheet?.getCell("C2").value)).toContain(
       "Approved data estate profile",
+    );
+    const startHere = workbook.getWorksheet("Start Here");
+    expect(startHere?.getCell("A5").value).toBe("Evidence references included");
+    expect(startHere?.getCell("B5").value).toBe("1");
+    expect(startHere?.getCell("A6").value).toBe("Needs input");
+    expect(Number(startHere?.getCell("B6").value)).toBeGreaterThan(0);
+    const dataSheetContext = dataSheet
+      ? [2, 3, 4].map((row) => String(dataSheet.getCell(`C${row}`).value))
+      : [];
+    expect(dataSheetContext.join("\n")).toContain("known gaps");
+    const visibleQuestions = workbook.worksheets.flatMap((sheet) => {
+      if (["Start Here", "Evidence & Open Items", "_metadata"].includes(sheet.name)) {
+        return [];
+      }
+      const rows: string[] = [];
+      sheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) rows.push(String(row.getCell(1).value ?? ""));
+      });
+      return rows;
+    });
+    expect(visibleQuestions).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("current-state reality"),
+        expect.stringContaining("volumes, frequency, cycle times"),
+        expect.stringContaining("systems, data fields, files"),
+        expect.stringContaining("fail, vary by segment"),
+      ]),
     );
   });
 });

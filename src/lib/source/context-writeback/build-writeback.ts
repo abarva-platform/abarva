@@ -2,6 +2,11 @@ import { createHash } from "node:crypto";
 import { canonicalTenantKey } from "@/lib/tenant-keys";
 import type { SourceEventFactRow } from "@/lib/source/facts/fact-types";
 import {
+  projectAcceptedSourceFacts,
+  type SourceAssertionInput,
+  type SourceProjectedFact,
+} from "@/lib/source/accepted-fact-projection";
+import {
   SOURCE_CONTEXT_RECORD_TYPE,
   SOURCE_CONTEXT_SOURCE_SYSTEM,
   SOURCE_CONTEXT_WRITEBACK_SCHEMA_VERSION,
@@ -106,12 +111,40 @@ function skip(
   return { factId: fact.id, factKey: fact.fact_key, reason };
 }
 
+function matchesAcceptedAssertion(
+  fact: SourceEventFactRow,
+  assertion: SourceProjectedFact | undefined,
+): boolean {
+  if (!assertion) return false;
+  const value = valueForFact(fact);
+  return (
+    assertion.factId === fact.id &&
+    assertion.factKey === fact.fact_key &&
+    assertion.source.system === SOURCE_CONTEXT_SOURCE_SYSTEM &&
+    assertion.source.artifactId === citationDoc(fact) &&
+    assertion.source.versionId === fact.source_citation?.version_id &&
+    assertion.source.location === citationLocator(fact) &&
+    assertion.observedAt === fact.captured_at &&
+    (value?.factType === "number"
+      ? assertion.value === value.factValue.value
+      : assertion.value === fact.value_text)
+  );
+}
+
 export function buildSourceContextWritebackPlan(input: {
   readonly event: SourceContextWritebackEvent;
   readonly facts: readonly SourceEventFactRow[];
   readonly committedAt: string;
+  readonly acceptedAssertions?: readonly SourceAssertionInput[];
 }): SourceContextWritebackPlan {
   const tenantKey = canonicalTenantKey(input.event.clientKey);
+  const accepted = projectAcceptedSourceFacts(
+    { tenantKey, eventId: input.event.id, asOf: input.committedAt },
+    input.acceptedAssertions ?? [],
+  );
+  const acceptedByFactId = new Map(
+    accepted.facts.map((assertion) => [assertion.factId, assertion]),
+  );
   const records: SourceEnterpriseContextRecordRow[] = [];
   const factDrafts: SourceEnterpriseContextFactDraft[] = [];
   const readinessDrafts: SourceGovernedReadinessDraft[] = [];
@@ -120,6 +153,10 @@ export function buildSourceContextWritebackPlan(input: {
   for (const fact of input.facts) {
     if (canonicalTenantKey(fact.client_key) !== tenantKey) {
       skippedFacts.push(skip(fact, "wrong_client"));
+      continue;
+    }
+    if (fact.source_event_id !== input.event.id) {
+      skippedFacts.push(skip(fact, "wrong_event"));
       continue;
     }
     if (fact.is_stale) {
@@ -133,6 +170,10 @@ export function buildSourceContextWritebackPlan(input: {
     }
     if (!fact.source_citation || !citationDoc(fact)) {
       skippedFacts.push(skip(fact, "missing_citation"));
+      continue;
+    }
+    if (!matchesAcceptedAssertion(fact, acceptedByFactId.get(fact.id))) {
+      skippedFacts.push(skip(fact, "review_not_verified"));
       continue;
     }
 

@@ -43,23 +43,13 @@ type ImpactCacheEntry = {
 const impactCache = new Map<string, ImpactCacheEntry>();
 
 export async function GET(request: Request) {
-  let tenancy;
-  try {
-    tenancy = await requireTenancy();
-  } catch (err) {
-    if (err instanceof TenancyError && err.code === "unauthenticated") {
-      return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-    }
-    return NextResponse.json({ error: "tenancy_unavailable" }, { status: 503 });
-  }
-
   const requestUrl = new URL(request.url);
   const requestedClient = requestUrl.searchParams.get("client")?.trim() || null;
   const requestedClientKey = appClientKeyForTenant(requestedClient);
   if (requestedClient && !requestedClientKey) {
     return NextResponse.json({ error: "unknown_client" }, { status: 404 });
   }
-  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+  if (requestedClientKey) {
     const access = await checkTenantAccessByKey(requestedClientKey);
     if (!access.ok) {
       const status =
@@ -71,12 +61,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: access.reason }, { status });
     }
   }
+  let tenancy = null;
+  if (!requestedClientKey) {
+    try {
+      tenancy = await requireTenancy();
+    } catch (err) {
+      if (err instanceof TenancyError && err.code === "unauthenticated") {
+        return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+      }
+      return NextResponse.json(
+        { error: "tenancy_unavailable" },
+        { status: 503 },
+      );
+    }
+  }
 
   const activeClient = requestedClientKey
     ? null
     : await getActiveClientRow().catch(() => null);
   const tenantKey =
-    requestedClientKey ?? activeClient?.key ?? tenancy.clientKey ?? "";
+    requestedClientKey ?? activeClient?.key ?? tenancy?.clientKey ?? "";
   if (!tenantKey) {
     return NextResponse.json({ error: "no_tenant" }, { status: 404 });
   }
@@ -94,21 +98,24 @@ export async function GET(request: Request) {
       impactMode,
     });
     const { impact, sourceProviderKey, loadMs, timings } = await value;
-    return NextResponse.json({
-      impact,
-      sourceProviderKey,
-      impactMode,
-      timings,
-    }, {
-      headers: {
-        "Cache-Control": "private, no-store",
-        "X-Source-Portfolio-Cache": cacheState,
-        "X-Source-Portfolio-Impact-Mode": impactMode,
-        "X-Source-Portfolio-Load-Ms": String(loadMs),
-        "X-Source-Portfolio-Response-Scope": responseScope,
-        "X-Source-Portfolio-Timings": compactTimingsHeader(timings),
+    return NextResponse.json(
+      {
+        impact,
+        sourceProviderKey,
+        impactMode,
+        timings,
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+          "X-Source-Portfolio-Cache": cacheState,
+          "X-Source-Portfolio-Impact-Mode": impactMode,
+          "X-Source-Portfolio-Load-Ms": String(loadMs),
+          "X-Source-Portfolio-Response-Scope": responseScope,
+          "X-Source-Portfolio-Timings": compactTimingsHeader(timings),
+        },
+      },
+    );
   }
 
   const { value, cacheState } = loadCachedPortfolio({
@@ -119,19 +126,22 @@ export async function GET(request: Request) {
   });
   const { portfolio, sourceProviderKey, loadMs } = await value;
 
-  return NextResponse.json({
-    portfolio,
-    sourceProviderKey,
-    impactMode,
-  }, {
-    headers: {
-      "Cache-Control": "private, no-store",
-      "X-Source-Portfolio-Cache": cacheState,
-      "X-Source-Portfolio-Impact-Mode": impactMode,
-      "X-Source-Portfolio-Load-Ms": String(loadMs),
-      "X-Source-Portfolio-Response-Scope": responseScope,
+  return NextResponse.json(
+    {
+      portfolio,
+      sourceProviderKey,
+      impactMode,
     },
-  });
+    {
+      headers: {
+        "Cache-Control": "private, no-store",
+        "X-Source-Portfolio-Cache": cacheState,
+        "X-Source-Portfolio-Impact-Mode": impactMode,
+        "X-Source-Portfolio-Load-Ms": String(loadMs),
+        "X-Source-Portfolio-Response-Scope": responseScope,
+      },
+    },
+  );
 }
 
 function loadCachedPortfolio({
@@ -158,9 +168,14 @@ function loadCachedPortfolio({
   }
 
   const startedAt = Date.now();
-  const value = loadSourceWorkspacePortfolio(tenantKey, asOfDateIso, requestedProvider, {
-    impactMode,
-  })
+  const value = loadSourceWorkspacePortfolio(
+    tenantKey,
+    asOfDateIso,
+    requestedProvider,
+    {
+      impactMode,
+    },
+  )
     .then((portfolio) => ({
       portfolio,
       sourceProviderKey: sourceProviderModeFromPortfolio(portfolio),

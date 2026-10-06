@@ -31,12 +31,18 @@ export type FindingKind =
   | "content_hash"
   | "model_name"
   | "schema_identifier"
+  | "render_package_payload"
   | "internal_enum_pair"
   | "internal_type_key"
   | "pipeline_vocabulary"
   | "internal_reference_code"
   | "vendor_claim_without_state"
+  | "fixture_control_language"
   | "unresolved_placeholder"
+  | "source_field_expression"
+  | "source_field_name"
+  | "authoring_scaffold_label"
+  | "truncated_claim"
   | "filler_language";
 
 export interface ScanFinding {
@@ -145,6 +151,71 @@ const FILLER_PHRASES = [
   "move the needle",
 ];
 
+const FIXTURE_CONTROL_PHRASES = [
+  "simulated client approved upload",
+  "synthetic aggregate evidence only",
+  "must mention in generated output",
+  "must not claim:",
+];
+
+// ── Evidence passed through instead of interpreted ──
+//
+// The schema list above is a closed set of OUR identifiers. It says nothing
+// about the client's: a column name lifted from an uploaded extract
+// (`conflict_flag = true`) is not on it and never will be, because the set of
+// client column names is open. These two rules match the SHAPE instead — a
+// snake_case field compared to a raw value, and a snake_case token ending in a
+// data-column suffix — so an extract row printed as a finding is caught
+// whichever tenant's extract it came from.
+
+const FIELD_NAME = String.raw`[a-z][a-z0-9]*(?:_[a-z0-9]+)+`;
+const RAW_FIELD_VALUE = [
+  "true",
+  "TRUE",
+  "True",
+  "false",
+  "FALSE",
+  "False",
+  "null",
+  "NULL",
+  "None",
+  String.raw`[YN]\b`,
+  String.raw`-?\d+(?:\.\d+)?%?`,
+  String.raw`'[^'\n]{0,40}'`,
+  String.raw`"[^"\n]{0,40}"`,
+].join("|");
+const FIELD_COMPARISON = String.raw`(?:===?|!==?|<>|[<>]=?|=)`;
+
+/** Suffixes that mark a token as a data column rather than a compound word. */
+const DATA_COLUMN_SUFFIXES = [
+  "flag",
+  "id",
+  "ind",
+  "cd",
+  "code",
+  "key",
+  "ts",
+  "pct",
+  "cnt",
+  "amt",
+  "dt",
+  "num",
+];
+
+/**
+ * Labels that name a paragraph's job in the document instead of saying
+ * anything. They are instructions to the author that survived into the text.
+ * Case-sensitive on purpose: "this section summary shows" is prose.
+ */
+const AUTHORING_SCAFFOLD_LABELS = [
+  // One lowercase word after "Section"/"Slide", then a terminator. Not an
+  // enumerated list: the words seen so far (verdict, boundary, stance) are
+  // whatever the author happened to coin, and the next one will be new.
+  String.raw`(?:Section|Slide) [a-z][a-z-]{2,24}`,
+  String.raw`Governing (?:message|thought|point)`,
+  String.raw`Speaker notes?`,
+].join("|");
+
 const VENDOR_STATE_BOUNDARY_PATTERN =
   /\b(?:vendor[-\s]published|public[-\s]hypothesis|public vendor|vendor materials?|public materials?|not proof of (?:a )?client deployment|not client truth|contract[-\s]confirmed|implementation[-\s]confirmed|client[-\s]observed|client evidence|client-side assertion|client[-\s]confirmed)\b/i;
 
@@ -206,6 +277,13 @@ const RULES: readonly Rule[] = [
     why: "A table or column name is internal structure leaking into a client document.",
   },
   {
+    kind: "render_package_payload",
+    severity: "blocker",
+    pattern:
+      /"?\b(?:bodyMarkdown|rawBodyMarkdown|generatedSections|groundingMode|citationsUsed)\b"?\s*:/g,
+    why: "A render-package field is structured generation payload, not client-facing narrative.",
+  },
+  {
     kind: "internal_enum_pair",
     severity: "blocker",
     // e.g. generated_artifact:financial_model. Requires lower snake-ish
@@ -239,6 +317,12 @@ const RULES: readonly Rule[] = [
     why: "This describes how the document was produced rather than what the client should decide.",
   },
   {
+    kind: "fixture_control_language",
+    severity: "blocker",
+    pattern: new RegExp(`(?:${alternation(FIXTURE_CONTROL_PHRASES)})`, "gi"),
+    why: "Smoke-test control language is not client evidence or a deliverable; it must stay in test fixtures and audit notes.",
+  },
+  {
     kind: "unresolved_placeholder",
     severity: "blocker",
     pattern: new RegExp(
@@ -253,6 +337,62 @@ const RULES: readonly Rule[] = [
       /^\[(?:EVIDENCE MISSING|ASSUMPTION TO VALIDATE|CLIENT TO COMPLETE)/i.test(
         match,
       ),
+  },
+  {
+    kind: "source_field_expression",
+    severity: "blocker",
+    pattern: new RegExp(
+      `\\b${FIELD_NAME}\\s*${FIELD_COMPARISON}\\s*(?:${RAW_FIELD_VALUE})`,
+      "g",
+    ),
+    why: "A source field compared to a raw value is a row from an extract, not a finding. Say what it means for the reader in their own terms.",
+  },
+  {
+    kind: "source_field_name",
+    severity: "review",
+    pattern: new RegExp(
+      `\\b[a-z][a-z0-9]*(?:_[a-z0-9]+)*_(?:${alternation(DATA_COLUMN_SUFFIXES)})\\b`,
+      "g",
+    ),
+    why: "This reads as a column name from a source system. A client reader needs the business term, not the field.",
+    exempt: (match, context) => {
+      const lower = match.toLowerCase();
+      // Already reported, as a blocker, by the rules that own these lists.
+      if (SCHEMA_IDENTIFIERS.includes(lower)) return true;
+      if (PIPELINE_VOCABULARY.includes(lower)) return true;
+      const after = context.slice(context.indexOf("»") + 1);
+      // A file name in a source register ("member_calls_id.csv") is a
+      // citation the reader can follow, not a leaked column.
+      if (/^\.[A-Za-z0-9]{2,5}\b/.test(after)) return true;
+      // The comparison form is reported once, by source_field_expression.
+      return new RegExp(`^\\s*${FIELD_COMPARISON}`).test(after);
+    },
+  },
+  {
+    kind: "authoring_scaffold_label",
+    severity: "blocker",
+    // Must stand at the start of a line or sentence (list and emphasis markers
+    // allowed before it) and be terminated, so a sentence that merely begins
+    // with the same words is not a label.
+    pattern: new RegExp(
+      `(?<=(?:^|[\\n.!?])[\\s*_•·-]{0,6})(?:${AUTHORING_SCAFFOLD_LABELS})(?=\\s*[.:])`,
+      "gm",
+    ),
+    why: "A label describing the paragraph's role in the document is authoring scaffolding. As a headline it tells the reader nothing.",
+    // "Section two:" is a numbered reference, not a role label.
+    exempt: (match) =>
+      /^(?:Section|Slide) (?:one|two|three|four|five|six|seven|eight|nine|ten)$/.test(
+        match,
+      ),
+  },
+  {
+    kind: "truncated_claim",
+    severity: "blocker",
+    // An ellipsis that ENDS a line. Mid-line it is punctuation; at the end of
+    // a slide point or paragraph it is a claim that was cut before it finished,
+    // and the reader cannot tell what the missing half said.
+    pattern: /(?<=[A-Za-z0-9,;)%]\s?)(?:\.{3}|…)(?=[ \t]*(?:\r?\n|$))/g,
+    why: "A statement that ends in an ellipsis was cut off. A reader cannot rely on a finding whose qualifier, figure, or verb is missing.",
   },
   {
     kind: "filler_language",

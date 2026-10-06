@@ -220,6 +220,16 @@ describe('W4-PR-3 · submitForApproval → emitNotification("approval.requested"
 describe('W4-PR-3 · decideApprovalRequest → emitNotification("program.gate_decision")', () => {
   it('emits "approved" decision after the primary update lands', async () => {
     pendingResults.push({
+      maybeSingleResult: {
+        data: {
+          program_id: 'eng_1',
+          tenant_key: 'tenant-a',
+          brief_snapshot: { phase: '2' },
+        },
+        error: null,
+      },
+    });
+    pendingResults.push({
       singleResult: {
         data: makeDbRow({
           request_status: 'approved',
@@ -286,6 +296,9 @@ describe('W4-PR-3 · decideApprovalRequest → emitNotification("program.gate_de
 
   it('does NOT emit when the primary update fails (already decided)', async () => {
     pendingResults.push({
+      maybeSingleResult: { data: null, error: null },
+    });
+    pendingResults.push({
       singleResult: { data: null, error: { message: 'no row' } },
     });
 
@@ -302,6 +315,16 @@ describe('W4-PR-3 · decideApprovalRequest → emitNotification("program.gate_de
   });
 
   it('does NOT propagate broker failures into the caller', async () => {
+    pendingResults.push({
+      maybeSingleResult: {
+        data: {
+          program_id: 'eng_1',
+          tenant_key: 'tenant-a',
+          brief_snapshot: { phase: '2' },
+        },
+        error: null,
+      },
+    });
     pendingResults.push({
       singleResult: {
         data: makeDbRow({

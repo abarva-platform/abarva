@@ -1,0 +1,47 @@
+name: Every object id is one the ledger declares
+
+on:
+  pull_request:
+    paths:
+      - "scripts/data/assign-stable-identity.mjs"
+      - "scripts/data/assign-stable-identity.test.mjs"
+      - "scripts/data/identity-ledger-check.mjs"
+      - "scripts/data/identity-ledger-check.test.mjs"
+      - "scripts/data-refresh/generate-analytics-topology.mjs"
+      - "scripts/data-refresh/generate-analytics-topology.test.mjs"
+      - "datasets/tenant-inputs/active/**/*.csv"
+      - "datasets/tenant-inputs/*/identity-ledger.json"
+      - "datasets/tenant-inputs/tenant-input-registry.json"
+      - "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/ontology.json"
+      - ".github/workflows/tenant-identity-ledger.yml"
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    # `assign-stable-identity.mjs` is the only minter of object ids, and it records each one in
+    # the tenant's identity ledger. A row appended from a template inherits the template's id, a
+    # generator can stamp ids of its own, and a row appended after the last mint carries none --
+    # each looks like a working id to every reader. `--check` reads the committed files as they
+    # stand and exits non-zero on any of them; a dry run of the minter would pass on exactly the
+    # files that need minting.
+    name: No object id the identity ledger cannot stand behind
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the suites, then the gate over the committed intake
+        run: npm run check:identity-ledger

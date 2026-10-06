@@ -49,6 +49,15 @@ interface LifecycleRow {
   readonly finance_realization_count: string;
 }
 
+interface OpportunityStateRow {
+  readonly opportunity_id: string;
+  readonly contract_id: string;
+  readonly stage: string;
+  readonly approval_state: string;
+  readonly amount_state: string;
+  readonly finance_confirmation_state: string | null;
+}
+
 function parseArgs(): Args {
   const argv = process.argv.slice(2);
   const value = (name: string): string | undefined => {
@@ -203,6 +212,23 @@ async function readConflicts(
         AND dataset_version = $2
         AND contract_id = ANY($3::text[])
       ORDER BY contract_id, conflict_id`,
+    [args.tenantKey, args.datasetVersion, args.contractIds],
+  );
+  return result.rows;
+}
+
+async function readOpportunityState(
+  client: Client,
+  args: Args,
+): Promise<readonly OpportunityStateRow[]> {
+  const result = await client.query<OpportunityStateRow>(
+    `SELECT opportunity_id, contract_id, stage, approval_state, amount_state,
+            payload->>'finance_confirmation_state' AS finance_confirmation_state
+       FROM source.optimization_opportunity
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND contract_id = ANY($3::text[])
+      ORDER BY contract_id, opportunity_id`,
     [args.tenantKey, args.datasetVersion, args.contractIds],
   );
   return result.rows;
@@ -410,10 +436,12 @@ async function main(): Promise<void> {
     await client.query("SELECT set_config('app.tenant_key', $1, false)", [
       args.tenantKey,
     ]);
-    const [coverageRows, conflictRows, lifecycleRows] = await Promise.all([
+    await client.query("BEGIN READ ONLY");
+    const [coverageRows, conflictRows, lifecycleRows, opportunityStateRows] = await Promise.all([
       readCoverage(client, args),
       readConflicts(client, args),
       readLifecycle(client, args),
+      readOpportunityState(client, args),
     ]);
     const failures = defects(args, coverageRows);
     const event = {
@@ -454,12 +482,14 @@ async function main(): Promise<void> {
         negotiated_outcome_count: Number(row.negotiated_outcome_count),
         finance_realization_count: Number(row.finance_realization_count),
       })),
+      opportunity_state: opportunityStateRows,
       conflicts_by_contract: rowsByContract(conflictRows),
       failures,
     };
     console.log(JSON.stringify(event, null, 2));
     if (failures.length > 0) process.exitCode = 1;
   } finally {
+    await client.query("ROLLBACK").catch(() => undefined);
     await client.end();
   }
 }

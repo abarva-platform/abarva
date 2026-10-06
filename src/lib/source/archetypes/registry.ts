@@ -408,6 +408,38 @@ export const CONTRACT_RENEWAL: SourceEventArchetype = {
     { stage: 'pricing', requiredEvidence: [{ family: 'utilization', severity: 'hard' }, { family: 'sla_performance', severity: 'hard' }], analysisMethods: ['market_benchmark', 'consumption_forecast'], deliverables: [] },
     { stage: 'bafo', requiredEvidence: [], analysisMethods: [], deliverables: ['renewal_negotiation_memo'] },
   ],
+  valueLeverRules: [
+    {
+      key: 'RENEWAL.UTILIZATION_RERATE', name: 'Re-rate unused entitlements', category: 'productivity', valueType: 'solution_tightening', capabilityRef: 'value_lever_map',
+      whatToWatch: 'Licensed or committed units exceed evidenced active use while the renewal preserves the existing quantity.', requiredEvidence: ['spend_baseline', 'utilization'], triggerLogic: 'Annual contract spend and an evidenced unused-entitlement share are both present.', valueBasis: 'Annual contract spend × evidenced unused-entitlement share × renewal term.',
+      computation: { inputs: [{ key: 'annual_contract_spend', label: 'Annual contract spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'unused_entitlement_pct', label: 'Unused entitlement share', unit: 'pct', source: 'enterprise_inventory', citationRequired: true }, { key: 'term_years', label: 'Renewal term', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_contract_spend × unused_entitlement_pct × term_years', formulaId: 'RENEWAL_UTILIZATION_RERATE', rangeMethod: 'Low bound haircuts the observed unused share for seasonality and adoption commitments.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'med', rfpClause: 'Require right-sizing at renewal and annual true-down rights tied to governed utilization evidence.', evaluationImpact: 'Normalize renewal pricing to evidenced active use rather than the incumbent quantity.', bafoAsk: 'Remove or re-rate unused units and preserve annual true-down rights.', executiveImplication: 'Renewal should not convert unused capacity into a new multi-year commitment.', commercialRisk: 'Do not treat inactive telemetry as avoidable spend until licenses, users, and contractual minimums are reconciled.',
+    },
+    {
+      key: 'RENEWAL.BENCHMARK_GAP', name: 'Comparable price gap', category: 'pricing', valueType: 'incremental_negotiated', capabilityRef: 'vendor_commercial_posture',
+      whatToWatch: 'Current net pricing exceeds a named, dated, and comparable market or client benchmark.', requiredEvidence: ['spend_baseline', 'comparable_pricing'], triggerLogic: 'Benchmarkable annual spend and a comparable price gap are both evidenced.', valueBasis: 'Benchmarkable annual spend × comparable price gap × renewal term.',
+      computation: { inputs: [{ key: 'annual_benchmarkable_spend', label: 'Annual benchmarkable spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'benchmark_price_gap_pct', label: 'Comparable price gap', unit: 'pct', source: 'benchmark', citationRequired: true }, { key: 'term_years', label: 'Renewal term', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_benchmarkable_spend × benchmark_price_gap_pct × term_years', formulaId: 'RENEWAL_BENCHMARK_GAP', rangeMethod: 'Low bound applies the standard evidence haircut to the comparable price gap.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'med', rfpClause: 'Require benchmark adjustment rights using an agreed peer set, scope, geography, unit basis, and cadence.', evaluationImpact: 'Compare the renewal to the same unit and service scope, not headline discounts.', bafoAsk: 'Close the evidenced comparable price gap and retain benchmark adjustment rights.', executiveImplication: 'The negotiating ask is anchored in a comparable unit-price gap, not a generic discount target.', commercialRisk: 'Do not apply a benchmark across unlike scope, geography, service levels, or volume bands.',
+    },
+    {
+      key: 'RENEWAL.SLA_CREDITS', name: 'Earned but unclaimed SLA credits', category: 'sla_economics', valueType: 'protected', capabilityRef: 'value_lever_map',
+      whatToWatch: 'Performance misses created contractual credits that were calculated but not claimed or recovered.', requiredEvidence: ['current_contract', 'sla_performance'], triggerLogic: 'Contractual credits owed and credits already claimed are reconciled from the clause and performance record.', valueBasis: 'Contractual credits owed less credits already claimed; this is recoverable leakage, not recurring savings.',
+      computation: { inputs: [{ key: 'credit_owed_usd', label: 'Contractual SLA credits owed', unit: 'usd', source: 'enterprise_inventory', citationRequired: true }, { key: 'credit_claimed_usd', label: 'SLA credits already claimed', unit: 'usd', source: 'enterprise_inventory', citationRequired: true }], method: 'max(credit_owed_usd − credit_claimed_usd, 0)', formulaId: 'RENEWAL_SLA_CREDIT_RECOVERY', rangeMethod: 'No extrapolation: low and high equal the reconciled recoverable amount.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'high', rfpClause: 'Preserve automatic credit calculation, auditable performance data, claim notice, and chronic-miss remedies.', evaluationImpact: 'Treat settlement of earned credits separately from forward renewal pricing.', bafoAsk: 'Settle the reconciled unclaimed credit balance before renewal execution.', executiveImplication: 'The buyer can recover a contractual amount already earned before negotiating future economics.', commercialRisk: 'A performance miss is not a credit unless the governing clause, threshold, fee base, and claim status all reconcile.',
+    },
+    {
+      key: 'RENEWAL.UPLIFT_AVOIDANCE', name: 'Proposed renewal uplift', category: 'pricing', valueType: 'expected_concession', capabilityRef: 'vendor_commercial_posture',
+      whatToWatch: 'The renewal applies an uplift to the current annual spend without a scope, unit, or service-level change.', requiredEvidence: ['current_contract', 'spend_baseline'], triggerLogic: 'Current annual spend, vendor-proposed uplift, and renewal term are stated.', valueBasis: 'Annual contract spend × proposed renewal uplift × renewal term.',
+      computation: { inputs: [{ key: 'annual_contract_spend', label: 'Annual contract spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'proposed_renewal_uplift_pct', label: 'Proposed renewal uplift', unit: 'pct', source: 'extracted_vendor', citationRequired: true }, { key: 'term_years', label: 'Renewal term', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_contract_spend × proposed_renewal_uplift_pct × term_years', formulaId: 'RENEWAL_UPLIFT_AVOIDANCE', rangeMethod: 'Low bound haircuts the proposed uplift for any supported indexation component.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'high', rfpClause: 'Cap indexation to an agreed published index with a ceiling, floor, and no double escalation.', evaluationImpact: 'Separate price hold or uplift avoidance from incremental unit-price improvement.', bafoAsk: 'Remove the unsupported uplift and cap future indexation.', executiveImplication: 'Avoiding a proposed increase protects the baseline; it is not the same as a new saving.', commercialRisk: 'Do not label the full avoided uplift as negotiated savings when a supported index component remains.',
+    },
+    {
+      key: 'RENEWAL.LOCK_IN_EXPOSURE', name: 'Renewal lock-in exposure', category: 'assumptions', valueType: 'risk_adjusted', capabilityRef: 'solution_quality',
+      whatToWatch: 'A missed notice window or auto-renewal clause commits the buyer before utilization, price, or alternatives are resolved.', requiredEvidence: ['current_contract', 'renewal_timeline', 'spend_baseline'], triggerLogic: 'Annual spend and the contractually locked renewal period are evidenced.', valueBasis: 'Annual contract spend × locked renewal years; this is commercial exposure, not savings.',
+      computation: { inputs: [{ key: 'annual_contract_spend', label: 'Annual contract spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'locked_renewal_years', label: 'Contractually locked renewal period', unit: 'count', source: 'extracted_contract', citationRequired: true }], method: 'annual_contract_spend × locked_renewal_years', formulaId: 'RENEWAL_LOCK_IN_EXPOSURE', rangeMethod: 'Low bound applies an evidence haircut for termination, cure, or negotiated release options.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'low', rfpClause: 'Replace automatic renewal with affirmative renewal and a governed notice calendar; preserve termination and transition rights.', evaluationImpact: 'Show lock-in exposure separately from expected concessions and savings.', bafoAsk: 'Waive the auto-renewal consequence and restore an affirmative renewal decision.', executiveImplication: 'Timing can remove negotiating freedom before the commercial case is complete.', commercialRisk: 'Exposure is not loss and not savings; legal review must confirm the clause and notice status.',
+    },
+  ],
 };
 
 // ── registry ─────────────────────────────────────────────────────────────────
@@ -507,6 +539,47 @@ export const CLOUD_FINOPS: SourceEventArchetype = {
     { stage: 'rfp', requiredEvidence: [{ family: 'workload_inventory', severity: 'hard' }, { family: 'cloud_billing', severity: 'hard' }], analysisMethods: [], deliverables: ['cloud_rfp'] },
     { stage: 'pricing', requiredEvidence: [{ family: 'cloud_billing', severity: 'hard' }, { family: 'contract_baseline', severity: 'soft' }], analysisMethods: ['tco_normalization', 'should_cost'], deliverables: [] },
     { stage: 'bafo', requiredEvidence: [], analysisMethods: ['market_benchmark'], deliverables: ['cloud_negotiation_memo'] },
+  ],
+  valueLeverRules: [
+    {
+      key: 'CLOUD.COMMITMENT_COVERAGE', name: 'Uncovered eligible usage', category: 'pricing', valueType: 'incremental_negotiated', capabilityRef: 'value_lever_map',
+      whatToWatch: 'Steady-state eligible usage remains on on-demand pricing while commitment coverage is below the evidenced workload floor.',
+      requiredEvidence: ['cloud_billing', 'commitment_inventory'],
+      triggerLogic: 'Eligible spend and uncovered coverage are observed, with a named and comparable commitment-discount source.',
+      valueBasis: 'Eligible annual cloud spend × uncovered share × cited commitment discount × term.',
+      computation: { inputs: [{ key: 'annual_eligible_cloud_spend', label: 'Annual eligible cloud spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'uncovered_commitment_pct', label: 'Eligible usage not covered by commitments', unit: 'pct', source: 'enterprise_inventory', citationRequired: true }, { key: 'benchmark_commitment_discount_pct', label: 'Comparable commitment discount', unit: 'pct', source: 'benchmark', citationRequired: true }, { key: 'term_years', label: 'Decision horizon', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_eligible_cloud_spend × uncovered_commitment_pct × benchmark_commitment_discount_pct × term_years', formulaId: 'CLOUD_COMMITMENT_OPPORTUNITY', rangeMethod: 'Low bound applies the standard evidence haircut to the cited comparable discount.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'med', rfpClause: 'Require transparent commitment assumptions, eligible-service scope, flexibility and buyer ownership of the commitment benefit.', evaluationImpact: 'Normalize proposals against the same eligible-usage and commitment basis.', bafoAsk: 'Return the full commitment benefit to the buyer with flexibility and no hidden management markup.', executiveImplication: 'The organization is paying on-demand economics for usage that its own history shows is stable.', commercialRisk: 'A public discount is not automatically attainable; do not quantify without exact service, region, term and eligibility comparability.',
+    },
+    {
+      key: 'CLOUD.RIGHTSIZING', name: 'Idle and oversized compute', category: 'productivity', valueType: 'solution_tightening', capabilityRef: 'value_lever_map',
+      whatToWatch: 'Compute spend persists on resources with evidenced low utilization or inactive periods.', requiredEvidence: ['cloud_billing', 'utilization_telemetry'], triggerLogic: 'Billing and telemetry identify the annual compute pool and the measured idle/oversized share.', valueBasis: 'Annual compute spend × evidenced idle/oversized share × term.',
+      computation: { inputs: [{ key: 'annual_compute_spend', label: 'Annual compute spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'identified_idle_waste_pct', label: 'Measured idle or oversized share', unit: 'pct', source: 'enterprise_inventory', citationRequired: true }, { key: 'term_years', label: 'Decision horizon', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_compute_spend × identified_idle_waste_pct × term_years', formulaId: 'CLOUD_RIGHTSIZING_OPPORTUNITY', rangeMethod: 'Low bound haircuts the measured waste share for implementation and workload constraints.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'med', rfpClause: 'Require resource-level optimization actions, exclusions, approval workflow and contractual credit for unexecuted recommendations.', evaluationImpact: 'Score committed execution and realized-dollar accountability, not recommendation volume.', bafoAsk: 'Commit to a measured rightsizing plan with monthly evidence and fee-at-risk.', executiveImplication: 'This is engineering-backed consumption removal, not a vendor discount.', commercialRisk: 'Do not count utilization flags without workload-owner validation and production constraints.',
+    },
+    {
+      key: 'CLOUD.STORAGE_TIERING', name: 'Storage tier mismatch', category: 'productivity', valueType: 'solution_tightening', capabilityRef: 'value_lever_map',
+      whatToWatch: 'Cold data remains in higher-cost storage tiers despite access history supporting lifecycle movement.', requiredEvidence: ['cloud_billing', 'utilization_telemetry'], triggerLogic: 'Storage spend, cold-data share and cited tier-rate reduction are all present.', valueBasis: 'Annual storage spend × evidenced cold-data share × cited tier-rate reduction × term.',
+      computation: { inputs: [{ key: 'annual_storage_spend', label: 'Annual storage spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'cold_data_pct', label: 'Cold-data share', unit: 'pct', source: 'enterprise_inventory', citationRequired: true }, { key: 'storage_rate_reduction_pct', label: 'Comparable tier-rate reduction', unit: 'pct', source: 'benchmark', citationRequired: true }, { key: 'term_years', label: 'Decision horizon', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_storage_spend × cold_data_pct × storage_rate_reduction_pct × term_years', formulaId: 'CLOUD_STORAGE_TIERING_OPPORTUNITY', rangeMethod: 'Low bound applies an evidence haircut for retrieval and minimum-duration constraints.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'med', rfpClause: 'Require lifecycle policies, retrieval-cost modeling and documented exclusions by data class.', evaluationImpact: 'Normalize storage proposals for retrieval charges and minimum-duration penalties.', bafoAsk: 'Include lifecycle execution and retrieval economics in the committed optimization schedule.', executiveImplication: 'Storage optimization depends on access behavior and retention constraints, not a blanket migration percentage.', commercialRisk: 'Never apply a tier discount to the full storage estate or ignore retrieval and retention costs.',
+    },
+    {
+      key: 'CLOUD.EGRESS_ARCHITECTURE', name: 'Avoidable data egress', category: 'scope_leakage', valueType: 'protected', capabilityRef: 'vendor_commercial_posture',
+      whatToWatch: 'Recurring architecture or routing patterns create data-transfer charges that can be designed out.', requiredEvidence: ['cloud_billing', 'workload_inventory'], triggerLogic: 'Annual egress spend and the architecture-reviewed avoidable share are present.', valueBasis: 'Annual egress spend × architecture-validated avoidable share × term.',
+      computation: { inputs: [{ key: 'annual_egress_spend', label: 'Annual egress spend', unit: 'usd_per_year', source: 'enterprise_inventory', citationRequired: true }, { key: 'avoidable_egress_pct', label: 'Architecture-validated avoidable share', unit: 'pct', source: 'analyst_input', citationRequired: true }, { key: 'term_years', label: 'Decision horizon', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_egress_spend × avoidable_egress_pct × term_years', formulaId: 'CLOUD_EGRESS_AVOIDANCE', rangeMethod: 'Low bound haircuts the architecture-reviewed avoidable share.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'low', rfpClause: 'Require data-flow disclosure, egress modeling and architecture assistance for avoidable transfers.', evaluationImpact: 'Evaluate TCO with expected transfer patterns, not compute rates alone.', bafoAsk: 'Cap or credit avoidable egress created by the provider solution.', executiveImplication: 'A low compute rate can be erased by data movement the solution architecture creates.', commercialRisk: 'Architecture review is mandatory; do not infer avoidability from the billing line alone.',
+    },
+    {
+      key: 'CLOUD.PASSTHROUGH_MARKUP', name: 'Hidden pass-through markup', category: 'commercial_posture', valueType: 'incremental_negotiated', capabilityRef: 'vendor_commercial_posture',
+      whatToWatch: 'A managed-cloud provider blends net hyperscaler cost with its fee, obscuring markup.', requiredEvidence: ['cloud_billing', 'private_pricing_agreements', 'contract_baseline'], triggerLogic: 'Annual pass-through spend and the evidenced markup over buyer net rate are present.', valueBasis: 'Annual pass-through spend × evidenced markup × term.',
+      computation: { inputs: [{ key: 'annual_pass_through_spend', label: 'Annual hyperscaler pass-through spend', unit: 'usd_per_year', source: 'extracted_vendor', citationRequired: true }, { key: 'pass_through_markup_pct', label: 'Markup over buyer net rate', unit: 'pct', source: 'extracted_vendor', citationRequired: true }, { key: 'term_years', label: 'Decision horizon', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_pass_through_spend × pass_through_markup_pct × term_years', formulaId: 'CLOUD_PASSTHROUGH_MARKUP', rangeMethod: 'Low bound applies an evidence haircut for rebate and timing uncertainty.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'high', rfpClause: 'Separate buyer net hyperscaler charges from management fees and grant audit rights to invoices, rebates and credits.', evaluationImpact: 'Disqualify blended pricing that prevents pass-through reconciliation.', bafoAsk: 'Remove pass-through markup and state the management fee separately.', executiveImplication: 'The buyer should not pay a margin on its own hyperscaler consumption without seeing it.', commercialRisk: 'Compare against the buyer net rate, not public list price.',
+    },
+    {
+      key: 'CLOUD.STRANDED_COMMITMENT', name: 'Stranded commitment exposure', category: 'assumptions', valueType: 'risk_adjusted', capabilityRef: 'solution_quality',
+      whatToWatch: 'A proposed commitment exceeds the workload forecast after migration, retirement and demand uncertainty.', requiredEvidence: ['commitment_inventory', 'workload_inventory'], triggerLogic: 'Annual commitment and the forecast shortfall share are evidenced over the decision horizon.', valueBasis: 'Annual committed spend × forecast shortfall share × term; this is risk exposure, not savings.',
+      computation: { inputs: [{ key: 'annual_committed_spend', label: 'Annual committed spend', unit: 'usd_per_year', source: 'extracted_contract', citationRequired: true }, { key: 'forecast_shortfall_pct', label: 'Forecast commitment shortfall', unit: 'pct', source: 'enterprise_inventory', citationRequired: true }, { key: 'term_years', label: 'Commitment term', unit: 'count', source: 'extracted_vendor', citationRequired: true }], method: 'annual_committed_spend × forecast_shortfall_pct × term_years', formulaId: 'CLOUD_STRANDED_COMMITMENT_EXPOSURE', rangeMethod: 'Low bound haircuts the forecast shortfall for demand uncertainty.', onMissingEvidence: 'insufficient_evidence' },
+      defaultConfidence: 'low', rfpClause: 'Require commitment flexibility, exchange rights, drawdown reporting and explicit ownership of stranded risk.', evaluationImpact: 'Risk-adjust the apparent discount by the exposure created if forecast usage does not materialize.', bafoAsk: 'Reduce the commitment floor or add exchange and ramp protections.', executiveImplication: 'A larger discount can destroy value when the commitment is larger than the evidence supports.', commercialRisk: 'Never label exposure as savings and never size it without a governed workload forecast.',
+    },
   ],
 };
 
@@ -826,6 +899,105 @@ export const STAFF_AUGMENTATION: SourceEventArchetype = {
     { stage: 'bafo', requiredEvidence: [], analysisMethods: ['market_benchmark'], deliverables: ['staffing_negotiation_memo'] },
   ],
 };
+export const AI_ENGINEERING_PARTNER: SourceEventArchetype = {
+  id: 'AI_ENGINEERING_PARTNER',
+  name: 'AI Engineering Partner Selection',
+  description: 'Selecting an accountable AI engineering partner for agentic product build, retrieval/evaluation, MLOps, secure integration, and production handoff — not a generic agile pod or staff-augmentation lane.',
+  version: '1.0.0', status: 'validated', eventType: 'ai_engineering_partner',
+  applicableSpendCategories: ['ai_engineering_partner', 'agentic_build', 'mlops_delivery'],
+  requiredEvidenceFamilies: [
+    f({ key: 'ai_use_case_portfolio', label: 'AI use-case portfolio and delivery boundaries', kind: 'document', whyNeeded: 'Defines which AI workflows the partner will build, what stays internal, and which outcomes are in scope; without it the engagement becomes a generic SI ask.', sourceDocHint: 'AI use-case backlog + delivery-lane decision memo (XLSX/DOCX)', acceptedFormats: ['xlsx', 'docx'], feedsMethods: ['pod_sizing', 'scorecard_weighting'] }),
+    f({ key: 'eval_harness_baseline', label: 'Evaluation harness and acceptance baseline', kind: 'metric_baseline', whyNeeded: 'The governed pass/fail bar for model, retrieval, safety, and workflow quality. Without it vendor demos cannot become acceptance evidence.', sourceDocHint: 'Eval harness results, acceptance rubric, and red-team criteria (CSV/XLSX/DOCX)', acceptedFormats: ['csv', 'xlsx', 'docx'], feedsMethods: ['scorecard_weighting', 'quality_gap'] }),
+    f({ key: 'retrieval_data_inventory', label: 'Retrieval and data-source inventory', kind: 'inventory', whyNeeded: 'Lists the governed sources, indices, APIs, and data boundaries the partner may use; prevents raw-context and cross-tenant leakage.', sourceDocHint: 'Retrieval/source inventory + API/data boundary map (CSV/XLSX)', acceptedFormats: ['csv', 'xlsx'], feedsMethods: ['tco_normalization'] }),
+    f({ key: 'ai_security_privacy_controls', label: 'AI security, privacy, and compliance controls', kind: 'process', whyNeeded: 'Controls model access, data residency, PII/PHI handling, prompt injection defenses, and audit evidence before the partner touches governed context.', sourceDocHint: 'AI security/privacy control map and compliance requirements (DOCX/XLSX)', acceptedFormats: ['docx', 'xlsx'], feedsMethods: ['scorecard_weighting'] }),
+    f({ key: 'model_ops_runbook', label: 'Model-ops and production handoff runbook', kind: 'process', whyNeeded: 'Defines monitoring, drift response, incident response, release cadence, and handoff obligations for day-2 operation.', sourceDocHint: 'MLOps/LLMOps runbook + support model (DOCX)', acceptedFormats: ['docx', 'pdf'], feedsMethods: ['tco_normalization'] }),
+    f({ key: 'ip_data_rights_baseline', label: 'IP, model, prompt, and data-rights baseline', kind: 'commercial', whyNeeded: 'Establishes ownership of prompts, evals, retrieval configs, fine-tunes, generated assets, and data-use restrictions on exit.', sourceDocHint: 'Current IP/data-rights position and required terms (DOCX/PDF)', acceptedFormats: ['docx', 'pdf'], feedsMethods: ['market_benchmark'] }),
+    f({ key: 'current_engineering_capacity', label: 'Current AI/engineering capacity and cost', kind: 'financial', whyNeeded: 'Anchors should-cost and retained-team responsibilities so partner pricing is compared to the actual build/run capacity gap.', sourceDocHint: 'Engineering roster, skill map, and cost baseline (XLSX/CSV)', acceptedFormats: ['xlsx', 'csv'], feedsMethods: ['should_cost', 'pod_sizing'] }),
+    CONTRACT_BASELINE,
+  ],
+  optionalEvidenceFamilies: [
+    f({ key: 'reference_architecture', label: 'Target AI reference architecture', kind: 'document', whyNeeded: 'Clarifies integration patterns, deployment constraints, and platform dependencies before vendors propose incompatible stacks.', sourceDocHint: 'Target architecture / integration diagram (DOCX/PDF)', acceptedFormats: ['docx', 'pdf'] }),
+    f({ key: 'product_telemetry_baseline', label: 'Product telemetry and usage baseline', kind: 'metric_baseline', whyNeeded: 'Connects the AI build to real adoption, quality, and workflow outcomes after launch.', sourceDocHint: 'Product telemetry baseline (CSV/XLSX)', acceptedFormats: ['csv', 'xlsx'] }),
+  ],
+  requiredStakeholders: ['CIO / CTO', 'Product owner', 'AI platform owner', 'Security / Privacy', 'Data governance lead', 'Procurement / Vendor Management', 'Legal / IP counsel'],
+  sourcingStrategyQuestions: [
+    'Is this a true accountable AI engineering partner, or generic product engineering / staff augmentation wearing AI language?',
+    'Which AI use cases are ready enough for a partner to build, and which must stay internal until evidence closes?',
+    'What eval, safety, retrieval-quality, and workflow-acceptance gates must vendors pass before award?',
+    'Who owns prompts, evals, retrieval configuration, fine-tunes, generated code, and model artifacts on exit?',
+    'What MLOps / LLMOps handoff and incident-response obligations are required for production operation?',
+  ],
+  vendorDiscussionGuide: {
+    topics: ['Use-case readiness and delivery lane', 'Evaluation harness and acceptance gates', 'Retrieval/data boundary and tenant safety', 'MLOps/LLMOps production handoff', 'AI security and privacy controls', 'IP, model, prompt, and data rights', 'Named AI engineering team and proof tasks'],
+    ask: ['Show a production AI build where you owned eval, retrieval quality, secure integration, and day-2 handoff — what evidence can we inspect?', 'Will you accept our eval harness as a contractual acceptance gate, including safety and retrieval-quality failures?', 'Which prompts, evals, retrieval configs, generated code, fine-tunes, and telemetry do we own on exit?', 'How do you prevent our data from being used for model training, cross-client assets, or reusable prompt libraries?', 'What named engineers, model-ops leads, and security owners are locked through delivery?'],
+    doNotRevealYet: ['Our internal eval failure thresholds beyond the published acceptance rubric', 'Our walk-away position on IP ownership', 'Which use cases we might keep internal', 'The maximum retained-team capacity we can supply'],
+    likelyPushback: ['Treating eval gates as advisory rather than acceptance criteria', 'Claiming reusable accelerators while keeping prompts/evals/configs proprietary', 'Leaving model monitoring and drift response as post-project support', 'Substituting generic agile roles for named AI engineering and model-ops expertise'],
+    challengeAssumptions: ['Assumed demo accuracy is production quality', 'Assumed retrieval access implies data-use rights', 'Assumed prompt/eval assets belong to the partner', 'Assumed model-ops can be deferred until after launch'],
+  },
+  rfpDocumentStructure: [
+    { key: 'exec_overview', title: 'Executive overview and AI outcomes sought', required: true, evidenceDependencies: [] },
+    { key: 'use_case_scope', title: 'Use-case portfolio, delivery lanes, and retained responsibilities', required: true, evidenceDependencies: ['ai_use_case_portfolio'] },
+    { key: 'eval_acceptance', title: 'Evaluation harness, safety gates, and acceptance criteria', required: true, evidenceDependencies: ['eval_harness_baseline'] },
+    { key: 'retrieval_data_controls', title: 'Retrieval, data boundaries, and governed context controls', required: true, evidenceDependencies: ['retrieval_data_inventory', 'ai_security_privacy_controls'] },
+    { key: 'model_ops_handoff', title: 'MLOps/LLMOps, monitoring, drift, and production handoff', required: true, evidenceDependencies: ['model_ops_runbook'] },
+    { key: 'ip_data_rights', title: 'IP, prompt, eval, model, fine-tune, and data-use terms', required: true, evidenceDependencies: ['ip_data_rights_baseline'] },
+    { key: 'team_proof_tasks', title: 'Named team, proof tasks, and security review', required: true, evidenceDependencies: ['current_engineering_capacity'] },
+    { key: 'pricing_schedule', title: 'Milestone, holdback, support, and change-control pricing', required: true, evidenceDependencies: ['current_engineering_capacity', 'contract_baseline'] },
+    { key: 'response_instructions', title: 'Response instructions and scorecard', required: true, evidenceDependencies: [] },
+  ],
+  pricingModel: {
+    model: 'milestone-based build + eval-gated acceptance holdback + named team rate card + fixed model-ops support runway',
+    costComponents: ['discovery and architecture', 'build milestones by use-case lane', 'retrieval/integration work package', 'eval and red-team work package', 'MLOps/LLMOps support runway', 'cloud/model consumption pass-through', 'change-control pool', 'acceptance holdback'],
+    traps: ['Demo-led fixed price with no eval acceptance gate', 'Partner-owned prompts/evals/configs creating exit lock-in', 'Unbounded model/API consumption passed through without guardrails', 'Model-ops and drift response priced as a later add-on', 'Generic blended rates hiding missing AI/security expertise', 'Reusable accelerators that train on or retain buyer context'],
+    shouldCost: true,
+  },
+  evaluationModel: {
+    criteria: [
+      { key: 'eval_acceptance', label: 'Eval, safety, and acceptance rigor', weight: 0.30 },
+      { key: 'engineering_capability', label: 'AI engineering and secure integration capability', weight: 0.20 },
+      { key: 'modelops_handoff', label: 'MLOps/LLMOps and production handoff', weight: 0.15 },
+      { key: 'commercial_ip', label: 'IP, data-rights, and exit posture', weight: 0.15 },
+      { key: 'price', label: 'Milestone price and support runway normalization', weight: 0.15 },
+      { key: 'team_continuity', label: 'Named team continuity and proof tasks', weight: 0.05 },
+    ],
+    disqualifiers: ['Will not contract to the buyer-owned eval and safety acceptance gate', 'No no-training-on-buyer-data commitment', 'No buyer ownership / portability for prompts, evals, retrieval configs, and generated code', 'No named AI engineering or model-ops lead', 'Cannot evidence production deployment with governed data boundaries'],
+  },
+  riskModel: {
+    dimensions: ['demo-to-production quality risk', 'unsafe retrieval / raw-context exposure', 'model/data-rights lock-in', 'model drift and day-2 support gap', 'prompt/eval ownership ambiguity', 'named-team bait-and-switch', 'unbounded consumption pass-through'],
+    contractProtections: ['buyer-owned eval acceptance gate with holdback', 'no-training-on-buyer-data and no cross-client reuse without approval', 'prompt/eval/retrieval-config/code portability on exit', 'data-residency and tenant-boundary clauses', 'MLOps support runway with monitoring and incident-response obligations', 'named-team continuity with substitution approval', 'model/API consumption caps and alerting', 'security review and audit rights'],
+  },
+  negotiationLevers: [
+    { key: 'eval_acceptance', label: 'Eval-gated acceptance holdback', rationale: 'Makes quality, safety, and retrieval performance the payment gate rather than a demo promise.', timing: 'rfp' },
+    { key: 'ip_portability', label: 'Prompt/eval/retrieval-config portability', rationale: 'Prevents the partner from converting buyer-specific AI assets into renewal lock-in.', timing: 'rfp' },
+    { key: 'no_training_data_rights', label: 'No-training and data-use restrictions', rationale: 'Protects governed context and bars reuse of buyer data in vendor models or accelerators.', timing: 'final_contracting' },
+    { key: 'modelops_runway', label: 'Fixed MLOps support runway', rationale: 'Forces day-2 monitoring, drift response, and incident handling into the base deal.', timing: 'bafo' },
+    { key: 'named_team_proof', label: 'Named team proof task', rationale: 'Separates real AI engineering capacity from sales slides and generic SI staffing.', timing: 'pre_rfp' },
+    { key: 'consumption_guardrails', label: 'Model/API consumption caps', rationale: 'Caps pass-through exposure from model calls, embeddings, and evaluation runs.', timing: 'bafo' },
+  ],
+  deliverablePack: [
+    { key: 'ai_partner_strategy_memo', label: 'AI Engineering Partner Sourcing Strategy Memo', stage: 'strategy', audience: 'CIO · CTO · Product Sponsor', sections: ['Objective', 'Use-case delivery-lane decision', 'Eval and safety acceptance posture', 'Retained vs partner responsibilities', 'IP/data-rights posture', 'Commercial guardrails'], qualityBar: { minSections: 6, requiresCitations: true, altitude: 'exec', rubric: ['Names the actual AI use cases and readiness gaps', 'Every quality/value claim cited or marked missing', 'States eval acceptance and IP posture explicitly'] }, formats: ['html', 'docx'], gateArtifact: true },
+    { key: 'ai_partner_rfp', label: 'AI Engineering Partner RFP', stage: 'rfp', audience: 'AI engineering partners', sections: ['Use-case scope', 'Eval acceptance gates', 'Retrieval/data controls', 'Model-ops handoff', 'IP/data rights', 'Named team and proof tasks', 'Pricing schedule'], qualityBar: { minSections: 7, requiresCitations: true, altitude: 'full', rubric: ['Eval-gated, not demo-led', 'No-training/data-rights terms mandatory', 'Named AI engineering and model-ops ownership explicit'] }, formats: ['docx', 'pdf'], gateArtifact: true },
+    { key: 'ai_partner_negotiation_memo', label: 'AI Partner Pricing & Negotiation Memo', stage: 'bafo', audience: 'CIO · CTO · Procurement', sections: ['Eval and proof-task gaps by vendor', 'Milestone/holdback normalization', 'IP/data-rights exceptions', 'BAFO asks by vendor', 'Walk-away'], qualityBar: { minSections: 5, requiresCitations: true, altitude: 'exec', rubric: ['Vendor-specific eval/IP asks', 'Milestone and support runway normalized', 'Walk-away stated'] }, formats: ['html', 'docx'] },
+  ],
+  gateCriteria: [
+    { key: 'ai_partner_eval_ready', describe: 'Use-case scope, eval baseline, security controls, and IP/data-rights requirements are usable before RFP.', fromStage: 'scope', toStage: 'rfp', severity: 'hard' },
+    { key: 'ai_partner_eval_contractual', describe: 'RFP and responses bind vendors to buyer-owned eval and safety acceptance gates before pricing decisions.', fromStage: 'rfp', toStage: 'pricing', severity: 'hard' },
+    { key: 'ai_partner_price_normalized', describe: 'Proposals normalized for milestone acceptance, holdback, support runway, consumption guardrails, and change control before BAFO.', fromStage: 'pricing', toStage: 'bafo', severity: 'hard' },
+  ],
+  agentGuidance: {
+    systemFraming: 'This is an AI engineering partner selection event for aVa-relevant agentic build, retrieval, evaluation, secure integration, and production handoff. Reason only over committed AI use-case, eval, retrieval/data boundary, security/privacy, model-ops, IP/data-rights, and capacity evidence. Never assert model quality, safety, value, or production readiness without governed eval evidence; never expose raw context to the partner or to aVa; never treat generic product-engineering velocity as proof of AI readiness. Name missing evidence explicitly.',
+    keyQuestions: ['Which use cases are ready for partner delivery?', 'What eval and safety gate decides acceptance?', 'Who owns prompts, evals, retrieval configs, generated code, and fine-tunes?', 'What no-training/data-use restrictions must be contractual?', 'What model-ops handoff keeps aVa-safe production behavior governed?'],
+    requiresGroundedAnswer: true,
+  },
+  stageModel: [
+    { stage: 'strategy', requiredEvidence: [{ family: 'ai_use_case_portfolio', severity: 'hard' }, { family: 'current_engineering_capacity', severity: 'hard' }], analysisMethods: ['pod_sizing', 'should_cost'], deliverables: ['ai_partner_strategy_memo'] },
+    { stage: 'scope', requiredEvidence: [{ family: 'ai_use_case_portfolio', severity: 'hard' }, { family: 'eval_harness_baseline', severity: 'hard' }, { family: 'retrieval_data_inventory', severity: 'hard' }, { family: 'ai_security_privacy_controls', severity: 'hard' }, { family: 'model_ops_runbook', severity: 'soft' }], analysisMethods: ['scorecard_weighting', 'quality_gap'], deliverables: [] },
+    { stage: 'rfp', requiredEvidence: [{ family: 'ai_use_case_portfolio', severity: 'hard' }, { family: 'eval_harness_baseline', severity: 'hard' }, { family: 'ip_data_rights_baseline', severity: 'hard' }, { family: 'ai_security_privacy_controls', severity: 'soft' }], analysisMethods: [], deliverables: ['ai_partner_rfp'] },
+    { stage: 'evaluation', requiredEvidence: [{ family: 'eval_harness_baseline', severity: 'hard' }, { family: 'model_ops_runbook', severity: 'soft' }], analysisMethods: ['scorecard_weighting', 'quality_gap'], deliverables: [] },
+    { stage: 'pricing', requiredEvidence: [{ family: 'current_engineering_capacity', severity: 'hard' }, { family: 'model_ops_runbook', severity: 'soft' }, { family: 'contract_baseline', severity: 'soft' }], analysisMethods: ['tco_normalization', 'should_cost', 'market_benchmark'], deliverables: [] },
+    { stage: 'bafo', requiredEvidence: [{ family: 'ip_data_rights_baseline', severity: 'hard' }], analysisMethods: ['market_benchmark'], deliverables: ['ai_partner_negotiation_memo'] },
+  ],
+};
 export const DIGITAL_PRODUCT_ENGINEERING: SourceEventArchetype = {
   id: 'DIGITAL_PRODUCT_ENGINEERING',
   name: 'Digital Product Engineering Services',
@@ -1037,6 +1209,7 @@ export const SOURCE_ARCHETYPE_REGISTRY: Record<string, SourceEventArchetype> = {
   [MSSP_CYBER.id]: MSSP_CYBER,
   [STAFF_AUGMENTATION.id]: STAFF_AUGMENTATION,
   [DIGITAL_PRODUCT_ENGINEERING.id]: DIGITAL_PRODUCT_ENGINEERING,
+  [AI_ENGINEERING_PARTNER.id]: AI_ENGINEERING_PARTNER,
   [CONTACT_CENTER_CX.id]: CONTACT_CENTER_CX,
   // Add new archetypes here — no Source core code change required.
 };

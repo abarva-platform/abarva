@@ -50,31 +50,12 @@ import {
 import { evaluateGate, gateCriteriaForPhase } from "./governance";
 import { PHASE_LABELS } from "./types.db";
 import { getPhaseLabel } from "./phase-labels";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalProgramClientName } from "./client-name";
 
 type TransformerOptions = {
   supabase?: unknown;
   evaluateGateCriteria?: boolean;
 };
-
-// ── Client name mapping ────────────────────────────────────────────────
-// Delegate to the canonical resolver (src/lib/client-config.ts), which knows
-// every tenant (Meridian, First Capital, Apex, Lakeshore, SkyHarbor Air,
-// Northstar Clinical, …). NEVER default to a specific tenant: an unresolved
-// client falls back to its own raw name, then a neutral dash. Previously this
-// hardcoded "Apex Retail Group" as the catch-all default, so any tenant not in
-// a stale closed list (SkyHarbor, Northstar) rendered as "Apex Retail Group" —
-// a cross-tenant name leak on every Move card/detail.
-function canonicalProgramClientName(args: {
-  clientId?: string | null;
-  name?: string | null;
-}): ProgramSummary["clientName"] {
-  return (
-    canonicalClientDisplayName({ key: args.clientId, name: args.name }) ??
-    args.name?.trim() ??
-    "—"
-  );
-}
 
 function displayText(value: unknown, fallback = "—"): string {
   if (typeof value === "string" && value.trim()) return value;
@@ -188,6 +169,7 @@ export async function buildGateCriteria(
   ctx: TenancyCtx,
   moveId: string,
   currentPhase: number,
+  opts: { allowHistoricalPhase?: boolean } = {},
 ): Promise<StrategicMove["gateCriteria"]> {
   const criteria = gateCriteriaForPhase(currentPhase);
   // Terminal phase (or unknown phase) — no outgoing gate to evaluate.
@@ -196,12 +178,11 @@ export async function buildGateCriteria(
   // Evaluate the current → next transition against real program state.
   let failedKeys: Set<string> | null = null;
   try {
-    const check = await evaluateGate(
-      ctx,
-      moveId,
-      currentPhase,
-      currentPhase + 1,
-    );
+    const check = opts.allowHistoricalPhase
+      ? await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1, {
+          allowHistoricalPhase: true,
+        })
+      : await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1);
     // A `phase_mismatch` / `program_not_found` failure is not a per-criterion
     // signal — in that case treat the criteria as not yet verified rather
     // than marking every concrete criterion failed.
@@ -235,7 +216,7 @@ export async function buildGateCriteria(
   }));
 }
 
-function buildUnverifiedGateCriteria(
+export function buildUnverifiedGateCriteria(
   currentPhase: number,
 ): StrategicMove["gateCriteria"] {
   const criteria = gateCriteriaForPhase(currentPhase);
@@ -299,7 +280,11 @@ interface ParticipantRow {
 function authorityToViewerRole(
   auth: string | null,
   fallback: ViewerRole = "team_member",
+  participantRole?: string | null,
 ): ViewerRole {
+  if (/^(co[- ]?)?sponsor$/i.test(participantRole?.trim() ?? "")) {
+    return "sponsor";
+  }
   if (auth === "sponsor") return "sponsor";
   if (auth === "approver") return "lead";
   if (auth === "contributor") return "team_member";
@@ -357,7 +342,11 @@ async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
         title: p.role ?? r.role ?? "",
         initials: initialsOf(p.name),
         avatarColor: colorForId(p.id),
-        role: authorityToViewerRole(r.approval_authority),
+        role: authorityToViewerRole(
+          r.approval_authority,
+          "team_member",
+          r.role,
+        ),
       } satisfies ParticipantRef;
     });
   return [
@@ -365,7 +354,7 @@ async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
     ...legacyRows.map((r) => ({
       ...legacyPersonFromLabel(r.user_id),
       title: r.role ?? "",
-      role: authorityToViewerRole(r.approval_authority),
+      role: authorityToViewerRole(r.approval_authority, "team_member", r.role),
     })),
   ];
 }
@@ -380,12 +369,13 @@ async function resolveSponsorAndLead(
   }>({
     table: "engagement_participants",
     columns: ["user_id", "approval_authority", "role"],
-    where: {
-      engagement_id: engagementId,
-      approval_authority: { op: "in", value: ["sponsor", "approver"] },
-    },
+    where: { engagement_id: engagementId },
   });
-  const sponsorRow = rows.find((r) => r.approval_authority === "sponsor");
+  const sponsorRow = rows.find(
+    (r) =>
+      r.approval_authority === "sponsor" ||
+      /^(co[- ]?)?sponsor$/i.test(r.role?.trim() ?? ""),
+  );
   const leadRow = rows.find((r) => r.approval_authority === "approver");
   const [sponsor, lead] = await Promise.all([
     sponsorRow
@@ -987,7 +977,7 @@ async function buildCharterSummary(
     sponsorDecision:
       charter.status === "signed_off"
         ? "Signed off"
-        : "Awaiting sponsor decision",
+        : "Awaiting authorized workspace-user decision",
     baselineNeed: "Baseline captured",
   };
 }
@@ -1296,8 +1286,8 @@ export async function getMoveStatus(
       statusKey: "awaiting_decision",
       statusText: "AWAITING DECISION",
       statusDescription: isP0
-        ? "Origination brief awaiting sponsor approval — approving closes P0 and advances this Move to P1 Charter"
-        : `${getPhaseLabel(move.currentPhase)} gate awaiting sponsor approval — approving advances this Move to ${getPhaseLabel((move.currentPhase ?? 0) + 1)}`,
+        ? "Origination brief awaiting approval from an authorized workspace user — approval closes P0 and advances this Move to P1 Charter"
+        : `${getPhaseLabel(move.currentPhase)} gate awaiting approval from an authorized workspace user — approval advances this Move to ${getPhaseLabel((move.currentPhase ?? 0) + 1)}`,
       statusColor: "amber",
     };
   }
@@ -1627,7 +1617,9 @@ export async function buildStrategicMove(
   });
 
   const sponsorFromParticipants = participantRows.find(
-    (row) => row.approval_authority === "sponsor",
+    (row) =>
+      row.approval_authority === "sponsor" ||
+      /^(co[- ]?)?sponsor$/i.test(row.role?.trim() ?? ""),
   );
   const sponsorPersonId =
     move.sponsorPersonId ||

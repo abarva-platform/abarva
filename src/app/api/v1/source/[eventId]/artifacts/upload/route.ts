@@ -17,6 +17,7 @@ import {
   SOURCE_STAGE_ORDER,
 } from "@/lib/source/constants";
 import { getSourcingEvent, type SourceEventRow } from "@/lib/source/queries";
+import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
 import type { SourceStageKey } from "@/lib/source/types";
 import {
   buildSourceArtifactBlobPath,
@@ -34,7 +35,6 @@ import {
   isSynchronouslyParseableSourceFormat,
   parseSourceTextArtifact,
 } from "@/lib/source/artifact-registry/text-parser";
-import { criteriaByArtifactCode } from "@/lib/source/canonical-specs/gate-criteria";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   extractSourceUploadText,
@@ -194,18 +194,15 @@ interface UploadLandingResult {
 }
 
 /**
- * Land an artifact-scoped upload on the canvas: replace the target artifact's
- * body with the extracted text and mark every gate criterion linked to that
- * artifact as met (chosen product semantics — an uploaded document satisfies
- * its gate). Best-effort and non-fatal: any miss is returned as a warning so
- * the upload still succeeds as a registry document.
+ * Land extracted text on the canvas artifact. The upload may supply evidence,
+ * but it cannot make the accountable decision for a linked gate criterion.
+ * Best-effort and non-fatal: the file remains registered if landing fails.
  */
 async function landUploadOnArtifact(args: {
   eventId: string;
   clientKey: string;
   artifactCode: string;
   extracted: ExtractedUploadText;
-  reviewerPersonId: string | null;
   authorId: string | null;
 }): Promise<UploadLandingResult> {
   const warnings: string[] = [];
@@ -257,36 +254,7 @@ async function landUploadOnArtifact(args: {
     }
   }
 
-  // 2. Auto-satisfy the gate criteria this artifact is linked to.
-  const satisfiedCriteria: string[] = [];
-  for (const criterion of criteriaByArtifactCode(args.artifactCode)) {
-    const { data: criterionRow } = await supabase
-      .from("source_event_gate_criterion_states")
-      .select("id, state")
-      .eq("source_event_id", args.eventId)
-      .eq("criterion_id", criterion.criterionId)
-      .maybeSingle<{ id: string; state: string }>();
-    if (!criterionRow) continue;
-    if (criterionRow.state === "met" || criterionRow.state === "waived") {
-      satisfiedCriteria.push(criterion.criterionId);
-      continue;
-    }
-    const nowIso = new Date().toISOString();
-    const write = await writer.updateGateCriterion({
-      criterionRowId: criterionRow.id,
-      state: "met",
-      reviewerUserId: args.reviewerPersonId,
-      reviewedAtIso: nowIso,
-      updatedAtIso: nowIso,
-    });
-    if (write.ok) satisfiedCriteria.push(criterion.criterionId);
-    else
-      warnings.push(
-        `Gate ${criterion.criterionId} flip failed: ${write.error}`,
-      );
-  }
-
-  return { bodyLanded, satisfiedCriteria, warnings };
+  return { bodyLanded, satisfiedCriteria: [], warnings };
 }
 
 export async function POST(
@@ -365,6 +333,23 @@ export async function POST(
   });
   if (!scope) return jsonError(403, "forbidden_event");
 
+  const requirementId = parseOptionalString(formData.get("evidenceRequirementId"));
+  if (formData.has("evidenceRequirementId") && !requirementId)
+    return jsonError(400, "invalid_evidence_requirement");
+  if (requirementId) {
+    const requirement = evidenceById(requirementId);
+    const extension = filename.split(".").pop()?.toLowerCase();
+    const format = sourceArtifactFormatFromMime(mimeType);
+    if (!requirement || requirement.stage !== scope.stageKey)
+      return jsonError(400, "invalid_evidence_requirement");
+    if (
+      !extension ||
+      !requirement.acceptedFileTypes.includes(extension) ||
+      (format !== extension && !(format === "markdown" && extension === "md"))
+    )
+      return jsonError(400, "invalid_evidence_file_type");
+  }
+
   const artifactId = randomUUID();
   let blobUri: string;
   try {
@@ -425,22 +410,27 @@ export async function POST(
   }
 
   try {
+    const artifactFamily = requirementId ? "other" : inferSourceArtifactFamily({
+      stageKey: scope.stageKey,
+      filename,
+      requestedFamily: parseOptionalString(formData.get("artifactFamily")),
+    });
+    const artifactKind = requirementId
+      ? "uploaded_source_artifact"
+      : parseOptionalString(formData.get("artifactKind")) ??
+        "uploaded_source_artifact";
+    const sourceFormat = sourceArtifactFormatFromMime(mimeType);
+    const fileFormat = sourceFormat === "markdown" ? "md" : sourceFormat;
     let artifact = await registerSourceArtifactUpload({
       artifactId,
       tenantKey,
       sourceEventId: scope.eventId,
       sourceEventRowId: scope.sourceEventRowId,
       stageKey: scope.stageKey,
-      artifactFamily: inferSourceArtifactFamily({
-        stageKey: scope.stageKey,
-        filename,
-        requestedFamily: parseOptionalString(formData.get("artifactFamily")),
-      }),
-      artifactKind:
-        parseOptionalString(formData.get("artifactKind")) ??
-        "uploaded_source_artifact",
+      artifactFamily,
+      artifactKind,
       sourceOrigin: "uploaded",
-      sourceFormat: sourceArtifactFormatFromMime(mimeType),
+      sourceFormat,
       originalName: filename,
       blobUri,
       uploaderUserId: tenancy.userId,
@@ -449,6 +439,28 @@ export async function POST(
       sha256,
       dataClassification,
       createdBy: tenancy.userId,
+      fileCabinet: {
+        clientId: client.id,
+        sourcingStage: scope.stageKey,
+        artifactGroup: "upload",
+        artifactType: artifactKind,
+        artifactFamily,
+        title: filename,
+        description: null,
+        fileName: filename,
+        fileFormat,
+        blobContainer: STORAGE_BUCKET,
+        blobPath: blobUri,
+        fileSize: file.size,
+        version: 1,
+        status: "draft",
+        generatedBy: tenancy.userId,
+        sourceBasis: "uploaded source document",
+        citationReady: false,
+        evidenceFamiliesUsed: [artifactFamily],
+        sourceRegisterId: artifactId,
+        blobSha256: sha256,
+      },
     });
 
     const extracted = await extractSourceUploadText({
@@ -456,11 +468,8 @@ export async function POST(
       mimeType,
     });
 
-    // Artifact-scoped landing (chosen semantics: an uploaded document satisfies
-    // its gate). When the upload targets a specific canvas artifact, land the
-    // extracted text on that artifact's body and mark the gate criteria it is
-    // linked to as met. Falls through harmlessly to registry-only when no
-    // artifactCode is supplied or the format can't be extracted.
+    // Land extracted text on the targeted canvas artifact. Receipt alone
+    // never records the named decision required by a governance gate.
     const artifactCode = parseOptionalString(formData.get("artifactCode"));
     const landing = artifactCode
       ? await landUploadOnArtifact({
@@ -468,7 +477,6 @@ export async function POST(
           clientKey: client.key,
           artifactCode,
           extracted,
-          reviewerPersonId: currentUser?.personId ?? null,
           authorId: currentUser?.clerkUserId ?? null,
         })
       : null;
@@ -553,6 +561,7 @@ export async function POST(
           artifactId: artifact.id,
           artifactFamily: artifact.artifactFamily,
           filename,
+          requirementId,
           parsed: artifact.parseStatus === "parsed",
         });
       } catch (syncError) {

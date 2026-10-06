@@ -17,7 +17,15 @@ import type {
 
 type V6Record = Record<string, string>;
 
-const TENANT_DATASET_BY_KEY: Record<string, string> = {
+/**
+ * Which on-disk dataset backs each demo tenant's V6 packs.
+ *
+ * Exported so a guard can iterate it. An entry here is a claim that the
+ * directory exists; when it does not, both builders below return null and
+ * every caller silently degrades — which is exactly what happened, unnoticed,
+ * when these roots were removed.
+ */
+export const TENANT_DATASET_BY_KEY: Record<string, string> = {
   "skyharbor-air": "skyharbor-air-synthetic-v6",
   "lakeshore-holdings": "lakeshore-holdings-synthetic-v6",
 };

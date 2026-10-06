@@ -1,16 +1,28 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import type { SynthesisViolationEvent } from '../violationsRecorder';
 
-const getServerSupabase = jest.fn();
+// Item T-497. Until 2026-09-27 this suite mocked the Supabase server seam. Its
+// subject has imported `getAzureWriteFluentClient` from
+// `@/lib/data-plane/postgresCompat` since `5d795a3976`, which is also this suite's
+// only commit -- so the mocked seam was never on the subject's call path, the real
+// client ran, and it asked for a database URL that unit CI does not set. The suite
+// has therefore never passed and no workflow ran it to say so.
+//
+// The product is right, not the expectation: AGENTS.md requires the Azure/Postgres
+// data-plane adapters and forbids new runtime dependencies on Supabase clients. So
+// the mock moves to the seam the module actually calls. The module's own filename
+// keeps its legacy spelling -- that is compatibility-era residue with live
+// importers, and renaming it is not this item's change.
+const getAzureWriteFluentClient = jest.fn();
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase,
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient,
 }));
 
-describe('agent-quality Supabase violation backend', () => {
+describe('agent-quality violation backend on the Azure/Postgres data plane', () => {
   beforeEach(() => {
     jest.resetModules();
-    getServerSupabase.mockReset();
+    getAzureWriteFluentClient.mockReset();
     delete process.env.ABARVA_AZURE_DATABASE_URL;
     delete process.env.DATABASE_URL;
   });
@@ -21,7 +33,7 @@ describe('agent-quality Supabase violation backend', () => {
       return { error: null };
     });
     const from = jest.fn().mockReturnValue({ insert });
-    getServerSupabase.mockReturnValue({ from });
+    getAzureWriteFluentClient.mockReturnValue({ from });
     const { supabaseViolationsBackend } = await import('../violationsSupabaseBackend');
 
     const event: SynthesisViolationEvent = {
@@ -54,12 +66,12 @@ describe('agent-quality Supabase violation backend', () => {
     });
   });
 
-  it('throws when Supabase rejects the insert', async () => {
+  it('throws when the data plane rejects the insert', async () => {
     const insert = jest.fn(async (row: unknown) => {
       void row;
       return { error: { message: 'permission denied' } };
     });
-    getServerSupabase.mockReturnValue({ from: jest.fn().mockReturnValue({ insert }) });
+    getAzureWriteFluentClient.mockReturnValue({ from: jest.fn().mockReturnValue({ insert }) });
     const { supabaseViolationsBackend } = await import('../violationsSupabaseBackend');
 
     await expect(
@@ -102,7 +114,7 @@ describe('agent-quality Supabase violation backend', () => {
     const order = jest.fn().mockReturnValue({ limit });
     const eq = jest.fn().mockReturnValue({ order });
     const select = jest.fn().mockReturnValue({ eq });
-    getServerSupabase.mockReturnValue({ from: jest.fn().mockReturnValue({ select }) });
+    getAzureWriteFluentClient.mockReturnValue({ from: jest.fn().mockReturnValue({ select }) });
     const { listRecentAgentQualityViolationEvents } = await import('../violationsSupabaseBackend');
 
     const events = await listRecentAgentQualityViolationEvents('meridian-health', 25);

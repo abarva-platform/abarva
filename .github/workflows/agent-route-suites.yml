@@ -1,0 +1,35 @@
+name: Agent route suites
+
+# The shared agent route carries tenant, event, financial-redaction, and
+# visible-output controls. Run its complete test directory as one owned unit so
+# a new sibling suite cannot sit outside CI unnoticed.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  agent-route-suites:
+    name: Agent route suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run agent route suites
+        run: npx jest src/app/api/chat/agent/__tests__ --no-coverage --ci

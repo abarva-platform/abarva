@@ -1,47 +1,59 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+/** @jest-environment jsdom */
+
+import { render, screen, within } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { SourceEmptyState } from '@/components/source/SourceEmptyState';
 
 describe('SourceEmptyState (SRC-EMP-NO-EVENTS)', () => {
-  let html: string;
+  it('renders a clear, tenant-named empty state', () => {
+    render(<SourceEmptyState tenantName="Example Tenant" />);
 
-  beforeAll(() => {
-    html = renderToStaticMarkup(<SourceEmptyState />);
+    const emptyState = screen.getByTestId('source-events-empty-state');
+    expect(
+      within(emptyState).getByRole('heading', {
+        level: 1,
+        name: /no source events for example tenant yet/i,
+      }),
+    ).toBeTruthy();
   });
 
-  it('renders the empty state heading (P1-2: tenant-named, with generic fallback)', () => {
-    // Default (no tenantName prop) uses the generic-tenant fallback copy.
-    expect(html).toContain('No source events for this tenant yet');
-  });
+  it('offers one accessible action for starting an event', () => {
+    render(<SourceEmptyState />);
 
-  it('names the active tenant when one is provided', () => {
-    const tenantHtml = renderToStaticMarkup(
-      <SourceEmptyState tenantName="Northwind Retail" />,
+    const emptyState = screen.getByTestId('source-events-empty-state');
+    const actions = within(emptyState).getAllByRole('link', {
+      name: /start .*sourcing event/i,
+    });
+    expect(actions).toHaveLength(1);
+    expect(actions[0]).toHaveAttribute('href', '/source/new');
+    expect(actions[0]).toHaveAttribute(
+      'data-testid',
+      'source-empty-start-event',
     );
-    expect(tenantHtml).toContain('No source events for Northwind Retail yet');
   });
 
-  it('links the new-tenant onboarding runbook', () => {
-    expect(html).toContain('/docs/pilot/ONBOARDING-NEW-TENANT.md');
-    expect(html).toContain('New-tenant onboarding runbook');
+  it('renders an operator-supplied tenant name as text, never markup', () => {
+    const tenantName = 'Example <script>alert(1)</script> Tenant';
+    const { container } = render(<SourceEmptyState tenantName={tenantName} />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      tenantName,
+    );
+    expect(container.querySelector('script')).toBeNull();
   });
 
-  it('renders the primary "start event" CTA', () => {
-    expect(html).toContain('Start IT sourcing event');
-  });
+  it('offers setup and guidance without claiming active monitoring or agents', () => {
+    render(<SourceEmptyState />);
 
-  it('links the primary CTA to /source/new', () => {
-    expect(html).toContain('href="/source/new"');
-  });
-
-  it('renders as a single full-width panel (no orphaned agent column)', () => {
-    // The earlier version dropped a fixed-width AgentColumn into AppShell's
-    // column flexbox, collapsing the working pane and leaving the right of
-    // the screen blank. The empty state is now one centered panel.
-    expect(html).toContain('source-events-empty-state');
-  });
-
-  it('renders the next-step cards', () => {
-    expect(html).toContain('Review setup connectors');
-    expect(html).toContain('Portfolio guide');
+    const emptyState = screen.getByTestId('source-events-empty-state');
+    expect(
+      within(emptyState).getByRole('link', { name: /review setup connectors/i }),
+    ).toHaveAttribute('href', '/admin/setup');
+    expect(
+      within(emptyState).getByRole('link', {
+        name: /new-tenant onboarding runbook/i,
+      }),
+    ).toHaveAttribute('href', '/docs/pilot/ONBOARDING-NEW-TENANT.md');
+    expect(emptyState).not.toHaveTextContent(/steward|sentinel|live monitoring/i);
   });
 });

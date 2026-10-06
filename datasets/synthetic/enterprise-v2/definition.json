@@ -1,0 +1,38 @@
+{
+  "base_definition_sha256": "379ec06b181f0ed0474a3082caf17b04a55efc4a81b66bc368a14a0bf7b7974d",
+  "dataset_id": "MERIDIAN_SYNTHETIC_ENTERPRISE_V2",
+  "assessment_id": "assessment-meridian-synthetic-enterprise-v2",
+  "generation_basis": "synthetic_enterprise_v2_formula_1",
+  "service_capabilities_by_function": {
+    "FUNC-0001": ["Claims Intake", "Benefit Configuration", "Eligibility Verification", "Prior Authorization", "Payment Integrity", "Risk Adjustment", "Claims Coordination", "Enrollment Reconciliation"],
+    "FUNC-0002": ["Member Identity", "Contact Routing", "Grievance Management", "Appeals Resolution", "Member Communications", "Service Recovery", "Omnichannel Experience"],
+    "FUNC-0003": ["Provider Credentialing", "Network Adequacy", "Provider Directory", "Contract Operations", "Referral Routing"],
+    "FUNC-0004": ["Formulary Management", "Drug Utilization", "Dispensing Coordination", "Specialty Authorization", "Medication Safety"],
+    "FUNC-0005": ["Care Planning", "Quality Measures", "Utilization Review", "Chronic Care", "Clinical Triage", "Discharge Coordination", "Population Health", "Clinical Documentation"],
+    "FUNC-0006": ["Charge Capture", "Clinical Coding", "Denials Management", "Patient Billing", "Collections", "Cash Posting", "Revenue Assurance"],
+    "FUNC-0007": ["Social Needs Screening", "Resource Referrals", "Community Outreach", "Follow-up Tracking"],
+    "FUNC-0008": ["Specialty Referrals", "Procedure Scheduling", "Authorization Tracking", "Procedure Registry", "Clinical Pathways"],
+    "FUNC-0009": ["Financial Forecasting", "Capital Approval", "Accounts Payable", "Treasury Operations", "Benefit Realization"],
+    "FUNC-0010": ["Service Desk", "Change Management", "Incident Response", "Asset Management", "Identity Operations", "Release Coordination", "Observability"],
+    "FUNC-0011": ["Data Ingestion", "Data Catalog", "Lineage Management", "Analytics Publishing", "Data Quality", "Master Data"],
+    "FUNC-0012": ["Risk Register", "Control Testing", "Privacy Operations", "Security Incident"],
+    "FUNC-0013": ["Workforce Roster", "Employee Onboarding", "Credential Tracking", "Staff Scheduling", "Payroll Operations"],
+    "FUNC-0014": ["Supplier Onboarding", "Sourcing Events", "Contract Compliance", "Inventory Control"]
+  },
+  "service_suppliers_by_function": {
+    "FUNC-0001": ["HealthEdge Software", "TriZetto Corporation", "Optum"],
+    "FUNC-0002": ["Salesforce Inc.", "Microsoft Corporation", "Artera"],
+    "FUNC-0003": ["Availity", "Innovaccer", "Optum"],
+    "FUNC-0004": ["Surescripts", "McKesson", "Optum"],
+    "FUNC-0005": ["Epic Systems Corporation", "Oracle Corporation", "ZeOmega"],
+    "FUNC-0006": ["R1 RCM", "Experian Health", "Waystar"],
+    "FUNC-0007": ["Salesforce Inc.", "Teladoc Health", "Amwell"],
+    "FUNC-0008": ["Epic Systems Corporation", "Oracle Corporation", "Redox"],
+    "FUNC-0009": ["Workday Inc.", "Oracle Corporation", "Infor Inc."],
+    "FUNC-0010": ["ServiceNow Inc.", "Microsoft Corporation", "Cisco Systems"],
+    "FUNC-0011": ["Microsoft Corporation", "Snowflake Inc.", "Databricks"],
+    "FUNC-0012": ["ServiceNow Inc.", "Okta", "Palo Alto Networks"],
+    "FUNC-0013": ["Workday Inc.", "Oracle Corporation", "ServiceNow Inc."],
+    "FUNC-0014": ["Infor Inc.", "Oracle Corporation", "Accenture"]
+  }
+}

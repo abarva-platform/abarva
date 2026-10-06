@@ -87,11 +87,11 @@ describe('POST /api/v1/programs/[programId]/approvals', () => {
     return mod.POST(makePost(body), { params: Promise.resolve({ programId }) });
   }
 
-  it('allows own-tenant approval request creation', async () => {
+  it('retires approval-request creation for own-tenant programs', async () => {
     const res = await invoke(OWN_PROGRAM);
-    expect(res.status).toBe(201);
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('mutation');
-    expect(requestFounderApproval).toHaveBeenCalled();
+    expect(res.status).toBe(410);
+    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('program_read');
+    expect(requestFounderApproval).not.toHaveBeenCalled();
   });
 
   it('returns 404 for foreign-tenant program id', async () => {

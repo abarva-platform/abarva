@@ -100,6 +100,12 @@ describe("document-generation-policy", () => {
     ).toBe(4000);
     expect(
       resolvePassTokenBudget({
+        pass: "section_repair",
+        deliverableType: "Program Charter",
+      }),
+    ).toBe(4000);
+    expect(
+      resolvePassTokenBudget({
         pass: "synthesis",
         deliverableType: "charter",
       }),

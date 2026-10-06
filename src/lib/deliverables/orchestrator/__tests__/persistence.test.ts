@@ -181,6 +181,106 @@ describe("persistDeliverable", () => {
     ).toBe("root_cause");
   });
 
+  it("materializes Moves generations into an unsigned deliverables_v2 draft and links the Office companion to that version", async () => {
+    const mockSave = (async () =>
+      ({
+        id: "generated-artifact-1",
+        clientId: "c1",
+        metadata: {},
+      }) as unknown as GeneratedArtifactRecord) as never;
+    const materializeDeliverableDraft = jest.fn(async () => ({
+      deliverableId: "deliverable-1",
+      versionId: "version-1",
+      status: "draft" as const,
+    }));
+    const saveGeneratedOfficeCompanion = jest.fn(async () => ({
+      artifactId: "office-artifact-1",
+      version: 1,
+      blobPath: "moves/demo/move-1/generated/p1/charter/v1/charter.docx",
+      blobStored: true,
+    }));
+    const renderOfficeCompanion = jest.fn(async () => ({
+      body: Buffer.from("docx"),
+      fileFormat: "docx" as const,
+      fileName: "charter.docx",
+    }));
+
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "business_case",
+    });
+    const result = {
+      ok: true,
+      brief: getArtifactBrief(req),
+      document: {
+        ...goodDocument(),
+        title: "Generated Charter",
+      },
+      quality: { pass: true, blockers: [], warnings: [], metrics: {} as never },
+      passTrace: [],
+    } as OrchestrationResult;
+
+    const rec = await persistDeliverable(
+      result,
+      {
+        clientId: "c1",
+        userId: "user-1",
+        renderedBy: "user-1",
+        sourceArtifactRef: "81448568-b4cd-4254-9218-76f7e2974b61",
+        tenantKey: "tenant-a",
+        tenantPolicy,
+        deliverableTypeKey: "charter",
+      },
+      {
+        save: mockSave,
+        materializeDeliverableDraft: materializeDeliverableDraft as never,
+        saveGeneratedOfficeCompanion: saveGeneratedOfficeCompanion as never,
+        renderOfficeCompanion: renderOfficeCompanion as never,
+      },
+    );
+
+    expect(rec.id).toBe("generated-artifact-1");
+    expect(materializeDeliverableDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "c1",
+        clientKey: "tenant-a",
+        userId: "user-1",
+      }),
+      "81448568-b4cd-4254-9218-76f7e2974b61",
+      expect.objectContaining({
+        deliverableTypeKey: "charter",
+        title: "Generated Charter",
+        signOff: false,
+        structuredData: expect.objectContaining({
+          source: "generated_by_orchestrator",
+          generated_artifact_id: "generated-artifact-1",
+          requiresOfficeCompanionScan: true,
+        }),
+      }),
+    );
+    expect(saveGeneratedOfficeCompanion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "c1",
+        clientKey: "tenant-a",
+        userId: "user-1",
+      }),
+      expect.objectContaining({
+        moveId: "81448568-b4cd-4254-9218-76f7e2974b61",
+        phase: 1,
+        artifactType: "charter_editable_docx",
+        artifactFamily: "generated_deliverable",
+        fileFormat: "docx",
+        requireBlobStored: true,
+        metadata: expect.objectContaining({
+          deliverableId: "deliverable-1",
+          versionId: "version-1",
+          generatedArtifactId: "generated-artifact-1",
+          outputRole: "docx_editable_phase_record",
+        }),
+      }),
+    );
+  });
+
   it("honors the queued registry key when the orchestrator type is shared by another Moves deliverable", async () => {
     let extraMeta: unknown;
     const mockSave = (async (

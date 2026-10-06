@@ -1,0 +1,2 @@
+tenant_key,dataset_version,contract_id,change_order_id,description,status,scope_posture,value_impact_usd,date_proposed,approval_owner,linked_application_ref,source_file_id,synthetic_policy,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,CO-01,"Add AWS Marketplace private offer routing for future commitment",proposed_not_executed,in_scope_undecided,0,2026-06-12,"VP Technology & Data",MER-APP-CLAIMSDENIAL,EVID-01,synthetic_demo_only_not_client_truth,SRC-CHG-001

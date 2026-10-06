@@ -1019,8 +1019,9 @@ function shouldCompactSurface(surface: string): boolean {
   // surface for Atlas chat: the compactor turned real answers into
   // malformed tables, dangling numbered lists, and "Evidence: 1." stubs.
   // Tower now preserves natural Atlas output and only applies safety
-  // repairs (markup/id scrubbing, malformed-table repair, next-action
-  // fallback).
+  // repairs (markup/id scrubbing, malformed-table repair). The "next-action
+  // fallback" this comment used to name was removed by #4038 and its two
+  // vestigial options by backlog item 41; nothing here appends a closing.
   //
   // The anti-regression guard test in response-shape.test.ts asserts that
   // every expert-posture surface returns false from this function. If a
@@ -1177,8 +1178,6 @@ export interface ShapeAgentResponseOptions {
   targetChars?: number;
   hardMaxChars?: number;
   maxParagraphs?: number;
-  requireNextStep?: boolean;
-  nextStepFallback?: string;
   issues?: SharedResponseShapeIssue[];
   replacements?: Array<{ from: string; to: string }>;
 }
@@ -1212,18 +1211,53 @@ export function shapeAgentResponseForSurface(
   );
   // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already
   // returned well-formed structure. See looksAlreadyStructured() above.
+  //
+  // C-502 — and the second compactor, which that detector never governed.
+  //
+  // There are TWO compactors on this path, and until this change only one
+  // of them was gated on shouldCompactSurface():
+  //
+  //   1. compactConsultantChatText, called below. Gated correctly —
+  //      shouldCompactSurface('source') is already false, so a Source
+  //      answer has never reached it.
+  //   2. compactForChat, inside shapeSharedAdvisorResponse, which runs
+  //      whenever preserveStructure is false and rebuilds the answer as a
+  //      lead line plus up to three "- " bullets against a 900-char
+  //      target. Gated only on looksAlreadyStructured().
+  //
+  // looksAlreadyStructured() recognises pipe tables, Atlas section
+  // headers, 3+ bullets and 3+ numbered lines. A Brief C advisor answer is
+  // deliberately none of those — it is prose paragraphs — so every advisor
+  // answer over the target took the second compactor by construction, on
+  // surfaces whose entire contract is that they must not be compacted.
+  // Measured on the verbatim Brief C vendor shortlist: 1,361 chars in, 229
+  // out, with the second option, the third option and the closing
+  // recommendation gone rather than restructured.
+  //
+  // So preserveStructure is now the union of the two reasons to preserve:
+  // the answer is already structured, OR the surface is one this module
+  // has already declared must not be compacted. That keeps a single gate —
+  // shouldCompactSurface — for both compactors, so the exclusion cannot
+  // drift back apart per-surface, and it leaves the four declared form
+  // surfaces (setup, /admin/setup, /setup, /platform/admin) compacting
+  // exactly as before.
+  //
+  // Widening looksAlreadyStructured() to count prose paragraphs was the
+  // other candidate and is deliberately NOT taken: it would also bypass
+  // the compactor on those four form surfaces, which do want it.
+  const preserveStructure =
+    looksAlreadyStructured(cleaned) || !shouldCompactSurface(surface);
   const shaped =
-    shouldCompactSurface(surface) && !looksAlreadyStructured(cleaned)
+    shouldCompactSurface(surface) && !preserveStructure
       ? compactConsultantChatText(cleaned, 120)
       : cleaned;
   const shared = shapeSharedAdvisorResponse({
     text: shaped,
+    preserveStructure,
     labels: options.labels,
     targetChars: options.targetChars,
     hardMaxChars: options.hardMaxChars,
     maxParagraphs: options.maxParagraphs,
-    requireNextStep: options.requireNextStep,
-    nextStepFallback: options.nextStepFallback,
   });
   if (options.issues) options.issues.push(...shared.issues);
   if (options.replacements) options.replacements.push(...shared.replacements);

@@ -146,6 +146,19 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => mockClient,
 }));
 
+// The refresh event is the repository's boundary to Intelligence: mock it here
+// so each save's emission is observable, rather than letting the real module
+// throw on this suite's write-only client and be swallowed as a warning (T-791).
+const mockRecordContextRefreshEvent = jest.fn<
+  Promise<null>,
+  [Record<string, unknown>]
+>(async () => null);
+
+jest.mock("@/lib/intelligence/refresh-events", () => ({
+  recordContextRefreshEvent: (input: Record<string, unknown>) =>
+    mockRecordContextRefreshEvent(input),
+}));
+
 import {
   generateAndSaveBoardPack,
   getGeneratedArtifactById,
@@ -172,6 +185,7 @@ describe("generated artifact repository", () => {
   beforeEach(() => {
     mockRows.length = 0;
     mockClient.from.mockClear();
+    mockRecordContextRefreshEvent.mockClear();
   });
 
   it("generates, saves, and retrieves a board-grade Move pack with a persisted artifact reference", async () => {
@@ -444,6 +458,115 @@ describe("generated artifact repository", () => {
     );
     expect(secondAfter?.supersededBy).toBeNull();
     expect(secondAfter?.metadata.renderedHtml).toContain("second version");
+  });
+
+  // T-791: every save below used to fire its refresh event into a mock that had
+  // no read client, and the repository swallowed the throw as a console.warn —
+  // so the refresh-after-save path was never exercised. Assert the emission
+  // itself, with the saved artifact's identifiers, for both save paths.
+  it("emits a context refresh event carrying the saved artifact's identifiers", async () => {
+    const saved = await saveGeneratedArtifact(
+      {
+        clientId: "codex-fs-e2e",
+        sourceArtifactRef: "move-refresh",
+        artifactType: "move_board_pack",
+        renderEngine: "internal",
+        outputFormat: "html",
+        renderedBy: "jest-user",
+        title: "Refresh Pack",
+        tenantPolicy,
+        facts: [],
+        sections: [],
+      },
+      {
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-refresh",
+        renderEngine: "internal",
+        outputFormat: "html",
+        html: "<html>refresh</html>",
+        blobUrl: "",
+        blobSha256: "sha-refresh",
+        qualityScore: 90,
+        evidenceLedgerIds: [],
+        generationEgressAudit: null,
+        quarantined: false,
+        quarantineReason: null,
+      },
+      { deliverableTypeKey: "business_case" },
+    );
+    const boardGrade = await saveRenderedBoardGradeMoveArtifact({
+      clientId: "meridian",
+      moveId: "move-refresh-bg",
+      artifactId: "discover-brief",
+      title: "Board-grade Refresh",
+      html: "<html>board-grade refresh</html>",
+      renderedBy: "jest-user",
+      routePath: "/api/v1/moves/board-grade-discover-brief",
+      generatedOn: "2026-09-30",
+    });
+
+    expect(mockRecordContextRefreshEvent).toHaveBeenCalledTimes(2);
+    expect(mockRecordContextRefreshEvent.mock.calls).toEqual([
+      [
+        {
+          clientId: "codex-fs-e2e",
+          triggeredBy: "move_artifact",
+          sourceLabel: "Refresh Pack",
+          rowsSeen: 1,
+          rowsAccepted: 1,
+          approvalRequired: false,
+          affectedSurfaces: ["moves", "change-log"],
+          receiptUrl: `/api/v1/artifacts/${saved.id}`,
+        },
+      ],
+      [
+        {
+          clientId: "meridian",
+          triggeredBy: "move_artifact",
+          sourceLabel: "Board-grade Refresh",
+          rowsSeen: 1,
+          rowsAccepted: 1,
+          approvalRequired: false,
+          affectedSurfaces: ["moves", "change-log"],
+          receiptUrl: `/api/v1/artifacts/${boardGrade.id}`,
+        },
+      ],
+    ]);
+    expect(saved.blobUrl).toBe(`/api/v1/artifacts/${saved.id}`);
+    expect(boardGrade.blobUrl).toBe(`/api/v1/artifacts/${boardGrade.id}`);
+  });
+
+  it("keeps the saved artifact when the refresh event fails", async () => {
+    mockRecordContextRefreshEvent.mockRejectedValueOnce(
+      new Error("refresh store unavailable"),
+    );
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const record = await saveRenderedBoardGradeMoveArtifact({
+        clientId: "meridian",
+        moveId: "move-refresh-fail",
+        artifactId: "business-case",
+        title: "Refresh Failure",
+        html: "<html>kept</html>",
+        renderedBy: "jest-user",
+        routePath: "/api/v1/moves/board-grade-business-case",
+        generatedOn: "2026-09-30",
+      });
+      expect(mockRecordContextRefreshEvent).toHaveBeenCalledTimes(1);
+      const stored = await getGeneratedArtifactById(record.id, {
+        clientId: "meridian",
+      });
+      expect(stored?.metadata.renderedHtml).toContain("kept");
+      expect(warn).toHaveBeenCalledWith(
+        "[generated-artifacts] refresh event failed",
+        expect.objectContaining({
+          clientId: "meridian",
+          error: "refresh store unavailable",
+        }),
+      );
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("lists generated Move artifacts across client UUID and tenant-key storage conventions", async () => {

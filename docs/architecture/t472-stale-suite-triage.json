@@ -1,0 +1,446 @@
+{
+  "item": "T-472",
+  "title": "The second draw of stale, unrun test suites, run before judged",
+  "recordedAt": "2026-09-21T22:05:00Z",
+  "base": {
+    "branch": "claude/exec-queue-20260921T214706Z",
+    "originMainSha": "989db2363c54d3e69ab6aff736a1fa96bde95b8f",
+    "currentMainChecked": true
+  },
+  "scope": {
+    "intent": "Machine-readable verdict record for the sixteen suites in the T-472 draw: the fourteen the census named at directory grain, plus the two its per-file mode resolved.",
+    "triagesOnly": true,
+    "runtimeChange": false,
+    "deploymentClaim": false,
+    "signedInAcceptanceClaim": false,
+    "dataPlaneMutation": false
+  },
+  "verdictVocabulary": {
+    "note": "The acceptance names 'the three verdicts T-509 established' as wire_into_ci, rewrite_as_behavior and update_with_reason_recorded. T-509's own record establishes repair, update_with_reason_recorded and rewrite_as_behavior: wire_into_ci is not in it, and repair is. The two sets disagree by one member each.",
+    "resolution": "Use the union of four. This draw needs both of the disputed members and would be falsified by either three-member set: eleven files are green and proven safe, which only wire_into_ci describes, and one file is correct-and-red about live behavior, which only repair describes.",
+    "values": [
+      "wire_into_ci",
+      "repair",
+      "update_with_reason_recorded",
+      "rewrite_as_behavior"
+    ],
+    "rewriteAsBehaviorUsed": false,
+    "rewriteAsBehaviorWhyNot": "T-509's draw was nine source-text scanners and every one earned it. This draw contains none: the only file that touches the filesystem reads a data manifest, and the rest render or drive real handlers."
+  },
+  "premiseCorrections": [
+    "The item is filed under 'stale, unrun test suites'. Eleven of the sixteen are GREEN. Unrun is measured; stale was assumed, and for two thirds of this draw it is false: these are current contracts that no workflow names.",
+    "T-509's premise correction was that every one of its twenty was red. That does not generalize; it was a property of that directory, not of the pool.",
+    "The acceptance's fallback, 'if the script has no per-file mode, say so and file that as the finding', resolves the other way. scripts/quality/test-ci-coverage-census.mjs --explain already reports unrun status per file, and the six 'unresolvable' files were resolvable all along.",
+    "Of those six, four already carry a T-509 verdict (atlas-ask-route, deliverable-render-contract, marketing-nav-dropdowns, sign-in-shell). The census still counts them untriaged because its 'triaged' means 'excluded by a naming command's --testPathIgnorePatterns', not 'a human wrote a verdict'. Two were genuinely new, and this record holds them."
+  ],
+  "jestEvidence": {
+    "batches": [
+      {
+        "what": "the fourteen named at directory grain",
+        "command": "npx jest --runTestsByPath <14 paths> --runInBand --no-coverage --ci --json --outputFile=/tmp/t472-jest-current.json",
+        "outputFile": "/tmp/t472-jest-current.json",
+        "totalSuites": 14,
+        "failedSuites": 3,
+        "totalTests": 131,
+        "failedTests": 8,
+        "passedTests": 123
+      },
+      {
+        "what": "the two resolved by the census's per-file mode",
+        "command": "npx jest --runTestsByPath src/__tests__/integration/source-chat-shape.test.ts src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand --no-coverage --ci --json --outputFile=/tmp/t472-jest-extra.json",
+        "outputFile": "/tmp/t472-jest-extra.json",
+        "totalSuites": 2,
+        "failedSuites": 2,
+        "totalTests": 83,
+        "failedTests": 5,
+        "passedTests": 78
+      }
+    ],
+    "runTestsByPathWhy": "Four of the sixteen paths contain [contractId], [scope] or [artifactId]. A bare jest pattern is a regex and those are character classes, so a pattern run silently matches nothing and reports a clean slate."
+  },
+  "swallowProbe": {
+    "why": "T-469 classifies the data-plane clients. The pg-backed family CONNECTS and is already guarded repo-wide by src/testing/pg-test-boundary.ts, which throws by name. postgresCompat SWALLOWS: it resolves to {data:null} with the failure in a side channel and no socket, so a suite behind it can be green because its read failed. Green is therefore not evidence until that case is excluded, and no gate excludes it.",
+    "method": "Re-ran the eleven green suites with a setup file that replaces getAzureReadFluentClient and getAzureWriteFluentClient with functions that throw a marker. Measurement only: the probe is not committed and is not part of CI.",
+    "negativeControl": {
+      "why": "A probe that cannot fire proves nothing, which is the exact defect this backlog was opened over.",
+      "how": "A throwaway suite calling getAzureReadFluentClient().from('clients').select('*').limit(1), run both ways, then deleted.",
+      "withoutProbe": "1 passed, green on a swallowed null, reproducing the T-469 'swallows' verdict.",
+      "withProbe": "1 failed with T472_SWALLOWING_CLIENT_REACHED_UNSTUBBED:getAzureReadFluentClient.",
+      "provesProbeCanFail": true
+    },
+    "suitesProbed": 11,
+    "suitesReachingSwallowingClientUnstubbed": 0,
+    "result": "11 passed, 119 tests, identical to the unprobed run. Every wire_into_ci verdict below rests on this, not on green alone."
+  },
+  "censusPerFileMode": {
+    "question": "The acceptance asks whether scripts/quality/test-ci-coverage-census.mjs can name unrun files rather than only counting them per directory.",
+    "answer": "exists",
+    "invocation": "node scripts/quality/test-ci-coverage-census.mjs --explain --json",
+    "measuredOn": "989db2363c54d3e69ab6aff736a1fa96bde95b8f",
+    "unrunDirectories": 221,
+    "unrunFiles": 551,
+    "consequenceForT582": "T-582 was filed on the premise that 'until a census entry resolves to a filename, every further draw is either a guess or nothing'. That blocker is false: --explain resolves the filename today. What T-582 asks for that does NOT exist is the loaded/collected/run/green grain per file, a different and still-open request. T-582 should be narrowed to that rather than closed."
+  },
+  "suites": [
+    {
+      "path": "src/app/api/knowledge/consumption/__tests__/_shared.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 2,
+      "failedTests": 0,
+      "passedTests": 2,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Stubs its whole boundary at the top of the file: foundation-preview-session, platform-admin-session, tenancy and consumption-server are all jest.mock'd before the handler is imported.",
+        "Green, and still green with the swallowing client made loud, so the green is a stubbed read and not a null read back as 'no rows'."
+      ],
+      "rationale": "A tenant-fencing handler contract that runs in well under a second with no data-plane reach. Nothing about it is stale; it is simply named by no workflow.",
+      "currentAction": "Nothing to repair. Wire it, under T-516, with the other ten proven-green files."
+    },
+    {
+      "path": "src/app/api/programs/synthesis/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 4,
+      "failedTests": 3,
+      "passedTests": 1,
+      "swallowProbe": "not_applicable_suite_is_red",
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-517",
+      "evidence": [
+        "Asserts res.headers.get('x-abarva-v6-surface') is 'moves'. That header name appears NOWHERE in src outside this file and its Source twin, checked at every commit that ever touched the pair (6c6596353, 7daf4e4c8, ea6ab5d52): the route's own count is 0 in all three.",
+        "The route does emit surface attribution, under a different name: MOVES_V6_SYNTHESIS_HEADERS sets X-AbarVa-V6-Contract, X-AbarVa-Moves-Layer: moves-current and X-AbarVa-Renderer-Policy.",
+        "Two further cases expect 200 and receive 404, so the fixture program no longer resolves."
+      ],
+      "rationale": "The contract is behavior-bearing and the control it names is present, under another header. The expectation is wrong about the name and has been wrong since it was written, so this is a stale assertion and NOT evidence of a deleted control. Saying otherwise would be the false alarm this backlog can least afford.",
+      "currentAction": "Do not repair here. T-517 refreshes the header name to the one the route emits and re-points the fixture; this item only records what was measured."
+    },
+    {
+      "path": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "passedTests": 3,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Seven jest.mock calls cover tenancy, both access policies, both artifact registries and the intelligence shared module before the route is imported.",
+        "Green, and unchanged under the swallow probe."
+      ],
+      "rationale": "An artifact-download authorization contract with every boundary stubbed. It asserts behavior, not source text.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "failedTests": 0,
+      "passedTests": 5,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Mocks tenancy, active-client and the Source access policy, then drives POST through the real route.",
+        "Green, and unchanged under the swallow probe."
+      ],
+      "rationale": "Exercises the workflow route end to end behind stand-ins. Behavior-bearing and current.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/app/api/source/synthesis/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 4,
+      "failedTests": 4,
+      "passedTests": 0,
+      "swallowProbe": "not_applicable_suite_is_red",
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-517",
+      "evidence": [
+        "Same wrong header as its Moves twin: x-abarva-v6-surface is asserted four times and emitted by no route, at any commit in the pair's history.",
+        "SOURCE_V6_SYNTHESIS_HEADERS emits X-AbarVa-V6-Contract, X-AbarVa-Source-Layer: source-current and X-AbarVa-Renderer-Policy instead.",
+        "The first case expects 200 and receives 403, so the fixture tenant is now fenced out by the very control the suite was written to prove."
+      ],
+      "rationale": "Behavior-bearing contract, stale expectation. The 403 is the more interesting half: the fencing works and the fixture predates it.",
+      "currentAction": "Do not repair here. T-517 owns the refresh."
+    },
+    {
+      "path": "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 12,
+      "failedTests": 0,
+      "passedTests": 12,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Mocks server-only, tenancy, tenant-access, active-client, the contract-360 view and the read adapter.",
+        "Twelve cases green, and unchanged under the swallow probe."
+      ],
+      "rationale": "The largest tenant-fencing route contract in this draw and it is entirely current.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 6,
+      "failedTests": 0,
+      "passedTests": 6,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Imports the route's exported __test__ helpers only; no network, no data-plane client, no jest.mock needed.",
+        "Green, and unchanged under the swallow probe, which was run on it precisely because importing the route pulls the module graph in."
+      ],
+      "rationale": "A pure-function contract over optimization shaping. Cheap and safe to run anywhere.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/app/api/source/workspace/portfolio/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "passedTests": 3,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Mocks server-only, tenancy, tenant-access, active-client and the portfolio query module.",
+        "Green, and unchanged under the swallow probe."
+      ],
+      "rationale": "Tenant-scoped portfolio read contract, current.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/app/api/webhooks/clerk/__tests__/route-w4-pr3-emit.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Mocks the invite audit, the notification broker and one further module before importing POST.",
+        "Green, and unchanged under the swallow probe."
+      ],
+      "rationale": "A webhook emission contract over an auth-adjacent surface. It is exactly the class of control the 17 Sep audit found deleted unnoticed, and today no workflow runs it.",
+      "currentAction": "Nothing to repair. Wire it under T-516; of the eleven, this is the one whose absence from CI matters most."
+    },
+    {
+      "path": "src/app/programs/expert-kernel/expert-review/export/__tests__/route.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 16,
+      "failedTests": 0,
+      "passedTests": 16,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Mocks current-user and drives the real GET export route.",
+        "Sixteen cases green, and unchanged under the swallow probe."
+      ],
+      "rationale": "An export-authorization contract with real assertions over the response. Current.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/lib/enterprise-data/source-adapters/__tests__/mapping-profiles.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 56,
+      "failedTests": 0,
+      "passedTests": 56,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "Its single readFileSync reads datasets/tenant-inputs/templates/universal/standard-2026-07-v3/template-manifest.json, a data contract rather than source text, so it is not the T-509 scanner pattern.",
+        "Fifty-six cases green, and unchanged under the swallow probe."
+      ],
+      "rationale": "The biggest suite in the draw, and it binds intake templates to mapping profiles, which is the layer-1-to-layer-2 boundary. A template column rename would break it, which is the point.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/lib/programs/queries.azure-read.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "failedTests": 0,
+      "passedTests": 5,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "jest.mock's @/lib/data-plane/azureRead and the program access policy, so the T-469 'connects' family is replaced rather than merely guarded.",
+        "Green, and unchanged under the swallow probe."
+      ],
+      "rationale": "A tenant-scoped read contract that stubs the exact client T-469 classified as socket-opening.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/lib/source/nda/__tests__/nda-authority-repository.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 4,
+      "failedTests": 1,
+      "passedTests": 3,
+      "swallowProbe": "not_applicable_suite_is_red",
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-519",
+      "evidence": [
+        "One case fails on a toEqual: the repository now returns a signatureEvidence object (signedAt, signatureMethod, buyerSignatoryName, supplierSignatoryName, documentSha256, certificateSha256, privateEvidenceRef) that the expected literal does not carry.",
+        "The other three cases are green."
+      ],
+      "rationale": "A feature was added and one exhaustive expectation was not widened. The suite is right about everything it still checks; it is behind by one field group.",
+      "currentAction": "Do not repair here. T-519 widens the expectation to assert signatureEvidence rather than to ignore it: widening it by switching toEqual to toMatchObject would delete the exhaustiveness that is the value of this test."
+    },
+    {
+      "path": "src/lib/source/stage-guidebooks/__tests__/repository.test.ts",
+      "draw": "named_by_census_directory",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 7,
+      "failedTests": 0,
+      "passedTests": 7,
+      "swallowProbe": "stayed_green_with_swallowing_client_made_loud",
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-516",
+      "evidence": [
+        "jest.mock's @/lib/data-plane/postgresCompat, the one T-469 client that swallows its own failure, so its green is a stubbed read by construction.",
+        "Green, and unchanged under the swallow probe, which is the confirmation rather than the claim."
+      ],
+      "rationale": "The suite most exposed to the swallow hazard is the one that already stubs it. Measured rather than assumed.",
+      "currentAction": "Nothing to repair. Wire it under T-516."
+    },
+    {
+      "path": "src/__tests__/integration/source-chat-shape.test.ts",
+      "draw": "resolved_by_census_explain",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 7,
+      "failedTests": 1,
+      "passedTests": 6,
+      "swallowProbe": "not_applicable_suite_is_red",
+      "verdict": "repair",
+      "ownerItem": "C-500",
+      "evidence": [
+        "One of seven cases fails, on the longest Brief C fixture only. The four not.toMatch guards against the compactConsultantChatText template (- Evidence:, - Missing:, - Next:, - Question:) all PASS, and so does toContain('Three credible vendors'); the failure is at toContain('Daisy Intelligence is a credible second').",
+        "shouldCompactSurface('source') is false by design (VOICE.STRAT-2026-05-10f removed Source), so the loss is not the compactor the suite is named after. The shaped output keeps the opener and the last paragraph and drops the middle, which is a paragraph/char budget in shapeSharedAdvisorResponse reached from the same shapeAgentResponseForSurface call.",
+        "Reached by live surfaces rather than orphaned: useAgentStream.ts, StewardChat.tsx, StrategicMoveOriginateClient.tsx and AtlasPageStateProvider.tsx all import it."
+      ],
+      "rationale": "This suite is not stale. It is correct, it is red, and it is red about live behavior on a client-facing surface: long Brief C advisor prose is truncated mid-argument on Source. It is the only file in the draw where the code is wrong rather than the test.",
+      "currentAction": "Do not touch the suite. Whether the shared advisor budget SHOULD truncate advisor prose on Source is a product decision rather than a guess: filed as C-500, decision needed, with the measurement attached."
+    },
+    {
+      "path": "src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx",
+      "draw": "resolved_by_census_explain",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 76,
+      "failedTests": 4,
+      "passedTests": 72,
+      "swallowProbe": "not_applicable_suite_is_red",
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-518",
+      "evidence": [
+        "Four of seventy-six cases fail. Three are copy or fixture drift: '7 inputs available', '1 required next-phase prep item' and a canary deliverable title are no longer in the rendered output.",
+        "The fourth is a deliberate product change the test never followed: the artifact link is now /api/v1/artifacts/<id>?format=html&inline=1 and the expectation still reads ?inline=1.",
+        "It renders through Testing Library rather than scanning source text, so it is not the T-509 scanner pattern."
+      ],
+      "rationale": "Seventy-two green cases over a real rendered surface, four expectations that drifted. Deleting or weakening it to make the count go down is precisely the move this backlog exists to prevent.",
+      "currentAction": "Do not repair here. T-518 refreshes the four expectations against the current render, each with the reason recorded."
+    }
+  ],
+  "excluded": [
+    "src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts, named by the filing as the fifteenth and excluded there for being live in an open PR. Left excluded.",
+    "Repairing any red suite. This item triages; the five red files are handed to C-500, T-517, T-518 and T-519 with the measurement attached.",
+    "Wiring the eleven green files into a workflow. That edits CI and belongs in its own reviewable change: T-516.",
+    "The five T-513-owned suites and .github/workflows/integration-suites.yml, both on T-509's forbiddenEdits."
+  ],
+  "followOnItems": [
+    {
+      "id": "T-516",
+      "what": "Wire the eleven proven-green unrun suites into a workflow that names them."
+    },
+    {
+      "id": "T-517",
+      "what": "Refresh the two V6 synthesis route suites: assert the header the route emits, and re-point the fixtures the fencing now rejects."
+    },
+    {
+      "id": "T-518",
+      "what": "Refresh four drifted expectations in MovesPhaseStandaloneClient, each with the reason recorded."
+    },
+    {
+      "id": "T-519",
+      "what": "Widen the NDA authority expectation to assert signatureEvidence without losing the exhaustive fencing assertion."
+    },
+    {
+      "id": "C-500",
+      "what": "Decision needed: should the shared advisor response budget truncate long Brief C prose on the Source surface?"
+    }
+  ],
+  "claimedWriteFiles": [
+    "docs/architecture/t472-stale-suite-triage.json",
+    "src/__tests__/behaviors/t472-stale-suite-triage-record.test.ts",
+    "docs/releases/records/2026-09-21-t472-stale-suite-triage.md",
+    "/Users/anand/Downloads/EXECUTION_CLAIMS.md",
+    "/Users/anand/Downloads/EXECUTION_BACKLOG_20260918.md",
+    "/Users/anand/Downloads/EXECUTION_PULSE_20260918.md"
+  ]
+}

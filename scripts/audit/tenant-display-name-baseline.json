@@ -1,0 +1,11 @@
+{
+  "note": "Tenant display names used in non-test src/ code that datasets/tenant-inputs/tenant-input-registry.json does not declare. The registry is the authority — the data operating model says identity is declared, never inferred, and that tenancy comes from that file. Two other vocabularies disagree with it and with each other: buildAgentContext says 'Meridian Health System' where the registry says 'Meridian Health', and the client registry says 'Retail Demo' and 'SkyHarbor Global' where it says 'Apex Retail' and 'Airline Demo'. Measured against the registry, buildAgentContext is right on two of three and the client registry on one of three; neither is the authority.",
+  "whyCountsAndNotABan": "64 non-test files already carry one of these names. A ban fails on day one and gets switched off. These counts can only go down: a new use is new drift and fails the check, while removing uses is expected and the number should be lowered here when it happens. Same ratchet as the Source integration quarantine.",
+  "whyQuotedLiteralsOnly": "A name inside prose or a comment is not a declaration. Counting those would make the number describe something other than the problem, and would move when someone edits a sentence.",
+  "cleanupIsItsOwnItem": "Renaming the 64 files is a cross-cutting change that needs its own review — it touches admin pages, auth logins, landscape models and the client config. This file stops the drift growing while that is scheduled.",
+  "nonRegistryNames": {
+    "Meridian Health System": 53,
+    "Retail Demo": 4,
+    "SkyHarbor Global": 7
+  }
+}

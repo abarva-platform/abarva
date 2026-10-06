@@ -13,12 +13,11 @@
 //
 // HONESTY RULE (load-bearing): `evidenceComplete` is true ONLY because the task's
 // evidence reached a usable, PERSISTED state —
-//   • a `provide` task bound to a `factTemplateCode` is complete when ANY of that
-//     template's column fact keys already exists in the event's committed facts
-//     (the same facts that flip the step insight LIVE); and
-//   • a `provide` task with no template (its evidence is a stored document, e.g. the
-//     signed sponsor letter) is complete when at least one artifact is registered
-//     for the task's stage; and
+//   • a ticket-history task needs its validated fact-derived evidence receipt;
+//     other template tasks use committed column facts; and
+//   • a `provide` task with no template needs an exact governed evidence binding;
+//     an arbitrary artifact registered for the stage cannot prove its content
+//     or signature; and
 //   • a `confirm` / `decide` task is complete only when it has an explicit task →
 //     evidence-requirement mapping and that governed evidence row meets the
 //     requirement's minimum readiness state.
@@ -34,47 +33,57 @@ import type {
   SourceEventEvidenceCurrentState,
 } from "@/lib/source/canvas-substrate";
 import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
+import { evidenceMeetsRequirement, type EvidenceAssessment } from "@/lib/source/evidence-authority";
 import type { EvaluatorInputs } from "@/lib/source/facts/evaluators/types";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
 import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
 } from "@/lib/source/facts/task-evidence-requirements";
+import {
+  parseScopeMatrixDecision,
+  scopeMatrixDecisionMatchesSources,
+  SCOPE_MATRIX_DECISION_ID,
+} from "@/lib/source/facts/scope-matrix-decision";
+import {
+  parseScopeExclusionDecision,
+  scopeExclusionDecisionMatchesBasis,
+  SCOPE_EXCLUSIONS_DECISION_ID,
+} from "@/lib/source/facts/scope-exclusion-decision";
 
 /** The minimal artifact shape this hydrator needs (from the registry record). */
 export interface HydrationArtifact {
   /** The canonical stage the artifact was uploaded under. */
   stageKey: string;
+  /** Registry kind and filename let intake uploads bind to their later task. */
+  artifactKind?: string;
+  originalName?: string;
+  sourceFormat?: string;
+  sizeBytes?: number;
 }
 
 export interface HydrateTaskEvidenceInput {
   /** The stage tasks to stamp (returned unchanged in count/order). */
   tasks: readonly StageTaskView[];
   /**
-   * factKey → numeric value for the event, from `readEventFacts`. A template's
-   * task is complete when ANY of its bound column fact keys is present here.
+   * factKey → numeric value for the event, from `readEventFacts`. Non-ticket
+   * template tasks use the presence of a bound column fact key.
    */
   factInputs: EvaluatorInputs;
-  /**
-   * The event's registered artifacts (from `listSourceArtifactsForSourceEventId`).
-   * A template-less `provide` task is complete when at least one artifact exists
-   * for its stage. Empty / omitted → no artifact-derived completion.
-   */
+  /** The event's registered artifacts (from `listSourceArtifactsForSourceEventId`). */
   artifacts?: readonly HydrationArtifact[];
   /**
    * Effective evidence states for this event (persisted evidence plus
    * fact-backed evidence), from `listEffectiveEvidenceStatesForEvent`.
-   * Used for non-upload confirm/decide rows that still need audited readback.
+   * Used for ticket-history and non-upload confirm/decide readback.
    */
-  evidenceStates?: readonly Pick<
-    SourceEventEvidence,
-    "requirementId" | "currentState"
-  >[];
-  /**
-   * The canonical stage key being rendered. Used to match artifacts to a
-   * template-less `provide` task (the artifact carries the stage it landed under).
-   */
+  evidenceStates?: readonly (EvidenceAssessment & Partial<Pick<SourceEventEvidence, "id" | "notes">>)[];
+  /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
+  /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
+  verifiedDelegatedSponsorAcknowledgement?: boolean;
+  /** All archetype RFP levers have a valid newest persisted 0/1 decision. */
+  rfpClauseChecklistComplete?: boolean;
 }
 
 /**
@@ -108,15 +117,9 @@ export function hydrateTaskEvidenceState(
     factInputs,
     artifacts = [],
     evidenceStates = [],
-    stageKey,
+    verifiedDelegatedSponsorAcknowledgement = false,
+    rfpClauseChecklistComplete = false,
   } = input;
-
-  // Which stages have at least one registered artifact — for template-less
-  // `provide` tasks whose evidence is a stored document, not typed facts.
-  const stagesWithArtifact = new Set<string>();
-  for (const artifact of artifacts) {
-    if (artifact.stageKey) stagesWithArtifact.add(artifact.stageKey);
-  }
 
   const evidenceStateByRequirementId = new Map<
     string,
@@ -132,9 +135,38 @@ export function hydrateTaskEvidenceState(
   }
 
   return tasks.map((task) => {
+    if (task.id === "scope.sponsor" && verifiedDelegatedSponsorAcknowledgement) {
+      return { ...task, evidenceComplete: true };
+    }
     if (task.type !== "provide") {
       const requirementId = evidenceRequirementIdForTask(task);
       if (!requirementId) return task;
+      if (requirementId === SCOPE_EXCLUSIONS_DECISION_ID) {
+        const receipt = evidenceStates.find((row) => row.requirementId === requirementId);
+        const sow = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-CURRENT-SOW");
+        const receiptRequirement = evidenceById(requirementId);
+        const decision = parseScopeExclusionDecision(receipt?.notes);
+        return receiptRequirement && evidenceMeetsRequirement(receiptRequirement, receipt) &&
+          scopeExclusionDecisionMatchesBasis(decision, sow)
+          ? { ...task, evidenceComplete: true }
+          : task;
+      }
+      if (requirementId === SCOPE_MATRIX_DECISION_ID) {
+        const receipt = evidenceStates.find((row) => row.requirementId === requirementId);
+        const workforce = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-WORKFORCE");
+        const sla = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-SLA-BASELINE");
+        const decision = parseScopeMatrixDecision(receipt?.notes);
+        const receiptRequirement = evidenceById(requirementId);
+        const workforceRequirement = evidenceById("EVID-SRC-SCOPE-WORKFORCE");
+        const slaRequirement = evidenceById("EVID-SRC-SCOPE-SLA-BASELINE");
+        return receiptRequirement && workforceRequirement && slaRequirement &&
+          evidenceMeetsRequirement(receiptRequirement, receipt) &&
+          evidenceMeetsRequirement(workforceRequirement, workforce) &&
+          evidenceMeetsRequirement(slaRequirement, sla) &&
+          scopeMatrixDecisionMatchesSources(decision, workforce, sla)
+          ? { ...task, evidenceComplete: true }
+          : task;
+      }
       const requirement = evidenceById(requirementId);
       const currentState = evidenceStateByRequirementId.get(requirementId);
       if (
@@ -147,22 +179,84 @@ export function hydrateTaskEvidenceState(
       return task;
     }
 
+    if (task.id === "scope.app-inventory") {
+      const reviewedInventory = evidenceStates.find((evidence) =>
+        evidence.requirementId === "EVID-SRC-SCOPE-APP-INV" &&
+        evidence.currentState === "Usable Evidence" &&
+        Boolean(evidence.id && !evidence.id.startsWith("fact-derived:")) &&
+        Boolean(evidence.sourceArtifactId),
+      );
+      if (reviewedInventory) return { ...task, evidenceComplete: true };
+      return task;
+    }
+
+    if (task.id === "scope.prior-baseline") {
+      const requirement = evidenceById("EVID-SRC-SCOPE-FY-CONTRACT");
+      const evidence = evidenceStates.find((row) => row.requirementId === requirement?.requirementId);
+      return requirement && evidenceMeetsRequirement(requirement, evidence)
+        ? { ...task, evidenceComplete: true }
+        : task;
+    }
+
     const taskFactTemplateCode = factTemplateCodeForTask(task);
     if (taskFactTemplateCode) {
-      if (templateFactsPresent(taskFactTemplateCode, factInputs)) {
+      if (taskFactTemplateCode === "RFP_CLAUSES_V1") {
+        if (rfpClauseChecklistComplete && templateFactsPresent(taskFactTemplateCode, factInputs)) {
+          return { ...task, evidenceComplete: true };
+        }
+      } else if (taskFactTemplateCode === "TICKET_HISTORY_V1") {
+        const requirementId = evidenceRequirementIdForTask(task);
+        const requirement = requirementId ? evidenceById(requirementId) : null;
+        const factReceipt = evidenceStates.find((evidence) =>
+          evidence.requirementId === requirementId &&
+          evidence.id?.startsWith("fact-derived:") &&
+          (evidence.sourceEventFactIds?.length ?? 0) > 0 &&
+          requirement &&
+          evidenceStateMeetsMinimum(evidence.currentState, requirement.minimumState),
+        );
+        if (factReceipt) return { ...task, evidenceComplete: true };
+      } else if (templateFactsPresent(taskFactTemplateCode, factInputs)) {
         return { ...task, evidenceComplete: true };
+      }
+      const storedArtifact = artifacts.find((artifact) =>
+        artifactMatchesTemplate(artifact, taskFactTemplateCode),
+      );
+      if (storedArtifact?.originalName) {
+        return {
+          ...task,
+          file: task.file ?? {
+            format: (storedArtifact.sourceFormat ?? "file").toUpperCase(),
+            name: storedArtifact.originalName,
+            meta: `${formatArtifactSize(storedArtifact.sizeBytes)} · uploaded · awaiting extraction`,
+          },
+        };
       }
       return task;
     }
 
-    // Template-less `provide` task → its evidence is a stored artifact. Complete
-    // when at least one artifact is registered for this task's stage.
-    const taskStage = stageKey ?? undefined;
-    if (taskStage && stagesWithArtifact.has(taskStage)) {
-      return { ...task, evidenceComplete: true };
-    }
+    // Without an exact task/evidence binding, neither a stage match nor a
+    // filename can establish that a document was reviewed or signed.
     return task;
   });
+}
+
+function artifactMatchesTemplate(
+  artifact: HydrationArtifact,
+  templateCode: string,
+): boolean {
+  const templateToken = templateCode.toUpperCase();
+  return [artifact.artifactKind, artifact.originalName].some((value) =>
+    value?.toUpperCase().includes(templateToken),
+  );
+}
+
+function formatArtifactSize(sizeBytes: number | undefined): string {
+  if (!Number.isFinite(sizeBytes) || (sizeBytes ?? 0) <= 0) return "Stored file";
+  if ((sizeBytes ?? 0) < 1024) return `${sizeBytes} B`;
+  if ((sizeBytes ?? 0) < 1024 * 1024) {
+    return `${Math.round((sizeBytes ?? 0) / 1024)} KB`;
+  }
+  return `${((sizeBytes ?? 0) / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 const READINESS_RANK: Record<SourceEventEvidenceCurrentState, number> = {

@@ -20,6 +20,13 @@ const writes: Array<{ table: string; payload: Record<string, unknown> }> = [];
 const writeAdapter = {
   insertActivityLog: jest.fn(async () => ({ ok: true })),
 };
+let canApproveSourceStages = true;
+let eventStage = "scope";
+let workforceState = "Available";
+let slaArtifactId: string | null = "sla-v1";
+let factBackedSources = false;
+let currentSowArtifactId: string | null = "sow-v1";
+let currentSowAbsence = false;
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -39,11 +46,38 @@ jest.mock("@/lib/auth/current-user", () => ({
 jest.mock("@/lib/auth/source-access-policy", () => ({
   loadUserSourceAccessPolicy: jest.fn(async () => ({
     canGenerateSourcingArtifacts: true,
+    canApproveSourceStages,
   })),
 }));
 
 jest.mock("@/lib/source/queries", () => ({
   resolveSourceEventUuidForClient: jest.fn(async () => "evt-1"),
+}));
+
+jest.mock("@/lib/source/canvas-substrate/queries", () => ({
+  listEffectiveEvidenceStatesForEvent: jest.fn(async () => [
+    {
+      requirementId: "EVID-SRC-SCOPE-WORKFORCE",
+      currentState: workforceState,
+      ...(factBackedSources ? { sourceEventFactIds: ["workforce-fact-1"] } : { sourceArtifactId: "workforce-v1" }),
+    },
+    {
+      requirementId: "EVID-SRC-SCOPE-SLA-BASELINE",
+      currentState: "Parsed",
+      ...(factBackedSources ? { sourceEventFactIds: ["sla-fact-1"] } : { sourceArtifactId: slaArtifactId }),
+    },
+    {
+      requirementId: "EVID-SRC-SCOPE-CURRENT-SOW",
+      currentState: currentSowAbsence ? "Not Requested" : "Available",
+      sourceArtifactId: currentSowArtifactId,
+      ...(currentSowAbsence ? {
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "This synthetic net-new service has no prior current SOW or change-order history.",
+        applicabilityActorUserId: "owner-1",
+        applicabilityDecidedAt: "2026-09-30T09:00:00Z",
+      } : {}),
+    },
+  ]),
 }));
 
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
@@ -100,12 +134,21 @@ function fakeFluentClient() {
               data: {
                 id: "evt-1",
                 client_key: "skyharbor",
-                current_stage_key: "scope",
+                current_stage_key: eventStage,
               },
               error: null,
             };
           }
           if (table === "source_event_evidence_states") {
+            if (["EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION", "EVID-SRC-SCOPE-EXCLUSIONS-DECISION"].includes(String(filters.requirement_id))) {
+              return { data: null, error: null };
+            }
+            if (filters.requirement_id === "EVID-SRC-SCOPE-WORKFORCE") {
+              return { data: { ...evidenceRow, requirement_id: filters.requirement_id, current_state: workforceState, source_artifact_id: "workforce-v1" }, error: null };
+            }
+            if (filters.requirement_id === "EVID-SRC-SCOPE-SLA-BASELINE") {
+              return { data: { ...evidenceRow, requirement_id: filters.requirement_id, current_state: "Parsed", source_artifact_id: slaArtifactId }, error: null };
+            }
             return { data: existingEvidence, error: null };
           }
           return { data: null, error: null };
@@ -156,9 +199,136 @@ beforeEach(() => {
   jest.clearAllMocks();
   writes.length = 0;
   existingEvidence = evidenceRow;
+  canApproveSourceStages = true;
+  eventStage = "scope";
+  workforceState = "Available";
+  slaArtifactId = "sla-v1";
+  factBackedSources = false;
+  currentSowArtifactId = "sow-v1";
+  currentSowAbsence = false;
 });
 
 describe("POST Source evidence answer", () => {
+  const exclusionsCtx = { params: Promise.resolve({ eventId: "evt-1", requirementId: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION" }) };
+  const exclusionsBody = {
+    stage: "scope",
+    scopeExclusions: {
+      excludedWork: "Security operations and application retirement are outside the proposed supplier service boundary.",
+      responsibleOwner: "The retained client operations and application owners remain accountable for those excluded activities.",
+      rationale: "Synthetic owner decision for scope planning only, without asserting a contract exclusion or supplier acceptance.",
+    },
+  };
+
+  it("persists a structured exclusions decision bound to current SOW evidence", async () => {
+    const res = await POST(request(exclusionsBody), exclusionsCtx);
+    expect(res.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        requirement_id: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION",
+        notes: expect.stringContaining('"sourceId":"sow-v1"'),
+      }),
+    }));
+  });
+
+  it("binds an exclusions decision to a genuine audited absence, not a fabricated agreement", async () => {
+    currentSowArtifactId = null;
+    currentSowAbsence = true;
+    const res = await POST(request(exclusionsBody), exclusionsCtx);
+    expect(res.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        source_artifact_id: null,
+        notes: expect.stringContaining('"kind":"audited_absence"'),
+      }),
+    }));
+  });
+
+  it("rejects an exclusions decision without authority, current stage, source, or explicit fields", async () => {
+    canApproveSourceStages = false;
+    expect((await POST(request(exclusionsBody), exclusionsCtx)).status).toBe(403);
+    canApproveSourceStages = true;
+    eventStage = "rfp";
+    expect((await POST(request(exclusionsBody), exclusionsCtx)).status).toBe(409);
+    eventStage = "scope";
+    currentSowArtifactId = null;
+    expect((await POST(request(exclusionsBody), exclusionsCtx)).status).toBe(422);
+    currentSowArtifactId = "sow-v1";
+    expect((await POST(request({ stage: "scope", answer: "Confirm exclusions" }), exclusionsCtx)).status).toBe(400);
+    expect(writes).toEqual([]);
+  });
+
+  const matrixCtx = { params: Promise.resolve({ eventId: "evt-1", requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION" }) };
+  const matrixBody = {
+    stage: "scope",
+    scopeMatrix: {
+      retainedResponsibilities: "Client operations retains service ownership, security policy, and approvals.",
+      vendorResponsibilities: "Prospective vendor handles L1/L2 service desk and endpoint support only.",
+      rationale: "Synthetic owner decision based on the reviewed workforce and SLA test evidence.",
+    },
+  };
+
+  it("persists a structured owner matrix decision with source identities", async () => {
+    const res = await POST(request(matrixBody), matrixCtx);
+    expect(res.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        requirement_id: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+        current_state: "Available",
+        notes: expect.stringContaining('"workforceArtifactId":"workforce-v1"'),
+      }),
+    }));
+  });
+
+  it("persists identities from the effective fact-backed evidence read model", async () => {
+    factBackedSources = true;
+    const res = await POST(request(matrixBody), matrixCtx);
+    expect(res.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        notes: expect.stringContaining('"slaArtifactId":"facts:sla-fact-1"'),
+      }),
+    }));
+  });
+
+  it("rejects a matrix decision from a contributor without stage approval authority", async () => {
+    canApproveSourceStages = false;
+    const res = await POST(request(matrixBody), matrixCtx);
+    expect(res.status).toBe(403);
+    expect(writes).toEqual([]);
+  });
+
+  it("rejects a matrix decision outside the active Scope stage", async () => {
+    eventStage = "rfp";
+    const res = await POST(request(matrixBody), matrixCtx);
+    expect(res.status).toBe(409);
+    expect(writes).toEqual([]);
+  });
+
+  it("rejects missing source evidence or a generic canned answer", async () => {
+    slaArtifactId = null;
+    const missing = await POST(request(matrixBody), matrixCtx);
+    expect(missing.status).toBe(422);
+    const canned = await POST(request({ stage: "scope", answer: "Confirm retained vs vendor" }), matrixCtx);
+    expect(canned.status).toBe(400);
+    expect(writes).toEqual([]);
+  });
+  it.each([
+    "EVID-SRC-STR-INCUMBENT",
+    "EVID-SRC-STR-SPEND-BASELINE",
+  ])("does not turn a typed answer into record-backed %s", async (requirementId) => {
+    const res = await POST(
+      request({ answer: "No source extract is available for this synthetic test.", stage: "strategy" }),
+      { params: Promise.resolve({ eventId: "evt-1", requirementId }) },
+    );
+    expect(res.status).toBe(422);
+    expect(writes).toEqual([]);
+    expect(writeAdapter.insertActivityLog).not.toHaveBeenCalled();
+  });
+
   it("advances existing evidence to client-stated Available and logs provenance", async () => {
     const res = await POST(
       request({

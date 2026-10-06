@@ -7,7 +7,6 @@
 //   → dynamic prompt → governed model → golden-bar quality gate → result
 
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
-import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import {
   assertPhaseReadyForGeneration,
   type GateReadinessSources,
@@ -45,6 +44,10 @@ import {
   premiumGoldenBarOptionsForArtifact,
   STRATEGIC_MOVES_DRAFT_CAVEAT,
 } from "./strategic-moves-artifact-standard";
+
+function requiresApprovedArchitectureOption(artifact: DeliverableKey): boolean {
+  return artifact === "target_state_architecture";
+}
 
 export interface GenerateArtifactDeps {
   contextSources: SolutionContextSources;
@@ -529,11 +532,7 @@ export async function generateArtifact(
       };
     }
   }
-  const profile = getDeliverableProfile(args.artifact);
-  if (
-    profile.renderer === "html_architecture" &&
-    args.artifact !== "solution_approach_options"
-  ) {
+  if (requiresApprovedArchitectureOption(args.artifact)) {
     const archOk = architectureMayProceed(ctx);
     if (!archOk.ready) {
       return { status: "blocked_context", missing: archOk.missing };

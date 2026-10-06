@@ -44,10 +44,25 @@ jobs:
         run: npm ci
 
       - name: TypeScript typecheck (full project)
-        # OOM fix: full-project tsc was crossing 2 GB heap limit; bumped to 6 GB. Tracked under CI-FIX.
-        env:
-          NODE_OPTIONS: --max-old-space-size=6144
-        run: npx tsc --noEmit
+        # One command, defined in scripts/quality/typecheck.mjs: it removes any
+        # .tsbuildinfo first, raises the heap above where this project OOMs, and
+        # exits 3 on a crash so an abort can never read as a clean run. The heap
+        # floor lives in the script, not here, so a local run gets it too.
+        run: npm run typecheck
 
       - name: Reasoning-layer Jest tests
         run: npx jest src/lib/reasoning --silent
+
+      # The reasoning ROUTES, not just the library. Added with item C-527,
+      # whose behavioural case for `/api/reasoning/stage-synthesis` landed in a
+      # directory no workflow ran — which the coverage census caught and is the
+      # reason this step exists. A control that CI never executes is the defect
+      # class this guard exists against, so the whole directory is named rather
+      # than one file: a case added beside a future reasoning route is wired by
+      # being written, not by someone remembering to edit this list.
+      #
+      # `src/app/api/reasoning/gate-waiver` is also run by
+      # ai-surface-control-catalog.yml. Running it twice is cheap; leaving a new
+      # sibling directory unrun is not.
+      - name: Reasoning route Jest tests
+        run: npx jest src/app/api/reasoning --silent

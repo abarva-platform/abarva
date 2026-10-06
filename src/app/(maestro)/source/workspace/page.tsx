@@ -49,16 +49,6 @@ export default async function SourceWorkspacePage({
     workspaceTab?: string;
   }>;
 }) {
-  let tenancy;
-  try {
-    tenancy = await requireTenancy();
-  } catch (err) {
-    if (err instanceof TenancyError && err.code === "unauthenticated") {
-      redirect("/sign-in");
-    }
-    throw err;
-  }
-
   const params = await searchParams;
   const requestedClient = params.client?.trim() || null;
   const requestedContractId = params.contractId?.trim() || null;
@@ -74,7 +64,7 @@ export default async function SourceWorkspacePage({
   if (requestedClient && !requestedClientKey) {
     notFound();
   }
-  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+  if (requestedClientKey) {
     const access = await checkTenantAccessByKey(requestedClientKey);
     if (!access.ok) {
       if (access.reason === "tenant_not_found") {
@@ -84,6 +74,17 @@ export default async function SourceWorkspacePage({
         redirect("/sign-in");
       }
       return <SourceWorkspaceTenantAccessDenied />;
+    }
+  }
+  let tenancy = null;
+  if (!requestedClientKey) {
+    try {
+      tenancy = await requireTenancy();
+    } catch (err) {
+      if (err instanceof TenancyError && err.code === "unauthenticated") {
+        redirect("/sign-in");
+      }
+      throw err;
     }
   }
 
@@ -103,7 +104,7 @@ export default async function SourceWorkspacePage({
     requestedClientKey ??
     activeClient?.key ??
     tenant?.appClientKey ??
-    tenancy.clientKey ??
+    tenancy?.clientKey ??
     "";
   const defaultAsOf = SOURCE_WORKSPACE_DEFAULT_AS_OF;
   const asOfDateIso = params.asOf?.trim() || defaultAsOf;

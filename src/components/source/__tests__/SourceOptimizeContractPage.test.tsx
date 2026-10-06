@@ -12,7 +12,7 @@ import {
 } from "@testing-library/react";
 import { TextDecoder, TextEncoder } from "util";
 
-import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
+import { labelOpportunityAmountBasis, SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
 import { trimContractOptimizationOpportunitySetForClient } from "@/lib/source/data-model/contract-optimization-client-payload";
 import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
@@ -305,6 +305,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine()}
         opportunitySet={null}
+        canViewFinancialValues
       />,
     );
 
@@ -391,6 +392,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -415,6 +417,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -450,6 +453,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -501,6 +505,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -565,6 +570,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -622,6 +628,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={approvalStageSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -684,6 +691,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={targetPositionSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -701,6 +709,9 @@ describe("SourceOptimizeContractPage", () => {
     );
     expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
       "Controlled outreach only; Finance/Tower still controls realized value.",
+    );
+    expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
+      "Reproducible from calculation run",
     );
 
     expect(
@@ -731,6 +742,14 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("workflow-action-message")).toHaveTextContent(
       "Strategy approval request is ready for review.",
     );
+  });
+
+  it("does not call an authored exact amount calculated without a run", () => {
+    const opportunity = makeOpportunitySet().opportunities[0];
+    expect(labelOpportunityAmountBasis({
+      ...opportunity,
+      calculation: null,
+    })).toBe("Amount stated; calculation not verified");
   });
 
   it("records an approval decision against a pending strategy request", async () => {
@@ -774,6 +793,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={pendingApprovalSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -859,6 +879,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={agreedOutcomeSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1004,6 +1025,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={confirmedSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1097,6 +1119,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={pendingFinanceHandoffSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1198,6 +1221,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={confirmedWithoutHandoff}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1253,6 +1277,7 @@ describe("SourceOptimizeContractPage", () => {
           missingEvidenceSources: [],
         })}
         opportunitySet={makeConflictOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1299,6 +1324,7 @@ describe("SourceOptimizeContractPage", () => {
           missingEvidenceSources: [],
         })}
         opportunitySet={opportunitySet}
+        canViewFinancialValues
       />,
     );
 
@@ -1347,6 +1373,7 @@ describe("SourceOptimizeContractPage", () => {
           ],
         })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1375,21 +1402,27 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
-    // No evidence pack supplied, so required evidence is missing and the case
-    // must hold at the evidence step — not sit on a hardcoded step 2.
+    // The selected opportunity reproduces from a calculation run. With no
+    // archetype-governed pack, the generic evidence list cannot contradict
+    // that trace and block the case; diagnosis is the next real gate.
     expect(screen.getByTestId("optimize-step-select")).toHaveAttribute(
       "data-state",
       "complete",
     );
     expect(screen.getByTestId("optimize-step-evidence")).toHaveAttribute(
       "data-state",
-      "blocked",
+      "complete",
     );
     // Nothing downstream of the current step may look done.
-    for (const key of ["diagnose", "plan", "approve", "prove_value"]) {
+    expect(screen.getByTestId("optimize-step-diagnose")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+    for (const key of ["plan", "approve", "prove_value"]) {
       expect(screen.getByTestId(`optimize-step-${key}`)).toHaveAttribute(
         "data-state",
         "future",
@@ -1397,10 +1430,10 @@ describe("SourceOptimizeContractPage", () => {
     }
 
     const next = screen.getByTestId("optimize-next-decision");
-    expect(next).toHaveTextContent("Step 3 of 7");
-    expect(next).toHaveTextContent("Collect 8 missing evidence families");
+    expect(next).toHaveTextContent("Step 4 of 7");
+    expect(next).toHaveTextContent("Validate the diagnosed opportunities");
     expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
-      "8 required evidence families have no governed evidence.",
+      "No opportunity has been validated yet.",
     );
   });
 
@@ -1427,6 +1460,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={withUntraced}
+        canViewFinancialValues
       />,
     );
 
@@ -1485,6 +1519,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1541,6 +1576,7 @@ describe("SourceOptimizeContractPage", () => {
             },
           ],
         }}
+        canViewFinancialValues
       />,
     );
 

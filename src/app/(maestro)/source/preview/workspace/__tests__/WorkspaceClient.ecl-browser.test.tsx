@@ -117,6 +117,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listSourceContractClaimCards: jest.fn(() => Promise.resolve([])),
   listSourceContractEvidenceCoverage: jest.fn(() => Promise.resolve([])),
   listSourcePageStoryline: jest.fn(() => Promise.resolve([])),
+  listSourceLoadRunCompletions: jest.fn(() => Promise.resolve([])),
   listSourceVendorPositions: jest.fn(() => Promise.resolve([])),
   listVendorContractPortfolio: jest.fn(),
 }));
@@ -128,6 +129,7 @@ import path from "node:path";
 import type { ReactNode } from "react";
 
 import { WorkspaceClient } from "../WorkspaceClient";
+import { expectCleanComposition } from "../test-support/compositionInvariants";
 import {
   loadSourceWorkspacePortfolio,
   type SourceWorkspacePortfolioData,
@@ -346,6 +348,35 @@ describe("Source workspace ECL browser-surface proof", () => {
     await rm(dir, { force: true, recursive: true });
   });
 
+  it("renders the populated dataset version as a separate header control", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "synthetic-organization",
+      "2027-06-30T00:00:00Z",
+    );
+    const datasetVersion = "source-build-2026.09.21";
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          workspaceDiagnostics: {
+            ...portfolio.workspaceDiagnostics,
+            datasetVersion,
+          },
+        }}
+        tenantName="Synthetic Organization"
+        sourceClientKey="synthetic-organization"
+      />,
+    );
+
+    expect(screen.getByLabelText("Dataset build").textContent).toContain(
+      datasetVersion,
+    );
+    expect(
+      screen.getByLabelText("Source scenario date").textContent,
+    ).toContain("30 Jun 2027");
+  });
+
   it("renders the real workspace component from flagged ECL projection rows", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
@@ -450,7 +481,13 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByText("Thin records do not get rich narrative"),
     ).toBeTruthy();
-    expect(screen.getByText(/specific backfill request/i)).toBeTruthy();
+    // The rule is the same; it is now stated to the reader rather than to
+    // whoever builds the page. "Contract pages should show…" was an authoring
+    // instruction rendered at the foot of the executive view.
+    expect(
+      screen.getByText(/names the input it needs rather than showing/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Contract pages should show/i)).toBeNull();
     expect(screen.queryByText("Contract register")).toBeNull();
     expect(screen.queryByText("Application scope")).toBeNull();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
@@ -469,18 +506,14 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     const contractsTab = screen.getAllByRole("button", {
       name: "Contracts",
-    })[0] as HTMLAnchorElement;
+    })[0] as HTMLButtonElement;
     expect(
       screen
         .getByTestId("source-agent-dock")
         .getAttribute("data-disable-stored-mode"),
     ).toBe("true");
-    expect(contractsTab.getAttribute("href")).toContain(
-      "/source?workspaceTab=contracts",
-    );
-    expect(contractsTab.getAttribute("href")).toContain(
-      "client=meridian-health",
-    );
+    expect(contractsTab.getAttribute("href")).toBeNull();
+    expect(contractsTab.getAttribute("aria-pressed")).toBe("false");
 
     fireEvent.click(contractsTab);
 
@@ -518,9 +551,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByRole("button", { name: "Back to contracts" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Scope" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Economics" })).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(1);
+    expect(screen.getByRole("tab", { name: "Scope" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Economics" })).toBeTruthy();
+    expect(screen.getAllByRole("tab", { name: "Optimize" })).toHaveLength(1);
     expect(
       screen.queryByLabelText("Persistent Source workspace toolbar"),
     ).toBeNull();
@@ -535,7 +568,7 @@ describe("Source workspace ECL browser-surface proof", () => {
       "Optimize",
     ].forEach((tabName) => {
       expect(
-        screen.getAllByRole("button", { name: tabName }).length,
+        screen.getAllByRole("tab", { name: tabName }).length,
       ).toBeGreaterThan(0);
     });
     expect(
@@ -550,20 +583,69 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByRole("button", { name: "Documents" })).toBeNull();
     expect(screen.queryByRole("button", { name: "AI Insights" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
-    expect(screen.getByText("Optimize gap")).toBeTruthy();
-    expect(screen.getByText("Contract readout")).toBeTruthy();
-    expect(screen.getByText("Decision consequence")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Story" })).toBeTruthy();
+    // Optimize has no right column at all. It takes the full three columns,
+    // so the context panel beside every other tab is not built here.
+    //
+    // This block used to assert that panel's contents on Optimize — "Contract
+    // readout", the governed statement trimmed to its headline, "Decision
+    // consequence". Those assertions were written for the two-column Optimize
+    // and outlived it: the tab went full-width and the panel stopped being
+    // rendered on it. They are asserted as absent rather than deleted, because
+    // the layout is the claim and an assertion that cannot fail is not one.
+    expect(screen.queryByText("Deterministic cards")).toBeNull();
+    expect(screen.queryByText("Contract readout")).toBeNull();
+    expect(screen.queryByText("Decision consequence")).toBeNull();
+    expect(screen.queryByText("What Source can state")).toBeNull();
+    // This fixture loads no governed opportunity rows, so the two surfaces the
+    // full-width tab does own are absent with it — and the tab refuses rather
+    // than inventing a play, which is the control worth pinning here.
+    expect(screen.queryByText("What can be claimed")).toBeNull();
+    expect(screen.queryByText("What still gates value")).toBeNull();
+    expect(
+      screen.getByText("No contract-specific optimization levers loaded."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /will not invent an optimization play until governed opportunity rows exist/,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    // Story's side panel has its own context stack rather than the tab
+    // narrative, so the statement keeps its blocker there. That is the
+    // differential: the statement is trimmed only where the panel beside it
+    // already renders the same paragraphs.
+    fireEvent.click(screen.getByRole("tab", { name: "Story" }));
+    {
+      const statement = screen
+        .getByText("What Source can state")
+        .closest(".sw-c3-governed-statement");
+      expect(
+        statement?.querySelectorAll(".sw-c3-governed-blocker").length,
+      ).toBe(1);
+    }
 
-    expect(screen.getByText("Contract 360 / Scope")).toBeTruthy();
-    expect(screen.getByText("Scope story")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
+
     expect(screen.getAllByText("Workday Finance").length).toBeGreaterThan(0);
-    expect(screen.getByText("Business function")).toBeTruthy();
+    // The scope briefing renders each row's business function as content
+    // beside the workload it belongs to, rather than as a column header on a
+    // separate table — so assert the boundary statement the tab is for.
+    expect(
+      screen.getByText(
+        "Declared scope, not enterprise-wide dependency coverage.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("The boundary")).toBeTruthy();
+
+    // Composition, not correctness: no governed sentence on the mounted tab
+    // may be stated twice, and no identifier may reach the reader. Checked per
+    // tab because the previous tab's content is unmounted. Every defect worth
+    // fixing on this surface was found by reading the deployed page rather
+    // than by the suite, because each render is right on its own.
+    expectCleanComposition(container);
     expect(
       screen.getByText(
         "Use only these named workloads when explaining coverage; do not expand to tower, module, or CMDB relationships without matching rows.",
@@ -605,10 +687,9 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     const leversTab = screen.getByRole("button", {
       name: "Levers",
-    }) as HTMLAnchorElement;
-    expect(leversTab.getAttribute("href")).toContain(
-      "/source?workspaceTab=levers",
-    );
+    }) as HTMLButtonElement;
+    expect(leversTab.getAttribute("href")).toBeNull();
+    expect(leversTab.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(leversTab);
     expect(screen.getByRole("tab", { name: "Queue" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
@@ -725,6 +806,60 @@ describe("Source workspace ECL browser-surface proof", () => {
         "No quantified opportunity is loaded in the current deterministic slice.",
       ),
     ).toBeNull();
+  });
+
+  it("distinguishes unsized command actions from zero-valued and finance-ready actions", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const actionCandidates: SourceWorkspacePortfolioData["impact"]["actionCandidates"] =
+      Array.from({ length: 6 }, (_, index) => ({
+        tenant_key: portfolio.contracts[0].tenant_key,
+        action_candidate_id: `OPP-SIGNAL-${index + 1}`,
+        opportunity_id: `OPP-SIGNAL-${index + 1}`,
+        contract_id: portfolio.contracts[0].contract_id,
+        vendor_ref: portfolio.contracts[0].vendor_ref,
+        vendor_name: portfolio.contracts[0].vendor_name,
+        title: `Review signal ${index + 1}`,
+        action_type: "negotiated_improvement",
+        opportunity_type: "negotiated_improvement",
+        finding_summary: "Evidence required before sizing.",
+        deterministic_basis: "Loaded contract record.",
+        candidate_amount_usd: null,
+        priority: "medium",
+        readiness_state: "review_required",
+        evidence_state: "partial",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Load a calculation basis.",
+        accountable_role: "sourcing_owner",
+        decision_due_date: null,
+        coverage_state: "partial",
+        blocker_if_missing: "Do not claim a dollar amount.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      }));
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          workspaceDiagnostics: {
+            ...portfolio.workspaceDiagnostics,
+            exploreProvider: "EclProjectionDbProvider",
+          },
+          impact: { ...portfolio.impact, actionCandidates },
+        }}
+        tenantName="Demo account"
+        sourceClientKey={portfolio.contracts[0].tenant_key}
+        impactLoadState="ready"
+      />,
+    );
+
+    expect(await screen.findByText("6 open actions · 6 unsized")).toBeTruthy();
+    expect(screen.getByText("1 further action awaits sizing.")).toBeTruthy();
+    expect(screen.getByText(/No candidate dollar total is established/)).toBeTruthy();
+    expect(screen.queryByText(/\$0 in candidate value/)).toBeNull();
   });
 
   it("renders a sequenced lever report on the default Optimize page when action rows exist", async () => {
@@ -1110,7 +1245,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.queryByText("Contract not found in governed Source rows"),
     ).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
     expect(screen.getByText("Workloads covered")).toBeTruthy();
     expect(
       screen.getByText(
@@ -1136,23 +1271,27 @@ describe("Source workspace ECL browser-surface proof", () => {
         name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
       }),
     );
-    expect(screen.getByText("Contract 360 / Story")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
     expect(
       screen.getByText("No contract-specific optimization levers loaded."),
     ).toBeTruthy();
-    expect(screen.getByText("Contract readout")).toBeTruthy();
-    expect(screen.getByText("Decision consequence")).toBeTruthy();
+    // Same reason as the Optimize block above: the full-width tab renders no
+    // context panel, so "Contract readout" and "Decision consequence" are
+    // asserted absent here rather than present. This contract loads no
+    // governed opportunity rows either, so the ledger and the gate stay off
+    // the tab with them.
+    expect(screen.queryByText("Contract readout")).toBeNull();
+    expect(screen.queryByText("Decision consequence")).toBeNull();
+    expect(screen.queryByText("What can be claimed")).toBeNull();
+    expect(screen.queryByText("What still gates value")).toBeNull();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Performance" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Performance" }));
 
     expect(screen.getByText("Service Desk Managed Services")).toBeTruthy();
     expect(screen.getAllByText(/MER-TECH-SD-001/).length).toBeGreaterThan(0);
-    expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText("12 performance periods loaded.")).toBeTruthy();
     });
@@ -1566,15 +1705,31 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
-    });
+      });
     await waitFor(() => {
-      expect(screen.getByLabelText("Negotiation levers")).toBeTruthy();
+      // The deck's table replaced the inline-styled one; it is addressed by
+      // its column heading rather than an aria-label.
+      expect(screen.getByText("Why they can say yes")).toBeTruthy();
     });
 
+    // The governed Optimize headline is the lever list in prose, and the three
+    // sub-tabs to the left render those levers as tables. Because the statement
+    // is keyed on the Contract 360 tab and not the sub-tab, it restated
+    // whichever sub-tab was open, on all three. The evidence gate is the one
+    // claim with no other home, so it is what survives in the right column.
     expect(
-      screen.getByText("Two Databricks levers are governed for outreach."),
-    ).toBeTruthy();
+      screen.queryByText("Two Databricks levers are governed for outreach."),
+    ).toBeNull();
+    expect(screen.getByText("What still gates value")).toBeTruthy();
+    // The value-type ledger is the standing context that earns its place on
+    // every sub-tab: the three ledgers never sum, whichever view is open.
+    expect(screen.getByText("What can be claimed")).toBeTruthy();
+    // "What can be claimed" is the ledger's heading, and a heading is not the
+    // ledger. Deleting the stack underneath it left this block green, so the
+    // ledger's own content is asserted too — the finance-confirmed line is the
+    // one that keeps booked dollars in a column of their own.
+    expect(screen.getByText("Finance confirmed")).toBeTruthy();
+    expect(screen.queryByText("Deterministic cards")).toBeNull();
     expect(
       screen.getByText(
         /Signal rows need benchmark and per-SKU evidence before they carry value/,
@@ -1789,6 +1944,80 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeNull();
     expect(
       screen.queryByRole("heading", { name: "Epic Systems Corporation" }),
+    ).toBeNull();
+  });
+
+  it("keeps an action reviewable when its contract detail returns 404", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const missingContractId = "CONTRACT-ACTION-WITHOUT-DETAIL";
+    const actionCandidate = {
+      ...portfolio.impact.actionCandidates[0],
+      action_candidate_id: "ACTION-WITHOUT-DETAIL",
+      contract_id: missingContractId,
+      title: "Review unmatched action",
+      next_action: "Resolve contract identity before using detail.",
+    } as SourceWorkspacePortfolioData["impact"]["actionCandidates"][number];
+    const routedPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      impact: { ...portfolio.impact, actionCandidates: [actionCandidate] },
+    };
+    (global.fetch as jest.Mock).mockImplementation(
+      (input: RequestInfo | URL) =>
+        String(input).includes(
+          `/api/source/workspace/contract/${missingContractId}`,
+        )
+          ? Promise.resolve({ ok: false, status: 404 } as Response)
+          : new Promise<Response>(() => undefined),
+    );
+
+    render(
+      <WorkspaceClient
+        portfolio={routedPortfolio}
+        tenantName="Synthetic tenant"
+        sourceClientKey="synthetic-tenant"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Contracts" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a contract" }), {
+      target: { value: missingContractId },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Review unmatched action/ }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Contract detail unavailable")).toBeTruthy();
+    });
+    expect(
+      screen.getByText(/No substitute contract is being shown/),
+    ).toBeTruthy();
+    expect(screen.getByText("Review unmatched action")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Review action" })).toBeTruthy();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.filter(([input]) =>
+        String(input).includes(
+          `/api/source/workspace/contract/${missingContractId}`,
+        ),
+      ),
+    ).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review action" }));
+    expect(
+      screen.getByRole("complementary", { name: "Action details" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Resolve contract identity before using detail."),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Open Contract 360" }),
+    ).toBeNull();
+    expect(screen.getAllByText("Contract detail unavailable").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: portfolio.contracts[0].contract_name }),
     ).toBeNull();
   });
 });

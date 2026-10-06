@@ -12,6 +12,10 @@ import {
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 import {
+  buildApprovalWorkspaceDecisions,
+  type ApprovalDecisionGroup,
+} from "@/lib/source/approval-workspace-decisions";
+import {
   SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
@@ -23,6 +27,10 @@ import {
   buildSourceArtifactLifecycleSummary,
   type SourceArtifactLifecycleSummary,
 } from "@/lib/source/artifact-lifecycle-matrix";
+import {
+  stageArtifactReadinessFor,
+  type SourceStageArtifactReadiness,
+} from "@/lib/source/stage-artifact-readiness";
 import { specByCode } from "@/lib/source/canonical-specs/artifact-specs";
 import type {
   IntelProvenance,
@@ -90,6 +98,8 @@ export interface SourceShellStep {
   template: StageTaskView["template"] | null;
   provenance: StageTaskView["provenance"] | null;
   factTemplateCode: StageTaskView["factTemplateCode"] | null;
+  confirmationVersion?: string;
+  approvalPolicyCode?: string | null;
 }
 
 export interface SourceShellFileItem {
@@ -119,6 +129,8 @@ export interface SourceShellFileItem {
   complianceReviewMessage: string | null;
   /** First-mile extraction status from the durable Source artifact row. */
   parseStatus: string | null;
+  /** Registry origin distinguishes rendered work products from uploaded evidence. */
+  sourceOrigin?: string | null;
   /** Search/vector readiness status from the durable Source artifact row. */
   embeddingStatus: string | null;
   /** Graph/entity projection status from the durable Source artifact row. */
@@ -131,6 +143,12 @@ export interface SourceShellFileItem {
    * action a human took.
    */
   latestAcceptance: ArtifactAcceptanceRecord | null;
+  /**
+   * True when either the append-only acceptance record exists or the artifact
+   * registry already marks this artifact as the accepted client-final,
+   * current-authoritative version.
+   */
+  acceptedAsAuthoritative: boolean;
 }
 
 export interface SourceShellIntelligenceFinding {
@@ -158,6 +176,7 @@ export interface SourceShellApprovalsWorkspace {
   items: ApprovalsInboxItem[];
   currentStageItem: ApprovalsInboxItem | null;
   readinessLine: string;
+  pendingDecisionGroups: ApprovalDecisionGroup[];
   /** Full 11-stage per-event ledger — see approval-ledger.ts. Empty when not loaded. */
   ledger: ApprovalLedgerRow[];
 }
@@ -168,21 +187,17 @@ export interface SourceShellGuidebookWorkspace {
   emptyMessage: string;
 }
 
-export interface SourceShellStageArtifactReadiness {
-  ready: boolean;
-  blockerCount: number;
-  warningCount: number;
-  line: string;
-  blockers: string[];
-}
+export type SourceShellStageArtifactReadiness = SourceStageArtifactReadiness;
 
 export interface SourceEventShellView {
   event: {
     id: string;
+    approvalPolicyCode?: SourcingEventSummary["approvalPolicyCode"];
     code: string;
     name: string;
     tenantName: string;
     accountName: string;
+    lifecycle: string;
     statusLabel: string;
     valueAtStakeLabel: string;
     currentStageKey: SourceStageKey;
@@ -233,6 +248,7 @@ export interface SourceEventShellView {
 
 export interface SourceShellArtifactLike {
   id: string;
+  recordKind?: "canvas_state" | "registry_artifact";
   artifactCode?: string | null;
   artifactKind?: string | null;
   stageKey?: string | null;
@@ -252,7 +268,10 @@ export interface SourceShellArtifactLike {
   evidenceState?: string | null;
   isClientFinal?: boolean | null;
   isCurrentAuthoritative?: boolean | null;
+  clientFinalAcceptedAt?: string | null;
+  clientFinalAcceptedBy?: string | null;
   sourceGeneratedArtifactId?: string | null;
+  linkedArtifactId?: string | null;
   body?: string | null;
   bodyMarkdown?: string | null;
   renderedText?: string | null;
@@ -275,6 +294,7 @@ export interface BuildSourceEventShellViewInput {
   tenantName: string;
   viewedStageKey: SourceStageKey;
   stageView: StageAnalyticsView;
+  gateCriteriaReady?: boolean;
   stepInsight?: StepInsightView | null;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
@@ -302,7 +322,16 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
   const merged = registryArtifacts.map((artifact) => {
     const code = artifactCodeFor(artifact);
     const state = code ? statesByCode.get(code) : undefined;
-    if (!state || artifactBodyFor(artifact)?.trim()) return artifact;
+    if (!state) return artifact;
+    const registryBody = artifactBodyFor(artifact)?.trim();
+    if (registryBody) {
+      if (registryBody !== state.body?.trim()) return artifact;
+      return {
+        ...artifact,
+        bodyGenerationMetadata:
+          state.bodyGenerationMetadata ?? artifact.bodyGenerationMetadata,
+      };
+    }
     return {
       ...artifact,
       body: state.body,
@@ -310,6 +339,8 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
         state.bodyFormat === "markdown" ? state.body : artifact.bodyMarkdown,
       renderedText:
         state.bodyFormat !== "markdown" ? state.body : artifact.renderedText,
+      bodyGenerationMetadata:
+        state.bodyGenerationMetadata ?? artifact.bodyGenerationMetadata,
     };
   });
   const existingCodes = new Set(
@@ -340,6 +371,7 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
       body: state.body,
       bodyMarkdown: state.bodyFormat === "markdown" ? state.body : null,
       renderedText: state.bodyFormat !== "markdown" ? state.body : null,
+      bodyGenerationMetadata: state.bodyGenerationMetadata,
     });
     existingCodes.add(state.artifactCode);
   }
@@ -352,7 +384,8 @@ export function buildSourceEventShellView(
 ): SourceEventShellView {
   const activeWorkspace = input.activeWorkspace ?? "steps";
   const tasks = input.stageView.tasks;
-  const ready = tasks.filter((task) => isTaskCaptured(task)).length;
+  const ready = tasks.filter((task) =>
+    isTaskCaptured(task, input.event.approvalPolicyCode)).length;
   const total = tasks.length;
   const resolvedJourney = input.journey ?? SOURCE_JOURNEYS.competitive_rfp;
   const viewedStageLabel =
@@ -393,14 +426,13 @@ export function buildSourceEventShellView(
         input.event.status === "completed" &&
         current &&
         approvalEvidenced === true;
-      const state: SourceShellJourneyStage["state"] =
-        completedCurrentStage
-          ? "complete"
-          : index < currentStageIndex
-            ? "past"
-            : current
-              ? "current"
-              : "future";
+      const state: SourceShellJourneyStage["state"] = completedCurrentStage
+        ? "complete"
+        : index < currentStageIndex
+          ? "past"
+          : current
+            ? "current"
+            : "future";
       const stageTotal = viewed && state !== "past" ? Math.max(total, 1) : 1;
       const stageDone = state === "past" ? stageTotal : viewed ? ready : 0;
       return {
@@ -417,7 +449,7 @@ export function buildSourceEventShellView(
     },
   );
 
-  const groups = groupSteps(tasks);
+  const groups = groupSteps(tasks, input.event.approvalPolicyCode);
   const stepsById = new Map(
     groups.flatMap((group) => group.steps).map((step) => [step.id, step]),
   );
@@ -425,13 +457,36 @@ export function buildSourceEventShellView(
     tasks
       .map((task) => stepsById.get(task.id))
       .find((step) => step && step.status !== "captured") ?? null;
-  const artifacts = (input.artifacts ?? []).map((artifact) =>
+  const statesByLinkedArtifactId = new Map(
+    (input.artifacts ?? [])
+      .filter((artifact) =>
+        artifact.recordKind === "canvas_state" &&
+        artifact.linkedArtifactId &&
+        artifact.bodyGenerationMetadata,
+      )
+      .map((artifact) => [artifact.linkedArtifactId!, artifact]),
+  );
+  const registeredArtifacts = (input.artifacts ?? [])
+    .filter((artifact) => artifact.recordKind !== "canvas_state")
+    .map((artifact) => {
+      const state = statesByLinkedArtifactId.get(artifact.id);
+      if (!state) return artifact;
+      const registryBody = artifactBodyFor(artifact)?.trim();
+      if (registryBody && (!state.body || registryBody !== state.body.trim())) {
+        return artifact;
+      }
+      return {
+        ...artifact,
+        bodyGenerationMetadata: state.bodyGenerationMetadata,
+      };
+    });
+  const artifacts = registeredArtifacts.map((artifact) =>
     toFileItem(
       artifact,
       input.latestArtifactAcceptancesById?.get(artifact.id) ?? null,
     ),
   );
-  const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
+  const lifecycle = buildSourceArtifactLifecycleSummary(registeredArtifacts);
   const artifactReadiness = stageArtifactReadinessFor(
     lifecycle,
     input.viewedStageKey,
@@ -452,10 +507,11 @@ export function buildSourceEventShellView(
   const currentStageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
-  const viewedStageApprovalRecorded = approvedStageKeys.has(input.viewedStageKey);
+  const viewedStageApprovalRecorded = approvedStageKeys.has(
+    input.viewedStageKey,
+  );
   const viewedStageApproval = approvalLedger.find(
-    (row) =>
-      row.stageKey === input.viewedStageKey && row.state === "approved",
+    (row) => row.stageKey === input.viewedStageKey && row.state === "approved",
   );
   const approvalTraceState: SourceEventShellView["stage"]["approvalTraceState"] =
     !viewedStageApprovalRecorded
@@ -490,9 +546,9 @@ export function buildSourceEventShellView(
             total > 0
               ? completedViewedStage
                 ? artifactReadiness.ready
-                  ? `All ${total} required evidence item${total === 1 ? "" : "s"} ready - review and approve ${viewedStageLabel}.`
-                  : `All ${total} required evidence item${total === 1 ? "" : "s"} ready, but ${artifactReadiness.blockerCount} required/gate artifact${artifactReadiness.blockerCount === 1 ? "" : "s"} still need review before approving ${viewedStageLabel}.`
-                : `${ready} of ${total} required evidence item${total === 1 ? "" : "s"} ready - review the gaps before approving ${viewedStageLabel}.`
+                  ? `All ${total} workflow input${total === 1 ? "" : "s"} complete - review and approve ${viewedStageLabel}.`
+                  : `All ${total} workflow input${total === 1 ? "" : "s"} complete, but ${artifactReadiness.blockerCount} required/gate artifact${artifactReadiness.blockerCount === 1 ? "" : "s"} still need review before approving ${viewedStageLabel}.`
+                : `${ready} of ${total} workflow input${total === 1 ? "" : "s"} complete - review the gaps before approving ${viewedStageLabel}.`
               : normalizedCurrentStageItem.readiness,
           href: stageApprovalWorkspaceHref,
           actionLabel: completedViewedStage
@@ -502,6 +558,33 @@ export function buildSourceEventShellView(
             : "Review & decide",
         }
       : normalizedCurrentStageItem;
+  const approvalDecisionItem = viewedStageIsCurrent
+    ? normalizedCurrentStageItem
+    : null;
+  const pendingDecisionGroups =
+    viewedStageIsCurrent || viewedStageApprovalRecorded
+    ? buildApprovalWorkspaceDecisions({
+        eventId: input.event.id,
+        eventCode: input.event.code,
+        eventName: input.event.name,
+        currentStageKey: input.viewedStageKey,
+        stageLabel: viewedStageLabel,
+        currentStageItem: viewedStageIsCurrent
+          ? currentStageApprovalRecorded
+            ? approvalDecisionItem
+            : currentStageItem
+          : null,
+        approvalRecorded: viewedStageApprovalRecorded,
+        workflowComplete: completedViewedStage,
+        artifactsReady: artifactReadiness.ready,
+        gateCriteriaReady: input.gateCriteriaReady,
+        gateActionArmed:
+          viewedStageIsCurrent && Boolean(input.stageView.gate.action),
+        approvalRationale: viewedStageIsCurrent
+          ? (input.stageView.gate.action?.rationale ?? null)
+          : null,
+      })
+    : [];
   // currentStageItem already renders featured above the list — exclude it
   // here so it doesn't also render a second time inside the list.
   const approvals = thisEventApprovals.filter(
@@ -516,10 +599,12 @@ export function buildSourceEventShellView(
   return {
     event: {
       id: input.event.id,
+      approvalPolicyCode: input.event.approvalPolicyCode,
       code: input.event.code,
       name: input.event.name,
       tenantName: input.tenantName,
       accountName: input.event.accountName,
+      lifecycle: input.event.status,
       statusLabel: input.event.statusLabel,
       valueAtStakeLabel: formatUsdPerYear(input.event.valueAtStakeUsd),
       currentStageKey: visibleCurrentStageKey,
@@ -543,14 +628,13 @@ export function buildSourceEventShellView(
       activeStep,
       approvalRecorded: viewedStageApprovalRecorded,
       approvalTraceState,
-      gateReadinessLine:
-        viewedStageApprovalRecorded
-          ? stageReadyWithArtifactGaps
-            ? approvalTraceState === "historical"
-              ? `${viewedStageLabel} advanced under an earlier control state. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
-              : `${viewedStageLabel} approval is recorded. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
-            : `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
-          : completedViewedStage && artifactReadiness.ready
+      gateReadinessLine: viewedStageApprovalRecorded
+        ? stageReadyWithArtifactGaps
+          ? approvalTraceState === "historical"
+            ? `${viewedStageLabel} advanced under an earlier control state. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
+            : `${viewedStageLabel} approval is recorded. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
+          : `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
+        : completedViewedStage && artifactReadiness.ready
           ? "Stage complete - required inputs and gate artifacts are ready. Open the approval workspace to advance."
           : stageReadyWithArtifactGaps
             ? artifactReadiness.line
@@ -599,11 +683,11 @@ export function buildSourceEventShellView(
     approvals: {
       items: approvals,
       currentStageItem,
-      readinessLine:
-        viewedStageApprovalRecorded
-          ? `${viewedStageLabel} approval is recorded. No further stage decision is required.`
-          : currentStageItem?.readiness ??
-            "No approval item is currently routed for this viewed stage.",
+      readinessLine: viewedStageApprovalRecorded
+        ? `${viewedStageLabel} approval is recorded. No further stage decision is required.`
+        : (currentStageItem?.readiness ??
+          "No approval item is currently routed for this viewed stage."),
+      pendingDecisionGroups,
       ledger: Array.from(input.approvalLedger ?? []),
     },
     guidebook: {
@@ -626,97 +710,34 @@ function normalizeCurrentStageApprovalItem(
     stageLabel,
     ask: `Approve advancing out of ${stageLabel}.`,
     href,
+    versionKey: item.versionKey ?? `${item.eventId}:${stageKey}`,
+    versionLabel: item.versionLabel ?? stageLabel,
+    requiredReviewerRole:
+      item.requiredReviewerRole === undefined
+        ? "Source stage approver"
+        : item.requiredReviewerRole,
   };
 }
 
-function stageArtifactReadinessFor(
-  lifecycle: SourceArtifactLifecycleSummary,
-  stageKey: SourceStageKey,
-): SourceShellStageArtifactReadiness {
-  const gateRows = lifecycle.rows.filter(
-    (row) =>
-      row.stageKey === stageKey &&
-      (row.requirementLabel === "Required" ||
-        row.gateLabel === "Gate-defining"),
-  );
-  if (gateRows.length === 0) {
-    return {
-      ready: true,
-      blockerCount: 0,
-      warningCount: 0,
-      line: "No required/gate artifact standard is registered for this stage yet; use required inputs and approval rationale as the control.",
-      blockers: [],
-    };
+function isTaskCaptured(
+  task: StageTaskView,
+  approvalPolicyCode?: string | null,
+): boolean {
+  if (task.id === "strategy.confirm" && approvalPolicyCode === "self_v1") {
+    return task.evidenceComplete === true;
   }
-
-  const blockers = gateRows
-    .map((row) => {
-      const reason = artifactBlockerReason(row);
-      return reason ? `${row.name}: ${reason}` : null;
-    })
-    .filter((item): item is string => Boolean(item));
-  const warningCount = gateRows.reduce(
-    (totalWarnings, row) =>
-      totalWarnings +
-      row.quality.warnings.length +
-      row.contentQuality.warnings.length,
-    0,
-  );
-
-  if (blockers.length === 0) {
-    return {
-      ready: true,
-      blockerCount: 0,
-      warningCount,
-      line:
-        warningCount > 0
-          ? `Gate artifacts are client-final, with ${warningCount} warning${warningCount === 1 ? "" : "s"} to review in Files.`
-          : "Gate artifacts are client-final and ready for approval.",
-      blockers: [],
-    };
-  }
-
-  return {
-    ready: false,
-    blockerCount: blockers.length,
-    warningCount,
-    line: `${blockers.length} required/gate artifact${blockers.length === 1 ? "" : "s"} still need client-final or quality review before approval.`,
-    blockers,
-  };
-}
-
-function artifactBlockerReason(
-  row: SourceArtifactLifecycleSummary["rows"][number],
-): string | null {
-  if (row.lifecycleState === "not_registered") return "not registered";
-  if (row.lifecycleState === "ai_draft") {
-    return "AI draft not accepted as client final";
-  }
-  if (row.lifecycleState === "evidence_only") {
-    return "evidence is present, but no governed deliverable is accepted";
-  }
-  if (row.consultingGate.state === "required_not_run") {
-    return "consulting-grade Gate B not run";
-  }
-  if (row.consultingGate.state === "failed") {
-    return "consulting-grade Gate B failed";
-  }
-  if (row.contentQuality.state === "blocked") {
-    return row.contentQuality.blockers[0] ?? "content QA blocked";
-  }
-  return row.quality.hardFails[0] ?? null;
-}
-
-function isTaskCaptured(task: StageTaskView): boolean {
   return task.state === "done" || task.evidenceComplete === true;
 }
 
-function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
+function groupSteps(
+  tasks: readonly StageTaskView[],
+  approvalPolicyCode?: string | null,
+): SourceShellStepGroup[] {
   const groups = new Map<string, SourceShellStep[]>();
   tasks.forEach((task, index) => {
     const label = taskGroupLabel(task);
     const list = groups.get(label) ?? [];
-    list.push(toShellStep(task, list.length === 0, index));
+    list.push(toShellStep(task, list.length === 0, index, approvalPolicyCode));
     groups.set(label, list);
   });
   return Array.from(groups.entries())
@@ -732,8 +753,9 @@ function toShellStep(
   task: StageTaskView,
   firstInGroup: boolean,
   order: number,
+  approvalPolicyCode?: string | null,
 ): SourceShellStep {
-  const captured = isTaskCaptured(task);
+  const captured = isTaskCaptured(task, approvalPolicyCode);
   return {
     id: task.id,
     order,
@@ -748,6 +770,8 @@ function toShellStep(
     template: task.template ?? null,
     provenance: task.provenance ?? null,
     factTemplateCode: task.factTemplateCode ?? null,
+    confirmationVersion: task.confirmationVersion,
+    approvalPolicyCode,
   };
 }
 
@@ -872,6 +896,9 @@ function toFileItem(
   );
   const isClientFinal =
     artifact.isClientFinal === true || state === "client_final";
+  const acceptedAsAuthoritative =
+    latestAcceptance !== null ||
+    (isClientFinal && artifact.isCurrentAuthoritative === true);
   const governance = fileGovernanceFor({ group, sourceOrigin, isClientFinal });
   const needsComplianceReview = hasComplianceReviewFlag(artifact.description);
   const artifactRole: "authoritative" | "evidence" = specByCode(artifactCode)
@@ -908,9 +935,11 @@ function toFileItem(
       ? SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE
       : null,
     parseStatus: artifact.parseStatus ?? null,
+    sourceOrigin: artifact.sourceOrigin ?? null,
     embeddingStatus: artifact.embeddingStatus ?? null,
     graphStatus: artifact.graphStatus ?? null,
     latestAcceptance,
+    acceptedAsAuthoritative,
   };
 }
 

@@ -32,6 +32,7 @@ import {
 import {
   classifyUploadedMoveEvidence,
   mergeMoveEvidenceClassification,
+  reviewFamilyKeyForUploadedMoveEvidence,
 } from "@/lib/programs/uploaded-move-evidence-classification";
 import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
 import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
@@ -40,6 +41,13 @@ import {
   evaluateSensitiveUpload,
   type UploadProtectionResult,
 } from "@/lib/security/sensitive-upload-guard";
+import {
+  initialReviewedEvidenceExtraction,
+  normalizeReviewedEvidenceExtraction,
+  reviewedExtractionFromStoredSourceRef,
+  toStoredReviewedStructured,
+  type ReviewedEvidenceExtraction,
+} from "@/lib/programs/evidence-review-contract";
 
 export type ReviewDecision = "pending" | "approved" | "rejected";
 
@@ -80,10 +88,69 @@ export function assessExtractedTextSensitivity(
   });
 }
 
+/**
+ * The check a Move upload must pass BEFORE its bytes are stored anywhere.
+ *
+ * Layer 1 scans the raw bytes (text, CSV, JSON, PDF text) and honours a
+ * declared regulated classification. Layer 2 decodes the document and scans
+ * the extracted text, because Office files are ZIP containers whose content a
+ * raw-byte scan cannot see. Extraction here is the document parser only: no
+ * reasoning model sees the text, and no artifact or evidence record is
+ * written.
+ *
+ * If the parser cannot read the file, the layer-1 result stands: there is no
+ * decoded text to scan, and the upload is not refused for being unreadable.
+ */
+export async function assessMoveUploadSensitivity(
+  args: {
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+    declaredClassification?: unknown;
+    cacheScope?: string;
+  },
+  extract: typeof extractProgramEvidenceFromUploadBuffer = extractProgramEvidenceFromUploadBuffer,
+): Promise<UploadProtectionResult> {
+  const declaredClassification =
+    typeof args.declaredClassification === "string"
+      ? args.declaredClassification
+      : null;
+  const raw = evaluateSensitiveUpload({
+    filename: args.filename,
+    mimeType: args.mimeType,
+    bytes: args.buffer,
+    declaredClassification,
+  });
+  if (raw.decision === "quarantine") return raw;
+
+  let decoded: string;
+  try {
+    const evidence = await extract({
+      filename: args.filename,
+      mimeType: args.mimeType,
+      buffer: args.buffer,
+      cacheScope: args.cacheScope,
+    });
+    decoded = [evidence.extractedText ?? "", evidence.summary ?? ""]
+      .filter(Boolean)
+      .join("\n");
+  } catch {
+    return raw;
+  }
+  if (!decoded) return raw;
+  return assessExtractedTextSensitivity(decoded, {
+    filename: args.filename,
+    mimeType: args.mimeType,
+    declaredClassification,
+  });
+}
+
 export interface DocIngestResult {
   ok: boolean;
   evidenceId: string;
   reviewId: string;
+  sourceArtifactId: string;
+  sourceArtifactStored: true;
   familyKey: string;
   /** 'review_required' (pending) or 'committed' (auto-promoted structured). */
   reviewState: "review_required" | "committed";
@@ -111,10 +178,13 @@ export interface DocFamilyReviewState {
   pendingItems: Array<{
     evidenceId: string;
     reviewId: string;
+    sourceArtifactId: string | null;
     title: string;
     parseMethod: string;
     confidence: number;
     submittedAt: string;
+    extraction: ReviewedEvidenceExtraction;
+    sourceTextPreview: string;
   }>;
   /** Real, citation-ready content lines extracted from the APPROVED (committed)
    *  document evidence — fed verbatim into grounded deliverables so the committed
@@ -138,6 +208,7 @@ export interface EnsureEvidenceReviewArgs {
   initialDecision?: ReviewDecision;
   rationale?: string | null;
   sourceRef?: Record<string, unknown>;
+  reviewedExtraction?: ReviewedEvidenceExtraction;
 }
 
 export interface EnsureEvidenceReviewResult {
@@ -201,6 +272,10 @@ export interface IngestDocArgs {
   filename: string;
   mimeType: string;
   buffer: Buffer;
+  persistSourceArtifact: () => Promise<{
+    artifactId: string;
+    blobStored: boolean;
+  }>;
   /** Optional declared data classification (e.g. "phi") from the upload form. */
   declaredClassification?: string | null;
 }
@@ -266,6 +341,13 @@ export async function ingestCurrentStateDoc(
       : { valid: false, rows: 0 };
   const autoPromoted = kpiCheck.valid;
 
+  // Keep the original file in the same Move-scoped vault as other evidence.
+  // This runs only after extracted-text sensitivity checks and parsing pass.
+  const sourceArtifact = await args.persistSourceArtifact();
+  if (!sourceArtifact.artifactId || !sourceArtifact.blobStored) {
+    throw new Error("source_artifact_not_durably_stored");
+  }
+
   // 1) Append-only evidence row (cited; step_id tags the current-state family).
   const evidenceId = await recordProgramEvidence(ctx, {
     ...evidence,
@@ -297,6 +379,7 @@ export async function ingestCurrentStateDoc(
       auto_promoted: autoPromoted,
       rationale,
       source_ref: {
+        move_artifact_id: sourceArtifact.artifactId,
         filename: args.filename,
         mime_type: args.mimeType,
         parse_method: parseMethod,
@@ -330,6 +413,8 @@ export async function ingestCurrentStateDoc(
     ok: true,
     evidenceId,
     reviewId,
+    sourceArtifactId: sourceArtifact.artifactId,
+    sourceArtifactStored: true,
     familyKey,
     reviewState: autoPromoted ? "committed" : "review_required",
     autoPromoted,
@@ -375,6 +460,13 @@ export async function ensureEvidenceReviewForUploadedEvidence(
   const autoPromoted = args.autoPromoted === true;
   const decision: ReviewDecision =
     args.initialDecision ?? (autoPromoted ? "approved" : "pending");
+  const reviewedExtraction =
+    decision === "approved" && !autoPromoted
+      ? normalizeReviewedEvidenceExtraction(args.reviewedExtraction)
+      : null;
+  if (decision === "approved" && !autoPromoted && !reviewedExtraction) {
+    throw new Error("reviewed_extraction_required");
+  }
   const reviewedOnInsert = decision !== "pending";
   const sourceRef = {
     filename: args.filename ?? undefined,
@@ -394,7 +486,8 @@ export async function ensureEvidenceReviewForUploadedEvidence(
             ? "rejected"
             : "pending_review",
       attachment_status: "attached_to_move",
-      maturity_level: decision === "pending" ? "uploaded" : reviewStateForDecision(decision),
+      maturity_level:
+        decision === "pending" ? "uploaded" : reviewStateForDecision(decision),
       accepted_by: decision === "approved" ? ctx.userId : null,
       accepted_at: decision === "approved" ? new Date().toISOString() : null,
       attached_to_move_id: args.moveId,
@@ -403,6 +496,7 @@ export async function ensureEvidenceReviewForUploadedEvidence(
       blueprint_category: familyKey,
     },
     ...(args.sourceRef ?? {}),
+    ...(reviewedExtraction ? { reviewed_extraction: reviewedExtraction } : {}),
   };
   const rationale =
     args.rationale ??
@@ -471,11 +565,12 @@ export async function ensureEvidenceReviewForUploadedEvidence(
     tenantKey,
     programId: args.moveId,
     engagementId: args.moveId,
-    action: decision === "approved" && !autoPromoted
-      ? "workspace_evidence_committed"
-      : autoPromoted
-      ? "workspace_evidence_auto_accepted"
-      : "workspace_evidence_review_opened",
+    action:
+      decision === "approved" && !autoPromoted
+        ? "workspace_evidence_committed"
+        : autoPromoted
+          ? "workspace_evidence_auto_accepted"
+          : "workspace_evidence_review_opened",
     fromState: "uploaded",
     toState: reviewStateForDecision(decision),
     rationale,
@@ -514,6 +609,13 @@ export interface IngestUploadedMoveEvidenceArgs {
   /** The `move_artifacts.id` for this upload, if the caller's surface uses that table. Traceability only — never written to the `attachment_id` FK column. */
   moveArtifactId?: string | null;
   declaredClassification?: unknown;
+  /**
+   * The required evidence family the uploader says this file covers. When
+   * present it is recorded as the review's family instead of the family
+   * inferred from the file's name and text, so readiness credits the file to
+   * what its uploader declared it to be. The caller validates the key.
+   */
+  declaredFamilyKey?: string | null;
 }
 
 export interface IngestUploadedMoveEvidenceResult {
@@ -599,10 +701,10 @@ export async function ingestUploadedMoveEvidence(
   const evidenceReview = await ensureEvidenceReviewForUploadedEvidence(ctx, {
     moveId: args.moveId,
     evidenceId,
-    familyKey:
-      classification.slotIds[0] ??
-      classification.evidenceType ??
-      rawEvidence.evidenceType,
+    familyKey: reviewFamilyKeyForUploadedMoveEvidence({
+      classification,
+      declaredFamilyKey: args.declaredFamilyKey,
+    }),
     archetypeId: args.archetypeId,
     phase: args.phase,
     filename: args.filename,
@@ -623,6 +725,7 @@ export async function ingestUploadedMoveEvidence(
       where_used: classification.whereUsed,
       quarantined,
       move_artifact_id: args.moveArtifactId ?? undefined,
+      family_declared_by_uploader: Boolean(args.declaredFamilyKey?.trim()),
     },
   });
 
@@ -666,6 +769,7 @@ export async function decideEvidenceReview(
     evidenceId: string;
     decision: Exclude<ReviewDecision, "pending">;
     rationale?: string;
+    reviewedExtraction?: ReviewedEvidenceExtraction;
   },
 ): Promise<{
   ok: boolean;
@@ -675,6 +779,41 @@ export async function decideEvidenceReview(
 }> {
   const tenantKey = ctx.clientKey ?? "";
   const sb = getAzureWriteFluentClient();
+  let reviewedSourceRef: Record<string, unknown> | null = null;
+  if (args.decision === "approved") {
+    const reviewedExtraction = normalizeReviewedEvidenceExtraction(
+      args.reviewedExtraction,
+    );
+    if (!reviewedExtraction) {
+      return {
+        ok: false,
+        evidenceId: args.evidenceId,
+        familyKey: null,
+        decision: "pending",
+      };
+    }
+    const { data: pendingReview, error: pendingReviewError } = await sb
+      .from("program_evidence_reviews")
+      .select("source_ref")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", args.moveId)
+      .eq("evidence_id", args.evidenceId)
+      .eq("decision", "pending")
+      .maybeSingle();
+    if (pendingReviewError) throw pendingReviewError;
+    if (pendingReview) {
+      const sourceRef =
+        pendingReview.source_ref &&
+        typeof pendingReview.source_ref === "object" &&
+        !Array.isArray(pendingReview.source_ref)
+          ? (pendingReview.source_ref as Record<string, unknown>)
+          : {};
+      reviewedSourceRef = {
+        ...sourceRef,
+        reviewed_extraction: reviewedExtraction,
+      };
+    }
+  }
   const { data, error } = await sb
     .from("program_evidence_reviews")
     .update({
@@ -682,9 +821,12 @@ export async function decideEvidenceReview(
       reviewed_by_user_id: ctx.userId,
       reviewed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      ...(reviewedSourceRef ? { source_ref: reviewedSourceRef } : {}),
       rationale:
         args.rationale ??
-        `Reviewed ${args.decision} by ${ctx.userId} on the current-state evidence review.`,
+        (args.decision === "approved"
+          ? `Approved extraction version 1 after human review by ${ctx.userId}.`
+          : `Reviewed ${args.decision} by ${ctx.userId} on the current-state evidence review.`),
     })
     .eq("tenant_key", tenantKey)
     .eq("program_id", args.moveId)
@@ -726,7 +868,9 @@ export async function decideEvidenceReview(
 
     const { data: evidenceRow, error: evidenceError } = await sb
       .from("program_evidence_items")
-      .select("id, evidence_type, title, confidence, phase, extracted_structured")
+      .select(
+        "id, evidence_type, title, confidence, phase, extracted_structured",
+      )
       .eq("tenant_key", tenantKey)
       .eq("program_id", args.moveId)
       .eq("id", args.evidenceId)
@@ -761,6 +905,7 @@ export async function decideEvidenceReview(
         confidence: evidence.confidence,
         autoPromoted: false,
         initialDecision: args.decision,
+        reviewedExtraction: args.reviewedExtraction,
         rationale:
           args.rationale ??
           "Human reviewer accepted existing workspace-uploaded evidence.",
@@ -859,31 +1004,85 @@ export async function resolveDocFamilyReviews(
         state.pendingItems.push({
           evidenceId: r.evidence_id,
           reviewId: r.id,
+          sourceArtifactId:
+            typeof ref.move_artifact_id === "string"
+              ? ref.move_artifact_id
+              : null,
           title: String(ref.title ?? ref.filename ?? "Uploaded document"),
           parseMethod: String(ref.parse_method ?? "unknown"),
           confidence: typeof ref.confidence === "number" ? ref.confidence : 0.7,
           submittedAt: r.created_at,
+          extraction: initialReviewedEvidenceExtraction({
+            summary: null,
+            extractedText: null,
+            extractedStructured: null,
+          }),
+          sourceTextPreview: "",
         });
       }
+    }
+
+    const allEvidenceIds = [
+      ...new Set([
+        ...approvedEvidenceIds,
+        ...state.pendingItems.map((item) => item.evidenceId),
+      ]),
+    ];
+    const evidenceById = new Map<string, Record<string, unknown>>();
+    if (allEvidenceIds.length) {
+      const { data: evidenceRows } = await sb
+        .from("program_evidence_items")
+        .select("id, extracted_structured, extracted_text, summary, title")
+        .eq("tenant_key", tenantKey)
+        .eq("program_id", moveId)
+        .in("id", allEvidenceIds);
+      if (Array.isArray(evidenceRows)) {
+        for (const item of evidenceRows as Array<Record<string, unknown>>) {
+          const id = String(item.id ?? "");
+          if (id) evidenceById.set(id, item);
+        }
+      }
+    }
+    for (const pending of state.pendingItems) {
+      const item = evidenceById.get(pending.evidenceId);
+      pending.extraction = initialReviewedEvidenceExtraction({
+        summary: item?.summary,
+        extractedText: item?.extracted_text,
+        extractedStructured: item?.extracted_structured,
+      });
+      pending.sourceTextPreview = String(item?.extracted_text ?? "");
     }
 
     // Pull the REAL extracted content from the approved (committed) evidence so
     // grounded deliverables can cite actual decisions/risks/baselines — not just
     // "committed". Generic across families (uses the shared extraction shape).
     if (approvedEvidenceIds.length) {
-      const { data: ev } = await sb
-        .from("program_evidence_items")
-        .select("extracted_structured, summary, title")
-        .in("id", approvedEvidenceIds);
-      if (Array.isArray(ev)) {
-        state.committedSignals = buildCommittedSignals(
-          ev as Array<{
-            extracted_structured: Record<string, unknown> | null;
-            summary: string | null;
-            title: string | null;
-          }>,
-        );
-      }
+      const reviewByEvidenceId = new Map(
+        rows
+          .filter((row) => row.decision === "approved")
+          .map((row) => [row.evidence_id, row.source_ref]),
+      );
+      state.committedSignals = buildCommittedSignals(
+        approvedEvidenceIds.flatMap((id) => {
+          const item = evidenceById.get(id);
+          if (!item) return [];
+          const reviewed = reviewedExtractionFromStoredSourceRef(
+            reviewByEvidenceId.get(id),
+          );
+          return [
+            {
+              extracted_structured: reviewed
+                ? toStoredReviewedStructured(
+                    reviewed,
+                    item.extracted_structured,
+                  )
+                : (item.extracted_structured as Record<string, unknown> | null),
+              summary: reviewed?.summary ?? (item.summary as string | null),
+              title: item.title as string | null,
+            },
+          ];
+        }),
+      );
     }
     return state;
   } catch {

@@ -121,7 +121,10 @@ export interface PilotResultReportPayload {
 }
 
 /** Spec narrowed to the pilot-result-report kind + payload. */
-export type PilotResultReportSpec = Omit<DeliverableSpec, 'kind' | 'payload'> & {
+export type PilotResultReportSpec = Omit<
+  DeliverableSpec,
+  'kind' | 'payload'
+> & {
   kind: 'pilot-result-report';
   payload: PilotResultReportPayload;
 };
@@ -430,7 +433,9 @@ function cohortSentimentLabel(s: PilotResultCohortSentiment): string {
   }
 }
 
-function cohortSentimentColor(s: PilotResultCohortSentiment): string | undefined {
+function cohortSentimentColor(
+  s: PilotResultCohortSentiment,
+): string | undefined {
   switch (s) {
     case 'positive':
       return GREEN_HEX;
@@ -598,7 +603,11 @@ function buildEdgeCasesSection(
     );
     return out;
   }
-  const headers: ReadonlyArray<string> = ['Description', 'Impact', 'Mitigation'];
+  const headers: ReadonlyArray<string> = [
+    'Description',
+    'Impact',
+    'Mitigation',
+  ];
   const headerRow = new TableRow({
     tableHeader: true,
     children: headers.map((h) => headerCell(h)),
@@ -733,8 +742,8 @@ function buildP5RecommendationSection(
     subsectionHeading('Rationale'),
     bodyParagraph(payload.p5RecommendationRationale),
     bodyParagraph(
-      '"Continue analysis" is not a recommendation. The decision above is binding for sponsor review at ' +
-        'the P4 → P5 gate; any subsequent change requires a logged sponsor decision in the program record.',
+      '"Continue analysis" is not a recommendation. The decision above is binding for authorized workspace-user approval at ' +
+        'the P4 → P5 gate; any subsequent change requires a logged decision in the program record.',
     ),
   ];
 }

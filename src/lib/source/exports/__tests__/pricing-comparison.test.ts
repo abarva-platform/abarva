@@ -15,6 +15,22 @@ function makeSubmission(
       'L-CMP-01': 400,
       'L-OPS-01': 95,
     },
+    normalizedUnitPricesById: {
+      'L-CMP-01': 400,
+      'L-OPS-01': 95,
+    },
+    pricingBasis: {
+      raw: {
+        currency: 'USD',
+        period: 'annual',
+        scenario: 'vendor-submitted',
+      },
+      normalized: {
+        currency: 'USD',
+        period: 'annual',
+        scenario: 'locked-rfp-basis',
+      },
+    },
     pricingNotes: '',
     assumptionDeviations: [],
   };
@@ -117,33 +133,100 @@ describe('buildPricingComparisonWorkbook', () => {
     // Acme: 400*3360 + 95*24000 = 1,344,000 + 2,280,000 = 3,624,000
     expect(sheet.getCell('D2').value).toBe(3_624_000);
     // Acme 3-yr TCO @ 4% escalator = 3.624M * (1 + 1.04 + 1.0816) ≈ 11,313,408
-    const tco = sheet.getCell('E2').value as number;
+    expect(sheet.getCell('E2').value).toBe(3_624_000);
+    const tco = sheet.getCell('F2').value as number;
     expect(tco).toBeGreaterThan(11_300_000);
     expect(tco).toBeLessThan(11_320_000);
     // Deviations counts
-    expect(sheet.getCell('F2').value).toBe(0);
-    expect(sheet.getCell('F3').value).toBe(1);
-    expect(sheet.getCell('F4').value).toBe(1);
+    expect(sheet.getCell('G2').value).toBe(0);
+    expect(sheet.getCell('G3').value).toBe(1);
+    expect(sheet.getCell('G4').value).toBe(1);
   });
 
-  it('Pricing Comparison sheet builds 3 columns per vendor with Δ-vs-cheapest formulas', () => {
+  it('blocks comparison and TCO claims when pricing basis metadata is missing', () => {
+    const wb = buildPricingComparisonWorkbook(
+      makePayload({
+        submissions: [
+          {
+            vendorName: 'Raw Only Vendor',
+            submittedAt: '2026-06-12T12:00:00.000Z',
+            unitPricesById: {
+              'L-CMP-01': 400,
+              'L-OPS-01': 95,
+            },
+            pricingNotes: '',
+            assumptionDeviations: [],
+          },
+        ],
+      }),
+    );
+
+    const indexText = collectSheetText(wb.getWorksheet('Submissions Index')!);
+    expect(indexText).toContain('Blocked');
+    expect(indexText).toContain('normalized amount');
+
+    const pricingSheet = wb.getWorksheet('Pricing Comparison')!;
+    expect(pricingSheet.getCell('I3').value).toBe('BLOCKED');
+
+    const tcoText = collectSheetText(wb.getWorksheet('TCO Comparison')!);
+    expect(tcoText).toContain('TCO claims blocked');
+    expect(tcoText).not.toContain('Cheapest 3-yr');
+    expect(tcoText).not.toContain('Range (max−min)');
+
+    const recommendationText = collectSheetText(wb.getWorksheet('Recommendation')!);
+    expect(recommendationText).toContain('Pricing comparability blocked');
+    expect(recommendationText).not.toContain('Cheapest 3-year TCO');
+  });
+
+  it('blocks comparison when normalized currency does not match the shared basis', () => {
+    const wb = buildPricingComparisonWorkbook(
+      makePayload({
+        submissions: [
+          makeSubmission({ vendorName: 'Acme' }),
+          makeSubmission({
+            vendorName: 'Beta',
+            pricingBasis: {
+              raw: {
+                currency: 'USD',
+                period: 'annual',
+                scenario: 'vendor-submitted',
+              },
+              normalized: {
+                currency: 'EUR',
+                period: 'annual',
+                scenario: 'locked-rfp-basis',
+              },
+            },
+          }),
+        ],
+      }),
+    );
+
+    const indexText = collectSheetText(wb.getWorksheet('Submissions Index')!);
+    expect(indexText).toContain('normalized_basis_mismatch');
+    expect(indexText).toContain('currency');
+  });
+
+  it('Pricing Comparison sheet keeps raw and normalized unit prices distinct', () => {
     const wb = buildPricingComparisonWorkbook(makePayload());
     const sheet = wb.getWorksheet('Pricing Comparison')!;
     // Row 2 is sub-header.
-    expect(sheet.getCell('F2').value).toBe('Unit Price');
-    expect(sheet.getCell('G2').value).toBe('Extended');
-    expect(sheet.getCell('H2').value).toBe('Δ vs cheapest');
-    expect(sheet.getCell('I2').value).toBe('Unit Price'); // Vendor B
-    expect(sheet.getCell('L2').value).toBe('Unit Price'); // Vendor C
+    expect(sheet.getCell('F2').value).toBe('Raw Unit Price');
+    expect(sheet.getCell('G2').value).toBe('Normalized Unit Price');
+    expect(sheet.getCell('H2').value).toBe('Normalized Extended');
+    expect(sheet.getCell('I2').value).toBe('Δ vs cheapest');
+    expect(sheet.getCell('J2').value).toBe('Raw Unit Price'); // Vendor B
+    expect(sheet.getCell('N2').value).toBe('Raw Unit Price'); // Vendor C
     // Row 3: first line item, Vendor A unit price
     expect(sheet.getCell('F3').value).toBe(400);
-    // Vendor A extended formula: =E3*F3
-    expect(sheet.getCell('G3').value).toMatchObject({
-      formula: expect.stringContaining('E3*F3'),
+    expect(sheet.getCell('G3').value).toBe(400);
+    // Vendor A normalized extended formula: =E3*G3
+    expect(sheet.getCell('H3').value).toMatchObject({
+      formula: expect.stringContaining('E3*G3'),
     });
-    // Δ vs cheapest formula references MIN of all 3 vendor extended cells (G3, J3, M3)
-    const deltaFormula = (sheet.getCell('H3').value as { formula: string }).formula;
-    expect(deltaFormula).toContain('MIN(G3,J3,M3)');
+    // Δ vs cheapest formula references MIN of all 3 normalized extended cells (H3, L3, P3)
+    const deltaFormula = (sheet.getCell('I3').value as { formula: string }).formula;
+    expect(deltaFormula).toContain('MIN(H3,L3,P3)');
   });
 
   it('Pricing Comparison totals row sums extended columns per vendor', () => {
@@ -151,9 +234,9 @@ describe('buildPricingComparisonWorkbook', () => {
     const sheet = wb.getWorksheet('Pricing Comparison')!;
     // 2 line items → totals at row 5 (header rows 1-2, line rows 3-4).
     expect(sheet.getCell('A5').value).toBe('TOTAL');
-    expect(sheet.getCell('G5').value).toMatchObject({ formula: 'SUM(G3:G4)' });
-    expect(sheet.getCell('J5').value).toMatchObject({ formula: 'SUM(J3:J4)' });
-    expect(sheet.getCell('M5').value).toMatchObject({ formula: 'SUM(M3:M4)' });
+    expect(sheet.getCell('H5').value).toMatchObject({ formula: 'SUM(H3:H4)' });
+    expect(sheet.getCell('L5').value).toMatchObject({ formula: 'SUM(L3:L4)' });
+    expect(sheet.getCell('P5').value).toMatchObject({ formula: 'SUM(P3:P4)' });
   });
 
   it('TCO Comparison sheet builds Year 1..N rows with cumulative formulas', () => {
@@ -235,11 +318,12 @@ describe('buildPricingComparisonWorkbook', () => {
       makePayload({ submissions: [makeSubmission({ vendorName: 'Solo' })] }),
     );
     const sheet = wb.getWorksheet('Pricing Comparison')!;
-    expect(sheet.getCell('F2').value).toBe('Unit Price');
-    expect(sheet.getCell('G2').value).toBe('Extended');
-    expect(sheet.getCell('H2').value).toBe('Δ vs cheapest');
-    // No second vendor → column I header should be empty.
-    expect(sheet.getCell('I2').value).toBeFalsy();
+    expect(sheet.getCell('F2').value).toBe('Raw Unit Price');
+    expect(sheet.getCell('G2').value).toBe('Normalized Unit Price');
+    expect(sheet.getCell('H2').value).toBe('Normalized Extended');
+    expect(sheet.getCell('I2').value).toBe('Δ vs cheapest');
+    // No second vendor → column J header should be empty.
+    expect(sheet.getCell('J2').value).toBeFalsy();
   });
 
   it('serializes to a non-empty xlsx buffer', async () => {

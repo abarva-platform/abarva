@@ -196,16 +196,58 @@ function evaluateGates(input: {
             ? "Baseline inputs conflict."
             : "No governed commercial baseline yet.",
     },
-    {
-      satisfied: !readiness.sizingBlocked,
-      primaryAction: `Collect ${readiness.requiredTotal - readiness.requiredEvidenced} missing evidence famil${
-        readiness.requiredTotal - readiness.requiredEvidenced === 1 ? "y" : "ies"
-      }`,
-      primaryActionDetail: readiness.summary,
-      blocker: readiness.sizingBlocked
-        ? `${readiness.blockingFamilies.length} required evidence famil${readiness.blockingFamilies.length === 1 ? "y has" : "ies have"} no governed evidence.`
-        : null,
-    },
+    /*
+     * Read evidence.
+     *
+     * The evidence-readiness model carries template packs for a subset of
+     * contract shapes. Where none matches, it falls back to a generic required
+     * list, so on a contract type it does not model it reported every family as
+     * missing — and the rail then declared the contract unsizable on the same
+     * page that showed sized, calculation-backed levers. Two statements about
+     * one contract, drawn from two different populations.
+     *
+     * A traced opportunity is itself proof that evidence was read: the amount
+     * reproduces from a calculation run. So this step is satisfied when the
+     * readiness model is content OR when governed evidence already backs an
+     * opportunity, and the wording says which of the two it is.
+     */
+    (() => {
+      const tracedOpportunities = traceability.tracedCount;
+      /*
+       * Only bypass the block when the required list is not archetype-governed.
+       *
+       * Where a template pack matches the contract, a missing required family
+       * is a real gate and must hold the case — even with traced opportunities,
+       * because a traced amount can still rest on incomplete evidence. Where no
+       * pack matches, the list is a generic default built for other contract
+       * shapes, and blocking on it told the reader this contract could not be
+       * sized on the same page that showed it sized.
+       */
+      const requiredListIsGoverned = readiness.archetypeKey != null;
+      const evidenceBackedSizing =
+        !requiredListIsGoverned && tracedOpportunities > 0;
+      const missingFamilies =
+        readiness.requiredTotal - readiness.requiredEvidenced;
+      return {
+        satisfied: !readiness.sizingBlocked || evidenceBackedSizing,
+        primaryAction: evidenceBackedSizing
+          ? "Diagnose the sized opportunities"
+          : `Collect ${missingFamilies} missing evidence famil${
+              missingFamilies === 1 ? "y" : "ies"
+            }`,
+        primaryActionDetail: evidenceBackedSizing
+          ? `${tracedOpportunities} opportunit${
+              tracedOpportunities === 1 ? "y reproduces" : "ies reproduce"
+            } from a calculation run. ${readiness.summary}`
+          : readiness.summary,
+        blocker:
+          readiness.sizingBlocked && !evidenceBackedSizing
+            ? `${readiness.blockingFamilies.length} required evidence famil${
+                readiness.blockingFamilies.length === 1 ? "y has" : "ies have"
+              } no governed evidence.`
+            : null,
+      };
+    })(),
     {
       satisfied:
         opportunities.length > 0 &&

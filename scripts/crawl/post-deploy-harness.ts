@@ -10,6 +10,7 @@ import {
 } from '../../src/lib/crawl/persona-switcher';
 import {
   compareCrawlToBaseline,
+  hasBlockingCrawlProofFinding,
   isAuthAutomationBlockMessage,
   type CrawlBaseline,
   type CrawlComparison,
@@ -209,8 +210,11 @@ async function main() {
   console.log(`Post-deploy crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`);
   console.log(`Artifacts: ${out}`);
 
-  if (comparison.p0 > 0) {
+  if (hasBlockingCrawlProofFinding(comparison)) {
     process.exitCode = 2;
+    if (comparison.p0 === 0) {
+      console.error("Signed-in crawl proof is incomplete: Clerk authentication did not reach the product route.");
+    }
     if (args.rollbackOnP0) {
       console.error('P0 findings detected. Run scripts/crawl/auto-rollback.ts with --execute only from the controlled deploy workflow.');
     }

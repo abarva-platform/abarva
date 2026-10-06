@@ -1,6 +1,10 @@
 const eventRow = {
   id: "event-1",
   client_key: "apex-retail",
+  event_name: "Infrastructure sourcing",
+  event_type: "managed_service",
+  sourcing_motion: "competitive_rfp",
+  classified_category: "ams",
   trigger_description: "Old trigger.",
   scope_description: "Existing scope.",
   decision_owner: "CIO",
@@ -8,6 +12,9 @@ const eventRow = {
 };
 
 const updateEventIntake = jest.fn(async () => ({ ok: true }));
+const updateEventIntakeWithRequestAuthority = jest.fn(async () => ({
+  ok: true,
+}));
 const insertActivityLog = jest.fn(async () => ({ ok: true }));
 const maybeSingle = jest.fn(
   async (): Promise<{ data: typeof eventRow | null; error: null }> => ({
@@ -54,12 +61,13 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
   selectSourceWriteAdapter: jest.fn(() => ({
     updateEventIntake,
+    updateEventIntakeWithRequestAuthority,
     insertActivityLog,
   })),
 }));
 
 jest.mock("@/lib/source/canvas-substrate/event-intake-sync", () => ({
-  syncEventIntakeEvidence: jest.fn(async () => true),
+  repairLegacyClientStatedTriggerEvidence: jest.fn(async () => true),
 }));
 
 jest.mock("@/lib/source/queries", () => ({
@@ -69,10 +77,12 @@ jest.mock("@/lib/source/queries", () => ({
 import { PATCH } from "../route";
 import type { NextRequest } from "next/server";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 
 const mockLoadUserSourceAccessPolicy = jest.mocked(loadUserSourceAccessPolicy);
-const mockSyncEventIntakeEvidence = jest.mocked(syncEventIntakeEvidence);
+const mockRepairLegacyClientStatedTriggerEvidence = jest.mocked(
+  repairLegacyClientStatedTriggerEvidence,
+);
 
 function correctionRequest(body: Record<string, unknown>) {
   return new Request("https://app.abarva.ai/api/v1/source/events/event-1", {
@@ -84,10 +94,11 @@ function correctionRequest(body: Record<string, unknown>) {
 describe("PATCH Source event intake", () => {
   beforeEach(() => {
     updateEventIntake.mockClear();
+    updateEventIntakeWithRequestAuthority.mockClear();
     insertActivityLog.mockClear();
     maybeSingle.mockClear();
     maybeSingle.mockResolvedValue({ data: eventRow, error: null });
-    mockSyncEventIntakeEvidence.mockClear();
+    mockRepairLegacyClientStatedTriggerEvidence.mockClear();
     mockLoadUserSourceAccessPolicy.mockResolvedValue({
       canApproveSourceStages: true,
       accessLevel: "client_admin",
@@ -114,19 +125,27 @@ describe("PATCH Source event intake", () => {
       { params: Promise.resolve({ eventId: "event-1" }) },
     );
     expect(response.status).toBe(200);
-    expect(updateEventIntake).toHaveBeenCalledWith(
+    expect(updateEventIntakeWithRequestAuthority).toHaveBeenCalledWith(
       expect.objectContaining({
         eventId: "event-1",
         clientKey: "apex-retail",
         triggerDescription: "Corrected renewal trigger.",
         estimatedValueUsd: 2_000_000,
+        requestAuthority: expect.objectContaining({
+          authorityKind: "request",
+          createdByUserId: "user-1",
+          payload: expect.objectContaining({
+            triggerDescription: "Corrected renewal trigger.",
+            estimatedValueUsd: 2_000_000,
+          }),
+        }),
       }),
     );
-    expect(mockSyncEventIntakeEvidence).toHaveBeenCalledWith(
+    expect(updateEventIntake).not.toHaveBeenCalled();
+    expect(mockRepairLegacyClientStatedTriggerEvidence).toHaveBeenCalledWith(
       expect.objectContaining({
         sourceEventId: "event-1",
         tenantKey: "apex-retail",
-        triggerDescription: "Corrected renewal trigger.",
       }),
     );
     expect(insertActivityLog).toHaveBeenCalledWith(

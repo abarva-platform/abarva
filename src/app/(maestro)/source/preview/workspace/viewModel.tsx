@@ -51,6 +51,44 @@ export function money(m: number | null | undefined): string {
   if (abs >= 1_000) return '$' + (m / 1_000).toFixed(0) + 'K';
   return '$' + m.toFixed(0);
 }
+/**
+ * Two decimals in the millions, for a figure that shares a surface with a
+ * different quantity of similar size.
+ *
+ * `money` renders millions to one decimal, so $1.511M and $1.484M both print
+ * as "$1.5M". On the Story decision strip the sized ask and the undrawn
+ * commitment are exactly that far apart, and rendering both as the same string
+ * invited the reader to conclude the ask was derived from the gap. It is not:
+ * the two differ by $27K and are unrelated measures.
+ */
+export function moneyPrecise(m: number | null | undefined): string {
+  if (m == null) return 'Not established';
+  const abs = Math.abs(m);
+  if (abs < 1_000_000 || abs >= 1_000_000_000) return money(m);
+  return '$' + (m / 1_000_000).toFixed(2) + 'M';
+}
+/**
+ * A governed fragment, rendered as a sentence.
+ *
+ * Some authored fields are bare lowercase fragments with no terminal
+ * punctuation - "finance confirmation required before realized-value claim".
+ * Set into a paragraph of prose one reads as a machine token rather than a
+ * statement, which undercuts the claim it makes.
+ *
+ * Only the opening character and the terminator are touched. A fragment that
+ * already opens with a capital or an identifier, or already ends in
+ * punctuation, is returned unchanged - the aim is to stop a fragment looking
+ * like a token, not to rewrite authored text. Callers that used to append
+ * their own period produced "claim.." on any value that already had one.
+ */
+export function asSentence(value: string | null | undefined): string | null {
+  const text = value?.trim();
+  if (!text) return null;
+  const first = text[0];
+  const opened =
+    first === first.toUpperCase() ? text : first.toUpperCase() + text.slice(1);
+  return /[.!?]$/.test(opened) ? opened : `${opened}.`;
+}
 export function pct(v: number): string {
   if (!Number.isFinite(v)) return 'Not established';
   return (v * 100).toFixed(1) + '%';
@@ -157,6 +195,7 @@ const CONTRACT_TABS = new Set([
   'Relationship',
   'Evidence',
   'Optimize',
+  'Education',
 ]);
 const CONTRACT_TAB_BY_PARAM = new Map(
   [...CONTRACT_TABS].map((tab) => [tab.toLowerCase(), tab]),
@@ -172,6 +211,27 @@ const WORKSPACE_TAB_SELECTIONS = new Map<
   ['evidence', { kind: 'evidence', id: null, tab: 'Coverage' }],
   ['coverage', { kind: 'vendorList', id: null }],
 ]);
+
+/**
+ * The workspace-tab parameter that would reproduce a given selection.
+ *
+ * `WORKSPACE_TAB_SELECTIONS` reads a URL into state; this reads state back out,
+ * so the address bar can be kept in step with what is on screen. Returns null
+ * for a selection no workspace tab represents (a contract, for instance, which
+ * is addressed by contractId instead).
+ */
+export function workspaceTabParamFor(
+  sel: { kind: string; id: string | null },
+  tabs: Record<string, string>,
+): string | null {
+  for (const [param, selection] of WORKSPACE_TAB_SELECTIONS) {
+    if (selection.kind !== sel.kind) continue;
+    if ((selection.id ?? null) !== (sel.id ?? null)) continue;
+    if (selection.tab && tabs[sel.kind] !== selection.tab) continue;
+    return param;
+  }
+  return null;
+}
 
 function normalizeContractTab(value: string | null | undefined): string {
   const requestedTab = value?.trim();

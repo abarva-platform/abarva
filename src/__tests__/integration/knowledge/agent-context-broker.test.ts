@@ -105,17 +105,50 @@ describe('enterprise agent context broker', () => {
     expect(bundle.blockedItems.some((item) => item.requestedDomain === 'operating_telemetry')).toBe(true);
   });
 
-  it('is not imported by app routes yet', () => {
-    const routeFiles = [
-      'src/app/api/chat/agent/route.ts',
-      'src/app/api/v1/programs/[programId]/nexus/ask/route.ts',
-      'src/app/api/v1/programs/[programId]/nexus/draft/route.ts',
-    ];
+  // This case used to assert the broker was "not imported by app routes yet".
+  // That is a snapshot of an unfinished migration, not a contract: it went red
+  // the moment the migration it was waiting for succeeded, and it went red in
+  // the direction the architecture wants — /api/chat/agent now consumes the
+  // broker. A test that fails when the intended change lands is worse than no
+  // test, because the cheapest way to make it green is to revert the change.
+  //
+  // What is durably true is the boundary the broker exists to enforce: the
+  // broker owns bundle assembly, and a route consumes the assembled bundle
+  // rather than reaching past it and assembling one itself.
+  const ROUTE_FILES: ReadonlyArray<string> = [
+    'src/app/api/chat/agent/route.ts',
+    'src/app/api/v1/programs/[programId]/nexus/ask/route.ts',
+    'src/app/api/v1/programs/[programId]/nexus/draft/route.ts',
+  ];
 
-    for (const routeFile of routeFiles) {
+  // The broker's own assembly inputs. A route importing one of these is
+  // building a context bundle by hand, which is the failure mode the broker
+  // was introduced to remove.
+  const ASSEMBLY_INTERNALS: ReadonlyArray<string> = [
+    '@/lib/knowledge/tenant-data/mapper',
+    '@/lib/knowledge/enterprise-data-room',
+  ];
+
+  it('app routes consume the assembled bundle and do not assemble one themselves', () => {
+    for (const routeFile of ROUTE_FILES) {
       const routeText = fs.readFileSync(path.join(repoRoot, routeFile), 'utf8');
-      expect(routeText).not.toContain('agent-context-broker');
-      expect(routeText).not.toContain('buildEnterpriseAgentContextBundle');
+
+      for (const internal of ASSEMBLY_INTERNALS) {
+        expect(routeText).not.toContain(internal);
+      }
+    }
+  });
+
+  it('a route that builds an enterprise bundle imports it from the broker', () => {
+    // Scoped to routes that actually use the entry point, so a route which
+    // does not consume enterprise context is not forced to.
+    for (const routeFile of ROUTE_FILES) {
+      const routeText = fs.readFileSync(path.join(repoRoot, routeFile), 'utf8');
+      if (!routeText.includes('buildEnterpriseAgentContextBundle')) continue;
+
+      expect(routeText).toMatch(
+        /from\s+["']@\/lib\/knowledge\/agent-context-broker["']/,
+      );
     }
   });
 });

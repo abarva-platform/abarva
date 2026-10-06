@@ -10,9 +10,13 @@ UI + the gates.
 - **Tenant:** Meridian Health (real loaded healthcare context).
 - **Move / use case:** "Unify clinical + claims on Databricks to drive clinical quality + operational
   performance KPIs."
-- **Golden bar (acceptance target):** the two manually-generated decks, staged at
+- **Visual benchmark target:** the two manually-generated decks staged at
   `docs/build/golden-artifacts/` — `Target-State-Architecture.html` and
-  `Clinical-Claims-Databricks-Strategy.html`. **Every generated artifact is measured against these.**
+  `Clinical-Claims-Databricks-Strategy.html`. These prove the expected visual/story quality for
+  deck-like artifacts.
+- **Per-deliverable exemplar target:** every judged deliverable type still needs a human-approved
+  exemplar entry in `golden-exemplar-manifest.json` with owner, review date, approved status, and
+  rationale. The visual benchmark decks do **not** make the model judge ready for all artifacts.
 
 ## The QA gate every slice MUST pass before the next starts (the "no excuse" rule)
 
@@ -20,8 +24,10 @@ UI + the gates.
 2. `npx jest` — unit green, no regressions.
 3. Integration test green (the seam works end to end in-process).
 4. **E2E click-through** (Playwright, real move on the deployed app) — green, **no click failure**.
-5. **Artifact renders to the golden bar** — required exhibits present, flashy HTML, grounded (not
-   `[DATA GAP]`). Checked by the Slice-0 acceptance helper.
+5. **Artifact renders to the visual benchmark where applicable** — required exhibits present,
+   polished visual treatment, grounded (not `[DATA GAP]`). Checked by the Slice-0 acceptance helper.
+   This is separate from per-deliverable exemplar coverage; `readyForJudge=false` until the
+   exemplar audit has human-approved coverage for every profiled Moves deliverable.
 6. **Second-tenant smoke** — re-run one artifact on SkyHarbor → proves universal, not hard-coded.
 7. `node scripts/release-check.mjs` + release record + tenant-purity green.
 8. Merge → `aca-main-deploy` → **live verify on `app.abarva.ai`**.

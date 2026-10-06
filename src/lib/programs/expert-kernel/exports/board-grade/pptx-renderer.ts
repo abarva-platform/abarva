@@ -42,6 +42,7 @@ import {
   compactUsd,
 } from './svg-charts';
 import { rasteriseSvgToDataUrl } from './svg-raster';
+import { scrubBuilderVocabulary } from '@/lib/deliverables/client-facing-artifact-sanitize';
 
 // ---------------------------------------------------------------------------
 // Locked AbarVa design tokens — the same restrained register as the HTML deck.
@@ -472,11 +473,14 @@ function renderCover(pptx: PptxGenJS, pack: CostedBusinessCasePack): void {
   slide.addText(
     [
       {
-        text:
+        // Builder vocabulary scrubbed to the client voice (the native-PPTX path
+        // does not go through renderDeckDocument, so it is scrubbed here too).
+        text: scrubBuilderVocabulary(
           'A board deck in 12 slides. Every figure is produced by the Moves ' +
-          'Expert Kernel from Apex’s audited substrate. Where data is not ' +
-          'recorded it is declared a seed gap — never invented. The honest ' +
-          'verdict is ',
+            'Expert Kernel from Apex’s audited substrate. Where data is not ' +
+            'recorded it is declared a seed gap — never invented. The honest ' +
+            'verdict is ',
+        ),
       },
       { text: 'shape', options: { bold: true, italic: true } },
       {
@@ -1490,7 +1494,7 @@ export async function renderApexCostedBusinessCasePptx(
 
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_16x9';
-  pptx.author = 'AbarVa · Moves Expert Kernel';
+  pptx.author = scrubBuilderVocabulary('AbarVa · Moves Expert Kernel');
   pptx.company = 'AbarVa';
   pptx.subject = 'Costed Business-Case Pack';
   pptx.title = `${pack.moveLabel} — Costed Business-Case Pack`;

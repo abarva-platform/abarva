@@ -68,8 +68,36 @@ import {
   isCredibleBaseline,
 } from './waterfall-view-adapter';
 import { resolveValueArchetype } from './stage-analytics-builder';
+import { factSpecByKey } from '@/lib/source/facts/fact-catalog';
 
 // ── formatting (compact USD, matching the ValueWaterfall renderer) ───────────
+
+/**
+ * The client-facing name of a fact key, for any string that reaches a screen.
+ *
+ * Item U-523. Every `note` on this builder renders straight into the
+ * Intelligence tab, and eleven of them named the storage key a client is being
+ * asked to supply — "upload the award commitments so each lever gets a
+ * `committed_value_usd` fact". The transition-risk note was worse: it joined
+ * `missingEvidence` verbatim, so the keys were assembled at run time and no
+ * grep over this file would have found them. That shape is why item U-400's
+ * control is render-measured, and it is what caught these.
+ *
+ * The fact catalog already publishes a human label for every one of those keys,
+ * so this is a **rename, not a product decision** — U-400's test for which of
+ * the two a term gets. Read from the catalog rather than re-typed here, so a
+ * key whose label is improved later is named correctly without touching this
+ * file.
+ *
+ * A key the catalog does not carry falls through to the key itself. That is a
+ * real gap in the catalog and the render-measured control is what shows it;
+ * `fact-catalog` has its own guard that every catalog entry carries a
+ * non-empty label.
+ */
+function clientFactName(factKey: string): string {
+  const label = factSpecByKey(factKey)?.label;
+  return label && label.trim().length > 0 ? label : factKey;
+}
 
 const USD_COMPACT = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -84,7 +112,43 @@ function fmtUsd(value: number): string {
 
 function fmtUsdRange(low: number, high: number): string {
   if (low === high) return fmtUsd(low);
+  if (low < 0 || high < 0) return `${fmtUsd(low)} to ${fmtUsd(high)}`;
   return `${fmtUsd(low)}–${fmtUsd(high)}`;
+}
+
+const NEGOTIABLE_VALUE_TYPES: readonly ValueType[] = [
+  'expected_concession',
+  'incremental_negotiated',
+  'solution_tightening',
+];
+
+function classifiedMovementSummary(
+  rows: readonly ScopeCoverageRowView[],
+): string {
+  const bandFor = (types: readonly ValueType[]) => {
+    const selected = rows.filter((row) => types.includes(row.valueType));
+    return {
+      count: selected.length,
+      low: selected.reduce((sum, row) => sum + row.low, 0),
+      high: selected.reduce((sum, row) => sum + row.high, 0),
+    };
+  };
+  const negotiable = bandFor(NEGOTIABLE_VALUE_TYPES);
+  const protectedValue = bandFor(['protected']);
+  const riskAdjusted = bandFor(['risk_adjusted']);
+  const segments = [
+    negotiable.count > 0
+      ? `Negotiable ${fmtUsdRange(negotiable.low, negotiable.high)}`
+      : null,
+    protectedValue.count > 0
+      ? `Protected ${fmtUsdRange(protectedValue.low, protectedValue.high)}`
+      : null,
+    riskAdjusted.count > 0
+      ? `Risk-adjusted ${fmtUsdRange(riskAdjusted.low, riskAdjusted.high)}`
+      : null,
+  ]
+    .filter((value): value is string => Boolean(value));
+  return segments.length > 0 ? segments.join('; ') : 'No classified movements';
 }
 
 // ── which stage keys map to which insight kind ───────────────────────────────
@@ -147,6 +211,8 @@ export interface BuildStepInsightInput {
   citations: Record<string, FactSourceCitation | null>;
   /** The event's raw event_type — used to resolve the archetype. */
   eventType?: string | null;
+  /** Preferred deterministic classifier category for archetype resolution. */
+  classifiedCategory?: string | null;
   /** Explicit archetype id override (tests). */
   archetypeId?: string;
   /** Baseline label/amount for the value bridge. */
@@ -223,7 +289,7 @@ export function buildStepInsight(
   // Explicit archetype id (tests) short-circuits event_type resolution.
   const resolved = input.archetypeId
     ? resolveArchetypeById(input.archetypeId)
-    : resolveValueArchetype(input.eventType);
+    : resolveValueArchetype(input.eventType, input.classifiedCategory);
   if (!resolved) return null;
 
   switch (kind) {
@@ -287,8 +353,8 @@ function resolveArchetypeById(id: string): SourceEventArchetype | null {
 /**
  * Value pool: one bar per QUANTIFIED lever (low–high $ at stake), biggest-first,
  * colored by value type. When facts quantify at least one lever → live. When they
- * don't but the archetype declares levers → a clearly-marked SAMPLE built from the
- * archetype's illustrative values. When neither → honest empty.
+ * don't but the archetype declares levers → name the unsized levers without
+ * sample amounts. When neither → honest empty.
  */
 export function buildValuePoolInsight(
   archetype: SourceEventArchetype,
@@ -313,17 +379,16 @@ export function buildValuePoolInsight(
     };
   }
 
-  // No live levers. If the archetype declares rules, show a SAMPLE value pool
-  // built from each rule's illustrative band so the buyer learns the shape.
+  // A declared lever is not a quantified value pool. Keep its name visible,
+  // but do not supply a plausible amount in the absence of event facts.
   if (rules.length > 0) {
-    const bars = sampleBarsFromRules(rules);
     return {
       kind: 'value_pool',
       provenance: 'sample',
-      headline: valuePoolHeadline(bars, 0, true),
-      bars,
-      needsEvidenceLevers: [],
-      note: 'Illustrative value pool — the shape of the prize this archetype chases. It sizes for real once your run-cost, ticket, and contract evidence lands. Not a tenant savings claim.',
+      headline: 'Provide evidence to size the value pool for this event.',
+      bars: [],
+      needsEvidenceLevers: rules.map((rule) => rule.name),
+      note: 'These value levers are unsized. No event-specific amount is asserted until the required source facts are recorded.',
     };
   }
 
@@ -721,22 +786,16 @@ function scopeCoverageHeadline(
   if (rows.length === 0) return 'No value levers are wired for this archetype yet.';
   const reachable = rows.filter((r) => r.reachable);
   const stranded = rows.filter((r) => !r.reachable);
-  const reachableLow = reachable.reduce((s, r) => s + r.low, 0);
-  const reachableHigh = reachable.reduce((s, r) => s + r.high, 0);
-  const totalLow = rows.reduce((s, r) => s + r.low, 0);
-  const totalHigh = rows.reduce((s, r) => s + r.high, 0);
 
   if (isModel) {
     return (
-      `A complete scope unlocks ${fmtUsdRange(totalLow, totalHigh)} across ${rows.length} ` +
+      `A complete scope covers ${classifiedMovementSummary(rows)} across ${rows.length} ` +
       `levers — every lever left out of scope is a lever you can't recover in RFP or BAFO.`
     );
   }
   if (stranded.length === 0) {
-    return `${fmtUsdRange(reachableLow, reachableHigh)} across all ${rows.length} levers is reachable under current scope — nothing stranded.`;
+    return `${classifiedMovementSummary(reachable)} across all ${rows.length} levers is reachable under current scope — nothing stranded.`;
   }
-  const strandedLow = stranded.reduce((s, r) => s + r.low, 0);
-  const strandedHigh = stranded.reduce((s, r) => s + r.high, 0);
   const worst = [...stranded].sort((a, b) => b.high - a.high)[0];
   const why =
     worst.missingEvidence.length > 0 ? worst.missingEvidence[0] : 'missing evidence';
@@ -745,10 +804,10 @@ function scopeCoverageHeadline(
   // stranded number is a benchmark-scaled potential-if-unblocked, not a tenant claim.
   const anyPotential = stranded.some((r) => r.potentialAtRisk);
   const strandedFrag = anyPotential
-    ? `${fmtUsdRange(strandedLow, strandedHigh)} at risk, benchmark-scaled, if unblocked`
-    : `${fmtUsdRange(strandedLow, strandedHigh)} stranded`;
+    ? `${classifiedMovementSummary(stranded)} at risk, benchmark-scaled, if unblocked`
+    : `${classifiedMovementSummary(stranded)} stranded`;
   return (
-    `${fmtUsdRange(reachableLow, reachableHigh)} of ${fmtUsdRange(totalLow, totalHigh)} reachable under current scope; ` +
+    `${classifiedMovementSummary(reachable)} reachable under current scope; ` +
     `${strandedFrag} — biggest is ${worst.label}, blocked on ${why}.`
   );
 }
@@ -851,7 +910,7 @@ export function buildRfpClauseInsight(
       headline: rfpClauseHeadline(ordered, true),
       rows: ordered,
       isModel: false,
-      note: 'Live — protected vs exposed is read from the RFP clause checklist you provided (one rfp_clause_present fact per lever). A protected lever has its clause required in the RFP draft; an exposed lever does not — recover it in the RFP or lose it. The $ at stake and clause text are the same cited/advisor values as the model.',
+      note: `Live — protected vs exposed is read from the RFP clause checklist you provided (one ${clientFactName('rfp_clause_present').toLowerCase()} value per lever). A protected lever has its clause required in the RFP draft; an exposed lever does not — recover it in the RFP or lose it. The $ at stake and clause text are the same cited/advisor values as the model.`,
       ...advisor,
     };
   }
@@ -862,7 +921,7 @@ export function buildRfpClauseInsight(
     headline: rfpClauseHeadline(ordered, false),
     rows: ordered,
     isModel: true,
-    note: 'Model — no structured RFP draft is in the fact model yet, so every lever is shown as a clause to require. It resolves protected-vs-exposed for real once an RFP-clause signal exists (upload the RFP clause checklist so each lever gets an rfp_clause_present fact). The clause text below is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
+    note: `Model — no structured RFP draft is in the fact model yet, so every lever is shown as a clause to require. It resolves protected-vs-exposed for real once an RFP-clause signal exists (upload the RFP clause checklist so each lever records whether its ${clientFactName('rfp_clause_present').toLowerCase()}). The clause text below is real advisor guidance from the archetype playbook. Not a tenant savings claim.`,
     ...advisor,
   };
 }
@@ -1393,7 +1452,11 @@ export function buildTransitionRiskInsight(
   }
 
   // Facts absent → honest empty (named missing evidence), never a guessed number.
-  const missing = result.missingEvidence.join(', ');
+  // Item U-523: `missingEvidence` carries FACT KEYS, and this note renders to a
+  // client. Joining them verbatim put `transition_fee, overrun_probability` on
+  // the Intelligence tab — assembled at run time, so invisible to any grep over
+  // this file and visible only to a render-measured control.
+  const missing = result.missingEvidence.map(clientFactName).join(', ');
   return {
     kind: 'transition_risk',
     provenance: 'sample',
@@ -1407,7 +1470,10 @@ export function buildTransitionRiskInsight(
     overrunCostMultiple: 0,
     confidence: rule.defaultConfidence,
     note:
-      `Needs evidence — missing ${missing || 'transition_fee, overrun_probability'}. ` +
+      `Needs evidence — missing ${
+        missing ||
+        `${clientFactName('transition_fee')}, ${clientFactName('overrun_probability')}`
+      }. ` +
       'The exposure sizes for real from a quoted transition fee and a benchmarked overrun probability. Not a tenant claim.',
     ...advisor,
   };
@@ -1680,7 +1746,7 @@ export function buildValueRealizationInsight(
       isModel: false,
       flipFact:
         'Realized-value actuals per lever (run-cost actuals, SLA-credit actuals, productivity-credit actuals booked to date).',
-      note: 'Live (snapshot) — realized value is read from the realized-to-date actuals you provided (one realized_value_usd fact per lever). Each lever shows what has been realized TO DATE against its committed reference, and the realized-to-date total is marked as the current point on the committed track; a lever with no realized fact stays "not yet realized", never fabricated. This is a realized-to-date snapshot, not a per-period ramp — the full per-period time-series is a deferred enhancement. The committed reference and advisor guidance are the same cited/advisor values as the model.',
+      note: `Live (snapshot) — realized value is read from the realized-to-date actuals you provided (one ${clientFactName('realized_value_usd').toLowerCase()} figure per lever). Each lever shows what has been realized TO DATE against its committed reference, and the realized-to-date total is marked as the current point on the committed track; a lever with no realized fact stays "not yet realized", never fabricated. This is a realized-to-date snapshot, not a per-period ramp — the full per-period time-series is a deferred enhancement. The committed reference and advisor guidance are the same cited/advisor values as the model.`,
       ...advisor,
     };
   }
@@ -1705,7 +1771,7 @@ export function buildValueRealizationInsight(
     isModel: true,
     flipFact:
       'Realized-value actuals per lever (run-cost actuals, SLA-credit actuals, productivity-credit actuals booked to date).',
-    note: 'Model — realized-value actuals are not in the fact model yet, so the realized track is shown pending against committed value. It goes live once realized-to-date actuals per lever are ingested (upload the realized-value actuals so each lever gets a realized_value_usd fact). Committed value is the awarded-lever roll-up; realization is never fabricated. Not a tenant savings claim.',
+    note: `Model — realized-value actuals are not in the fact model yet, so the realized track is shown pending against committed value. It goes live once realized-to-date actuals per lever are ingested (upload the realized-value actuals so each lever records its ${clientFactName('realized_value_usd').toLowerCase()}). Committed value is the awarded-lever roll-up; realization is never fabricated. Not a tenant savings claim.`,
     ...advisor,
   };
 }
@@ -1846,7 +1912,7 @@ export function buildResponseCoverageInsight(
       isModel: false,
       flipFact:
         'Vendor responses ingested per lever/clause (a parsed vendor proposal whose commitments are extracted and matched to each value dimension).',
-      note: 'Live — answered vs dodged is read from the vendor response coverage you provided (one response_addressed fact per vendor×lever). A dimension is answered when at least one vendor addressed it; per-vendor coverage shows each vendor’s answered/dodged split. A vendor×lever with no fact stays "not yet answered", never fabricated. The $ at stake and evaluation-impact text are the same cited/advisor values as the model.',
+      note: `Live — answered vs dodged is read from the vendor response coverage you provided (one ${clientFactName('response_addressed').toLowerCase()} value per vendor×lever). A dimension is answered when at least one vendor addressed it; per-vendor coverage shows each vendor’s answered/dodged split. A vendor×lever with no fact stays "not yet answered", never fabricated. The $ at stake and evaluation-impact text are the same cited/advisor values as the model.`,
       ...advisor,
     };
   }
@@ -2091,7 +2157,7 @@ export function buildBafoProgressInsight(
       flipFact:
         'BAFO concession actuals per lever (each negotiated concession booked against the lever it moves — a captured $ per lever per BAFO round).',
       isModel: false,
-      note: 'Live — captured value is read from the BAFO concession actuals you provided (one bafo_concession_captured_usd fact per lever). Each lever shows what the BAFO round booked against its target band; a lever with no concession fact is shown as still-open (0 captured), never fabricated. The target band, BAFO ask, and advisor guidance are the same cited/advisor values as the model.',
+      note: `Live — captured value is read from the BAFO concession actuals you provided (one ${clientFactName('bafo_concession_captured_usd').toLowerCase()} figure per lever). Each lever shows what the BAFO round booked against its target band; a lever with no concession fact is shown as still-open (0 captured), never fabricated. The target band, BAFO ask, and advisor guidance are the same cited/advisor values as the model.`,
       ...advisor,
     };
   }
@@ -2106,7 +2172,7 @@ export function buildBafoProgressInsight(
     flipFact:
       'BAFO concession actuals per lever (each negotiated concession booked against the lever it moves — a captured $ per lever per BAFO round).',
     isModel: true,
-    note: 'Model — BAFO concession actuals are not in the fact model yet, so captured is shown as pending (0) against each lever’s target. It goes live once BAFO concession actuals per lever are ingested (upload the BAFO concession actuals so each lever gets a bafo_concession_captured_usd fact). The BAFO-ask text is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
+    note: `Model — BAFO concession actuals are not in the fact model yet, so captured is shown as pending (0) against each lever’s target. It goes live once BAFO concession actuals per lever are ingested (upload the BAFO concession actuals so each lever records its ${clientFactName('bafo_concession_captured_usd').toLowerCase()}). The BAFO-ask text is real advisor guidance from the archetype playbook. Not a tenant savings claim.`,
     ...advisor,
   };
 }
@@ -2255,7 +2321,7 @@ export function buildCommittedValueInsight(
       flipFact:
         'Award facts (the executed contract / award record confirming which levers and $ the winning vendor committed).',
       isModel: false,
-      note: 'Live — committed value is read from the award commitments you provided (one committed_value_usd fact per lever). Each bar shows what the executed award LOCKED for the lever against its target band; a lever with no award fact is shown as awaiting award, never as $0. The target band and advisor guidance are the same cited/advisor values as the model.',
+      note: `Live — committed value is read from the award commitments you provided (one ${clientFactName('committed_value_usd').toLowerCase()} figure per lever). Each bar shows what the executed award LOCKED for the lever against its target band; a lever with no award fact is shown as awaiting award, never as $0. The target band and advisor guidance are the same cited/advisor values as the model.`,
       ...advisor,
     };
   }
@@ -2270,7 +2336,7 @@ export function buildCommittedValueInsight(
     flipFact:
       'Award facts (the executed contract / award record confirming which levers and $ the winning vendor committed).',
     isModel: true,
-    note: 'Model — award facts are not in the fact model yet, so the committed value is the awarded-lever roll-up shown against each lever. It goes live once the executed-contract award commitments are ingested (upload the award commitments so each lever gets a committed_value_usd fact). Not a tenant savings claim.',
+    note: `Model — award facts are not in the fact model yet, so the committed value is the awarded-lever roll-up shown against each lever. It goes live once the executed-contract award commitments are ingested (upload the award commitments so each lever records its ${clientFactName('committed_value_usd').toLowerCase()}). Not a tenant savings claim.`,
     ...advisor,
   };
 }

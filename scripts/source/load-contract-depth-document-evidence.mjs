@@ -167,6 +167,34 @@ function nonEmpty(value) {
   return text ? text : null;
 }
 
+// The dense contract-depth package uses the canonical clause columns while
+// this companion writes the document-shaped projection. Normalize at that
+// boundary so the projection cannot silently insert undefined identities.
+export function normalizeDocumentClauseRows(clauses, pages) {
+  const pageByFile = new Map();
+  for (const row of pages) {
+    const sourceFileId = nonEmpty(row.source_file_id);
+    if (sourceFileId && !pageByFile.has(sourceFileId)) pageByFile.set(sourceFileId, row);
+  }
+  return clauses.map((row) => {
+    const sourceFileId = nonEmpty(row.source_file_id);
+    const page = sourceFileId ? pageByFile.get(sourceFileId) : undefined;
+    return {
+      ...row,
+      extraction_id: nonEmpty(row.extraction_id) || nonEmpty(row.clause_id) || nonEmpty(row.source_row_id),
+      concept_ref: nonEmpty(row.concept_ref) || nonEmpty(row.clause_type),
+      subject_kind: nonEmpty(row.subject_kind) || "contract",
+      subject_ref: nonEmpty(row.subject_ref) || nonEmpty(row.contract_id),
+      source_section: nonEmpty(row.source_section) || nonEmpty(row.source_page_ref),
+      source_page: nonEmpty(row.source_page) || nonEmpty(page?.source_page) || "1",
+      source_file_id: sourceFileId,
+      evidence_class: nonEmpty(row.evidence_class) || "contract_clause",
+      confidence: nonEmpty(row.confidence) || "0.95",
+      review_state: nonEmpty(row.review_state) || "system_extracted_synthetic_demo",
+    };
+  });
+}
+
 export function buildDocumentFileInputs(pages, clauses) {
   const pagesByFile = new Map();
   for (const row of pages) {
@@ -205,6 +233,24 @@ export function buildDocumentFileInputs(pages, clauses) {
     });
 }
 
+export function documentFileIdentityConflictMessage(rows) {
+  const details = rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
+  return `Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`;
+}
+
+export function staleDocumentFileIds(rows, currentFileIds, args) {
+  const current = new Set(currentFileIds);
+  const sourcePackage = `${args.datasetVersion}/source-files`;
+  return rows
+    .filter(
+      (row) =>
+        !current.has(row.file_id) &&
+        args.contractIds.includes(row.contract_ref) &&
+        row.metadata_json?.source_package === sourcePackage,
+    )
+    .map((row) => row.file_id)
+    .sort();
+}
 async function ensureDocumentSchema(client) {
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}`);
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(META_SCHEMA)}`);
@@ -367,26 +413,33 @@ function spanId(row) {
 
 async function deleteExisting(client, args, fileIds, pageIds, spanIds, extractionIds) {
   const aliases = [args.tenantKey];
-  if (extractionIds.length) {
+  if (fileIds.length || extractionIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
         WHERE tenant_key = ANY($1::text[]) AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
       [aliases, extractionIds, fileIds],
     );
   }
-  if (spanIds.length) {
+  if (fileIds.length || spanIds.length) {
+    // A file can already have spans from an earlier extraction version. Delete
+    // every dependent span before replacing the file; deleting only the current
+    // clause IDs leaves stale spans behind and the file FK rejects the retry.
     await client.query(
-      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span WHERE tenant_key = ANY($1::text[]) AND span_id = ANY($2::text[])`,
-      [aliases, spanIds],
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
+        WHERE tenant_key = ANY($1::text[]) AND (span_id = ANY($2::text[]) OR file_id = ANY($3::text[]))`,
+      [aliases, spanIds, fileIds],
     );
   }
-  if (pageIds.length) {
+  if (fileIds.length || pageIds.length) {
     await client.query(
-      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page WHERE tenant_key = ANY($1::text[]) AND page_id = ANY($2::text[])`,
-      [aliases, pageIds],
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
+        WHERE tenant_key = ANY($1::text[]) AND (page_id = ANY($2::text[]) OR file_id = ANY($3::text[]))`,
+      [aliases, pageIds, fileIds],
     );
   }
-  if (fileIds.length) {
+  // Keep the file row in place when possible. Existing spans/pages reference
+  // it, so the upsert below is the idempotent replacement boundary.
+  if (fileIds.length && process.env.SOURCE_DOCUMENT_EVIDENCE_DELETE_ORPHAN_FILES === "true") {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
       [aliases, fileIds],
@@ -394,10 +447,59 @@ async function deleteExisting(client, args, fileIds, pageIds, spanIds, extractio
   }
 }
 
+async function deleteStalePackageFiles(client, args, fileIds) {
+  if (fileIds.length === 0) return;
+  const aliases = [args.tenantKey];
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
+      WHERE tenant_key = ANY($1::text[]) AND source_file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
+      WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
+      WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file
+      WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+}
+
 async function loadDocumentEvidence(client, args, pages, clauses) {
   await ensureDocumentSchema(client);
 
   const fileIds = [...new Set([...pages.map((r) => r.source_file_id), ...clauses.map((r) => r.source_file_id)])].filter(Boolean);
+  const conflictingFiles = await client.query(
+    `SELECT file_id, contract_ref
+       FROM ${quoteIdent(DOC_SCHEMA)}.file
+      WHERE tenant_key = $1
+        AND file_id = ANY($2::text[])
+        AND contract_ref IS NOT NULL
+        AND NOT (contract_ref = ANY($3::text[]))`,
+    [args.tenantKey, fileIds, args.contractIds],
+  );
+  if (conflictingFiles.rows.length > 0) {
+    const details = conflictingFiles.rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
+    throw new Error(`Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`);
+  }
+  const staleFiles = await client.query(
+    `SELECT file_id, contract_ref, metadata_json
+       FROM ${quoteIdent(DOC_SCHEMA)}.file
+      WHERE tenant_key = $1
+        AND contract_ref = ANY($2::text[])
+        AND metadata_json->>'source_package' = $3
+        AND NOT (file_id = ANY($4::text[]))`,
+    [args.tenantKey, args.contractIds, `${args.datasetVersion}/source-files`, fileIds],
+  );
+  const staleFileIds = staleDocumentFileIds(staleFiles.rows, fileIds, args);
+  await deleteStalePackageFiles(client, args, staleFileIds);
   const pageIds = pages.map(pageId);
   const spanIds = clauses.map(spanId);
   const extractionIds = clauses.map((row) => row.extraction_id);
@@ -561,6 +663,7 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
     doc_page: pages.length,
     doc_span: clauses.length,
     doc_extraction: clauses.length,
+    stale_package_files_removed: staleFileIds.length,
   };
 }
 
@@ -586,7 +689,10 @@ async function main() {
   const allPages = readCsv(args.packageDir, "contract_page_text.csv");
   const allClauses = readCsv(args.packageDir, "contract_clauses.csv");
   const pages = allPages.filter((row) => args.contractIds.includes(row.contract_id));
-  const clauses = allClauses.filter((row) => args.contractIds.includes(row.contract_id));
+  const clauses = normalizeDocumentClauseRows(
+    allClauses.filter((row) => args.contractIds.includes(row.contract_id)),
+    pages,
+  );
 
   const plan = {
     event: "source_contract_depth_document_evidence_plan",

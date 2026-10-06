@@ -1,0 +1,3 @@
+tenant_key,dataset_version,contract_id,quarter,run_percent,transform_percent,automation_backlog_items,report_retirement_candidates,summary_note,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-Q1,85,15,3,0,"Databricks CSM flagged utilization below plan; recommended workload onboarding acceleration.",SRC-QBR-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-Q2,78,22,4,0,"Second consecutive QBR noting utilization gap; program delay cited by Meridian as root cause.",SRC-QBR-002

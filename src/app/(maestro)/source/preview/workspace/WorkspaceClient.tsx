@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./workspace.css";
 import {
   buildInitialWorkspaceState,
   WorkspaceViewModel,
   type WorkspaceState,
+  workspaceTabParamFor,
 } from "./viewModel";
 import { buildViewModel } from "./buildViewModel";
 import type {
@@ -13,6 +14,18 @@ import type {
   SourceWorkspaceProviderMode,
 } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
+
+/**
+ * A cold contract-detail request can fail once and succeed immediately after.
+ * Two further attempts rides out that window without turning a genuinely
+ * missing contract into a long spinner.
+ */
+const CONTRACT_DETAIL_RETRY_ATTEMPTS = 2;
+const CONTRACT_DETAIL_RETRY_DELAY_MS = 600;
+const INITIAL_CONTRACT_DETAIL_RETRY_DELAY_MS = 1200;
+class ContractDetailNotFoundError extends Error {}
+const DEFAULT_SOURCE_PROVIDER_KEY: SourceWorkspaceProviderMode =
+  "ecl_projection_db";
 import {
   AgentDock,
   type AttachmentRef,
@@ -145,7 +158,54 @@ export function WorkspaceClient({
     }),
   );
   const [thread, setThread] = useState<ChatMessage[]>([]);
+  /** Which contract details have been requested, decided synchronously. */
+  const detailRequests = useRef<Map<string, "loading" | "loaded">>(
+    new Map(),
+  );
+  const initialDetailRetry = useRef<string | null>(null);
   const [showEclDiagnostics, setShowEclDiagnostics] = useState(false);
+  const effectiveSourceProviderKey =
+    sourceProviderKey ?? DEFAULT_SOURCE_PROVIDER_KEY;
+
+  /*
+   * Keep the address bar in step with the selection.
+   *
+   * Selecting a contract and switching a contract tab were React state only,
+   * while the URL kept whatever workspace tab the page was opened on. The page
+   * therefore described a different view from the one on screen, so a refresh,
+   * a shared link or the back button rebuilt the workspace from the stale
+   * parameters and the contract vanished — which reads as the layout changing
+   * by itself.
+   *
+   * replaceState rather than pushState: this mirrors state that already
+   * changed, and pushing an entry per tab click would turn the back button into
+   * a tab-history walker. Deep links already rehydrate correctly; only the
+   * writing half was missing.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const next = new URLSearchParams(url.search);
+
+    if (state.sel.kind === "contract" && state.sel.id) {
+      next.set("contractId", state.sel.id);
+      next.set("contractTab", state.tabs.contract ?? "Story");
+      next.delete("workspaceTab");
+      next.delete("tab");
+    } else {
+      next.delete("contractId");
+      next.delete("contractTab");
+      next.delete("tab");
+      const workspaceTab = workspaceTabParamFor(state.sel, state.tabs);
+      if (workspaceTab) next.set("workspaceTab", workspaceTab);
+      else next.delete("workspaceTab");
+    }
+
+    const search = next.toString();
+    const target = `${url.pathname}${search ? `?${search}` : ""}`;
+    if (target === `${url.pathname}${url.search}`) return;
+    window.history.replaceState(window.history.state, "", target);
+  }, [state.sel, state.tabs]);
 
   const setState = useMemo(
     () =>
@@ -162,35 +222,75 @@ export function WorkspaceClient({
     [],
   );
 
+  /**
+   * Load one contract's detail, and do not state failure on a single attempt.
+   *
+   * A deep link that met one cold-start failure showed "Source could not load
+   * <id>. No substitute contract is being shown." — a definitive claim built on
+   * a single request — and recovered only when the reader happened to open the
+   * same contract again from the register, because the fetch ran whether or not
+   * the guard above it had allowed the attempt.
+   *
+   * The request ledger is a ref, not state: the decision to send a request has
+   * to be made synchronously at call time, and a state updater may not have run
+   * by the time this function returns. A contract is requested once while in
+   * flight, never re-requested once loaded, and released back for a later
+   * attempt if every retry fails — so a failure is reported, not latched.
+   */
   const fetchContractDetail = useCallback(
     (contractId: string) => {
-      setStateRaw((prev) => {
-        if (prev.contractDetail[contractId]) return prev; // already loaded/loading
-        return {
-          ...prev,
-          contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
-        };
-      });
-      fetch(buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey))
-        .then((r) =>
-          r.ok
-            ? (r.json() as Promise<Contract360Response>)
-            : Promise.reject(new Error(String(r.status))),
+      const pending = detailRequests.current.get(contractId);
+      if (pending === "loading" || pending === "loaded") return;
+      detailRequests.current.set(contractId, "loading");
+      setStateRaw((prev) => ({
+        ...prev,
+        contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
+      }));
+
+      const attempt = (remaining: number) => {
+        fetch(
+          buildContractApiUrl(
+            contractId,
+            sourceClientKey,
+            effectiveSourceProviderKey,
+          ),
         )
-        .then((view) =>
-          setStateRaw((prev) => ({
-            ...prev,
-            contractDetail: { ...prev.contractDetail, [contractId]: view },
-          })),
-        )
-        .catch(() =>
-          setStateRaw((prev) => ({
-            ...prev,
-            contractDetail: { ...prev.contractDetail, [contractId]: "error" },
-          })),
-        );
+          .then((r) => {
+            if (r.ok) return r.json() as Promise<Contract360Response>;
+            if (r.status === 404) throw new ContractDetailNotFoundError();
+            throw new Error(String(r.status));
+          })
+          .then((view) => {
+            detailRequests.current.set(contractId, "loaded");
+            setStateRaw((prev) => ({
+              ...prev,
+              contractDetail: { ...prev.contractDetail, [contractId]: view },
+            }));
+          })
+          .catch((error: unknown) => {
+            if (
+              !(error instanceof ContractDetailNotFoundError) &&
+              remaining > 0
+            ) {
+              window.setTimeout(
+                () => attempt(remaining - 1),
+                CONTRACT_DETAIL_RETRY_DELAY_MS,
+              );
+              return;
+            }
+            // Released, so opening the contract again tries afresh rather than
+            // meeting a stored verdict.
+            detailRequests.current.delete(contractId);
+            setStateRaw((prev) => ({
+              ...prev,
+              contractDetail: { ...prev.contractDetail, [contractId]: "error" },
+            }));
+          });
+      };
+
+      attempt(CONTRACT_DETAIL_RETRY_ATTEMPTS);
     },
-    [sourceClientKey, sourceProviderKey],
+    [effectiveSourceProviderKey, sourceClientKey],
   );
 
   const startContractOptimization = useCallback(
@@ -270,8 +370,21 @@ export function WorkspaceClient({
 
   useEffect(() => {
     if (!initialContractId?.trim()) return;
+    // The loader resolves this before mount; the component default also keeps
+    // standalone embeds and tests on the governed provider path.
     fetchContractDetail(initialContractId.trim());
   }, [fetchContractDetail, initialContractId]);
+
+  useEffect(() => {
+    const contractId = initialContractId?.trim();
+    if (!contractId || state.contractDetail[contractId] !== "error") return;
+    if (initialDetailRetry.current === contractId) return;
+    initialDetailRetry.current = contractId;
+    const retry = window.setTimeout(() => {
+      fetchContractDetail(contractId);
+    }, INITIAL_CONTRACT_DETAIL_RETRY_DELAY_MS);
+    return () => window.clearTimeout(retry);
+  }, [fetchContractDetail, initialContractId, state.contractDetail]);
 
   const logic = useMemo(
     () =>

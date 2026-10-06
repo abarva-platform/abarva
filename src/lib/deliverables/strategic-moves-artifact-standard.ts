@@ -410,10 +410,9 @@ function recordedBaselineMetricsBlock(ctx: SolutionContext): string {
   const entries = Object.entries(ctx.baselineMetrics ?? {}).filter(
     ([label, value]) => label.trim() && value.trim(),
   );
-  if (!entries.length) return "- [none captured as structured baseline metrics]";
-  return entries
-    .map(([label, value]) => `- ${label}: ${value}`)
-    .join("\n");
+  if (!entries.length)
+    return "- [none captured as structured baseline metrics]";
+  return entries.map(([label, value]) => `- ${label}: ${value}`).join("\n");
 }
 
 function evidenceTaxonomyBlock(ctx: SolutionContext): string {
@@ -482,7 +481,7 @@ The Charter is a governance document. It authorizes the work, defines its purpos
 aligns sponsors, and prepares the client for Discovery.
 
 The Charter is not a diagnostic report, solution design, architecture document, business case,
-implementation roadmap, or project plan.
+implementation roadmap, project plan, or Discovery/workshop guide.
 
 Near the beginning of the Charter, include this statement verbatim:
 "${CHARTER_CONTRACT.boundaryStatement}"
@@ -490,16 +489,11 @@ Near the beginning of the Charter, include this statement verbatim:
 Required sections, in order:
 ${requiredSections}
 
-For "${CHARTER_CONTRACT.sections[7]?.title}" specifically: this section prepares the client for
-Discovery — it does not perform the assessment. Include an executive table (Area / What to Expect /
-What We Need From You / Priority) covering Business Process, People & Governance, Technology, Data,
-Performance, and Risk & Controls; then a second table of typical Discovery activities and their
-typical duration (e.g. Executive Sponsor Session ~60 minutes, Business Process Workshop ~90 minutes,
-Technology Review ~60 minutes, Data Review ~60 minutes, Validation & Readout ~60 minutes); then a
-short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be
-generated after Charter approval — containing interview questionnaires, workshop agendas, guided
-templates, evidence checklists, and data-capture instructions. Do not embed that detailed material
-in the Charter itself.
+For "${CHARTER_CONTRACT.sections.find((section) => section.key === "authorization_conditions")?.title}" specifically: record only the sponsor's authorization
+conditions and the few open inputs that must carry into Discovery. Do not include workshop agendas,
+session plans, questionnaires, data request workbooks, interview scripts, or detailed guidebook
+instructions. Those are generated as a separate Discovery Workshop Guide / Evidence Request Pack
+after Charter approval.
 
 You consume only approved P0 structured capture, approved enterprise context, approved evidence,
 and explicit sponsor input. Never invent information that should have been collected in P0. Every
@@ -640,7 +634,7 @@ Visible status requirement:
 - Title or subtitle must state: "P3 Draft — based on approved P2 diagnostic for design shaping".
 - State that P2 was approved only for P3 draft shaping.
 - State that P2 is not final and P3 is not final.
-- Carry forward sponsor/signoff, missing evidence, and unresolved decision caveats.
+- Carry forward the sponsor contact and communication preference, missing evidence, and unresolved decision caveats. Sponsor sign-off is not required.
 
 AbarVa boundary:
 - AbarVa helps define the new way of working, future-state direction, human + AI roles, control
@@ -946,7 +940,7 @@ ${missingInputsActionBlock(ctx)}
 4. Readiness and gates
 - Draft/final mode: ${args.generationMode}
 - Draft caveat when applicable: ${args.generationMode === "draft" ? (args.draftCaveat ?? STRATEGIC_MOVES_DRAFT_CAVEAT) : "Not a draft artifact."}
-- Final artifacts require capture complete, sponsor/owner conditions satisfied, evidence covered or waived, gate approval, golden-bar pass, and no hard blockers.
+- Final artifacts require capture complete, accountable owner conditions satisfied, evidence covered or explicitly waived, approval by an authorized workspace user, golden-bar pass, and no hard blockers. Sponsor approval is not a condition.
 
 5. Phase-specific assignment
 ${phaseAssignmentForArtifact({ artifact: args.artifact, phase: args.phase, context: ctx })}

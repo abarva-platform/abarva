@@ -1,5 +1,8 @@
+import { MODULE_V6_ANSWER_CONTRACT_VERSION } from "@/lib/agent/module-v6-answer-contract";
+
 const mockAnthropicStream = jest.fn();
 const mockGetActiveClientRow = jest.fn();
+const mockBuildV6SourceEventInstanceForTenant = jest.fn();
 
 jest.mock("@/lib/integrations/ai-egress", () => ({
   preflightAnthropicDirectClient: jest.fn(() => ({
@@ -23,7 +26,7 @@ jest.mock("@/lib/module-v6/demo-tenant-packs", () => {
 
   return {
     ...actual,
-    buildV6SourceEventInstanceForTenant: jest.fn(
+    buildV6SourceEventInstanceForTenant: mockBuildV6SourceEventInstanceForTenant.mockImplementation(
       (tenantKeyInput: string, requestedInstanceId?: string | null) => {
         const tenantKey = actual.canonicalV6DemoTenantKey(tenantKeyInput);
         if (!["skyharbor-air", "lakeshore-holdings"].includes(tenantKey)) {
@@ -88,7 +91,25 @@ describe("POST /api/source/synthesis", () => {
     });
   });
 
-  it("uses the active Airline Demo V6 Source pack instead of defaulting to the Apex AMS fixture", async () => {
+  /**
+   * This case expected 200 and now asserts 403, because the behaviour it
+   * describes changed deliberately: `skyharbor-air` joined
+   * FOUNDATION_TENANT_KEYS, and the route refuses legacy V6 synthesis packs
+   * for foundation tenants so Source renders from governed operational state
+   * instead. The 403 is the control working, not a regression, and this is an
+   * expectation refresh rather than a deleted control.
+   *
+   * It is kept rather than folded into the `airline-demo-new` case below:
+   * skyharbor-air is the tenant this route used to serve and the one demos
+   * still reach for, so it is the case that would notice if the refusal were
+   * relaxed for it specifically.
+   *
+   * What it can no longer assert is the prompt body — the previous version
+   * checked that the Airline pack, not the Apex fixture, reached the model.
+   * A refused request never reaches the model, so that proof now lives only
+   * in the Lakeshore case below.
+   */
+  it("refuses the legacy V6 pack for skyharbor-air, now a governed foundation tenant", async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: "client-skyharbor",
       name: "Airline Demo",
@@ -104,23 +125,29 @@ describe("POST /api/source/synthesis", () => {
       }),
     );
 
-    expect(res.status).toBe(200);
-    expect(res.headers.get("x-abarva-v6-surface")).toBe("source");
-    await expect(res.text()).resolves.toBe("Source V6 answer.");
-    expect(mockAnthropicStream).toHaveBeenCalledTimes(1);
-    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
-    expect(streamArgs.messages[0].content).toContain(
-      "OCC Modernization vendor and commercial readiness",
+    expect(res.status).toBe(403);
+    expect(res.headers.get("x-abarva-source-layer")).toBe("source-current");
+    await expect(res.json()).resolves.toEqual({
+      error: "governed_foundation_tenant",
+      detail:
+        "Foundation tenants must render Source synthesis from governed Source operational state. Legacy V6 synthesis packs are unavailable on this tenant.",
+    });
+    // Refused before the model is reached: a blocked tenant must not cost an
+    // egress call, and must not have its context sent out on the way to being
+    // refused.
+    expect(mockAnthropicStream).not.toHaveBeenCalled();
+    // Refused before the PACK is reached, which is the part "expect a 403"
+    // cannot prove on its own. skyharbor-air is a key for which a pack would
+    // resolve, so moving the refusal to run after the pack is built leaves this
+    // status and body byte-identical — and fails here, and only here.
+    expect(mockBuildV6SourceEventInstanceForTenant).not.toHaveBeenCalled();
+    // The error response carries the rest of the surface attribution too, not
+    // just the layer: an error path that quietly stops emitting the contract
+    // version is how a surface loses its attribution without any case noticing.
+    expect(res.headers.get("x-abarva-v6-contract")).toBe(
+      MODULE_V6_ANSWER_CONTRACT_VERSION,
     );
-    expect(streamArgs.messages[0].content).toContain(
-      "vendor-commercial-packet",
-    );
-    expect(streamArgs.messages[0].content).toContain(
-      'include the exact phrase "commercial evidence is DATA-THIN"',
-    );
-    expect(streamArgs.messages[0].content).not.toContain(
-      "apex-retail-ams-outsourcing-2026",
-    );
+    expect(res.headers.get("x-abarva-renderer-policy")).toBe("placement-only");
   });
 
   it("uses the active Lakeshore Holdings V6 Source pack with loaded commercial facts", async () => {
@@ -143,7 +170,7 @@ describe("POST /api/source/synthesis", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("x-abarva-v6-surface")).toBe("source");
+    expect(res.headers.get("x-abarva-source-layer")).toBe("source-current");
     await expect(res.text()).resolves.toBe("Industrial Source V6 answer.");
     const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
     expect(streamArgs.messages[0].content).toContain(
@@ -151,6 +178,18 @@ describe("POST /api/source/synthesis", () => {
     );
     expect(streamArgs.messages[0].content).toContain(
       "vendor-commercial-packet",
+    );
+    // Re-homed from the refused skyharbor-air case. The comment above that case
+    // says this proof "now lives only in the Lakeshore case below" — it did not:
+    // both guards were dropped with the case and landed nowhere, so nothing
+    // asserted the data-thin instruction or the no-Apex-fallback contract at
+    // all. This is now the only 200 on this route, so it is the only place
+    // either can be proved, and the comment above is true as written.
+    expect(streamArgs.messages[0].content).toContain(
+      'include the exact phrase "commercial evidence is DATA-THIN"',
+    );
+    expect(streamArgs.messages[0].content).not.toContain(
+      "apex-retail-ams-outsourcing-2026",
     );
   });
 
@@ -171,7 +210,7 @@ describe("POST /api/source/synthesis", () => {
     );
 
     expect(res.status).toBe(403);
-    expect(res.headers.get("x-abarva-v6-surface")).toBe("source");
+    expect(res.headers.get("x-abarva-source-layer")).toBe("source-current");
     await expect(res.json()).resolves.toEqual({
       error: "wrong_client",
       detail: "Requested Source event does not belong to the active tenant.",
@@ -196,7 +235,7 @@ describe("POST /api/source/synthesis", () => {
     );
 
     expect(res.status).toBe(403);
-    expect(res.headers.get("x-abarva-v6-surface")).toBe("source");
+    expect(res.headers.get("x-abarva-source-layer")).toBe("source-current");
     await expect(res.json()).resolves.toEqual({
       error: "governed_foundation_tenant",
       detail:

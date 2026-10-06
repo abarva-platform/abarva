@@ -366,7 +366,7 @@ describe("buildStructuredExhibits", () => {
         "- P2 Discover & Diagnose: ground the evidence.",
         "- P3 Design Future State: compare options.",
         "- P4 Roadmap & Business Case: build the roadmap.",
-        "- P5 Approval & Mobilization: confirm readiness.",
+        "- P5 Mobilize & Handoff: confirm readiness.",
         "- Tower Track Outcomes: track value evidence.",
       ].join("\n"),
     });
@@ -379,7 +379,7 @@ describe("buildStructuredExhibits", () => {
           title: "Moves Phase Plan",
           rows: expect.arrayContaining([
             expect.objectContaining({ phase: "P0 Originate" }),
-            expect.objectContaining({ phase: "P5 Approval & Mobilization" }),
+            expect.objectContaining({ phase: "P5 Mobilize & Handoff" }),
             expect.objectContaining({
               phase: "Tower Track Outcomes",
               boundary:

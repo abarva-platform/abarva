@@ -686,10 +686,11 @@ describe("Moves learning review queue", () => {
   });
 
   it("marks fully gated but not-yet-stewarded candidates preview-ready", () => {
-    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+    // A declared tenant: the promotion evaluator blocks a non-canonical client_key.
+    const queue = summarizeMovesLearningReviewCandidates("skyharbor-air", [
       {
         id: "rec-1",
-        tenant_key: "first-capital",
+        tenant_key: "skyharbor-air",
         canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
         record_subtype: "approved_evidence",
         title: "Loan onboarding baseline",
@@ -749,10 +750,11 @@ describe("Moves learning review queue", () => {
   });
 
   it("builds a promotion rollup that summarizes why candidates are not active-context ready", () => {
-    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+    // A declared tenant: the promotion evaluator blocks a non-canonical client_key.
+    const queue = summarizeMovesLearningReviewCandidates("skyharbor-air", [
       {
         id: "rec-1",
-        tenant_key: "first-capital",
+        tenant_key: "skyharbor-air",
         canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
         record_subtype: "approved_evidence",
         title: "Loan onboarding baseline",
@@ -781,7 +783,7 @@ describe("Moves learning review queue", () => {
       },
       {
         id: "rec-2",
-        tenant_key: "first-capital",
+        tenant_key: "skyharbor-air",
         canonical_record_id: "moves-learning-move-1-client_approved_deliverable-del-1",
         record_subtype: "client_approved_deliverable",
         title: "Client-approved charter",

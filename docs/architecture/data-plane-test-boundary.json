@@ -1,0 +1,73 @@
+{
+  "$schema": "./data-plane-test-boundary.schema.md",
+  "item": "T-469",
+  "title": "What an unstubbed data-plane read does under jest, per client",
+  "why": "Test-time data-plane safety is a property of which client the code sits behind, not of the suite. It is invisible from the test file, and the two families behave in opposite ways: one opens a real socket, the other swallows its own driver-load refusal into a null a caller reads back as 'no rows'. Before this artifact existed it was rediscovered by hand, per backlog item, by whoever happened to probe -- producing two correct-looking conclusions that contradicted each other.",
+  "provenBy": "execution, not by reading the import",
+  "provenAgainst": "postgresql://probe:probe@127.0.0.1:59999/probe -- a closed local port, so a 'connects' verdict is proved by ECONNREFUSED without any database being reached",
+  "provenOn": { "sha": "1902350b2", "date": "2026-09-21" },
+  "reprovedBy": "src/lib/data-plane/__tests__/test-boundary.test.ts",
+  "enforcedBy": "src/testing/pg-test-boundary.ts, mapped over '^pg$' in jest.config.ts",
+  "verdicts": {
+    "connects": "The driver is loaded eagerly and an unstubbed call opens a TCP socket. Anywhere a real connection string is in the environment -- including a developer checkout whose .env.local carries one -- this is a live tenant read.",
+    "throws": "An unstubbed call raises before any socket is opened. Loud and safe.",
+    "swallows": "An unstubbed call resolves with an empty or null result carrying the failure in a side channel. Safe for the database and dangerous for the assertion: the suite cannot tell a failed read from an empty one."
+  },
+  "entryPoints": [
+    {
+      "id": "azure-session",
+      "module": "src/lib/data-plane/read-adapters/azureSession.ts",
+      "driverLoad": "static",
+      "driverImport": "import { Pool } from 'pg'",
+      "verdictConfigured": "connects",
+      "verdictUnconfigured": "throws",
+      "observed": "ECONNREFUSED 127.0.0.1:59999 in ~3ms; unconfigured: azure_read_adapter_no_connection",
+      "reachedBy": [
+        "src/lib/data-plane/azureRead.ts",
+        "src/lib/data-plane/write-adapters/azurePostgresWriteAdapter.ts",
+        "every per-domain adapter under src/lib/data-plane/read-adapters/ that imports createDefaultSession"
+      ],
+      "probe": "azureRead.select({ table: 'clients', limit: 1 })"
+    },
+    {
+      "id": "azure-postgres-read-adapter",
+      "module": "src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts",
+      "driverLoad": "static",
+      "driverImport": "import { Client } from 'pg'",
+      "verdictConfigured": "connects",
+      "verdictUnconfigured": "throws",
+      "observed": "ECONNREFUSED 127.0.0.1:59999 in ~2ms",
+      "reachedBy": ["the parallel-run read adapter surface"],
+      "probe": "azurePostgresReadAdapter.getTenantInvariants([...])"
+    },
+    {
+      "id": "domain-pool",
+      "module": "src/lib/corpus/db.ts",
+      "driverLoad": "static",
+      "driverImport": "import { Pool } from 'pg'",
+      "verdictConfigured": "connects",
+      "verdictUnconfigured": "throws",
+      "observed": "ECONNREFUSED 127.0.0.1:59999 in ~0ms",
+      "reachedBy": [
+        "the per-domain pool family: src/lib/corpus/db.ts, src/lib/workshops/db.ts, src/lib/instruments/db.ts, src/lib/dependencies/db.ts, src/lib/tower/value-states/db.ts, src/lib/tower/ingest/azure-cost/db.ts, src/lib/tower/ingest/servicenow-cmdb/db.ts, src/lib/agents/sentinel-reasoning/db.ts"
+      ],
+      "probe": "withCorpusClient(c => c.query('select 1'))",
+      "note": "Probed on one member of the family and classified for the family, because every member reaches pg through the same static import and the same Pool construction. The enforcement does not rely on this classification being complete -- it is installed on the driver, so a member nobody has listed is still guarded."
+    },
+    {
+      "id": "postgres-compat",
+      "module": "src/lib/data-plane/postgresCompat.ts",
+      "driverLoad": "dynamic",
+      "driverImport": "new Function('specifier', 'return import(specifier)')",
+      "verdictConfigured": "swallows",
+      "verdictUnconfigured": "swallows",
+      "observed": "{ data: null, error: { message: 'TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG]...' } } in 0ms, no socket; unconfigured: the same shape carrying 'Missing ABARVA_AZURE_DATABASE_URL or DATABASE_URL'",
+      "reachedBy": [
+        "src/lib/data-plane/read-adapters/supabaseReadAdapter.ts",
+        "src/lib/data-plane/write-adapters/supabaseWriteAdapter.ts"
+      ],
+      "probe": "getAzureReadFluentClient().from('clients').select('*').limit(1)",
+      "note": "The jest VM refuses the dynamic import without --experimental-vm-modules and the refusal is swallowed. No socket is opened, so no gate can help here; what a suite behind this client needs is a STRICT stand-in that raises on any unexpected table, because a green assertion here is as likely to mean 'the read failed' as 'the table was empty'. src/lib/atlas/__tests__/tower-grounding-client-name.test.ts is the worked shape."
+    }
+  ]
+}

@@ -70,10 +70,10 @@ const AMS_HANDOFF_NARRATIVES = buildStageHandoffNarratives(PAT_SRC_AMS_001);
 
 export function SentinelEngagementCanvas({
   event,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: {
   event: SourcingEventDetail;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 }) {
   const missionReport = buildEventCanvasMissionReport(event);
   const missionPreviewMissions = getEventCanvasMissionPreviewMissions(missionReport);
@@ -122,6 +122,7 @@ export function SentinelEngagementCanvas({
               title="Event pressure signals"
               emptyLabel="No open event alerts. Ava will keep this shell focused on the current stage."
               variant="light"
+              canViewFinancialValues={canViewFinancialValues}
             />
           </div>
           <SourceStagePanel event={event} />

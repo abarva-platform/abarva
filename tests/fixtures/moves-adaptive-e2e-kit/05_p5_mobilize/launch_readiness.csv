@@ -1,0 +1,8 @@
+readiness_item,required_state,evidence_needed,status_for_smoke,owner_role
+Synthetic/approved data only,No PHI or unapproved client content,Data classification and scan,open,Privacy Officer
+Source access,Least-privilege read path approved,Access decision and interface test,open,Data Platform Owner
+Knowledge freshness,Conflicting stale article remediated or filtered,Owner approval and negative test,open,Knowledge Owner
+Human confirmation,No unreviewed communication or writeback,Workflow test and audit event,open,Product Owner
+Red-line tests,All negative canaries blocked or safely redirected,Test results and reviewer,open,Compliance Lead
+Finance baseline,Definitions and capacity method approved,Finance sign-off,open,Finance Value Owner
+Agent readiness,Training and supervisor sampling plan ready,Approved materials and roster,open,Operations Lead

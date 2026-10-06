@@ -195,7 +195,7 @@ describe("listContractVendor360 tenant-key resolution", () => {
       if (sql.startsWith("SELECT set_config")) return [];
       if (
         sql.includes("source.contract_360") &&
-        sql.includes("AND contract_id = $2")
+        sql.includes("AND c.contract_id = $2")
       ) {
         return [];
       }
@@ -396,6 +396,18 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(performanceQuery?.[0]).toContain(
       "active.observation_id = o.observation_id",
     );
+    expect(performanceQuery?.[0]).toContain(
+      "active.load_run_id = o.load_run_id",
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "current_contract.load_run_id = o.load_run_id",
+    );
+    const spendQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("source.contract_consumption_observation"),
+    );
+    expect(spendQuery?.[0]).toContain(
+      "current_contract.load_run_id = o.load_run_id",
+    );
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
       ["meridian-health"],
@@ -413,6 +425,106 @@ describe("listContractVendor360 tenant-key resolution", () => {
       ["meridian-health"],
       ["meridian-health"],
     ]);
+  });
+
+  it("hydrates missing contract narrative fields from governed fact assertions", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            contract_name: "Enterprise Agreement",
+            purpose_summary: null,
+          },
+        ];
+      }
+      if (sql.includes("FROM source.canonical_fact_assertion")) {
+        return [
+          {
+            fact_key: "contract.purpose_summary",
+            value_text:
+              "Databricks provides governed analytics platform capacity for the declared workload groups.",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const row = await getContract360("meridian-health", "MER-TECH-DBX-001");
+
+    expect(row?.purpose_summary).toContain(
+      "governed analytics platform capacity",
+    );
+    const factQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("FROM source.canonical_fact_assertion"),
+    );
+    expect(factQuery?.[0]).toContain("review_state IN");
+  });
+
+  it("surfaces a declared archetype preserved on the canonical contract payload", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            vendor_category: null,
+            contract_name: "Databricks Enterprise Agreement",
+            annual_value: "1550000",
+            __declared_contract_archetype: "cloud_consumption_commit",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const row = (await listContract360("meridian")).find(
+      (candidate) => candidate.contract_id === "MER-TECH-DBX-001",
+    );
+
+    expect(row).toMatchObject({
+      contract_archetype: "cloud_consumption_commit",
+      vendor_category: "cloud_consumption_commit",
+    });
+  });
+
+  it("does not turn a canonical-source miss into a false missing contract", async () => {
+    let contractQueryCount = 0;
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        contractQueryCount += 1;
+        return contractQueryCount === 1
+          ? []
+          : [
+              {
+                tenant_key: "meridian-health",
+                contract_id: "MER-TECH-DBX-001",
+                vendor_ref: "MER-VEN-DATABRICKS",
+                vendor_name: "Databricks, Inc.",
+                contract_name: "Enterprise Agreement",
+                purpose_summary:
+                  "Governed analytics platform capacity for declared workload groups.",
+              },
+            ];
+      }
+      return [];
+    });
+
+    const row = await getContract360("meridian-health", "MER-TECH-DBX-001");
+
+    expect(row?.contract_id).toBe("MER-TECH-DBX-001");
+    expect(contractQueryCount).toBe(2);
+    expect(
+      run.mock.calls.filter(([sql]) => sql.includes("FROM source.contract_360")),
+    ).toHaveLength(2);
   });
 
   it("reads cloud commitment coverage rows through canonical Source tenant context", async () => {
@@ -668,12 +780,12 @@ describe("listContractVendor360 tenant-key resolution", () => {
     ).toEqual([
       ["meridian-health"],
       ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-      ]);
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+    ]);
     expect(JSON.stringify(run.mock.calls)).not.toContain(
       "meridian_health_global",
     );

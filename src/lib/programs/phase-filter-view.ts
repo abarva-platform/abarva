@@ -27,7 +27,7 @@ export interface PhaseFilterOption {
   label: string;
   description: string;
   isCurrentPhase: boolean; // for apex-retail cdp program
-  programCount: number;    // deterministic seed count
+  programCount: number; // deterministic seed count
 }
 
 export interface PhaseFilterView {
@@ -61,7 +61,7 @@ const PHASE_DESCRIPTION_MAP: Record<ProgramPhase, string> = {
   build:
     'Workstreams, estimates, timeline, milestones, dependencies, RACI, risks, and execution success criteria.',
   activate:
-    'Business case, funding package, sponsor alignment, readiness, and change-management approval.',
+    'Business case, funding package, stakeholder context, readiness, and change-management approval by an authorized workspace user.',
   operate:
     'Tower monitoring contract, data-feed ownership, escalation thresholds, and value tracking cadence.',
 };
@@ -77,12 +77,12 @@ const DETERMINISTIC_CAVEAT =
 // ---------------------------------------------------------------------------
 
 const APEX_RETAIL_PHASE_COUNTS: Record<ProgramPhase, number> = {
-  discovery: 1,  // Demand Forecasting — early framing
-  synthesis: 1,  // Store Associate Productivity — synthesis stage
-  design: 1,     // Contact Center AI — design and vendor evaluation
-  build: 1,      // CDP — currently in Execution Roadmap phase (current phase)
-  activate: 0,   // None in Approval & Mobilization yet
-  operate: 0,    // None in Tower Handoff yet
+  discovery: 1, // Demand Forecasting — early framing
+  synthesis: 1, // Store Associate Productivity — synthesis stage
+  design: 1, // Contact Center AI — design and vendor evaluation
+  build: 1, // CDP — currently in Execution Roadmap phase (current phase)
+  activate: 0, // None in Approval & Mobilization yet
+  operate: 0, // None in Tower Handoff yet
 };
 
 // Meridian tenant has 2 programs (Intelligence demo tenant — thinner seed)
@@ -167,7 +167,8 @@ export function buildPhaseFilterView(
   activePhase: ProgramPhase | 'all' = 'all',
 ): PhaseFilterView {
   const counts = getPhaseCounts(tenantSlug);
-  const currentPhase: ProgramPhase | undefined = TENANT_CURRENT_PHASE[tenantSlug];
+  const currentPhase: ProgramPhase | undefined =
+    TENANT_CURRENT_PHASE[tenantSlug];
 
   const all: ProgramPhase[] = [
     'discovery',

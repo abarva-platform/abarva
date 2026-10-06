@@ -149,8 +149,30 @@ describe("supabase source write adapter", () => {
       source_event_id: "evt-1",
       source_event_row_id: "evt-1",
       user_id: "user-1",
-      role: "source creator",
+      role: "event owner",
+      approval_authority: "approver",
+      source_access_level: "source_member",
+      can_view_financial: false,
+      can_approve_source_stages: true,
+      can_approve_award: true,
+      can_publish_sourcing_artifacts: true,
     });
+  });
+
+  it("does not accept a missing participant table as an owner assignment", async () => {
+    const client = {
+      from: () => ({
+        insert: () => Promise.resolve({
+          error: { message: "source_event_participants does not exist" },
+        }),
+      }),
+    } as unknown as SupabaseClient;
+    const result = await createSupabaseSourceWriteAdapter(() => client).insertParticipant({
+      clientKey: "synthetic",
+      sourceEventId: "evt-1",
+      userId: "person-1",
+    });
+    expect(result.ok).toBe(false);
   });
 
   it("applyApproval updates the event then inserts the approval record", async () => {
@@ -233,6 +255,30 @@ describe("supabase source write adapter", () => {
       "source_events",
       "source_event_approvals",
     ]);
+  });
+
+  it("refuses exact-version authority approvals on the legacy write path before mutating", async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.applyApproval({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      fromState: "waiting_on_client",
+      toState: "active",
+      approvalAction: "admin_review",
+      approvedByUserId: "admin-1",
+      notes: "Reviewed the current Request version.",
+      authorityApproval: {
+        authorityKind: "request",
+        versionId: "request-version-1",
+        role: "request_acceptor",
+        decision: "approved",
+        actorUserId: "admin-1",
+        reason: "Reviewed the current Request version.",
+      },
+    });
+    expect(result).toMatchObject({ ok: false });
+    expect(calls).toHaveLength(0);
   });
 
   it("insertCriterionApproval inserts a source_event_approvals row and returns its id", async () => {
@@ -457,6 +503,9 @@ describe("azure source write adapter", () => {
     expect(result.ok).toBe(true);
     expect(statements[0]).toContain("INSERT INTO source_event_participants");
     expect(statements[0]).toContain("$2::text,$2::uuid");
+    expect(statements[0].replace(/\s+/g, " ")).toContain(
+      "'event owner','approver','source_member', false,true,true,true,true,true",
+    );
   });
 
   it("applyApproval issues the event UPDATE and the approval INSERT in one tx", async () => {
@@ -474,6 +523,151 @@ describe("azure source write adapter", () => {
     expect(result.ok).toBe(true);
     expect(statements[0]).toContain("UPDATE source_events");
     expect(statements[1]).toContain("INSERT INTO source_event_approvals");
+  });
+
+  it("binds an authority approval to the exact current version before lifecycle mutation", async () => {
+    const { session, statements, paramSets } = fakeTxSession((sql) =>
+      sql.includes("FOR UPDATE") ||
+      sql.includes("source_event_authority_version_approvals")
+        ? [{ id: "authority-approval-1" }]
+        : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.applyApproval({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      fromState: "waiting_on_client",
+      toState: "active",
+      approvalAction: "admin_review",
+      approvedByUserId: "admin-1",
+      notes: "Reviewed the current Request version.",
+      authorityApproval: {
+        authorityKind: "request",
+        versionId: "request-version-1",
+        role: "request_acceptor",
+        decision: "approved",
+        actorUserId: "admin-1",
+        reason: "Reviewed the current Request version.",
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain("SELECT id FROM source_events");
+    expect(statements[0]).toContain("FOR UPDATE");
+    expect(paramSets[0]).toEqual(["evt-1", "apex-retail"]);
+    expect(statements[1]).toContain("source_event_authority_versions");
+    expect(statements[1]).toContain("FOR UPDATE");
+    expect(statements[1]).toContain("superseded_at IS NULL");
+    expect(paramSets[1]).toEqual([
+      "request-version-1",
+      "evt-1",
+      "apex-retail",
+      "request",
+    ]);
+    expect(statements[2]).toContain(
+      "INSERT INTO source_event_authority_version_approvals",
+    );
+    expect(statements[3]).toContain("UPDATE source_events");
+  });
+
+  it("serializes a competing Request edit before committing exact-current approval", async () => {
+    const statements: string[] = [];
+    let current = true;
+    let versionLocked = false;
+    let editCommitted = false;
+    let editCommittedAtApprovalCommit = false;
+    let releaseVersionLock = () => {};
+    const versionLockReleased = new Promise<void>((resolve) => {
+      releaseVersionLock = resolve;
+    });
+    let competingEdit: Promise<void> | undefined;
+    const session: TxSessionRunner = async (fn) => {
+      try {
+        const result = await fn(async <R>(sql: string) => {
+          statements.push(sql);
+          if (sql.trimStart().startsWith("SELECT id FROM source_events")) {
+            return [{ id: "evt-1" }] as R[];
+          }
+          if (
+            sql
+              .trimStart()
+              .startsWith("SELECT id FROM source_event_authority_versions")
+          ) {
+            versionLocked = sql.includes("FOR UPDATE");
+            return [{ id: "request-version-1" }] as R[];
+          }
+          if (sql.includes("INSERT INTO source_event_authority_version_approvals")) {
+            const matchedAtStatementStart = current;
+            competingEdit = (async () => {
+              if (versionLocked) await versionLockReleased;
+              current = false;
+              editCommitted = true;
+            })();
+            await Promise.resolve();
+            return (matchedAtStatementStart ? [{ id: "approval-1" }] : []) as R[];
+          }
+          return [] as R[];
+        });
+        editCommittedAtApprovalCommit = editCommitted;
+        return result;
+      } finally {
+        releaseVersionLock();
+        await competingEdit;
+      }
+    };
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.applyApproval({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      fromState: "waiting_on_client",
+      toState: "active",
+      approvalAction: "admin_review",
+      approvedByUserId: "admin-1",
+      notes: "Reviewed the current Request version.",
+      authorityApproval: {
+        authorityKind: "request",
+        versionId: "request-version-1",
+        role: "request_acceptor",
+        decision: "approved",
+        actorUserId: "admin-1",
+        reason: "Reviewed the current Request version.",
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(editCommittedAtApprovalCommit).toBe(false);
+    expect(editCommitted).toBe(true);
+    expect(statements[0]).toContain("SELECT id FROM source_events");
+    expect(statements[1]).toContain("source_event_authority_versions");
+  });
+
+  it("does not mutate lifecycle when the authority version is stale", async () => {
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes("SELECT id FROM source_events") ? [{ id: "evt-1" }] : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.applyApproval({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      fromState: "waiting_on_client",
+      toState: "active",
+      approvalAction: "admin_review",
+      approvedByUserId: "admin-1",
+      notes: "Reviewed the current Request version.",
+      authorityApproval: {
+        authorityKind: "request",
+        versionId: "stale-version",
+        role: "request_acceptor",
+        decision: "approved",
+        actorUserId: "admin-1",
+        reason: "Reviewed the current Request version.",
+      },
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      error: "request authority version is not current",
+    });
+    expect(statements).toHaveLength(2);
+    expect(statements[0]).toContain("FOR UPDATE");
+    expect(statements[1]).not.toContain("UPDATE source_events");
   });
 
   it("insertCriterionApproval returns the Azure approval id", async () => {
@@ -529,6 +723,39 @@ describe("azure source write adapter", () => {
       "evt-1",
       "apex-retail",
     ]);
+  });
+
+  it("updates intake and supersedes its Request authority in one Azure transaction", async () => {
+    const { session, statements } = fakeTxSession((sql) => {
+      if (sql.includes("SELECT id, version_number, content_hash")) {
+        return [];
+      }
+      if (sql.includes("INSERT INTO source_event_authority_versions")) {
+        return [{ id: "request-version-1" }];
+      }
+      if (sql.includes("UPDATE source_events")) return [{ id: "evt-1" }];
+      return [];
+    });
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.updateEventIntakeWithRequestAuthority({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      triggerDescription: "Corrected renewal trigger.",
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+      requestAuthority: {
+        eventId: "evt-1",
+        clientKey: "apex-retail",
+        authorityKind: "request",
+        payload: { triggerDescription: "Corrected renewal trigger." },
+        createdByUserId: "user-1",
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain("UPDATE source_events");
+    expect(statements[1]).toContain("SELECT id, version_number, content_hash");
+    expect(statements[2]).toContain(
+      "INSERT INTO source_event_authority_versions",
+    );
   });
 
   it("updateGateCriterion issues an UPDATE ... RETURNING * and returns the row", async () => {
@@ -629,7 +856,7 @@ describe("azure source write adapter", () => {
   });
 
   it("insertParticipant treats a unique-violation as a benign no-op", async () => {
-    const { session } = fakeTxSession((sql) => {
+    const { session, statements } = fakeTxSession((sql) => {
       if (sql.startsWith("INSERT")) {
         throw Object.assign(new Error("duplicate key value"), {
           code: "23505",
@@ -644,6 +871,21 @@ describe("azure source write adapter", () => {
       userId: "user-1",
     });
     expect(result.ok).toBe(true);
+    expect(statements).toHaveLength(1);
+  });
+
+  it("does not accept a missing Azure participant table as an owner assignment", async () => {
+    const { session } = fakeTxSession(() => {
+      throw Object.assign(new Error("source_event_participants does not exist"), {
+        code: "42P01",
+      });
+    });
+    const result = await createAzureSourceWriteAdapter(session).insertParticipant({
+      clientKey: "synthetic",
+      sourceEventId: "evt-1",
+      userId: "person-1",
+    });
+    expect(result.ok).toBe(false);
   });
 
   it("linkAttachments surfaces a backend fault without throwing", async () => {

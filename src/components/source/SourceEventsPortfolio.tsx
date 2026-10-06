@@ -178,14 +178,14 @@ type Props = {
   events: SourcingEventSummary[];
   activeStage: string | null;
   activeStatus: string | null;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 };
 
 export function SourceEventsPortfolio({
   events,
   activeStage,
   activeStatus,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: Props) {
   const filteredEvents = events.filter((event) => {
     const matchesStage = !activeStage || event.currentStageKey === activeStage;

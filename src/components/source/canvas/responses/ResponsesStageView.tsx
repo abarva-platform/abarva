@@ -1,6 +1,8 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import type { SourceShellArtifactLike } from "@/lib/source/source-event-shell-v2";
+import type { SourceEventEvidenceCurrentState } from "@/lib/source/canvas-substrate";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type {
   VendorBafoInstructionPack,
@@ -25,6 +27,7 @@ import { VendorResponseIntelligenceBrief } from "./VendorResponseIntelligenceBri
 import { VendorResponsePackageCockpit } from "./VendorResponsePackageCockpit";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 import { NormalizedResponseQualityPanel } from "./NormalizedResponseQualityPanel";
+import { VendorResponseIntakePanel } from "./VendorResponseIntakePanel";
 import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 
 export function ResponsesStageView({
@@ -40,6 +43,10 @@ export function ResponsesStageView({
   eventDisplayName,
   documentWorkspace,
   normalizedResponsePackages,
+  artifacts = [],
+  responseProposalAvailabilityState = null,
+  onResponseUploaded,
+  canViewFinancialValues = false,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
@@ -47,12 +54,23 @@ export function ResponsesStageView({
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
   parseReports?: VendorResponseParseReport[];
+  /**
+   * U-520 — pass-through for the one descendant that prints an exact magnitude,
+   * `VendorResponseDecisionProofPanel`. This view does not read it.
+   *
+   * Optional, defaulted `false` — fail-closed. The leaf takes it as required;
+   * see the canvas's copy of this note for why a pass-through does not.
+   */
+  canViewFinancialValues?: boolean;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   decisionBriefDocxHref?: string;
   decisionBriefPdfHref?: string;
   eventDisplayName?: string;
   documentWorkspace: ReactNode;
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  artifacts?: readonly SourceShellArtifactLike[];
+  responseProposalAvailabilityState?: SourceEventEvidenceCurrentState | null;
+  onResponseUploaded?: () => void;
 }) {
   const records = readiness?.records ?? [];
   const blocker = readiness?.blockers[0];
@@ -89,6 +107,18 @@ export function ResponsesStageView({
 
       {!isContractOptimization ? (
         <>
+          <VendorResponseIntakePanel
+            eventId={readiness?.eventId ?? ""}
+            suppliers={records.map((record) => ({
+              vendorId: record.vendorId,
+              vendorName: record.vendorName,
+            }))}
+            artifacts={artifacts}
+            responseProposalAvailabilityState={
+              responseProposalAvailabilityState
+            }
+            onUploaded={onResponseUploaded}
+          />
           <div style={STATUS_ROW}>
             {records.length === 0 ? (
               <StatusCard
@@ -152,7 +182,10 @@ export function ResponsesStageView({
             evaluationDecisionView={evaluationDecisionView}
             parseReports={parseReports}
           />
-          <VendorResponseDecisionProofPanel parseReports={parseReports} />
+          <VendorResponseDecisionProofPanel
+            parseReports={parseReports}
+            canViewFinancialValues={canViewFinancialValues}
+          />
           <VendorResponseProfilesPanel profileSet={profileSet} />
           <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
           <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />

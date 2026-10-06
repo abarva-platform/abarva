@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-databricks-enterprise-agreement-v1-20260908",
+  "title": "Meridian Databricks Enterprise Agreement — Renegotiation Evidence Pack",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_contract_depth_package",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade cloud data platform contract depth package. No patient, member, provider, claim-line, PHI, PII, or real production records are included. Synthetic evidence must remain labeled as demo-only and may not be represented as live-client truth or finance-confirmed realized value.",
+  "expected_object_count": 88,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-09-08",
+  "notes": "Manifest gates the in-repo source-file package at datasets/source/contract-depth/meridian-databricks-enterprise-agreement-v1-20260908/source-files. Adapter and projection quality gates (scripts/source/project-contract-depth-package.ts) must pass against this exact package before an operator ACA data-build job. The loader also enforces tenant_key and dataset_version identity across every populated source lane. contract_page_text.csv contains synthetic reviewed page summaries for demo citation wiring, not original PDFs. negotiation_findings.csv and negotiation_levers.csv are Layer 2 inputs linked into Layer 3 optimization opportunity payloads for the governed Optimize surface. This authorizes only a controlled operator ACA data-build job with row-count reconciliation, quality-gate output, proof bundle, and live retrieval proof before product or aVa claims rely on the package."
+}

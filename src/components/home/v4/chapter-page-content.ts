@@ -16,6 +16,8 @@ import {
   organizationFindings,
   interviewTables,
   interviewFindings,
+  crossFamilyFindings,
+  relationshipPathTables,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
@@ -107,6 +109,7 @@ export interface EstateRecordTypes {
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
   data?: EstateRow[];
+  relationships?: EstateRow[];
 }
 
 export interface ChapterDepth {
@@ -227,16 +230,34 @@ export function chapterDepth(
   estate: EstateRecordTypes,
 ): ChapterDepth {
   const depth = depthForSources(CHAPTER_SOURCES[chapterId] ?? [], estate);
+  const crossFamily =
+    chapterId === "what_needs_attention" ? crossFamilyFindings(estate) : [];
+  const graphTables =
+    chapterId === "what_needs_attention" ? relationshipPathTables(estate) : [];
+  const baseDepth =
+    graphTables.length > 0
+      ? { ...depth, tables: [...depth.tables, ...graphTables] }
+      : depth;
   const extra = EXTRA_FINDING_SOURCES[chapterId];
-  if (!extra) return depth;
-  const seen = new Set(depth.findings.map((f) => f.claim));
+  if (!extra) {
+    const seen = new Set(baseDepth.findings.map((f) => f.claim));
+    return {
+      ...baseDepth,
+      findings: [
+        ...baseDepth.findings,
+        ...crossFamily.filter((f) => !seen.has(f.claim)),
+      ],
+    };
+  }
+  const seen = new Set(baseDepth.findings.map((f) => f.claim));
   return {
-    ...depth,
+    ...baseDepth,
     findings: [
-      ...depth.findings,
+      ...baseDepth.findings,
       ...depthForSources(extra, estate).findings.filter(
         (f) => !seen.has(f.claim),
       ),
+      ...crossFamily.filter((f) => !seen.has(f.claim)),
     ],
   };
 }

@@ -118,7 +118,7 @@ describe('Source text artifact parser', () => {
         ...baseArtifact,
         stageKey: 'vendor_responses',
         artifactFamily: 'proposal',
-        artifactKind: 'vendor_response',
+        artifactKind: 'vendor_response_pack:vendor-northstar',
         originalName: 'northstar-response.md',
       },
       text: `Commitment: 99.9% availability for critical data platforms.\nSLA: P1 response within 30 minutes.\nPricing: fixed transition fee $1.2M in year 1 and offshore run rate $85/hour.`,
@@ -132,7 +132,13 @@ describe('Source text artifact parser', () => {
     ]);
     const commitments = insertCaptures.find((c) => c.table === 'source_vendor_commitments')?.payload as Array<Record<string, unknown>>;
     expect(commitments).toHaveLength(2);
+    expect(commitments).toEqual(expect.arrayContaining([
+      expect.objectContaining({ vendor_id: 'vendor-northstar' }),
+    ]));
     const pricing = insertCaptures.find((c) => c.table === 'source_pricing_components')?.payload as Array<Record<string, unknown>>;
+    expect(pricing).toEqual(expect.arrayContaining([
+      expect.objectContaining({ vendor_id: 'vendor-northstar' }),
+    ]));
     expect(pricing.map((row) => row.amount_usd).sort((a, b) => Number(a) - Number(b))).toEqual([85, 1_200_000]);
     expect(pricing).toEqual(expect.arrayContaining([
       expect.objectContaining({ component_key: 'PRICE-001', amount_usd: 1_200_000 }),

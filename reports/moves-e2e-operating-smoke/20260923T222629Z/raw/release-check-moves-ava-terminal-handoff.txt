@@ -1,0 +1,18 @@
+
+> abarva@0.1.0 release:check
+> node scripts/release-check.mjs
+
+migration-seals: verified 1 sealed migration
+Azure deployment lane check passed.
+[audit:no-legacy-tenant-inputs] pass
+Deleted legacy files in diff: 0
+Allowed historical references: 605
+Release record template contract passed.
+Release Control Gate passed.
+Release-relevant files: 12
+Release records: docs/releases/records/2026-09-23-moves-discovery-blueprint-routing.md, docs/releases/records/2026-09-23-moves-terminal-ava-guidance.md, docs/releases/records/2026-09-23-moves-terminal-handoff-status.md
+Nexus manual is current.
+Deploy Authority Gate passed.
+Tower tool rollout field survival gate passed for 1 generated package(s).
+Tower AI business-case field survival gate passed for 1 generated package(s).
+Pilot Data Loader Gate passed.

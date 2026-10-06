@@ -35,8 +35,13 @@ import { buildContractOptimizationEvidenceReadiness } from "@/lib/source/data-mo
 import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract-optimization-workflow-step";
 import type { OptimizationOpportunityValueType } from "@/lib/source/data-model/contract-optimization-opportunity";
+import type {
+  ContractOptimizationOpportunity,
+  ContractOpportunityClaim,
+} from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
   getContract360,
+  getContractIntelligence,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
 } from "@/lib/source/data-model/read-adapter";
@@ -58,11 +63,53 @@ function fmtPct(value: number | null | undefined): string {
   return `${Math.round(value * 100)}%`;
 }
 
+function firstNonBlank(
+  ...values: readonly (string | null | undefined)[]
+): string | null {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
 const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   recoverable_leakage: "Recoverable leakage",
   avoided_cost: "Avoided cost",
   negotiated_improvement: "Negotiated improvement",
 };
+
+export function opportunityForAvaTrace(
+  opportunity: ContractOptimizationOpportunity,
+  claims: readonly ContractOpportunityClaim[] = [],
+): ContractOptimizationOpportunity {
+  // The persisted read adapter verifies the claim-to-run ID before emitting a
+  // sized amount. The aVa read checks the exposed claim and output as well.
+  const sizingClaim = claims.find(
+    (claim) =>
+      claim.role === "sizing" &&
+      claim.opportunityId === opportunity.opportunityId &&
+      claim.contractId === opportunity.contractId &&
+      claim.basis === "calculated" &&
+      claim.evidenceStatus === "supported" &&
+      Boolean(claim.calculationRunId?.trim()) &&
+      claim.sourceRefs.length > 0 &&
+      claim.amountUsd != null &&
+      opportunity.amountUsd != null &&
+      Math.abs(claim.amountUsd - opportunity.amountUsd) <= 1 &&
+      opportunity.calculation != null &&
+      Number.isFinite(opportunity.calculation.calculatedAmountUsd) &&
+      Math.abs(
+        claim.amountUsd - opportunity.calculation.calculatedAmountUsd,
+      ) <= 1,
+  );
+  return {
+    ...opportunity,
+    amountUsd:
+      opportunity.amountState === "not_sized" ? null : opportunity.amountUsd,
+    calculation: sizingClaim ? opportunity.calculation : null,
+  };
+}
 
 const CONTRACT_SOURCE_EVIDENCE_MAP = [
   {
@@ -164,12 +211,18 @@ export async function buildAvaSourceContractGrounding(
   if (!tenantKey || !trimmedId) return { block: "", hasLiveNumbers: false };
 
   const contract = await getContract360(tenantKey, trimmedId).catch(() => null);
-  const [opportunitySet, evidencePack] = await Promise.all([
-    getContractOptimizationOpportunitySet(tenantKey, trimmedId, contract).catch(
-      () => null,
-    ),
-    getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(() => null),
-  ]);
+  const [opportunitySet, evidencePack, contractIntelligence] =
+    await Promise.all([
+      getContractOptimizationOpportunitySet(
+        tenantKey,
+        trimmedId,
+        contract,
+      ).catch(() => null),
+      getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(
+        () => null,
+      ),
+      getContractIntelligence(tenantKey, trimmedId).catch(() => null),
+    ]);
   if (!contract && !opportunitySet) {
     return { block: "", hasLiveNumbers: false };
   }
@@ -178,7 +231,9 @@ export async function buildAvaSourceContractGrounding(
     evidencePack: evidencePack ?? null,
   });
   const traceability = summarizeOpportunityTraceability(
-    opportunitySet?.opportunities ?? [],
+    (opportunitySet?.opportunities ?? []).map((opportunity) =>
+      opportunityForAvaTrace(opportunity, opportunitySet?.claims),
+    ),
   );
   const position = deriveOptimizeWorkflowPosition({
     hasSelectedContract: true,
@@ -209,11 +264,13 @@ export async function buildAvaSourceContractGrounding(
   const valueProofClosed =
     financeConfirmedUsd > 0 && financeRequest?.approvalState === "approved";
 
-  const ledgerTotals = buildLedgerTotals({
-    tracedByValueType: traceability.tracedByValueType,
-    financeConfirmedUsd,
-    valueProofClosed,
-  });
+  const ledgerTotals = traceability.tracedCount > 0
+    ? buildLedgerTotals({
+        tracedByValueType: traceability.tracedByValueType,
+        financeConfirmedUsd,
+        valueProofClosed,
+      })
+    : [];
   const largestLedger = ledgerTotals
     .filter((row) => row.valueType !== "realized_value")
     .reduce<
@@ -230,10 +287,21 @@ export async function buildAvaSourceContractGrounding(
       const negotiation = detail
         ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · vendor rationale/concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
         : "";
-      return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${fmtUsd(
-        opportunity.amountUsd,
-      )} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
+      const amountLabel =
+        opportunity.stage === "signal" ||
+        opportunity.amountState === "not_sized"
+          ? "not sized"
+          : trace?.state === "traced"
+            ? fmtUsd(opportunity.amountUsd)
+            : `stated ${fmtUsd(opportunity.amountUsd)}; ${trace?.state === "restated" ? "calculation run disagrees" : "no reproducible calculation run"}`;
+      return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${amountLabel} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
     });
+  const claimLines = (opportunitySet?.claims ?? [])
+    .slice(0, 32)
+    .map(
+      (claim) =>
+        `- ${claim.claimId} · ${claim.role} · basis ${claim.basis} · evidence ${claim.evidenceStatus} · review ${claim.reviewStatus} · ${claim.statement}`,
+    );
   const opportunityExportRows = (opportunitySet?.opportunities ?? [])
     .slice(0, 8)
     .map((opportunity, index) => {
@@ -244,25 +312,39 @@ export async function buildAvaSourceContractGrounding(
         index,
         opportunity,
         traceLabel: trace?.label ?? null,
+        traceState: trace?.state ?? "not_sized",
       });
     });
 
+  const contractDisplayName =
+    firstNonBlank(contract?.contract_name, opportunitySet?.contractName) ??
+    `Contract ${trimmedId}`;
+  const vendorDisplayName =
+    firstNonBlank(contract?.vendor_name, opportunitySet?.vendorName) ??
+    "Vendor not established";
+  const baselineConflict = opportunitySet?.baseline.status === "conflict";
+  const annualValueUsd = contract
+    ? contract.annual_value
+    : baselineConflict
+      ? null
+      : opportunitySet?.baseline.annualValueUsd;
+
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
-    `Exact contract display name: "${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}". Exact vendor display name: "${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
-    // `resolved_annual_value` wins whenever extraction disagreed with the
-    // stated value; quoting the raw column there would repeat a known conflict.
-    `Contract: ${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}. Vendor: ${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}. Annual value: ${fmtUsd(
-      contract
-        ? contract.annual_value_conflict_flag
-          ? contract.resolved_annual_value
-          : contract.annual_value
-        : opportunitySet?.baseline.annualValueUsd,
-    )}.${
-      contract?.annual_value_conflict_flag
-        ? " (Stated annual value and extracted value disagreed; the resolved value is quoted.)"
+    `Exact contract display name: "${contractDisplayName}". Exact vendor display name: "${vendorDisplayName}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
+    `Contract: ${contractDisplayName}. Vendor: ${vendorDisplayName}. Annual value: ${fmtUsd(annualValueUsd)}.${
+      baselineConflict || contract?.annual_value_conflict_flag
+        ? " (Contract 360 stated annual value; extraction or persisted baseline disagrees. The conflict is unresolved, so this is not a reconciled baseline.)"
         : ""
     }`,
+    "SEMANTIC VALUE GUARD: Annual value is the contract header value, not an annual commitment. Observed spend is consumption or spend evidence, not AP-paid cash. Never call annual value a commitment, and never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status.",
+    contractIntelligence?.intelligence_record
+      ? [
+          "LOAD-TIME CONTRACT INTELLIGENCE RECORD (authoritative for purpose, archetype, anatomy, education, and industry boundary):",
+          JSON.stringify(contractIntelligence.intelligence_record),
+          "The record is deterministic and versioned from the governed load. Explain it, but do not add facts, relationships, benchmarks, or amounts outside it.",
+        ].join("\n")
+      : "Load-time contract intelligence record: not available for this contract; do not invent purpose, archetype, anatomy, education, or industry claims.",
     `Commercial baseline status: ${opportunitySet?.baseline.status ?? "no governed baseline"}.`,
     `Workflow position: step ${position.currentIndex} of ${position.steps.length} (${position.currentLabel}). Next action: ${position.primaryAction}.${
       position.blocker ? ` Blocked by: ${position.blocker}` : ""
@@ -272,12 +354,12 @@ export async function buildAvaSourceContractGrounding(
         ? ` Missing: ${missingFamilies.join(", ")}.`
         : ""
     }`,
-    `Opportunity value that a calculation run can reproduce: ${fmtUsd(traceability.tracedAmountUsd)}. Stated value with no reproducible calculation run: ${fmtUsd(
+    `Opportunity value that a calculation run can reproduce: ${traceability.tracedCount > 0 ? fmtUsd(traceability.tracedAmountUsd) : "not established"}. Stated value with no reproducible calculation run: ${fmtUsd(
       traceability.untracedAmountUsd,
     )}.`,
-    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals
-      .map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`)
-      .join("; ")}.`,
+    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals.length > 0
+      ? ledgerTotals.map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`).join("; ")
+      : "not established; calculation run identity is not exposed by the current opportunity read"}.`,
     largestLedger
       ? `Largest reproducible non-realized ledger for chart narration: ${largestLedger.label} at ${fmtUsd(largestLedger.amountUsd)}. Quote this line instead of recomputing totals from the opportunity rows.`
       : "",
@@ -286,6 +368,14 @@ export async function buildAvaSourceContractGrounding(
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
+    claimLines.length > 0
+      ? [
+          "CLAIM-LEVEL PROVENANCE (use this to explain why a statement may or may not be made):",
+          ...claimLines,
+          "A claim with basis not_recorded, evidence missing/not_established, or review draft is not a supported external fact.",
+          "A calculated sizing claim is not a reproducible amount unless it appears in the run-linked reproducible total above.",
+        ].join("\n")
+      : "Claim-level provenance: no claim rows are loaded for this contract; do not upgrade opportunity prose into a governed fact.",
     opportunityExportRows.length > 0
       ? [
           "CONTRACT OPTIMIZATION EXPORT ROWS (use these rows when the user asks how to optimize this contract, asks for levers, or asks for a client/PDF-ready sample):",
@@ -329,6 +419,7 @@ function formatOpportunityExportRow(input: {
     } | null;
   };
   traceLabel: string | null;
+  traceState: "traced" | "restated" | "untraced" | "not_sized";
 }): string {
   const { opportunity } = input;
   const detail = opportunity.negotiationDetail;
@@ -338,7 +429,9 @@ function formatOpportunityExportRow(input: {
     (opportunity.confidence != null && opportunity.confidence < 0.5);
   const askParts = [
     detail?.buyerAsk,
-    detail?.negotiationLanguage ? `Language: ${detail.negotiationLanguage}` : null,
+    detail?.negotiationLanguage
+      ? `Language: ${detail.negotiationLanguage}`
+      : null,
   ].filter((part): part is string => Boolean(part));
   const evidenceParts = [
     input.traceLabel,
@@ -364,7 +457,7 @@ function formatOpportunityExportRow(input: {
     `Action / buyer ask: ${askParts.join(" ") || opportunity.nextAction}`,
     `Why vendor can agree: ${detail?.vendorConcession ?? "not established in governed opportunity detail"}`,
     `Evidence basis: ${evidenceParts.join("; ") || "not established"}`,
-    `Value state: ${isSignal ? "Not sized - needs evidence before it carries a number" : fmtUsd(opportunity.amountUsd)}`,
+    `Value state: ${isSignal ? "Not sized - needs evidence before it carries a number" : input.traceState === "traced" ? fmtUsd(opportunity.amountUsd) : `stated ${fmtUsd(opportunity.amountUsd)}; ${input.traceState === "restated" ? "calculation run disagrees" : "no reproducible calculation run"}`}`,
     `Owner / timing: ${ownerTimingParts.join(" / ") || "not established"}`,
     `What not to claim yet: ${doNotClaimParts.join("; ")}.`,
   ].join(" | ");

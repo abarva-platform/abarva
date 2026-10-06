@@ -1,0 +1,25 @@
+{
+  "dataset_id": "nexus_moves_adaptive_e2e_synthetic_20260927",
+  "package_version": "1.0.2",
+  "generated_on": "2026-10-03",
+  "data_class": "synthetic_demo_evidence",
+  "synthetic": true,
+  "contains_phi": false,
+  "contains_real_personal_data": false,
+  "source_status": "synthetic_fixture_not_client_attested",
+  "loading_status": "offline_only_not_loaded_not_indexed_not_agent_ready",
+  "registry_activation": false,
+  "phases": ["P0", "P1", "P2", "P3", "P4", "P5"],
+  "intended_use": "Manual signed-in smoke testing in a disposable synthetic Move after a human selects the destination tenant and Move.",
+  "primary_upload_manifest": "00_demo/upload_manifest.json",
+  "tenant_identity": "Must come from authenticated workspace and canonical tenant registry; do not infer from package name or file contents.",
+  "controls": [
+    "No raw PHI",
+    "No autonomous clinical, eligibility, claims, coverage, or prior-authorization decision",
+    "No unsubstantiated ROI or savings",
+    "Human review before external communication or writeback",
+    "No vendor model training on restricted content"
+  ],
+  "agent_ready": false,
+  "note": "Not canonical Layer 3 truth, not a governed corpus load, and not production/client evidence."
+}

@@ -3,7 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { isFoundationPreviewOperatorSession } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { answerHomeAvaQuestion } from "@/lib/home/preview/ava-answer";
-import { getHomeReviewBundle, isHomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
+import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
+import {
+  getHomeReviewBundle,
+  isHomePreviewTenantKey,
+} from "@/lib/home/preview/golden-snapshot";
+import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
+import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
+import {
+  isEclProductProvider,
+  resolveEclProductProvider,
+} from "@/lib/ecl/product-provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,13 +23,15 @@ interface AskBody {
   tenantKey?: string;
   question?: string;
   activeChapterId?: string;
+  requestedProvider?: string;
+  expectedRecordSource?: HomeRecordRenderSource;
 }
 
-/** Ask aVa, scoped to the Home preview surface: answers are grounded ONLY in the requested
- * tenant's already-verified golden-snapshot HomeReviewBundle -- no live DB query, no external
- * retrieval. Gated behind the same access check as the preview page itself (see
- * src/app/(maestro)/home/preview/page.tsx) since this route can only ever see preview data, not
- * production tenant data. */
+/** Ask aVa, scoped to the Home preview surface: answers are grounded in the same served bundle
+ * resolver that renders /home. When the governed projection is unavailable, the resolver keeps the
+ * reviewed-snapshot fallback but returns that record source explicitly so the fallback is never
+ * silent. Gated behind the same access check as the preview page itself (see
+ * src/app/(maestro)/home/page.tsx). */
 export async function POST(req: NextRequest) {
   const hasPlatformAdmin = await isPlatformAdminSession();
   const hasFoundationOperator = await isFoundationPreviewOperatorSession();
@@ -42,10 +54,45 @@ export async function POST(req: NextRequest) {
   if (!question) {
     return NextResponse.json({ error: "question_required" }, { status: 400 });
   }
+  if (
+    !body.expectedRecordSource ||
+    typeof body.expectedRecordSource.kind !== "string" ||
+    typeof body.expectedRecordSource.canonicalSnapshotHash !== "string"
+  ) {
+    return NextResponse.json(
+      { error: "record_source_required" },
+      { status: 400 },
+    );
+  }
 
-  const bundle = getHomeReviewBundle(tenantKey);
+  const served = isEclProductProvider(
+    resolveEclProductProvider(
+      typeof body.requestedProvider === "string"
+        ? body.requestedProvider
+        : undefined,
+    ),
+  )
+    ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
+    : null;
+  const bundle = served?.bundle ?? getHomeReviewBundle(tenantKey);
   if (!bundle) {
-    return NextResponse.json({ error: "missing_golden_snapshot" }, { status: 500 });
+    return NextResponse.json(
+      { error: "home_bundle_unavailable" },
+      { status: 404 },
+    );
+  }
+  const recordSource: HomeRecordRenderSource = served?.recordSource ?? {
+    kind: "reviewed_snapshot",
+    canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+  };
+  if (
+    homeRecordSourceToken(tenantKey, body.expectedRecordSource) !==
+    homeRecordSourceToken(tenantKey, recordSource)
+  ) {
+    return NextResponse.json(
+      { error: "home_context_changed" },
+      { status: 409 },
+    );
   }
 
   const answer = await answerHomeAvaQuestion({
@@ -55,5 +102,5 @@ export async function POST(req: NextRequest) {
     activeChapterId: body.activeChapterId,
   });
 
-  return NextResponse.json({ answer });
+  return NextResponse.json({ answer, recordSource });
 }

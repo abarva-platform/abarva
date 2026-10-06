@@ -70,7 +70,7 @@ export function isTenantSwitcherEnabled(): boolean {
  * `CANONICAL_TENANT_KEYS` before honoring the switch.
  */
 export function getCanonicalTenantSwitchOptions(): ReadonlyArray<TenantSwitchOption> {
-  return ALL_CLIENTS.map((client) => {
+  return ALL_CLIENTS.map((client): TenantSwitchOption | null => {
     const profile = resolveTenantAlias(client.id);
     if (!profile) {
       // Should never happen — every ALL_CLIENTS entry has a profile.

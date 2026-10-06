@@ -23,6 +23,8 @@ interface IntakeCompletionFooterProps {
   capturedFactsCount: number;
   totalFactsCount: number;
   submitting: boolean;
+  actionBlocked?: boolean;
+  actionLabel?: string;
   draftSaved: boolean;
   onOpenEvent: () => Promise<void>;
   onSaveDraft: () => void;
@@ -35,6 +37,8 @@ export function IntakeCompletionFooter({
   capturedFactsCount,
   totalFactsCount,
   submitting,
+  actionBlocked = false,
+  actionLabel = "Open event",
   draftSaved,
   onOpenEvent,
   onSaveDraft,
@@ -98,15 +102,15 @@ export function IntakeCompletionFooter({
         <button
           type="button"
           onClick={onOpenEvent}
-          disabled={submitting}
+          disabled={submitting || actionBlocked}
           data-testid="source-intake-open-event"
           style={{
             ...PRIMARY_BUTTON,
-            opacity: submitting ? 0.66 : 1,
-            cursor: submitting ? "progress" : "pointer",
+            opacity: submitting || actionBlocked ? 0.55 : 1,
+            cursor: submitting ? "progress" : actionBlocked ? "not-allowed" : "pointer",
           }}
         >
-          {submitting ? "Opening approval…" : "Open event"}
+          {submitting ? "Opening approval…" : actionLabel}
         </button>
       </div>
 

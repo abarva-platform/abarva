@@ -1,0 +1,468 @@
+# Execution queue toolchain
+#
+# THIS JOB CANNOT BLOCK A MERGE, and nothing about a green run here says so.
+# `Execution queue behavioral contract` is required by no ruleset: read by name
+# against the rulesets API on 2026-10-04, `main` carried 19 required status
+# contexts and this was not one of them. It triggers on `scripts/exec/**` and it
+# is advisory when it goes red (item C-582).
+#
+# The run that DOES gate these suites is the step `Prove the execution-queue
+# toolchain contracts can fail a merge`, inside `Run hygiene_gate.sh` in
+# `.github/workflows/hygiene-gate.yml`. That is the required context, and
+# that is the run a closure note must quote. Quoting a step below instead is a
+# true sentence about a run that gates nothing -- item T-595's defect exactly,
+# which is why the required sweep echoes each suite path as it goes.
+#
+# The fifteen individually titled steps here are kept deliberately: their
+# comments are the only written record of what each control measured and why it
+# exists, and the required sweep is a glob so a sixteenth suite is gated the day
+# it lands whether or not it is ever named below. The contract that the required
+# sweep still covers this whole directory is
+# `src/__tests__/behaviors/exec-toolchain-requiredness.test.ts`.
+
+name: Execution queue toolchain
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/execution-queue-toolchain.yml"
+      - "scripts/exec/**"
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Execution queue behavioral contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Run the execution queue behavioral contract
+        run: node scripts/exec/build-execution-queue.test.mjs
+
+      # T-457. The deployment register's time authority. Measured against
+      # GitHub before this landed: 26 merge announcements in one day's window,
+      # 17 of them outside +/-300s of the `mergedAt` they reported, drift
+      # running from -44s to +48077s -- opposite signs and non-constant
+      # magnitude, so not a skew one offset would repair -- and six lines
+      # stamped in the future of the clock that read them. The control runs
+      # over FIXTURE registers here and asserts on exit status and verdicts, so
+      # CI never reads an operator file it cannot see. Mutation-proved,
+      # negated-use case included: the real register's "NOT MERGED YET" line
+      # was classified as an announcement until case 9 was added.
+      # T-702. The board's claim-record boundary. `executionClaimEntries`
+      # started a new record only on `^TIMESTAMP | ` at MINUTE precision, so
+      # every line written with seconds, or in the pipe-less canonical form
+      # this directory's README documents, was appended to the record above
+      # it. Measured over the live register: 1207 stamped lines, 633
+      # recognised, 574 swallowed. `rung === 0` is the queue's claimable
+      # filter and `rung === 7` is its `isFinished` test, so an item that
+      # absorbed a neighbour's proof language left every bucket the queue
+      # renders. Repairing the boundary moved 105 items -- every one of them
+      # DOWN the ladder, none up -- and took the queue from 0 claimable to 4.
+      # The suite runs over FIXTURE registers, so CI never reads an operator
+      # file it cannot see. Mutation-proved, including the opposite error: a
+      # fix that made every line its own record fails case 4.
+      - name: Run the source board claim-record boundary contract
+        run: node scripts/exec/build-source-board.test.mjs
+
+      - name: Run the register time-authority contract
+        run: node scripts/exec/register-time-authority.test.mjs
+
+      # T-708. The claim-append gate wiring. T-706 shipped `--preclaim`, the
+      # ownership check an agent runs BEFORE appending a claim: correct,
+      # proven on the real register, and called by nobody. An available
+      # control and a wired one are the same shape from outside, which is the
+      # defect this whole directory exists against -- a gate that could not
+      # fail went green for ten weeks because a comment carried the name of
+      # the control someone had deleted.
+      #
+      # So the contract asserted here is deliberately NOT "the gate returns
+      # the right verdict"; T-706 proved that, and re-proving it is the
+      # substitution that lets unwired wiring look wired. It is: a claim the
+      # gate refuses is NOT APPENDED, compared by digest over a fixture
+      # register. The helper fails closed on a gate it cannot run, cannot
+      # trust, or whose exit code it does not interpret, and refuses to
+      # forward a flag the installed gate does not advertise -- an unknown
+      # flag parses to nothing, so asking an older gate for a check it does
+      # not implement would otherwise pass silently. Sixteen mutations,
+      # sixteen caught; two of them survived their first fixture and are
+      # recorded in the suite, because a case that passes through the wrong
+      # branch cannot fail for the right reason.
+      - name: Run the claim-append gate wiring contract
+        run: node scripts/exec/append-claim.test.mjs
+
+      # T-719. Worktree retention. The instruction "remove it when the item is
+      # merged" has been in the operator task file since 18 Sep. Two runs of
+      # that same task did not follow it, and at 2026-09-23T03:57Z a run could
+      # not start at all: 580 MiB free of 926 GiB, `git worktree add` dying
+      # ENOSPC mid-checkout, with 798 registered worktrees on disk and `git
+      # worktree prune` removing none of them. A rule nothing can fail is the
+      # shape this directory exists against, so the rule now has a control.
+      #
+      # The control reports; it never removes. The asymmetry it is built around
+      # is that a worktree wrongly called `keep` costs one item's disk, while a
+      # worktree wrongly called `removable` costs someone's uncommitted work —
+      # so `removable` needs three independent proofs (branch merged by PR
+      # `mergedAt`, NOT by ancestry, because a squash merge is not an ancestor;
+      # `git status --porcelain` empty; no live claim naming the branch or the
+      # path) and everything else is `unknown`.
+      #
+      # What runs here is the behavioural suite over FIXTURES and over real
+      # worktrees git creates in a temp directory — never the operator's
+      # machine, whose free space and checkouts CI cannot see and must not
+      # assert on. Fifteen mutations, fifteen caught, each by a named case.
+      - name: Run the worktree retention contract
+        run: node scripts/exec/worktree-retention.test.mjs
+
+      # T-720. Which generator wrote the queue a claim was taken from. T-507
+      # moved this toolchain into the repository and left the superseded copies
+      # standing in the operator root. T-711 shipped a guard for the MIXED case
+      # -- the repo-owned queue refuses a summary the repo-owned board did not
+      # write -- but the superseded PAIR is self-consistent: its board writes an
+      # unstamped summary and its queue never asks, so the guard never fires on
+      # it. That left one defence between reading a queue row and claiming it: a
+      # prose line in the artifact saying a file without it is stale on sight.
+      #
+      # Measured on 2026-09-23, two consecutive runs missed that line. On
+      # byte-identical inputs the superseded pair offered 61 claimable rows where
+      # the repo-owned pair offers 1, reported no live claims while three were
+      # live, and classified 110 rows whose only remaining work needs an
+      # operator as claimable. One run re-verified three long-closed items
+      # before noticing -- the same three ids T-711 had already named as its
+      # evidence.
+      #
+      # So the queue now stamps the sha256 of the generator's own file, read at
+      # run time, and the claim helper refuses a claim whose queue does not
+      # match the generator beside it. Hash, not path, because the same
+      # generator legitimately runs from a worktree, a fixture directory and a
+      # CI checkout. Every verdict other than repo_owned fails closed, including
+      # the ones that mean "could not tell", and ONLY a claim is gated: a
+      # release and an abstention take nothing, and a stale queue is exactly
+      # when a holder most needs to hand work back.
+      #
+      # What runs here is the behavioural suite over synthetic operator roots,
+      # including one that runs a DRIFTED COPY of the generator and asserts the
+      # queue it writes is refused. Fourteen mutations, fourteen caught.
+      - name: Run the queue provenance contract
+        run: node scripts/exec/queue-provenance.test.mjs
+
+      # T-723. The entry guard every CLI in this directory needs, because every
+      # script here is a module with a CLI attached and each must answer "was I
+      # run, or imported". Four of them answered four different ways and only
+      # append-claim.mjs was right. `path.resolve` normalises a path without
+      # following symlinks, and `import.meta.url` is always the realpath -- so on
+      # macOS, where /tmp is a symlink to /private/tmp, two guards answered
+      # "imported", did nothing and EXITED 0. The operator task file instructs
+      # agents to work in /tmp/exec-<item>-<timestamp>, which makes the broken
+      # path the likely one.
+      #
+      # Measured, both through a /tmp path: `queue-provenance.mjs --register`
+      # produced no output and exit 0, and `worktree-retention.mjs --check
+      # --free-floor-gib 9999` did the same -- a control whose entire contract is
+      # to exit 1 below the floor, shipped hours earlier BECAUSE a run had died
+      # ENOSPC. A control that exits 0 having done nothing is this directory's
+      # founding defect reached from the quietest direction.
+      #
+      # The two acceptance cases invoke a REAL CLI through a REAL symlink that
+      # the suite creates itself -- /tmp is a symlink on macOS and not on Linux,
+      # so a suite relying on that would silently stop testing anything on this
+      # runner, which is the same "passes because it never ran" shape. The
+      # opposite error is held down too: importing either module must not run its
+      # CLI, since append-claim.mjs imports queue-provenance.mjs on every claim.
+      # Eleven mutations, eleven caught.
+      - name: Run the CLI entry guard contract
+        run: node scripts/exec/cli-entry.test.mjs
+
+      # T-726. What this toolchain needs in order to run, declared once.
+      #
+      # Four suites here each kept their OWN hand-written list of the files a
+      # fixture must contain, and nothing declared the real answer. Two of those
+      # lists went stale loudly inside one session: T-720 crashed the queue
+      # suite on collection when the generator began importing
+      # queue-provenance.mjs, and T-723 crashed it again -- and took
+      # queue-provenance.test.mjs from 30/0 to 27/3 -- when that began importing
+      # cli-entry.mjs. Loud is cheap. The same list also decides what a
+      # fixture's executables can SEE, and the quiet version was already on main
+      # when this item was filed: cli-entry.test.mjs copied three files, and
+      # queue-provenance.mjs reaches build-execution-queue.mjs through a sibling
+      # PATH rather than an import. Over a queue file that exists, the repo
+      # directory answered `unstamped` and that three-file copy answered
+      # `generator_missing` -- a different verdict from the same input, in a
+      # suite that stayed green because its cases drove only the branch where
+      # both collapse to `absent`.
+      #
+      # An import closure is the obvious fix and the wrong one: a missing static
+      # import throws on load, and all three silent dependencies in this
+      # directory are not imports. So a fixture gets the DIRECTORY, not a list.
+      #
+      # The acceptance cases are deliberately expensive: each adds a real new
+      # module to a copy of this directory, makes a real executable import it,
+      # and runs a real sibling suite from that copy -- T-720 and T-723 replayed
+      # as a control rather than described in a comment. Red first 13/4, green
+      # 17/0. Twelve mutations, twelve caught; the twelfth was caught only after
+      # it was found to survive, and closing it turned up two generators in this
+      # directory that have no entry guard at all (item T-727).
+      - name: Run the toolchain manifest contract
+        run: node scripts/exec/toolchain-manifest.test.mjs
+
+      # C-526. Does a release record's own account of its signed-in proof match
+      # what the register says happened?
+      #
+      # The filed instance: a record on `main` declared a signed-in replay
+      # required and, in QA/Validation, that it was NOT RUN, while the register's
+      # release line for the same pull request said the replay ran, was positive,
+      # and produced a residual now carried by its own item. The durable artifact
+      # in the public repository asserted a debt that did not exist and hid a
+      # finding that did, and nothing compared the two. A false "not run" costs
+      # more than a false "run": an auditor either re-runs a proof already
+      # obtained, or reports a release as owing one it does not owe.
+      #
+      # Measured over 626 records added in the window: 209 declare a signed-in
+      # proof required, and 9 of them DISAGREE with the register after the filed
+      # instance was repaired -- so the item was one case of a class, not an
+      # incident.
+      #
+      # The cases run over REAL records read from `docs/releases/records` at run
+      # time, and over register text quoted in the suite, so CI never reads the
+      # operator root. Calibrated in BOTH directions: the filed disagreement, and
+      # a real known-negative whose replay genuinely was not run and which must
+      # come back `agree` -- a detector calibrated only on the disagreeing case
+      # cannot tell a stale record from a detector that always says stale.
+      #
+      # Red first 2/34 on the repair half; 41 passed / 0 failed after.
+      # Seventeen mutations, seventeen caught. Two guards were DELETED rather
+      # than kept during that sweep, each after measuring that it decided zero
+      # records across the whole corpus.
+      - name: Run the signed-in-proof reconciliation contract
+        run: node scripts/exec/signed-in-proof-reconcile.test.mjs
+
+      # T-729. Two findings, one item id -- a detector, not an allocator.
+      #
+      # Three times in one day two overlapping runs of this scheduled task each
+      # reached for "the next free number" and each got it, and every time it
+      # was found by a human reading the file. The item was filed as "nothing
+      # detects a duplicate item id", and that is false in the direction that
+      # matters: build-source-board.mjs has had a collision detector for longer
+      # than the item has, it prints a count and a trend on every run, and it
+      # reports 59 collisions among 434 ids while naming NONE of the three that
+      # actually happened. Probed against its own parser, two of those ids have
+      # ZERO definitions in it -- invisible, not misclassified. It accepts a
+      # table only when the first header cell is literally `#`, and 22 headers
+      # on disk are written `id | finding | lane | status`; and it requires a
+      # level-three heading, where those filings are level-two. A report loud
+      # enough that nobody notices what it cannot see is this directory's
+      # founding shape from a new direction.
+      #
+      # Two of the cases run over the REAL operator documents and require the
+      # two collisions that are genuinely on disk, by id, by line number and by
+      # subject -- the item asked for proof on real positives rather than on
+      # fixtures. On this runner those three cases SKIP, and skips are counted
+      # separately so a skipped case can never read as a passing one: 60 / 0 /
+      # 3 here against 70 / 0 / 0 locally. Red first against a reader stripped
+      # back to the status quo: 43 passed, 20 failed. Eighteen mutations,
+      # eighteen caught -- three of them only after a first attempt survived,
+      # and one of those survived because the grouping the case asserted on
+      # collapsed the difference rather than because the guard was covered.
+      #
+      # The detector itself is NOT wired into CI, deliberately. Its subject is
+      # an operator document outside this repository, and a control that takes
+      # its truth from a file the pull request never saw cannot fail. It is
+      # agent-invoked, like --preclaim, and its refusal is advisory.
+      - name: Run the item id collision detector contract
+        run: node scripts/exec/id-collision.test.mjs
+
+      # T-733. Resolving the queue's suppressed candidates against git and
+      # GitHub, because until now a human did it or nobody did.
+      #
+      # `build-execution-queue.mjs` suppresses a candidate whose newest claim
+      # line names a branch or a PR, and that signal never expires. The rendered
+      # queue therefore hands the reader the rest of the job in prose: check the
+      # branch and the pull request each claim names, and if the branch is gone
+      # and the PR is merged, append a release line. T-732 filed the gap and
+      # called that remedy "a protocol sentence rather than an implementation".
+      # A protocol sentence invoked by nobody is exactly the shape T-706/T-708
+      # had to wire, twice.
+      #
+      # Executed for all fourteen live candidates on 2026-09-23: ZERO were in
+      # flight. Four were fossils whose pull requests had merged 37 hours
+      # earlier with their branches deleted, nine had no branch on origin and no
+      # pull request that ever existed, and one declares no branch at all. Six
+      # of the nine have no implementation on `main` by path or by symbol -- so
+      # the bucket had been hiding genuinely unclaimed work for four days, one
+      # item of it in this lane.
+      #
+      # The verdict SPLIT is the contract, not the listing. `fossil` authorises
+      # a release line saying the work is done; `abandoned` refuses one, because
+      # three of the nine real abandoned claims name work that did land from
+      # some other branch and three name work that never landed at all. A
+      # resolver that collapsed the two would launder undone work into a closed
+      # item, silently.
+      #
+      # Every probe in the suite is INJECTED and this step makes no network
+      # call: a runner has neither `origin` nor a credential, and a suite that
+      # degraded to "could not check, therefore fine" would be the unfailable
+      # gate again. The real-corpus cases assert only the extraction half and
+      # SKIP when the operator documents are absent, counted separately so a
+      # skip cannot read as a pass. Eleven mutations, eleven caught; two
+      # survived their first fixture -- one guard that looked redundant until
+      # `branch n/a` was tried against it, and one whose risk today's prose
+      # happens not to contain.
+      #
+      # The generator is untouched. Letting the board read the repository is
+      # T-732's shape (b), which would make rendering the queue require a
+      # network; this is a separate CLI, in the shape of `--preclaim`.
+      - name: Run the fossil-claim resolver contract
+        run: node scripts/exec/fossil-claims.test.mjs
+
+      # The `LIVE_<n>` transcription verifier (item T-718).
+      #
+      # ONLY THE SUITE RUNS HERE, and that is the whole design. The verifier
+      # itself reads the operator register, which a runner does not have and
+      # must not have: `register-time-authority.test.mjs` proves its rules
+      # against hand-copied fragments of that register precisely so the control
+      # cannot take its truth from its own subject. Wiring the verifier into CI
+      # would rebuild the thing it exists to avoid.
+      #
+      # So the suite below is entirely synthetic -- every case builds a register
+      # in a temp directory -- and the live reading is a report an agent runs
+      # beside `--preclaim`. Twenty-two cases, seven mutations, seven caught.
+      #
+      # What the first live run found is why the tool is not merely
+      # preventative: of 22 citations in the suite, ONE resolved at the line it
+      # names and it won on a tie at 1 of 3 segments; 18 resolved four lines
+      # below, every one of them at the same +4; 3 were unlocatable. T-718 was
+      # filed on a hand measurement of seven that all still resolved.
+      - name: Run the register-citation transcription verifier contract
+        run: node scripts/exec/register-citation-check.test.mjs
+
+      # Which merges actually deployed (item T-476).
+      #
+      # Eighteen merged items carried a `deploy proof pending` line that had
+      # been stale for three to four days, and the first one checked named a
+      # run that had already completed `success` against its exact merge SHA
+      # before the line claiming it was in flight was written. All eighteen
+      # resolved -- fifteen deployed on their own SHA, three superseded by a
+      # descendant run after the concurrency group cancelled their own, none
+      # genuinely undeployed. A ledger that says `pending` when the proof
+      # exists is a false state, and it is the direction that hides finished
+      # work, so nothing downstream ever trips over it.
+      #
+      # The suite is synthetic -- every run record and every commit graph is
+      # built in the test, including a real two-branch git repository, because
+      # `actions/checkout` is shallow and a case reading this repository's own
+      # `HEAD~1` would pass locally and be unreachable in CI.
+      #
+      # The cases that carry it are the ones where TIME and ANCESTRY disagree:
+      # a later successful run on a sibling branch is not a descendant, and
+      # crediting it writes a false `deployed`. Ten mutations, ten caught.
+      - name: Run the deploy-proof resolver contract
+        run: node scripts/exec/deploy-proof-resolver.test.mjs
+
+      # Is the directory the protocol sends agents to swept by something else?
+      # (item T-489)
+      #
+      # At 2026-09-26T00:19Z a full checkout created per the operator task
+      # file's own first instruction vanished mid-session between two commands
+      # about 90 seconds apart, taking uncommitted work with it; the next
+      # command died `uv_cwd ENOENT`. A second, independent run of the same task
+      # lost a worktree in the same window. Nothing in the register, the pulse
+      # file or the task instructions said who sweeps that directory, on what
+      # trigger, or with what age bound -- so the claim protocol was telling
+      # every agent to work somewhere another process may delete, and no control
+      # could say so.
+      #
+      # The control READS the host's own declarations -- launchd job definitions
+      # and the scripts they run -- rather than asserting a verdict about a path
+      # in prose. A gate that said "/tmp is unsafe" could not notice the rule
+      # changing, could not be wrong in a way anyone sees, and would say nothing
+      # at all about a root nobody thought of.
+      #
+      # Three inversions it refuses, each pinned by a case: an unreadable host
+      # is `unknown`, never `not_swept`; `not_swept` means no DECLARED sweeper
+      # reaches the root and reports the count of jobs that declare nothing, so
+      # it is not read as a proof of safety; and the age bound is WHEN, never
+      # WHETHER -- every worktree is younger than the bound when it is created,
+      # so a verdict consulting the candidate's own age would report safe at
+      # exactly the moment an agent asks.
+      #
+      # Cases 1-13 run the exported functions over fixtures, 14-18 run the real
+      # CLI as a child process, 20 pins the shebang bound, and 21 reads the real
+      # host and is the ONLY case that skips -- a Linux runner has no launchd,
+      # and a gate asserting on a subject it cannot see is the unfailable kind.
+      #
+      # Eight mutations, eight caught -- but two of them survived their first
+      # fixture and both are recorded in the suite. The prefix-boundary case
+      # passed with the boundary check removed, because after symlink resolution
+      # no prefix relationship held in either form; it is now built so the
+      # textual prefix genuinely holds, and asserts that before reading the
+      # verdict. The shebang bound changed no verdict at all until a case
+      # asserted what it actually buys.
+      - name: Run the worktree sweep-hazard contract
+        run: node scripts/exec/worktree-sweep-hazard.test.mjs
+
+      # Does the register account for this merge at all? (item C-556)
+      #
+      # Four controls in this directory ask whether a register line decides a row
+      # correctly. This asks whether there IS a line. A change can merge to
+      # `main`, ship, and alter a product surface while nothing in the register
+      # names it by merge SHA or by pull request -- and every downstream reader is
+      # keyed to a line, so it then carries no merged state, no deployed state, no
+      # signed-in question, and no item reports it as unfinished. The absence of a
+      # row and the absence of work are indistinguishable.
+      #
+      # Measured over --since 2026-09-26T00:00:00Z: 76 merges, 64 named, 8
+      # mentioned-only, 4 unnamed. Both directions, which is what stops this
+      # counting merges instead of detecting silence.
+      #
+      # The item was filed on a grep for ten-character abbreviations, and two of
+      # its nine findings were wrong in opposite directions. One merge IS named --
+      # "PR #8520 merged as 7f0056d1", by pull request and by an EIGHT character
+      # abbreviation that a fixed-width probe cannot see -- so a SHA is matched by
+      # prefix relation. Four more DO appear at nine characters and none of them is
+      # named: they are somebody else's base, another item's merge narrated in
+      # passing, or the SHA of a deploy run a different item queued behind. A
+      # substring reader calls all four accounted-for, which is C-551's
+      # distinction asked about SHAs, so the join is the SUBJECT pull request read
+      # with signed-in-proof-reconcile.mjs's own grammar.
+      #
+      # `mentioned-only` is its own verdict for that reason. Folding it into
+      # `named` hides an unaccounted merge -- the defect, inverted, in the silent
+      # direction -- and folding it into `unnamed` sends an auditor after a thread
+      # that is on file.
+      #
+      # A guard requiring the naming line to ASSERT the merge was built, measured
+      # over the live window, and REMOVED rather than kept: it moved 12 ordinary
+      # release lines out of `named`, because the repo's merge-token reader is
+      # tuned for a different question and an untokenised "squash merge <sha>"
+      # reads as unannounced. Widening the token to fit would be C-529's defect.
+      # The flag is reported on the row instead and decides nothing.
+      #
+      # This step runs the SUITE only. The detector reads the operator register
+      # and the GitHub API, neither of which a runner has, and a control taking
+      # its truth from a subject the pull request never saw cannot fail. Every
+      # pull request lookup in the suite is passed in as data; the one git case
+      # builds its own two-commit repository, because `actions/checkout` is
+      # shallow and a case reading real commits would pass locally and be
+      # unreachable here. The live-corpus cases assert only what an append-only
+      # register cannot undo -- a named merge stays named, a mentioned one stays
+      # at least mentioned -- and deliberately do NOT assert that any merge is
+      # still unnamed, which would go red the day the corpus improved.
+      #
+      # Red first 31 passed / 19 failed against the status-quo reader (fixed-width
+      # substring, two naming states, no subject grammar); 50 / 0 after. Fifteen
+      # mutations, fifteen caught -- one of them only after a first attempt
+      # SURVIVED, and closing it needed a case reaching a line that carries no SHA
+      # at all.
+      - name: Run the merge-coverage detector contract
+        run: node scripts/exec/register-merge-coverage.test.mjs

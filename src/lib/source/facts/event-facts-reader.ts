@@ -92,7 +92,8 @@ export async function readEventFacts(input: {
  * value is 0/1. It returns:
  *   • `signalPresent` — whether ANY non-stale rfp_clause_present fact exists for
  *     the event (drives live vs model in the insight); and
- *   • `presentLeverKeys` — the set of lever keys whose newest non-stale fact = 1.
+ *   • `presentLeverKeys` — the set of lever keys whose newest non-stale fact = 1;
+ *   • `assessedLeverKeys` — the set whose newest fact is a valid 0/1 decision.
  *
  * Newest-non-stale-per-lever wins (a lever reassessed to 0 flips back to exposed).
  * Tenant-scoped by client_key (RLS). Returns `signalPresent: false` + an empty set
@@ -102,7 +103,11 @@ export async function readEventFacts(input: {
 export async function readRfpClausePresentLeverKeys(input: {
   eventId: string;
   clientKey: string;
-}): Promise<{ signalPresent: boolean; presentLeverKeys: Set<string> }> {
+}): Promise<{
+  signalPresent: boolean;
+  presentLeverKeys: Set<string>;
+  assessedLeverKeys: Set<string>;
+}> {
   const { eventId, clientKey } = input;
   const supabase = getAzureWriteFluentClient();
 
@@ -123,6 +128,7 @@ export async function readRfpClausePresentLeverKeys(input: {
   >;
 
   const presentLeverKeys = new Set<string>();
+  const assessedLeverKeys = new Set<string>();
   // Rows are ordered newest-first; keep the FIRST value seen per lever key so a
   // reassessment supersedes older captures.
   const seen = new Set<string>();
@@ -133,10 +139,17 @@ export async function readRfpClausePresentLeverKeys(input: {
     signalPresent = true;
     if (seen.has(leverKey)) continue;
     seen.add(leverKey);
-    if (Number(row.value_numeric) === 1) presentLeverKeys.add(leverKey);
+    const rawValue = row.value_numeric;
+    if (rawValue === null || rawValue === undefined || String(rawValue).trim() === '') {
+      continue;
+    }
+    const decision = Number(rawValue);
+    if (decision !== 0 && decision !== 1) continue;
+    assessedLeverKeys.add(leverKey);
+    if (decision === 1) presentLeverKeys.add(leverKey);
   }
 
-  return { signalPresent, presentLeverKeys };
+  return { signalPresent, presentLeverKeys, assessedLeverKeys };
 }
 
 /**

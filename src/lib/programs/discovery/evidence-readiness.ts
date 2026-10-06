@@ -2,12 +2,15 @@ import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
-  getDiscoveryBlueprint,
+  resolveDeclaredDiscoveryBlueprint,
+  resolveDiscoveryBlueprintWithBasis,
   type DiscoveryBlueprint,
+  type DiscoveryBlueprintBasis,
   type EvidenceFamily,
 } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { getProgramById } from "@/lib/programs/queries";
+import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 
 export interface DiscoveryEvidenceReadinessItem {
   id: string;
@@ -17,6 +20,12 @@ export interface DiscoveryEvidenceReadinessItem {
   phase: number | null;
   confidence: number | string | null;
   createdAt: string | null;
+  /**
+   * The evidence family the uploader declared for this item, when it was
+   * uploaded against one. Declared identity outranks anything inferred from
+   * the item's text.
+   */
+  declaredFamilyKey?: string | null;
 }
 
 export interface DiscoveryFamilyCoverage {
@@ -42,6 +51,18 @@ export interface DiscoveryEvidenceReadiness {
   blueprintId: string;
   blueprintVersion: string;
   archetypeLabel: string;
+  /**
+   * What decided the archetype this readiness pack grades evidence against.
+   * Anything other than a declared basis means no human chose it, so the gap
+   * register is an opinion about an inferred archetype.
+   */
+  blueprintBasis: DiscoveryBlueprintBasis;
+  /**
+   * The declaration that was supplied and did not name a catalog archetype, so
+   * it was discarded. Non-null means the pack is grading against an archetype
+   * nobody declared; show it rather than presenting the archetype as declared.
+   */
+  unknownDeclaredArchetype: string | null;
   requiredTotal: number;
   requiredCovered: number;
   requiredMissing: number;
@@ -272,14 +293,6 @@ function nonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function firstNonEmptyString(...values: unknown[]): string | null {
-  for (const value of values) {
-    const normalized = nonEmptyString(value);
-    if (normalized) return normalized;
-  }
-  return null;
-}
-
 interface DiscoveryBlueprintProgramInput {
   functionPackKey?: string | null;
   archetype?: string | null;
@@ -289,9 +302,15 @@ interface DiscoveryBlueprintProgramInput {
   charter?: unknown;
 }
 
-export function buildDiscoveryBlueprintInputFromProgram(
+/**
+ * The DECLARED archetype id for a program, if any — functionPackKey or the
+ * charter's declared classification. This is the authoritative identity the
+ * blueprint resolver honors (identity is declared, never inferred). Returns
+ * null when nothing is declared, so resolution falls back to inference.
+ */
+export function resolveDeclaredProgramArchetypeId(
   program: DiscoveryBlueprintProgramInput | null | undefined,
-): string {
+): string | null {
   const charter =
     typeof program?.charter === "object" && program.charter !== null
       ? (program.charter as Record<string, unknown>)
@@ -303,14 +322,37 @@ export function buildDiscoveryBlueprintInputFromProgram(
       : null;
   const charterClassificationText =
     typeof charterClassification === "string" ? charterClassification : null;
+  const candidates = [
+    program?.functionPackKey,
+    charterArchetype,
+    program?.archetype,
+    charterClassificationText,
+  ]
+    .map((value) => nonEmptyString(value))
+    .filter((value): value is string => Boolean(value));
+  // Prefer the first candidate that names a KNOWN catalog archetype. A declared
+  // identity then wins regardless of field order, so a `functionPackKey` that is
+  // not an archetype cannot shadow an archetype declared in the charter
+  // classification, and `program.archetype` (which drives phase logic) need not
+  // be overloaded to declare a discovery blueprint. When no candidate matches
+  // the catalog, the first non-empty value is returned as the inference seed —
+  // identical to the prior behavior.
+  const declaredArchetype = candidates.find(
+    (candidate) => resolveDeclaredDiscoveryBlueprint(candidate) != null,
+  );
+  return declaredArchetype ?? candidates[0] ?? null;
+}
+
+export function buildDiscoveryBlueprintInputFromProgram(
+  program: DiscoveryBlueprintProgramInput | null | undefined,
+): string {
+  const charter =
+    typeof program?.charter === "object" && program.charter !== null
+      ? (program.charter as Record<string, unknown>)
+      : {};
 
   return [
-    firstNonEmptyString(
-      program?.functionPackKey,
-      charterArchetype,
-      program?.archetype,
-      charterClassificationText,
-    ) ?? "STRATEGIC_MOVE",
+    resolveDeclaredProgramArchetypeId(program) ?? "STRATEGIC_MOVE",
     program?.name,
     program?.problemStatement,
     program?.targetOutcome,
@@ -380,6 +422,83 @@ function familyScore(
   return score;
 }
 
+/**
+ * Declared upload family → the discovery families it evidences.
+ *
+ * The readiness map a file is uploaded against and the discovery blueprint the
+ * build gate reads are two taxonomies of the same archetype. They were joined
+ * only by re-inferring a family from keywords in the item's title and summary,
+ * one family per item. A workflow walkthrough whose rows mention claims and
+ * eligibility outscores its own family and is filed under data access, so the
+ * workflow map reads as missing while the approved file that is the workflow
+ * map sits in the Move. The uploader already said what the file is; this table
+ * carries that statement across instead of discarding it.
+ *
+ * A key maps to more than one family where its label covers both.
+ */
+const DECLARED_FAMILY_CROSSWALK: Record<string, readonly string[]> = {
+  member_service_process_map: ["current_state_workflow_map"],
+  member_service_metrics_baseline: ["contact_center_kpis"],
+  member_service_systems_data_landscape: [
+    "crm_contact_center_system_map",
+    "claims_eligibility_benefits_data_access",
+  ],
+  knowledge_policy_content_inventory: ["knowledge_base_ownership_freshness"],
+  contact_center_transcripts_intents: [
+    "call_recording_transcript_availability",
+  ],
+  phi_controls_and_human_approval: [
+    "phi_privacy_security_controls",
+    "human_in_loop_model",
+  ],
+  member_service_org_change_readiness: ["change_adoption_owner"],
+};
+
+/**
+ * The blueprint families an item's DECLARED family evidences, or an empty list
+ * when it declared none this blueprint recognises. A declared key that is
+ * itself a blueprint family id maps to that family.
+ */
+export function declaredDiscoveryFamilies(
+  item: DiscoveryEvidenceReadinessItem,
+  blueprint: DiscoveryBlueprint,
+): string[] {
+  const declared = item.declaredFamilyKey?.trim();
+  if (!declared) return [];
+  const blueprintIds = new Set(
+    blueprint.evidenceFamilies.map((family) => family.id),
+  );
+  if (blueprintIds.has(declared)) return [declared];
+  return (DECLARED_FAMILY_CROSSWALK[declared] ?? []).filter((id) =>
+    blueprintIds.has(id),
+  );
+}
+
+/**
+ * Validate an evidence family an uploader declared for a file.
+ *
+ * Empty means nothing was declared (null). A key the Move's discovery does not
+ * require is refused: silently falling back to inference would record the
+ * upload as if nothing had been declared, and the uploader would have no way
+ * to know their statement was dropped.
+ */
+export function resolveDeclaredEvidenceFamily(
+  raw: unknown,
+  blueprint: DiscoveryBlueprint,
+): { ok: true; familyKey: string | null } | { ok: false; detail: string } {
+  const declared = typeof raw === "string" ? raw.trim() : "";
+  if (!declared) return { ok: true, familyKey: null };
+  const known = blueprint.evidenceFamilies.some(
+    (family) => family.id === declared,
+  );
+  return known
+    ? { ok: true, familyKey: declared }
+    : {
+        ok: false,
+        detail: `'${declared}' is not an evidence family this Move requires.`,
+      };
+}
+
 export function mapEvidenceToDiscoveryFamily(
   item: DiscoveryEvidenceReadinessItem,
   blueprint: DiscoveryBlueprint,
@@ -395,14 +514,32 @@ export function mapEvidenceToDiscoveryFamily(
 export function evaluateDiscoveryEvidenceReadiness(args: {
   blueprint: DiscoveryBlueprint;
   evidenceItems: DiscoveryEvidenceReadinessItem[];
+  /**
+   * What decided `blueprint`, from `resolveDiscoveryBlueprintWithBasis`.
+   * Optional so existing callers that only have a blueprint keep working; they
+   * are reported as not-declared, which is what they can honestly claim.
+   */
+  blueprintBasis?: DiscoveryBlueprintBasis;
+  /** A supplied declaration that named no catalog archetype, if any. */
+  unknownDeclaredArchetype?: string | null;
 }): DiscoveryEvidenceReadiness {
   const coverage = new Map<string, DiscoveryEvidenceReadinessItem[]>();
   for (const item of args.evidenceItems) {
-    const familyId = mapEvidenceToDiscoveryFamily(item, args.blueprint);
-    if (!familyId) continue;
-    const items = coverage.get(familyId) ?? [];
-    items.push(item);
-    coverage.set(familyId, items);
+    // What the uploader declared wins. Keyword inference is the fallback for
+    // items that declared nothing this blueprint recognises — it never
+    // overrides, and never adds to, a declaration.
+    const declared = declaredDiscoveryFamilies(item, args.blueprint);
+    const inferred =
+      declared.length > 0 ||
+      isP1CharterEvidenceFamily(item.declaredFamilyKey)
+        ? null
+        : mapEvidenceToDiscoveryFamily(item, args.blueprint);
+    const familyIds = declared.length > 0 ? declared : inferred ? [inferred] : [];
+    for (const familyId of familyIds) {
+      const items = coverage.get(familyId) ?? [];
+      items.push(item);
+      coverage.set(familyId, items);
+    }
   }
 
   const families = args.blueprint.evidenceFamilies.map((family) => {
@@ -437,6 +574,10 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
     blueprintId: args.blueprint.blueprintId,
     blueprintVersion: args.blueprint.blueprintVersion,
     archetypeLabel: args.blueprint.archetypeLabel,
+    // Absent an explicit basis the caller did not resolve through the
+    // basis-aware path, so the honest answer is that it was not declared here.
+    blueprintBasis: args.blueprintBasis ?? "inferred",
+    unknownDeclaredArchetype: args.unknownDeclaredArchetype ?? null,
     requiredTotal: requiredFamilies.length,
     requiredCovered,
     requiredMissing: gapRegister.length,
@@ -458,9 +599,11 @@ export async function loadDiscoveryEvidenceReadiness(
   programId: string,
 ): Promise<DiscoveryEvidenceReadiness> {
   const program = await getProgramById(ctx, programId);
-  const blueprint = getDiscoveryBlueprint(
+  const resolution = resolveDiscoveryBlueprintWithBasis(
     buildDiscoveryBlueprintInputFromProgram(program),
+    resolveDeclaredProgramArchetypeId(program),
   );
+  const blueprint = resolution.blueprint;
   const tenantKey = ctx.clientKey ?? "";
   const rows = await azureRead
     .query<{
@@ -471,6 +614,7 @@ export async function loadDiscoveryEvidenceReadiness(
       phase: number | null;
       confidence: number | string | null;
       created_at: string | null;
+      family_key: string | null;
     }>(
       `
         SELECT
@@ -480,7 +624,8 @@ export async function loadDiscoveryEvidenceReadiness(
           pei.evidence_type,
           pei.phase,
           pei.confidence,
-          pei.created_at
+          pei.created_at,
+          per.family_key
         FROM program_evidence_reviews per
         INNER JOIN program_evidence_items pei
           ON pei.id = per.evidence_id
@@ -498,6 +643,8 @@ export async function loadDiscoveryEvidenceReadiness(
     .catch(() => []);
   return evaluateDiscoveryEvidenceReadiness({
     blueprint,
+    blueprintBasis: resolution.basis,
+    unknownDeclaredArchetype: resolution.unknownDeclaration,
     evidenceItems: rows.map((row) => ({
       id: row.id,
       title: row.title ?? "Untitled evidence",
@@ -506,6 +653,7 @@ export async function loadDiscoveryEvidenceReadiness(
       phase: row.phase,
       confidence: row.confidence,
       createdAt: row.created_at,
+      declaredFamilyKey: row.family_key,
     })),
   });
 }

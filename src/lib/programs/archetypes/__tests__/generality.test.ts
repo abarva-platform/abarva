@@ -138,9 +138,47 @@ describe("generality — IT_SOURCING_EVENT through the same engine", () => {
     };
 
     const diagnose = answerGrounded(bundle, "What should be diagnosed in P2?");
-    expect(diagnose.answer).toMatch(
-      /incumbent_performance|sla_baseline|vendor_spend/,
+
+    // What this case claims is in its name: the answer serves IT_SOURCING's OWN
+    // families. It used to assert that by matching three raw family keys, and
+    // went red when the answer began rendering humanised labels instead —
+    // "Sla Baseline" for `sla_baseline`. The families were right the whole
+    // time; only the vocabulary moved, and a pinned vocabulary reports that as
+    // a product defect.
+    //
+    // So the expectation is DERIVED from the archetype's own phase model, and
+    // compared on a normalised form that is blind to case and separators. The
+    // negative half is what makes it a proof rather than a keyword search: the
+    // other archetype's families are disjoint from this one's, and none of them
+    // may appear. An answer built from a fixed list would fail that.
+    const normalise = (value: string) =>
+      value.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+    const familiesOf = (archetype: typeof IT_SOURCING_EVENT) =>
+      archetype.phaseModel.flatMap((phase) =>
+        phase.requiredEvidence.map((evidence) => evidence.family),
+      );
+
+    const ownFamilies = familiesOf(IT_SOURCING_EVENT);
+    const foreignFamilies = familiesOf(AI_PRODUCT_DEVELOPMENT_LIFECYCLE).filter(
+      (family) => !ownFamilies.includes(family),
     );
+    const normalisedAnswer = normalise(diagnose.answer);
+
+    // Non-vacuous: an empty list on either side would make the two assertions
+    // below hold against any answer at all, including an empty string.
+    expect(ownFamilies.length).toBeGreaterThan(0);
+    expect(foreignFamilies.length).toBeGreaterThan(0);
+
+    expect(
+      ownFamilies.filter((family) =>
+        normalisedAnswer.includes(normalise(family)),
+      ),
+    ).not.toEqual([]);
+    expect(
+      foreignFamilies.filter((family) =>
+        normalisedAnswer.includes(normalise(family)),
+      ),
+    ).toEqual([]);
     expect(diagnose.envelope.tenantResolved).toBe("skyharbor-air");
     expect(diagnose.envelope.archetypeResolved).toBe("IT_SOURCING_EVENT");
 
