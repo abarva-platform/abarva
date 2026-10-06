@@ -121,15 +121,21 @@ there. Every mutation was reverted from a backup and the tree re-verified clean
 Mutations 3–8 each kill exactly the case written for them, so no case is passing
 on a neighbour's assertion.
 
-**Census.** `npm run audit:test-ci-coverage:check` exits 0 and reports
-`coverage shape matches the committed census` both with and without this file.
-Measured in isolation by moving the file out and back, the file moves
-`testFiles` 2713 → 2714 **and** `coveredTestFiles` 2549 → 2550 — so
-`uncoveredTestFiles` is unchanged, which is the proof that the suite is wired to
-a CI job rather than merely present. The committed census is stale by +3 counts;
-+2 of those predate this branch and belong to other work. The census JSON is not
-updated here because it is held by another agent's live claim, and the counts are
-a report, not a gate.
+**Census.** Re-measured on the current base after merging `origin/main`, because
+the absolute counts this paragraph first quoted (`testFiles` 2713 → 2714,
+`coveredTestFiles` 2549 → 2550) went stale while this branch waited — the
+conclusion they supported held, the numbers did not, so they are corrected here
+rather than left standing. Measured in isolation by moving the file out and back
+on the merged base: without it the census reads 2746 / 2582, with it 2747 / 2583.
+The suite moves `testFiles` **and** `coveredTestFiles` by the same +1 while
+`uncoveredTestFiles` is unchanged, which is the proof that it is wired to a CI job
+rather than merely present. Of the +3 total drift against the committed file, +2
+are inherited: two suites merged into `main` without a census refresh, and that
+is measured separately rather than absorbed into this branch's count. The census
+JSON **is** regenerated and committed here, which it was not on the original base
+— it is no longer held by another agent's live claim, and the fence-coverage
+census needed no change (`audit:tenancy-fence-coverage` exits 0 against the
+committed file).
 
 Two jsdom-environment facts are documented in the suite because each one, left
 implicit, produces a failure that reads as a product defect:
